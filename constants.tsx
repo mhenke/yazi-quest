@@ -175,8 +175,14 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: 'nav-protocols',
+        description: "Navigate into 'protocols'",
+        check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'protocols',
+        completed: false
+      },
+      {
         id: 'create-2',
-        description: "Generate 'uplink_v1.conf'",
+        description: "Generate 'uplink_v1.conf' in protocols",
         check: (state) => {
           const protocols = findNodeByName(state.fs, 'protocols');
           return !!protocols?.children?.find(c => c.name === 'uplink_v1.conf');
@@ -185,7 +191,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-3',
-        description: "Generate 'uplink_v2.conf'",
+        description: "Generate 'uplink_v2.conf' in protocols",
         check: (state) => {
           const protocols = findNodeByName(state.fs, 'protocols');
           return !!protocols?.children?.find(c => c.name === 'uplink_v2.conf');
@@ -239,7 +245,16 @@ export const LEVELS: Level[] = [
     tasks: [
       {
          id: 'ep2-1a',
-         description: "Create 'neural_net/weights' structure",
+         description: "Create directory 'neural_net'",
+         check: (state) => {
+             const ws = findNodeByName(state.fs, 'workspace');
+             return !!ws?.children?.find(c => c.name === 'neural_net');
+         },
+         completed: false
+      },
+      {
+         id: 'ep2-1b',
+         description: "Create directory 'weights' in 'neural_net'",
          check: (state) => {
              const net = findNodeByName(state.fs, 'neural_net');
              return !!net?.children?.find(c => c.name === 'weights');
@@ -381,8 +396,17 @@ export const LEVELS: Level[] = [
     hint: "Create 'etc/daemon/config'. Move 'datastore/vault' to 'root/tmp'.",
     tasks: [
       {
+        id: 'ep3-1a',
+        description: "Create directory 'daemon' in 'etc'",
+        check: (state) => {
+           const etc = findNodeByName(state.fs, 'etc');
+           return !!etc?.children?.find(c => c.name === 'daemon' && c.type === 'dir');
+        },
+        completed: false
+      },
+      {
         id: 'ep3-1b',
-        description: "Create 'daemon/config' in 'etc'",
+        description: "Create file 'config' inside 'daemon'",
         check: (state) => {
            const etc = findNodeByName(state.fs, 'etc');
            const daemon = etc?.children?.find(c => c.name === 'daemon');
@@ -449,7 +473,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-4a',
-        description: "Construct 'sector_1/zone_A/node_X'",
+        description: "Construct directory chain 'sector_1/zone_A/node_X'",
         check: (state) => {
            const user = findNodeByName(state.fs, 'guest');
            const s1 = user?.children?.find(c => c.name === 'sector_1');
@@ -459,7 +483,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-4b',
-        description: "Construct 'grid_alpha/relay_9/proxy'",
+        description: "Construct directory chain 'grid_alpha/relay_9/proxy'",
         check: (state) => {
             const user = findNodeByName(state.fs, 'guest');
             const g1 = user?.children?.find(c => c.name === 'grid_alpha');
