@@ -1,3 +1,4 @@
+
 export type NodeType = 'file' | 'dir';
 
 export interface FileNode {
@@ -30,6 +31,14 @@ export interface Level {
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
 }
 
+export interface Episode {
+  id: number;
+  title: string;
+  subtitle: string;
+  lore: string[]; // Array of strings for typewriter effect paragraphs
+  color: string;
+}
+
 export interface ClipboardItem {
   nodes: FileNode[]; // Changed to array for batch operations
   action: 'yank' | 'cut';
@@ -49,4 +58,5 @@ export interface GameState {
   selectedIds: string[]; // IDs of currently selected files
   showHelp: boolean; // Toggle for help modal
   showHint: boolean; // Toggle for hint modal
+  showEpisodeIntro: boolean; // Toggle for story mode overlay
 }

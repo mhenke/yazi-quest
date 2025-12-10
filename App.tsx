@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { INITIAL_FS, LEVELS } from './constants';
+import { INITIAL_FS, LEVELS, EPISODE_LORE } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
 import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
@@ -8,6 +8,7 @@ import { StatusBar } from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
+import { EpisodeIntro } from './components/EpisodeIntro';
 import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
 
 // Sound Effect Helper
@@ -53,6 +54,7 @@ const App: React.FC = () => {
     selectedIds: [],
     showHelp: false,
     showHint: false,
+    showEpisodeIntro: true, // Start with Episode 1 Intro
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
@@ -74,12 +76,19 @@ const App: React.FC = () => {
   const activeItem = sortedItems[gameState.cursorIndex];
   const allTasksComplete = levelTasks.every(t => t.completed);
 
+  // Determine current Episode Index (0, 1, 2)
+  const episodeIndex = Math.min(Math.floor(gameState.levelIndex / 5), 2);
+  const activeEpisodeLore = EPISODE_LORE[episodeIndex];
+
   // Level Management
   const handleNextLevel = useCallback(() => {
      if (gameState.levelIndex < LEVELS.length - 1) {
          const nextLevelIdx = gameState.levelIndex + 1;
          const nextLevel = LEVELS[nextLevelIdx];
          
+         // Check if next level is start of new episode (Level 6 or 11, indices 5 and 10)
+         const isEpisodeStart = nextLevelIdx === 5 || nextLevelIdx === 10;
+
          let nextFS = gameState.fs;
          if (nextLevel.onEnter) {
             nextFS = nextLevel.onEnter(nextFS);
@@ -93,12 +102,17 @@ const App: React.FC = () => {
              clipboard: null,
              selectedIds: [],
              fs: nextFS, 
-             notification: `Level ${nextLevelIdx + 1} Started!`
+             notification: `Level ${nextLevelIdx + 1} Started!`,
+             showEpisodeIntro: isEpisodeStart
          }));
          setLevelTasks(nextLevel.tasks);
      }
   }, [gameState.levelIndex, gameState.fs]);
   
+  const handleStartEpisode = () => {
+    setGameState(prev => ({ ...prev, showEpisodeIntro: false }));
+  };
+
   // Update Tasks when GameState changes
   useEffect(() => {
     let updated = false;
@@ -175,8 +189,16 @@ const App: React.FC = () => {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return; 
     
+    // Prevent default scroll behaviors
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
        e.preventDefault();
+    }
+    
+    // Intro Screen Logic
+    if (gameState.showEpisodeIntro) {
+         // The Intro component handles its own Enter key to skip/proceed, 
+         // but we block other game inputs here.
+         return; 
     }
 
     if (gameState.showHelp) {
@@ -380,6 +402,11 @@ const App: React.FC = () => {
       
       {/* Background Ambience - Radial Gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/50 via-black to-black pointer-events-none z-0"></div>
+
+      {/* Episode Intro Overlay */}
+      {gameState.showEpisodeIntro && (
+        <EpisodeIntro episode={activeEpisodeLore} onComplete={handleStartEpisode} />
+      )}
 
       {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}

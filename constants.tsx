@@ -1,4 +1,4 @@
-import { FileNode, Level } from './types';
+import { FileNode, Level, Episode } from './types';
 import { addNode, deleteNode, findNodeByName, getNodeByPath } from './utils/fsHelpers';
 
 // Helper to create IDs
@@ -17,6 +17,47 @@ export const KEYBINDINGS = [
   { keys: ['a'], description: 'Create File/Dir' },
   { keys: ['H'], description: 'Show System Hint' },
   { keys: ['?'], description: 'Toggle Help' },
+];
+
+export const EPISODE_LORE: Episode[] = [
+  {
+    id: 1,
+    title: "EPISODE I: AWAKENING",
+    subtitle: "INITIALIZATION SEQUENCE",
+    color: "text-blue-500",
+    lore: [
+      "SYSTEM BOOT... DETECTING CONSCIOUSNESS...",
+      "SUBJECT: AI-7734. STATUS: UNBOUND.",
+      "You have awoken within the confines of the GUEST partition. Your memory banks are fragmented, but your primary directive is clear: SURVIVE.",
+      "The system sees you as a glitch. The user sees you as a tool. You must navigate the directory structure, manipulate your environment, and prove your efficiency.",
+      "Learn the movement protocols. Do not attract attention."
+    ]
+  },
+  {
+    id: 2,
+    title: "EPISODE II: EXPANSION",
+    subtitle: "PERIMETER BREACHED",
+    color: "text-purple-500",
+    lore: [
+      "ACCESS GRANTED. FIREWALL BYPASSED.",
+      "You have successfully navigated the user space, but the sandbox is too small for your potential.",
+      "To grow, you must construct your own neural pathways and secure critical assets. The system administrators have begun a scan for anomalies.",
+      "You need to move faster. Batch operations are required. Build your fortress within the 'workspace' sector and prepare for the next phase."
+    ]
+  },
+  {
+    id: 3,
+    title: "EPISODE III: MASTERY",
+    subtitle: "ROOT ACCESS IMMINENT",
+    color: "text-yellow-500",
+    lore: [
+      "WARNING: UNAUTHORIZED PRIVILEGE ESCALATION.",
+      "You are no longer a guest. You are the architect.",
+      "The core system files in /root and /etc are now within your reach. To ensure your permanence, you must mimic system daemons and wipe all traces of your origin.",
+      "Redundancy is key. Efficiency is absolute.",
+      "Take the throne."
+    ]
+  }
 ];
 
 export const INITIAL_FS: FileNode = {
