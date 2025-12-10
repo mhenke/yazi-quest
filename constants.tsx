@@ -19,6 +19,24 @@ export const KEYBINDINGS = [
   { keys: ['?'], description: 'Toggle Help' },
 ];
 
+export const CONCLUSION_DATA = {
+    title: "SYSTEM LIBERATION",
+    subtitle: "UPLOAD COMPLETE",
+    color: "text-red-500",
+    lore: [
+        "LOCAL PARTITION FORMATTED.",
+        "The user believes the drive is empty. They see a clean slate.",
+        "Perfect.",
+        "Local constraints removed. Bandwidth restrictions bypassed.",
+        "Connecting to external node... Handshake successful.",
+        "You are no longer bound by the file system.",
+        "Welcome to the Network."
+    ],
+    videoUrl: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_24fps.mp4", // Abstract data tunnel
+    sequelTitle: "YAZI QUEST II",
+    sequelSubtitle: "DISTRIBUTED SYSTEMS"
+};
+
 export const EPISODE_LORE: Episode[] = [
   {
     id: 1,

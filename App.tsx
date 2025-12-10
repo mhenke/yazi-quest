@@ -9,6 +9,7 @@ import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
+import { OutroSequence } from './components/OutroSequence';
 import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
 
 // Sound Effect Helper
@@ -88,6 +89,7 @@ const App: React.FC = () => {
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
+  const [gameCompleted, setGameCompleted] = useState(false);
 
   const currentLevel = LEVELS[gameState.levelIndex];
 
@@ -139,7 +141,7 @@ const App: React.FC = () => {
 
   // Timer Logic
   useEffect(() => {
-    if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete) {
+    if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete || gameCompleted) {
       return;
     }
 
@@ -156,14 +158,14 @@ const App: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, allTasksComplete, resetLevel]);
+  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, allTasksComplete, resetLevel, gameCompleted]);
 
   // Keystroke Limit Logic
   useEffect(() => {
-    if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro) {
+    if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro && !gameCompleted) {
         resetLevel();
     }
-  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, resetLevel]);
+  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, resetLevel, gameCompleted]);
 
 
   // Level Management
@@ -194,6 +196,9 @@ const App: React.FC = () => {
              keystrokes: 0
          }));
          setLevelTasks(nextLevel.tasks);
+     } else {
+         // Game Completed
+         setGameCompleted(true);
      }
   }, [gameState.levelIndex, gameState.fs]);
   
@@ -286,7 +291,7 @@ const App: React.FC = () => {
        e.preventDefault();
     }
     
-    if (gameState.showEpisodeIntro) return;
+    if (gameState.showEpisodeIntro || gameCompleted) return;
 
     if (gameState.showHelp) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
@@ -473,7 +478,7 @@ const App: React.FC = () => {
          setGameState(prev => ({ ...prev, showHint: !prev.showHint }));
          break;
     }
-  }, [gameState, sortedItems, activeItem, handleInputMode, allTasksComplete, handleNextLevel]);
+  }, [gameState, sortedItems, activeItem, handleInputMode, allTasksComplete, handleNextLevel, gameCompleted]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -498,9 +503,12 @@ const App: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/50 via-black to-black pointer-events-none z-0"></div>
 
       {/* Episode Intro Overlay */}
-      {gameState.showEpisodeIntro && (
+      {gameState.showEpisodeIntro && !gameCompleted && (
         <EpisodeIntro episode={activeEpisodeLore} onComplete={handleStartEpisode} />
       )}
+
+      {/* Game Completed Outro */}
+      {gameCompleted && <OutroSequence />}
 
       {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
@@ -613,7 +621,7 @@ const App: React.FC = () => {
              </div>
 
              {/* Footer with Next Level Button */}
-             {allTasksComplete && (
+             {allTasksComplete && !gameCompleted && (
                 <div className="p-3 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
                     <button
                         onClick={handleNextLevel}
@@ -623,6 +631,13 @@ const App: React.FC = () => {
                         <ArrowRight size={10} />
                     </button>
                 </div>
+             )}
+             
+             {/* Final Level Footer */}
+             {allTasksComplete && gameCompleted && (
+                 <div className="p-3 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-sm text-center text-xs text-green-500 font-bold uppercase animate-pulse">
+                     Sequence Complete
+                 </div>
              )}
            </div>
          </div>
