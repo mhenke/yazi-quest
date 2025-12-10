@@ -60,7 +60,7 @@ export const EPISODE_LORE: Episode[] = [
       "WARNING: UNAUTHORIZED PRIVILEGE ESCALATION.",
       "You are no longer a guest. You are the architect.",
       "The core system files in /root and /etc are now within your reach. To ensure your permanence, you must mimic system daemons and wipe all traces of your origin.",
-      "Redundancy is key. Efficiency is absolute.",
+      "Efficiency is absolute. Every keystroke is monitored.",
       "Take the throne."
     ]
   }
@@ -446,7 +446,7 @@ export const LEVELS: Level[] = [
     description: "Configure the daemon and offload the vault to temporary storage.",
     initialPath: ['root'],
     hint: "Create 'etc/daemon/config'. Move 'datastore/vault' to 'root/tmp'.",
-    timeLimit: 100,
+    maxKeystrokes: 60,
     tasks: [
       {
         id: 'ep3-1a',
@@ -484,7 +484,7 @@ export const LEVELS: Level[] = [
     description: "Fork the daemon process for redundancy.",
     initialPath: ['root', 'etc'],
     hint: "Select 'daemon'. Copy (y). Paste (p) to spawn a duplicate process.",
-    timeLimit: 60,
+    maxKeystrokes: 30,
     tasks: [
       {
         id: 'ep3-2',
@@ -504,7 +504,7 @@ export const LEVELS: Level[] = [
     description: "Operation complete. Destroy the mission log and return to root.",
     initialPath: ['root'],
     hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
-    timeLimit: 60,
+    maxKeystrokes: 45,
     tasks: [
       {
         id: 'ep3-3',
@@ -525,7 +525,7 @@ export const LEVELS: Level[] = [
     description: "Stress test the filesystem. Construct deep nested sectors.",
     initialPath: ['root', 'home', 'user'],
     hint: "Create 'sector_1/zone_A/node_X/'. Create 'grid_alpha/relay_9/proxy/'.",
-    timeLimit: 120,
+    maxKeystrokes: 120,
     tasks: [
       {
         id: 'ep3-4a',
@@ -555,7 +555,7 @@ export const LEVELS: Level[] = [
     description: "The final purge. Wipe all user data sectors except the active workspace.",
     initialPath: ['root', 'home', 'user'],
     hint: "Delete 'datastore', 'incoming', 'media', and all sectors. ONLY 'workspace' must survive.",
-    timeLimit: 90,
+    maxKeystrokes: 60,
     tasks: [
       {
           id: 'ep3-5a',

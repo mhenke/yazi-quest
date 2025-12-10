@@ -83,6 +83,7 @@ const App: React.FC = () => {
     showHint: false,
     showEpisodeIntro: true, // Start with Episode 1 Intro
     timeLeft: null,
+    keystrokes: 0,
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
@@ -108,6 +109,34 @@ const App: React.FC = () => {
   const episodeIndex = Math.min(Math.floor(gameState.levelIndex / 5), 2);
   const activeEpisodeLore = EPISODE_LORE[episodeIndex];
 
+  // Helper to reset level on failure
+  const resetLevel = useCallback(() => {
+        playFailureSound();
+        setGameState(prev => ({
+            ...prev,
+            timeLeft: null, 
+            notification: "SYSTEM FAILURE! RESETTING LEVEL...",
+            mode: 'normal',
+            selectedIds: [],
+            clipboard: null
+        }));
+
+        setTimeout(() => {
+            const levelConfig = LEVELS[gameState.levelIndex];
+            setGameState(prev => ({
+                ...prev,
+                fs: cloneFS(prev.levelStartFS), 
+                currentPath: levelConfig.initialPath,
+                cursorIndex: 0,
+                notification: "Level Reset. Try Again.",
+                timeLeft: levelConfig.timeLimit || null,
+                keystrokes: 0
+            }));
+            
+            setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
+        }, 2000);
+  }, [gameState.levelIndex]);
+
   // Timer Logic
   useEffect(() => {
     if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete) {
@@ -115,33 +144,7 @@ const App: React.FC = () => {
     }
 
     if (gameState.timeLeft <= 0) {
-        // Handle Timeout / Failure
-        playFailureSound();
-        setGameState(prev => ({
-            ...prev,
-            timeLeft: null, // Stop timer
-            notification: "SYSTEM DETECTION! RESETTING LEVEL...",
-            mode: 'normal',
-            selectedIds: [],
-            clipboard: null
-        }));
-
-        // Delay then Reset
-        setTimeout(() => {
-            const resetLevel = LEVELS[gameState.levelIndex];
-            setGameState(prev => ({
-                ...prev,
-                fs: cloneFS(prev.levelStartFS), // Restore file system state from start of level
-                currentPath: resetLevel.initialPath,
-                cursorIndex: 0,
-                notification: "Level Reset. Try Again.",
-                timeLeft: resetLevel.timeLimit || null
-            }));
-            
-            // Reset tasks state
-            setLevelTasks(resetLevel.tasks.map(t => ({...t, completed: false})));
-        }, 2000);
-
+        resetLevel();
         return;
     }
 
@@ -153,7 +156,14 @@ const App: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, gameState.levelIndex, gameState.levelStartFS, allTasksComplete]);
+  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, allTasksComplete, resetLevel]);
+
+  // Keystroke Limit Logic
+  useEffect(() => {
+    if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro) {
+        resetLevel();
+    }
+  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, resetLevel]);
 
 
   // Level Management
@@ -162,7 +172,6 @@ const App: React.FC = () => {
          const nextLevelIdx = gameState.levelIndex + 1;
          const nextLevel = LEVELS[nextLevelIdx];
          
-         // Check if next level is start of new episode (Level 6 or 11, indices 5 and 10)
          const isEpisodeStart = nextLevelIdx === 5 || nextLevelIdx === 10;
 
          let nextFS = gameState.fs;
@@ -178,10 +187,11 @@ const App: React.FC = () => {
              clipboard: null,
              selectedIds: [],
              fs: nextFS,
-             levelStartFS: cloneFS(nextFS), // Snapshot the new state for this level
+             levelStartFS: cloneFS(nextFS),
              notification: `Level ${nextLevelIdx + 1} Started!`,
              showEpisodeIntro: isEpisodeStart,
-             timeLeft: nextLevel.timeLimit || null
+             timeLeft: nextLevel.timeLimit || null,
+             keystrokes: 0
          }));
          setLevelTasks(nextLevel.tasks);
      }
@@ -222,6 +232,11 @@ const App: React.FC = () => {
 
   // Handle Input Mode 
   const handleInputMode = useCallback((key: string) => {
+    // Only count 'Enter' as a meaningful keystroke in input mode for mastery tracking,
+    // plus the individual typing.
+    // However, to keep it simple and fair for Mastery, we count every keypress.
+    // We handle the increment in the main listener.
+
     if (key === 'Enter') {
         if (!gameState.inputBuffer.trim()) {
             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
@@ -267,17 +282,11 @@ const App: React.FC = () => {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return; 
     
-    // Prevent default scroll behaviors
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
        e.preventDefault();
     }
     
-    // Intro Screen Logic
-    if (gameState.showEpisodeIntro) {
-         // The Intro component handles its own Enter key to skip/proceed, 
-         // but we block other game inputs here.
-         return; 
-    }
+    if (gameState.showEpisodeIntro) return;
 
     if (gameState.showHelp) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
@@ -286,6 +295,13 @@ const App: React.FC = () => {
          return;
       }
       return; 
+    }
+
+    // Increment keystrokes for any valid action
+    // Ignoring modifiers (which we returned early for above, but Shift might exist)
+    // We ignore Shift/Tab/Caps if they slip through, but generally sticking to chars.
+    if (e.key.length === 1 || ['Enter', 'Backspace', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+         setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
     }
 
     if (gameState.mode !== 'normal') {

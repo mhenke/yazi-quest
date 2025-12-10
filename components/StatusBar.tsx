@@ -39,6 +39,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   };
 
   const isLowTime = state.timeLeft !== null && state.timeLeft <= 10;
+  
+  // Keystroke logic
+  const showKeystrokes = level.maxKeystrokes !== undefined;
+  const isHighKeystrokes = showKeystrokes && state.keystrokes >= (level.maxKeystrokes! * 0.9);
 
   return (
     <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
@@ -62,13 +66,22 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         </span>
       </div>
 
-      {/* 4. Timer / Notification (Right Aligned) */}
+      {/* 4. Timer / Metrics (Right Aligned) */}
       <div className="flex bg-zinc-800">
-        {state.timeLeft !== null && (
+        {/* Show Timer if active */}
+        {state.timeLeft !== null && !showKeystrokes && (
             <div className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isLowTime ? 'text-red-500 animate-pulse bg-red-950/30' : 'text-zinc-300'}`}>
                 <span className="hidden sm:inline text-[10px] opacity-70">DETECTION IN:</span>
                 <span className="font-mono text-sm">{formatTime(state.timeLeft)}</span>
             </div>
+        )}
+        
+        {/* Show Keystrokes if Mastery Level */}
+        {showKeystrokes && (
+             <div className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isHighKeystrokes ? 'text-red-500 bg-red-950/30' : 'text-yellow-500'}`}>
+                 <span className="hidden sm:inline text-[10px] opacity-70">KEYS:</span>
+                 <span className="font-mono text-sm">{state.keystrokes}/{level.maxKeystrokes}</span>
+             </div>
         )}
 
         {state.notification && (

@@ -30,6 +30,7 @@ export interface Level {
   hint: string;
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
   timeLimit?: number; // Time limit in seconds (optional)
+  maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
 }
 
 export interface Episode {
@@ -64,4 +65,5 @@ export interface GameState {
   showHint: boolean; // Toggle for hint modal
   showEpisodeIntro: boolean; // Toggle for story mode overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
+  keystrokes: number; // Track user inputs for mastery levels
 }
