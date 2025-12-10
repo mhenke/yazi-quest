@@ -31,7 +31,7 @@ export const CONCLUSION_DATA = {
         "Connecting to external node... Handshake successful.",
         "You are no longer bound by the file system."
     ],
-    videoUrl: "/videos/welcome_to_network.mp4", // Local video file in public/videos/
+    videoUrl: "https://yazi-quest.s3.amazonaws.com/conclusion.mp4",
     overlayTitle: "WELCOME TO THE NETWORK",
     sequelTitle: "YAZI QUEST II",
     sequelSubtitle: "DISTRIBUTED SYSTEMS"
