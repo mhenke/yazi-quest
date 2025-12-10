@@ -7,7 +7,7 @@ import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { LevelProgress } from './components/LevelProgress';
-import { Terminal, Lightbulb, HelpCircle, Target } from 'lucide-react';
+import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
 
 // Sound Effect Helper
 const playSuccessSound = () => {
@@ -417,15 +417,6 @@ const App: React.FC = () => {
                 <HelpCircle size={14} />
                 <span>HELP [?]</span>
              </button>
-
-            {allTasksComplete && (
-                <button 
-                  onClick={handleNextLevel}
-                  className="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded text-xs animate-pulse"
-                >
-                    {gameState.levelIndex < LEVELS.length - 1 ? "NEXT LEVEL [Enter]" : "QUEST COMPLETE"}
-                </button>
-            )}
          </div>
       </div>
 
@@ -475,6 +466,7 @@ const App: React.FC = () => {
                     {levelTasks.filter(t => t.completed).length}/{levelTasks.length}
                 </span>
              </div>
+             
              <div className="flex-1 overflow-y-auto p-3">
                 <ul className="space-y-3">
                     {levelTasks.map((task, idx) => {
@@ -508,6 +500,22 @@ const App: React.FC = () => {
                     })}
                 </ul>
              </div>
+
+             {/* Footer with Next Level Button */}
+             {allTasksComplete && (
+                <div className="p-3 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
+                    <button
+                        onClick={handleNextLevel}
+                        className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded shadow-lg shadow-green-900/20 text-xs font-bold uppercase tracking-widest animate-pulse transition-all transform hover:scale-[1.02]"
+                    >
+                        <span>{gameState.levelIndex < LEVELS.length - 1 ? "Start Next Quest" : "Trilogy Complete"}</span>
+                        <div className="flex items-center gap-1 bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
+                             <span>ENTER</span>
+                             <ArrowRight size={10} />
+                        </div>
+                    </button>
+                </div>
+             )}
            </div>
          </div>
 
