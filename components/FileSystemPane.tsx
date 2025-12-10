@@ -1,6 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { FileNode } from '../types';
-import { Folder, FileText, ChevronRight } from 'lucide-react';
+import { 
+  Folder, 
+  FileText, 
+  FileImage, 
+  FileCode, 
+  FileArchive, 
+  FileCog, 
+  FileLock, 
+  Terminal as TerminalIcon, 
+  ChevronRight 
+} from 'lucide-react';
 
 interface FileSystemPaneProps {
   items: FileNode[];
@@ -10,6 +20,44 @@ interface FileSystemPaneProps {
   isParent?: boolean;
   selectedIds: string[];
 }
+
+// Helper for file styling based on extension/name
+const getFileStyle = (node: FileNode) => {
+  if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
+  
+  const name = node.name.toLowerCase();
+  
+  // Images
+  if (/\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
+    return { color: 'text-purple-400', icon: FileImage };
+  }
+  // Executables / Binaries
+  if (/\.(exe|bin|sh|bat)$/.test(name)) {
+    return { color: 'text-green-400', icon: TerminalIcon };
+  }
+  // Archives
+  if (/\.(zip|tar|gz|7z|rar)$/.test(name)) {
+    return { color: 'text-red-400', icon: FileArchive };
+  }
+  // Configs / Data
+  if (/\.(json|toml|yaml|conf|ini|xml)$/.test(name)) {
+    return { color: 'text-cyan-400', icon: FileCog };
+  }
+  // Code
+  if (/\.(js|ts|tsx|py|rs|c|cpp|go|java)$/.test(name)) {
+    return { color: 'text-yellow-400', icon: FileCode };
+  }
+  // Keys / Secrets
+  if (/\.(pem|key|lock)$/.test(name)) {
+    return { color: 'text-amber-600', icon: FileLock };
+  }
+  // Markdown / Text
+  if (/\.(md|txt)$/.test(name)) {
+    return { color: 'text-zinc-300', icon: FileText };
+  }
+
+  return { color: 'text-zinc-400', icon: FileText };
+};
 
 export const FileSystemPane: React.FC<FileSystemPaneProps> = ({ 
   items, 
@@ -32,46 +80,53 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   }, [cursorIndex, isActive]);
 
   return (
-    <div className={`flex flex-col h-full border-r border-zinc-700 bg-zinc-900 ${isParent ? 'w-1/4 text-zinc-500' : 'w-1/3 text-zinc-300'}`}>
+    <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${isParent ? 'w-1/4 bg-zinc-950/50 text-zinc-600' : 'w-1/3 bg-zinc-900/80 text-zinc-300'}`}>
       {title && (
-        <div className="px-3 py-1 text-xs font-bold bg-zinc-800 text-zinc-400 border-b border-zinc-700 uppercase tracking-wider">
-          {title}
+        <div className={`px-3 py-1 text-[10px] font-bold border-b border-zinc-800 uppercase tracking-wider flex items-center justify-between ${isParent ? 'text-zinc-600' : 'text-blue-400'}`}>
+          <span>{title}</span>
+          {!isParent && <span className="text-zinc-600">{items.length} nodes</span>}
         </div>
       )}
-      <div ref={listRef} className="flex-1 overflow-y-auto py-1">
+      
+      <div ref={listRef} className="flex-1 overflow-y-auto py-1 scrollbar-hide">
         {items.length === 0 && (
-          <div className="px-4 py-2 text-zinc-600 italic">Empty</div>
+          <div className="px-4 py-2 text-zinc-700 italic text-xs">~ empty ~</div>
         )}
         {items.map((item, idx) => {
           const isSelected = isActive && idx === cursorIndex;
           const isMarked = selectedIds.includes(item.id);
+          const { color, icon: Icon } = getFileStyle(item);
           
           return (
             <div
               key={item.id}
               className={`
-                px-3 py-1 flex items-center gap-2 truncate text-sm font-mono cursor-default
-                ${isSelected ? 'bg-zinc-700' : ''}
-                ${isMarked ? 'text-yellow-400' : isSelected ? 'text-white' : ''}
-                ${isParent ? 'opacity-60' : ''}
+                px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm
+                transition-colors duration-75
+                ${isSelected ? 'bg-zinc-800' : ''}
+                ${isMarked ? 'text-yellow-400' : ''}
+                ${isParent ? 'opacity-50 grayscale' : ''}
               `}
             >
-              <span className={item.type === 'dir' ? 'text-blue-400' : 'text-zinc-400'}>
-                {item.type === 'dir' ? <Folder size={14} fill="currentColor" fillOpacity={0.2} /> : <FileText size={14} />}
+              <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`}>
+                <Icon size={14} fill={item.type === 'dir' ? "currentColor" : "none"} fillOpacity={item.type === 'dir' ? 0.2 : 0} />
               </span>
-              <span className="truncate flex-1">{item.name}</span>
-              {isMarked && <span className="text-yellow-500 text-xs font-bold">[S]</span>}
-              {item.type === 'dir' && <ChevronRight size={12} className="opacity-50" />}
+              
+              <span className={`truncate flex-1 ${isSelected && !isMarked ? 'text-white font-medium' : ''} ${isMarked ? 'font-bold' : ''}`}>
+                {item.name}
+              </span>
+              
+              {isMarked && <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VISUAL]</span>}
+              
+              {item.type === 'dir' && (
+                  <span className="text-zinc-700">
+                    <ChevronRight size={12} strokeWidth={3} />
+                  </span>
+              )}
             </div>
           );
         })}
       </div>
-      {isActive && (
-         <div className="px-3 py-1 border-t border-zinc-700 text-xs text-zinc-500 flex justify-between">
-           <span>{items.length} items</span>
-           <span>{(cursorIndex + 1)}/{items.length}</span>
-         </div>
-      )}
     </div>
   );
 };
