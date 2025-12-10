@@ -13,15 +13,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   const [activeTab, setActiveTab] = useState<number>(0);
 
   // Helper icons for the 3 episodes (mapped by index)
-  const episodeIcons = [Shield, Zap, Crown];
+  // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
+  const episodeIcons = [Zap, Shield, Crown];
 
-  // Derive Episode Data from Lore Constant
+  // Derive Episode Data directly from Lore Constant
   const episodes = EPISODE_LORE.map((lore, idx) => ({
     ...lore,
-    // Convert "EPISODE I: AWAKENING" -> "Ep. I: Awakening" for shorter UI labels
-    shortTitle: lore.title.replace('EPISODE', 'Ep.').replace(/: (\w)/, ': $1').replace(/(\w)(\w*)/g, (g0,g1,g2) => g1.toUpperCase() + g2.toLowerCase()).replace('Ii', 'II').replace('Iii', 'III').replace('Ep. i', 'Ep. I'),
-    // Extract just the name "Awakening" for badges
-    badgeName: lore.title.split(': ')[1], 
     levels: levels.slice(idx * 5, (idx + 1) * 5),
     border: lore.color.replace('text-', 'border-') + '/30',
     bg: lore.color.replace('text-', 'bg-') + '/10',
@@ -67,7 +64,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
       <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-10 relative">
         
         {/* Left Side: Map Button + Current Episode Progress */}
-        <div className="flex items-center gap-6 overflow-hidden mr-4">
+        <div className="flex items-center gap-6 overflow-hidden mr-4 h-8">
             <button 
                 onClick={() => setShowLegend(true)}
                 className="flex items-center gap-2 text-xs font-mono text-zinc-500 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
@@ -77,16 +74,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                 <span className="uppercase tracking-widest font-bold border-b border-transparent group-hover:border-zinc-500">Map</span>
             </button>
             
-            <div className="h-6 w-px bg-zinc-800 shrink-0"></div>
+            <div className="h-4 w-px bg-zinc-800 shrink-0"></div>
 
-            <div className="flex flex-col justify-center">
-                 <div className="flex items-center gap-2 mb-1.5">
-                     <span className={`text-[10px] uppercase font-bold tracking-widest ${episodes[currentEpisodeIdx].color}`}>
+            <div className="flex flex-col justify-center h-full">
+                 <div className="flex items-center gap-2 mb-1">
+                     <span className={`text-[10px] uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx].color}`}>
                         {episodes[currentEpisodeIdx].shortTitle}
                      </span>
                  </div>
                  
-                 <div className="flex items-center">
+                 <div className="flex items-center h-4">
                     {episodes[currentEpisodeIdx].levels.map((level, idx) => {
                         const globalIdx = levels.indexOf(level);
                         const isCompleted = globalIdx < currentLevelIndex;
@@ -100,31 +97,31 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                         <div key={level.id} className="flex items-center group shrink-0">
                             {/* Connector */}
                             {idx > 0 && (
-                                <div className={`w-4 h-[2px] mx-1 rounded-full ${isCompleted ? 'bg-zinc-600' : 'bg-zinc-800'}`} />
+                                <div className={`w-3 h-[2px] mx-1 rounded-full ${isCompleted ? 'bg-zinc-600' : 'bg-zinc-800'}`} />
                             )}
 
                             {/* Stage Node */}
                             <div 
                             className={`
-                                flex items-center gap-2 px-2 py-0.5 rounded border text-[10px] font-mono transition-all duration-300
+                                flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-[9px] font-mono transition-all duration-300
                                 ${isCompleted ? 'bg-zinc-900/50 border-zinc-800 text-zinc-500' : ''}
                                 ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].color} shadow-[0_0_15px_rgba(255,255,255,0.05)] scale-105 z-10` : ''}
                                 ${isLocked ? 'bg-transparent border-transparent text-zinc-700' : ''}
                             `}
                             >
                                 <div className="flex items-center justify-center">
-                                    {isCompleted && <Check size={10} strokeWidth={3} />}
-                                    {isCurrent && <MapPin size={10} className="animate-pulse" />}
-                                    {isLocked && <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />}
+                                    {isCompleted && <Check size={8} strokeWidth={3} />}
+                                    {isCurrent && <MapPin size={8} className="animate-pulse" />}
+                                    {isLocked && <div className="w-1 h-1 rounded-full bg-zinc-800" />}
                                 </div>
                                 
                                 {(isCurrent) && (
-                                    <span className="whitespace-nowrap font-bold ml-1">
+                                    <span className="whitespace-nowrap font-bold">
                                         {level.title}
                                     </span>
                                 )}
                                 {(!isCurrent && !isLocked) && (
-                                     <span className="ml-1 font-bold">{displayNum}</span>
+                                     <span className="font-bold">{displayNum}</span>
                                 )}
                             </div>
                         </div>
@@ -135,7 +132,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
         </div>
 
         {/* Right Side: Trilogy Badges (Dynamic) */}
-        <div className="flex items-center gap-6 pl-6 border-l border-zinc-800 shrink-0">
+        <div className="flex items-center gap-6 pl-6 border-l border-zinc-800 shrink-0 h-8">
             {episodes.map((ep, idx) => {
                 const isComplete = completionStatus[idx];
                 const Icon = ep.icon;
@@ -149,12 +146,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                                     'rgba(250,204,21,0.5)';
 
                 return (
-                    <div key={ep.id} className={`flex flex-col items-center gap-1 transition-all duration-700 ${isComplete ? `text-${baseColor}-400 scale-110` : 'text-zinc-600'}`}
+                    <div key={ep.id} className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-700 ${isComplete ? `text-${baseColor}-400 scale-110` : 'text-zinc-600'}`}
                          style={isComplete ? { filter: `drop-shadow(0 0 8px ${shadowColor})` } : {}}
                     >
-                        <Icon size={16} fill={isComplete ? "currentColor" : "none"} />
-                        <span className="text-[9px] uppercase font-bold tracking-wider hidden sm:inline-block">
-                            {ep.badgeName}
+                        <Icon size={14} fill={isComplete ? "currentColor" : "none"} />
+                        <span className="text-[8px] uppercase font-bold tracking-wider hidden sm:inline-block leading-none mt-0.5">
+                            {ep.name}
                         </span>
                     </div>
                 );

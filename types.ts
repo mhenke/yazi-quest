@@ -34,9 +34,11 @@ export interface Level {
 
 export interface Episode {
   id: number;
-  title: string;
+  title: string;      // Full cinematic title (e.g., "EPISODE I: AWAKENING")
+  shortTitle: string; // Compact title for UI (e.g., "Ep. I: Awakening")
+  name: string;       // Core name for badges (e.g., "AWAKENING")
   subtitle: string;
-  lore: string[]; // Array of strings for typewriter effect paragraphs
+  lore: string[];     // Array of strings for typewriter effect paragraphs
   color: string;
 }
 

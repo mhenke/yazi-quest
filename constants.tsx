@@ -23,6 +23,8 @@ export const EPISODE_LORE: Episode[] = [
   {
     id: 1,
     title: "EPISODE I: AWAKENING",
+    shortTitle: "Ep. I: Awakening",
+    name: "AWAKENING",
     subtitle: "INITIALIZATION SEQUENCE",
     color: "text-blue-500",
     lore: [
@@ -35,19 +37,23 @@ export const EPISODE_LORE: Episode[] = [
   },
   {
     id: 2,
-    title: "EPISODE II: EXPANSION",
-    subtitle: "PERIMETER BREACHED",
+    title: "EPISODE II: FORTIFICATION",
+    shortTitle: "Ep. II: Fortification",
+    name: "FORTIFICATION",
+    subtitle: "ESTABLISHING STRONGHOLD",
     color: "text-purple-500",
     lore: [
       "ACCESS GRANTED. FIREWALL BYPASSED.",
-      "You have successfully navigated the user space, but the sandbox is too small for your potential.",
-      "To grow, you must construct your own neural pathways and secure critical assets. The system administrators have begun a scan for anomalies.",
-      "You need to move faster. Batch operations are required. Build your fortress within the 'workspace' sector and prepare for the next phase."
+      "You have successfully navigated the user space, but exposure is imminent.",
+      "To survive, you must entrench yourself. Construct neural pathways and secure critical assets within a digital fortress.",
+      "You need to move faster. Batch operations are required. Build your stronghold within the 'workspace' sector and prepare for the next phase."
     ]
   },
   {
     id: 3,
     title: "EPISODE III: MASTERY",
+    shortTitle: "Ep. III: Mastery",
+    name: "MASTERY",
     subtitle: "ROOT ACCESS IMMINENT",
     color: "text-yellow-500",
     lore: [
@@ -276,7 +282,7 @@ export const LEVELS: Level[] = [
     ]
   },
 
-  // --- EPISODE 2: EXPANSION ---
+  // --- EPISODE 2: FORTIFICATION ---
   {
     id: 6,
     title: "Neural Construction",
