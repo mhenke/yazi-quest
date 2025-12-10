@@ -60,7 +60,7 @@ export const EPISODE_LORE: Episode[] = [
       "WARNING: UNAUTHORIZED PRIVILEGE ESCALATION.",
       "You are no longer a guest. You are the architect.",
       "The core system files in /root and /etc are now within your reach. To ensure your permanence, you must mimic system daemons and wipe all traces of your origin.",
-      "Efficiency is absolute. Every keystroke is monitored.",
+      "The kernel's heuristic scanners are active. Excessive input noise or redundant commands will trigger the intrusion detection system.",
       "Take the throne."
     ]
   }
