@@ -66,4 +66,6 @@ export interface GameState {
   showEpisodeIntro: boolean; // Toggle for story mode overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Track user inputs for mastery levels
+  isGameOver: boolean; // Flag for game over state
+  gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
 }

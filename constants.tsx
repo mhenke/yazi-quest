@@ -304,9 +304,9 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     title: "Neural Construction",
-    description: "Build the AI subsystem and inject the primary uplink protocol.",
+    description: "Build the AI subsystem. Locate 'uplink_v1.conf' in 'datastore/active' and copy it to 'neural_net'.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from 'datastore/active' to 'neural_net'.",
+    hint: "Create 'neural_net/weights/model.rs'. Go to '../docs/datastore/active', yank (y) 'uplink_v1.conf', return to 'neural_net', paste (p).",
     timeLimit: 120, // 2 minutes
     tasks: [
       {

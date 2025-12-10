@@ -70,8 +70,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
       <div className="flex bg-zinc-800">
         {/* Show Timer if active */}
         {state.timeLeft !== null && !showKeystrokes && (
-            <div className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isLowTime ? 'text-red-500 animate-pulse bg-red-950/30' : 'text-zinc-300'}`}>
-                <span className="hidden sm:inline text-[10px] opacity-70">DETECTION IN:</span>
+            <div className={`px-4 py-0.5 font-bold border-l border-zinc-700 flex items-center gap-2 transition-colors ${
+              isLowTime 
+                ? 'bg-red-600 text-white animate-pulse' 
+                : 'bg-red-900/80 text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
+            }`}>
+                <span className="hidden sm:inline text-[10px] opacity-90 uppercase tracking-widest">Time:</span>
                 <span className="font-mono text-sm">{formatTime(state.timeLeft)}</span>
             </div>
         )}

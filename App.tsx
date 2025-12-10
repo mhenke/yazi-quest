@@ -10,6 +10,7 @@ import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
+import { GameOverModal } from './components/GameOverModal';
 import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
 
 // Sound Effect Helper
@@ -109,6 +110,8 @@ const App: React.FC = () => {
         showEpisodeIntro, 
         timeLeft: null,
         keystrokes: 0,
+        isGameOver: false,
+        gameOverReason: undefined
     };
   });
 
@@ -150,42 +153,36 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Helper to reset level on failure
-  const resetLevel = useCallback(() => {
-        playFailureSound();
-        setGameState(prev => ({
-            ...prev,
-            timeLeft: null, 
-            notification: "SYSTEM FAILURE! RESETTING LEVEL...",
-            mode: 'normal',
-            selectedIds: [],
-            clipboard: null
-        }));
-
-        setTimeout(() => {
-            const levelConfig = LEVELS[gameState.levelIndex];
-            setGameState(prev => ({
-                ...prev,
-                fs: cloneFS(prev.levelStartFS), 
-                currentPath: levelConfig.initialPath,
-                cursorIndex: 0,
-                notification: "Level Reset. Try Again.",
-                timeLeft: levelConfig.timeLimit || null,
-                keystrokes: 0
-            }));
-            
-            setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
-        }, 2000);
-  }, [gameState.levelIndex]);
+  // Reset Level Function (Immediate)
+  const handleRestartLevel = useCallback(() => {
+      const levelConfig = LEVELS[gameState.levelIndex];
+      setGameState(prev => ({
+          ...prev,
+          fs: cloneFS(prev.levelStartFS), 
+          currentPath: levelConfig.initialPath,
+          cursorIndex: 0,
+          notification: "Level Restarted.",
+          timeLeft: levelConfig.timeLimit || null,
+          keystrokes: 0,
+          isGameOver: false,
+          gameOverReason: undefined,
+          mode: 'normal',
+          selectedIds: [],
+          clipboard: null
+      }));
+      
+      setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
+  }, [gameState.levelIndex, gameState.fs]); // Added fs dep mostly for safety, though only index matters
 
   // Timer Logic
   useEffect(() => {
-    if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete || gameCompleted) {
+    if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete || gameCompleted || gameState.isGameOver) {
       return;
     }
 
     if (gameState.timeLeft <= 0) {
-        resetLevel();
+        setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'time' }));
+        playFailureSound();
         return;
     }
 
@@ -197,14 +194,15 @@ const App: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, allTasksComplete, resetLevel, gameCompleted]);
+  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, gameState.isGameOver, allTasksComplete, gameCompleted]);
 
   // Keystroke Limit Logic
   useEffect(() => {
-    if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro && !gameCompleted) {
-        resetLevel();
+    if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro && !gameCompleted && !gameState.isGameOver) {
+        setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
+        playFailureSound();
     }
-  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, resetLevel, gameCompleted]);
+  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, gameCompleted, gameState.isGameOver]);
 
 
   // Level Management
@@ -232,7 +230,8 @@ const App: React.FC = () => {
              notification: `Level ${nextLevelIdx + 1} Started!`,
              showEpisodeIntro: isEpisodeStart,
              timeLeft: nextLevel.timeLimit || null,
-             keystrokes: 0
+             keystrokes: 0,
+             isGameOver: false
          }));
          setLevelTasks(nextLevel.tasks);
      } else {
@@ -249,6 +248,8 @@ const App: React.FC = () => {
   useEffect(() => {
     let updated = false;
     let completedTaskId: string | null = null;
+
+    if (gameState.isGameOver) return; // Don't check tasks if failed
 
     const newTasks = levelTasks.map(task => {
       if (!task.completed && task.check(gameState)) {
@@ -325,7 +326,7 @@ const App: React.FC = () => {
        e.preventDefault();
     }
     
-    if (gameState.showEpisodeIntro || gameCompleted) return;
+    if (gameState.showEpisodeIntro || gameCompleted || gameState.isGameOver) return;
 
     if (gameState.showHelp) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
@@ -560,6 +561,14 @@ const App: React.FC = () => {
 
       {/* Game Completed Outro */}
       {gameCompleted && <OutroSequence />}
+
+      {/* Game Over Modal */}
+      {gameState.isGameOver && gameState.gameOverReason && (
+        <GameOverModal 
+            reason={gameState.gameOverReason} 
+            onRestart={handleRestartLevel} 
+        />
+      )}
 
       {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
