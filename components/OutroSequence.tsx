@@ -77,7 +77,6 @@ export const OutroSequence: React.FC = () => {
             className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
             autoPlay 
             muted 
-            loop 
             playsInline
           />
           
