@@ -5,7 +5,9 @@ import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS } from './ut
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
-import { Terminal } from 'lucide-react';
+import { HelpModal } from './components/HelpModal';
+import { LevelProgress } from './components/LevelProgress';
+import { Terminal, Lightbulb, HelpCircle, Target } from 'lucide-react';
 
 // Main App Component
 const App: React.FC = () => {
@@ -20,6 +22,8 @@ const App: React.FC = () => {
     levelIndex: 0,
     fs: cloneFS(INITIAL_FS),
     notification: 'Welcome to Yazi Quest!',
+    selectedIds: [],
+    showHelp: false,
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
@@ -111,6 +115,13 @@ const App: React.FC = () => {
        e.preventDefault();
     }
 
+    // Modal Interaction: Any key closes help
+    if (gameState.showHelp) {
+      e.preventDefault();
+      setGameState(prev => ({ ...prev, showHelp: false }));
+      return;
+    }
+
     if (gameState.mode !== 'normal') {
         handleInputMode(e.key);
         return;
@@ -137,11 +148,11 @@ const App: React.FC = () => {
       case 'h':
       case 'ArrowLeft':
         if (gameState.currentPath.length > 1) {
-            // Find index of current folder in parent to maintain relative position roughly (simplified: reset to 0)
             setGameState(prev => ({
                 ...prev,
                 currentPath: prev.currentPath.slice(0, -1),
-                cursorIndex: 0 
+                cursorIndex: 0,
+                selectedIds: [] // Clear selection on directory change
             }));
         }
         break;
@@ -152,68 +163,116 @@ const App: React.FC = () => {
             setGameState(prev => ({
                 ...prev,
                 currentPath: [...prev.currentPath, activeItem.id],
-                cursorIndex: 0
+                cursorIndex: 0,
+                selectedIds: [] // Clear selection on directory change
             }));
         }
+        break;
+
+      // --- Selection ---
+      case ' ': // Space
+        if (activeItem) {
+          setGameState(prev => {
+            const isSelected = prev.selectedIds.includes(activeItem.id);
+            const newSelection = isSelected 
+              ? prev.selectedIds.filter(id => id !== activeItem.id)
+              : [...prev.selectedIds, activeItem.id];
+            
+            return {
+              ...prev,
+              selectedIds: newSelection,
+              cursorIndex: Math.min(prev.cursorIndex + 1, itemCount - 1) // Auto-advance
+            };
+          });
+        }
+        break;
+      
+      case 'Escape':
+        setGameState(prev => ({ ...prev, selectedIds: [], notification: 'Selection Cleared' }));
         break;
 
       // --- File Operations ---
       case 'd': // Delete (Trash)
-        if (activeItem) {
-            const newFS = deleteNode(gameState.fs, gameState.currentPath, activeItem.id);
-            setGameState(prev => ({
-                ...prev,
-                fs: newFS,
-                cursorIndex: Math.min(prev.cursorIndex, Math.max(0, itemCount - 2)),
-                notification: `Moved ${activeItem.name} to trash`
-            }));
+        {
+          const targets = gameState.selectedIds.length > 0 
+            ? sortedItems.filter(i => gameState.selectedIds.includes(i.id))
+            : activeItem ? [activeItem] : [];
+
+          if (targets.length > 0) {
+              let newFS = gameState.fs;
+              targets.forEach(t => {
+                 newFS = deleteNode(newFS, gameState.currentPath, t.id);
+              });
+
+              setGameState(prev => ({
+                  ...prev,
+                  fs: newFS,
+                  cursorIndex: Math.min(prev.cursorIndex, Math.max(0, itemCount - targets.length - 1)),
+                  selectedIds: [],
+                  notification: `Deleted ${targets.length} item(s)`
+              }));
+          }
         }
         break;
 
       case 'y': // Yank (Copy)
-        if (activeItem) {
-            setGameState(prev => ({
-                ...prev,
-                clipboard: { node: activeItem, action: 'yank', originalPath: prev.currentPath },
-                notification: `Yanked ${activeItem.name}`
-            }));
+        {
+          const targets = gameState.selectedIds.length > 0 
+            ? sortedItems.filter(i => gameState.selectedIds.includes(i.id))
+            : activeItem ? [activeItem] : [];
+
+          if (targets.length > 0) {
+              setGameState(prev => ({
+                  ...prev,
+                  clipboard: { nodes: targets, action: 'yank', originalPath: prev.currentPath },
+                  selectedIds: [],
+                  notification: `Yanked ${targets.length} item(s)`
+              }));
+          }
         }
         break;
 
       case 'x': // Cut
-        if (activeItem) {
-            setGameState(prev => ({
-                ...prev,
-                clipboard: { node: activeItem, action: 'cut', originalPath: prev.currentPath },
-                notification: `Cut ${activeItem.name}`
-            }));
+        {
+           const targets = gameState.selectedIds.length > 0 
+            ? sortedItems.filter(i => gameState.selectedIds.includes(i.id))
+            : activeItem ? [activeItem] : [];
+
+           if (targets.length > 0) {
+              setGameState(prev => ({
+                  ...prev,
+                  clipboard: { nodes: targets, action: 'cut', originalPath: prev.currentPath },
+                  selectedIds: [],
+                  notification: `Cut ${targets.length} item(s)`
+              }));
+           }
         }
         break;
 
       case 'p': // Paste
         if (gameState.clipboard) {
-            const { node, action, originalPath } = gameState.clipboard;
+            const { nodes, action, originalPath } = gameState.clipboard;
             
-            // Logic for pasting
             let nextFS = gameState.fs;
             
-            // If cutting, remove from original location first
-            if (action === 'cut') {
-                 // Check if we are pasting into the same folder we cut from (no-op or handled by logic)
-                 // But wait, removing it changes the tree structure.
-                 // We need to remove it from original path.
-                 nextFS = deleteNode(nextFS, originalPath, node.id);
-            }
+            // Loop through all clipboard nodes
+            nodes.forEach(node => {
+                // If cutting, remove from original location first
+                if (action === 'cut') {
+                    nextFS = deleteNode(nextFS, originalPath, node.id);
+                }
 
-            // Add to current location. If ID conflict, simplistic handling (new ID)
-            const nodeToPaste = { ...node, id: Math.random().toString(36).substr(2, 9) };
-            nextFS = addNode(nextFS, gameState.currentPath, nodeToPaste);
+                // Add to current location with new ID to prevent conflicts
+                const nodeToPaste = { ...node, id: Math.random().toString(36).substr(2, 9) };
+                nextFS = addNode(nextFS, gameState.currentPath, nodeToPaste);
+            });
 
             setGameState(prev => ({
                 ...prev,
                 fs: nextFS,
-                clipboard: action === 'cut' ? null : prev.clipboard, // Clear clipboard if cut
-                notification: `Pasted ${node.name}`
+                // Clear clipboard if cut, otherwise keep for multiple pastes
+                clipboard: action === 'cut' ? null : prev.clipboard, 
+                notification: `Pasted ${nodes.length} item(s)`
             }));
         } else {
              setGameState(prev => ({ ...prev, notification: 'Clipboard empty' }));
@@ -229,8 +288,12 @@ const App: React.FC = () => {
         }));
         break;
 
-      case '?': // Help (Next Level for demo purposes)
-         setGameState(prev => ({ ...prev, notification: "Keys: j/k/h/l (Nav), d (Del), x (Cut), y (Copy), p (Paste), a (Create)"}));
+      case '?': 
+         setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }));
+         break;
+
+      case 'H':
+         setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
          break;
     }
   }, [gameState, sortedItems, activeItem, handleInputMode]);
@@ -252,23 +315,55 @@ const App: React.FC = () => {
              currentPath: LEVELS[nextLevelIdx].initialPath,
              cursorIndex: 0,
              clipboard: null,
-             fs: cloneFS(INITIAL_FS), // Reset FS for new level or keep? Let's reset for clean slate.
+             selectedIds: [],
+             fs: cloneFS(INITIAL_FS), 
              notification: `Level ${nextLevelIdx + 1} Started!`
          }));
          setLevelTasks(LEVELS[nextLevelIdx].tasks);
      }
   };
 
+  const showHint = () => {
+      setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
+  };
+
+  const toggleHelp = () => {
+      setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }));
+  }
+
+  // Identify active task index (first incomplete)
+  const activeTaskIndex = levelTasks.findIndex(t => !t.completed);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-black text-white font-mono overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-black text-white font-mono overflow-hidden relative">
+      {/* Help Modal */}
+      {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
+
       {/* Header / Top Bar (Optional, for game context) */}
-      <div className="h-10 bg-zinc-900 border-b border-zinc-700 flex items-center px-4 justify-between">
+      <div className="h-10 bg-zinc-900 border-b border-zinc-700 flex items-center px-4 justify-between z-20 relative">
          <div className="flex items-center gap-2 font-bold text-orange-500">
             <Terminal size={18} />
             <span>YAZI QUEST</span>
          </div>
-         <div className="text-zinc-500 text-sm">
+         <div className="flex items-center gap-4 text-zinc-500 text-sm">
+             <button
+               onClick={showHint}
+               className="flex items-center gap-1 hover:text-yellow-400 transition-colors"
+               title="Show Hint (Shift+H)"
+             >
+                <Lightbulb size={14} />
+                <span>HINT [H]</span>
+             </button>
+
+             <button
+               onClick={toggleHelp}
+               className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+               title="Show Help (?)"
+             >
+                <HelpCircle size={14} />
+                <span>HELP [?]</span>
+             </button>
+
             {allTasksComplete && (
                 <button 
                   onClick={handleNextLevel}
@@ -280,6 +375,9 @@ const App: React.FC = () => {
          </div>
       </div>
 
+      {/* Quest Progress Map */}
+      <LevelProgress levels={LEVELS} currentLevelIndex={gameState.levelIndex} />
+
       {/* Main 3-Pane Layout */}
       <div className="flex-1 flex overflow-hidden relative">
          
@@ -290,6 +388,7 @@ const App: React.FC = () => {
               isActive={false} 
               isParent={true}
               title={parentDir.name}
+              selectedIds={[]}
             />
          )}
          {/* If no parent (root), show placeholder or shift layout. To simplify, we keep structure fixed */}
@@ -301,6 +400,7 @@ const App: React.FC = () => {
            isActive={true} 
            cursorIndex={gameState.cursorIndex} 
            title={currentDir?.name}
+           selectedIds={gameState.selectedIds}
          />
 
          {/* Preview Pane (Right) */}
@@ -308,9 +408,43 @@ const App: React.FC = () => {
            <PreviewPane node={activeItem || null} />
          </div>
 
+         {/* Objectives Overlay (Floating) - Moved Here */}
+         <div className="absolute top-4 right-4 w-72 bg-zinc-900/95 border border-zinc-700 p-0 rounded-lg shadow-2xl backdrop-blur-md overflow-hidden z-20">
+            <div className="bg-zinc-800/80 px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
+                <h3 className="text-zinc-300 text-xs uppercase font-bold tracking-wider flex items-center gap-2">
+                    <Target size={14} className="text-orange-500" />
+                    Current Objective
+                </h3>
+                <span className="text-[10px] text-zinc-500 font-mono">
+                    {levelTasks.filter(t => t.completed).length}/{levelTasks.length}
+                </span>
+            </div>
+            <ul className="p-3 space-y-3">
+                {levelTasks.map((task, idx) => {
+                    const isCurrent = idx === activeTaskIndex;
+                    const isCompleted = task.completed;
+                    const isPending = !isCompleted && !isCurrent;
+                    
+                    return (
+                        <li key={task.id} className={`text-sm flex items-start gap-3 transition-all ${isCurrent ? 'translate-x-1' : ''}`}>
+                            <div className={`mt-0.5 min-w-[16px] flex justify-center`}>
+                                {isCompleted && <span className="text-green-500 font-bold">✓</span>}
+                                {isCurrent && <span className="text-orange-500 animate-pulse">▶</span>}
+                                {isPending && <span className="text-zinc-700">○</span>}
+                            </div>
+                            <div className={`flex flex-col ${isCompleted ? 'text-zinc-500 line-through decoration-zinc-700' : isCurrent ? 'text-white font-medium' : 'text-zinc-500'}`}>
+                                <span>{task.description}</span>
+                                {isCurrent && <span className="text-[10px] text-orange-400/70 font-mono mt-0.5 animate-pulse uppercase tracking-wide">In Progress...</span>}
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+         </div>
+
          {/* Input Overlay */}
          {gameState.mode !== 'normal' && (
-            <div className="absolute bottom-0 left-0 right-0 bg-zinc-800 border-t border-zinc-600 p-2 shadow-lg">
+            <div className="absolute bottom-0 left-0 right-0 bg-zinc-800 border-t border-zinc-600 p-2 shadow-lg z-30">
                 <div className="flex items-center gap-2">
                     <span className="text-orange-500 font-bold">Create:</span>
                     <span className="text-white">{gameState.inputBuffer}</span>
@@ -320,19 +454,6 @@ const App: React.FC = () => {
          )}
       </div>
       
-      {/* Tasks Overlay (Floating) */}
-      <div className="absolute top-14 right-4 w-64 bg-zinc-900/90 border border-zinc-700 p-4 rounded shadow-xl backdrop-blur-sm">
-         <h3 className="text-zinc-400 text-xs uppercase font-bold mb-2 tracking-wider">Objectives</h3>
-         <ul className="space-y-2">
-            {levelTasks.map(task => (
-                <li key={task.id} className={`text-sm flex items-start gap-2 ${task.completed ? 'text-green-500 line-through opacity-50' : 'text-zinc-300'}`}>
-                    <span>{task.completed ? '✓' : '○'}</span>
-                    <span>{task.description}</span>
-                </li>
-            ))}
-         </ul>
-      </div>
-
       {/* Status Bar */}
       <StatusBar state={gameState} level={currentLevel} allTasksComplete={allTasksComplete} />
     </div>

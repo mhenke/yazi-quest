@@ -8,6 +8,7 @@ interface FileSystemPaneProps {
   cursorIndex?: number;
   title?: string;
   isParent?: boolean;
+  selectedIds: string[];
 }
 
 export const FileSystemPane: React.FC<FileSystemPaneProps> = ({ 
@@ -15,7 +16,8 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   isActive, 
   cursorIndex = -1,
   title,
-  isParent = false
+  isParent = false,
+  selectedIds = []
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -42,13 +44,15 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
         )}
         {items.map((item, idx) => {
           const isSelected = isActive && idx === cursorIndex;
+          const isMarked = selectedIds.includes(item.id);
           
           return (
             <div
               key={item.id}
               className={`
                 px-3 py-1 flex items-center gap-2 truncate text-sm font-mono cursor-default
-                ${isSelected ? 'bg-zinc-700 text-white' : ''}
+                ${isSelected ? 'bg-zinc-700' : ''}
+                ${isMarked ? 'text-yellow-400' : isSelected ? 'text-white' : ''}
                 ${isParent ? 'opacity-60' : ''}
               `}
             >
@@ -56,6 +60,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                 {item.type === 'dir' ? <Folder size={14} fill="currentColor" fillOpacity={0.2} /> : <FileText size={14} />}
               </span>
               <span className="truncate flex-1">{item.name}</span>
+              {isMarked && <span className="text-yellow-500 text-xs font-bold">[S]</span>}
               {item.type === 'dir' && <ChevronRight size={12} className="opacity-50" />}
             </div>
           );

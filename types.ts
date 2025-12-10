@@ -26,12 +26,13 @@ export interface Level {
   description: string;
   tasks: LevelTask[];
   initialPath: string[]; // Path of IDs
+  hint: string;
 }
 
 export interface ClipboardItem {
-  node: FileNode;
+  nodes: FileNode[]; // Changed to array for batch operations
   action: 'yank' | 'cut';
-  originalPath: string[]; // Path IDs where it came from
+  originalPath: string[]; // Path IDs where they came from
 }
 
 export interface GameState {
@@ -44,4 +45,6 @@ export interface GameState {
   levelIndex: number;
   fs: FileNode; // The entire file tree
   notification: string | null;
+  selectedIds: string[]; // IDs of currently selected files
+  showHelp: boolean; // Toggle for help modal
 }
