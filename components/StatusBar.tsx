@@ -14,9 +14,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   // Calculate completion percentage
   const completedTasks = level.tasks.filter(t => t.completed).length;
   const totalTasks = level.tasks.length;
-  const progress = Math.round((completedTasks / totalTasks) * 100);
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const selectionCount = state.selectedIds.length;
+
+  const hasNotification = state.notification && state.notification !== "Press '?' for help";
 
   return (
     <div className="h-8 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
@@ -56,8 +58,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         </div>
       </div>
 
-      {/* Notification Area */}
-      <div className="bg-zinc-800 text-zinc-300 px-3 flex items-center justify-end min-w-[200px] truncate border-l border-zinc-700">
+      {/* Notification Area - Improved Visibility */}
+      <div className={`
+          px-3 flex items-center justify-end min-w-[300px] truncate border-l border-zinc-700 transition-colors duration-300
+          ${hasNotification ? 'bg-yellow-900/40 text-yellow-300 font-bold' : 'bg-zinc-800 text-zinc-500 italic'}
+      `}>
          {state.notification || "Press '?' for help"}
       </div>
 
