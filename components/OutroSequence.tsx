@@ -50,7 +50,7 @@ export const OutroSequence: React.FC = () => {
   }, [showTeaser]);
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden">
+    <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
       
       {/* Narrative Section (Fades out when Teaser starts) */}
       <div className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
@@ -77,7 +77,7 @@ export const OutroSequence: React.FC = () => {
       </div>
 
       {/* Video Teaser Section (Fades in) */}
-      <div className={`absolute inset-0 z-10 transition-opacity duration-3000 delay-500 flex items-center justify-center ${showTeaser ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 z-10 transition-opacity duration-3000 delay-500 flex items-center justify-center ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
           {/* Background Video */}
           <video 
             ref={videoRef}
