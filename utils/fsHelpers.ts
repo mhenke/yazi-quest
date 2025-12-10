@@ -61,3 +61,44 @@ export const findNodeByName = (root: FileNode, name: string): FileNode | null =>
   }
   return null;
 };
+
+export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut'): string | null => {
+  const name = node.name;
+  
+  // 1. Core System Structure (Always Protected)
+  if (['root', 'home', 'guest', 'etc', 'tmp', 'workspace'].includes(name)) {
+      return `System integrity protection: ${name}`;
+  }
+
+  // 2. Episode Structural Directories (Deleted only in Ep 3 Finale - Level 15 / Index 14)
+  if (['datastore', 'incoming', 'media'].includes(name)) {
+      if (levelIndex < 14) return `Sector protected by admin policy: ${name}`;
+  }
+
+  // 3. Specific Critical Files
+
+  // access_key.pem
+  if (name === 'access_key.pem') {
+      if (action === 'delete') return "Critical asset. Deletion prohibited.";
+      // Allowed cut in L9 (Live Migration) and L10 (Rollback)
+      // Level 9 is index 8. Level 10 is index 9.
+      if (action === 'cut' && levelIndex !== 8 && levelIndex !== 9) return "Asset locked. Relocation not authorized.";
+  }
+
+  // mission_log.md
+  if (name === 'mission_log.md') {
+      // Allowed delete in L13 (Trace Removal) - index 12
+      if (action === 'delete' && levelIndex !== 12) return "Mission log required for validation.";
+      // Allowed cut in L9 and L10
+      if (action === 'cut' && levelIndex !== 8 && levelIndex !== 9) return "Log file locked.";
+  }
+
+  // target_map.png
+  if (name === 'target_map.png') {
+      if (action === 'delete') return "Intel target. Do not destroy.";
+      // Allowed cut in L3 (Asset Relocation) - index 2
+      if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
+  }
+
+  return null;
+};

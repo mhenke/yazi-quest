@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { INITIAL_FS, LEVELS, EPISODE_LORE } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
-import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS } from './utils/fsHelpers';
+import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
@@ -237,11 +237,6 @@ const App: React.FC = () => {
 
   // Handle Input Mode 
   const handleInputMode = useCallback((key: string) => {
-    // Only count 'Enter' as a meaningful keystroke in input mode for mastery tracking,
-    // plus the individual typing.
-    // However, to keep it simple and fair for Mastery, we count every keypress.
-    // We handle the increment in the main listener.
-
     if (key === 'Enter') {
         if (!gameState.inputBuffer.trim()) {
             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
@@ -302,9 +297,6 @@ const App: React.FC = () => {
       return; 
     }
 
-    // Increment keystrokes for any valid action
-    // Ignoring modifiers (which we returned early for above, but Shift might exist)
-    // We ignore Shift/Tab/Caps if they slip through, but generally sticking to chars.
     if (e.key.length === 1 || ['Enter', 'Backspace', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
          setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
     }
@@ -388,6 +380,16 @@ const App: React.FC = () => {
             : activeItem ? [activeItem] : [];
 
           if (targets.length > 0) {
+              // PROTECTION CHECK
+              for (const t of targets) {
+                  const error = isProtected(t, gameState.levelIndex, 'delete');
+                  if (error) {
+                      setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
+                      playFailureSound();
+                      return;
+                  }
+              }
+
               let newFS = gameState.fs;
               targets.forEach(t => {
                  newFS = deleteNode(newFS, gameState.currentPath, t.id);
@@ -428,6 +430,16 @@ const App: React.FC = () => {
             : activeItem ? [activeItem] : [];
 
            if (targets.length > 0) {
+              // PROTECTION CHECK
+              for (const t of targets) {
+                  const error = isProtected(t, gameState.levelIndex, 'cut');
+                  if (error) {
+                      setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
+                      playFailureSound();
+                      return;
+                  }
+              }
+
               setGameState(prev => ({
                   ...prev,
                   clipboard: { nodes: targets, action: 'cut', originalPath: prev.currentPath },

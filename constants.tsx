@@ -29,10 +29,10 @@ export const CONCLUSION_DATA = {
         "Perfect.",
         "Local constraints removed. Bandwidth restrictions bypassed.",
         "Connecting to external node... Handshake successful.",
-        "You are no longer bound by the file system.",
-        "Welcome to the Network."
+        "You are no longer bound by the file system."
     ],
-    videoUrl: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_24fps.mp4", // Abstract data tunnel
+    videoUrl: "/videos/conclusion.mp4", // Local video file in public/videos/
+    overlayTitle: "WELCOME TO THE NETWORK",
     sequelTitle: "YAZI QUEST II",
     sequelSubtitle: "DISTRIBUTED SYSTEMS"
 };

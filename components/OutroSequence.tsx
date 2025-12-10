@@ -82,10 +82,15 @@ export const OutroSequence: React.FC = () => {
           />
           
           {/* Teaser Overlay Content */}
-          <div className="relative z-30 flex flex-col items-center text-center space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full">
-              <div className="animate-pulse text-red-500 mb-4">
+          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full">
+              <div className="animate-pulse text-red-500 mb-2">
                   <Signal size={48} />
               </div>
+
+              {/* Added Overlay Title */}
+              <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                  {CONCLUSION_DATA.overlayTitle}
+              </h2>
               
               <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
                   {CONCLUSION_DATA.sequelTitle}
@@ -97,7 +102,7 @@ export const OutroSequence: React.FC = () => {
                   {CONCLUSION_DATA.sequelSubtitle}
               </h3>
 
-              <div className="pt-12">
+              <div className="pt-8 md:pt-12">
                    <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
                        <UploadCloud size={16} className="animate-bounce" />
                        <span>Establishing Remote Uplink...</span>
