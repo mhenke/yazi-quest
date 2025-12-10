@@ -38,6 +38,32 @@ const playSuccessSound = () => {
   }
 };
 
+const playFailureSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
+    
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {
+    console.error("Audio play failed", e);
+  }
+};
+
 // Main App Component
 const App: React.FC = () => {
   // State Initialization
@@ -50,11 +76,13 @@ const App: React.FC = () => {
     history: [],
     levelIndex: 0,
     fs: cloneFS(INITIAL_FS),
+    levelStartFS: cloneFS(INITIAL_FS), // Initialize snapshot
     notification: 'Welcome to Yazi Quest!',
     selectedIds: [],
     showHelp: false,
     showHint: false,
     showEpisodeIntro: true, // Start with Episode 1 Intro
+    timeLeft: null,
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
@@ -80,6 +108,54 @@ const App: React.FC = () => {
   const episodeIndex = Math.min(Math.floor(gameState.levelIndex / 5), 2);
   const activeEpisodeLore = EPISODE_LORE[episodeIndex];
 
+  // Timer Logic
+  useEffect(() => {
+    if (gameState.showEpisodeIntro || gameState.showHelp || gameState.timeLeft === null || allTasksComplete) {
+      return;
+    }
+
+    if (gameState.timeLeft <= 0) {
+        // Handle Timeout / Failure
+        playFailureSound();
+        setGameState(prev => ({
+            ...prev,
+            timeLeft: null, // Stop timer
+            notification: "SYSTEM DETECTION! RESETTING LEVEL...",
+            mode: 'normal',
+            selectedIds: [],
+            clipboard: null
+        }));
+
+        // Delay then Reset
+        setTimeout(() => {
+            const resetLevel = LEVELS[gameState.levelIndex];
+            setGameState(prev => ({
+                ...prev,
+                fs: cloneFS(prev.levelStartFS), // Restore file system state from start of level
+                currentPath: resetLevel.initialPath,
+                cursorIndex: 0,
+                notification: "Level Reset. Try Again.",
+                timeLeft: resetLevel.timeLimit || null
+            }));
+            
+            // Reset tasks state
+            setLevelTasks(resetLevel.tasks.map(t => ({...t, completed: false})));
+        }, 2000);
+
+        return;
+    }
+
+    const timer = setInterval(() => {
+        setGameState(prev => ({
+            ...prev,
+            timeLeft: prev.timeLeft !== null ? prev.timeLeft - 1 : null
+        }));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, gameState.levelIndex, gameState.levelStartFS, allTasksComplete]);
+
+
   // Level Management
   const handleNextLevel = useCallback(() => {
      if (gameState.levelIndex < LEVELS.length - 1) {
@@ -101,9 +177,11 @@ const App: React.FC = () => {
              cursorIndex: 0,
              clipboard: null,
              selectedIds: [],
-             fs: nextFS, 
+             fs: nextFS,
+             levelStartFS: cloneFS(nextFS), // Snapshot the new state for this level
              notification: `Level ${nextLevelIdx + 1} Started!`,
-             showEpisodeIntro: isEpisodeStart
+             showEpisodeIntro: isEpisodeStart,
+             timeLeft: nextLevel.timeLimit || null
          }));
          setLevelTasks(nextLevel.tasks);
      }

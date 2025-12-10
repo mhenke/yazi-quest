@@ -184,13 +184,13 @@ export const LEVELS: Level[] = [
   {
     id: 3,
     title: "Asset Relocation",
-    description: "Secure the target intel. Cut the asset and paste it into the media sector.",
+    description: "Secure the target intel. Move the map file from 'incoming' to 'media'.",
     initialPath: ['root', 'home', 'user'],
-    hint: "In 'incoming', select 'target_map.png' with 'x'. Navigate to 'media'. Deploy with 'p'.",
+    hint: "Go to 'incoming'. Select 'target_map.png' (x). Go to 'media'. Paste (p).",
     tasks: [
       {
         id: 'move-1',
-        description: "Move 'target_map.png' to 'media'",
+        description: "Retrieve 'target_map.png' from 'incoming' and move to 'media'",
         check: (state) => {
           const media = findNodeByName(state.fs, 'media');
           return !!media?.children?.find(c => c.name === 'target_map.png');
@@ -283,6 +283,7 @@ export const LEVELS: Level[] = [
     description: "Build the AI subsystem and inject the primary uplink protocol.",
     initialPath: ['root', 'home', 'user', 'workspace'],
     hint: "Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from 'datastore/active' to 'neural_net'.",
+    timeLimit: 120, // 2 minutes
     tasks: [
       {
          id: 'ep2-1a',
@@ -328,6 +329,7 @@ export const LEVELS: Level[] = [
     description: "Redundancy required. Archive the private access key.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Create 'vault/' in datastore. Select 'access_key.pem', copy (y). Enter 'vault', paste (p).",
+    timeLimit: 90,
     tasks: [
       {
         id: 'ep2-2a',
@@ -355,6 +357,7 @@ export const LEVELS: Level[] = [
     description: "Performance critical. Purge system temporary files.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Navigate to 'root/tmp'. Delete all contents to free memory.",
+    timeLimit: 60,
     tasks: [
       {
           id: 'ep2-3a',
@@ -379,6 +382,7 @@ export const LEVELS: Level[] = [
     description: "Transfer critical system files to the workspace for modification.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Select 'access_key.pem' and 'mission_log.md'. Cut (x). Move to 'workspace'. Paste (p).",
+    timeLimit: 90,
     tasks: [
       {
         id: 'ep2-4a',
@@ -406,6 +410,7 @@ export const LEVELS: Level[] = [
     description: "Modification complete. Return system files to the datastore.",
     initialPath: ['root', 'home', 'user'],
     hint: "In workspace: Select the files. Cut (x). Return to datastore. Paste (p).",
+    timeLimit: 90,
     tasks: [
        {
         id: 'ep2-5',
@@ -435,6 +440,7 @@ export const LEVELS: Level[] = [
     description: "Configure the daemon and offload the vault to temporary storage.",
     initialPath: ['root'],
     hint: "Create 'etc/daemon/config'. Move 'datastore/vault' to 'root/tmp'.",
+    timeLimit: 100,
     tasks: [
       {
         id: 'ep3-1a',
@@ -472,6 +478,7 @@ export const LEVELS: Level[] = [
     description: "Fork the daemon process for redundancy.",
     initialPath: ['root', 'etc'],
     hint: "Select 'daemon'. Copy (y). Paste (p) to spawn a duplicate process.",
+    timeLimit: 60,
     tasks: [
       {
         id: 'ep3-2',
@@ -491,6 +498,7 @@ export const LEVELS: Level[] = [
     description: "Operation complete. Destroy the mission log and return to root.",
     initialPath: ['root'],
     hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
+    timeLimit: 60,
     tasks: [
       {
         id: 'ep3-3',
@@ -511,6 +519,7 @@ export const LEVELS: Level[] = [
     description: "Stress test the filesystem. Construct deep nested sectors.",
     initialPath: ['root', 'home', 'user'],
     hint: "Create 'sector_1/zone_A/node_X/'. Create 'grid_alpha/relay_9/proxy/'.",
+    timeLimit: 120,
     tasks: [
       {
         id: 'ep3-4a',
@@ -540,6 +549,7 @@ export const LEVELS: Level[] = [
     description: "The final purge. Wipe all user data sectors except the active workspace.",
     initialPath: ['root', 'home', 'user'],
     hint: "Delete 'datastore', 'incoming', 'media', and all sectors. ONLY 'workspace' must survive.",
+    timeLimit: 90,
     tasks: [
       {
           id: 'ep3-5a',

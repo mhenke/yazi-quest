@@ -31,6 +31,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   // Fake permissions/size for aesthetic
   const fakePerms = state.mode === 'input-dir' ? 'drwxr-xr-x' : '-rw-r--r--';
   
+  // Timer formatting
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const isLowTime = state.timeLeft !== null && state.timeLeft <= 10;
+
   return (
     <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
       {/* 1. Mode Block */}
@@ -53,12 +62,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         </span>
       </div>
 
-      {/* 4. Notification (Right Aligned) */}
-      {state.notification && (
-        <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic">
-           {state.notification}
-        </div>
-      )}
+      {/* 4. Timer / Notification (Right Aligned) */}
+      <div className="flex bg-zinc-800">
+        {state.timeLeft !== null && (
+            <div className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isLowTime ? 'text-red-500 animate-pulse bg-red-950/30' : 'text-zinc-300'}`}>
+                <span className="hidden sm:inline text-[10px] opacity-70">DETECTION IN:</span>
+                <span className="font-mono text-sm">{formatTime(state.timeLeft)}</span>
+            </div>
+        )}
+
+        {state.notification && (
+            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic">
+            {state.notification}
+            </div>
+        )}
+      </div>
 
       {/* 5. Stats Block */}
       <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center gap-4">

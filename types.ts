@@ -29,6 +29,7 @@ export interface Level {
   initialPath: string[]; // Path of IDs
   hint: string;
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
+  timeLimit?: number; // Time limit in seconds (optional)
 }
 
 export interface Episode {
@@ -54,9 +55,11 @@ export interface GameState {
   history: string[]; // Log of actions
   levelIndex: number;
   fs: FileNode; // The entire file tree
+  levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   showHelp: boolean; // Toggle for help modal
   showHint: boolean; // Toggle for hint modal
   showEpisodeIntro: boolean; // Toggle for story mode overlay
+  timeLeft: number | null; // Current countdown time in seconds (null if no timer)
 }
