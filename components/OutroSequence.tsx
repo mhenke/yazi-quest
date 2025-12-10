@@ -76,48 +76,51 @@ export const OutroSequence: React.FC = () => {
          </div>
       </div>
 
-      {/* Video Teaser Section (Fades in) */}
-      <div className={`absolute inset-0 z-10 transition-opacity duration-3000 delay-500 flex items-center justify-center ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-          {/* Background Video */}
-          <video 
-            ref={videoRef}
-            src={CONCLUSION_DATA.videoUrl}
-            className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
-            muted 
-            playsInline
-          />
+      {/* Video Teaser Section */}
+      <div className={`absolute inset-0 z-10 flex items-center justify-center`}>
           
-          {/* Teaser Overlay Content */}
-          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full">
-              <div className="animate-pulse text-red-500 mb-2">
-                  <Signal size={48} />
-              </div>
-
-              {/* Added Overlay Title */}
-              <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                  {CONCLUSION_DATA.overlayTitle}
-              </h2>
-              
-              <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
-                  {CONCLUSION_DATA.sequelTitle}
-              </h2>
-              
-              <div className="h-px w-32 bg-red-500" />
-              
-              <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
-                  {CONCLUSION_DATA.sequelSubtitle}
-              </h3>
-
-              <div className="pt-8 md:pt-12">
-                   <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
-                       <UploadCloud size={16} className="animate-bounce" />
-                       <span>Establishing Remote Uplink...</span>
-                   </div>
-              </div>
+          {/* Background Video Container - Fades in */}
+          <div className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+            <video 
+                ref={videoRef}
+                src={CONCLUSION_DATA.videoUrl}
+                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
+                muted 
+                playsInline
+            />
+             {/* Scanlines Effect */}
+            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-20" />
           </div>
           
-          {/* Scanlines Effect */}
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-20" />
+          {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
+          {showTeaser && (
+            <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-in fade-in zoom-in-95 duration-1000 delay-1000 fill-mode-forwards">
+                <div className="animate-pulse text-red-500 mb-2">
+                    <Signal size={48} />
+                </div>
+
+                <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in slide-in-from-bottom-4 duration-1000">
+                    {CONCLUSION_DATA.overlayTitle}
+                </h2>
+                
+                <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
+                    {CONCLUSION_DATA.sequelTitle}
+                </h2>
+                
+                <div className="h-px w-32 bg-red-500" />
+                
+                <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
+                    {CONCLUSION_DATA.sequelSubtitle}
+                </h3>
+
+                <div className="pt-8 md:pt-12">
+                    <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
+                        <UploadCloud size={16} className="animate-bounce" />
+                        <span>Establishing Remote Uplink...</span>
+                    </div>
+                </div>
+            </div>
+          )}
       </div>
 
     </div>
