@@ -41,6 +41,14 @@ export const OutroSequence: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentLineIdx]);
 
+  // Play video only when teaser is shown
+  useEffect(() => {
+    if (showTeaser && videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(e => console.error("Video play failed", e));
+    }
+  }, [showTeaser]);
+
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden">
       
@@ -75,7 +83,6 @@ export const OutroSequence: React.FC = () => {
             ref={videoRef}
             src={CONCLUSION_DATA.videoUrl}
             className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
-            autoPlay 
             muted 
             playsInline
           />
