@@ -6,6 +6,7 @@ import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
+import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
 import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
 
@@ -51,6 +52,7 @@ const App: React.FC = () => {
     notification: 'Welcome to Yazi Quest!',
     selectedIds: [],
     showHelp: false,
+    showHint: false,
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
@@ -118,7 +120,7 @@ const App: React.FC = () => {
       setLevelTasks(newTasks);
       setGameState(prev => ({
         ...prev,
-        notification: "Task Completed! Great job."
+        notification: "Objective Complete."
       }));
       
       if (completedTaskId) {
@@ -182,11 +184,14 @@ const App: React.FC = () => {
        e.preventDefault();
     }
 
-    // Modal Interaction: Any key closes help
+    // Modal Interaction: Help modal blocks interaction
     if (gameState.showHelp) {
-      e.preventDefault();
-      setGameState(prev => ({ ...prev, showHelp: false }));
-      return;
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+         e.preventDefault();
+         setGameState(prev => ({ ...prev, showHelp: false }));
+         return;
+      }
+      return; // Block other interactions while Help modal is open
     }
 
     if (gameState.mode !== 'normal') {
@@ -366,7 +371,8 @@ const App: React.FC = () => {
          break;
 
       case 'H':
-         setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
+         // Toggles Hint
+         setGameState(prev => ({ ...prev, showHint: !prev.showHint }));
          break;
     }
   }, [gameState, sortedItems, activeItem, handleInputMode, allTasksComplete, handleNextLevel]);
@@ -377,8 +383,8 @@ const App: React.FC = () => {
   }, [handleKeyDown]);
 
 
-  const showHint = () => {
-      setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
+  const toggleHint = () => {
+      setGameState(prev => ({ ...prev, showHint: !prev.showHint }));
   };
 
   const toggleHelp = () => {
@@ -390,8 +396,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-black text-white font-mono overflow-hidden relative">
-      {/* Help Modal */}
+      {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
+      {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
 
       {/* Header / Top Bar (Optional, for game context) */}
       <div className="h-10 bg-zinc-900 border-b border-zinc-700 flex items-center px-4 justify-between z-20 relative">
@@ -401,9 +408,9 @@ const App: React.FC = () => {
          </div>
          <div className="flex items-center gap-4 text-zinc-500 text-sm">
              <button
-               onClick={showHint}
-               className="flex items-center gap-1 hover:text-yellow-400 transition-colors"
-               title="Show Hint (Shift+H)"
+               onClick={toggleHint}
+               className={`flex items-center gap-1 hover:text-yellow-400 transition-colors ${gameState.showHint ? 'text-yellow-400' : ''}`}
+               title="Toggle Hint (Shift+H)"
              >
                 <Lightbulb size={14} />
                 <span>HINT [H]</span>
@@ -460,7 +467,7 @@ const App: React.FC = () => {
              <div className="px-3 py-2 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
                 <h3 className="text-zinc-300 text-xs uppercase font-bold tracking-wider flex items-center gap-2">
                     <Target size={14} className="text-orange-500" />
-                    Current Quest
+                    Current Objectives
                 </h3>
                 <span className="text-[10px] text-zinc-500 font-mono">
                     {levelTasks.filter(t => t.completed).length}/{levelTasks.length}
@@ -508,7 +515,7 @@ const App: React.FC = () => {
                         onClick={handleNextLevel}
                         className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded shadow-lg shadow-green-900/20 text-xs font-bold uppercase tracking-widest animate-pulse transition-all transform hover:scale-[1.02]"
                     >
-                        <span>{gameState.levelIndex < LEVELS.length - 1 ? "Start Next Quest" : "Trilogy Complete"}</span>
+                        <span>{gameState.levelIndex < LEVELS.length - 1 ? "Initialize Next Level" : "Trilogy Complete"}</span>
                         <div className="flex items-center gap-1 bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
                              <span>ENTER</span>
                              <ArrowRight size={10} />

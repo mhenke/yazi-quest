@@ -1,5 +1,6 @@
 import React from 'react';
 import { KEYBINDINGS } from '../constants';
+import { X } from 'lucide-react';
 
 interface HelpModalProps {
   onClose: () => void;
@@ -14,9 +15,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       >
         <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-zinc-500 hover:text-white text-sm"
+            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
         >
-            [ESC]
+            <X size={20} />
         </button>
         <div className="mb-6 border-b border-zinc-800 pb-2">
           <h2 className="text-xl font-bold text-orange-500 tracking-wider">HELP / KEYBINDINGS</h2>

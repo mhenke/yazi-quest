@@ -48,4 +48,5 @@ export interface GameState {
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   showHelp: boolean; // Toggle for help modal
+  showHint: boolean; // Toggle for hint modal
 }

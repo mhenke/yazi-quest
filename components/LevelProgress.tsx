@@ -42,9 +42,9 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   };
 
   const statusMap = {
-      active: { text: "Current Quest", icon: <MapPin size={14} />, class: "text-orange-400 border-orange-500/50 bg-orange-500/10" },
+      active: { text: "Active Level", icon: <MapPin size={14} />, class: "text-orange-400 border-orange-500/50 bg-orange-500/10" },
       completed: { text: "Episode Complete", icon: <Check size={14} />, class: "text-green-400 border-green-500/50 bg-green-500/10" },
-      locked: { text: "Future Prophecy", icon: <Lock size={14} />, class: "text-zinc-500 border-zinc-700 bg-zinc-900" }
+      locked: { text: "Locked Data", icon: <Lock size={14} />, class: "text-zinc-500 border-zinc-700 bg-zinc-900" }
   };
 
   return (
