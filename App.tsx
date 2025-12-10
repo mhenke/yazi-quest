@@ -9,6 +9,33 @@ import { HelpModal } from './components/HelpModal';
 import { LevelProgress } from './components/LevelProgress';
 import { Terminal, Lightbulb, HelpCircle, Target } from 'lucide-react';
 
+// Sound Effect Helper
+const playSuccessSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle'; // Softer than square
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.1); // C6
+    
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (e) {
+    console.error("Audio play failed", e);
+  }
+};
+
 // Main App Component
 const App: React.FC = () => {
   // State Initialization
@@ -27,6 +54,8 @@ const App: React.FC = () => {
   });
 
   const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
+  const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
+
   const currentLevel = LEVELS[gameState.levelIndex];
 
   // Derived State Helpers
@@ -41,13 +70,45 @@ const App: React.FC = () => {
   });
 
   const activeItem = sortedItems[gameState.cursorIndex];
+  const allTasksComplete = levelTasks.every(t => t.completed);
+
+  // Level Management
+  const handleNextLevel = useCallback(() => {
+     if (gameState.levelIndex < LEVELS.length - 1) {
+         const nextLevelIdx = gameState.levelIndex + 1;
+         const nextLevel = LEVELS[nextLevelIdx];
+         
+         // Persist current FS state instead of resetting
+         let nextFS = gameState.fs;
+         
+         // Run setup logic if level has specific requirements (e.g. restoring files)
+         if (nextLevel.onEnter) {
+            nextFS = nextLevel.onEnter(nextFS);
+         }
+
+         setGameState(prev => ({
+             ...prev,
+             levelIndex: nextLevelIdx,
+             currentPath: nextLevel.initialPath,
+             cursorIndex: 0,
+             clipboard: null,
+             selectedIds: [],
+             fs: nextFS, 
+             notification: `Level ${nextLevelIdx + 1} Started!`
+         }));
+         setLevelTasks(nextLevel.tasks);
+     }
+  }, [gameState.levelIndex, gameState.fs]);
   
   // Update Tasks when GameState changes
   useEffect(() => {
     let updated = false;
+    let completedTaskId: string | null = null;
+
     const newTasks = levelTasks.map(task => {
       if (!task.completed && task.check(gameState)) {
         updated = true;
+        completedTaskId = task.id;
         return { ...task, completed: true };
       }
       return task;
@@ -59,6 +120,12 @@ const App: React.FC = () => {
         ...prev,
         notification: "Task Completed! Great job."
       }));
+      
+      if (completedTaskId) {
+        playSuccessSound();
+        setRecentlyCompletedId(completedTaskId);
+        setTimeout(() => setRecentlyCompletedId(null), 2500); // Highlight duration
+      }
     }
   }, [gameState, levelTasks]);
 
@@ -124,6 +191,12 @@ const App: React.FC = () => {
 
     if (gameState.mode !== 'normal') {
         handleInputMode(e.key);
+        return;
+    }
+
+    // Check for Level Completion shortcut
+    if (e.key === 'Enter' && allTasksComplete) {
+        handleNextLevel();
         return;
     }
 
@@ -296,32 +369,13 @@ const App: React.FC = () => {
          setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
          break;
     }
-  }, [gameState, sortedItems, activeItem, handleInputMode]);
+  }, [gameState, sortedItems, activeItem, handleInputMode, allTasksComplete, handleNextLevel]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-
-  // Level Management
-  const allTasksComplete = levelTasks.every(t => t.completed);
-  const handleNextLevel = () => {
-     if (gameState.levelIndex < LEVELS.length - 1) {
-         const nextLevelIdx = gameState.levelIndex + 1;
-         setGameState(prev => ({
-             ...prev,
-             levelIndex: nextLevelIdx,
-             currentPath: LEVELS[nextLevelIdx].initialPath,
-             cursorIndex: 0,
-             clipboard: null,
-             selectedIds: [],
-             fs: cloneFS(INITIAL_FS), 
-             notification: `Level ${nextLevelIdx + 1} Started!`
-         }));
-         setLevelTasks(LEVELS[nextLevelIdx].tasks);
-     }
-  };
 
   const showHint = () => {
       setGameState(prev => ({ ...prev, notification: LEVELS[prev.levelIndex].hint }));
@@ -403,43 +457,58 @@ const App: React.FC = () => {
            selectedIds={gameState.selectedIds}
          />
 
-         {/* Preview Pane (Right) */}
-         <div className="flex-1 border-l border-zinc-700">
-           <PreviewPane node={activeItem || null} />
-         </div>
+         {/* Preview Pane (Right) - Contains Preview AND Quest List */}
+         <div className="flex-1 border-l border-zinc-700 flex flex-col h-full bg-zinc-950">
+           {/* Preview Section */}
+           <div className="flex-1 overflow-hidden relative">
+             <PreviewPane node={activeItem || null} />
+           </div>
 
-         {/* Objectives Overlay (Floating) - Moved Here */}
-         <div className="absolute top-4 right-4 w-72 bg-zinc-900/95 border border-zinc-700 p-0 rounded-lg shadow-2xl backdrop-blur-md overflow-hidden z-20">
-            <div className="bg-zinc-800/80 px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
+           {/* Current Quest Section */}
+           <div className="border-t border-zinc-800 bg-zinc-900/50 flex flex-col h-1/3 min-h-[180px]">
+             <div className="px-3 py-2 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
                 <h3 className="text-zinc-300 text-xs uppercase font-bold tracking-wider flex items-center gap-2">
                     <Target size={14} className="text-orange-500" />
-                    Current Objective
+                    Current Quest
                 </h3>
                 <span className="text-[10px] text-zinc-500 font-mono">
                     {levelTasks.filter(t => t.completed).length}/{levelTasks.length}
                 </span>
-            </div>
-            <ul className="p-3 space-y-3">
-                {levelTasks.map((task, idx) => {
-                    const isCurrent = idx === activeTaskIndex;
-                    const isCompleted = task.completed;
-                    const isPending = !isCompleted && !isCurrent;
-                    
-                    return (
-                        <li key={task.id} className={`text-sm flex items-start gap-3 transition-all ${isCurrent ? 'translate-x-1' : ''}`}>
-                            <div className={`mt-0.5 min-w-[16px] flex justify-center`}>
-                                {isCompleted && <span className="text-green-500 font-bold">✓</span>}
-                                {isCurrent && <span className="text-orange-500 animate-pulse">▶</span>}
-                                {isPending && <span className="text-zinc-700">○</span>}
-                            </div>
-                            <div className={`flex flex-col ${isCompleted ? 'text-zinc-500 line-through decoration-zinc-700' : isCurrent ? 'text-white font-medium' : 'text-zinc-500'}`}>
-                                <span>{task.description}</span>
-                                {isCurrent && <span className="text-[10px] text-orange-400/70 font-mono mt-0.5 animate-pulse uppercase tracking-wide">In Progress...</span>}
-                            </div>
-                        </li>
-                    );
-                })}
-            </ul>
+             </div>
+             <div className="flex-1 overflow-y-auto p-3">
+                <ul className="space-y-3">
+                    {levelTasks.map((task, idx) => {
+                        const isCurrent = idx === activeTaskIndex;
+                        const isCompleted = task.completed;
+                        const isPending = !isCompleted && !isCurrent;
+                        const isRecentlyCompleted = task.id === recentlyCompletedId;
+                        
+                        return (
+                            <li 
+                              key={task.id} 
+                              className={`
+                                text-sm flex items-start gap-3 transition-all duration-300 p-1 rounded
+                                ${isCurrent ? 'translate-x-1' : ''}
+                                ${isRecentlyCompleted ? 'bg-green-900/30 shadow-[0_0_15px_rgba(34,197,94,0.2)] scale-[1.02]' : ''}
+                              `}
+                            >
+                                <div className={`mt-0.5 min-w-[16px] flex justify-center`}>
+                                    {isCompleted && <span className={`font-bold ${isRecentlyCompleted ? 'text-green-300 scale-125 transition-transform' : 'text-green-500'}`}>✓</span>}
+                                    {isCurrent && <span className="text-orange-500 animate-pulse">▶</span>}
+                                    {isPending && <span className="text-zinc-700">○</span>}
+                                </div>
+                                <div className={`flex flex-col ${isCompleted ? 'text-zinc-500' : isCurrent ? 'text-white font-medium' : 'text-zinc-500'}`}>
+                                    <span className={`${isCompleted ? 'line-through decoration-zinc-700' : ''} ${isRecentlyCompleted ? 'text-green-200' : ''}`}>
+                                        {task.description}
+                                    </span>
+                                    {isCurrent && <span className="text-[10px] text-orange-400/70 font-mono mt-0.5 animate-pulse uppercase tracking-wide">In Progress...</span>}
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+             </div>
+           </div>
          </div>
 
          {/* Input Overlay */}

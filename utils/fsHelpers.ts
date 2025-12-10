@@ -51,3 +51,13 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   }
   return newRoot;
 };
+
+export const findNodeByName = (root: FileNode, name: string): FileNode | null => {
+  if (root.name === name) return root;
+  if (!root.children) return null;
+  for (const child of root.children) {
+    const found = findNodeByName(child, name);
+    if (found) return found;
+  }
+  return null;
+};

@@ -27,6 +27,7 @@ export interface Level {
   tasks: LevelTask[];
   initialPath: string[]; // Path of IDs
   hint: string;
+  onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
 }
 
 export interface ClipboardItem {

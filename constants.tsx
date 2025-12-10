@@ -1,4 +1,5 @@
 import { FileNode, Level } from './types';
+import { addNode, deleteNode, findNodeByName, getNodeByPath } from './utils/fsHelpers';
 
 // Helper to create IDs
 const id = () => Math.random().toString(36).substr(2, 9);
@@ -49,7 +50,7 @@ export const INITIAL_FS: FileNode = {
               type: 'dir',
               children: [
                 { id: 'virus', name: 'strange_file.exe', type: 'file', content: 'Definitely not a virus.' },
-                { id: 'image1', name: 'vacation.png', type: 'file', content: '[PNG Image Data]' },
+                { id: 'image1', name: 'vacation.png', type: 'file', content: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop' },
               ]
             },
             {
@@ -73,29 +74,6 @@ export const INITIAL_FS: FileNode = {
   ]
 };
 
-// Helper to traverse FS for checks
-function getCurrentNode(root: FileNode, pathIds: string[]): FileNode | null {
-  let current = root;
-  if (pathIds[0] !== root.id) return null;
-  
-  for (let i = 1; i < pathIds.length; i++) {
-    const child = current.children?.find(c => c.id === pathIds[i]);
-    if (!child) return null;
-    current = child;
-  }
-  return current;
-}
-
-function findNodeByName(root: FileNode, name: string): FileNode | null {
-  if (root.name === name) return root;
-  if (!root.children) return null;
-  for (const child of root.children) {
-    const found = findNodeByName(child, name);
-    if (found) return found;
-  }
-  return null;
-}
-
 export const LEVELS: Level[] = [
   {
     id: 1,
@@ -108,7 +86,7 @@ export const LEVELS: Level[] = [
         id: 'nav-1',
         description: "Navigate into 'documents'",
         check: (state) => {
-           const currentDir = getCurrentNode(state.fs, state.currentPath);
+           const currentDir = getNodeByPath(state.fs, state.currentPath);
            return currentDir?.name === 'documents';
         },
         completed: false
@@ -117,7 +95,7 @@ export const LEVELS: Level[] = [
         id: 'nav-2',
         description: "Go back, then navigate into 'etc'",
         check: (state) => {
-           const currentDir = getCurrentNode(state.fs, state.currentPath);
+           const currentDir = getNodeByPath(state.fs, state.currentPath);
            return currentDir?.name === 'etc';
         },
         completed: false
@@ -193,9 +171,49 @@ export const LEVELS: Level[] = [
   {
     id: 5,
     title: "Batch Master",
-    description: "Use <Space> to select multiple files. Navigate to 'downloads', select BOTH files, cut them ('x'), and paste ('p') into 'pictures'.",
+    description: "System restored files for training. Navigate to 'downloads', select BOTH files, cut them ('x'), and paste ('p') into 'pictures'.",
     initialPath: ['root', 'home', 'user'],
     hint: "In 'downloads': Highlight file 1, press Space. Highlight file 2, press Space. Press 'x' to cut both. Go to 'pictures'. Press 'p'.",
+    onEnter: (fs) => {
+        // IDs for standard paths (assuming user hasn't renamed 'user' or 'home')
+        const downloadsPath = ['root', 'home', 'user', 'downloads'];
+        const picsPath = ['root', 'home', 'user', 'pics'];
+        
+        let newFS = fs;
+        
+        // 1. Clean up pictures (remove target files if they are there from prev levels)
+        const picsNode = findNodeByName(newFS, 'pictures');
+        if (picsNode && picsNode.children) {
+             const toDelete = picsNode.children.filter(c => c.name === 'vacation.png' || c.name === 'strange_file.exe');
+             toDelete.forEach(node => {
+                 newFS = deleteNode(newFS, picsPath, node.id);
+             });
+        }
+        
+        // 2. Ensure they exist in downloads (Restoration)
+        const downloadsNode = findNodeByName(newFS, 'downloads');
+        const hasVirus = downloadsNode?.children?.some(c => c.name === 'strange_file.exe');
+        const hasImg = downloadsNode?.children?.some(c => c.name === 'vacation.png');
+        
+        if (!hasVirus) {
+             newFS = addNode(newFS, downloadsPath, { 
+                id: 'virus_restored', 
+                name: 'strange_file.exe', 
+                type: 'file', 
+                content: 'Definitely not a virus (restored).' 
+             });
+        }
+        
+        if (!hasImg) {
+             newFS = addNode(newFS, downloadsPath, { 
+                id: 'image1_restored', 
+                name: 'vacation.png', 
+                type: 'file', 
+                content: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop' 
+             });
+        }
+        return newFS;
+    },
     tasks: [
       {
         id: 'batch-1',
@@ -206,9 +224,11 @@ export const LEVELS: Level[] = [
            
            const hasVirus = pics?.children?.some(c => c.name === 'strange_file.exe');
            const hasImg = pics?.children?.some(c => c.name === 'vacation.png');
-           const downloadsEmpty = downloads?.children?.length === 0;
+           
+           // We check if downloads no longer has them (or is empty) to ensure move occurred
+           const downloadsClean = !downloads?.children?.some(c => c.name === 'strange_file.exe' || c.name === 'vacation.png');
 
-           return !!(hasVirus && hasImg && downloadsEmpty);
+           return !!(hasVirus && hasImg && downloadsClean);
         },
         completed: false
       }
