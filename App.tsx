@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { INITIAL_FS, LEVELS, EPISODE_LORE } from './constants';
+import { INITIAL_FS, LEVELS, EPISODE_LORE, CONCLUSION_DATA } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
 import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
@@ -67,27 +67,52 @@ const playFailureSound = () => {
 
 // Main App Component
 const App: React.FC = () => {
+  // Check for debug flag
+  const searchParams = new URLSearchParams(window.location.search);
+  const isDebugOutro = searchParams.get('debug') === 'outro';
+
   // State Initialization
-  const [gameState, setGameState] = useState<GameState>({
-    currentPath: LEVELS[0].initialPath,
-    cursorIndex: 0,
-    clipboard: null,
-    mode: 'normal',
-    inputBuffer: '',
-    history: [],
-    levelIndex: 0,
-    fs: cloneFS(INITIAL_FS),
-    levelStartFS: cloneFS(INITIAL_FS), // Initialize snapshot
-    notification: 'Welcome to Yazi Quest!',
-    selectedIds: [],
-    showHelp: false,
-    showHint: false,
-    showEpisodeIntro: true, // Start with Episode 1 Intro
-    timeLeft: null,
-    keystrokes: 0,
+  const [gameState, setGameState] = useState<GameState>(() => {
+    let fs = cloneFS(INITIAL_FS);
+    let levelIndex = 0;
+    let currentPath = LEVELS[0].initialPath;
+    let showEpisodeIntro = true;
+    let notification = 'Welcome to Yazi Quest!';
+
+    if (isDebugOutro) {
+        levelIndex = 14; // Final Level
+        currentPath = LEVELS[14].initialPath;
+        showEpisodeIntro = false;
+        notification = 'DEBUG: OUTRO READY';
+
+        // Modify FS to satisfy Level 15 conditions (Only workspace remains in guest)
+        const guestNode = getNodeByPath(fs, ['root', 'home', 'user']);
+        if (guestNode && guestNode.children) {
+             guestNode.children = guestNode.children.filter(c => c.name === 'workspace');
+        }
+    }
+
+    return {
+        currentPath,
+        cursorIndex: 0,
+        clipboard: null,
+        mode: 'normal',
+        inputBuffer: '',
+        history: [],
+        levelIndex,
+        fs,
+        levelStartFS: cloneFS(fs), // Initialize snapshot
+        notification,
+        selectedIds: [],
+        showHelp: false,
+        showHint: false,
+        showEpisodeIntro, 
+        timeLeft: null,
+        keystrokes: 0,
+    };
   });
 
-  const [levelTasks, setLevelTasks] = useState(LEVELS[0].tasks);
+  const [levelTasks, setLevelTasks] = useState(LEVELS[isDebugOutro ? 14 : 0].tasks);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
 
@@ -110,6 +135,20 @@ const App: React.FC = () => {
   // Determine current Episode Index (0, 1, 2)
   const episodeIndex = Math.min(Math.floor(gameState.levelIndex / 5), 2);
   const activeEpisodeLore = EPISODE_LORE[episodeIndex];
+
+  // Pre-load video via browser cache (avoids CORS fetch issues)
+  useEffect(() => {
+    const video = document.createElement('video');
+    video.src = CONCLUSION_DATA.videoUrl;
+    video.preload = 'auto';
+    video.muted = true; // Required for some browsers to buffer without interaction
+    video.load(); 
+    
+    return () => {
+        video.src = "";
+        video.load();
+    };
+  }, []);
 
   // Helper to reset level on failure
   const resetLevel = useCallback(() => {
