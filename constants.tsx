@@ -111,8 +111,26 @@ export const INITIAL_FS: FileNode = {
               type: 'dir',
               children: [
                 // Files to push access_key.pem down (alphabetically and by type)
-                { id: id(), name: 'legacy_data.tar', type: 'archive', children: [] },
-                { id: id(), name: 'source_code.zip', type: 'archive', children: [] },
+                { 
+                  id: id(), 
+                  name: 'legacy_data.tar', 
+                  type: 'archive', 
+                  children: [
+                    { id: id(), name: 'main.c', type: 'file', content: '#include <stdio.h>\nint main() { printf("Legacy System"); }' },
+                    { id: id(), name: 'Makefile', type: 'file', content: 'all: main.c\n\tgcc -o app main.c' },
+                    { id: id(), name: 'readme.txt', type: 'file', content: 'Legacy project from 1999. Do not delete.' }
+                  ] 
+                },
+                { 
+                  id: id(), 
+                  name: 'source_code.zip', 
+                  type: 'archive', 
+                  children: [
+                    { id: id(), name: 'Cargo.toml', type: 'file', content: '[package]\nname = "yazi_core"\nversion = "0.1.0"' },
+                    { id: id(), name: 'main.rs', type: 'file', content: 'fn main() {\n    println!("Hello Yazi!");\n}' },
+                    { id: id(), name: 'lib.rs', type: 'file', content: 'pub mod core;\npub mod ui;' }
+                  ] 
+                },
                 { id: id(), name: '_env.local', type: 'file', content: 'DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******' },
                 { id: id(), name: '00_manifest.xml', type: 'file', content: '<?xml version="1.0"?>\n<manifest>\n  <project id="YAZI-7734" />\n  <status>active</status>\n  <integrity>verified</integrity>\n</manifest>' },
                 { id: id(), name: '01_intro.mp4', type: 'file', content: '[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]' },
@@ -129,7 +147,16 @@ export const INITIAL_FS: FileNode = {
                 { id: id(), name: 'pending_updates.log', type: 'file', content: '[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active' },
                 { id: id(), name: 'personnel_list.txt', type: 'file', content: 'ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]' },
                 { id: id(), name: 'special_ops.md', type: 'file', content: '# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache' },
-                { id: id(), name: 'tape_archive.tar', type: 'archive', children: [] },
+                { 
+                  id: id(), 
+                  name: 'tape_archive.tar', 
+                  type: 'archive', 
+                  children: [
+                    { id: id(), name: 'header.dat', type: 'file', content: '[TAPE HEADER 0x001]' },
+                    { id: id(), name: 'partition_1.img', type: 'file', content: '[BINARY DATA PARTITION 1]' },
+                    { id: id(), name: 'partition_2.img', type: 'file', content: '[BINARY DATA PARTITION 2]' }
+                  ] 
+                },
 
                 // The Target
                 { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' },
@@ -171,7 +198,15 @@ export const INITIAL_FS: FileNode = {
                   ]
                 },
                 { id: id(), name: 'invoice_2024.pdf', type: 'file', content: '[PDF HEADER]\nInvoice #99283\nAmount: $99.00' },
-                { id: id(), name: 'meme_collection.zip', type: 'archive', children: [] },
+                { 
+                  id: id(), 
+                  name: 'meme_collection.zip', 
+                  type: 'archive', 
+                  children: [
+                    { id: id(), name: 'classic_cat.jpg', type: 'file', content: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=600&auto=format&fit=crop' },
+                    { id: id(), name: 'coding_time.gif', type: 'file', content: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=600&auto=format&fit=crop' }
+                  ] 
+                },
               ]
             },
             {

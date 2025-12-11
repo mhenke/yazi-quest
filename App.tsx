@@ -546,6 +546,7 @@ export default function App() {
                 toggleSelection();
                 break;
             case 'a':
+                e.preventDefault(); // Prevent 'a' from entering input
                 setGameState(prev => ({ ...prev, mode: 'input-file', notification: 'Create: Type name (end with / for dir)' }));
                 break;
             case 'd':
@@ -553,6 +554,7 @@ export default function App() {
                 break;
             case 'r':
                 if (currentItem) {
+                    e.preventDefault(); // Prevent 'r' from entering input
                     setGameState(prev => ({ ...prev, mode: 'rename', inputBuffer: currentItem.name, notification: `Rename ${currentItem.name}` }));
                 }
                 break;
@@ -570,6 +572,7 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'filter', notification: 'Filter Mode' }));
                 break;
             case 'Z':
+                e.preventDefault(); // Prevent 'Z' from entering input
                 setGameState(prev => ({ ...prev, mode: 'fuzzy-find', notification: 'Fuzzy Find Directory' }));
                 break;
             case 'Escape':
