@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameState, Level } from '../types';
+import { Scissors, Copy } from 'lucide-react';
 
 interface StatusBarProps {
   state: GameState;
@@ -55,16 +56,30 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
       <div className={`${modeBg} w-0 h-0 border-t-[24px] border-t-transparent border-l-[10px] border-l-zinc-900 -ml-[1px]`}></div>
 
       {/* 3. File Info / Path */}
-      <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center justify-between border-r border-zinc-700">
-        <span className="truncate">
+      <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
+        <span className="truncate mr-4">
             {state.currentPath.length > 1 ? `/${state.currentPath.slice(1).join('/')}` : '/'}
         </span>
         
         {/* Quest Info embedded in status bar */}
-        <span className="text-zinc-500 hidden sm:inline-block">
+        <span className="text-zinc-500 hidden sm:inline-block whitespace-nowrap">
             {progress}% OP: {level.title}
         </span>
       </div>
+
+      {/* 3.5 Clipboard Indicator (NEW) */}
+      {state.clipboard && (
+          <div className={`px-3 flex items-center gap-2 font-bold ${
+              state.clipboard.action === 'cut' 
+                  ? 'bg-red-900/50 text-red-200 border-l border-red-700' 
+                  : 'bg-blue-900/50 text-blue-200 border-l border-blue-700'
+          }`}>
+              {state.clipboard.action === 'cut' ? <Scissors size={10} /> : <Copy size={10} />}
+              <span>
+                  {state.clipboard.action === 'cut' ? 'MOVE' : 'COPY'}: {state.clipboard.nodes.length}
+              </span>
+          </div>
+      )}
 
       {/* 4. Timer / Metrics (Right Aligned) */}
       <div className="flex bg-zinc-800">
@@ -89,14 +104,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         )}
 
         {state.notification && (
-            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic">
+            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[200px] truncate">
             {state.notification}
             </div>
         )}
       </div>
 
       {/* 5. Stats Block */}
-      <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center gap-4">
+      <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center gap-4 hidden md:flex">
         <span className="text-zinc-400">{fakePerms}</span>
         <span>
              {state.cursorIndex + 1}/{state.fs.children?.length || 1}

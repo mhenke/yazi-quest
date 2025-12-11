@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { INITIAL_FS, LEVELS, EPISODE_LORE, CONCLUSION_DATA } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
-import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected } from './utils/fsHelpers';
+import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected, createPath } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
@@ -105,6 +105,7 @@ const App: React.FC = () => {
         levelStartFS: cloneFS(fs), // Initialize snapshot
         notification,
         selectedIds: [],
+        pendingDeleteIds: [],
         showHelp: false,
         showHint: false,
         showEpisodeIntro, 
@@ -168,6 +169,7 @@ const App: React.FC = () => {
           gameOverReason: undefined,
           mode: 'normal',
           selectedIds: [],
+          pendingDeleteIds: [],
           clipboard: null
       }));
       
@@ -225,6 +227,7 @@ const App: React.FC = () => {
              cursorIndex: 0,
              clipboard: null,
              selectedIds: [],
+             pendingDeleteIds: [],
              fs: nextFS,
              levelStartFS: cloneFS(nextFS),
              notification: `Level ${nextLevelIdx + 1} Started!`,
@@ -283,31 +286,26 @@ const App: React.FC = () => {
             return;
         }
 
-        const isDir = gameState.inputBuffer.endsWith('/');
-        const name = isDir ? gameState.inputBuffer.slice(0, -1) : gameState.inputBuffer;
-        
-        if (!name) {
-             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-             return;
+        // Use new createPath for recursive creation support
+        const { fs: newFS, error } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
+
+        if (error) {
+           setGameState(prev => ({
+                ...prev,
+                mode: 'normal',
+                inputBuffer: '',
+                notification: error
+            }));
+            playFailureSound();
+        } else {
+            setGameState(prev => ({
+                ...prev,
+                fs: newFS,
+                mode: 'normal',
+                inputBuffer: '',
+                notification: `Created: ${gameState.inputBuffer}`
+            }));
         }
-
-        const newNode: FileNode = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: name,
-            type: isDir ? 'dir' : 'file',
-            content: isDir ? undefined : '',
-            children: isDir ? [] : undefined
-        };
-
-        const newFS = addNode(gameState.fs, gameState.currentPath, newNode);
-
-        setGameState(prev => ({
-            ...prev,
-            fs: newFS,
-            mode: 'normal',
-            inputBuffer: '',
-            notification: `Created ${isDir ? 'directory' : 'file'}: ${name}`
-        }));
 
     } else if (key === 'Escape') {
         setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
@@ -339,6 +337,37 @@ const App: React.FC = () => {
 
     if (e.key.length === 1 || ['Enter', 'Backspace', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
          setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
+    }
+
+    if (gameState.mode === 'confirm-delete') {
+        if (e.key.toLowerCase() === 'y' || e.key === 'Enter') {
+            // EXECUTE DELETE
+            let newFS = gameState.fs;
+            gameState.pendingDeleteIds.forEach(id => {
+                newFS = deleteNode(newFS, gameState.currentPath, id);
+            });
+            const deletedCount = gameState.pendingDeleteIds.length;
+            const newCount = (sortedItems.length - deletedCount);
+
+            setGameState(prev => ({
+                ...prev,
+                fs: newFS,
+                mode: 'normal',
+                pendingDeleteIds: [],
+                selectedIds: [],
+                cursorIndex: Math.min(prev.cursorIndex, Math.max(0, newCount - 1)),
+                notification: `Deleted ${deletedCount} item(s)`
+            }));
+        } else {
+             // CANCEL
+             setGameState(prev => ({
+                ...prev,
+                mode: 'normal',
+                pendingDeleteIds: [],
+                notification: 'Deletion Cancelled'
+            }));
+        }
+        return;
     }
 
     if (gameState.mode !== 'normal') {
@@ -430,17 +459,12 @@ const App: React.FC = () => {
                   }
               }
 
-              let newFS = gameState.fs;
-              targets.forEach(t => {
-                 newFS = deleteNode(newFS, gameState.currentPath, t.id);
-              });
-
+              // Trigger Confirmation Mode
               setGameState(prev => ({
                   ...prev,
-                  fs: newFS,
-                  cursorIndex: Math.min(prev.cursorIndex, Math.max(0, itemCount - targets.length - 1)),
-                  selectedIds: [],
-                  notification: `Deleted ${targets.length} item(s)`
+                  mode: 'confirm-delete',
+                  pendingDeleteIds: targets.map(t => t.id),
+                  notification: 'Confirm Deletion?'
               }));
           }
         }
@@ -457,7 +481,7 @@ const App: React.FC = () => {
                   ...prev,
                   clipboard: { nodes: targets, action: 'yank', originalPath: prev.currentPath },
                   selectedIds: [],
-                  notification: `Yanked ${targets.length} item(s)`
+                  notification: `COPIED ${targets.length} item(s). Press 'p' to paste.`
               }));
           }
         }
@@ -484,7 +508,7 @@ const App: React.FC = () => {
                   ...prev,
                   clipboard: { nodes: targets, action: 'cut', originalPath: prev.currentPath },
                   selectedIds: [],
-                  notification: `Cut ${targets.length} item(s)`
+                  notification: `CUT ${targets.length} item(s). Press 'p' to move.`
               }));
            }
         }
@@ -506,7 +530,7 @@ const App: React.FC = () => {
                 ...prev,
                 fs: nextFS,
                 clipboard: action === 'cut' ? null : prev.clipboard, 
-                notification: `Pasted ${nodes.length} item(s)`
+                notification: action === 'cut' ? `MOVED ${nodes.length} item(s)` : `PASTED ${nodes.length} item(s)`
             }));
         } else {
              setGameState(prev => ({ ...prev, notification: 'Clipboard empty' }));
@@ -518,7 +542,7 @@ const App: React.FC = () => {
             ...prev,
             mode: 'input-file',
             inputBuffer: '',
-            notification: 'Enter filename (end with / for dir):'
+            notification: 'Enter path (end with / for dir):'
         }));
         break;
 
@@ -570,6 +594,41 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Delete Confirmation Modal */}
+      {gameState.mode === 'confirm-delete' && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="border border-purple-500 bg-zinc-900 shadow-2xl min-w-[300px] max-w-lg">
+                <div className="border-b border-purple-500 text-purple-400 font-bold px-4 py-1 text-center relative">
+                    <span className="bg-zinc-900 px-2 relative z-10">
+                        Trash {gameState.pendingDeleteIds.length} selected {gameState.pendingDeleteIds.length === 1 ? 'file' : 'files'}?
+                    </span>
+                    <div className="absolute top-1/2 left-0 w-full h-px bg-purple-500 -z-0"></div>
+                </div>
+                <div className="p-6">
+                    <ul className="text-zinc-300 text-sm space-y-1 overflow-hidden max-h-32">
+                        {gameState.pendingDeleteIds.slice(0, 3).map(id => {
+                            const item = sortedItems.find(i => i.id === id);
+                            return (
+                                <li key={id} className="truncate">
+                                    {/* Mock full path for aesthetic */}
+                                    <span className="opacity-50">.../</span>
+                                    {item?.name || 'unknown'}
+                                </li>
+                            );
+                        })}
+                        {gameState.pendingDeleteIds.length > 3 && (
+                            <li className="text-zinc-500 italic">...and {gameState.pendingDeleteIds.length - 3} more</li>
+                        )}
+                    </ul>
+                </div>
+                <div className="border-t border-purple-500 bg-zinc-900 px-4 py-1 flex justify-between text-sm font-bold">
+                    <span className="text-white bg-white/10 px-1">[Y]es</span>
+                    <span className="text-zinc-500">(N)o</span>
+                </div>
+            </div>
+        </div>
+      )}
+
       {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
       {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
@@ -615,6 +674,7 @@ const App: React.FC = () => {
               isParent={true}
               title={parentDir.name}
               selectedIds={[]}
+              clipboard={gameState.clipboard}
             />
          )}
          {/* Root placeholder */}
@@ -627,6 +687,7 @@ const App: React.FC = () => {
            cursorIndex={gameState.cursorIndex} 
            title={currentDir?.name}
            selectedIds={gameState.selectedIds}
+           clipboard={gameState.clipboard}
          />
 
          {/* Preview Pane (Right) */}
@@ -703,7 +764,7 @@ const App: React.FC = () => {
          </div>
 
          {/* Input Overlay */}
-         {gameState.mode !== 'normal' && (
+         {(gameState.mode === 'input-file' || gameState.mode === 'input-dir') && (
             <div className="absolute bottom-0 left-0 right-0 bg-zinc-800 border-t border-zinc-600 p-2 shadow-lg z-30 animate-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-center gap-2 font-mono text-sm">
                     <span className="text-orange-500 font-bold">Create:</span>

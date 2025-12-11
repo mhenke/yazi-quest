@@ -52,6 +52,61 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   return newRoot;
 };
 
+export const createPath = (root: FileNode, parentPathIds: string[], pathStr: string): { fs: FileNode, error?: string } => {
+  const newRoot = cloneFS(root);
+  let currentPath = [...parentPathIds];
+  
+  const isDirTarget = pathStr.endsWith('/');
+  const segments = pathStr.split('/').filter(s => s.trim().length > 0);
+  
+  for (let i = 0; i < segments.length; i++) {
+    const name = segments[i];
+    const isLast = i === segments.length - 1;
+    // If it's the last segment, type depends on trailing slash. Otherwise intermediate must be dir.
+    const type: 'dir' | 'file' = (isLast && !isDirTarget) ? 'file' : 'dir';
+    
+    // Find parent in the NEW root
+    const parent = getNodeByPath(newRoot, currentPath);
+    if (!parent) return { fs: root, error: "Path resolution failed" };
+    
+    const existing = parent.children?.find(c => c.name === name);
+    
+    if (existing) {
+      if (existing.type !== 'dir' && !isLast) {
+         // Trying to go through a file as a directory
+         return { fs: root, error: `Cannot create directory inside file: ${name}` };
+      }
+      if (isLast && existing.type !== type) {
+          return { fs: root, error: `Item '${name}' already exists as ${existing.type}` };
+      }
+      // It exists and is valid (dir), traverse into it
+      currentPath.push(existing.id);
+    } else {
+      // Create new
+      const newNode: FileNode = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: name,
+        type: type,
+        children: type === 'dir' ? [] : undefined,
+        content: type === 'file' ? '' : undefined
+      };
+      
+      if (!parent.children) parent.children = [];
+      parent.children.push(newNode);
+      
+      // Sort alphabetically roughly
+        parent.children.sort((a, b) => {
+            if (a.type === b.type) return a.name.localeCompare(b.name);
+            return a.type === 'dir' ? -1 : 1;
+        });
+
+      currentPath.push(newNode.id);
+    }
+  }
+  
+  return { fs: newRoot };
+};
+
 export const findNodeByName = (root: FileNode, name: string): FileNode | null => {
   if (root.name === name) return root;
   if (!root.children) return null;

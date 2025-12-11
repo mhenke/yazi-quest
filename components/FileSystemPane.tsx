@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { FileNode } from '../types';
+import { FileNode, ClipboardItem } from '../types';
 import { 
   Folder, 
   FileText, 
@@ -9,7 +9,9 @@ import {
   FileCog, 
   FileLock, 
   Terminal as TerminalIcon, 
-  ChevronRight 
+  ChevronRight,
+  Scissors,
+  Copy
 } from 'lucide-react';
 
 interface FileSystemPaneProps {
@@ -19,6 +21,7 @@ interface FileSystemPaneProps {
   title?: string;
   isParent?: boolean;
   selectedIds: string[];
+  clipboard: ClipboardItem | null;
 }
 
 // Helper for file styling based on extension/name
@@ -65,7 +68,8 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   cursorIndex = -1,
   title,
   isParent = false,
-  selectedIds = []
+  selectedIds = [],
+  clipboard
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -97,26 +101,37 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isMarked = selectedIds.includes(item.id);
           const { color, icon: Icon } = getFileStyle(item);
           
+          // Check clipboard status
+          const inClipboard = clipboard?.nodes.some(n => n.id === item.id);
+          const isCut = inClipboard && clipboard?.action === 'cut';
+          const isYank = inClipboard && clipboard?.action === 'yank';
+
           return (
             <div
               key={item.id}
               className={`
                 px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm
-                transition-colors duration-75
+                transition-colors duration-75 relative
                 ${isSelected ? 'bg-zinc-800' : ''}
                 ${isMarked ? 'text-yellow-400' : ''}
                 ${isParent ? 'opacity-50 grayscale' : ''}
+                ${isCut ? 'opacity-50' : ''}
               `}
             >
               <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`}>
                 <Icon size={14} fill={item.type === 'dir' ? "currentColor" : "none"} fillOpacity={item.type === 'dir' ? 0.2 : 0} />
               </span>
               
-              <span className={`truncate flex-1 ${isSelected && !isMarked ? 'text-white font-medium' : ''} ${isMarked ? 'font-bold' : ''}`}>
-                {item.name}
+              <span className={`truncate flex-1 flex items-center gap-2 ${isSelected && !isMarked ? 'text-white font-medium' : ''} ${isMarked ? 'font-bold' : ''}`}>
+                <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>{item.name}</span>
               </span>
               
-              {isMarked && <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VISUAL]</span>}
+              {/* Status Indicators */}
+              <div className="flex items-center gap-2">
+                {isCut && <Scissors size={10} className="text-red-500 animate-pulse" />}
+                {isYank && <Copy size={10} className="text-blue-400" />}
+                {isMarked && <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VIS]</span>}
+              </div>
               
               {item.type === 'dir' && (
                   <span className="text-zinc-700">

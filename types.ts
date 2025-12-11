@@ -53,7 +53,7 @@ export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
   clipboard: ClipboardItem | null;
-  mode: 'normal' | 'input-file' | 'input-dir'; // standard or typing filename
+  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete'; // Added confirm-delete
   inputBuffer: string; // for typing filenames
   history: string[]; // Log of actions
   levelIndex: number;
@@ -61,6 +61,7 @@ export interface GameState {
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
+  pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   showHelp: boolean; // Toggle for help modal
   showHint: boolean; // Toggle for hint modal
   showEpisodeIntro: boolean; // Toggle for story mode overlay
