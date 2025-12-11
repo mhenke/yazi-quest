@@ -110,9 +110,26 @@ export const INITIAL_FS: FileNode = {
               name: 'datastore',
               type: 'dir',
               children: [
+                // Files to push access_key.pem down (alphabetically and by type)
+                { id: id(), name: 'legacy_data.tar', type: 'archive', children: [] },
+                { id: id(), name: 'source_code.zip', type: 'archive', children: [] },
+                { id: id(), name: '_env.local', type: 'file', content: 'DB_HOST=127.0.0.1' },
+                { id: id(), name: '00_manifest.xml', type: 'file', content: '<manifest></manifest>' },
+                { id: id(), name: '01_intro.mp4', type: 'file', content: '[VIDEO]' },
+                { id: id(), name: 'aa_recovery_procedures.pdf', type: 'file', content: '[PDF]' },
+                { id: id(), name: 'abandoned_script.py', type: 'file', content: 'print("hello")' },
+                { id: id(), name: 'ability_scores.csv', type: 'file', content: 'str,dex,int...' },
+                { id: id(), name: 'about.md', type: 'file', content: '# About' },
+                { id: id(), name: 'abstract_model.ts', type: 'file', content: 'export interface Model...' },
+
+                // The Target
                 { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...' },
+                
+                // Other files (Alphabetically after access_key)
+                { id: id(), name: 'account_settings.json', type: 'file', content: '{}' },
                 { id: id(), name: 'mission_log.md', type: 'file', content: '# Operation: SILENT ECHO\n- Establish uplink\n- Bypass firewall\n- Retrieve payload' },
-                // Noise files for Level 6 Filtering Task
+                
+                // Existing Noise
                 { id: id(), name: 'checksum.md5', type: 'file', content: 'd41d8cd98f00b204e9800998ecf8427e' },
                 { id: id(), name: 'LICENSE', type: 'file', content: 'MIT License' },
                 { id: id(), name: 'manifest.json', type: 'file', content: '{ "version": "1.0.4", "build": 884 }' },
@@ -125,6 +142,7 @@ export const INITIAL_FS: FileNode = {
                 { id: id(), name: 'auth_token.tmp', type: 'file', content: 'EYJhbGciOiJIUzI1...' },
                 { id: id(), name: 'policy_draft.docx', type: 'file', content: '[BINARY DATA]' },
                 { id: id(), name: 'public_key.pub', type: 'file', content: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...' },
+                { id: id(), name: 'z_end_of_file.eof', type: 'file', content: '' },
               ]
             },
             {
@@ -234,7 +252,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-0',
-        description: "Navigate into 'incoming'",
+        description: "Navigate into 'incoming' (in /home/guest)",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'incoming',
         completed: false
       },
@@ -254,13 +272,13 @@ export const LEVELS: Level[] = [
     id: 3,
     episodeId: 1,
     title: "Asset Relocation",
-    description: "Secure the target intel. Move the map file from 'incoming' to 'media'.",
+    description: "Secure the target intel. Cut the map file from 'incoming' and paste it into 'media'.",
     initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
-    hint: "Select 'target_map.png' (Space/x). Go to 'media'. Paste (p).",
+    hint: "Highlight 'target_map.png'. Press 'x' to Cut. Navigate to 'media'. Press 'p' to Paste.",
     tasks: [
       {
         id: 'move-1',
-        description: "Retrieve 'target_map.png' from 'incoming' and move to 'media'",
+        description: "Move 'target_map.png' to 'media' (Cut & Paste)",
         check: (state) => {
           const media = findNodeByName(state.fs, 'media');
           return !!media?.children?.find(c => c.name === 'target_map.png');
@@ -487,9 +505,9 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Encrypted Payload",
-    description: "Intelligence archives detected. Breach the container and extract payload.",
+    description: "Intelligence archives detected. Enter the archive and copy the payload to workspace.",
     initialPath: ['root', 'home', 'user', 'incoming'],
-    hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter the archive. Extract 'sys_v2.log' to workspace.",
+    hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter. Highlight 'sys_v2.log'. Press 'y' (Copy). Go to workspace. Press 'p' (Paste).",
     timeLimit: 120,
     tasks: [
       {
