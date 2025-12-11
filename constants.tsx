@@ -253,7 +253,7 @@ export const LEVELS: Level[] = [
     title: "Protocol Design",
     description: "Establish new network protocols. Generate the directory structure and configuration files.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press 'a' and type 'protocols/' (end with / to create dir). Enter it. Press 'a' to create 'uplink_v1.conf', then 'uplink_v2.conf'.",
+    hint: "Press 'a', type 'protocols/' (add trailing slash). Enter it with 'l'. Press 'a', type 'uplink_v1.conf'. Press 'a', type 'uplink_v2.conf'.",
     tasks: [
       {
         id: 'create-1',
