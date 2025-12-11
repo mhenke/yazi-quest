@@ -341,7 +341,8 @@ export const LEVELS: Level[] = [
       {
         id: 'search-1',
         description: "Activate filter and search for 'pem'",
-        check: (state) => state.mode === 'filter' && state.filter.toLowerCase().includes('pem'),
+        // Allows passing even if user pressed Enter and is now in normal mode with filter active
+        check: (state) => (state.mode === 'filter' || state.filter !== '') && state.filter.toLowerCase().includes('pem'),
         completed: false
       },
       {

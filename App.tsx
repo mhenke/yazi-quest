@@ -67,16 +67,35 @@ export default function App() {
 
     // Check tasks
     const tasks = currentLevel.tasks;
-    const allComplete = tasks.every(t => t.check(gameState));
+    let hasUpdates = false;
+
+    // Check each task. If it completes, mark it done forever in the singleton.
+    // This allows transient states (like being in a filter mode) to be captured.
+    tasks.forEach(t => {
+        if (!t.completed && t.check(gameState)) {
+            t.completed = true;
+            hasUpdates = true;
+        }
+    });
+
+    if (hasUpdates) {
+        // Trigger a re-render so the checkmark appears in UI immediately
+        setGameState(prev => ({ 
+            ...prev, 
+            notification: "Objective Complete" 
+        }));
+    }
+
+    const allComplete = tasks.every(t => t.completed);
     
-    // Update completion status in UI implicitly by passing level data, but we need to advance level
+    // Advance Level if all complete
     if (allComplete) {
        const timer = setTimeout(() => {
           advanceLevel();
        }, 500); // Small delay for effect
        return () => clearTimeout(timer);
     }
-  }, [gameState.fs, gameState.currentPath, gameState.selectedIds, gameState.mode, gameState.levelIndex]);
+  }, [gameState.fs, gameState.currentPath, gameState.selectedIds, gameState.mode, gameState.levelIndex, gameState.filter, gameState.stats]);
 
   const advanceLevel = () => {
     setGameState(prev => {
@@ -87,6 +106,11 @@ export default function App() {
         }
         
         const nextLevel = LEVELS[nextIndex];
+        // Reset tasks for the next level to ensure clean state
+        if (nextLevel) {
+            nextLevel.tasks.forEach(t => t.completed = false);
+        }
+
         const isNewEpisode = nextLevel.episodeId !== currentLevel.episodeId;
         
         // Take a snapshot for reset
@@ -529,6 +553,9 @@ export default function App() {
            <GameOverModal 
              reason={gameState.gameOverReason} 
              onRestart={() => {
+                // Reset tasks for the restart
+                currentLevel.tasks.forEach(t => t.completed = false);
+
                 // Reset to start of current level
                 setGameState(prev => ({
                     ...prev,
