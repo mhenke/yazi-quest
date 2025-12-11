@@ -122,6 +122,15 @@ export const INITIAL_FS: FileNode = {
                 { id: id(), name: 'about.md', type: 'file', content: '# About' },
                 { id: id(), name: 'abstract_model.ts', type: 'file', content: 'export interface Model...' },
 
+                // Noise matching 'pe' to improve filtering task
+                { id: id(), name: 'apex_predator.png', type: 'file', content: '[IMG]' },
+                { id: id(), name: 'expenditure_log.csv', type: 'file', content: 'date,amount\n2024-01-01,500' },
+                { id: id(), name: 'hyperloop_specs.pdf', type: 'file', content: '[PDF DATA]' },
+                { id: id(), name: 'pending_updates.log', type: 'file', content: 'Update 1.0.5 pending...' },
+                { id: id(), name: 'personnel_list.txt', type: 'file', content: 'ADMIN: ...' },
+                { id: id(), name: 'special_ops.md', type: 'file', content: '# Special Operations' },
+                { id: id(), name: 'tape_archive.tar', type: 'archive', children: [] },
+
                 // The Target
                 { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...' },
                 
@@ -334,9 +343,9 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "Batch Deployment",
-    description: "Protocols verified. Batch move configuration files to the active sector.",
+    description: "Protocols verified. Efficiency required: Move both configuration files simultaneously using batch selection.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Create 'active/' in datastore. In 'protocols': Select both configs (Space). Cut (x). Deploy to 'active' (p).",
+    hint: "Create 'active/' in datastore. Enter 'protocols'. Press Space on 'uplink_v1.conf'. Press Space on 'uplink_v2.conf'. Press 'x' to Cut. Go to 'active'. Press 'p'.",
     tasks: [
       {
         id: 'batch-0',
@@ -348,8 +357,22 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: 'batch-1',
-        description: "Move both 'uplink' configs to 'active'",
+        id: 'batch-select',
+        description: "Batch select both files (Space)",
+        check: (state) => {
+           // We expect the user to be in 'protocols' and have both files selected
+           const protocols = findNodeByName(state.fs, 'protocols');
+           if (!protocols?.children) return false;
+           
+           const selected = protocols.children.filter(c => state.selectedIds.includes(c.id));
+           const names = selected.map(c => c.name);
+           return names.includes('uplink_v1.conf') && names.includes('uplink_v2.conf');
+        },
+        completed: false
+      },
+      {
+        id: 'batch-move',
+        description: "Cut selection (x) & Paste to 'active'",
         check: (state) => {
           const active = findNodeByName(state.fs, 'active');
           const protocols = findNodeByName(state.fs, 'protocols');
