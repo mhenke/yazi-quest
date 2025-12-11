@@ -730,7 +730,7 @@ export default function App() {
                         } else if (e.key === 'Escape') {
                             e.preventDefault();
                             if (gameState.mode === 'filter') {
-                                 setGameState(prev => ({ ...prev, filter: '', mode: 'normal', notification: 'Filter Cleared' }));
+                                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
                             } else {
                                  setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', notification: null }));
                             }
