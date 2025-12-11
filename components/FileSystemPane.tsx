@@ -23,6 +23,7 @@ interface FileSystemPaneProps {
   isParent?: boolean;
   selectedIds: string[];
   clipboard: ClipboardItem | null;
+  className?: string;
 }
 
 // Helper for file styling based on extension/name
@@ -71,7 +72,8 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   title,
   isParent = false,
   selectedIds = [],
-  clipboard
+  clipboard,
+  className
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -85,8 +87,12 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     }
   }, [cursorIndex, isActive]);
 
+  const defaultWidth = isParent ? 'w-1/4' : 'w-1/3';
+  const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
+  const finalClass = className || `${defaultWidth} ${bgColors}`;
+
   return (
-    <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${isParent ? 'w-1/4 bg-zinc-950/50 text-zinc-600' : 'w-1/3 bg-zinc-900/80 text-zinc-300'}`}>
+    <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}>
       {title && (
         <div className={`px-3 py-1 text-[10px] font-bold border-b border-zinc-800 uppercase tracking-wider flex items-center justify-between ${isParent ? 'text-zinc-600' : 'text-blue-400'}`}>
           <span>{title}</span>

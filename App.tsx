@@ -61,6 +61,16 @@ export default function App() {
   const visibleItems = getVisibleItems();
   const currentItem = visibleItems[gameState.cursorIndex];
 
+  // --- Auto-Clamp Cursor Effect ---
+  // If the number of visible items changes (e.g., deletion), ensure cursor is valid.
+  useEffect(() => {
+     if (visibleItems.length === 0 && gameState.cursorIndex !== 0) {
+         setGameState(prev => ({ ...prev, cursorIndex: 0 }));
+     } else if (visibleItems.length > 0 && gameState.cursorIndex >= visibleItems.length) {
+         setGameState(prev => ({ ...prev, cursorIndex: visibleItems.length - 1 }));
+     }
+  }, [visibleItems.length, gameState.cursorIndex]);
+
   // --- Game Loop / Level Check ---
   useEffect(() => {
     if (gameState.isGameOver || isLastLevel) return;
@@ -106,12 +116,18 @@ export default function App() {
         }
         
         const nextLevel = LEVELS[nextIndex];
+        const prevLevel = LEVELS[prev.levelIndex];
+
         // Reset tasks for the next level to ensure clean state
         if (nextLevel) {
             nextLevel.tasks.forEach(t => t.completed = false);
         }
 
-        const isNewEpisode = nextLevel.episodeId !== currentLevel.episodeId;
+        const isNewEpisode = nextLevel.episodeId !== prevLevel.episodeId;
+        
+        // Continuum Logic: If it's a new episode, teleport to start.
+        // Otherwise, stay exactly where we are to prevent jarring transitions.
+        const nextPath = isNewEpisode ? nextLevel.initialPath : prev.currentPath;
         
         // Take a snapshot for reset
         const currentFSSnapshot = cloneFS(prev.fs);
@@ -119,7 +135,7 @@ export default function App() {
         return {
             ...prev,
             levelIndex: nextIndex,
-            currentPath: nextLevel.initialPath, // Teleport to new start
+            currentPath: nextPath, 
             cursorIndex: 0,
             filter: '',
             selectedIds: [],
@@ -150,7 +166,6 @@ export default function App() {
   // --- Action Handlers ---
   const navigate = (dir: number) => {
     setGameState(prev => {
-       const visible = getVisibleItems(); // Need fresh calc inside setter if using prev? Actually ref is safer or assume consistent
        // Recalculating inside based on prev is safer
        const currentDir = getNodeByPath(prev.fs, prev.currentPath);
        const items = prev.filter 
@@ -216,9 +231,6 @@ export default function App() {
       for (const id of idsToDelete) {
           // Find node to check name (expensive but safe)
           // Simplified: we only check current context or selection.
-          // Since finding by ID globally is hard without path, we assume items are in current dir
-          // But wait, selection persists? No, usually localized. 
-          // For simplicity in this version, selection clears on dir change, so items are in current dir.
           const dir = getCurrentDir();
           const node = dir?.children?.find(c => c.id === id);
           if (node) {
@@ -418,18 +430,22 @@ export default function App() {
     // --- Input Modes ---
     if (['input-file', 'input-dir', 'rename', 'fuzzy-find'].includes(gameState.mode)) {
         if (key === 'Escape') {
+            e.preventDefault();
             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', notification: null }));
             return;
         }
         if (key === 'Enter') {
+            e.preventDefault();
             handleInputSubmit();
             return;
         }
         if (key === 'Backspace') {
+            e.preventDefault();
             setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
             return;
         }
         if (key.length === 1) {
+            e.preventDefault(); // Stop browser shortcuts like Quick Find (/) or Search (')
             setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
             return;
         }
@@ -439,13 +455,13 @@ export default function App() {
     // --- Filter Mode Logic (Snippet Integration) ---
     if (gameState.mode === 'filter') {
         if (key === 'Escape' || key === 'Enter') {
-             // User request: Escape (and Enter) exits input mode but KEEPS the filter active.
-             // This allows interacting with the filtered subset.
-             // A subsequent Escape in normal mode will clear the filter.
+             e.preventDefault();
              setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
         } else if (key === 'Backspace') {
+             e.preventDefault();
              setGameState(prev => ({ ...prev, filter: prev.filter.slice(0, -1), cursorIndex: 0 }));
         } else if (key.length === 1) {
+             e.preventDefault();
              setGameState(prev => ({ ...prev, filter: prev.filter + key, cursorIndex: 0 }));
         }
         return;
@@ -485,10 +501,6 @@ export default function App() {
                 toggleSelection();
                 break;
             case 'a':
-                // Cycle between file/dir? Or just default. Let's make 'a' file and 'A' dir?
-                // Yazi uses 'a' for create (opens input).
-                // Let's prompt input with hint? 
-                // Simplified: 'a' for file, shift+A for dir? Or just generic input that detects trailing slash
                 setGameState(prev => ({ ...prev, mode: 'input-file', notification: 'Create: Type name (end with / for dir)' }));
                 break;
             case 'd':
@@ -509,6 +521,7 @@ export default function App() {
                 handlePaste();
                 break;
             case 'f':
+                e.preventDefault();
                 setGameState(prev => ({ ...prev, mode: 'filter', notification: 'Filter Mode' }));
                 break;
             case 'Z':
@@ -553,10 +566,7 @@ export default function App() {
            <GameOverModal 
              reason={gameState.gameOverReason} 
              onRestart={() => {
-                // Reset tasks for the restart
                 currentLevel.tasks.forEach(t => t.completed = false);
-
-                // Reset to start of current level
                 setGameState(prev => ({
                     ...prev,
                     fs: prev.levelStartFS,
@@ -568,7 +578,7 @@ export default function App() {
                     isGameOver: false,
                     timeLeft: currentLevel.timeLimit || null,
                     keystrokes: 0,
-                    stats: { ...prev.stats } // keep stats or reset? usually reset for strict runs, but let's keep it fun
+                    stats: { ...prev.stats } 
                 }));
              }} 
            />
@@ -580,12 +590,18 @@ export default function App() {
        {/* Hint Modal */}
        {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
 
-       {/* Top Bar: Progress */}
-       <LevelProgress levels={LEVELS} currentLevelIndex={gameState.levelIndex} />
+       {/* Top Bar: Progress + Controls */}
+       <LevelProgress 
+         levels={LEVELS} 
+         currentLevelIndex={gameState.levelIndex} 
+         onToggleHint={() => setGameState(prev => ({ ...prev, showHint: !prev.showHint }))}
+         onToggleHelp={() => setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }))}
+       />
 
        {/* Main Content Area */}
        <div className="flex-1 flex overflow-hidden relative">
-           {/* Parent Pane (Optional view) */}
+           
+           {/* Parent Pane */}
            <FileSystemPane 
              items={getParentDir()?.children || []} 
              isActive={false} 
@@ -593,6 +609,7 @@ export default function App() {
              isParent={true}
              selectedIds={[]}
              clipboard={gameState.clipboard}
+             className="w-1/4 xl:w-1/5 bg-zinc-950/50 text-zinc-600 border-r border-zinc-800"
            />
            
            {/* Active Pane */}
@@ -603,10 +620,14 @@ export default function App() {
              title={`/${gameState.currentPath.slice(1).join('/')}`}
              selectedIds={gameState.selectedIds}
              clipboard={gameState.clipboard}
+             className="w-1/3 md:w-1/4 bg-zinc-900/80 text-zinc-300 border-r border-zinc-800"
            />
            
-           {/* Preview Pane */}
-           <PreviewPane node={currentItem || null} />
+           {/* Preview Pane with integrated Mission Log */}
+           <PreviewPane 
+             node={currentItem || null} 
+             level={currentLevel}
+           />
 
            {/* Input Overlay */}
            {['input-file', 'input-dir', 'rename', 'filter', 'fuzzy-find'].includes(gameState.mode) && (

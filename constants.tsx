@@ -234,8 +234,8 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: "Asset Relocation",
     description: "Secure the target intel. Move the map file from 'incoming' to 'media'.",
-    initialPath: ['root', 'home', 'user'],
-    hint: "Go to 'incoming'. Select 'target_map.png' (x). Go to 'media'. Paste (p).",
+    initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
+    hint: "Select 'target_map.png' (Space/x). Go to 'media'. Paste (p).",
     tasks: [
       {
         id: 'move-1',
@@ -349,10 +349,16 @@ export const LEVELS: Level[] = [
         id: 'search-2',
         description: "Navigate to 'access_key.pem' while filter is active",
         check: (state) => {
-          // Check if filter is active and the filtered view contains the item, and cursor is on it
-          if (!state.filter) return false;
+          // 1. Filter must be active (user has typed something and hasn't cleared it)
+          if (!state.filter || state.filter.length === 0) return false;
+
+          // 2. Determine what is visible under the current filter
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const visibleItems = currentDir?.children?.filter(c => c.name.toLowerCase().includes(state.filter.toLowerCase())) || [];
+          const visibleItems = currentDir?.children?.filter(c => 
+            c.name.toLowerCase().includes(state.filter.toLowerCase())
+          ) || [];
+
+          // 3. Check if the item under the cursor is the target
           const activeItem = visibleItems[state.cursorIndex];
           return activeItem?.name === 'access_key.pem';
         },
@@ -611,7 +617,7 @@ export const LEVELS: Level[] = [
     title: "Shadow Copy",
     description: "Fork the daemon process for redundancy.",
     initialPath: ['root', 'etc'],
-    hint: "Select 'daemon' directory. Copy (y). Paste (p) to spawn duplicate.",
+    hint: "Select 'daemon' directory. Copy (y). Paste (p). to spawn duplicate.",
     maxKeystrokes: 35,
     tasks: [
       {
