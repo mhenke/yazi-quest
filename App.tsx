@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { INITIAL_FS, LEVELS, EPISODE_LORE, CONCLUSION_DATA } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
 import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected, createPath, getAllDirectories, renameNode } from './utils/fsHelpers';
@@ -14,7 +15,8 @@ import { GameOverModal } from './components/GameOverModal';
 import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight, ArrowDown } from 'lucide-react';
 
 // Sound Effect Helper
-const playSuccessSound = () => {
+const playSuccessSound = (enabled: boolean) => {
+  if (!enabled) return;
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
@@ -40,7 +42,8 @@ const playSuccessSound = () => {
   }
 };
 
-const playFailureSound = () => {
+const playFailureSound = (enabled: boolean) => {
+  if (!enabled) return;
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
@@ -76,7 +79,17 @@ const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(() => {
     let fs = cloneFS(INITIAL_FS);
     let levelIndex = 0;
-    let currentPath = LEVELS[0].initialPath;
+    
+    // Attempt to load level from localStorage (persistence)
+    const savedLevel = localStorage.getItem('yazi_quest_level');
+    if (savedLevel && !isDebugOutro) {
+        const parsed = parseInt(savedLevel, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < LEVELS.length) {
+            levelIndex = parsed;
+        }
+    }
+
+    let currentPath = LEVELS[levelIndex].initialPath;
     let showEpisodeIntro = true;
     let notification = 'Welcome to Yazi Quest!';
 
@@ -92,6 +105,11 @@ const App: React.FC = () => {
              guestNode.children = guestNode.children.filter(c => c.name === 'workspace');
         }
     }
+
+    // Default settings
+    const initialSettings = {
+        soundEnabled: true
+    };
 
     return {
         currentPath,
@@ -110,7 +128,7 @@ const App: React.FC = () => {
         showHelp: false,
         showHint: false,
         showEpisodeIntro, 
-        timeLeft: null,
+        timeLeft: LEVELS[levelIndex].timeLimit || null,
         keystrokes: 0,
         isGameOver: false,
         gameOverReason: undefined,
@@ -119,39 +137,50 @@ const App: React.FC = () => {
            filterUsage: 0,
            renames: 0,
            archivesEntered: 0
-        }
+        },
+        settings: initialSettings
     };
   });
 
-  const [levelTasks, setLevelTasks] = useState(LEVELS[isDebugOutro ? 16 : 0].tasks);
+  const [levelTasks, setLevelTasks] = useState(LEVELS[gameState.levelIndex].tasks);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [bulkRenameText, setBulkRenameText] = useState("");
 
+  // Persist Level Progress
+  useEffect(() => {
+    localStorage.setItem('yazi_quest_level', gameState.levelIndex.toString());
+  }, [gameState.levelIndex]);
+
   const currentLevel = LEVELS[gameState.levelIndex];
 
-  // Derived State Helpers
-  const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-  const parentDir = getParentNode(gameState.fs, gameState.currentPath);
-  const currentItems = currentDir?.children || [];
+  // Derived State Helpers (Memoized)
+  const currentDir = useMemo(() => getNodeByPath(gameState.fs, gameState.currentPath), [gameState.fs, gameState.currentPath]);
+  const parentDir = useMemo(() => getParentNode(gameState.fs, gameState.currentPath), [gameState.fs, gameState.currentPath]);
+  const currentItems = useMemo(() => currentDir?.children || [], [currentDir]);
   
+  // Use Deferred Value for filter to prevent input lag on large lists (Performance)
+  const deferredFilter = useDeferredValue(gameState.filter);
+
   // Sort and Filter items
-  const sortedItems = [...currentItems].sort((a, b) => {
-    // Sort logic: Dir > Archive > File
-    const typeScore = (t: string) => {
-        if (t === 'dir') return 0;
-        if (t === 'archive') return 1;
-        return 2;
-    };
-    const scoreA = typeScore(a.type);
-    const scoreB = typeScore(b.type);
-    
-    if (scoreA !== scoreB) return scoreA - scoreB;
-    return a.name.localeCompare(b.name);
-  }).filter(item => {
-    if (!gameState.filter) return true;
-    return item.name.toLowerCase().includes(gameState.filter.toLowerCase());
-  });
+  const sortedItems = useMemo(() => {
+    return [...currentItems].sort((a, b) => {
+        // Sort logic: Dir > Archive > File
+        const typeScore = (t: string) => {
+            if (t === 'dir') return 0;
+            if (t === 'archive') return 1;
+            return 2;
+        };
+        const scoreA = typeScore(a.type);
+        const scoreB = typeScore(b.type);
+        
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.name.localeCompare(b.name);
+    }).filter(item => {
+        if (!deferredFilter) return true;
+        return item.name.toLowerCase().includes(deferredFilter.toLowerCase());
+    });
+  }, [currentItems, deferredFilter]);
 
   // Calculate fuzzy jump targets (Memoized)
   const allDirectories = useMemo(() => {
@@ -204,13 +233,10 @@ const App: React.FC = () => {
           pendingDeleteIds: [],
           clipboard: null,
           filter: '',
-          // Don't reset generic stats that persist, or maybe reset local level stats? 
-          // For now, keep stats accumulating or reset? Tasks check absolute values.
-          // Let's keep stats accumulating to be safe, or logic needs to check delta.
       }));
       
       setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
-  }, [gameState.levelIndex, gameState.fs]); 
+  }, [gameState.levelIndex]); 
 
   // Timer Logic
   useEffect(() => {
@@ -220,7 +246,7 @@ const App: React.FC = () => {
 
     if (gameState.timeLeft <= 0) {
         setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'time' }));
-        playFailureSound();
+        playFailureSound(gameState.settings.soundEnabled);
         return;
     }
 
@@ -232,15 +258,15 @@ const App: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, gameState.isGameOver, allTasksComplete, gameCompleted]);
+  }, [gameState.timeLeft, gameState.showEpisodeIntro, gameState.showHelp, gameState.isGameOver, allTasksComplete, gameCompleted, gameState.settings.soundEnabled]);
 
   // Keystroke Limit Logic
   useEffect(() => {
     if (currentLevel.maxKeystrokes && gameState.keystrokes > currentLevel.maxKeystrokes && !allTasksComplete && !gameState.showEpisodeIntro && !gameCompleted && !gameState.isGameOver) {
         setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
-        playFailureSound();
+        playFailureSound(gameState.settings.soundEnabled);
     }
-  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, gameCompleted, gameState.isGameOver]);
+  }, [gameState.keystrokes, currentLevel.maxKeystrokes, allTasksComplete, gameState.showEpisodeIntro, gameCompleted, gameState.isGameOver, gameState.settings.soundEnabled]);
 
 
   // Level Management
@@ -274,10 +300,6 @@ const App: React.FC = () => {
              timeLeft: nextLevel.timeLimit || null,
              keystrokes: 0,
              isGameOver: false,
-             // Stats persist? Or reset?
-             // If we reset, then "Deep Scan" (Level 7) task "fuzzy jump count >= 2" needs to be doable in one level.
-             // It's safer to keep them or specific checks should rely on flags.
-             // Let's keep them.
          }));
          setLevelTasks(nextLevel.tasks);
      } else {
@@ -314,12 +336,12 @@ const App: React.FC = () => {
       }));
       
       if (completedTaskId) {
-        playSuccessSound();
+        playSuccessSound(gameState.settings.soundEnabled);
         setRecentlyCompletedId(completedTaskId);
         setTimeout(() => setRecentlyCompletedId(null), 2500); 
       }
     }
-  }, [gameState, levelTasks]);
+  }, [gameState, levelTasks, gameState.settings.soundEnabled]);
 
   // Perform Batch Rename
   const executeBatchRename = () => {
@@ -330,7 +352,7 @@ const App: React.FC = () => {
 
       if (newNames.length !== targets.length) {
           setGameState(prev => ({ ...prev, notification: `Error: Line count mismatch (${newNames.length} vs ${targets.length})` }));
-          playFailureSound();
+          playFailureSound(gameState.settings.soundEnabled);
           return;
       }
 
@@ -511,7 +533,7 @@ const App: React.FC = () => {
                     inputBuffer: '',
                     notification: 'Directory not found'
                 }));
-                playFailureSound();
+                playFailureSound(gameState.settings.soundEnabled);
             }
 
         } else if (key === 'Escape') {
@@ -540,7 +562,7 @@ const App: React.FC = () => {
                 inputBuffer: '',
                 notification: error
             }));
-            playFailureSound();
+            playFailureSound(gameState.settings.soundEnabled);
         } else {
             setGameState(prev => ({
                 ...prev,
@@ -558,7 +580,7 @@ const App: React.FC = () => {
     } else if (key.length === 1) {
         setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
     }
-  }, [gameState, fuzzyResults, activeItem, sortedItems]);
+  }, [gameState, fuzzyResults, activeItem, sortedItems, gameState.settings.soundEnabled]);
 
   // Main Key Handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -607,13 +629,21 @@ const App: React.FC = () => {
             });
             const deletedCount = gameState.pendingDeleteIds.length;
             
+            // Re-calculate derived items to find new cursor index
+            // We need to look at what remains.
+            const newDir = getNodeByPath(newFS, gameState.currentPath);
+            const newChildren = newDir?.children || [];
+            
+            // Keep cursor in bounds
+            const newIndex = Math.max(0, Math.min(gameState.cursorIndex, newChildren.length - 1));
+
             setGameState(prev => ({
                 ...prev,
                 fs: newFS,
                 mode: 'normal',
                 pendingDeleteIds: [],
                 selectedIds: [],
-                cursorIndex: 0, 
+                cursorIndex: newIndex, 
                 notification: `Deleted ${deletedCount} item(s)`
             }));
         } else {
@@ -738,7 +768,7 @@ const App: React.FC = () => {
                   const error = isProtected(t, gameState.levelIndex, 'rename');
                   if (error) {
                       setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
-                      playFailureSound();
+                      playFailureSound(gameState.settings.soundEnabled);
                       return;
                   }
                }
@@ -775,7 +805,7 @@ const App: React.FC = () => {
                   const error = isProtected(t, gameState.levelIndex, 'delete');
                   if (error) {
                       setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
-                      playFailureSound();
+                      playFailureSound(gameState.settings.soundEnabled);
                       return;
                   }
               }
@@ -820,7 +850,7 @@ const App: React.FC = () => {
                   const error = isProtected(t, gameState.levelIndex, 'cut');
                   if (error) {
                       setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
-                      playFailureSound();
+                      playFailureSound(gameState.settings.soundEnabled);
                       return;
                   }
               }
@@ -873,6 +903,14 @@ const App: React.FC = () => {
 
       case 'H':
          setGameState(prev => ({ ...prev, showHint: !prev.showHint }));
+         break;
+
+      case 'm':
+         setGameState(prev => ({ 
+             ...prev, 
+             settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
+             notification: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`
+         }));
          break;
     }
   }, [gameState, sortedItems, activeItem, handleInputMode, allTasksComplete, handleNextLevel, gameCompleted]);

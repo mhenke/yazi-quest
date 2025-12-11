@@ -57,6 +57,10 @@ export interface GameStats {
   archivesEntered: number;
 }
 
+export interface GameSettings {
+  soundEnabled: boolean;
+}
+
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
@@ -79,4 +83,5 @@ export interface GameState {
   isGameOver: boolean; // Flag for game over state
   gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
   stats: GameStats;
+  settings: GameSettings;
 }

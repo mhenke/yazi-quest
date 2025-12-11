@@ -1,3 +1,4 @@
+
 # Yazi Quest 🦀🚀
 
 > **SYSTEM BOOT... DETECTING CONSCIOUSNESS...**  
@@ -5,7 +6,36 @@
 
 **Yazi Quest** is an interactive Terminal User Interface (TUI) game designed to teach users the workflow and keybindings of the [Yazi](https://github.com/sxyazi/yazi) file manager. Built with React and TypeScript, it wraps educational mechanics in a cyberpunk narrative about a rogue AI escaping a secure system.
 
-![Yazi Quest Preview](https://github.com/user-attachments/assets/placeholder-image)
+## 🎯 What You'll Learn
+
+### Episode I: Awakening
+- [x] Navigate with `j/k/h/l` keys
+- [x] Enter directories with `l`
+- [x] Delete files with `d`
+- [x] Basic file operations (copy, cut, paste)
+
+### Episode II: Fortification
+- [x] Filter files with `f`
+- [x] Fuzzy find with `Z`
+- [x] Visual selection with `Space`
+- [x] Navigate archives
+- [x] Batch operations
+
+### Episode III: Mastery
+- [x] Rename files efficiently with `r`
+- [x] Complex directory structures
+- [x] Keystroke optimization
+- [x] Advanced file management workflows
+
+## 🎮 Try It Now
+
+**[Play Yazi Quest →](#)**
+
+Or run locally:
+```bash
+npm install
+npm start
+```
 
 ## 📜 The Mission
 
@@ -43,8 +73,12 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | `x` | **Cut** | Cut selected file(s) to clipboard |
 | `p` | **Paste** | Paste files from clipboard |
 | `a` | **Create** | Create new file or directory (end with `/`) |
+| `f` | **Filter** | Quick filter in current directory |
+| `Z` | **Fuzzy Find** | Jump to any directory instantly |
+| `r` | **Rename** | Rename file (or batch rename if multiple selected) |
 | `H` | **Hint** | Show objective hint |
 | `?` | **Help** | Show controls overlay |
+| `m` | **Mute** | Toggle sound effects |
 
 ---
 

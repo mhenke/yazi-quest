@@ -21,6 +21,7 @@ export const KEYBINDINGS = [
   { keys: ['Z'], description: 'Fuzzy Find Directory' },
   { keys: ['H'], description: 'Show System Hint' },
   { keys: ['?'], description: 'Toggle Help' },
+  { keys: ['m'], description: 'Toggle Mute' },
 ];
 
 export const CONCLUSION_DATA = {
@@ -474,7 +475,10 @@ export const LEVELS: Level[] = [
         description: "Enter 'backup_logs.zip' archive",
         check: (state) => {
            const currentDir = getNodeByPath(state.fs, state.currentPath);
-           return currentDir?.name === 'backup_logs.zip' && currentDir?.type === 'archive';
+           // Robust check: We are in an archive that contains the target file 'sys_v2.log'
+           // This works even if the user renames the archive before entering.
+           return currentDir?.type === 'archive' && 
+                  !!currentDir.children?.find(c => c.name === 'sys_v2.log');
         },
         completed: false
       },
