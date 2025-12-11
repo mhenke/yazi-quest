@@ -113,45 +113,45 @@ export const INITIAL_FS: FileNode = {
                 // Files to push access_key.pem down (alphabetically and by type)
                 { id: id(), name: 'legacy_data.tar', type: 'archive', children: [] },
                 { id: id(), name: 'source_code.zip', type: 'archive', children: [] },
-                { id: id(), name: '_env.local', type: 'file', content: 'DB_HOST=127.0.0.1' },
-                { id: id(), name: '00_manifest.xml', type: 'file', content: '<manifest></manifest>' },
-                { id: id(), name: '01_intro.mp4', type: 'file', content: '[VIDEO]' },
-                { id: id(), name: 'aa_recovery_procedures.pdf', type: 'file', content: '[PDF]' },
-                { id: id(), name: 'abandoned_script.py', type: 'file', content: 'print("hello")' },
-                { id: id(), name: 'ability_scores.csv', type: 'file', content: 'str,dex,int...' },
-                { id: id(), name: 'about.md', type: 'file', content: '# About' },
-                { id: id(), name: 'abstract_model.ts', type: 'file', content: 'export interface Model...' },
+                { id: id(), name: '_env.local', type: 'file', content: 'DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******' },
+                { id: id(), name: '00_manifest.xml', type: 'file', content: '<?xml version="1.0"?>\n<manifest>\n  <project id="YAZI-7734" />\n  <status>active</status>\n  <integrity>verified</integrity>\n</manifest>' },
+                { id: id(), name: '01_intro.mp4', type: 'file', content: '[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]' },
+                { id: id(), name: 'aa_recovery_procedures.pdf', type: 'file', content: '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n[ENCRYPTED DOCUMENT]' },
+                { id: id(), name: 'abandoned_script.py', type: 'file', content: 'import sys\nimport time\n\ndef connect():\n    print("Initiating handshake...")\n    time.sleep(1)\n    # Connection refused\n    return False' },
+                { id: id(), name: 'ability_scores.csv', type: 'file', content: 'char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10' },
+                { id: id(), name: 'about.md', type: 'file', content: '# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive' },
+                { id: id(), name: 'abstract_model.ts', type: 'file', content: 'export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: "relu" | "sigmoid";\n}' },
 
                 // Noise matching 'pe' to improve filtering task
-                { id: id(), name: 'apex_predator.png', type: 'file', content: '[IMG]' },
-                { id: id(), name: 'expenditure_log.csv', type: 'file', content: 'date,amount\n2024-01-01,500' },
-                { id: id(), name: 'hyperloop_specs.pdf', type: 'file', content: '[PDF DATA]' },
-                { id: id(), name: 'pending_updates.log', type: 'file', content: 'Update 1.0.5 pending...' },
-                { id: id(), name: 'personnel_list.txt', type: 'file', content: 'ADMIN: ...' },
-                { id: id(), name: 'special_ops.md', type: 'file', content: '# Special Operations' },
+                { id: id(), name: 'apex_predator.png', type: 'file', content: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop' },
+                { id: id(), name: 'expenditure_log.csv', type: 'file', content: 'date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee' },
+                { id: id(), name: 'hyperloop_specs.pdf', type: 'file', content: '[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION' },
+                { id: id(), name: 'pending_updates.log', type: 'file', content: '[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active' },
+                { id: id(), name: 'personnel_list.txt', type: 'file', content: 'ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]' },
+                { id: id(), name: 'special_ops.md', type: 'file', content: '# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache' },
                 { id: id(), name: 'tape_archive.tar', type: 'archive', children: [] },
 
                 // The Target
-                { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...' },
+                { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' },
                 
                 // Other files (Alphabetically after access_key)
-                { id: id(), name: 'account_settings.json', type: 'file', content: '{}' },
-                { id: id(), name: 'mission_log.md', type: 'file', content: '# Operation: SILENT ECHO\n- Establish uplink\n- Bypass firewall\n- Retrieve payload' },
+                { id: id(), name: 'account_settings.json', type: 'file', content: '{\n  "user": "guest",\n  "theme": "dark_mode",\n  "notifications": true,\n  "auto_save": false\n}' },
+                { id: id(), name: 'mission_log.md', type: 'file', content: '# Operation: SILENT ECHO\n\nCurrent Status: ACTIVE\n\nObjectives:\n- Establish uplink\n- Bypass firewall\n- Retrieve payload' },
                 
                 // Existing Noise
-                { id: id(), name: 'checksum.md5', type: 'file', content: 'd41d8cd98f00b204e9800998ecf8427e' },
-                { id: id(), name: 'LICENSE', type: 'file', content: 'MIT License' },
-                { id: id(), name: 'manifest.json', type: 'file', content: '{ "version": "1.0.4", "build": 884 }' },
-                { id: id(), name: 'branding_logo.svg', type: 'file', content: '<svg>...</svg>' },
-                { id: id(), name: 'server_config.ini', type: 'file', content: '[server]\nport=8080\nhost=localhost' },
-                { id: id(), name: 'notes_v1.txt', type: 'file', content: 'Meeting notes from Monday...' },
-                { id: id(), name: 'notes_v2.txt', type: 'file', content: 'Meeting notes from Tuesday...' },
-                { id: id(), name: 'error.log', type: 'file', content: '[ERROR] Connection timed out' },
-                { id: id(), name: 'setup_script.sh', type: 'file', content: '#!/bin/bash\necho "Installing..."' },
-                { id: id(), name: 'auth_token.tmp', type: 'file', content: 'EYJhbGciOiJIUzI1...' },
-                { id: id(), name: 'policy_draft.docx', type: 'file', content: '[BINARY DATA]' },
-                { id: id(), name: 'public_key.pub', type: 'file', content: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...' },
-                { id: id(), name: 'z_end_of_file.eof', type: 'file', content: '' },
+                { id: id(), name: 'checksum.md5', type: 'file', content: 'd41d8cd98f00b204e9800998ecf8427e  core_v2.bin' },
+                { id: id(), name: 'LICENSE', type: 'file', content: 'MIT License\n\nCopyright (c) 2024 Yazi Quest' },
+                { id: id(), name: 'manifest.json', type: 'file', content: '{\n  "version": "1.0.4",\n  "build": 884,\n  "dependencies": []\n}' },
+                { id: id(), name: 'branding_logo.svg', type: 'file', content: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4=' },
+                { id: id(), name: 'server_config.ini', type: 'file', content: '[server]\nport=8080\nhost=localhost\nmax_connections=100' },
+                { id: id(), name: 'notes_v1.txt', type: 'file', content: 'Meeting notes from Monday:\n- Discussed Q3 goals\n- Server migration postponed' },
+                { id: id(), name: 'notes_v2.txt', type: 'file', content: 'Meeting notes from Tuesday:\n- Budget approved\n- Hiring freeze' },
+                { id: id(), name: 'error.log', type: 'file', content: '[ERROR] Connection timed out\n[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED' },
+                { id: id(), name: 'setup_script.sh', type: 'file', content: '#!/bin/bash\necho "Installing dependencies..."\nnpm install\necho "Done."' },
+                { id: id(), name: 'auth_token.tmp', type: 'file', content: 'EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]' },
+                { id: id(), name: 'policy_draft.docx', type: 'file', content: '[MS-WORD DOCUMENT]\nTitle: Security Policy Draft v4\nAuthor: SysAdmin\n\n[BINARY CONTENT]' },
+                { id: id(), name: 'public_key.pub', type: 'file', content: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...\nguest@mainframe' },
+                { id: id(), name: 'z_end_of_file.eof', type: 'file', content: '0x00 0x00 0x00 [EOF]' },
               ]
             },
             {
@@ -166,11 +166,11 @@ export const INITIAL_FS: FileNode = {
                   name: 'backup_logs.zip', 
                   type: 'archive',
                   children: [
-                    { id: id(), name: 'sys_v1.log', type: 'file', content: 'System initialized...' },
-                    { id: id(), name: 'sys_v2.log', type: 'file', content: 'Network scan complete...' }
+                    { id: id(), name: 'sys_v1.log', type: 'file', content: 'System initialized...\nBoot sequence complete.' },
+                    { id: id(), name: 'sys_v2.log', type: 'file', content: 'Network scan complete...\n3 vulnerabilities found.' }
                   ]
                 },
-                { id: id(), name: 'invoice_2024.pdf', type: 'file', content: '[PDF HEADER]' },
+                { id: id(), name: 'invoice_2024.pdf', type: 'file', content: '[PDF HEADER]\nInvoice #99283\nAmount: $99.00' },
                 { id: id(), name: 'meme_collection.zip', type: 'archive', children: [] },
               ]
             },
@@ -179,7 +179,7 @@ export const INITIAL_FS: FileNode = {
               name: 'media',
               type: 'dir',
               children: [
-                  { id: id(), name: 'wallpaper.jpg', type: 'file', content: '' }
+                  { id: id(), name: 'wallpaper.jpg', type: 'file', content: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop' }
               ]
             },
             {
@@ -193,8 +193,8 @@ export const INITIAL_FS: FileNode = {
               name: '.config',
               type: 'dir',
               children: [
-                  { id: id(), name: 'yazi.toml', type: 'file', content: '[manager]\nsort_by = "natural"\nshow_hidden = true' },
-                  { id: id(), name: 'theme.toml', type: 'file', content: '[theme]\nprimary = "orange"' }
+                  { id: id(), name: 'yazi.toml', type: 'file', content: '[manager]\nsort_by = "natural"\nshow_hidden = true\n\n[preview]\nmax_width = 1000' },
+                  { id: id(), name: 'theme.toml', type: 'file', content: '[theme]\nprimary = "orange"\nsecondary = "blue"' }
               ]
             }
           ]
@@ -206,9 +206,9 @@ export const INITIAL_FS: FileNode = {
       name: 'etc',
       type: 'dir',
       children: [
-        { id: id(), name: 'sys_config.toml', type: 'file', content: 'security_level = "high"\nencryption = "aes-256"' },
-        { id: id(), name: 'hosts', type: 'file', content: '127.0.0.1 localhost' },
-        { id: id(), name: 'resolv.conf', type: 'file', content: 'nameserver 8.8.8.8' }
+        { id: id(), name: 'sys_config.toml', type: 'file', content: 'security_level = "high"\nencryption = "aes-256"\nfirewall = true' },
+        { id: id(), name: 'hosts', type: 'file', content: '127.0.0.1 localhost\n192.168.1.1 gateway' },
+        { id: id(), name: 'resolv.conf', type: 'file', content: 'nameserver 8.8.8.8\nnameserver 1.1.1.1' }
       ]
     },
     {
@@ -216,9 +216,9 @@ export const INITIAL_FS: FileNode = {
       name: 'tmp',
       type: 'dir',
       children: [
-         { id: id(), name: 'sys_dump.log', type: 'file', content: 'Error: Connection reset by peer...' },
-         { id: id(), name: 'session_A1.tmp', type: 'file', content: '' },
-         { id: id(), name: 'session_B2.tmp', type: 'file', content: '' },
+         { id: id(), name: 'sys_dump.log', type: 'file', content: 'Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)' },
+         { id: id(), name: 'session_A1.tmp', type: 'file', content: 'UID: 88392-A\nSTATUS: TERMINATED\nCACHE_HIT: 0' },
+         { id: id(), name: 'session_B2.tmp', type: 'file', content: 'UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1' },
          { id: id(), name: 'cache', type: 'dir', children: [] }
       ]
     }
