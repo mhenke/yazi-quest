@@ -253,7 +253,7 @@ export const LEVELS: Level[] = [
     title: "Protocol Design",
     description: "Establish new network protocols. Generate the directory structure and configuration files.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Create dir 'protocols/'. Enter it. Create 'uplink_v1.conf' and 'uplink_v2.conf'.",
+    hint: "Press 'a' and type 'protocols/' (end with / to create dir). Enter it. Press 'a' to create 'uplink_v1.conf', then 'uplink_v2.conf'.",
     tasks: [
       {
         id: 'create-1',
@@ -473,18 +473,8 @@ export const LEVELS: Level[] = [
         id: 'archive-1',
         description: "Enter 'backup_logs.zip' archive",
         check: (state) => {
-          // Check if we are currently looking inside the zip (parent is archive)
-          const parent = getNodeByPath(state.fs, state.currentPath.slice(0, -1));
-          const current = getNodeByPath(state.fs, state.currentPath);
-          
-          // Logic: Either the current path points to the zip node itself (if it was treated as a dir) 
-          // OR the "parent" of the current view is the zip file.
-          // Based on app logic, when entering archive, currentPath includes the archive ID.
-          // So checking if the last ID in path is the archive's ID.
-          const zip = findNodeByName(state.fs, 'backup_logs.zip');
-          const isInside = state.currentPath[state.currentPath.length - 1] === zip?.id;
-          
-          return isInside || state.stats.archivesEntered >= 1;
+           const currentDir = getNodeByPath(state.fs, state.currentPath);
+           return currentDir?.name === 'backup_logs.zip' && currentDir?.type === 'archive';
         },
         completed: false
       },
@@ -505,7 +495,7 @@ export const LEVELS: Level[] = [
     title: "Live Migration",
     description: "Transfer critical files to workspace for modification, then return them safely.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Move 'access_key.pem' and 'mission_log.md' to workspace. Then move them back to datastore.",
+    hint: "Mark 'access_key.pem' & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
     timeLimit: 120,
     tasks: [
       {
