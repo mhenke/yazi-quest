@@ -507,42 +507,8 @@ export default function App() {
     }
 
     // --- Input Modes ---
-    if (['input-file', 'input-dir', 'rename', 'fuzzy-find'].includes(gameState.mode)) {
-        if (key === 'Escape') {
-            e.preventDefault();
-            setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', notification: null }));
-            return;
-        }
-        if (key === 'Enter') {
-            e.preventDefault();
-            handleInputSubmit();
-            return;
-        }
-        if (key === 'Backspace') {
-            e.preventDefault();
-            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
-            return;
-        }
-        if (key.length === 1) {
-            e.preventDefault(); // Stop browser shortcuts like Quick Find (/) or Search (')
-            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
-            return;
-        }
-        return;
-    }
-
-    // --- Filter Mode Logic (Snippet Integration) ---
-    if (gameState.mode === 'filter') {
-        if (key === 'Escape' || key === 'Enter') {
-             e.preventDefault();
-             setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
-        } else if (key === 'Backspace') {
-             e.preventDefault();
-             setGameState(prev => ({ ...prev, filter: prev.filter.slice(0, -1), cursorIndex: 0 }));
-        } else if (key.length === 1) {
-             e.preventDefault();
-             setGameState(prev => ({ ...prev, filter: prev.filter + key, cursorIndex: 0 }));
-        }
+    // IGNORE global key handling for these modes, as we use native <input> now
+    if (['input-file', 'input-dir', 'rename', 'fuzzy-find', 'filter'].includes(gameState.mode)) {
         return;
     }
 
@@ -734,14 +700,47 @@ export default function App() {
              level={currentLevel}
            />
 
-           {/* Input Overlay */}
+           {/* Input Overlay with NATIVE INPUT for cursor navigation */}
            {['input-file', 'input-dir', 'rename', 'filter', 'fuzzy-find'].includes(gameState.mode) && (
              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black border border-green-500 px-4 py-2 shadow-2xl flex items-center gap-2 z-20 w-1/2">
                 <span className="text-green-500 font-bold uppercase text-xs">{gameState.mode}:</span>
-                <span className="text-white font-mono flex-1 outline-none relative">
-                   {gameState.mode === 'filter' ? gameState.filter : gameState.inputBuffer}
-                   <span className="animate-pulse bg-white/50 w-2 h-4 inline-block align-middle ml-1"></span>
-                </span>
+                <input 
+                    type="text"
+                    autoFocus
+                    className="bg-transparent text-white font-mono flex-1 outline-none min-w-0"
+                    value={gameState.mode === 'filter' ? gameState.filter : gameState.inputBuffer}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (gameState.mode === 'filter') {
+                             setGameState(prev => ({ ...prev, filter: val, cursorIndex: 0 }));
+                        } else {
+                             setGameState(prev => ({ ...prev, inputBuffer: val }));
+                        }
+                    }}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                        
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (gameState.mode === 'filter') {
+                                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
+                            } else {
+                                 handleInputSubmit();
+                            }
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            if (gameState.mode === 'filter') {
+                                 setGameState(prev => ({ ...prev, filter: '', mode: 'normal', notification: 'Filter Cleared' }));
+                            } else {
+                                 setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', notification: null }));
+                            }
+                        }
+                    }}
+                    onBlur={(e) => {
+                        // Optional: Keep focus or let user click away (like on hints)
+                        // We allow blur so user can click other UI elements
+                    }}
+                />
              </div>
            )}
        </div>
