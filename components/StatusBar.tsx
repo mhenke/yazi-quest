@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { GameState, Level } from '../types';
 import { Scissors, Copy, Filter } from 'lucide-react';
+import { resolvePath } from '../utils/fsHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -63,7 +63,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
       {/* 3. File Info / Path */}
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
         <span className="truncate mr-4">
-            {state.currentPath.length > 1 ? `/${state.currentPath.slice(1).join('/')}` : '/'}
+            {resolvePath(state.fs, state.currentPath)}
         </span>
         
         {/* Quest Info embedded in status bar */}

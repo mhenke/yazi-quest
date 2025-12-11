@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
-import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, findNodeByName, isProtected, getAllDirectories } from './utils/fsHelpers';
+import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, findNodeByName, isProtected, getAllDirectories, resolvePath } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
@@ -617,7 +617,7 @@ export default function App() {
              items={visibleItems} 
              isActive={true} 
              cursorIndex={gameState.cursorIndex} 
-             title={`/${gameState.currentPath.slice(1).join('/')}`}
+             title={resolvePath(gameState.fs, gameState.currentPath)}
              selectedIds={gameState.selectedIds}
              clipboard={gameState.clipboard}
              className="w-1/3 md:w-1/4 bg-zinc-900/80 text-zinc-300 border-r border-zinc-800"

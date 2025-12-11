@@ -246,3 +246,26 @@ export const isProtected = (node: FileNode, levelIndex: number, action: 'delete'
 
   return null;
 };
+
+// Converts a list of IDs to a readable path string (e.g., /home/user/docs)
+export const resolvePath = (root: FileNode, pathIds: string[]): string => {
+  if (!pathIds.length || pathIds[0] !== root.id) return '/';
+  if (pathIds.length === 1) return '/';
+
+  const names: string[] = [];
+  let current = root;
+
+  for (let i = 1; i < pathIds.length; i++) {
+    const nextId = pathIds[i];
+    const child = current.children?.find(c => c.id === nextId);
+    if (child) {
+      names.push(child.name);
+      current = child;
+    } else {
+      names.push('?');
+      break;
+    }
+  }
+
+  return '/' + names.join('/');
+};
