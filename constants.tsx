@@ -112,6 +112,19 @@ export const INITIAL_FS: FileNode = {
               children: [
                 { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...' },
                 { id: id(), name: 'mission_log.md', type: 'file', content: '# Operation: SILENT ECHO\n- Establish uplink\n- Bypass firewall\n- Retrieve payload' },
+                // Noise files for Level 6 Filtering Task
+                { id: id(), name: 'checksum.md5', type: 'file', content: 'd41d8cd98f00b204e9800998ecf8427e' },
+                { id: id(), name: 'LICENSE', type: 'file', content: 'MIT License' },
+                { id: id(), name: 'manifest.json', type: 'file', content: '{ "version": "1.0.4", "build": 884 }' },
+                { id: id(), name: 'branding_logo.svg', type: 'file', content: '<svg>...</svg>' },
+                { id: id(), name: 'server_config.ini', type: 'file', content: '[server]\nport=8080\nhost=localhost' },
+                { id: id(), name: 'notes_v1.txt', type: 'file', content: 'Meeting notes from Monday...' },
+                { id: id(), name: 'notes_v2.txt', type: 'file', content: 'Meeting notes from Tuesday...' },
+                { id: id(), name: 'error.log', type: 'file', content: '[ERROR] Connection timed out' },
+                { id: id(), name: 'setup_script.sh', type: 'file', content: '#!/bin/bash\necho "Installing..."' },
+                { id: id(), name: 'auth_token.tmp', type: 'file', content: 'EYJhbGciOiJIUzI1...' },
+                { id: id(), name: 'policy_draft.docx', type: 'file', content: '[BINARY DATA]' },
+                { id: id(), name: 'public_key.pub', type: 'file', content: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...' },
               ]
             },
             {
@@ -130,13 +143,17 @@ export const INITIAL_FS: FileNode = {
                     { id: id(), name: 'sys_v2.log', type: 'file', content: 'Network scan complete...' }
                   ]
                 },
+                { id: id(), name: 'invoice_2024.pdf', type: 'file', content: '[PDF HEADER]' },
+                { id: id(), name: 'meme_collection.zip', type: 'archive', children: [] },
               ]
             },
             {
               id: 'pics',
               name: 'media',
               type: 'dir',
-              children: []
+              children: [
+                  { id: id(), name: 'wallpaper.jpg', type: 'file', content: '' }
+              ]
             },
             {
               id: 'workspace',
@@ -162,7 +179,9 @@ export const INITIAL_FS: FileNode = {
       name: 'etc',
       type: 'dir',
       children: [
-        { id: id(), name: 'sys_config.toml', type: 'file', content: 'security_level = "high"\nencryption = "aes-256"' }
+        { id: id(), name: 'sys_config.toml', type: 'file', content: 'security_level = "high"\nencryption = "aes-256"' },
+        { id: id(), name: 'hosts', type: 'file', content: '127.0.0.1 localhost' },
+        { id: id(), name: 'resolv.conf', type: 'file', content: 'nameserver 8.8.8.8' }
       ]
     },
     {
@@ -171,6 +190,8 @@ export const INITIAL_FS: FileNode = {
       type: 'dir',
       children: [
          { id: id(), name: 'sys_dump.log', type: 'file', content: 'Error: Connection reset by peer...' },
+         { id: id(), name: 'session_A1.tmp', type: 'file', content: '' },
+         { id: id(), name: 'session_B2.tmp', type: 'file', content: '' },
          { id: id(), name: 'cache', type: 'dir', children: [] }
       ]
     }
@@ -333,34 +354,27 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: "Intelligence Gathering",
-    description: "Scan the filesystem for sensitive data. Use filter protocol to locate classified files.",
-    initialPath: ['root', 'home', 'user'],
-    hint: "Press 'f' to activate filter mode. Type 'pem' to isolate certificate files. Navigate to the result.",
+    title: "Intelligence Analysis",
+    description: "Scan the filesystem for sensitive data. Locate the key using filter, then rename it to secure the asset.",
+    initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
+    hint: "Press 'f', type 'pem'. Press Enter to select/close filter. Press 'r' to rename to 'access_key_secure.pem'.",
     tasks: [
       {
         id: 'search-1',
-        description: "Activate filter and search for 'pem'",
-        // Allows passing even if user pressed Enter and is now in normal mode with filter active
+        description: "Filter for 'pem'",
+        // Check if filter contains pem.
         check: (state) => (state.mode === 'filter' || state.filter !== '') && state.filter.toLowerCase().includes('pem'),
         completed: false
       },
       {
         id: 'search-2',
-        description: "Navigate to 'access_key.pem' while filter is active",
+        description: "Rename to 'access_key_secure.pem'",
         check: (state) => {
-          // 1. Filter must be active (user has typed something and hasn't cleared it)
-          if (!state.filter || state.filter.length === 0) return false;
-
-          // 2. Determine what is visible under the current filter
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const visibleItems = currentDir?.children?.filter(c => 
-            c.name.toLowerCase().includes(state.filter.toLowerCase())
-          ) || [];
-
-          // 3. Check if the item under the cursor is the target
-          const activeItem = visibleItems[state.cursorIndex];
-          return activeItem?.name === 'access_key.pem';
+          // Check if original is gone and new name exists
+          const oldFile = currentDir?.children?.find(c => c.name === 'access_key.pem');
+          const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
+          return !oldFile && !!newFile;
         },
         completed: false
       }
@@ -372,7 +386,7 @@ export const LEVELS: Level[] = [
     title: "Deep Scan Protocol",
     description: "Bypass sequential navigation. Quantum jump to target locations.",
     initialPath: ['root', 'home', 'user', 'docs', 'datastore'],
-    hint: "Press 'Z' for fuzzy finder. Type 'tmp' to teleport instantly. Then use 'Z' again to jump to 'etc'.",
+    hint: "Press 'Shift+Z' for fuzzy finder. Type 'tmp' to teleport instantly. Then use 'Shift+Z' again to jump to 'etc'.",
     tasks: [
       {
         id: 'fuzzy-1',
@@ -436,7 +450,8 @@ export const LEVELS: Level[] = [
         description: "Create 'vault' in datastore and archive 'access_key.pem'",
         check: (state) => {
           const vault = findNodeByName(state.fs, 'vault');
-          return !!vault?.children?.find(c => c.name === 'access_key.pem');
+          // Since we renamed it in L6, check for secure name OR original name (flexibility)
+          return !!vault?.children?.find(c => c.name === 'access_key.pem' || c.name === 'access_key_secure.pem');
         },
         completed: false
       }
@@ -506,15 +521,15 @@ export const LEVELS: Level[] = [
     title: "Live Migration",
     description: "Transfer critical files to workspace for modification, then return them safely.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Mark 'access_key.pem' & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
+    hint: "Mark 'access_key_secure.pem' (or original) & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
     timeLimit: 120,
     tasks: [
       {
         id: 'migration-1',
-        description: "Move 'access_key.pem' and 'mission_log.md' to workspace",
+        description: "Move key and 'mission_log.md' to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
-          return ws?.children?.some(c => c.name === 'access_key.pem') &&
+          return ws?.children?.some(c => c.name.includes('access_key')) &&
                  ws?.children?.some(c => c.name === 'mission_log.md');
         },
         completed: false
@@ -525,9 +540,9 @@ export const LEVELS: Level[] = [
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
-          const inDocs = docs?.children?.some(c => c.name === 'access_key.pem') &&
+          const inDocs = docs?.children?.some(c => c.name.includes('access_key')) &&
                          docs?.children?.some(c => c.name === 'mission_log.md');
-          const notInWs = !ws?.children?.some(c => c.name === 'access_key.pem' || c.name === 'mission_log.md');
+          const notInWs = !ws?.children?.some(c => c.name.includes('access_key') || c.name === 'mission_log.md');
           return inDocs && notInWs;
         },
         completed: false
@@ -562,8 +577,7 @@ export const LEVELS: Level[] = [
         description: "Rename 'model.rs' to 'kernel.so'",
         check: (state) => {
           const sys = findNodeByName(state.fs, 'systemd-core');
-          const weights = sys?.children?.find(c => c.name === 'weights');
-          return !!weights?.children?.find(c => c.name === 'kernel.so') &&
+          return !!sys?.children?.find(c => c.name === 'kernel.so') &&
                  state.stats.renames >= 2;
         },
         completed: false

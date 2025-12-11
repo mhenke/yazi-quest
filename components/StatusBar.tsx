@@ -1,15 +1,16 @@
 import React from 'react';
 import { GameState, Level } from '../types';
-import { Scissors, Copy, Filter } from 'lucide-react';
+import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
 import { resolvePath } from '../utils/fsHelpers';
 
 interface StatusBarProps {
   state: GameState;
   level: Level;
   allTasksComplete: boolean;
+  onNextLevel: () => void;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComplete }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComplete, onNextLevel }) => {
   // Yazi Style Colors
   // Normal: Blue/Cyan
   // Input: Green
@@ -96,8 +97,29 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
 
       {/* 4. Timer / Metrics (Right Aligned) */}
       <div className="flex bg-zinc-800">
+        
+        {/* Level Complete Trigger */}
+        {allTasksComplete ? (
+             <button 
+                onClick={onNextLevel}
+                className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
+            >
+                <span className="hidden sm:inline">LEVEL COMPLETE</span>
+                <span className="sm:hidden">NEXT</span>
+                <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                    SHIFT <ArrowRight size={8} /> ENTER
+                </span>
+            </button>
+        ) : (
+            state.notification && (
+                <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate">
+                {state.notification}
+                </div>
+            )
+        )}
+
         {/* Show Timer if active */}
-        {state.timeLeft !== null && !showKeystrokes && (
+        {state.timeLeft !== null && !showKeystrokes && !allTasksComplete && (
             <div className={`px-4 py-0.5 font-bold border-l border-zinc-700 flex items-center gap-2 transition-colors ${
               isLowTime 
                 ? 'bg-red-600 text-white animate-pulse' 
@@ -114,12 +136,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
                  <span className="hidden sm:inline text-[10px] opacity-70">KEYS:</span>
                  <span className="font-mono text-sm">{state.keystrokes}/{level.maxKeystrokes}</span>
              </div>
-        )}
-
-        {state.notification && (
-            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate">
-            {state.notification}
-            </div>
         )}
       </div>
 

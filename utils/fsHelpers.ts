@@ -225,8 +225,13 @@ export const isProtected = (node: FileNode, levelIndex: number, action: 'delete'
   // access_key.pem
   if (name === 'access_key.pem') {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
-      // Allowed cut/rename in L9 (Live Migration) and L10 (Rollback)
-      if ((action === 'cut' || action === 'rename') && levelIndex !== 8 && levelIndex !== 9) return "Asset locked. Modification not authorized.";
+      // Allowed cut/rename in:
+      // L6 (Index 5) - Secure Asset
+      // L9 (Index 8) - Neural Construction
+      // L11 (Index 10) - Live Migration
+      if ((action === 'cut' || action === 'rename') && ![5, 8, 10].includes(levelIndex)) {
+          return "Asset locked. Modification not authorized.";
+      }
   }
 
   // mission_log.md

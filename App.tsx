@@ -96,6 +96,7 @@ export default function App() {
 
   const currentLevel = LEVELS[gameState.levelIndex];
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
+  const allTasksComplete = currentLevel.tasks.every(t => t.completed);
 
   // --- Derived State Helpers ---
   const getCurrentDir = () => getNodeByPath(gameState.fs, gameState.currentPath);
@@ -145,16 +146,8 @@ export default function App() {
             notification: "Objective Complete" 
         }));
     }
-
-    const allComplete = tasks.every(t => t.completed);
     
-    // Advance Level if all complete
-    if (allComplete) {
-       const timer = setTimeout(() => {
-          advanceLevel();
-       }, 500); // Small delay for effect
-       return () => clearTimeout(timer);
-    }
+    // Auto-advance removed. User must trigger transition via UI/Shortcut.
   }, [gameState.fs, gameState.currentPath, gameState.selectedIds, gameState.mode, gameState.levelIndex, gameState.filter, gameState.stats]);
 
   const advanceLevel = () => {
@@ -200,7 +193,7 @@ export default function App() {
 
   // --- Timer ---
   useEffect(() => {
-    if (!gameState.timeLeft || gameState.isGameOver || gameState.showEpisodeIntro || gameState.showHelp) return;
+    if (!gameState.timeLeft || gameState.isGameOver || gameState.showEpisodeIntro || gameState.showHelp || allTasksComplete) return;
     
     const interval = setInterval(() => {
         setGameState(prev => {
@@ -211,7 +204,7 @@ export default function App() {
         });
     }, 1000);
     return () => clearInterval(interval);
-  }, [gameState.timeLeft, gameState.isGameOver, gameState.showEpisodeIntro, gameState.showHelp]);
+  }, [gameState.timeLeft, gameState.isGameOver, gameState.showEpisodeIntro, gameState.showHelp, allTasksComplete]);
 
   // --- Action Handlers ---
   const navigate = (dir: number) => {
@@ -494,6 +487,15 @@ export default function App() {
         return;
     }
 
+    // --- Global: Level Advance ---
+    if (key === 'Enter' && e.shiftKey) {
+        if (allTasksComplete) {
+            e.preventDefault();
+            advanceLevel();
+            return;
+        }
+    }
+
     // --- Delete Confirmation Mode ---
     if (gameState.mode === 'confirm-delete') {
         if (key === 'y' || key === 'Y' || key === 'Enter') {
@@ -614,7 +616,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, handleInputSubmit]);
+  }, [gameState, currentLevel, allTasksComplete, handleInputSubmit]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -745,7 +747,12 @@ export default function App() {
        </div>
 
        {/* Status Bar */}
-       <StatusBar state={gameState} level={currentLevel} allTasksComplete={false} />
+       <StatusBar 
+         state={gameState} 
+         level={currentLevel} 
+         allTasksComplete={allTasksComplete} 
+         onNextLevel={advanceLevel}
+       />
     </div>
   );
 }
