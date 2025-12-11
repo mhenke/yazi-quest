@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants';
@@ -16,23 +17,27 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
   const episodeIcons = [Zap, Shield, Crown];
 
-  // Derive Episode Data directly from Lore Constant
+  // Derive Episode Data based on episodeId property
   const episodes = EPISODE_LORE.map((lore, idx) => ({
     ...lore,
-    levels: levels.slice(idx * 5, (idx + 1) * 5),
+    levels: levels.filter(l => l.episodeId === lore.id),
     border: lore.color.replace('text-', 'border-') + '/30',
     bg: lore.color.replace('text-', 'bg-') + '/10',
     icon: episodeIcons[idx] || Shield
   }));
 
-  // Determine completion status based on levels per episode (5 levels per episode)
-  const ep1Complete = currentLevelIndex >= 5;
-  const ep2Complete = currentLevelIndex >= 10;
-  const ep3Complete = currentLevelIndex >= 15;
-  const completionStatus = [ep1Complete, ep2Complete, ep3Complete];
+  // Determine completion status
+  // Episode is complete if currentLevelIndex is past the last level of this episode
+  const completionStatus = episodes.map((ep) => {
+      const lastLevelOfEpisode = ep.levels[ep.levels.length - 1];
+      const lastLevelGlobalIdx = levels.indexOf(lastLevelOfEpisode);
+      return currentLevelIndex > lastLevelGlobalIdx;
+  });
   
-  // Determine current active episode index
-  const currentEpisodeIdx = Math.min(Math.floor(currentLevelIndex / 5), episodes.length - 1);
+  // Determine current active episode index based on currentLevelIndex
+  const currentLevel = levels[currentLevelIndex];
+  const currentEpisodeId = currentLevel ? currentLevel.episodeId : 1;
+  const currentEpisodeIdx = currentEpisodeId - 1;
 
   // Sync modal tab with current episode when opening
   useEffect(() => {
@@ -44,8 +49,9 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   const activeEpisode = episodes[activeTab] || episodes[0];
 
   const getEpisodeStatus = (tabIndex: number) => {
-    // If previous episode is done, this one is active. If this one is done, it's completed.
     const isThisComplete = completionStatus[tabIndex];
+    // If it's the first episode, active if not complete. 
+    // If not first, active if prev complete & this not complete.
     const isPrevComplete = tabIndex === 0 ? true : completionStatus[tabIndex - 1];
 
     if (isThisComplete) return 'completed';
@@ -78,20 +84,20 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
             <div className="flex flex-col justify-center h-full">
                  <div className="flex items-center gap-2 mb-1">
-                     <span className={`text-[10px] uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx].color}`}>
-                        {episodes[currentEpisodeIdx].shortTitle}
+                     <span className={`text-[10px] uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx]?.color}`}>
+                        {episodes[currentEpisodeIdx]?.shortTitle}
                      </span>
                  </div>
                  
-                 <div className="flex items-center h-4">
-                    {episodes[currentEpisodeIdx].levels.map((level, idx) => {
+                 <div className="flex items-center h-4 max-w-[200px] sm:max-w-none overflow-x-auto scrollbar-hide">
+                    {episodes[currentEpisodeIdx]?.levels.map((level, idx) => {
                         const globalIdx = levels.indexOf(level);
                         const isCompleted = globalIdx < currentLevelIndex;
                         const isCurrent = globalIdx === currentLevelIndex;
                         const isLocked = globalIdx > currentLevelIndex;
                         
-                        // Local index 1-5 for display
-                        const displayNum = (globalIdx % 5) + 1;
+                        // Local index 1-N for display
+                        const displayNum = idx + 1;
 
                         return (
                         <div key={level.id} className="flex items-center group shrink-0">
@@ -137,10 +143,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                 const isComplete = completionStatus[idx];
                 const Icon = ep.icon;
                 
-                // Color parsing for shadow effects
-                // extract "blue", "purple", "yellow" from "text-blue-500"
                 const baseColor = ep.color.split('-')[1]; 
-                // Approximate hex mapping for drop-shadows since tailwind classes are strings
                 const shadowColor = baseColor === 'blue' ? 'rgba(96,165,250,0.5)' : 
                                     baseColor === 'purple' ? 'rgba(192,132,252,0.5)' : 
                                     'rgba(250,204,21,0.5)';
@@ -191,6 +194,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                         `}
                     >   
                         <span>{ep.shortTitle}</span>
+                        <span className="text-[9px] opacity-60">{ep.levels.length} Levels</span>
                     </button>
                 ))}
             </div>

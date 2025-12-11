@@ -81,12 +81,12 @@ const App: React.FC = () => {
     let notification = 'Welcome to Yazi Quest!';
 
     if (isDebugOutro) {
-        levelIndex = 14; // Final Level
-        currentPath = LEVELS[14].initialPath;
+        levelIndex = 16; // Final Level (Index 16 = Level 17)
+        currentPath = LEVELS[16].initialPath;
         showEpisodeIntro = false;
         notification = 'DEBUG: OUTRO READY';
 
-        // Modify FS to satisfy Level 15 conditions (Only workspace remains in guest)
+        // Modify FS to satisfy Level 17 conditions (Only workspace remains in guest)
         const guestNode = getNodeByPath(fs, ['root', 'home', 'user']);
         if (guestNode && guestNode.children) {
              guestNode.children = guestNode.children.filter(c => c.name === 'workspace');
@@ -113,11 +113,17 @@ const App: React.FC = () => {
         timeLeft: null,
         keystrokes: 0,
         isGameOver: false,
-        gameOverReason: undefined
+        gameOverReason: undefined,
+        stats: {
+           fuzzyJumps: 0,
+           filterUsage: 0,
+           renames: 0,
+           archivesEntered: 0
+        }
     };
   });
 
-  const [levelTasks, setLevelTasks] = useState(LEVELS[isDebugOutro ? 14 : 0].tasks);
+  const [levelTasks, setLevelTasks] = useState(LEVELS[isDebugOutro ? 16 : 0].tasks);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [bulkRenameText, setBulkRenameText] = useState("");
@@ -161,9 +167,10 @@ const App: React.FC = () => {
   const activeItem = sortedItems[gameState.cursorIndex];
   const allTasksComplete = levelTasks.every(t => t.completed);
 
-  // Determine current Episode Index (0, 1, 2)
-  const episodeIndex = Math.min(Math.floor(gameState.levelIndex / 5), 2);
-  const activeEpisodeLore = EPISODE_LORE[episodeIndex];
+  // Determine current Episode Index (0, 1, 2) based on episodeId in level config
+  // episodeId is 1-based, array is 0-based
+  const episodeIndex = currentLevel ? (currentLevel.episodeId - 1) : 0;
+  const activeEpisodeLore = EPISODE_LORE[episodeIndex] || EPISODE_LORE[0];
 
   // Pre-load video via browser cache (avoids CORS fetch issues)
   useEffect(() => {
@@ -196,7 +203,10 @@ const App: React.FC = () => {
           selectedIds: [],
           pendingDeleteIds: [],
           clipboard: null,
-          filter: ''
+          filter: '',
+          // Don't reset generic stats that persist, or maybe reset local level stats? 
+          // For now, keep stats accumulating or reset? Tasks check absolute values.
+          // Let's keep stats accumulating to be safe, or logic needs to check delta.
       }));
       
       setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
@@ -238,8 +248,10 @@ const App: React.FC = () => {
      if (gameState.levelIndex < LEVELS.length - 1) {
          const nextLevelIdx = gameState.levelIndex + 1;
          const nextLevel = LEVELS[nextLevelIdx];
+         const currentLevel = LEVELS[gameState.levelIndex];
          
-         const isEpisodeStart = nextLevelIdx === 5 || nextLevelIdx === 10;
+         // Episode starts if episodeId changes
+         const isEpisodeStart = nextLevel.episodeId !== currentLevel.episodeId;
 
          let nextFS = gameState.fs;
          if (nextLevel.onEnter) {
@@ -261,7 +273,11 @@ const App: React.FC = () => {
              showEpisodeIntro: isEpisodeStart,
              timeLeft: nextLevel.timeLimit || null,
              keystrokes: 0,
-             isGameOver: false
+             isGameOver: false,
+             // Stats persist? Or reset?
+             // If we reset, then "Deep Scan" (Level 7) task "fuzzy jump count >= 2" needs to be doable in one level.
+             // It's safer to keep them or specific checks should rely on flags.
+             // Let's keep them.
          }));
          setLevelTasks(nextLevel.tasks);
      } else {
@@ -331,7 +347,8 @@ const App: React.FC = () => {
           fs: nextFS,
           mode: 'normal',
           selectedIds: [],
-          notification: `Renamed ${targets.length} item(s)`
+          notification: `Renamed ${targets.length} item(s)`,
+          stats: { ...prev.stats, renames: prev.stats.renames + targets.length }
       }));
   };
 
@@ -359,7 +376,8 @@ const App: React.FC = () => {
                      mode: 'normal', 
                      currentPath: fuzzyResults[0].path,
                      inputBuffer: '',
-                     notification: `Jumped to ${fuzzyResults[0].display}`
+                     notification: `Jumped to ${fuzzyResults[0].display}`,
+                     stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 }
                  }));
              }
         } else if (key === 'Backspace') {
@@ -380,7 +398,8 @@ const App: React.FC = () => {
                     fs: newFS,
                     mode: 'normal',
                     inputBuffer: '',
-                    notification: `Renamed to ${prev.inputBuffer}`
+                    notification: `Renamed to ${prev.inputBuffer}`,
+                    stats: { ...prev.stats, renames: prev.stats.renames + 1 }
                 }));
             } else {
                 setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
@@ -654,12 +673,17 @@ const App: React.FC = () => {
       case 'Enter':
         // Modified: Allow entering if type is dir or archive
         if (activeItem && (activeItem.type === 'dir' || activeItem.type === 'archive' || (activeItem.children && activeItem.children.length > 0))) {
+            const isArchive = activeItem.type === 'archive';
             setGameState(prev => ({
                 ...prev,
                 currentPath: [...prev.currentPath, activeItem.id],
                 cursorIndex: 0,
                 selectedIds: [],
-                filter: '' // Clear filter on child nav
+                filter: '', // Clear filter on child nav
+                stats: { 
+                   ...prev.stats, 
+                   archivesEntered: isArchive ? prev.stats.archivesEntered + 1 : prev.stats.archivesEntered 
+                }
             }));
         }
         break;

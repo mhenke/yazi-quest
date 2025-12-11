@@ -23,6 +23,7 @@ export interface LevelTask {
 
 export interface Level {
   id: number;
+  episodeId: number; // 1, 2, or 3
   title: string;
   description: string;
   tasks: LevelTask[];
@@ -49,6 +50,13 @@ export interface ClipboardItem {
   originalPath: string[]; // Path IDs where they came from
 }
 
+export interface GameStats {
+  fuzzyJumps: number;
+  filterUsage: number;
+  renames: number;
+  archivesEntered: number;
+}
+
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
@@ -70,4 +78,5 @@ export interface GameState {
   keystrokes: number; // Track user inputs for mastery levels
   isGameOver: boolean; // Flag for game over state
   gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
+  stats: GameStats;
 }
