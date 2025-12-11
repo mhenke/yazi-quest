@@ -431,9 +431,9 @@ export const LEVELS: Level[] = [
     id: 6,
     episodeId: 2,
     title: "Intelligence Analysis",
-    description: "Scan the filesystem for sensitive data. Locate the key using filter, then rename it to secure the asset.",
+    description: "Scan the filesystem for sensitive data. Locate the key using filter, then rename it to secure the asset. Finally, clear the filter to reveal all files.",
     initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
-    hint: "Press 'f', type 'pem'. Press Enter to select/close filter. Press 'r' to rename to 'access_key_secure.pem'.",
+    hint: "Press 'f', type 'pem'. Press Enter to select/close filter. Press 'r' to rename to 'access_key_secure.pem'. Press 'Esc' to clear filter.",
     tasks: [
       {
         id: 'search-1',
@@ -451,6 +451,17 @@ export const LEVELS: Level[] = [
           const oldFile = currentDir?.children?.find(c => c.name === 'access_key.pem');
           const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
           return !oldFile && !!newFile;
+        },
+        completed: false
+      },
+      {
+        id: 'search-3',
+        description: "Clear filter (Esc)",
+        check: (state) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
+          // Only complete if rename is done AND filter is cleared
+          return !!newFile && state.filter === '';
         },
         completed: false
       }
