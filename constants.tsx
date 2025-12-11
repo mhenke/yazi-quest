@@ -8,13 +8,17 @@ export const KEYBINDINGS = [
   { keys: ['j', '↓'], description: 'Navigation Down' },
   { keys: ['k', '↑'], description: 'Navigation Up' },
   { keys: ['h', '←'], description: 'Go to Parent' },
-  { keys: ['l', '→', 'Enter'], description: 'Enter Directory' },
+  { keys: ['l', '→', 'Enter'], description: 'Enter Dir / View Archive' },
+  { keys: ['g'], description: 'Go Mode (Jump)' },
   { keys: ['Space'], description: 'Toggle Selection' },
   { keys: ['d'], description: 'Delete Selected' },
+  { keys: ['r'], description: 'Rename Selected' },
   { keys: ['x'], description: 'Cut Selected' },
   { keys: ['y'], description: 'Copy/Yank Selected' },
   { keys: ['p'], description: 'Paste' },
   { keys: ['a'], description: 'Create File/Dir' },
+  { keys: ['f'], description: 'Filter Files' },
+  { keys: ['Z'], description: 'Fuzzy Find Directory' },
   { keys: ['H'], description: 'Show System Hint' },
   { keys: ['?'], description: 'Toggle Help' },
 ];
@@ -116,6 +120,15 @@ export const INITIAL_FS: FileNode = {
               children: [
                 { id: 'virus', name: 'tracker_beacon.bin', type: 'file', content: '0x1A4F89... [MALICIOUS SIGNATURE DETECTED]' },
                 { id: id(), name: 'target_map.png', type: 'file', content: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop' },
+                { 
+                  id: id(), 
+                  name: 'backup_logs.zip', 
+                  type: 'archive',
+                  children: [
+                    { id: id(), name: 'sys_v1.log', type: 'file', content: 'System initialized...' },
+                    { id: id(), name: 'sys_v2.log', type: 'file', content: 'Network scan complete...' }
+                  ]
+                },
               ]
             },
             {
@@ -129,6 +142,15 @@ export const INITIAL_FS: FileNode = {
               name: 'workspace',
               type: 'dir',
               children: []
+            },
+            {
+              id: 'config',
+              name: '.config',
+              type: 'dir',
+              children: [
+                  { id: id(), name: 'yazi.toml', type: 'file', content: '[manager]\nsort_by = "natural"\nshow_hidden = true' },
+                  { id: id(), name: 'theme.toml', type: 'file', content: '[theme]\nprimary = "orange"' }
+              ]
             }
           ]
         }
@@ -306,9 +328,15 @@ export const LEVELS: Level[] = [
     title: "Neural Construction",
     description: "Build the AI subsystem. Locate 'uplink_v1.conf' in 'datastore/active' and copy it to 'neural_net'.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Create 'neural_net/weights/model.rs'. Go to '../docs/datastore/active', yank (y) 'uplink_v1.conf', return to 'neural_net', paste (p).",
+    hint: "From workspace: Create 'neural_net/weights/model.rs'. Navigate to '../datastore/active'. Yank 'uplink_v1.conf'. Return to 'neural_net' and paste.",
     timeLimit: 120, // 2 minutes
     tasks: [
+      {
+         id: 'ep2-nav-ws',
+         description: "Navigate to 'workspace'",
+         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'workspace',
+         completed: false
+      },
       {
          id: 'ep2-1a',
          description: "Create directory 'neural_net'",
@@ -509,7 +537,8 @@ export const LEVELS: Level[] = [
         description: "Spawn a copy of 'daemon' directory",
         check: (state) => {
            const etc = findNodeByName(state.fs, 'etc');
-           const sysDirs = etc?.children?.filter(c => c.name === 'daemon' && c.type === 'dir');
+           // Check for any directories starting with 'daemon' (e.g. daemon, daemon_copy)
+           const sysDirs = etc?.children?.filter(c => c.name.startsWith('daemon') && c.type === 'dir');
            return (sysDirs?.length || 0) >= 2;
         },
         completed: false

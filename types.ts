@@ -1,12 +1,12 @@
 
-export type NodeType = 'file' | 'dir';
+export type NodeType = 'file' | 'dir' | 'archive';
 
 export interface FileNode {
   id: string;
   name: string;
   type: NodeType;
   content?: string; // Text content for files
-  children?: FileNode[]; // Only for dirs
+  children?: FileNode[]; // For dirs AND archives
   parentId?: string | null;
 }
 
@@ -53,8 +53,9 @@ export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
   clipboard: ClipboardItem | null;
-  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete'; // Added confirm-delete
-  inputBuffer: string; // for typing filenames
+  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive';
+  inputBuffer: string; // for typing filenames or search queries
+  filter: string; // Active filter query (for 'f' mode)
   history: string[]; // Log of actions
   levelIndex: number;
   fs: FileNode; // The entire file tree

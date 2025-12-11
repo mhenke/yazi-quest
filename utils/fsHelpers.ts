@@ -39,15 +39,71 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   const parent = getNodeByPath(newRoot, parentPathIds);
   if (parent) {
     if (!parent.children) parent.children = [];
-    // Check duplicates
-    if (!parent.children.some(c => c.name === newNode.name)) {
-        parent.children.push(newNode);
-        // Sort alphabetically roughly
-        parent.children.sort((a, b) => {
-            if (a.type === b.type) return a.name.localeCompare(b.name);
-            return a.type === 'dir' ? -1 : 1;
-        });
+    
+    // Auto-rename logic for collisions (Shadow Copy support)
+    let finalName = newNode.name;
+    let counter = 1;
+    
+    const exists = (name: string) => parent.children!.some(c => c.name === name);
+
+    if (exists(finalName)) {
+        const nameParts = newNode.name.split('.');
+        // Try to insert _copy before extension if it exists and isn't a directory
+        if (nameParts.length > 1 && newNode.type !== 'dir') {
+             const ext = nameParts.pop();
+             const base = nameParts.join('.');
+             while(exists(finalName)) {
+                 finalName = `${base}_copy${counter > 1 ? `_${counter}` : ''}.${ext}`;
+                 counter++;
+             }
+        } else {
+             // Directories or files without extension
+             while(exists(finalName)) {
+                 finalName = `${newNode.name}_copy${counter > 1 ? `_${counter}` : ''}`;
+                 counter++;
+             }
+        }
     }
+
+    const nodeToAdd = { ...newNode, name: finalName };
+    parent.children.push(nodeToAdd);
+    
+    // Sort: Dirs > Archives > Files
+    parent.children.sort((a, b) => {
+        const typeScore = (t: string) => {
+            if (t === 'dir') return 0;
+            if (t === 'archive') return 1;
+            return 2;
+        };
+        const scoreA = typeScore(a.type);
+        const scoreB = typeScore(b.type);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.name.localeCompare(b.name);
+    });
+  }
+  return newRoot;
+};
+
+export const renameNode = (root: FileNode, parentPathIds: string[], nodeId: string, newName: string): FileNode => {
+  const newRoot = cloneFS(root);
+  const parent = getNodeByPath(newRoot, parentPathIds);
+  if (parent && parent.children) {
+      const node = parent.children.find(c => c.id === nodeId);
+      if (node) {
+          node.name = newName;
+          // Re-sort after rename
+          parent.children.sort((a, b) => {
+            const typeScore = (t: string) => {
+                if (t === 'dir') return 0;
+                if (t === 'archive') return 1;
+                return 2;
+            };
+            const scoreA = typeScore(a.type);
+            const scoreB = typeScore(b.type);
+            if (scoreA !== scoreB) return scoreA - scoreB;
+            return a.name.localeCompare(b.name);
+        });
+      }
   }
   return newRoot;
 };
@@ -94,11 +150,18 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
       if (!parent.children) parent.children = [];
       parent.children.push(newNode);
       
-      // Sort alphabetically roughly
-        parent.children.sort((a, b) => {
-            if (a.type === b.type) return a.name.localeCompare(b.name);
-            return a.type === 'dir' ? -1 : 1;
-        });
+      // Sort: Dirs > Archives > Files
+      parent.children.sort((a, b) => {
+        const typeScore = (t: string) => {
+            if (t === 'dir') return 0;
+            if (t === 'archive') return 1;
+            return 2;
+        };
+        const scoreA = typeScore(a.type);
+        const scoreB = typeScore(b.type);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.name.localeCompare(b.name);
+      });
 
       currentPath.push(newNode.id);
     }
@@ -117,7 +180,34 @@ export const findNodeByName = (root: FileNode, name: string): FileNode | null =>
   return null;
 };
 
-export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut'): string | null => {
+// Returns list of all directories with their full path ids and display string
+export const getAllDirectories = (root: FileNode): { path: string[], display: string }[] => {
+    const results: { path: string[], display: string }[] = [];
+    
+    const traverse = (node: FileNode, pathIds: string[], pathNames: string[]) => {
+        if (node.type !== 'dir') return;
+        
+        const currentIds = [...pathIds, node.id];
+        const currentNames = [...pathNames, node.name];
+        
+        // Exclude root ID 'root' to keep it clean, but include it implicitly if needed.
+        if (node.id !== 'root') {
+             results.push({
+                 path: currentIds,
+                 display: '/' + currentNames.slice(1).join('/')
+             });
+        }
+
+        if (node.children) {
+            node.children.forEach(child => traverse(child, currentIds, currentNames));
+        }
+    };
+    
+    traverse(root, [], []);
+    return results;
+};
+
+export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
   const name = node.name;
   
   // 1. Core System Structure (Always Protected)
@@ -135,24 +225,23 @@ export const isProtected = (node: FileNode, levelIndex: number, action: 'delete'
   // access_key.pem
   if (name === 'access_key.pem') {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
-      // Allowed cut in L9 (Live Migration) and L10 (Rollback)
-      // Level 9 is index 8. Level 10 is index 9.
-      if (action === 'cut' && levelIndex !== 8 && levelIndex !== 9) return "Asset locked. Relocation not authorized.";
+      // Allowed cut/rename in L9 (Live Migration) and L10 (Rollback)
+      if ((action === 'cut' || action === 'rename') && levelIndex !== 8 && levelIndex !== 9) return "Asset locked. Modification not authorized.";
   }
 
   // mission_log.md
   if (name === 'mission_log.md') {
       // Allowed delete in L13 (Trace Removal) - index 12
       if (action === 'delete' && levelIndex !== 12) return "Mission log required for validation.";
-      // Allowed cut in L9 and L10
-      if (action === 'cut' && levelIndex !== 8 && levelIndex !== 9) return "Log file locked.";
+      // Allowed cut/rename in L9 and L10
+      if ((action === 'cut' || action === 'rename') && levelIndex !== 8 && levelIndex !== 9) return "Log file locked.";
   }
 
   // target_map.png
   if (name === 'target_map.png') {
       if (action === 'delete') return "Intel target. Do not destroy.";
       // Allowed cut in L3 (Asset Relocation) - index 2
-      if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
+      if ((action === 'cut' || action === 'rename') && levelIndex !== 2) return "Map file anchored until capture sequence.";
   }
 
   return null;

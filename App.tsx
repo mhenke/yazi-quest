@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { INITIAL_FS, LEVELS, EPISODE_LORE, CONCLUSION_DATA } from './constants';
 import { GameState, Level, FileNode, ClipboardItem } from './types';
-import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected, createPath } from './utils/fsHelpers';
+import { getNodeByPath, getParentNode, addNode, deleteNode, cloneFS, isProtected, createPath, getAllDirectories, renameNode } from './utils/fsHelpers';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
@@ -11,7 +11,7 @@ import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
 import { GameOverModal } from './components/GameOverModal';
-import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight } from 'lucide-react';
+import { Terminal, Lightbulb, HelpCircle, Target, ArrowRight, ArrowDown } from 'lucide-react';
 
 // Sound Effect Helper
 const playSuccessSound = () => {
@@ -99,6 +99,7 @@ const App: React.FC = () => {
         clipboard: null,
         mode: 'normal',
         inputBuffer: '',
+        filter: '',
         history: [],
         levelIndex,
         fs,
@@ -119,6 +120,7 @@ const App: React.FC = () => {
   const [levelTasks, setLevelTasks] = useState(LEVELS[isDebugOutro ? 14 : 0].tasks);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
+  const [bulkRenameText, setBulkRenameText] = useState("");
 
   const currentLevel = LEVELS[gameState.levelIndex];
 
@@ -127,11 +129,34 @@ const App: React.FC = () => {
   const parentDir = getParentNode(gameState.fs, gameState.currentPath);
   const currentItems = currentDir?.children || [];
   
-  // Sort items: folders first, then files
+  // Sort and Filter items
   const sortedItems = [...currentItems].sort((a, b) => {
-    if (a.type === b.type) return a.name.localeCompare(b.name);
-    return a.type === 'dir' ? -1 : 1;
+    // Sort logic: Dir > Archive > File
+    const typeScore = (t: string) => {
+        if (t === 'dir') return 0;
+        if (t === 'archive') return 1;
+        return 2;
+    };
+    const scoreA = typeScore(a.type);
+    const scoreB = typeScore(b.type);
+    
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return a.name.localeCompare(b.name);
+  }).filter(item => {
+    if (!gameState.filter) return true;
+    return item.name.toLowerCase().includes(gameState.filter.toLowerCase());
   });
+
+  // Calculate fuzzy jump targets (Memoized)
+  const allDirectories = useMemo(() => {
+      if (gameState.mode !== 'fuzzy-find') return [];
+      return getAllDirectories(gameState.fs);
+  }, [gameState.fs, gameState.mode]);
+
+  const fuzzyResults = useMemo(() => {
+      if (!gameState.inputBuffer) return allDirectories;
+      return allDirectories.filter(d => d.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+  }, [allDirectories, gameState.inputBuffer]);
 
   const activeItem = sortedItems[gameState.cursorIndex];
   const allTasksComplete = levelTasks.every(t => t.completed);
@@ -170,11 +195,12 @@ const App: React.FC = () => {
           mode: 'normal',
           selectedIds: [],
           pendingDeleteIds: [],
-          clipboard: null
+          clipboard: null,
+          filter: ''
       }));
       
       setLevelTasks(levelConfig.tasks.map(t => ({...t, completed: false})));
-  }, [gameState.levelIndex, gameState.fs]); // Added fs dep mostly for safety, though only index matters
+  }, [gameState.levelIndex, gameState.fs]); 
 
   // Timer Logic
   useEffect(() => {
@@ -228,6 +254,7 @@ const App: React.FC = () => {
              clipboard: null,
              selectedIds: [],
              pendingDeleteIds: [],
+             filter: '',
              fs: nextFS,
              levelStartFS: cloneFS(nextFS),
              notification: `Level ${nextLevelIdx + 1} Started!`,
@@ -278,8 +305,206 @@ const App: React.FC = () => {
     }
   }, [gameState, levelTasks]);
 
+  // Perform Batch Rename
+  const executeBatchRename = () => {
+      const newNames = bulkRenameText.split('\n');
+      const targets = gameState.selectedIds.length > 0 
+          ? sortedItems.filter(i => gameState.selectedIds.includes(i.id))
+          : activeItem ? [activeItem] : [];
+
+      if (newNames.length !== targets.length) {
+          setGameState(prev => ({ ...prev, notification: `Error: Line count mismatch (${newNames.length} vs ${targets.length})` }));
+          playFailureSound();
+          return;
+      }
+
+      let nextFS = gameState.fs;
+      targets.forEach((node, idx) => {
+         const newName = newNames[idx].trim();
+         if (newName && newName !== node.name) {
+             nextFS = renameNode(nextFS, gameState.currentPath, node.id, newName);
+         }
+      });
+
+      setGameState(prev => ({
+          ...prev,
+          fs: nextFS,
+          mode: 'normal',
+          selectedIds: [],
+          notification: `Renamed ${targets.length} item(s)`
+      }));
+  };
+
   // Handle Input Mode 
   const handleInputMode = useCallback((key: string) => {
+    if (gameState.mode === 'filter') {
+        if (key === 'Escape' || key === 'Enter') {
+             setGameState(prev => ({ ...prev, mode: 'normal' }));
+        } else if (key === 'Backspace') {
+             setGameState(prev => ({ ...prev, filter: prev.filter.slice(0, -1), cursorIndex: 0 }));
+        } else if (key.length === 1) {
+             setGameState(prev => ({ ...prev, filter: prev.filter + key, cursorIndex: 0 }));
+        }
+        return;
+    }
+
+    if (gameState.mode === 'fuzzy-find') {
+        if (key === 'Escape') {
+             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        } else if (key === 'Enter') {
+             // Jump to first result
+             if (fuzzyResults.length > 0) {
+                 setGameState(prev => ({ 
+                     ...prev, 
+                     mode: 'normal', 
+                     currentPath: fuzzyResults[0].path,
+                     inputBuffer: '',
+                     notification: `Jumped to ${fuzzyResults[0].display}`
+                 }));
+             }
+        } else if (key === 'Backspace') {
+             setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+        } else if (key.length === 1) {
+             setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
+        }
+        return;
+    }
+
+    if (gameState.mode === 'rename') {
+        if (key === 'Enter') {
+            const target = activeItem;
+            if (target && gameState.inputBuffer.trim()) {
+                const newFS = renameNode(gameState.fs, gameState.currentPath, target.id, gameState.inputBuffer.trim());
+                setGameState(prev => ({
+                    ...prev,
+                    fs: newFS,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    notification: `Renamed to ${prev.inputBuffer}`
+                }));
+            } else {
+                setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+            }
+        } else if (key === 'Escape') {
+            setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        } else if (key === 'Backspace') {
+            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+        } else if (key.length === 1) {
+            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
+        }
+        return;
+    }
+
+    if (gameState.mode === 'go') {
+        if (key === 'Escape') {
+            setGameState(prev => ({ ...prev, mode: 'normal' }));
+            return;
+        }
+
+        switch(key) {
+            case 'h': // Home
+                setGameState(prev => ({
+                    ...prev,
+                    currentPath: ['root', 'home', 'user'],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    notification: 'Navigated to Home'
+                }));
+                break;
+            case 'd': // Downloads / Incoming
+                setGameState(prev => ({
+                    ...prev,
+                    currentPath: ['root', 'home', 'user', 'downloads'],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    notification: 'Navigated to Downloads'
+                }));
+                break;
+            case 'c': // Config
+                setGameState(prev => ({
+                    ...prev,
+                    currentPath: ['root', 'home', 'user', 'config'],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    notification: 'Navigated to Config'
+                }));
+                break;
+             case '/': // Root
+                setGameState(prev => ({
+                    ...prev,
+                    currentPath: ['root'],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    notification: 'Navigated to Root'
+                }));
+                break;
+            case ' ': // Interactive
+                 setGameState(prev => ({
+                    ...prev,
+                    mode: 'cd-interactive',
+                    inputBuffer: '',
+                    notification: 'Jump Interactively'
+                }));
+                break;
+            default:
+                // Unknown key in go mode resets
+                setGameState(prev => ({ ...prev, mode: 'normal' }));
+        }
+        return;
+    }
+
+     if (gameState.mode === 'cd-interactive') {
+        if (key === 'Enter') {
+            if (!gameState.inputBuffer.trim()) {
+                setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                return;
+            }
+            
+            // Try to change directory (simple path jump, supports jumping to immediate children or root absolute)
+            const pathStr = gameState.inputBuffer.trim();
+            if (pathStr === '~') {
+                 setGameState(prev => ({
+                    ...prev,
+                    currentPath: ['root', 'home', 'user'],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    notification: 'Jumped to Home'
+                }));
+                return;
+            }
+            
+            // Check current children for match
+            const target = sortedItems.find(i => i.name === pathStr && i.type === 'dir');
+            if (target) {
+                 setGameState(prev => ({
+                    ...prev,
+                    currentPath: [...prev.currentPath, target.id],
+                    cursorIndex: 0,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    notification: `Jumped to ${pathStr}`
+                }));
+            } else {
+                 setGameState(prev => ({
+                    ...prev,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    notification: 'Directory not found'
+                }));
+                playFailureSound();
+            }
+
+        } else if (key === 'Escape') {
+            setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        } else if (key === 'Backspace') {
+            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+        } else if (key.length === 1) {
+            setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
+        }
+        return;
+    }
+
     if (key === 'Enter') {
         if (!gameState.inputBuffer.trim()) {
             setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
@@ -314,10 +539,25 @@ const App: React.FC = () => {
     } else if (key.length === 1) {
         setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + key }));
     }
-  }, [gameState]);
+  }, [gameState, fuzzyResults, activeItem, sortedItems]);
 
   // Main Key Handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Stop propagation if we are in bulk rename mode using the textarea
+    if (gameState.mode === 'bulk-rename') return;
+
+    // Shift+Z handling
+    if (e.key === 'Z' && e.shiftKey) {
+        e.preventDefault();
+        setGameState(prev => ({
+            ...prev,
+            mode: 'fuzzy-find',
+            inputBuffer: '',
+            notification: 'Fuzzy Find Directory'
+        }));
+        return;
+    }
+
     if (e.metaKey || e.ctrlKey || e.altKey) return; 
     
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
@@ -347,15 +587,14 @@ const App: React.FC = () => {
                 newFS = deleteNode(newFS, gameState.currentPath, id);
             });
             const deletedCount = gameState.pendingDeleteIds.length;
-            const newCount = (sortedItems.length - deletedCount);
-
+            
             setGameState(prev => ({
                 ...prev,
                 fs: newFS,
                 mode: 'normal',
                 pendingDeleteIds: [],
                 selectedIds: [],
-                cursorIndex: Math.min(prev.cursorIndex, Math.max(0, newCount - 1)),
+                cursorIndex: 0, 
                 notification: `Deleted ${deletedCount} item(s)`
             }));
         } else {
@@ -375,7 +614,8 @@ const App: React.FC = () => {
         return;
     }
 
-    if (e.key === 'Enter' && allTasksComplete) {
+    // Only Shift+Enter allows shortcut, otherwise use UI button
+    if (e.key === 'Enter' && e.shiftKey && allTasksComplete) {
         handleNextLevel();
         return;
     }
@@ -387,7 +627,7 @@ const App: React.FC = () => {
       case 'ArrowDown':
         setGameState(prev => ({
           ...prev,
-          cursorIndex: Math.min(prev.cursorIndex + 1, itemCount - 1)
+          cursorIndex: Math.min(prev.cursorIndex + 1, Math.max(0, itemCount - 1))
         }));
         break;
       case 'k':
@@ -404,19 +644,22 @@ const App: React.FC = () => {
                 ...prev,
                 currentPath: prev.currentPath.slice(0, -1),
                 cursorIndex: 0,
-                selectedIds: [] 
+                selectedIds: [],
+                filter: '' // Clear filter on parent nav
             }));
         }
         break;
       case 'l':
       case 'ArrowRight':
       case 'Enter':
-        if (activeItem && activeItem.type === 'dir') {
+        // Modified: Allow entering if type is dir or archive
+        if (activeItem && (activeItem.type === 'dir' || activeItem.type === 'archive' || (activeItem.children && activeItem.children.length > 0))) {
             setGameState(prev => ({
                 ...prev,
                 currentPath: [...prev.currentPath, activeItem.id],
                 cursorIndex: 0,
-                selectedIds: [] 
+                selectedIds: [],
+                filter: '' // Clear filter on child nav
             }));
         }
         break;
@@ -432,14 +675,68 @@ const App: React.FC = () => {
             return {
               ...prev,
               selectedIds: newSelection,
-              cursorIndex: Math.min(prev.cursorIndex + 1, itemCount - 1) 
+              cursorIndex: Math.min(prev.cursorIndex + 1, Math.max(0, itemCount - 1)) 
             };
           });
         }
         break;
       
       case 'Escape':
-        setGameState(prev => ({ ...prev, selectedIds: [], notification: 'Selection Cleared' }));
+        setGameState(prev => ({ ...prev, selectedIds: [], filter: '', notification: 'Selection & Filter Cleared' }));
+        break;
+
+      case 'f':
+        setGameState(prev => ({
+            ...prev,
+            mode: 'filter',
+            filter: '', // Reset filter when starting new filter mode? Or keep? Yazi resets usually.
+            notification: 'Fuzzy Filter Active'
+        }));
+        break;
+
+      case 'g':
+        setGameState(prev => ({
+            ...prev,
+            mode: 'go',
+            notification: 'Go Mode'
+        }));
+        break;
+
+      case 'r':
+        {
+           const targets = gameState.selectedIds.length > 0 
+              ? sortedItems.filter(i => gameState.selectedIds.includes(i.id))
+              : activeItem ? [activeItem] : [];
+            
+           if (targets.length > 0) {
+               // PROTECTION CHECK
+               for (const t of targets) {
+                  const error = isProtected(t, gameState.levelIndex, 'rename');
+                  if (error) {
+                      setGameState(prev => ({ ...prev, notification: `DENIED: ${error}` }));
+                      playFailureSound();
+                      return;
+                  }
+               }
+               
+               if (targets.length === 1) {
+                   setGameState(prev => ({
+                       ...prev,
+                       mode: 'rename',
+                       inputBuffer: targets[0].name,
+                       notification: 'Rename File'
+                   }));
+               } else {
+                   // Bulk Rename Mode
+                   setBulkRenameText(targets.map(t => t.name).join('\n'));
+                   setGameState(prev => ({
+                       ...prev,
+                       mode: 'bulk-rename',
+                       notification: 'Bulk Rename (Edit Buffer)'
+                   }));
+               }
+           }
+        }
         break;
 
       case 'd': 
@@ -629,6 +926,93 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Fuzzy Find Overlay (Shift+Z) */}
+      {gameState.mode === 'fuzzy-find' && (
+        <div className="absolute inset-0 z-50 flex items-start justify-center pt-20 bg-black/60 backdrop-blur-sm">
+            <div className="w-[600px] bg-zinc-900 border border-zinc-700 shadow-2xl flex flex-col max-h-[70vh]">
+                <div className="p-3 border-b border-zinc-700 bg-zinc-800 flex items-center gap-2">
+                    <span className="text-red-500 font-bold">Z &gt;</span>
+                    <span className="text-white animate-pulse">_</span>
+                    <span className="text-zinc-300">{gameState.inputBuffer}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                    {fuzzyResults.length === 0 ? (
+                        <div className="text-zinc-600 italic p-2">No directories found</div>
+                    ) : (
+                        fuzzyResults.slice(0, 10).map((item, idx) => (
+                            <div key={item.path.join('-')} className={`px-2 py-1 font-mono text-sm ${idx === 0 ? 'bg-red-900/30 text-red-200 border-l-2 border-red-500' : 'text-zinc-400'}`}>
+                                {item.display}
+                            </div>
+                        ))
+                    )}
+                    {fuzzyResults.length > 10 && (
+                        <div className="text-zinc-600 text-xs px-2 pt-1">... {fuzzyResults.length - 10} more</div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* Vim-Like Bulk Rename Buffer */}
+      {gameState.mode === 'bulk-rename' && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="w-full max-w-4xl h-[600px] bg-[#1e1e1e] border border-zinc-600 shadow-2xl flex flex-col font-mono text-sm relative">
+                  {/* Buffer Status Bar (Top) */}
+                  <div className="bg-[#2d2d2d] px-4 py-1 flex justify-between items-center text-zinc-400 border-b border-zinc-700 select-none">
+                      <span className="flex items-center gap-2">
+                          <span className="text-orange-400 font-bold">buffer</span>
+                          <span className="text-zinc-500">typecraft_rename_buffer.tmp</span>
+                      </span>
+                  </div>
+
+                  <div className="flex flex-1 overflow-hidden relative">
+                      {/* Line Numbers Gutter */}
+                      <div className="w-12 bg-[#1e1e1e] border-r border-zinc-700 text-zinc-500 text-right pr-3 pt-4 select-none leading-[1.5rem] font-mono">
+                          {bulkRenameText.split('\n').map((_, i) => (
+                              <div key={i}>{i + 1}</div>
+                          ))}
+                          {/* Add extra tildes for empty space vim feel */}
+                          {Array.from({ length: Math.max(0, 20 - bulkRenameText.split('\n').length) }).map((_, i) => (
+                              <div key={`empty-${i}`} className="text-blue-900">~</div>
+                          ))}
+                      </div>
+
+                      {/* Text Editor Area */}
+                      <textarea 
+                        autoFocus
+                        className="flex-1 bg-[#1e1e1e] text-[#d4d4d4] p-0 pl-3 pt-4 outline-none resize-none leading-[1.5rem] font-mono border-none"
+                        value={bulkRenameText}
+                        spellCheck={false}
+                        onChange={(e) => setBulkRenameText(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                e.preventDefault();
+                                executeBatchRename();
+                            }
+                            if (e.key === 'Escape') {
+                                setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Rename Cancelled' }));
+                            }
+                        }}
+                      />
+                  </div>
+
+                  {/* Vim Status Bar (Bottom) */}
+                  <div className="bg-[#007acc] text-white px-2 py-1 flex justify-between items-center text-xs font-bold select-none">
+                      <div className="flex gap-4">
+                        <span>NORMAL</span>
+                        <span>master</span>
+                      </div>
+                      <div className="flex gap-4">
+                          <span>utf-8</span>
+                          <span>shell</span>
+                          <span>Save: Ctrl+Enter</span>
+                          <span>Cancel: Esc</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
       {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
@@ -748,7 +1132,7 @@ const App: React.FC = () => {
                         onClick={handleNextLevel}
                         className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 text-white py-1.5 px-4 rounded shadow-lg shadow-green-900/20 text-[10px] font-bold uppercase tracking-widest animate-pulse transition-all transform hover:scale-[1.01]"
                     >
-                        <span>Initialize Next Level</span>
+                        <span>Initialize Next Level [Shift+Enter]</span>
                         <ArrowRight size={10} />
                     </button>
                 </div>
@@ -764,13 +1148,47 @@ const App: React.FC = () => {
          </div>
 
          {/* Input Overlay */}
-         {(gameState.mode === 'input-file' || gameState.mode === 'input-dir') && (
+         {(gameState.mode === 'input-file' || gameState.mode === 'input-dir' || gameState.mode === 'rename' || gameState.mode === 'cd-interactive') && (
             <div className="absolute bottom-0 left-0 right-0 bg-zinc-800 border-t border-zinc-600 p-2 shadow-lg z-30 animate-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-center gap-2 font-mono text-sm">
-                    <span className="text-orange-500 font-bold">Create:</span>
+                    <span className="text-orange-500 font-bold">
+                        {gameState.mode === 'rename' ? 'Rename:' : gameState.mode === 'cd-interactive' ? 'Jump to:' : 'Create:'}
+                    </span>
                     <span className="text-white">{gameState.inputBuffer}</span>
                     <span className="w-2 h-4 bg-zinc-400 animate-pulse"></span>
                 </div>
+            </div>
+         )}
+
+         {/* Filter Overlay */}
+         {gameState.mode === 'filter' && (
+            <div className="absolute bottom-6 left-1/3 w-1/3 bg-zinc-800/90 border border-zinc-600 p-2 shadow-lg z-30 animate-in slide-in-from-bottom-2 duration-200 rounded-lg">
+                <div className="flex items-center gap-2 font-mono text-sm">
+                    <span className="text-yellow-500 font-bold">Filter:</span>
+                    <span className="text-white">{gameState.filter}</span>
+                    <span className="w-2 h-4 bg-zinc-400 animate-pulse"></span>
+                </div>
+            </div>
+         )}
+
+         {/* Go Mode Overlay */}
+         {gameState.mode === 'go' && (
+            <div className="absolute bottom-0 left-0 right-0 z-30 bg-zinc-900/90 backdrop-blur border-t border-zinc-700 p-2 flex justify-between items-center text-xs font-mono animate-in slide-in-from-bottom-2 duration-150">
+               <div className="flex gap-8 px-4 text-zinc-400">
+                  <div className="flex flex-col gap-1">
+                      <span className="text-white font-bold"><span className="text-orange-500">h</span> &rarr; Go to home</span>
+                      <span className="text-white font-bold"><span className="text-orange-500">D</span> &rarr; Go to dotfiles (config)</span>
+                      <span className="text-white font-bold"><span className="text-orange-500">/</span> &rarr; Go to root</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                      <span className="text-white font-bold"><span className="text-orange-500">c</span> &rarr; Go to config</span>
+                      <span className="text-white font-bold"><span className="text-orange-500">d</span> &rarr; Go to downloads</span>
+                      <span className="text-white font-bold"><span className="text-orange-500">&lt;Space&gt;</span> &rarr; Jump interactively</span>
+                  </div>
+               </div>
+               <div className="px-4 text-zinc-600 uppercase font-bold tracking-widest">
+                   GO MODE
+               </div>
             </div>
          )}
       </div>

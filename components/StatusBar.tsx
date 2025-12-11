@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameState, Level } from '../types';
-import { Scissors, Copy } from 'lucide-react';
+import { Scissors, Copy, Filter } from 'lucide-react';
 
 interface StatusBarProps {
   state: GameState;
@@ -13,6 +13,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   // Normal: Blue/Cyan
   // Input: Green
   // Visual: Orange/Yellow
+  // Filter: Purple
   
   let modeBg = 'bg-blue-600';
   let modeText = 'NOR';
@@ -20,6 +21,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   if (state.mode.startsWith('input')) {
     modeBg = 'bg-green-600';
     modeText = 'INS';
+  } else if (state.mode === 'filter') {
+    modeBg = 'bg-purple-600';
+    modeText = 'FLT';
   } else if (state.selectedIds.length > 0) {
     modeBg = 'bg-orange-600';
     modeText = 'VIS';
@@ -67,7 +71,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         </span>
       </div>
 
-      {/* 3.5 Clipboard Indicator (NEW) */}
+      {/* 3.2 Filter Active Indicator */}
+      {state.filter && (
+        <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
+            <Filter size={10} />
+            <span>FILTER: "{state.filter}"</span>
+        </div>
+      )}
+
+      {/* 3.5 Clipboard Indicator */}
       {state.clipboard && (
           <div className={`px-3 flex items-center gap-2 font-bold ${
               state.clipboard.action === 'cut' 

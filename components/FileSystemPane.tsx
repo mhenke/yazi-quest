@@ -11,7 +11,8 @@ import {
   Terminal as TerminalIcon, 
   ChevronRight,
   Scissors,
-  Copy
+  Copy,
+  PackageOpen
 } from 'lucide-react';
 
 interface FileSystemPaneProps {
@@ -27,6 +28,7 @@ interface FileSystemPaneProps {
 // Helper for file styling based on extension/name
 const getFileStyle = (node: FileNode) => {
   if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
+  if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
   
   const name = node.name.toLowerCase();
   
@@ -38,7 +40,7 @@ const getFileStyle = (node: FileNode) => {
   if (/\.(exe|bin|sh|bat)$/.test(name)) {
     return { color: 'text-green-400', icon: TerminalIcon };
   }
-  // Archives
+  // Archives (File extensions)
   if (/\.(zip|tar|gz|7z|rar)$/.test(name)) {
     return { color: 'text-red-400', icon: FileArchive };
   }
@@ -133,7 +135,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                 {isMarked && <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VIS]</span>}
               </div>
               
-              {item.type === 'dir' && (
+              {(item.type === 'dir' || item.type === 'archive') && (
                   <span className="text-zinc-700">
                     <ChevronRight size={12} strokeWidth={3} />
                   </span>
