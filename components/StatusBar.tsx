@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameState, Level } from '../types';
 import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
-import { resolvePath } from '../utils/fsHelpers';
+import { resolvePath, getNodeByPath } from '../utils/fsHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -35,8 +35,27 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   const totalTasks = level.tasks.length;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  // Fake permissions/size for aesthetic
-  const fakePerms = state.mode === 'input-dir' ? 'drwxr-xr-x' : '-rw-r--r--';
+  // Calculate items for stats
+  const currentDir = getNodeByPath(state.fs, state.currentPath);
+  let items = currentDir?.children || [];
+  if (state.filter) {
+      items = items.filter(c => c.name.toLowerCase().includes(state.filter.toLowerCase()));
+  }
+  const total = items.length;
+  const current = total === 0 ? 0 : state.cursorIndex + 1;
+  const currentItem = items[state.cursorIndex];
+
+  // Permissions logic
+  const isDir = currentItem?.type === 'dir' || currentItem?.type === 'archive';
+  const perms = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
+
+  // Position logic (Top/Bot/%)
+  let percentStr = "Top";
+  if (total > 0) {
+      if (state.cursorIndex === 0) percentStr = "Top";
+      else if (state.cursorIndex >= total - 1) percentStr = "Bot";
+      else percentStr = `${Math.round((current / total) * 100)}%`;
+  }
   
   // Timer formatting
   const formatTime = (seconds: number) => {
@@ -139,24 +158,23 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         )}
       </div>
 
-      {/* 5. Stats Block */}
-      <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center gap-4 hidden md:flex">
-        <span className="text-zinc-400">{fakePerms}</span>
-        <span>
-             {state.cursorIndex + 1}/{state.fs.children?.length || 1}
-        </span>
-        <div className="w-12 h-1 bg-zinc-600 rounded-full overflow-hidden">
-             <div 
-               className="h-full bg-blue-400" 
-               style={{ width: `${Math.min(((state.cursorIndex + 1) / (state.fs.children?.length || 1)) * 100, 100)}%` }} 
-             />
+      {/* 5. Stats Block (Yazi Style) */}
+      <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
+        <span className="text-zinc-500 font-mono hidden md:inline">{perms}</span>
+        
+        <div className="flex items-center rounded overflow-hidden text-xs font-bold font-mono h-4">
+             {/* Position Indicator (Top/Bot/%) */}
+             <div className="bg-zinc-700 text-zinc-300 px-2 flex items-center justify-center min-w-[36px]">
+                {percentStr}
+             </div>
+             
+             {/* Count Indicator */}
+             <div className="bg-blue-600 text-black px-2 flex items-center justify-center min-w-[48px]">
+                {current}/{total}
+             </div>
         </div>
       </div>
       
-      {/* 6. Percentage Block */}
-      <div className="bg-blue-600 text-black font-bold px-2 flex items-center">
-        {Math.round(((state.cursorIndex + 1) / (state.fs.children?.length || 1)) * 100)}%
-      </div>
     </div>
   );
 };
