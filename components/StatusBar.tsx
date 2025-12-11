@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GameState, Level } from '../types';
 import { Scissors, Copy, Filter } from 'lucide-react';
@@ -116,7 +117,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         )}
 
         {state.notification && (
-            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[200px] truncate">
+            <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate">
             {state.notification}
             </div>
         )}
