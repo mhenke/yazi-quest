@@ -420,6 +420,13 @@ export default function App() {
                    return;
                }
 
+               // Collision Check: Prevent duplicate names
+               const dir = getCurrentDir();
+               if (dir?.children?.some(c => c.name === buffer && c.id !== currentItem.id)) {
+                   setGameState(prev => ({ ...prev, notification: `Error: '${buffer}' already exists`, mode: 'normal', inputBuffer: '' }));
+                   return;
+               }
+
                setGameState(prev => ({
                    ...prev,
                    fs: renameNode(prev.fs, prev.currentPath, currentItem.id, buffer),
