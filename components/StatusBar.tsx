@@ -18,16 +18,20 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   // Filter: Purple
   
   let modeBg = 'bg-blue-600';
+  let modeBorder = 'border-l-blue-600';
   let modeText = 'NOR';
   
   if (state.mode.startsWith('input')) {
     modeBg = 'bg-green-600';
+    modeBorder = 'border-l-green-600';
     modeText = 'INS';
   } else if (state.mode === 'filter') {
     modeBg = 'bg-purple-600';
+    modeBorder = 'border-l-purple-600';
     modeText = 'FLT';
   } else if (state.selectedIds.length > 0) {
     modeBg = 'bg-orange-600';
+    modeBorder = 'border-l-orange-600';
     modeText = 'VIS';
   }
 
@@ -73,17 +77,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   return (
     <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
       {/* 1. Mode Block */}
-      <div className={`${modeBg} text-black font-bold px-3 flex items-center`}>
+      <div className={`${modeBg} text-black font-bold px-3 flex items-center relative z-20`}>
         {modeText}
       </div>
       
-      {/* 2. Path Triangle (CSS Hack for shape or just color block) */}
-      <div className={`${modeBg} w-0 h-0 border-t-[24px] border-t-transparent border-l-[10px] border-l-zinc-900 -ml-[1px]`}></div>
+      {/* 2. Powerline Arrow Separator */}
+      <div className={`w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[12px] ${modeBorder} relative z-20`}></div>
 
-      {/* 3. File Info / Path */}
-      <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
-        <span className="truncate mr-4">
-            {resolvePath(state.fs, state.currentPath)}
+      {/* 3. File Info / Name */}
+      {/* Negative margin pulls this block under the transparent parts of the arrow, creating the powerline effect */}
+      <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden relative z-10 -ml-3 pl-6">
+        <span className="truncate mr-4 font-bold">
+            {currentItem ? currentItem.name : ''}
         </span>
         
         {/* Quest Info embedded in status bar */}

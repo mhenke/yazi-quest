@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants';
-import { Check, Lock, MapPin, X, Map, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
+import { Check, Lock, MapPin, X, Map, Shield, Zap, Crown, HelpCircle, Lightbulb, PlayCircle } from 'lucide-react';
 
 interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
+  maxLevelReached: number;
+  onJumpToLevel: (index: number) => void;
   onToggleHint: () => void;
   onToggleHelp: () => void;
 }
 
-export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLevelIndex, onToggleHint, onToggleHelp }) => {
+export const LevelProgress: React.FC<LevelProgressProps> = ({ 
+    levels, 
+    currentLevelIndex, 
+    maxLevelReached,
+    onJumpToLevel,
+    onToggleHint, 
+    onToggleHelp 
+}) => {
   const [showLegend, setShowLegend] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -28,7 +37,6 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   }));
 
   // Determine completion status
-  // Episode is complete if currentLevelIndex is past the last level of this episode
   const completionStatus = episodes.map((ep) => {
       const lastLevelOfEpisode = ep.levels[ep.levels.length - 1];
       const lastLevelGlobalIdx = levels.indexOf(lastLevelOfEpisode);
@@ -51,8 +59,6 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
   const getEpisodeStatus = (tabIndex: number) => {
     const isThisComplete = completionStatus[tabIndex];
-    // If it's the first episode, active if not complete. 
-    // If not first, active if prev complete & this not complete.
     const isPrevComplete = tabIndex === 0 ? true : completionStatus[tabIndex - 1];
 
     if (isThisComplete) return 'completed';
@@ -228,34 +234,47 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                        // Calculate global index to check status against currentLevelIndex
                        const globalIdx = levels.findIndex(l => l.id === level.id);
                        
+                       const isUnlocked = globalIdx <= maxLevelReached;
                        const status = globalIdx < currentLevelIndex ? 'completed' : globalIdx === currentLevelIndex ? 'active' : 'locked';
                        
                        return (
-                        <div 
-                            key={level.id} 
+                        <button 
+                            key={level.id}
+                            disabled={!isUnlocked}
+                            onClick={() => {
+                                onJumpToLevel(globalIdx);
+                                setShowLegend(false);
+                            }}
                             className={`
-                            p-4 rounded border flex items-center gap-4 transition-all duration-300 relative overflow-hidden
+                            w-full text-left p-4 rounded border flex items-center gap-4 transition-all duration-300 relative overflow-hidden group
                             ${status === 'active' ? `bg-zinc-900 ${activeEpisode.border} border-l-4` : 'border-zinc-800/50 bg-zinc-900/30'}
-                            ${status === 'completed' ? 'opacity-60 hover:opacity-100' : ''}
-                            ${status === 'locked' ? 'opacity-40 grayscale' : ''}
+                            ${isUnlocked && status !== 'active' ? 'hover:bg-zinc-800 hover:border-zinc-600 cursor-pointer' : ''}
+                            ${status === 'locked' ? 'opacity-40 grayscale cursor-not-allowed' : ''}
                             `}
                         >
                             {/* Status Icon */}
                             <div className={`
-                                w-8 h-8 rounded flex items-center justify-center font-bold text-sm shrink-0 shadow-inner
+                                w-8 h-8 rounded flex items-center justify-center font-bold text-sm shrink-0 shadow-inner transition-colors
                                 ${status === 'completed' ? 'bg-zinc-800 text-green-500' : ''}
                                 ${status === 'active' ? `bg-zinc-800 ${activeEpisode.color}` : ''}
                                 ${status === 'locked' ? 'bg-zinc-900 text-zinc-700' : ''}
+                                ${isUnlocked && status !== 'active' ? 'group-hover:text-white' : ''}
                             `}>
                                 {status === 'completed' ? <Check size={16} /> : level.id}
                             </div>
                             
                             <div className="flex-1 z-10">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className={`font-bold tracking-wide ${status === 'active' ? 'text-white' : 'text-zinc-400'}`}>
+                                    <h3 className={`font-bold tracking-wide ${status === 'active' ? 'text-white' : 'text-zinc-400'} ${isUnlocked ? 'group-hover:text-white' : ''}`}>
                                         {level.title}
                                     </h3>
                                     {status === 'active' && <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded text-white animate-pulse">ACTIVE</span>}
+                                    {isUnlocked && status !== 'active' && (
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[9px] bg-zinc-700 px-2 py-0.5 rounded text-white">
+                                            <PlayCircle size={10} />
+                                            <span>JUMP</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-xs text-zinc-500">{level.description}</p>
                             </div>
@@ -264,7 +283,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                             <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none text-white scale-150">
                                 {React.createElement(activeEpisode.icon, { size: 80 })}
                             </div>
-                        </div>
+                        </button>
                        );
                   })}
               </div>
