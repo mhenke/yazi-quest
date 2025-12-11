@@ -125,9 +125,9 @@ export default function App() {
 
         const isNewEpisode = nextLevel.episodeId !== prevLevel.episodeId;
         
-        // Continuum Logic: If it's a new episode, teleport to start.
-        // Otherwise, stay exactly where we are to prevent jarring transitions.
-        const nextPath = isNewEpisode ? nextLevel.initialPath : prev.currentPath;
+        // Continuum Logic: Always preserve path for realism.
+        // We do not reset to nextLevel.initialPath unless the user restarts the level manually via Game Over.
+        const nextPath = prev.currentPath;
         
         // Take a snapshot for reset
         const currentFSSnapshot = cloneFS(prev.fs);
