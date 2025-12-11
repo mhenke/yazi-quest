@@ -11,10 +11,60 @@ import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
 import { GameOverModal } from './components/GameOverModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const initialLevel = LEVELS[0];
+    // 1. Clean Slate for Tasks (Important for hot-reload or URL jumps)
+    LEVELS.forEach(l => l.tasks.forEach(t => t.completed = false));
+
+    // 2. Parse URL Parameters
+    const params = new URLSearchParams(window.location.search);
+    const epParam = params.get('ep') || params.get('episode');
+    const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
+    const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
+    const skipIntro = params.get('intro') === 'false';
+    
+    // 3. Determine Target Level
+    let targetIndex = 0;
+    if (lvlParam) {
+        const id = parseInt(lvlParam, 10);
+        const idx = LEVELS.findIndex(l => l.id === id);
+        if (idx !== -1) targetIndex = idx;
+    } else if (epParam) {
+        const id = parseInt(epParam, 10);
+        const idx = LEVELS.findIndex(l => l.episodeId === id);
+        if (idx !== -1) targetIndex = idx;
+    }
+
+    // 4. Handle Task Completion (Bypass)
+    if (tasksParam) {
+        if (tasksParam === 'all') {
+            LEVELS[targetIndex].tasks.forEach(t => t.completed = true);
+        } else {
+            const ids = tasksParam.split(',');
+            LEVELS.forEach(l => l.tasks.forEach(t => {
+                if (ids.includes(t.id)) t.completed = true;
+            }));
+        }
+    }
+
+    // 5. Setup Initial State
+    const initialLevel = LEVELS[targetIndex];
+    const isDevOverride = !!(epParam || lvlParam || tasksParam);
+    
+    // Show intro if we are at start of an episode, OR if explicitly jumped to a level (unless skipped via logic, but simpler is better)
+    // We'll show it if it's the first level of an episode to set context.
+    const isEpisodeStart = targetIndex === 0 || 
+                           (targetIndex > 0 && LEVELS[targetIndex].episodeId !== LEVELS[targetIndex - 1].episodeId);
+    
+    // Logic: Always show intro for Ep 1 start. For others, only if it's the start of the episode.
+    const showIntro = !skipIntro && isEpisodeStart; 
+
+    // Note: FS is reset to INITIAL_FS on jump. 
+    // Complex levels later might be missing dependencies if jumped to directly without playing previous levels.
+    // This is expected behavior for a debug/bypass feature.
+
     return {
       currentPath: initialLevel.initialPath,
       cursorIndex: 0,
@@ -23,15 +73,15 @@ export default function App() {
       inputBuffer: '',
       filter: '',
       history: [],
-      levelIndex: 0,
+      levelIndex: targetIndex,
       fs: INITIAL_FS,
       levelStartFS: cloneFS(INITIAL_FS),
-      notification: null,
+      notification: isDevOverride ? `DEV BYPASS: LEVEL ${initialLevel.id}` : null,
       selectedIds: [],
       pendingDeleteIds: [],
       showHelp: false,
       showHint: false,
-      showEpisodeIntro: true,
+      showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
       keystrokes: 0,
       isGameOver: false,
@@ -222,15 +272,13 @@ export default function App() {
       });
   };
 
-  const handleDelete = () => {
+  const initiateDelete = () => {
       // Determine what to delete: selection or current item
       const idsToDelete = gameState.selectedIds.length > 0 ? gameState.selectedIds : (currentItem ? [currentItem.id] : []);
       if (idsToDelete.length === 0) return;
 
-      // Check protections
+      // Check protections BEFORE showing dialog
       for (const id of idsToDelete) {
-          // Find node to check name (expensive but safe)
-          // Simplified: we only check current context or selection.
           const dir = getCurrentDir();
           const node = dir?.children?.find(c => c.id === id);
           if (node) {
@@ -242,18 +290,37 @@ export default function App() {
           }
       }
 
+      // If valid, switch mode to confirmation
+      setGameState(prev => ({
+          ...prev,
+          mode: 'confirm-delete',
+          pendingDeleteIds: idsToDelete
+      }));
+  };
+
+  const confirmDelete = () => {
       setGameState(prev => {
           let newFS = prev.fs;
-          idsToDelete.forEach(id => {
+          prev.pendingDeleteIds.forEach(id => {
               newFS = deleteNode(newFS, prev.currentPath, id);
           });
           return { 
               ...prev, 
               fs: newFS, 
+              mode: 'normal',
               selectedIds: [], 
-              notification: `Deleted ${idsToDelete.length} items` 
+              pendingDeleteIds: [],
+              notification: `Deleted ${prev.pendingDeleteIds.length} items` 
           };
       });
+  };
+
+  const cancelDelete = () => {
+      setGameState(prev => ({
+          ...prev,
+          mode: 'normal',
+          pendingDeleteIds: []
+      }));
   };
 
   const handleCopy = (isCut: boolean) => {
@@ -400,7 +467,7 @@ export default function App() {
     const key = e.key;
 
     // Increment Keystrokes (for Mastery)
-    if (currentLevel.maxKeystrokes) {
+    if (currentLevel.maxKeystrokes && gameState.mode === 'normal') {
         setGameState(prev => {
             if (prev.keystrokes >= (currentLevel.maxKeystrokes || 999)) {
                  return { ...prev, isGameOver: true, gameOverReason: 'keystrokes', keystrokes: prev.keystrokes + 1 };
@@ -424,6 +491,16 @@ export default function App() {
     }
     if (gameState.showHint) {
         setGameState(prev => ({ ...prev, showHint: false }));
+        return;
+    }
+
+    // --- Delete Confirmation Mode ---
+    if (gameState.mode === 'confirm-delete') {
+        if (key === 'y' || key === 'Y' || key === 'Enter') {
+            confirmDelete();
+        } else if (key === 'n' || key === 'N' || key === 'Escape') {
+            cancelDelete();
+        }
         return;
     }
 
@@ -504,7 +581,7 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'input-file', notification: 'Create: Type name (end with / for dir)' }));
                 break;
             case 'd':
-                handleDelete();
+                initiateDelete();
                 break;
             case 'r':
                 if (currentItem) {
@@ -551,6 +628,27 @@ export default function App() {
       return <OutroSequence />;
   }
 
+  // Calculate confirmation details
+  let confirmMessage = "";
+  let confirmDetail = "";
+  if (gameState.mode === 'confirm-delete') {
+      const count = gameState.pendingDeleteIds.length;
+      confirmMessage = `Trash ${count} selected ${count === 1 ? 'file' : 'files'}?`;
+      // Show path of first item for context, similar to Yazi
+      const firstId = gameState.pendingDeleteIds[0];
+      const dir = getCurrentDir();
+      const node = dir?.children?.find(c => c.id === firstId);
+      const currentPathStr = resolvePath(gameState.fs, gameState.currentPath);
+      // Remove trailing slash if exists for clean join
+      const cleanPath = currentPathStr.endsWith('/') && currentPathStr !== '/' ? currentPathStr.slice(0, -1) : currentPathStr;
+      
+      confirmDetail = node ? `${cleanPath}/${node.name}` : `${count} Items`;
+      
+      if (count > 1) {
+          confirmDetail += ` (+${count - 1} others)`;
+      }
+  }
+
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-mono select-none">
        {/* Episode Intro Overlay */}
@@ -559,6 +657,11 @@ export default function App() {
              episode={EPISODE_LORE.find(e => e.id === currentLevel.episodeId) || EPISODE_LORE[0]} 
              onComplete={() => setGameState(prev => ({ ...prev, showEpisodeIntro: false }))} 
            />
+       )}
+
+       {/* Delete Confirmation Modal */}
+       {gameState.mode === 'confirm-delete' && (
+           <ConfirmationModal title={confirmMessage} detail={confirmDetail} />
        )}
 
        {/* Game Over Modal */}

@@ -53,7 +53,7 @@ Access granted. Now you must entrench yourself. Use batch operations to construc
 
 ### **EPISODE III: MASTERY (Yellow)**
 *Root Access Imminent*  
-You are no longer a guest. You are the architect. Infiltrate the `/root` directory, configure system daemons, and wipe your tracks. The kernel's heuristic scanners are watching—efficiency and precision (keystroke limits) are your only defense.
+You are no longer a guest. You are the architect. Infiltrate the `/root` directory, configure system daemons, and wipe all traces of your origin. The kernel's heuristic scanners are active—efficiency and precision (keystroke limits) are your only defense.
 
 ---
 
@@ -79,6 +79,24 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | `H` | **Hint** | Show objective hint |
 | `?` | **Help** | Show controls overlay |
 | `m` | **Mute** | Toggle sound effects |
+
+---
+
+## 🔧 Debug & Bypass Parameters
+
+You can use URL parameters to jump to specific parts of the game for testing or practice.
+
+| Parameter | Example | Description |
+| :--- | :--- | :--- |
+| `ep` / `episode` | `?ep=2` | Start at the beginning of specific Episode (1-3) |
+| `lvl` / `mission` | `?lvl=5` | Jump directly to a specific Level ID |
+| `tasks` | `?tasks=all` | Mark all tasks in the current level as complete (auto-advance) |
+| `intro` | `?intro=false` | Skip the cinematic text intro |
+
+**Examples:**
+*   `https://yazi-quest.app/?lvl=12` - Jump to Level 12
+*   `https://yazi-quest.app/?ep=3&intro=false` - Start Episode 3, skip intro
+*   `https://yazi-quest.app/?lvl=5&tasks=all` - Immediately complete Level 5 and go to 6
 
 ---
 
@@ -112,16 +130,6 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
     ```bash
     npm run build
     ```
-
-## 🧠 Lore & Design Choices
-
-The game uses visual cues to represent the AI's evolving state:
-*   **Blue UI**: Standard user permissions.
-*   **Purple UI**: Elevated privileges and data manipulation.
-*   **Yellow/Orange UI**: Visual Mode / Selection active.
-*   **Red UI**: System Alerts / Detection / Root access.
-
-The "Keystroke Limit" in Episode III forces players to internalize efficient movement (e.g., using `Space` to select a block of files and moving them at once, rather than moving them one by one), mirroring the real-world efficiency gains of using Yazi.
 
 ## 🔗 Credits
 
