@@ -644,7 +644,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "Encrypted Payload",
     description: "Intelligence archives detected. Enter the archive and copy the payload to workspace.",
-    initialPath: ['root', 'home', 'user', 'incoming'],
+    initialPath: ['root', 'home', 'user', 'downloads'],
     hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter. Highlight 'sys_v2.log'. Press 'y' (Copy). Go to workspace. Press 'p' (Paste).",
     timeLimit: 120,
     tasks: [
@@ -662,7 +662,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'archive-2',
-        description: "Copy 'sys_v2.log' from archive to workspace",
+        description: "Copy 'sys_v2.log' from backup_logs.zip to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'sys_v2.log');
