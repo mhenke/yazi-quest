@@ -73,6 +73,10 @@ export default function App() {
         initialZoxide['/home/guest/datastore/active'] = 10;
         initialZoxide['/home/guest/datastore'] = 10;
     }
+    // Pre-seed Zoxide for Level 9 (Stealth Cleanup) so tmp folder is in Shift+Z
+    if (initialLevel.id === 9) {
+        initialZoxide['/tmp'] = 10;
+    }
 
     // Prepare File System with Level-Specific Overrides (onEnter)
     let fs = cloneFS(INITIAL_FS);
@@ -279,6 +283,9 @@ export default function App() {
                  nextZoxideData['/home/guest/datastore/active'] = 10;
                  nextZoxideData['/home/guest/datastore'] = 10;
             }
+            if (nextLevel.id === 9) {
+                 nextZoxideData['/tmp'] = (nextZoxideData['/tmp'] || 0) + 10;
+            }
 
             // Apply onEnter hook to ensure prerequisites exist (e.g. created files from previous levels)
             let nextFS = cloneFS(prev.fs);
@@ -323,6 +330,9 @@ export default function App() {
     if (targetLevel.id === 8) {
         initialZoxide['/home/guest/datastore/active'] = 10;
         initialZoxide['/home/guest/datastore'] = 10;
+    }
+    if (targetLevel.id === 9) {
+        initialZoxide['/tmp'] = 10;
     }
 
     // Reset FS to initial state + level specific setup

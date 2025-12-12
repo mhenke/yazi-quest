@@ -255,6 +255,12 @@ export const INITIAL_FS: FileNode = {
          { id: id(), name: 'sys_dump.log', type: 'file', content: 'Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)' },
          { id: id(), name: 'session_A1.tmp', type: 'file', content: 'UID: 88392-A\nSTATUS: TERMINATED\nCACHE_HIT: 0' },
          { id: id(), name: 'session_B2.tmp', type: 'file', content: 'UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1' },
+         { id: id(), name: 'debug_trace.log', type: 'file', content: '[DEBUG] Trace execution started\n[DEBUG] Memory mapped at 0x8829\n[WARN] High latency detected' },
+         { id: id(), name: 'temp_store.dat', type: 'file', content: '0x00 0xFF 0xA2 [BINARY DATA]' },
+         { id: id(), name: 'overflow_heap.dmp', type: 'file', content: 'Heap dump triggered by OOM' },
+         { id: id(), name: 'socket_001.sock', type: 'file', content: '[SOCKET]' },
+         { id: id(), name: 'metrics_buffer.json', type: 'file', content: '{"cpu": 99, "mem": 1024}' },
+         { id: id(), name: 'ghost_process.pid', type: 'file', content: 'PID: 666' },
          { id: id(), name: 'cache', type: 'dir', children: [] }
       ]
     }
@@ -603,23 +609,31 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "Stealth Cleanup",
-    description: "Wipe tmp files without triggering alerts. Use visual selection to mark targets before deletion.",
+    description: "Remove obsolete temporary files. Use visual selection to mark multiple targets before deletion.",
     initialPath: ['root', 'tmp'],
-    hint: "Press Space on each file/folder to select multiple targets. Then delete all at once with 'd'.",
+    hint: "Press Space on multiple files to select them. Then press 'd' to delete the batch.",
     timeLimit: 90,
     tasks: [
       {
         id: 'stealth-1',
-        description: "Select at least 2 items using Space",
-        check: (state) => (state.selectedIds?.length || 0) >= 2,
+        description: "Select at least 2 tmp files in the tmp folder",
+        check: (state) => {
+            const tmp = findNodeByName(state.fs, 'tmp');
+            if (!tmp || !tmp.children) return false;
+            const tmpChildIds = tmp.children.map(c => c.id);
+            const selectedInTmp = state.selectedIds.filter(id => tmpChildIds.includes(id));
+            return selectedInTmp.length >= 2;
+        },
         completed: false
       },
       {
         id: 'stealth-2',
-        description: "Batch delete all selected files",
+        description: "Batch delete the selected files",
         check: (state) => {
           const tmp = findNodeByName(state.fs, 'tmp');
-          return tmp?.children?.length === 0;
+          // Allow level completion if at least 2 items have been removed (10 - 2 = 8 max allowed)
+          // This prevents getting stuck if the user doesn't wipe absolutely everything
+          return (tmp?.children?.length || 0) <= 8;
         },
         completed: false
       }
