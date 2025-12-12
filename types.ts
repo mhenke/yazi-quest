@@ -32,6 +32,13 @@ export interface Level {
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
+
+  // Theatre.md additions
+  coreSkill?: string; // Primary Yazi command being taught (e.g., "Filter (f)")
+  environmentalClue?: string; // UI hint shown in status area (e.g., "247 files. TARGET: .pem")
+  successMessage?: string; // Displayed on level completion (e.g., "ASSET LOCATED.")
+  buildsOn?: number[]; // Level IDs this level assumes knowledge from
+  leadsTo?: number[]; // Level IDs that build on this level's skill
 }
 
 export interface Episode {

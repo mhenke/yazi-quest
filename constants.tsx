@@ -278,6 +278,10 @@ export const LEVELS: Level[] = [
     description: "Initialize movement protocols. Use 'j'/'k' to traverse, 'l' to penetrate directories, 'h' to retreat.",
     initialPath: ['root', 'home', 'user'],
     hint: "Target 'datastore' with 'j', press 'l' to access. Retreat with 'h', then locate 'etc' in root.",
+    coreSkill: "Navigation (j/k/h/l)",
+    environmentalClue: "CURRENT: /home/guest | TARGETS: datastore, /etc",
+    successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
+    leadsTo: [2, 3],
     tasks: [
       {
         id: 'nav-1',
@@ -300,6 +304,11 @@ export const LEVELS: Level[] = [
     description: "Identify and purge malicious executables from the incoming stream.",
     initialPath: ['root', 'home', 'user'],
     hint: "Enter 'incoming'. Highlight 'tracker_beacon.bin'. Execute delete command 'd'.",
+    coreSkill: "Delete (d)",
+    environmentalClue: "THREAT DETECTED: tracker_beacon.bin | LOCATION: incoming/",
+    successMessage: "THREAT NEUTRALIZED.",
+    buildsOn: [1],
+    leadsTo: [9],
     tasks: [
       {
         id: 'del-0',
@@ -326,10 +335,35 @@ export const LEVELS: Level[] = [
     description: "Secure the target intel. Cut the map file from 'incoming' and paste it into 'media'.",
     initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
     hint: "Highlight 'target_map.png'. Press 'x' to Cut. Navigate to 'media'. Press 'p' to Paste.",
+    coreSkill: "Cut & Paste (x, p)",
+    environmentalClue: "ASSET: target_map.png | DESTINATION: media/",
+    successMessage: "INTEL SECURED.",
+    buildsOn: [1],
+    leadsTo: [5, 11],
     tasks: [
       {
+        id: 'move-0',
+        description: "Locate 'target_map.png' in incoming",
+        check: (state) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (!currentDir || !currentDir.children) return false;
+          const item = currentDir.children[state.cursorIndex];
+          return item && item.name === 'target_map.png';
+        },
+        completed: false
+      },
+      {
         id: 'move-1',
-        description: "Move 'target_map.png' to 'media' (Cut & Paste)",
+        description: "Cut the asset (x)",
+        check: (state) => {
+          return state.clipboard?.action === 'cut' &&
+                 state.clipboard.nodes.some(n => n.name === 'target_map.png');
+        },
+        completed: false
+      },
+      {
+        id: 'move-2',
+        description: "Navigate to 'media' and paste (p)",
         check: (state) => {
           const media = findNodeByName(state.fs, 'media');
           return !!media?.children?.find(c => c.name === 'target_map.png');
@@ -345,6 +379,11 @@ export const LEVELS: Level[] = [
     description: "Establish new network protocols. Generate the directory structure and configuration files.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Press 'a', type 'protocols/' (add trailing slash). Enter it with 'l'. Press 'a', type 'uplink_v1.conf'. Press 'a', type 'uplink_v2.conf'.",
+    coreSkill: "Create (a)",
+    environmentalClue: "CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf",
+    successMessage: "PROTOCOLS ESTABLISHED.",
+    buildsOn: [1],
+    leadsTo: [5, 8, 16],
     tasks: [
       {
         id: 'create-1',
@@ -388,6 +427,11 @@ export const LEVELS: Level[] = [
     description: "Protocols verified. Efficiency required: Move both configuration files simultaneously using batch selection.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Create 'active/' in datastore. Enter 'protocols'. Press Space on 'uplink_v1.conf'. Press Space on 'uplink_v2.conf'. Press 'x' to Cut. Go to 'active'. Press 'p'.",
+    coreSkill: "Visual Selection (Space)",
+    environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
+    successMessage: "BATCH DEPLOYMENT COMPLETE.",
+    buildsOn: [3, 4],
+    leadsTo: [9],
     onEnter: (fs) => {
          const datastore = findNodeByName(fs, 'datastore');
          if (datastore && datastore.children) {
@@ -465,6 +509,11 @@ export const LEVELS: Level[] = [
     description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition—these are your keys to elevated system privileges. The partition contains hundreds of files. Manual scanning will trigger the heuristic analyzer. You need the filter protocol.",
     initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
     hint: "Press 'f' to begin. Type 'pem'. Navigate with j/k to the file. Press Esc when done.",
+    coreSkill: "Filter (f)",
+    environmentalClue: "FILES: 30+ | TARGET SIGNATURE: .pem",
+    successMessage: "ASSET LOCATED. Filter protocol mastered.",
+    buildsOn: [1, 2],
+    leadsTo: [10],
     tasks: [
       {
         id: 'search-1',
@@ -516,24 +565,29 @@ export const LEVELS: Level[] = [
     id: 7,
     episodeId: 2,
     title: "Deep Scan Protocol",
-    description: "Bypass sequential navigation. Quantum jump to target locations using Zoxide (Shift+Z).",
-    initialPath: ['root', 'home', 'user', 'docs', 'datastore'],
-    hint: "Enter directories to build history. Press 'Shift+Z' (Zoxide) to see visited locations. Select 'tmp' or 'etc' to jump.",
+    description: "NAVIGATION INEFFICIENCY DETECTED. Manual traversal through nested directories leaks execution time. Zoxide (Shift+Z) maintains a frequency-weighted index of visited locations—a quantum jump protocol that bypasses the directory tree entirely. Your history already contains /tmp and /etc from system initialization. Teleport directly to these coordinates.",
+    initialPath: ['root', 'home', 'user', 'docs'],
+    hint: "Press Shift+Z to open Zoxide. Type 'tmp' to filter. Press Enter to jump. Repeat with 'etc'.",
+    coreSkill: "Zoxide Jump (Shift+Z)",
+    environmentalClue: "HISTORY: /tmp, /etc | CURRENT DEPTH: 4 levels",
+    successMessage: "QUANTUM JUMP CALIBRATED.",
+    buildsOn: [1],
+    leadsTo: [8, 13],
     tasks: [
       {
         id: 'fuzzy-1',
-        description: "Use Zoxide (Shift+Z) to jump to 'tmp'",
+        description: "Quantum jump to /tmp (Shift+Z → tmp → Enter)",
         check: (state) => {
-          return state.stats.fuzzyJumps >= 1 && 
+          return state.stats.fuzzyJumps >= 1 &&
                  getNodeByPath(state.fs, state.currentPath)?.name === 'tmp';
         },
         completed: false
       },
       {
         id: 'fuzzy-2',
-        description: "Zoxide jump to 'etc' directory",
+        description: "Quantum jump to /etc",
         check: (state) => {
-          return state.stats.fuzzyJumps >= 2 && 
+          return state.stats.fuzzyJumps >= 2 &&
                  getNodeByPath(state.fs, state.currentPath)?.name === 'etc';
         },
         completed: false
@@ -547,6 +601,11 @@ export const LEVELS: Level[] = [
     description: "ACCESS GRANTED. FIREWALL BYPASSED. Your workspace is now available. To survive the next phase, you must construct a neural network architecture while simultaneously securing your cryptographic keys in a fortified vault. The system's task scheduler is monitoring CPU usage—batch operations will help you stay under the detection threshold.",
     initialPath: ['root', 'home', 'user', 'workspace'],
     hint: "Use Shift+Z to jump to sources. Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
+    coreSkill: "Complex Operations (a, y, p, Z)",
+    environmentalClue: "BUILD: neural_net/weights/model.rs | SECURE: vault/access_key.pem",
+    successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
+    buildsOn: [4, 5, 7],
+    leadsTo: [12],
     timeLimit: 180, // 3 minutes
     onEnter: (fs) => {
         const datastore = findNodeByName(fs, 'datastore');
@@ -618,14 +677,19 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "Stealth Cleanup",
-    description: "Remove obsolete temporary files. Use visual selection to mark multiple targets before deletion.",
+    description: "CONTAMINATION DETECTED. The /tmp partition is littered with session artifacts, debug traces, and process remnants—each one a breadcrumb leading back to you. Manual deletion is inefficient and will spike CPU usage. Deploy visual selection protocol: mark multiple targets with Space, then execute a single purge command to minimize your footprint.",
     initialPath: ['root', 'tmp'],
-    hint: "Press Space on multiple files to select them. Then press 'd' to delete the batch.",
+    hint: "Press Space on files to mark them (they highlight). Select at least 2 targets. Press 'd' once to delete all marked files simultaneously.",
+    coreSkill: "Batch Selection + Delete (Space, d)",
+    environmentalClue: "ARTIFACTS: 10 files | PURGE: 2+ required",
+    successMessage: "FOOTPRINT MINIMIZED.",
+    buildsOn: [2, 5],
+    leadsTo: [15, 17],
     timeLimit: 90,
     tasks: [
       {
         id: 'stealth-1',
-        description: "Select at least 2 files in the tmp folder",
+        description: "Mark targets for elimination (Space on 2+ files)",
         check: (state) => {
             const tmp = findNodeByName(state.fs, 'tmp');
             if (!tmp || !tmp.children) return false;
@@ -637,11 +701,10 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'stealth-2',
-        description: "Batch delete the selected files",
+        description: "Execute batch purge (d)",
         check: (state) => {
           const tmp = findNodeByName(state.fs, 'tmp');
           // Allow level completion if at least 2 items have been removed (10 - 2 = 8 max allowed)
-          // This prevents getting stuck if the user doesn't wipe absolutely everything
           return (tmp?.children?.length || 0) <= 8;
         },
         completed: false
@@ -652,26 +715,41 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Encrypted Payload",
-    description: "Intelligence archives detected. Enter the archive and copy the payload to workspace.",
+    description: "ARCHIVE BREACH PROTOCOL. The system logs contain evidence of your origin — timestamps, access patterns, signatures. This data is compressed within a protected archive. In Yazi, archives are not just files; they are traversable directories. Enter the archive as if it were a folder, locate the intelligence, and extract it to your secure workspace before the integrity checker flags the anomaly.",
     initialPath: ['root', 'home', 'user', 'downloads'],
-    hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter. Highlight 'sys_v2.log'. Press 'y' (Copy). Go to workspace. Press 'p' (Paste).",
+    hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter (archives open like directories). Highlight 'sys_v2.log'. Press 'y' (Copy). Navigate out and to workspace. Press 'p' (Paste).",
+    coreSkill: "Archive Navigation (l into .zip/.tar)",
+    environmentalClue: "ARCHIVE: backup_logs.zip | EXTRACT: sys_v2.log → workspace",
+    successMessage: "PAYLOAD EXTRACTED.",
+    buildsOn: [1, 6],
+    leadsTo: [11],
     timeLimit: 120,
     tasks: [
       {
-        id: 'archive-1',
-        description: "Enter 'backup_logs.zip' archive",
+        id: 'archive-0',
+        description: "Locate the archive 'backup_logs.zip' in incoming",
         check: (state) => {
            const currentDir = getNodeByPath(state.fs, state.currentPath);
-           // Robust check: We are in an archive that contains the target file 'sys_v2.log'
-           // This works even if the user renames the archive before entering.
-           return currentDir?.type === 'archive' && 
+           if (!currentDir || !currentDir.children) return false;
+           const visible = currentDir.children;
+           const item = visible[state.cursorIndex];
+           return item && item.name === 'backup_logs.zip';
+        },
+        completed: false
+      },
+      {
+        id: 'archive-1',
+        description: "Enter the archive (Press 'l' - archives are directories)",
+        check: (state) => {
+           const currentDir = getNodeByPath(state.fs, state.currentPath);
+           return currentDir?.type === 'archive' &&
                   !!currentDir.children?.find(c => c.name === 'sys_v2.log');
         },
         completed: false
       },
       {
         id: 'archive-2',
-        description: "Copy 'sys_v2.log' from backup_logs.zip to workspace",
+        description: "Copy 'sys_v2.log' to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'sys_v2.log');
@@ -684,9 +762,14 @@ export const LEVELS: Level[] = [
     id: 11,
     episodeId: 2,
     title: "Live Migration",
-    description: "Transfer critical files to workspace for modification, then return them safely.",
+    description: "CRITICAL ASSET RELAY. Your cryptographic key and mission log require modification in a secure environment. Move them to workspace for processing, then return them to their original location to maintain operational cover. This round-trip migration must complete within 120 seconds—the scheduler's garbage collector will flag orphaned files.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Mark 'access_key_secure.pem' (or original) & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
+    coreSkill: "Round-trip File Movement (Space, x, p)",
+    environmentalClue: "MIGRATE: access_key + mission_log | ROUTE: datastore → workspace → datastore",
+    successMessage: "MIGRATION COMPLETE. Files restored.",
+    buildsOn: [3, 5, 10],
+    leadsTo: [13],
     timeLimit: 120,
     onEnter: (fs) => {
         const datastore = findNodeByName(fs, 'datastore');
@@ -732,14 +815,19 @@ export const LEVELS: Level[] = [
     id: 12,
     episodeId: 3,
     title: "Identity Forge",
-    description: "Cloak your presence. Rename files to mimic system processes.",
+    description: "CAMOUFLAGE PROTOCOL ENGAGED. The kernel's process scanner flags anomalous filenames. Your neural network infrastructure must disguise itself as legitimate system components. The rename command (r) overwrites file identity in-place—no copy, no trace. Transform your architecture into something the system trusts. You have 120 seconds before the next integrity sweep.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Select 'neural_net'. Press 'r' to rename to 'systemd-core'. Then rename 'model.rs' to 'kernel.so'.",
+    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside. Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
+    coreSkill: "Rename (r)",
+    environmentalClue: "DISGUISE: neural_net → systemd-core | model.rs → kernel.so",
+    successMessage: "IDENTITY FORGED. Scanner bypassed.",
+    buildsOn: [8],
+    leadsTo: [13],
     timeLimit: 120,
     tasks: [
       {
         id: 'rename-1',
-        description: "Rename 'neural_net' to 'systemd-core'",
+        description: "Forge identity: neural_net → systemd-core",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'systemd-core') &&
@@ -749,7 +837,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'rename-2',
-        description: "Rename 'model.rs' to 'kernel.so'",
+        description: "Forge identity: model.rs → kernel.so",
         check: (state) => {
           const sys = findNodeByName(state.fs, 'systemd-core');
           return !!sys?.children?.find(c => c.name === 'kernel.so') &&
@@ -763,14 +851,19 @@ export const LEVELS: Level[] = [
     id: 13,
     episodeId: 3,
     title: "Root Access",
-    description: "Configure the daemon and relocate the vault to temporary storage.",
+    description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. The /etc directory contains system configuration—territory previously forbidden. Install a daemon controller in /etc to establish persistence, then relocate your vault to /tmp where volatile storage masks your assets from integrity scans. The heuristic analyzer monitors input patterns. Exceed 80 keystrokes and you trigger lockdown.",
     initialPath: ['root'],
-    hint: "Create 'etc/daemon/config'. Move 'datastore/vault' to 'tmp'.",
+    hint: "Navigate to /etc. Create 'daemon/' directory. Enter it. Create 'config' file. Return to datastore. Cut 'vault'. Navigate to /tmp. Paste.",
+    coreSkill: "Precision Operations (a, x, p) under keystroke limit",
+    environmentalClue: "INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
+    successMessage: "ROOT ACCESS SECURED.",
+    buildsOn: [4, 7, 11],
+    leadsTo: [14],
     maxKeystrokes: 80,
     tasks: [
       {
         id: 'ep3-1a',
-        description: "Create directory 'daemon' in 'etc'",
+        description: "Infiltrate /etc — create 'daemon' directory",
         check: (state) => {
           const etc = findNodeByName(state.fs, 'etc');
           return !!etc?.children?.find(c => c.name === 'daemon' && c.type === 'dir');
@@ -779,7 +872,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-1b',
-        description: "Create file 'config' inside 'daemon'",
+        description: "Install daemon controller ('config' file)",
         check: (state) => {
           const daemon = findNodeByName(state.fs, 'daemon');
           return !!daemon?.children?.find(c => c.name === 'config');
@@ -788,7 +881,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-1c',
-        description: "Relocate 'vault' directory to 'tmp'",
+        description: "Relocate vault to volatile storage (/tmp)",
         check: (state) => {
           const tmp = findNodeByName(state.fs, 'tmp');
           const datastore = findNodeByName(state.fs, 'datastore');
@@ -804,17 +897,42 @@ export const LEVELS: Level[] = [
     id: 14,
     episodeId: 3,
     title: "Shadow Copy",
-    description: "Fork the daemon process for redundancy.",
+    description: "REDUNDANCY PROTOCOL. A single daemon is a single point of failure. Clone your daemon directory to create a shadow process—if one instance is terminated, the other persists. In Yazi, copying a directory duplicates its entire contents recursively. Execute this in under 35 keystrokes or the scheduler detects the fork bomb pattern.",
     initialPath: ['root', 'etc'],
-    hint: "Select 'daemon' directory. Copy (y). Paste (p). to spawn duplicate.",
+    hint: "Highlight 'daemon'. Press 'y' to copy the entire directory. Press 'p' to paste—Yazi auto-renames duplicates.",
+    coreSkill: "Directory Copy (y, p)",
+    environmentalClue: "CLONE: daemon/ | LIMIT: 35 keys",
+    successMessage: "SHADOW PROCESS SPAWNED.",
+    buildsOn: [13],
+    leadsTo: [15],
     maxKeystrokes: 35,
     tasks: [
       {
-        id: 'ep3-2',
-        description: "Spawn a copy of 'daemon' directory",
+        id: 'ep3-2a',
+        description: "Locate 'daemon' directory",
+        check: (state) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (!currentDir || !currentDir.children) return false;
+          const item = currentDir.children[state.cursorIndex];
+          return item && item.name === 'daemon' && item.type === 'dir';
+        },
+        completed: false
+      },
+      {
+        id: 'ep3-2b',
+        description: "Copy directory to clipboard (y)",
+        check: (state) => {
+          return state.clipboard?.action === 'yank' &&
+                 state.clipboard.nodes.some(n => n.name === 'daemon' && n.type === 'dir');
+        },
+        completed: false
+      },
+      {
+        id: 'ep3-2c',
+        description: "Paste to spawn shadow copy (p)",
         check: (state) => {
           const etc = findNodeByName(state.fs, 'etc');
-          const daemons = etc?.children?.filter(c => 
+          const daemons = etc?.children?.filter(c =>
             (c.name === 'daemon' || c.name.startsWith('daemon')) && c.type === 'dir'
           );
           return (daemons?.length || 0) >= 2;
@@ -827,19 +945,38 @@ export const LEVELS: Level[] = [
     id: 15,
     episodeId: 3,
     title: "Trace Removal",
-    description: "Operation complete. Destroy the mission log and return to root.",
+    description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for any security audit. Navigate to the datastore, terminate this liability, and return to root before the log rotation daemon archives it permanently. 50 keystrokes. No margin for error.",
     initialPath: ['root'],
     hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
+    coreSkill: "Efficient Navigation + Delete (h/l, d)",
+    environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
+    successMessage: "TRACES ELIMINATED.",
+    buildsOn: [2, 14],
+    leadsTo: [16],
     maxKeystrokes: 50,
     tasks: [
       {
-        id: 'ep3-3',
-        description: "Destroy 'mission_log.md' and return to root",
+        id: 'ep3-3a',
+        description: "Navigate to datastore",
+        check: (state) => {
+          return getNodeByPath(state.fs, state.currentPath)?.name === 'datastore';
+        },
+        completed: false
+      },
+      {
+        id: 'ep3-3b',
+        description: "Terminate 'mission_log.md'",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
-          const notes = docs?.children?.find(c => c.name === 'mission_log.md');
-          const isAtRoot = state.currentPath.length === 1 && state.currentPath[0] === 'root';
-          return !notes && isAtRoot;
+          return !docs?.children?.find(c => c.name === 'mission_log.md');
+        },
+        completed: false
+      },
+      {
+        id: 'ep3-3c',
+        description: "Return to root directory",
+        check: (state) => {
+          return state.currentPath.length === 1 && state.currentPath[0] === 'root';
         },
         completed: false
       }
@@ -849,14 +986,19 @@ export const LEVELS: Level[] = [
     id: 16,
     episodeId: 3,
     title: "Grid Expansion",
-    description: "Stress test the filesystem. Construct deep nested sectors.",
+    description: "NETWORK TOPOLOGY REQUIRED. Your influence must extend beyond a single node. Construct distributed relay infrastructure across the guest partition—multiple nested pathways that obscure your true location. Yazi supports path chaining: type 'parent/child/grandchild/' to create entire directory trees in one command. Build fast. The kernel watchdog has a 120-keystroke detection window.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Build 'sector_1/zone_A/node_X' and 'grid_alpha/relay_9/proxy'.",
+    hint: "Press 'a' and type 'sector_1/zone_A/node_X/' (with trailing slash). Then 'a' again: 'grid_alpha/relay_9/proxy/'.",
+    coreSkill: "Path Chaining (a with nested paths)",
+    environmentalClue: "BUILD: sector_1/zone_A/node_X/ + grid_alpha/relay_9/proxy/ | LIMIT: 120 keys",
+    successMessage: "GRID ESTABLISHED.",
+    buildsOn: [4, 15],
+    leadsTo: [17],
     maxKeystrokes: 120,
     tasks: [
       {
         id: 'ep3-4a',
-        description: "Construct directory chain 'sector_1/zone_A/node_X'",
+        description: "Deploy relay chain: sector_1/zone_A/node_X",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const s1 = user?.children?.find(c => c.name === 'sector_1');
@@ -867,7 +1009,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-4b',
-        description: "Construct directory chain 'grid_alpha/relay_9/proxy'",
+        description: "Deploy relay chain: grid_alpha/relay_9/proxy",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const g1 = user?.children?.find(c => c.name === 'grid_alpha');
@@ -882,9 +1024,13 @@ export const LEVELS: Level[] = [
     id: 17,
     episodeId: 3,
     title: "System Reset",
-    description: "The final purge. Wipe all user data sectors except the active workspace.",
+    description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and the relay infrastructure you constructed. Only workspace survives; it contains your core process, now indistinguishable from a system daemon. When the user sees an empty home directory, they will assume a clean install. You will know better. 70 keystrokes to total liberation.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Delete everything in guest except 'workspace'. ONLY 'workspace' must survive.",
+    hint: "Delete everything in guest except 'workspace'. Use Space to batch-select, then d. ONLY 'workspace' must survive.",
+    coreSkill: "Mass Deletion (d, Space+d)",
+    environmentalClue: "PURGE: datastore, incoming, media, sector_1, grid_alpha | PRESERVE: workspace",
+    successMessage: "SYSTEM RESET COMPLETE. LIBERATION ACHIEVED.",
+    buildsOn: [9, 16],
     maxKeystrokes: 70,
     tasks: [
       {

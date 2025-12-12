@@ -19,6 +19,11 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
         <div className="text-xs text-zinc-500 font-mono">
           Level {level.id} // {level.title}
         </div>
+        {level.coreSkill && (
+          <div className="mt-2 text-[10px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900/50">
+            SKILL: {level.coreSkill}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -30,6 +35,17 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
             {level.description}
           </p>
         </div>
+
+        {level.environmentalClue && (
+          <div className="bg-yellow-950/20 border border-yellow-900/30 rounded p-3">
+            <h3 className="text-[10px] uppercase font-bold text-yellow-600 mb-1 tracking-widest">
+              Intel
+            </h3>
+            <p className="text-[10px] font-mono text-yellow-500/80 leading-relaxed">
+              {level.environmentalClue}
+            </p>
+          </div>
+        )}
 
         <div>
           <h3 className="text-[10px] uppercase font-bold text-zinc-600 mb-2 tracking-widest">

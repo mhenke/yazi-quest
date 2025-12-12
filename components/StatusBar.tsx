@@ -124,16 +124,22 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
         
         {/* Level Complete Trigger */}
         {allTasksComplete ? (
-             <button 
+            <>
+              {level.successMessage && (
+                <div className="px-3 bg-green-950/50 text-green-400 font-bold border-l border-green-700 flex items-center text-[10px] uppercase tracking-wide">
+                  {level.successMessage}
+                </div>
+              )}
+              <button
                 onClick={onNextLevel}
                 className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
-            >
-                <span className="hidden sm:inline">LEVEL COMPLETE</span>
-                <span className="sm:hidden">NEXT</span>
+              >
+                <span className="hidden sm:inline">NEXT</span>
                 <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
                     SHIFT <ArrowRight size={8} /> ENTER
                 </span>
-            </button>
+              </button>
+            </>
         ) : (
             state.notification && (
                 <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate">
