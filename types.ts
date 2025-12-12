@@ -65,7 +65,7 @@ export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
   clipboard: ClipboardItem | null;
-  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive' | 'fzf-current';
+  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive' | 'fzf-current' | 'overwrite-confirm';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   zoxideData: Record<string, number>; // Directory visit frequency map: pathString -> count
@@ -76,6 +76,7 @@ export interface GameState {
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
+  pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
   showHint: boolean; // Toggle for hint modal
   showEpisodeIntro: boolean; // Toggle for story mode overlay

@@ -48,33 +48,11 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   if (parent) {
     if (!parent.children) parent.children = [];
     
-    // Auto-rename logic for collisions (Shadow Copy support)
-    let finalName = newNode.name;
-    let counter = 1;
-    
-    const exists = (name: string) => parent.children!.some(c => c.name === name);
+    // We now allow duplicate names if the type is different (e.g. file 'active' and dir 'active')
+    // We only filter out/replace if it's the exact same name AND type (for overwrites)
+    parent.children = parent.children.filter(c => !(c.name === newNode.name && c.type === newNode.type));
 
-    if (exists(finalName)) {
-        const nameParts = newNode.name.split('.');
-        // Try to insert _copy before extension if it exists and isn't a directory
-        if (nameParts.length > 1 && newNode.type !== 'dir') {
-             const ext = nameParts.pop();
-             const base = nameParts.join('.');
-             while(exists(finalName)) {
-                 finalName = `${base}_copy${counter > 1 ? `_${counter}` : ''}.${ext}`;
-                 counter++;
-             }
-        } else {
-             // Directories or files without extension
-             while(exists(finalName)) {
-                 finalName = `${newNode.name}_copy${counter > 1 ? `_${counter}` : ''}`;
-                 counter++;
-             }
-        }
-    }
-
-    const nodeToAdd = { ...newNode, name: finalName };
-    parent.children.push(nodeToAdd);
+    parent.children.push(newNode);
     
     // Sort: Dirs > Archives > Files
     parent.children.sort((a, b) => {
@@ -116,7 +94,8 @@ export const renameNode = (root: FileNode, parentPathIds: string[], nodeId: stri
   return newRoot;
 };
 
-export const createPath = (root: FileNode, parentPathIds: string[], pathStr: string): { fs: FileNode, error?: string } => {
+// Updated createPath: Returns collision info instead of auto-renaming
+export const createPath = (root: FileNode, parentPathIds: string[], pathStr: string): { fs: FileNode, error?: string, createdName?: string, collision?: boolean, collisionNode?: FileNode } => {
   const newRoot = cloneFS(root);
   let currentPath = [...parentPathIds];
   
@@ -124,7 +103,7 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
   const segments = pathStr.split('/').filter(s => s.trim().length > 0);
   
   for (let i = 0; i < segments.length; i++) {
-    const name = segments[i];
+    let name = segments[i];
     const isLast = i === segments.length - 1;
     // If it's the last segment, type depends on trailing slash. Otherwise intermediate must be dir.
     const type: 'dir' | 'file' = (isLast && !isDirTarget) ? 'file' : 'dir';
@@ -133,46 +112,76 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
     const parent = getNodeByPath(newRoot, currentPath);
     if (!parent) return { fs: root, error: "Path resolution failed" };
     
-    const existing = parent.children?.find(c => c.name === name);
+    // Traversal priority: look for directory first to traverse into
+    const existingDir = parent.children?.find(c => c.name === name && c.type === 'dir');
+    const existingFile = parent.children?.find(c => c.name === name && c.type !== 'dir');
+    const existing = existingDir || existingFile;
     
     if (existing) {
-      if (existing.type !== 'dir' && !isLast) {
-         // Trying to go through a file as a directory
-         return { fs: root, error: `Cannot create directory inside file: ${name}` };
+      if (!isLast) {
+         if (existing.type !== 'dir') {
+            // Trying to go through a file as a directory
+            return { fs: root, error: `Cannot create directory inside file: ${name}` };
+         }
+         // It exists and is valid (dir), traverse into it
+         currentPath.push(existing.id);
+         continue;
+      } else {
+         // Last segment
+         
+         // Conflict check: Only conflict if Same Name AND Same Type
+         const strictConflict = parent.children?.find(c => c.name === name && c.type === type);
+         
+         if (strictConflict) {
+             // Return collision info so UI can prompt overwrite
+             return { 
+                 fs: root, // Return original FS (no changes yet)
+                 collision: true,
+                 collisionNode: {
+                    id: Math.random().toString(36).substr(2, 9),
+                    name: name,
+                    type: type,
+                    children: type === 'dir' ? [] : undefined,
+                    content: type === 'file' ? '' : undefined
+                 }
+             };
+         }
+         
+         // If no strict conflict (e.g. existing is File but new is Dir), we proceed to create
+         // This satisfies the "we can have a file active and a folder active" requirement
       }
-      if (isLast && existing.type !== type) {
-          return { fs: root, error: `Item '${name}' already exists as ${existing.type}` };
-      }
-      // It exists and is valid (dir), traverse into it
-      currentPath.push(existing.id);
-    } else {
-      // Create new
-      const newNode: FileNode = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name,
-        type: type,
-        children: type === 'dir' ? [] : undefined,
-        content: type === 'file' ? '' : undefined
-      };
-      
-      if (!parent.children) parent.children = [];
-      parent.children.push(newNode);
-      
-      // Sort: Dirs > Archives > Files
-      parent.children.sort((a, b) => {
-        const typeScore = (t: string) => {
-            if (t === 'dir') return 0;
-            if (t === 'archive') return 1;
-            return 2;
-        };
-        const scoreA = typeScore(a.type);
-        const scoreB = typeScore(b.type);
-        if (scoreA !== scoreB) return scoreA - scoreB;
-        return a.name.localeCompare(b.name);
-      });
-
-      currentPath.push(newNode.id);
     }
+    
+    // Create new
+    const newNode: FileNode = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: name,
+      type: type,
+      children: type === 'dir' ? [] : undefined,
+      content: type === 'file' ? '' : undefined
+    };
+    
+    if (!parent.children) parent.children = [];
+    parent.children.push(newNode);
+    
+    // Sort: Dirs > Archives > Files
+    parent.children.sort((a, b) => {
+      const typeScore = (t: string) => {
+          if (t === 'dir') return 0;
+          if (t === 'archive') return 1;
+          return 2;
+      };
+      const scoreA = typeScore(a.type);
+      const scoreB = typeScore(b.type);
+      if (scoreA !== scoreB) return scoreA - scoreB;
+      return a.name.localeCompare(b.name);
+    });
+
+    if (isLast) {
+        return { fs: newRoot, createdName: name };
+    }
+    
+    currentPath.push(newNode.id);
   }
   
   return { fs: newRoot };

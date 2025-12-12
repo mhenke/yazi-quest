@@ -12,6 +12,7 @@ import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
 import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
+import { OverwriteModal } from './components/OverwriteModal';
 import { Search, Folder, FileText, ChevronRight } from 'lucide-react';
 
 export default function App() {
@@ -74,6 +75,7 @@ export default function App() {
       notification: isDevOverride ? `DEV BYPASS: LEVEL ${initialLevel.id}` : null,
       selectedIds: [],
       pendingDeleteIds: [],
+      pendingOverwriteNode: null,
       showHelp: false,
       showHint: false,
       showEpisodeIntro: showIntro,
@@ -565,9 +567,11 @@ export default function App() {
                 }
             }
             else if (e.key === 'a') {
+                e.preventDefault();
                 setGameState(prev => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
             }
             else if (e.key === 'r') {
+                 e.preventDefault();
                  if (state.selectedIds.length > 1) {
                      // Bulk Rename
                      // Pre-fill buffer with names
@@ -615,6 +619,38 @@ export default function App() {
                     };
                 });
             }
+        }
+
+        // Mode: OVERWRITE CONFIRM
+        else if (state.mode === 'overwrite-confirm') {
+             if (e.key.toLowerCase() === 'y') {
+                 // Proceed with overwrite
+                 if (state.pendingOverwriteNode) {
+                     // First delete existing node of same name
+                     // Note: pendingOverwriteNode already has the name we want to create
+                     
+                     // We need to find the ID of the item we are overwriting to delete it
+                     const parent = getNodeByPath(state.fs, state.currentPath);
+                     const conflictNode = parent?.children?.find(c => c.name === state.pendingOverwriteNode?.name && c.type === state.pendingOverwriteNode?.type);
+                     
+                     let newRoot = state.fs;
+                     if (conflictNode) {
+                         newRoot = deleteNode(newRoot, state.currentPath, conflictNode.id);
+                     }
+                     // Now add new
+                     newRoot = addNode(newRoot, state.currentPath, state.pendingOverwriteNode);
+                     
+                     setGameState(prev => ({
+                         ...prev,
+                         fs: newRoot,
+                         mode: 'normal',
+                         pendingOverwriteNode: null,
+                         notification: `Overwrote ${state.pendingOverwriteNode?.name}`
+                     }));
+                 }
+             } else if (e.key.toLowerCase() === 'n' || e.key === 'Escape') {
+                 setGameState(prev => ({ ...prev, mode: 'normal', pendingOverwriteNode: null }));
+             }
         }
 
         // Mode: FUZZY FIND (Z - Zoxide)
@@ -669,14 +705,26 @@ export default function App() {
              } else if (e.key === 'Enter') {
                  const name = state.inputBuffer.trim();
                  if (name) {
-                     const { fs: newFS, error } = createPath(state.fs, state.currentPath, name);
-                     setGameState(prev => ({
-                         ...prev,
-                         fs: newFS,
-                         mode: 'normal',
-                         inputBuffer: '',
-                         notification: error || `Created ${name}`
-                     }));
+                     const { fs: newFS, error, collision, collisionNode } = createPath(state.fs, state.currentPath, name);
+                     
+                     if (collision && collisionNode) {
+                         // Collision Detected! Ask for overwrite.
+                         setGameState(prev => ({
+                             ...prev,
+                             mode: 'overwrite-confirm',
+                             pendingOverwriteNode: collisionNode,
+                             inputBuffer: ''
+                         }));
+                     } else {
+                         // Normal creation or error
+                         setGameState(prev => ({
+                             ...prev,
+                             fs: newFS,
+                             mode: 'normal',
+                             inputBuffer: '',
+                             notification: error || `Created ${name}`
+                         }));
+                     }
                  }
              } else if (e.key === 'Backspace') {
                  setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
@@ -787,6 +835,12 @@ export default function App() {
             />
         )}
         
+        {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
+            <OverwriteModal 
+                fileName={resolvePath(gameState.fs, gameState.currentPath) + '/' + gameState.pendingOverwriteNode.name}
+            />
+        )}
+
         {/* Input Overlays */}
         {(gameState.mode === 'input-file' || gameState.mode === 'rename') && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-green-500 shadow-lg p-2 min-w-[300px] flex items-center gap-2 z-50">
@@ -816,8 +870,26 @@ export default function App() {
                                  // Handle New File Logic
                                  const name = gameState.inputBuffer.trim();
                                  if (name) {
-                                     const { fs: newFS, error } = createPath(gameState.fs, gameState.currentPath, name);
-                                     setGameState(prev => ({ ...prev, fs: newFS, mode: 'normal', notification: error || `Created ${name}` }));
+                                     const { fs: newFS, error, collision, collisionNode } = createPath(gameState.fs, gameState.currentPath, name);
+                                     
+                                     if (collision && collisionNode) {
+                                         // Collision Detected! Ask for overwrite.
+                                         setGameState(prev => ({
+                                             ...prev,
+                                             mode: 'overwrite-confirm',
+                                             pendingOverwriteNode: collisionNode,
+                                             inputBuffer: ''
+                                         }));
+                                     } else {
+                                         // Normal creation or error
+                                         setGameState(prev => ({
+                                             ...prev,
+                                             fs: newFS,
+                                             mode: 'normal',
+                                             inputBuffer: '',
+                                             notification: error || `Created ${name}`
+                                         }));
+                                     }
                                  }
                              }
                          } else if (e.key === 'Escape') {
