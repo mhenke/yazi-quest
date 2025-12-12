@@ -7,6 +7,14 @@ export const cloneFS = (node: FileNode): FileNode => {
   };
 };
 
+export const regenerateIds = (node: FileNode): FileNode => {
+  return {
+    ...node,
+    id: Math.random().toString(36).substr(2, 9),
+    children: node.children ? node.children.map(regenerateIds) : undefined
+  };
+};
+
 export const getNodeByPath = (root: FileNode, pathIds: string[]): FileNode | null => {
   let current = root;
   if (pathIds[0] !== root.id) return null;
@@ -205,6 +213,34 @@ export const getAllDirectories = (root: FileNode): { path: string[], display: st
     
     traverse(root, [], []);
     return results;
+};
+
+// Recursive recursive search from a specific root node (for 'z' command)
+export const getRecursiveContent = (root: FileNode, startPathIds: string[]): { path: string[], display: string, node: FileNode }[] => {
+  const results: { path: string[], display: string, node: FileNode }[] = [];
+  const startNode = getNodeByPath(root, startPathIds);
+  if (!startNode || !startNode.children) return [];
+
+  const traverse = (node: FileNode, currentPath: string[], relativeName: string) => {
+    // Add current node (file or dir)
+    results.push({
+      path: currentPath,
+      display: relativeName,
+      node: node
+    });
+
+    if (node.children) {
+      node.children.forEach(child => {
+        traverse(child, [...currentPath, child.id], relativeName ? `${relativeName}/${child.name}` : child.name);
+      });
+    }
+  };
+
+  startNode.children.forEach(child => {
+     traverse(child, [...startPathIds, child.id], child.name);
+  });
+
+  return results;
 };
 
 export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {

@@ -18,7 +18,8 @@ export const KEYBINDINGS = [
   { keys: ['p'], description: 'Paste' },
   { keys: ['a'], description: 'Create File/Dir' },
   { keys: ['f'], description: 'Filter Files' },
-  { keys: ['Z'], description: 'Fuzzy Find Directory' },
+  { keys: ['z'], description: 'FZF Find (Current Tree)' },
+  { keys: ['Z'], description: 'Zoxide Jump (History)' },
   { keys: ['H'], description: 'Show System Hint' },
   { keys: ['?'], description: 'Toggle Help' },
   { keys: ['m'], description: 'Toggle Mute' },
@@ -476,13 +477,13 @@ export const LEVELS: Level[] = [
     id: 7,
     episodeId: 2,
     title: "Deep Scan Protocol",
-    description: "Bypass sequential navigation. Quantum jump to target locations.",
+    description: "Bypass sequential navigation. Quantum jump to target locations using Zoxide (Z).",
     initialPath: ['root', 'home', 'user', 'docs', 'datastore'],
-    hint: "Press 'Shift+Z' for fuzzy finder. Type 'tmp' to teleport instantly. Then use 'Shift+Z' again to jump to 'etc'.",
+    hint: "Enter directories to build history. Press 'Shift+Z' (Zoxide) to see visited locations. Select 'tmp' or 'etc' to jump.",
     tasks: [
       {
         id: 'fuzzy-1',
-        description: "Use fuzzy find to jump to 'tmp'",
+        description: "Use Zoxide (Shift+Z) to jump to 'tmp'",
         check: (state) => {
           return state.stats.fuzzyJumps >= 1 && 
                  getNodeByPath(state.fs, state.currentPath)?.name === 'tmp';
@@ -491,7 +492,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'fuzzy-2',
-        description: "Fuzzy jump to 'etc' directory",
+        description: "Zoxide jump to 'etc' directory",
         check: (state) => {
           return state.stats.fuzzyJumps >= 2 && 
                  getNodeByPath(state.fs, state.currentPath)?.name === 'etc';

@@ -65,9 +65,10 @@ export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
   clipboard: ClipboardItem | null;
-  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive';
+  mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive' | 'fzf-current';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
+  zoxideData: Record<string, number>; // Directory visit frequency map: pathString -> count
   history: string[]; // Log of actions
   levelIndex: number;
   fs: FileNode; // The entire file tree
@@ -84,4 +85,5 @@ export interface GameState {
   gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
   stats: GameStats;
   settings: GameSettings;
+  fuzzySelectedIndex?: number; // For FZF navigation
 }
