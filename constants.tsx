@@ -679,6 +679,16 @@ export const LEVELS: Level[] = [
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Mark 'access_key_secure.pem' (or original) & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
     timeLimit: 120,
+    onEnter: (fs) => {
+        const datastore = findNodeByName(fs, 'datastore');
+        if (datastore && datastore.children) {
+             const key = datastore.children.find(c => c.name === 'access_key.pem');
+             if (key) {
+                 key.name = 'access_key_secure.pem';
+             }
+        }
+        return fs;
+    },
     tasks: [
       {
         id: 'migration-1',
