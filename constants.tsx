@@ -616,7 +616,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'stealth-1',
-        description: "Select at least 2 tmp files in the tmp folder",
+        description: "Select at least 2 files in the tmp folder",
         check: (state) => {
             const tmp = findNodeByName(state.fs, 'tmp');
             if (!tmp || !tmp.children) return false;
