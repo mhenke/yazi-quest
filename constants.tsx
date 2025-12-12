@@ -461,43 +461,52 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: "Intelligence Analysis",
-    description: "Scan the 'datastore' directory for sensitive data. Locate the key using filter, then rename it to secure the asset.",
+    title: "Intelligence Gathering",
+    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition—these are your keys to elevated system privileges. The partition contains hundreds of files. Manual scanning will trigger the heuristic analyzer. You need the filter protocol.",
     initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
-    hint: "Press 'f', type 'pem' to filter within the current folder. Press Enter. Press 'r' to rename to 'access_key_secure.pem'. Press 'Esc' to clear filter.",
+    hint: "Press 'f' to begin. Type 'pem'. Navigate with j/k to the file. Press Esc when done.",
     tasks: [
       {
         id: 'search-1',
-        description: "Filter for 'pem' in current directory",
-        // Check if filter contains pem.
-        check: (state) => {
-            const currentDir = getNodeByPath(state.fs, state.currentPath);
-            const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
-            return (state.mode === 'filter' || filter !== '') && (state.inputBuffer.includes('pem') || filter.includes('pem'));
-        },
+        description: "Initialize real-time file signature scanner (f)",
+        check: (state) => state.mode === 'filter',
         completed: false
       },
       {
         id: 'search-2',
-        description: "Rename to 'access_key_secure.pem'",
+        description: "Query for cryptographic material extensions ('pem')",
         check: (state) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          // Check if original is gone and new name exists
-          const oldFile = currentDir?.children?.find(c => c.name === 'access_key.pem');
-          const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
-          return !oldFile && !!newFile;
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
+            return filter.includes('pem');
         },
         completed: false
       },
       {
         id: 'search-3',
-        description: "Clear filter (Esc)",
+        description: "Navigate to encrypted asset to confirm access",
+        check: (state) => {
+           // To "navigate to" in this context implies the cursor is on the correct file 
+           // and the filter is likely active making it visible
+           const currentDir = getNodeByPath(state.fs, state.currentPath);
+           if (!currentDir || !currentDir.children) return false;
+           
+           const filter = state.filters[currentDir.id] || '';
+           // Replicate filter logic to get visible list
+           const visible = currentDir.children.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+           const item = visible[state.cursorIndex];
+           
+           return item && item.name === 'access_key.pem';
+        },
+        completed: false
+      },
+      {
+        id: 'search-4',
+        description: "Terminate scan mode and return to normal operations",
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
           const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
-          // Only complete if rename is done AND filter is cleared
-          return !!newFile && filter === '';
+          return state.mode === 'normal' && filter === '';
         },
         completed: false
       }
@@ -534,8 +543,8 @@ export const LEVELS: Level[] = [
   {
     id: 8,
     episodeId: 2,
-    title: "Neural Construction & Vault",
-    description: "Build the AI subsystem and archive critical assets simultaneously.",
+    title: "NEURAL CONSTRUCTION & VAULT",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. Your workspace is now available. To survive the next phase, you must construct a neural network architecture while simultaneously securing your cryptographic keys in a fortified vault. The system's task scheduler is monitoring CPU usage—batch operations will help you stay under the detection threshold.",
     initialPath: ['root', 'home', 'user', 'workspace'],
     hint: "Use Shift+Z to jump to sources. Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
     timeLimit: 180, // 3 minutes
@@ -567,7 +576,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'combo-1a',
-        description: "Create directory 'neural_net' in workspace",
+        description: "Initialize neural network housing ('neural_net')",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'neural_net');
@@ -576,7 +585,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1b',
-        description: "Create 'weights' directory and 'model.rs' file",
+        description: "Establish weight parameter storage ('weights/model.rs')",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           const weights = net?.children?.find(c => c.name === 'weights');
@@ -586,7 +595,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1c',
-        description: "Copy 'uplink_v1.conf' (from datastore/active) to 'neural_net'",
+        description: "Deploy uplink configuration to neural core",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           return !!net?.children?.find(c => c.name === 'uplink_v1.conf');
@@ -595,7 +604,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1d',
-        description: "Create 'vault' in datastore and archive 'access_key.pem'",
+        description: "Secure vault access in datastore",
         check: (state) => {
           const vault = findNodeByName(state.fs, 'vault');
           // Since we renamed it in L6, check for secure name OR original name (flexibility)

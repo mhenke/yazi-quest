@@ -22,6 +22,7 @@ export default function App() {
 
     // 2. Parse URL Parameters
     const params = new URLSearchParams(window.location.search);
+    const debugParam = params.get('debug');
     const epParam = params.get('ep') || params.get('episode');
     const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
@@ -29,7 +30,9 @@ export default function App() {
     
     // 3. Determine Target Level
     let targetIndex = 0;
-    if (lvlParam) {
+    if (debugParam === 'outro') {
+        targetIndex = LEVELS.length;
+    } else if (lvlParam) {
         const id = parseInt(lvlParam, 10);
         const idx = LEVELS.findIndex(l => l.id === id);
         if (idx !== -1) targetIndex = idx;
@@ -40,7 +43,7 @@ export default function App() {
     }
 
     // 4. Handle Task Completion (Bypass)
-    if (tasksParam) {
+    if (tasksParam && targetIndex < LEVELS.length) {
         if (tasksParam === 'all') {
             LEVELS[targetIndex].tasks.forEach(t => t.completed = true);
         } else {
@@ -52,13 +55,15 @@ export default function App() {
     }
 
     // 5. Setup Initial State
-    const initialLevel = LEVELS[targetIndex];
-    const isDevOverride = !!(epParam || lvlParam || tasksParam);
+    // If targetIndex is out of bounds (Outro), fallback to Level 0 for initialization safety
+    const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
+    const initialLevel = LEVELS[effectiveIndex];
+    const isDevOverride = !!(epParam || lvlParam || tasksParam || debugParam);
     
     const isEpisodeStart = targetIndex === 0 || 
-                           (targetIndex > 0 && LEVELS[targetIndex].episodeId !== LEVELS[targetIndex - 1].episodeId);
+                           (targetIndex > 0 && targetIndex < LEVELS.length && LEVELS[targetIndex].episodeId !== LEVELS[targetIndex - 1].episodeId);
     
-    const showIntro = !skipIntro && isEpisodeStart; 
+    const showIntro = !skipIntro && isEpisodeStart && targetIndex < LEVELS.length;
 
     // Initial Zoxide Data Logic
     const initialZoxide: Record<string, number> = { [resolvePath(INITIAL_FS, initialLevel.initialPath)]: 1 };
@@ -96,7 +101,7 @@ export default function App() {
       levelIndex: targetIndex,
       fs: fs,
       levelStartFS: cloneFS(fs),
-      notification: isDevOverride ? `DEV BYPASS: LEVEL ${initialLevel.id}` : null,
+      notification: isDevOverride ? `DEV BYPASS ACTIVE` : null,
       selectedIds: [],
       pendingDeleteIds: [],
       pendingOverwriteNode: null,
@@ -117,9 +122,11 @@ export default function App() {
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 
-  const currentLevel = LEVELS[gameState.levelIndex];
+  // Safe Accessors for Level Data
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
-  const allTasksComplete = currentLevel.tasks.every(t => t.completed);
+  // Fallback to last level if in Outro state to prevent crashes
+  const currentLevel = isLastLevel ? LEVELS[LEVELS.length - 1] : LEVELS[gameState.levelIndex];
+  const allTasksComplete = isLastLevel ? true : currentLevel.tasks.every(t => t.completed);
 
   // --- Derived State Helpers ---
   const getCurrentDir = useCallback(() => getNodeByPath(stateRef.current.fs, stateRef.current.currentPath), []);
@@ -200,7 +207,7 @@ export default function App() {
 
   // --- INSTANT TASK CHECKER ---
   useEffect(() => {
-    if (gameState.showEpisodeIntro || gameState.isGameOver) return;
+    if (gameState.showEpisodeIntro || gameState.isGameOver || isLastLevel) return;
     
     const level = LEVELS[gameState.levelIndex];
     let changed = false;
@@ -230,7 +237,7 @@ export default function App() {
             notification: changed ? "Objective Complete" : prev.notification
         }));
     }
-  }, [gameState.levelIndex, gameState.fs, gameState.currentPath, gameState.cursorIndex, gameState.selectedIds, gameState.filters, gameState.keystrokes, gameState.mode, gameState.stats]);
+  }, [gameState.levelIndex, gameState.fs, gameState.currentPath, gameState.cursorIndex, gameState.selectedIds, gameState.filters, gameState.keystrokes, gameState.mode, gameState.stats, isLastLevel]);
 
 
   // --- TIMER LOOP ---
@@ -238,7 +245,7 @@ export default function App() {
     const interval = setInterval(() => {
         const state = stateRef.current; // Use Ref to access latest state without re-binding interval
         
-        if (state.showEpisodeIntro || state.isGameOver || state.timeLeft === null || state.mode === 'confirm-delete') return;
+        if (state.showEpisodeIntro || state.isGameOver || state.timeLeft === null || state.mode === 'confirm-delete' || state.levelIndex >= LEVELS.length) return;
 
         const level = LEVELS[state.levelIndex];
         const allDone = level.tasks.every(t => t.completed);
@@ -360,6 +367,9 @@ export default function App() {
 
   const handleRestartLevel = useCallback(() => {
       const idx = stateRef.current.levelIndex;
+      // Safety check
+      if (idx >= LEVELS.length) return;
+
       const level = LEVELS[idx];
       level.tasks.forEach(t => t.completed = false);
       
@@ -480,6 +490,9 @@ export default function App() {
         // Global: Shift+Enter to Advance Level
         if (e.key === 'Enter' && e.shiftKey) {
             const currentLvl = LEVELS[state.levelIndex];
+            // If in outro (levelIndex out of bounds), do nothing
+            if (!currentLvl) return;
+
             const allDone = currentLvl.tasks.every(t => t.completed);
             if (allDone) {
                 e.preventDefault();
@@ -829,7 +842,7 @@ export default function App() {
                          setGameState(prev => ({ ...prev, mode: 'normal', notification: msg }));
                      } else {
                          const newFS = renameNode(state.fs, state.currentPath, item.id, newName);
-                         setGameState(prev => ({ ...prev, fs: newFS, mode: 'normal', notification: `Renamed to ${newName}` }));
+                         setGameState(prev => ({ ...prev, fs: newFS, mode: 'normal', notification: `Renamed to ${newName}`, stats: { ...prev.stats, renames: prev.stats.renames + 1 } }));
                      }
                  }
              } else if (e.key === 'Backspace') {
