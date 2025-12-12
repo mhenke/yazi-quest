@@ -13,6 +13,7 @@ import { OutroSequence } from './components/OutroSequence';
 import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
+import { SuccessToast } from './components/SuccessToast';
 import { Search, Folder, FileText, ChevronRight } from 'lucide-react';
 
 export default function App() {
@@ -119,6 +120,8 @@ export default function App() {
   });
 
   const [bulkRenameContent, setBulkRenameContent] = useState("");
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const prevAllTasksCompleteRef = useRef(false);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 
@@ -127,6 +130,14 @@ export default function App() {
   // Fallback to last level if in Outro state to prevent crashes
   const currentLevel = isLastLevel ? LEVELS[LEVELS.length - 1] : LEVELS[gameState.levelIndex];
   const allTasksComplete = isLastLevel ? true : currentLevel.tasks.every(t => t.completed);
+
+  // Show success toast when all tasks become complete
+  useEffect(() => {
+    if (allTasksComplete && !prevAllTasksCompleteRef.current && !isLastLevel) {
+      setShowSuccessToast(true);
+    }
+    prevAllTasksCompleteRef.current = allTasksComplete;
+  }, [allTasksComplete, isLastLevel]);
 
   // --- Derived State Helpers ---
   const getCurrentDir = useCallback(() => getNodeByPath(stateRef.current.fs, stateRef.current.currentPath), []);
@@ -270,7 +281,10 @@ export default function App() {
     // Read from Ref to ensure we have latest levelIndex
     const currentIdx = stateRef.current.levelIndex;
     const nextIdx = currentIdx + 1;
-    
+
+    // Reset success toast
+    setShowSuccessToast(false);
+
     if (nextIdx < LEVELS.length) {
         const nextLevel = LEVELS[nextIdx];
         const currentLvl = LEVELS[currentIdx];
@@ -1218,6 +1232,15 @@ export default function App() {
         {isLastLevel && allTasksComplete && <OutroSequence />}
 
       </div>
+
+      {/* Success Toast */}
+      {showSuccessToast && currentLevel.successMessage && (
+        <SuccessToast
+          message={currentLevel.successMessage}
+          levelTitle={currentLevel.title}
+          onDismiss={() => setShowSuccessToast(false)}
+        />
+      )}
 
       {/* 3. Status Bar */}
       <StatusBar 

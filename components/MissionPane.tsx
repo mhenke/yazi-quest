@@ -1,6 +1,6 @@
 import React from 'react';
 import { Level, GameState } from '../types';
-import { CheckSquare, Square, HelpCircle, Lightbulb } from 'lucide-react';
+import { CheckSquare, Square, HelpCircle, Lightbulb, GitBranch } from 'lucide-react';
 
 interface MissionPaneProps {
   level: Level;
@@ -44,6 +44,29 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
             <p className="text-[10px] font-mono text-yellow-500/80 leading-relaxed">
               {level.environmentalClue}
             </p>
+          </div>
+        )}
+
+        {(level.buildsOn?.length || level.leadsTo?.length) && (
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded p-3">
+            <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest flex items-center gap-1">
+              <GitBranch size={10} />
+              Skill Tree
+            </h3>
+            <div className="space-y-1 text-[10px] font-mono">
+              {level.buildsOn && level.buildsOn.length > 0 && (
+                <div className="text-zinc-500">
+                  <span className="text-zinc-600">REQUIRES:</span>{' '}
+                  {level.buildsOn.map(id => `L${id}`).join(', ')}
+                </div>
+              )}
+              {level.leadsTo && level.leadsTo.length > 0 && (
+                <div className="text-zinc-500">
+                  <span className="text-zinc-600">UNLOCKS:</span>{' '}
+                  {level.leadsTo.map(id => `L${id}`).join(', ')}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

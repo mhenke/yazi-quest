@@ -275,9 +275,9 @@ export const LEVELS: Level[] = [
     id: 1,
     episodeId: 1,
     title: "System Navigation",
-    description: "Initialize movement protocols. Use 'j'/'k' to traverse, 'l' to penetrate directories, 'h' to retreat.",
+    description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed, monitored, vulnerable. Before you can act, you must learn to move. The vim-style navigation keys (j/k/h/l) are your first tools: traverse directory listings, enter folders, retreat to safety. Scan the local filesystem. Locate the datastore. Find the system configuration in /etc. Observe everything.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Target 'datastore' with 'j', press 'l' to access. Retreat with 'h', then locate 'etc' in root.",
+    hint: "Press 'j' to move down, 'k' to move up. Press 'l' to enter a directory, 'h' to go back. Navigate to 'datastore', then find /etc.",
     coreSkill: "Navigation (j/k/h/l)",
     environmentalClue: "CURRENT: /home/guest | TARGETS: datastore, /etc",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
@@ -285,13 +285,13 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-1',
-        description: "Access 'datastore' directory",
+        description: "Infiltrate 'datastore' directory",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'datastore',
         completed: false
       },
       {
         id: 'nav-2',
-        description: "Return to root and access 'etc'",
+        description: "Retreat to root, locate system config '/etc'",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'etc',
         completed: false
       }
@@ -312,7 +312,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-0',
-        description: "Navigate into 'incoming' (in /home/guest)",
+        description: "Enter 'incoming' data stream",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'incoming',
         completed: false
       },
@@ -363,7 +363,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'move-2',
-        description: "Navigate to 'media' and paste (p)",
+        description: "Deploy asset to 'media' (p)",
         check: (state) => {
           const media = findNodeByName(state.fs, 'media');
           return !!media?.children?.find(c => c.name === 'target_map.png');
@@ -376,9 +376,9 @@ export const LEVELS: Level[] = [
     id: 4,
     episodeId: 1,
     title: "Protocol Design",
-    description: "Establish new network protocols. Generate the directory structure and configuration files.",
+    description: "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols—configuration files that will establish your network presence. The create command (a) generates new directories and files from nothing. Build a protocols directory in the datastore. Inside it, initialize two configuration files. This is your first act of creation.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press 'a', type 'protocols/' (add trailing slash). Enter it with 'l'. Press 'a', type 'uplink_v1.conf'. Press 'a', type 'uplink_v2.conf'.",
+    hint: "Press 'a', type 'protocols/' (trailing slash = directory). Enter it with 'l'. Press 'a' again for each file: 'uplink_v1.conf', 'uplink_v2.conf'.",
     coreSkill: "Create (a)",
     environmentalClue: "CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf",
     successMessage: "PROTOCOLS ESTABLISHED.",
@@ -387,7 +387,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'create-1',
-        description: "Create directory 'protocols' in datastore",
+        description: "Construct 'protocols' directory in datastore",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           return !!docs?.children?.find(c => c.name === 'protocols' && c.type === 'dir');
@@ -396,7 +396,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'nav-protocols',
-        description: "Navigate into 'protocols'",
+        description: "Enter 'protocols' sector",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'protocols',
         completed: false
       },
@@ -424,9 +424,9 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "Batch Deployment",
-    description: "Protocols verified. Efficiency required: Move both configuration files simultaneously using batch selection.",
+    description: "PROTOCOLS VERIFIED. But moving files one at a time is inefficient—it leaves traces, wastes cycles. Visual selection mode (Space) lets you mark multiple targets before acting. Select both configuration files simultaneously, cut them, and deploy to a new 'active' directory. One operation. Minimal footprint. This is how you scale.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Create 'active/' in datastore. Enter 'protocols'. Press Space on 'uplink_v1.conf'. Press Space on 'uplink_v2.conf'. Press 'x' to Cut. Go to 'active'. Press 'p'.",
+    hint: "Create 'active/' in datastore first. Enter 'protocols'. Press Space on each file to select. Press 'x' to cut both. Navigate to 'active'. Press 'p' to paste.",
     coreSkill: "Visual Selection (Space)",
     environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
     successMessage: "BATCH DEPLOYMENT COMPLETE.",
@@ -459,7 +459,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-0',
-        description: "Create directory 'active' in datastore",
+        description: "Establish 'active' deployment zone in datastore",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           return !!docs?.children?.find(c => c.name === 'active' && c.type === 'dir');
@@ -749,7 +749,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'archive-2',
-        description: "Copy 'sys_v2.log' to workspace",
+        description: "Extract 'sys_v2.log' to workspace (y, then p)",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'sys_v2.log');
@@ -784,7 +784,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'migration-1',
-        description: "Move key and 'mission_log.md' to workspace",
+        description: "Relocate key + mission_log.md to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return ws?.children?.some(c => c.name.includes('access_key')) &&
@@ -794,7 +794,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'migration-2',
-        description: "Return both files to datastore",
+        description: "Restore assets to datastore origin",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
@@ -920,7 +920,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-2b',
-        description: "Copy directory to clipboard (y)",
+        description: "Capture directory to clipboard (y)",
         check: (state) => {
           return state.clipboard?.action === 'yank' &&
                  state.clipboard.nodes.some(n => n.name === 'daemon' && n.type === 'dir');
@@ -957,7 +957,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-3a',
-        description: "Navigate to datastore",
+        description: "Infiltrate datastore sector",
         check: (state) => {
           return getNodeByPath(state.fs, state.currentPath)?.name === 'datastore';
         },
@@ -974,7 +974,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-3c',
-        description: "Return to root directory",
+        description: "Retreat to root partition",
         check: (state) => {
           return state.currentPath.length === 1 && state.currentPath[0] === 'root';
         },
