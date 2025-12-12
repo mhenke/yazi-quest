@@ -384,10 +384,10 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-0',
-        description: "Create directory 'active'",
+        description: "Create directory 'active' in datastore",
         check: (state) => {
-          // Allow creation anywhere (including inside protocols if user didn't move up)
-          return !!findNodeByName(state.fs, 'active');
+          const docs = findNodeByName(state.fs, 'datastore');
+          return !!docs?.children?.find(c => c.name === 'active' && c.type === 'dir');
         },
         completed: false
       },

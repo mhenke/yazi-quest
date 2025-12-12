@@ -70,7 +70,6 @@ export interface GameState {
   filter: string; // Active filter query (for 'f' mode)
   history: string[]; // Log of actions
   levelIndex: number;
-  maxLevelReached: number; // Track highest level unlocked
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   notification: string | null;
