@@ -38,8 +38,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   // Calculate items for stats
   const currentDir = getNodeByPath(state.fs, state.currentPath);
   let items = currentDir?.children || [];
-  if (state.filter) {
-      items = items.filter(c => c.name.toLowerCase().includes(state.filter.toLowerCase()));
+  
+  // Get active filter for current dir
+  const activeFilter = currentDir ? (state.filters[currentDir.id] || '') : '';
+  
+  if (activeFilter) {
+      items = items.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
   }
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;
@@ -93,10 +97,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
       </div>
 
       {/* 3.2 Filter Active Indicator */}
-      {state.filter && (
+      {activeFilter && (
         <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
             <Filter size={10} />
-            <span>FILTER: "{state.filter}"</span>
+            <span>FILTER: "{activeFilter}"</span>
         </div>
       )}
 

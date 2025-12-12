@@ -439,7 +439,11 @@ export const LEVELS: Level[] = [
         id: 'search-1',
         description: "Filter for 'pem'",
         // Check if filter contains pem.
-        check: (state) => (state.mode === 'filter' || state.filter !== '') && state.filter.toLowerCase().includes('pem'),
+        check: (state) => {
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
+            return (state.mode === 'filter' || filter !== '') && (state.inputBuffer.includes('pem') || filter.includes('pem'));
+        },
         completed: false
       },
       {
@@ -460,8 +464,9 @@ export const LEVELS: Level[] = [
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const newFile = currentDir?.children?.find(c => c.name === 'access_key_secure.pem');
+          const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
           // Only complete if rename is done AND filter is cleared
-          return !!newFile && state.filter === '';
+          return !!newFile && filter === '';
         },
         completed: false
       }

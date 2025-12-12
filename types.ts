@@ -67,7 +67,7 @@ export interface GameState {
   clipboard: ClipboardItem | null;
   mode: 'normal' | 'input-file' | 'input-dir' | 'confirm-delete' | 'filter' | 'fuzzy-find' | 'rename' | 'bulk-rename' | 'go' | 'cd-interactive';
   inputBuffer: string; // for typing filenames or search queries
-  filter: string; // Active filter query (for 'f' mode)
+  filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   history: string[]; // Log of actions
   levelIndex: number;
   fs: FileNode; // The entire file tree

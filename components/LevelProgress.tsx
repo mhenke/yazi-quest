@@ -68,7 +68,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
   return (
     <>
-      <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-10 relative">
+      <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative">
         
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-6 overflow-hidden mr-4 h-8 flex-1">

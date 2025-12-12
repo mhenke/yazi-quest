@@ -71,7 +71,7 @@ export default function App() {
       clipboard: null,
       mode: 'normal',
       inputBuffer: '',
-      filter: '',
+      filters: {},
       history: [],
       levelIndex: targetIndex,
       fs: INITIAL_FS,
@@ -102,15 +102,23 @@ export default function App() {
   const getCurrentDir = () => getNodeByPath(gameState.fs, gameState.currentPath);
   const getParentDir = () => getParentNode(gameState.fs, gameState.currentPath);
   
+  const getActiveFilter = () => {
+    const dir = getCurrentDir();
+    return dir ? (gameState.filters[dir.id] || '') : '';
+  };
+
   const getVisibleItems = () => {
     const dir = getCurrentDir();
     if (!dir || !dir.children) return [];
-    if (!gameState.filter) return dir.children;
-    return dir.children.filter(c => c.name.toLowerCase().includes(gameState.filter.toLowerCase()));
+    
+    const activeFilter = getActiveFilter();
+    if (!activeFilter) return dir.children;
+    return dir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
   };
 
   const visibleItems = getVisibleItems();
   const currentItem = visibleItems[gameState.cursorIndex];
+  const activeFilter = getActiveFilter();
 
   // --- Auto-Clamp Cursor Effect ---
   // If the number of visible items changes (e.g., deletion), ensure cursor is valid.
@@ -148,7 +156,7 @@ export default function App() {
     }
     
     // Auto-advance removed. User must trigger transition via UI/Shortcut.
-  }, [gameState.fs, gameState.currentPath, gameState.selectedIds, gameState.mode, gameState.levelIndex, gameState.filter, gameState.stats]);
+  }, [gameState.fs, gameState.currentPath, gameState.selectedIds, gameState.mode, gameState.levelIndex, gameState.filters, gameState.stats]);
 
   const advanceLevel = () => {
     setGameState(prev => {
@@ -180,7 +188,7 @@ export default function App() {
             levelIndex: nextIndex,
             currentPath: nextPath, 
             cursorIndex: 0,
-            filter: '',
+            filters: {}, // Reset filters on level advance
             selectedIds: [],
             timeLeft: nextLevel.timeLimit || null,
             keystrokes: 0,
@@ -209,10 +217,12 @@ export default function App() {
   // --- Action Handlers ---
   const navigate = (dir: number) => {
     setGameState(prev => {
-       // Recalculating inside based on prev is safer
        const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-       const items = prev.filter 
-         ? currentDir?.children?.filter(c => c.name.toLowerCase().includes(prev.filter.toLowerCase())) || []
+       // Use active filter from state
+       const filter = currentDir ? (prev.filters[currentDir.id] || '') : '';
+       
+       const items = filter 
+         ? currentDir?.children?.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())) || []
          : currentDir?.children || [];
          
        let newIndex = prev.cursorIndex + dir;
@@ -233,7 +243,7 @@ export default function App() {
            ...prev,
            currentPath: [...prev.currentPath, currentItem.id],
            cursorIndex: 0,
-           filter: '' // Reset filter on dir change
+           // Do NOT reset filters globally. Per-directory persistence.
        }));
     }
   };
@@ -244,7 +254,7 @@ export default function App() {
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
-              filter: ''
+              // Do NOT reset filters globally.
           }));
       }
   };
@@ -569,15 +579,25 @@ export default function App() {
                 break;
             case 'f':
                 e.preventDefault();
-                setGameState(prev => ({ ...prev, mode: 'filter', notification: 'Filter Mode' }));
+                const dir = getCurrentDir();
+                // When entering filter mode, pre-fill with existing filter if any
+                const existingFilter = dir ? (gameState.filters[dir.id] || '') : '';
+                setGameState(prev => ({ ...prev, mode: 'filter', inputBuffer: existingFilter, notification: 'Filter Mode' }));
                 break;
             case 'Z':
                 e.preventDefault(); // Prevent 'Z' from entering input
                 setGameState(prev => ({ ...prev, mode: 'fuzzy-find', notification: 'Fuzzy Find Directory' }));
                 break;
             case 'Escape':
-                if (gameState.filter) {
-                    setGameState(prev => ({ ...prev, filter: '', notification: 'Filter Cleared' }));
+                if (activeFilter) {
+                    const dir = getCurrentDir();
+                    if (dir) {
+                        setGameState(prev => {
+                            const newFilters = { ...prev.filters };
+                            delete newFilters[dir.id];
+                            return { ...prev, filters: newFilters, notification: 'Filter Cleared' };
+                        });
+                    }
                 } else if (gameState.selectedIds.length > 0) {
                     setGameState(prev => ({ ...prev, selectedIds: [], notification: 'Selection Cleared' }));
                 }
@@ -585,7 +605,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, allTasksComplete, handleInputSubmit]);
+  }, [gameState, currentLevel, allTasksComplete, handleInputSubmit, activeFilter]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -620,6 +640,8 @@ export default function App() {
       }
   }
 
+  const activePaneTitle = resolvePath(gameState.fs, gameState.currentPath) + (activeFilter ? ` (filter: ${activeFilter})` : '');
+
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-mono select-none">
        {/* Episode Intro Overlay */}
@@ -646,7 +668,7 @@ export default function App() {
                     fs: prev.levelStartFS,
                     currentPath: currentLevel.initialPath,
                     cursorIndex: 0,
-                    filter: '',
+                    filters: {},
                     selectedIds: [],
                     clipboard: null,
                     isGameOver: false,
@@ -691,7 +713,7 @@ export default function App() {
              items={visibleItems} 
              isActive={true} 
              cursorIndex={gameState.cursorIndex} 
-             title={resolvePath(gameState.fs, gameState.currentPath)}
+             title={activePaneTitle}
              selectedIds={gameState.selectedIds}
              clipboard={gameState.clipboard}
              className="w-1/3 md:w-1/4 bg-zinc-900/80 text-zinc-300 border-r border-zinc-800"
@@ -711,11 +733,18 @@ export default function App() {
                     type="text"
                     autoFocus
                     className="bg-transparent text-white font-mono flex-1 outline-none min-w-0"
-                    value={gameState.mode === 'filter' ? gameState.filter : gameState.inputBuffer}
+                    value={gameState.mode === 'filter' ? (getCurrentDir() && gameState.filters[getCurrentDir()!.id] || '') : gameState.inputBuffer}
                     onChange={(e) => {
                         const val = e.target.value;
                         if (gameState.mode === 'filter') {
-                             setGameState(prev => ({ ...prev, filter: val, cursorIndex: 0 }));
+                             const dir = getCurrentDir();
+                             if (dir) {
+                                 setGameState(prev => ({
+                                     ...prev,
+                                     filters: { ...prev.filters, [dir.id]: val },
+                                     cursorIndex: 0
+                                 }));
+                             }
                         } else {
                              setGameState(prev => ({ ...prev, inputBuffer: val }));
                         }
@@ -733,7 +762,13 @@ export default function App() {
                         } else if (e.key === 'Escape') {
                             e.preventDefault();
                             if (gameState.mode === 'filter') {
-                                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
+                                 const dir = getCurrentDir();
+                                 if (dir) {
+                                     // Escape in filter mode clears filter like Yazi behavior usually does, or just exits?
+                                     // Request: "press escape or enter to close it with the filter applied"
+                                     // So Escape should behave like Enter here.
+                                     setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Filter Active' }));
+                                 }
                             } else {
                                  setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', notification: null }));
                             }
