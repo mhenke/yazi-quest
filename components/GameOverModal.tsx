@@ -34,7 +34,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ reason, onRestart 
                 </div>
                 <p className="text-zinc-400 text-xs leading-relaxed font-mono">
                     {reason === 'time' 
-                        ? "The system traced your connection. To move faster, use <Space> to select multiple files and process them in a single batch." 
+                        ? "The system traced your connection. Tip: You can create nested paths instantly (e.g. 'a' -> 'folder/sub/file'). Use <Space> for batch operations." 
                         : "Your input noise levels triggered the IDS. Reduce keystrokes by planning your route and using batch operations."}
                 </p>
             </div>

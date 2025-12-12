@@ -432,13 +432,13 @@ export const LEVELS: Level[] = [
     id: 6,
     episodeId: 2,
     title: "Intelligence Analysis",
-    description: "Scan the filesystem for sensitive data. Locate the key using filter, then rename it to secure the asset. Finally, clear the filter to reveal all files.",
+    description: "Scan the 'datastore' directory for sensitive data. Locate the key using filter, then rename it to secure the asset.",
     initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
-    hint: "Press 'f', type 'pem'. Press Enter to select/close filter. Press 'r' to rename to 'access_key_secure.pem'. Press 'Esc' to clear filter.",
+    hint: "Press 'f', type 'pem' to filter within the current folder. Press Enter. Press 'r' to rename to 'access_key_secure.pem'. Press 'Esc' to clear filter.",
     tasks: [
       {
         id: 'search-1',
-        description: "Filter for 'pem'",
+        description: "Filter for 'pem' in current directory",
         // Check if filter contains pem.
         check: (state) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
@@ -507,7 +507,7 @@ export const LEVELS: Level[] = [
     title: "Neural Construction & Vault",
     description: "Build the AI subsystem and archive critical assets simultaneously.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
+    hint: "Use Shift+Z to jump to sources. Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
     timeLimit: 180, // 3 minutes
     tasks: [
       {
@@ -531,7 +531,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1c',
-        description: "Copy 'uplink_v1.conf' to 'neural_net'",
+        description: "Copy 'uplink_v1.conf' (from datastore/active) to 'neural_net'",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           return !!net?.children?.find(c => c.name === 'uplink_v1.conf');

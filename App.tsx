@@ -68,6 +68,11 @@ export default function App() {
         initialZoxide['/tmp'] = 10;
         initialZoxide['/etc'] = 10;
     }
+    // Pre-seed Zoxide for Level 8 (Neural Construction) to help with file copying
+    if (initialLevel.id === 8) {
+        initialZoxide['/home/guest/datastore/active'] = 10;
+        initialZoxide['/home/guest/datastore'] = 10;
+    }
 
     return {
       currentPath: initialLevel.initialPath,
@@ -258,11 +263,15 @@ export default function App() {
         nextLevel.tasks.forEach(t => t.completed = false);
 
         setGameState(prev => {
-            // Seed Zoxide for Level 7 (Deep Scan Protocol)
+            // Seed Zoxide for Level 7 (Deep Scan Protocol) and Level 8 (Neural Construction)
             let nextZoxideData = { ...prev.zoxideData };
             if (nextLevel.id === 7) {
                  nextZoxideData['/tmp'] = (nextZoxideData['/tmp'] || 0) + 10;
                  nextZoxideData['/etc'] = (nextZoxideData['/etc'] || 0) + 10;
+            }
+            if (nextLevel.id === 8) {
+                 nextZoxideData['/home/guest/datastore/active'] = 10;
+                 nextZoxideData['/home/guest/datastore'] = 10;
             }
 
             return {
@@ -297,6 +306,10 @@ export default function App() {
     if (targetLevel.id === 7) {
         initialZoxide['/tmp'] = 10;
         initialZoxide['/etc'] = 10;
+    }
+    if (targetLevel.id === 8) {
+        initialZoxide['/home/guest/datastore/active'] = 10;
+        initialZoxide['/home/guest/datastore'] = 10;
     }
 
     setGameState(prev => ({
