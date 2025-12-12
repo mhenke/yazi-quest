@@ -131,6 +131,14 @@ export default function App() {
   
   const currentItemUI = visibleItemsUI[gameState.cursorIndex];
   const activeFilter = gameState.filters[getCurrentDir()?.id || ''] || '';
+  const currentPathStr = resolvePath(gameState.fs, gameState.currentPath);
+
+  // Parent Info for Column 1
+  const parentNode = getParentDir();
+  const parentItems = parentNode?.children || [];
+  // Find which child in parent corresponds to our current directory
+  const currentDirId = gameState.currentPath[gameState.currentPath.length - 1];
+  const parentCursorIndex = parentItems.findIndex(c => c.id === currentDirId);
 
   // --- Fuzzy Find Matches (Z - Zoxide / Visited) ---
   const zoxideMatchesUI = gameState.mode === 'fuzzy-find' 
@@ -161,7 +169,6 @@ export default function App() {
   }, [visibleItemsUI.length, gameState.cursorIndex]);
 
   // --- INSTANT TASK CHECKER ---
-  // Runs on every relevant state change to provide immediate feedback
   useEffect(() => {
     if (gameState.showEpisodeIntro || gameState.isGameOver) return;
     
@@ -197,7 +204,6 @@ export default function App() {
 
 
   // --- TIMER LOOP ---
-  // Runs every second, independent of user input
   useEffect(() => {
     const interval = setInterval(() => {
         const state = stateRef.current; // Use Ref to access latest state without re-binding interval
@@ -782,30 +788,49 @@ export default function App() {
 
       {/* 2. Main Workspace */}
       <div className="flex-1 flex min-h-0 relative">
-        
-        {/* Parent Directory Pane (Context) */}
-        {gameState.currentPath.length > 1 && (
-           <FileSystemPane 
-             items={getParentDir()?.children || []}
-             isActive={false}
-             title={resolvePath(gameState.fs, gameState.currentPath.slice(0, -1))}
-             isParent={true}
-             selectedIds={[]}
-             clipboard={gameState.clipboard}
-           />
-        )}
 
-        {/* Current Directory Pane (Active) */}
-        <FileSystemPane 
-             items={visibleItemsUI}
-             isActive={gameState.mode === 'normal' || gameState.mode === 'filter' || gameState.mode.includes('select')}
-             cursorIndex={gameState.cursorIndex}
-             title={resolvePath(gameState.fs, gameState.currentPath) + (activeFilter ? ` (filter: ${activeFilter})` : '')}
-             isParent={false}
-             selectedIds={gameState.selectedIds}
-             clipboard={gameState.clipboard}
-             className="flex-1 border-r border-zinc-800"
-        />
+        {/* NEW WRAPPER FOR FILE SYSTEM PANES */}
+        <div className="flex-[2] flex flex-col min-w-0 border-r border-zinc-800">
+            
+            {/* NEW PATH HEADER SPANNING BOTH COLUMNS */}
+            <div className="h-8 shrink-0 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-3 font-mono text-sm">
+                <span className="text-zinc-500 font-bold select-none">PATH</span>
+                <span className="text-blue-400 font-bold select-all truncate">
+                   {currentPathStr === '/' ? '/root' : currentPathStr}
+                </span>
+                {activeFilter && (
+                  <span className="bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded text-xs border border-purple-700/50 flex items-center gap-1 animate-in fade-in ml-auto">
+                      <Search size={10} />
+                      <span>{activeFilter}</span>
+                  </span>
+                )}
+            </div>
+
+            {/* PANES CONTAINER */}
+            <div className="flex-1 flex min-h-0">
+                {/* Parent Directory Pane - ALWAYS RENDERED */}
+                <FileSystemPane 
+                    items={parentItems}
+                    isActive={false}
+                    isParent={true}
+                    cursorIndex={parentCursorIndex}
+                    selectedIds={[]}
+                    clipboard={gameState.clipboard}
+                    className="flex-1 border-r border-zinc-800 bg-zinc-950/50 text-zinc-600"
+                />
+
+                {/* Current Directory Pane */}
+                <FileSystemPane 
+                     items={visibleItemsUI}
+                     isActive={gameState.mode === 'normal' || gameState.mode === 'filter' || gameState.mode.includes('select')}
+                     cursorIndex={gameState.cursorIndex}
+                     isParent={false}
+                     selectedIds={gameState.selectedIds}
+                     clipboard={gameState.clipboard}
+                     className="flex-1" 
+                />
+            </div>
+        </div>
 
         {/* Right Side: Preview & Info */}
         <PreviewPane node={currentItemUI} level={currentLevel} />
@@ -1104,38 +1129,6 @@ export default function App() {
                        )}
                   </div>
              </div>
-        )}
-
-        {gameState.mode === 'bulk-rename' && (
-            <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-                <div className="w-[600px] bg-zinc-900 border border-zinc-700 p-6 shadow-2xl flex flex-col gap-4">
-                     <h3 className="text-lg font-bold text-white">Bulk Rename</h3>
-                     <p className="text-xs text-zinc-500">Edit names below (one per line). Order must match selection.</p>
-                     <textarea 
-                        className="w-full h-64 bg-black border border-zinc-800 p-4 font-mono text-sm text-zinc-300 outline-none focus:border-blue-500"
-                        value={bulkRenameContent}
-                        onChange={(e) => setBulkRenameContent(e.target.value)}
-                        autoFocus
-                        onKeyDown={(e) => {
-                             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                                 handleBulkRenameSubmit(bulkRenameContent);
-                             }
-                             if (e.key === 'Escape') {
-                                 setGameState(prev => ({ ...prev, mode: 'normal' }));
-                             }
-                        }}
-                     />
-                     <div className="flex justify-between items-center text-xs">
-                         <span className="text-zinc-500">Ctrl+Enter to Confirm • Esc to Cancel</span>
-                         <button 
-                             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold transition-colors"
-                             onClick={() => handleBulkRenameSubmit(bulkRenameContent)}
-                         >
-                             Confirm
-                         </button>
-                     </div>
-                </div>
-            </div>
         )}
 
         {/* Conclusion / Outro */}

@@ -19,7 +19,6 @@ interface FileSystemPaneProps {
   items: FileNode[];
   isActive: boolean;
   cursorIndex?: number;
-  title?: string;
   isParent?: boolean;
   selectedIds: string[];
   clipboard: ClipboardItem | null;
@@ -69,7 +68,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   items, 
   isActive, 
   cursorIndex = -1,
-  title,
   isParent = false,
   selectedIds = [],
   clipboard,
@@ -77,35 +75,29 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Scroll into view logic
+  // Scroll into view logic - runs whenever cursor changes, even if inactive (for parent context)
   useEffect(() => {
-    if (isActive && listRef.current && cursorIndex >= 0) {
+    if (listRef.current && cursorIndex >= 0) {
       const children = listRef.current.children;
+      // offset check to avoid crashes
       if (children[cursorIndex]) {
         children[cursorIndex].scrollIntoView({ block: 'nearest' });
       }
     }
-  }, [cursorIndex, isActive]);
+  }, [cursorIndex]);
 
-  const defaultWidth = isParent ? 'w-1/4' : 'w-1/3';
+  const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
   const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
   const finalClass = className || `${defaultWidth} ${bgColors}`;
 
   return (
     <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}>
-      {title && (
-        <div className={`px-3 py-1 text-[10px] font-bold border-b border-zinc-800 uppercase tracking-wider flex items-center justify-between ${isParent ? 'text-zinc-600' : 'text-blue-400'}`}>
-          <span>{title}</span>
-          {!isParent && <span className="text-zinc-600">{items.length} nodes</span>}
-        </div>
-      )}
-      
       <div ref={listRef} className="flex-1 overflow-y-auto py-1 scrollbar-hide">
         {items.length === 0 && (
-          <div className="px-4 py-2 text-zinc-700 italic text-xs">~ empty ~</div>
+          <div className="px-4 py-2 text-zinc-800 italic text-xs select-none">~ empty ~</div>
         )}
         {items.map((item, idx) => {
-          const isSelected = isActive && idx === cursorIndex;
+          const isCursor = idx === cursorIndex;
           const isMarked = selectedIds.includes(item.id);
           const { color, icon: Icon } = getFileStyle(item);
           
@@ -114,15 +106,31 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isCut = inClipboard && clipboard?.action === 'cut';
           const isYank = inClipboard && clipboard?.action === 'yank';
 
+          // Determine row styling
+          let rowBg = '';
+          let rowText = '';
+          
+          if (isCursor) {
+              if (isActive) {
+                  // Active pane cursor
+                  rowBg = 'bg-zinc-800';
+                  if (!isMarked) rowText = 'text-white font-medium';
+              } else {
+                  // Inactive/Parent pane cursor context
+                  rowBg = 'bg-zinc-800/40'; 
+                  if (!isMarked) rowText = 'text-zinc-400';
+              }
+          }
+
           return (
             <div
               key={item.id}
               className={`
                 px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm
                 transition-colors duration-75 relative
-                ${isSelected ? 'bg-zinc-800' : ''}
-                ${isMarked ? 'text-yellow-400' : ''}
-                ${isParent ? 'opacity-50 grayscale' : ''}
+                ${rowBg}
+                ${isMarked ? 'text-yellow-400' : rowText}
+                ${isParent && !isCursor ? 'opacity-50 grayscale' : ''}
                 ${isCut ? 'opacity-50' : ''}
               `}
             >
@@ -130,7 +138,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                 <Icon size={14} fill={item.type === 'dir' ? "currentColor" : "none"} fillOpacity={item.type === 'dir' ? 0.2 : 0} />
               </span>
               
-              <span className={`truncate flex-1 flex items-center gap-2 ${isSelected && !isMarked ? 'text-white font-medium' : ''} ${isMarked ? 'font-bold' : ''}`}>
+              <span className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}>
                 <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>{item.name}</span>
               </span>
               

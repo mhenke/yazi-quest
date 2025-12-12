@@ -38,79 +38,52 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">
       
-      {/* Top Section: Content Preview */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-3 py-1 text-xs font-bold bg-zinc-900 text-zinc-400 border-b border-zinc-800 uppercase tracking-wider shrink-0">
-            Preview
-        </div>
-        
+      {/* Content Display Section (No Header) */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {node ? (
-            <div className="flex-1 flex flex-col overflow-hidden"> 
-                {/* Header Info */}
-                <div className="p-4 border-b border-zinc-800 shrink-0 bg-zinc-900/10">
-                    <div className="flex items-center gap-3">
-                        {node.type === 'dir' ? (
-                            <FolderOpen size={24} className="text-blue-500" /> 
-                        ) : isArchiveDir || isArchiveFile ? (
-                            <PackageOpen size={24} className="text-red-500" />
-                        ) : isImage ? (
-                            <ImageIcon size={24} className="text-purple-500" />
-                        ) : (
-                            <FileText size={24} className="text-zinc-500" />
-                        )}
-                        <div className="overflow-hidden">
-                            <h2 className="text-sm font-bold text-white truncate font-mono">{node.name}</h2>
-                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
-                                {node.type} {showChildren && `• ${node.children?.length || 0} items`}
-                            </p>
-                        </div>
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                {/* CASE 1: Image */}
+                {isImage && (
+                    <div className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-zinc-800 rounded bg-zinc-900/30 p-4">
+                        <img 
+                            src={node.content} 
+                            alt={node.name} 
+                            className="max-w-full max-h-full object-contain rounded shadow-lg"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).parentElement!.innerText = '[Image Load Failed]';
+                            }}
+                        />
                     </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    {/* CASE 1: Image */}
-                    {isImage && (
-                        <div className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-zinc-800 rounded bg-zinc-900/30 p-4">
-                            <img 
-                                src={node.content} 
-                                alt={node.name} 
-                                className="max-w-full max-h-full object-contain rounded shadow-lg"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).parentElement!.innerText = '[Image Load Failed]';
-                                }}
-                            />
-                        </div>
-                    )}
+                )}
 
-                    {/* CASE 2: Text Content */}
-                    {node.type === 'file' && !isImage && !showChildren && (
-                        <div className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-400">
-                            {node.content || <span className="italic text-zinc-600">(Empty file)</span>}
-                        </div>
-                    )}
+                {/* CASE 2: Text Content */}
+                {node.type === 'file' && !isImage && !showChildren && (
+                    <div className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-400">
+                        {node.content || <span className="italic text-zinc-600">(Empty file)</span>}
+                    </div>
+                )}
 
-                    {/* CASE 3: Directory / Archive Listing */}
-                    {showChildren && (
-                        <div className="flex flex-col gap-0.5">
-                            {(!node.children || node.children.length === 0) ? (
-                                <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>
-                            ) : (
-                                node.children.map((child) => {
-                                    const { icon: Icon, color } = getPreviewIcon(child);
-                                    return (
-                                        <div key={child.id} className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-900/50 rounded cursor-default">
-                                            <Icon size={12} className={color} />
-                                            <span className={`text-xs font-mono truncate ${child.type === 'dir' ? 'text-blue-300' : 'text-zinc-400'}`}>
-                                                {child.name}
-                                            </span>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    )}
-                </div>
+                {/* CASE 3: Directory / Archive Listing */}
+                {showChildren && (
+                    <div className="flex flex-col gap-0.5">
+                        {(!node.children || node.children.length === 0) ? (
+                            <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>
+                        ) : (
+                            node.children.map((child) => {
+                                const { icon: Icon, color } = getPreviewIcon(child);
+                                return (
+                                    <div key={child.id} className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-900/50 rounded cursor-default">
+                                        <Icon size={12} className={color} />
+                                        <span className={`text-xs font-mono truncate ${child.type === 'dir' ? 'text-blue-300' : 'text-zinc-400'}`}>
+                                            {child.name}
+                                        </span>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                )}
             </div>
         ) : (
              <div className="flex-1 flex items-center justify-center text-zinc-700">

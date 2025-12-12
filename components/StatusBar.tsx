@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameState, Level } from '../types';
 import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
-import { resolvePath, getNodeByPath } from '../utils/fsHelpers';
+import { getNodeByPath } from '../utils/fsHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -48,6 +48,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;
   const currentItem = items[state.cursorIndex];
+  const itemName = currentItem ? currentItem.name : "";
 
   // Permissions logic
   const isDir = currentItem?.type === 'dir' || currentItem?.type === 'archive';
@@ -84,14 +85,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
       {/* 2. Path Triangle (CSS Hack for shape or just color block) */}
       <div className={`${modeBg} w-0 h-0 border-t-[24px] border-t-transparent border-l-[10px] border-l-zinc-900 -ml-[1px]`}></div>
 
-      {/* 3. File Info / Path */}
+      {/* 3. File Info / Name */}
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
-        <span className="truncate mr-4">
-            {resolvePath(state.fs, state.currentPath)}
+        <span className="truncate mr-4 font-bold text-white">
+            {itemName}
         </span>
         
         {/* Quest Info embedded in status bar */}
-        <span className="text-zinc-500 hidden sm:inline-block whitespace-nowrap">
+        <span className="text-zinc-500 hidden sm:inline-block whitespace-nowrap ml-auto">
             {progress}% OP: {level.title}
         </span>
       </div>
