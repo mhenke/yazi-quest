@@ -76,14 +76,26 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
           </h3>
           <div className="space-y-3">
             {level.tasks.map((task) => (
-              <div 
-                key={task.id} 
-                className={`flex gap-3 items-start transition-opacity duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
+              <div
+                key={task.id}
+                className={`flex gap-3 items-start transition-all duration-500 rounded px-2 py-1 -mx-2 ${
+                  task.completed
+                    ? 'opacity-60 bg-green-950/20 border-l-2 border-green-500'
+                    : 'opacity-100 border-l-2 border-transparent'
+                }`}
               >
-                <div className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}>
+                <div className={`mt-0.5 shrink-0 transition-all duration-300 ${
+                  task.completed
+                    ? 'text-green-500 scale-110'
+                    : 'text-zinc-600'
+                }`}>
                   {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
                 </div>
-                <div className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-600' : 'text-zinc-300'}`}>
+                <div className={`text-xs font-mono leading-tight transition-all duration-300 ${
+                  task.completed
+                    ? 'line-through text-green-600/70'
+                    : 'text-zinc-300'
+                }`}>
                   {task.description}
                 </div>
               </div>

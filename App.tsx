@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
 import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, findNodeByName, isProtected, getAllDirectories, resolvePath, regenerateIds, getRecursiveContent } from './utils/fsHelpers';
+import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
 import { StatusBar } from './components/StatusBar';
@@ -131,13 +132,14 @@ export default function App() {
   const currentLevel = isLastLevel ? LEVELS[LEVELS.length - 1] : LEVELS[gameState.levelIndex];
   const allTasksComplete = isLastLevel ? true : currentLevel.tasks.every(t => t.completed);
 
-  // Show success toast when all tasks become complete
+  // Show success toast and play sound when all tasks become complete
   useEffect(() => {
     if (allTasksComplete && !prevAllTasksCompleteRef.current && !isLastLevel) {
       setShowSuccessToast(true);
+      playSuccessSound(gameState.settings.soundEnabled);
     }
     prevAllTasksCompleteRef.current = allTasksComplete;
-  }, [allTasksComplete, isLastLevel]);
+  }, [allTasksComplete, isLastLevel, gameState.settings.soundEnabled]);
 
   // --- Derived State Helpers ---
   const getCurrentDir = useCallback(() => getNodeByPath(stateRef.current.fs, stateRef.current.currentPath), []);
@@ -219,9 +221,10 @@ export default function App() {
   // --- INSTANT TASK CHECKER ---
   useEffect(() => {
     if (gameState.showEpisodeIntro || gameState.isGameOver || isLastLevel) return;
-    
+
     const level = LEVELS[gameState.levelIndex];
     let changed = false;
+    let tasksJustCompleted = 0;
     let gameOver = false;
     let gameOverReason: 'keystrokes' | undefined = undefined;
 
@@ -230,8 +233,15 @@ export default function App() {
         if (!task.completed && task.check(gameState)) {
             task.completed = true;
             changed = true;
+            tasksJustCompleted++;
         }
     });
+
+    // Play task completion sound (but not if all tasks complete - that gets success sound)
+    const allDoneNow = level.tasks.every(t => t.completed);
+    if (tasksJustCompleted > 0 && !allDoneNow) {
+        playTaskCompleteSound(gameState.settings.soundEnabled);
+    }
 
     // 2. Check Keystrokes (Mastery) - Instant Fail
     const allDone = level.tasks.every(t => t.completed);
