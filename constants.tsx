@@ -382,6 +382,30 @@ export const LEVELS: Level[] = [
     description: "Protocols verified. Efficiency required: Move both configuration files simultaneously using batch selection.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Create 'active/' in datastore. Enter 'protocols'. Press Space on 'uplink_v1.conf'. Press Space on 'uplink_v2.conf'. Press 'x' to Cut. Go to 'active'. Press 'p'.",
+    onEnter: (fs) => {
+         const datastore = findNodeByName(fs, 'datastore');
+         if (datastore && datastore.children) {
+             let protocols = datastore.children.find(c => c.name === 'protocols');
+             if (!protocols) {
+                 protocols = { 
+                     id: Math.random().toString(36).substr(2, 9), 
+                     name: 'protocols', 
+                     type: 'dir', 
+                     children: [] 
+                 };
+                 datastore.children.push(protocols);
+             }
+             if (protocols.children) {
+                 if (!protocols.children.find(c => c.name === 'uplink_v1.conf')) {
+                     protocols.children.push({ id: Math.random().toString(36).substr(2, 9), name: 'uplink_v1.conf', type: 'file', content: 'conf_1' });
+                 }
+                 if (!protocols.children.find(c => c.name === 'uplink_v2.conf')) {
+                     protocols.children.push({ id: Math.random().toString(36).substr(2, 9), name: 'uplink_v2.conf', type: 'file', content: 'conf_2' });
+                 }
+             }
+         }
+         return fs;
+    },
     tasks: [
       {
         id: 'batch-0',
@@ -509,6 +533,31 @@ export const LEVELS: Level[] = [
     initialPath: ['root', 'home', 'user', 'workspace'],
     hint: "Use Shift+Z to jump to sources. Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
     timeLimit: 180, // 3 minutes
+    onEnter: (fs) => {
+        const datastore = findNodeByName(fs, 'datastore');
+        if (datastore && datastore.children) {
+             let active = datastore.children.find(c => c.name === 'active');
+             if (!active) {
+                 active = { 
+                     id: Math.random().toString(36).substr(2, 9), 
+                     name: 'active', 
+                     type: 'dir', 
+                     children: [] 
+                 };
+                 datastore.children.push(active);
+             }
+             
+             if (active.children && !active.children.find(c => c.name === 'uplink_v1.conf')) {
+                 active.children.push({
+                     id: Math.random().toString(36).substr(2, 9),
+                     name: 'uplink_v1.conf',
+                     type: 'file',
+                     content: 'network_mode=active\nsecure=true'
+                 });
+             }
+        }
+        return fs;
+    },
     tasks: [
       {
         id: 'combo-1a',

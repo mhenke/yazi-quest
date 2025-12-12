@@ -74,6 +74,12 @@ export default function App() {
         initialZoxide['/home/guest/datastore'] = 10;
     }
 
+    // Prepare File System with Level-Specific Overrides (onEnter)
+    let fs = cloneFS(INITIAL_FS);
+    if (initialLevel.onEnter) {
+        fs = initialLevel.onEnter(fs);
+    }
+
     return {
       currentPath: initialLevel.initialPath,
       cursorIndex: 0,
@@ -84,8 +90,8 @@ export default function App() {
       history: [],
       zoxideData: initialZoxide, 
       levelIndex: targetIndex,
-      fs: INITIAL_FS,
-      levelStartFS: cloneFS(INITIAL_FS),
+      fs: fs,
+      levelStartFS: cloneFS(fs),
       notification: isDevOverride ? `DEV BYPASS: LEVEL ${initialLevel.id}` : null,
       selectedIds: [],
       pendingDeleteIds: [],
@@ -274,6 +280,12 @@ export default function App() {
                  nextZoxideData['/home/guest/datastore'] = 10;
             }
 
+            // Apply onEnter hook to ensure prerequisites exist (e.g. created files from previous levels)
+            let nextFS = cloneFS(prev.fs);
+            if (nextLevel.onEnter) {
+                nextFS = nextLevel.onEnter(nextFS);
+            }
+
             return {
                 ...prev,
                 levelIndex: nextIdx,
@@ -283,7 +295,8 @@ export default function App() {
                 selectedIds: [],
                 timeLeft: nextLevel.timeLimit || null,
                 keystrokes: 0,
-                levelStartFS: cloneFS(prev.fs), // Snapshot for restart
+                fs: nextFS,
+                levelStartFS: cloneFS(nextFS), // Snapshot for restart
                 showEpisodeIntro: isNewEpisode,
                 notification: `LEVEL ${nextLevel.id} INITIATED`,
                 zoxideData: nextZoxideData
@@ -312,6 +325,12 @@ export default function App() {
         initialZoxide['/home/guest/datastore'] = 10;
     }
 
+    // Reset FS to initial state + level specific setup
+    let newFS = cloneFS(INITIAL_FS);
+    if (targetLevel.onEnter) {
+        newFS = targetLevel.onEnter(newFS);
+    }
+
     setGameState(prev => ({
         ...prev,
         levelIndex: targetIdx,
@@ -323,7 +342,9 @@ export default function App() {
         keystrokes: 0,
         isGameOver: false,
         notification: `JUMPED TO LEVEL ${targetLevel.id}`,
-        zoxideData: initialZoxide
+        zoxideData: initialZoxide,
+        fs: newFS,
+        levelStartFS: cloneFS(newFS)
     }));
   }, []);
 
