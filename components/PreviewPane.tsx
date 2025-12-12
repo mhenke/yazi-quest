@@ -87,7 +87,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
             </div>
         ) : (
              <div className="flex-1 flex items-center justify-center text-zinc-700">
-                <span className="text-sm italic">No selection</span>
+                {/* Empty State */}
             </div>
         )}
       </div>

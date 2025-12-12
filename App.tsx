@@ -133,6 +133,12 @@ export default function App() {
   const activeFilter = gameState.filters[getCurrentDir()?.id || ''] || '';
   const currentPathStr = resolvePath(gameState.fs, gameState.currentPath);
 
+  // Display Path Logic (Mapping /home/guest to ~)
+  let displayPath = currentPathStr;
+  if (displayPath.startsWith('/home/guest')) {
+      displayPath = displayPath.replace('/home/guest', '~');
+  }
+
   // Parent Info for Column 1
   const parentNode = getParentDir();
   const parentItems = parentNode?.children || [];
@@ -787,27 +793,26 @@ export default function App() {
       />
 
       {/* 2. Main Workspace */}
-      <div className="flex-1 flex min-h-0 relative">
+      <div className="flex-1 flex flex-col min-h-0 relative bg-zinc-950">
 
-        {/* NEW WRAPPER FOR FILE SYSTEM PANES */}
-        <div className="flex-[2] flex flex-col min-w-0 border-r border-zinc-800">
-            
-            {/* NEW PATH HEADER SPANNING BOTH COLUMNS */}
-            <div className="h-8 shrink-0 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-3 font-mono text-sm">
-                <span className="text-zinc-500 font-bold select-none">PATH</span>
-                <span className="text-blue-400 font-bold select-all truncate">
-                   {currentPathStr === '/' ? '/root' : currentPathStr}
+        {/* TOP BAR - SPANS ALL COLUMNS */}
+        <div className="h-8 shrink-0 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-3 font-mono text-sm">
+             <span className="text-blue-400 font-bold select-all truncate">
+                {displayPath}
+             </span>
+             {activeFilter && (
+                <span className="bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded text-xs border border-purple-700/50 flex items-center gap-1 animate-in fade-in ml-auto">
+                    <Search size={10} />
+                    <span>{activeFilter}</span>
                 </span>
-                {activeFilter && (
-                  <span className="bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded text-xs border border-purple-700/50 flex items-center gap-1 animate-in fade-in ml-auto">
-                      <Search size={10} />
-                      <span>{activeFilter}</span>
-                  </span>
-                )}
-            </div>
+            )}
+        </div>
 
-            {/* PANES CONTAINER */}
-            <div className="flex-1 flex min-h-0">
+        {/* PANES ROW */}
+        <div className="flex-1 flex min-h-0">
+             
+             {/* Parent + Current Wrapper */}
+             <div className="flex-[2] flex min-w-0">
                 {/* Parent Directory Pane - ALWAYS RENDERED */}
                 <FileSystemPane 
                     items={parentItems}
@@ -827,13 +832,14 @@ export default function App() {
                      isParent={false}
                      selectedIds={gameState.selectedIds}
                      clipboard={gameState.clipboard}
-                     className="flex-1" 
+                     className="flex-1 border-r border-zinc-800" 
                 />
             </div>
-        </div>
+             
+            {/* Preview Pane - Handles its own border-l */}
+            <PreviewPane node={currentItemUI} level={currentLevel} />
 
-        {/* Right Side: Preview & Info */}
-        <PreviewPane node={currentItemUI} level={currentLevel} />
+        </div>
         
         {/* Modals & Overlays */}
         {gameState.showEpisodeIntro && (
