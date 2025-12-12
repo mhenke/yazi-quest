@@ -60,6 +60,15 @@ export default function App() {
     
     const showIntro = !skipIntro && isEpisodeStart; 
 
+    // Initial Zoxide Data Logic
+    const initialZoxide: Record<string, number> = { [resolvePath(INITIAL_FS, initialLevel.initialPath)]: 1 };
+    
+    // Hack: Pre-seed Zoxide for Level 7 (Deep Scan Protocol) so tasks are possible immediately
+    if (initialLevel.id === 7) {
+        initialZoxide['/tmp'] = 10;
+        initialZoxide['/etc'] = 10;
+    }
+
     return {
       currentPath: initialLevel.initialPath,
       cursorIndex: 0,
@@ -68,7 +77,7 @@ export default function App() {
       inputBuffer: '',
       filters: {}, // Directory-based filters
       history: [],
-      zoxideData: { [resolvePath(INITIAL_FS, initialLevel.initialPath)]: 1 }, // Initialize with current path
+      zoxideData: initialZoxide, 
       levelIndex: targetIndex,
       fs: INITIAL_FS,
       levelStartFS: cloneFS(INITIAL_FS),
@@ -248,19 +257,29 @@ export default function App() {
         // Reset tasks for next level
         nextLevel.tasks.forEach(t => t.completed = false);
 
-        setGameState(prev => ({
-            ...prev,
-            levelIndex: nextIdx,
-            currentPath: prev.currentPath, // Continuum logic
-            cursorIndex: 0,
-            filters: {}, // Reset filters on level change
-            selectedIds: [],
-            timeLeft: nextLevel.timeLimit || null,
-            keystrokes: 0,
-            levelStartFS: cloneFS(prev.fs), // Snapshot for restart
-            showEpisodeIntro: isNewEpisode,
-            notification: `LEVEL ${nextLevel.id} INITIATED`
-        }));
+        setGameState(prev => {
+            // Seed Zoxide for Level 7 (Deep Scan Protocol)
+            let nextZoxideData = { ...prev.zoxideData };
+            if (nextLevel.id === 7) {
+                 nextZoxideData['/tmp'] = (nextZoxideData['/tmp'] || 0) + 10;
+                 nextZoxideData['/etc'] = (nextZoxideData['/etc'] || 0) + 10;
+            }
+
+            return {
+                ...prev,
+                levelIndex: nextIdx,
+                currentPath: prev.currentPath, // Continuum logic
+                cursorIndex: 0,
+                filters: {}, // Reset filters on level change
+                selectedIds: [],
+                timeLeft: nextLevel.timeLimit || null,
+                keystrokes: 0,
+                levelStartFS: cloneFS(prev.fs), // Snapshot for restart
+                showEpisodeIntro: isNewEpisode,
+                notification: `LEVEL ${nextLevel.id} INITIATED`,
+                zoxideData: nextZoxideData
+            };
+        });
     } else {
         // Game Complete
         setGameState(prev => ({ ...prev, levelIndex: nextIdx }));
@@ -274,6 +293,12 @@ export default function App() {
     // Reset tasks so they can be replayed/viewed
     targetLevel.tasks.forEach(t => t.completed = false);
 
+    const initialZoxide: Record<string, number> = { [resolvePath(INITIAL_FS, targetLevel.initialPath)]: 1 };
+    if (targetLevel.id === 7) {
+        initialZoxide['/tmp'] = 10;
+        initialZoxide['/etc'] = 10;
+    }
+
     setGameState(prev => ({
         ...prev,
         levelIndex: targetIdx,
@@ -285,7 +310,7 @@ export default function App() {
         keystrokes: 0,
         isGameOver: false,
         notification: `JUMPED TO LEVEL ${targetLevel.id}`,
-        zoxideData: { [resolvePath(INITIAL_FS, targetLevel.initialPath)]: 1 }
+        zoxideData: initialZoxide
     }));
   }, []);
 
@@ -797,15 +822,10 @@ export default function App() {
 
         {/* TOP BAR - SPANS ALL COLUMNS */}
         <div className="h-8 shrink-0 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-3 font-mono text-sm">
-             <span className="text-blue-400 font-bold select-all truncate">
+             <span className="text-blue-400 font-bold select-all truncate flex items-baseline gap-2">
                 {displayPath}
+                {activeFilter && <span className="text-purple-400 font-normal text-xs opacity-75">(filter: {activeFilter})</span>}
              </span>
-             {activeFilter && (
-                <span className="bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded text-xs border border-purple-700/50 flex items-center gap-1 animate-in fade-in ml-auto">
-                    <Search size={10} />
-                    <span>{activeFilter}</span>
-                </span>
-            )}
         </div>
 
         {/* PANES ROW */}
