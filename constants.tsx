@@ -477,7 +477,7 @@ export const LEVELS: Level[] = [
     id: 7,
     episodeId: 2,
     title: "Deep Scan Protocol",
-    description: "Bypass sequential navigation. Quantum jump to target locations using Zoxide (Z).",
+    description: "Bypass sequential navigation. Quantum jump to target locations using Zoxide (Shift+Z).",
     initialPath: ['root', 'home', 'user', 'docs', 'datastore'],
     hint: "Enter directories to build history. Press 'Shift+Z' (Zoxide) to see visited locations. Select 'tmp' or 'etc' to jump.",
     tasks: [
@@ -512,7 +512,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'combo-1a',
-        description: "Create directory 'neural_net'",
+        description: "Create directory 'neural_net' in workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'neural_net');
