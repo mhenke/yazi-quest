@@ -86,6 +86,8 @@ export interface GameState {
   pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
   showHint: boolean; // Toggle for hint modal
+  showHidden: boolean; // Toggle for showing hidden files (starting with .)
+  showInfoPanel: boolean; // Toggle for file info panel (Tab)
   showEpisodeIntro: boolean; // Toggle for story mode overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Track user inputs for mastery levels

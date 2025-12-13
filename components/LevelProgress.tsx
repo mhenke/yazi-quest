@@ -8,11 +8,30 @@ interface LevelProgressProps {
   currentLevelIndex: number;
   onToggleHint: () => void;
   onToggleHelp: () => void;
+  onToggleMap?: () => void;
 }
 
-export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLevelIndex, onToggleHint, onToggleHelp }) => {
+export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLevelIndex, onToggleHint, onToggleHelp, onToggleMap }) => {
   const [showLegend, setShowLegend] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
+
+  const handleToggleMap = () => {
+    setShowLegend(prev => !prev);
+    onToggleMap?.(); // Notify parent if callback provided
+  };
+
+  // Keyboard shortcut: Shift+M to toggle map
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'M' && e.shiftKey) {
+        e.preventDefault();
+        handleToggleMap();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Helper icons for the 3 episodes (mapped by index)
   // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
@@ -72,10 +91,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
         
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-6 overflow-hidden mr-4 h-8 flex-1">
-            <button 
-                onClick={() => setShowLegend(true)}
+            <button
+                onClick={handleToggleMap}
                 className="flex items-center gap-2 text-xs font-mono text-zinc-500 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
-                title="View Full Quest Map"
+                title="Quest Map [Shift+M]"
             >
                 <Map size={14} className="text-zinc-600 group-hover:text-orange-500 transition-colors" />
                 <span className="uppercase tracking-widest font-bold border-b border-transparent group-hover:border-zinc-500">Map</span>
@@ -166,17 +185,17 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
             {/* Hint & Help Controls */}
             <div className="flex items-center gap-2">
-                 <button 
+                 <button
                    onClick={onToggleHint}
                    className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-500 hover:text-yellow-500 transition-colors border border-transparent hover:border-zinc-700"
-                   title="Hint [H]"
+                   title="Hint [Shift+H]"
                  >
                    <Lightbulb size={18} />
                  </button>
-                 <button 
+                 <button
                    onClick={onToggleHelp}
                    className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-500 hover:text-blue-500 transition-colors border border-transparent hover:border-zinc-700"
-                   title="Help / Keybindings [?]"
+                   title="Help [?]"
                  >
                    <HelpCircle size={18} />
                  </button>
@@ -257,7 +276,34 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                                     </h3>
                                     {status === 'active' && <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded text-white animate-pulse">ACTIVE</span>}
                                 </div>
-                                <p className="text-xs text-zinc-500">{level.description}</p>
+
+                                {/* Core Skill Badge */}
+                                {level.coreSkill && (
+                                    <div className="mb-2">
+                                        <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-900/50">
+                                            {level.coreSkill}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <p className="text-xs text-zinc-500 leading-relaxed">{level.description}</p>
+
+                                {/* Tasks */}
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-[9px] text-zinc-600 uppercase tracking-wider">
+                                        {level.tasks.length} {level.tasks.length === 1 ? 'Task' : 'Tasks'}
+                                    </span>
+                                    {status === 'completed' && (
+                                        <span className="text-[9px] text-green-600">
+                                            • All Complete
+                                        </span>
+                                    )}
+                                    {status === 'active' && (
+                                        <span className="text-[9px] text-orange-500">
+                                            • {level.tasks.filter(t => t.completed).length}/{level.tasks.length} Complete
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Decorative Background Icon for Episode */}

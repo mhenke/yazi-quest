@@ -15,6 +15,7 @@ import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
+import { InfoPanel } from './components/InfoPanel';
 import { Search, Folder, FileText, ChevronRight } from 'lucide-react';
 
 export default function App() {
@@ -109,6 +110,8 @@ export default function App() {
       pendingOverwriteNode: null,
       showHelp: false,
       showHint: false,
+      showHidden: true, // Start with hidden files visible
+      showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
       keystrokes: 0,
@@ -122,6 +125,7 @@ export default function App() {
 
   const [bulkRenameContent, setBulkRenameContent] = useState("");
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [pendingGKey, setPendingGKey] = useState(false);
   const prevAllTasksCompleteRef = useRef(false);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
@@ -155,11 +159,19 @@ export default function App() {
     const state = stateRef.current;
     const dir = getNodeByPath(state.fs, state.currentPath);
     if (!dir || !dir.children) return [];
-    
+
+    // Filter hidden files (starting with .)
+    let items = state.showHidden
+      ? dir.children
+      : dir.children.filter(c => !c.name.startsWith('.'));
+
+    // Apply text filter if active
     const activeFilter = state.filters[dir.id];
-    if (!activeFilter) return dir.children;
-    
-    return dir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    if (activeFilter) {
+      items = items.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    }
+
+    return items;
   }, []); // Empty dep, depends on ref
 
   // We need a render-phase version for the UI
@@ -539,6 +551,18 @@ export default function App() {
              setGameState(prev => ({ ...prev, settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled }, notification: `Sound: ${!prev.settings.soundEnabled ? 'ON' : 'OFF'}` }));
              return;
         }
+        if (e.key === '.' && state.mode === 'normal') {
+             // Toggle hidden files
+             e.preventDefault();
+             setGameState(prev => ({ ...prev, showHidden: !prev.showHidden, cursorIndex: 0, notification: `Hidden files: ${!prev.showHidden ? 'SHOWN' : 'HIDDEN'}` }));
+             return;
+        }
+        if (e.key === 'Tab' && state.mode === 'normal') {
+             // Toggle info panel
+             e.preventDefault();
+             setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
+             return;
+        }
 
         // Mode: NORMAL
         if (state.mode === 'normal') {
@@ -602,11 +626,25 @@ export default function App() {
                     setGameState(prev => ({ ...prev, mode: 'filter', inputBuffer: currentFilter }));
                 }
             }
+            else if (e.key === 'g' && !e.shiftKey) {
+                 // Vim-style gg to jump to top
+                 if (pendingGKey) {
+                     // Second 'g' - jump to top
+                     setGameState(prev => ({ ...prev, cursorIndex: 0 }));
+                     setPendingGKey(false);
+                 } else {
+                     // First 'g' - wait for second
+                     setPendingGKey(true);
+                     setTimeout(() => setPendingGKey(false), 1000); // Clear after 1s
+                 }
+            }
             else if (e.key === 'G') {
+                 // Shift+G - jump to bottom
                  setGameState(prev => {
                      const count = getVisibleItems().length;
                      return { ...prev, cursorIndex: count - 1 };
                 });
+                 setPendingGKey(false); // Clear pending g if any
             }
             else if (e.key === 'Z' && e.shiftKey) { // Z - Zoxide Jump (History)
                  e.preventDefault();
@@ -960,7 +998,8 @@ export default function App() {
 
         {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
         {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
-        
+        {gameState.showInfoPanel && <InfoPanel file={visibleItemsUI[gameState.cursorIndex] || null} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
+
         {gameState.mode === 'confirm-delete' && (
             <ConfirmationModal 
                 title="CONFIRM DELETION" 
