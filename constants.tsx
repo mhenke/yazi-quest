@@ -839,7 +839,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'migration-1',
-        description: "Relocate access_key + mission_log.md from datastore to workspace",
+        description: "Relocate access_key + mission_log.md from /home/guest/datastore to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return ws?.children?.some(c => c.name.includes('access_key')) &&
@@ -849,7 +849,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'migration-2',
-        description: "Restore assets to datastore origin",
+        description: "Restore assets to /home/guest/datastore",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
