@@ -1,6 +1,7 @@
 
 import os
 import zipfile
+from datetime import datetime
 
 def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
     """
@@ -33,6 +34,11 @@ def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
                     if pattern.endswith('/') and arcname.startswith(pattern): # Folder pattern
                         excluded = True
                         break
+                    elif '*' in pattern: # Wildcard pattern
+                        import fnmatch
+                        if fnmatch.fnmatch(os.path.basename(file_path), pattern) or fnmatch.fnmatch(arcname, pattern):
+                            excluded = True
+                            break
                     elif arcname == pattern: # Exact file pattern
                         excluded = True
                         break
@@ -50,7 +56,10 @@ def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
 
 if __name__ == "__main__":
     current_directory = os.getcwd()
-    output_zip = "yazi-quest-ai-studio.zip"
+
+    # Generate timestamp for unique filename
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_zip = f"yazi-quest-ai-studio-{timestamp}.zip"
 
     # Define patterns to exclude
     # These are relative to the source_dir
@@ -59,7 +68,7 @@ if __name__ == "__main__":
         'node_modules/', # Exclude the node_modules directory
         'package-lock.json', # Exclude package-lock.json file
         'ai_debug_info.txt', # Exclude debug logs
-        output_zip, # Exclude the output zip file itself
+        'yazi-quest-ai-studio*.zip', # Exclude any existing zip files
         'fzf-0.57.0-linux_amd64.tar.gz', # Exclude downloaded archives
         'fzf-0.57.0-linux_amd64.tar.gz.1',
         'index.css', # Exclude generated CSS
