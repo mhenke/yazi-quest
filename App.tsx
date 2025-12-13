@@ -888,8 +888,16 @@ export default function App() {
   }, [getVisibleItems, getParentDir, advanceLevel, getCurrentDir, navigate, enterDirectory]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-black text-zinc-300 font-sans overflow-hidden selection:bg-orange-500/30">
+    <div className="relative flex flex-col h-screen w-screen bg-black text-zinc-300 font-sans overflow-hidden selection:bg-orange-500/30">
       
+      {/* 0. Episode Intro Overlay (Full Screen) */}
+      {gameState.showEpisodeIntro && (
+            <EpisodeIntro 
+                episode={EPISODE_LORE[currentLevel.episodeId - 1]} 
+                onComplete={() => setGameState(prev => ({ ...prev, showEpisodeIntro: false }))} 
+            />
+      )}
+
       {/* 1. Header: Progress & Breadcrumbs */}
       <LevelProgress 
          levels={LEVELS} 
@@ -943,13 +951,6 @@ export default function App() {
         </div>
         
         {/* Modals & Overlays */}
-        {gameState.showEpisodeIntro && (
-            <EpisodeIntro 
-                episode={EPISODE_LORE[currentLevel.episodeId - 1]} 
-                onComplete={() => setGameState(prev => ({ ...prev, showEpisodeIntro: false }))} 
-            />
-        )}
-
         {gameState.isGameOver && (
             <GameOverModal 
                 reason={gameState.gameOverReason || 'time'} 

@@ -15,31 +15,33 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle,
 
   return (
     <div
-      className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-500"
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] animate-in zoom-in-95 fade-in duration-300"
       role="alert"
     >
-      <div className="bg-green-950/95 border-2 border-green-500 shadow-2xl shadow-green-500/20 px-6 py-4 rounded-lg backdrop-blur-sm min-w-[320px]">
-        <div className="flex items-center gap-3">
-          <div className="bg-green-500 rounded-full p-2 animate-pulse">
-            <CheckCircle2 size={24} className="text-black" />
+      <div className="bg-green-950/95 border-2 border-green-500 shadow-2xl shadow-green-500/20 px-8 py-6 rounded-xl backdrop-blur-md min-w-[360px] max-w-md flex flex-col items-center text-center">
+        
+        <div className="bg-green-500 rounded-full p-3 mb-4 animate-pulse shadow-lg shadow-green-500/50">
+          <CheckCircle2 size={32} className="text-black" />
+        </div>
+        
+        <div className="space-y-1 mb-4 w-full">
+          <div className="flex items-center justify-center gap-2 text-green-400 text-xs font-bold uppercase tracking-widest">
+            <Zap size={12} />
+            Mission Complete
           </div>
-          <div>
-            <div className="flex items-center gap-2 text-green-400 text-sm font-bold uppercase tracking-wider">
-              <Zap size={14} />
-              Mission Complete
-            </div>
-            <div className="text-green-300 text-xs font-mono mt-1 opacity-80">
-              {levelTitle}
-            </div>
+          <div className="text-green-200 text-xl font-mono font-bold">
+            {levelTitle}
           </div>
         </div>
-        <div className="mt-3 pt-3 border-t border-green-800">
-          <p className="text-green-100 text-sm font-mono font-bold">
+
+        <div className="w-full border-t border-green-800/50 pt-4 mb-2">
+          <p className="text-white text-md font-mono font-medium leading-relaxed">
             {message}
           </p>
         </div>
-        <div className="mt-2 text-[10px] text-green-600 font-mono">
-          Press SHIFT+ENTER to continue...
+
+        <div className="mt-4 text-[10px] text-green-500/70 font-mono uppercase tracking-widest">
+          Press SHIFT+ENTER to continue
         </div>
       </div>
     </div>
