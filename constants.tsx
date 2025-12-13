@@ -377,7 +377,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'move-0',
-        description: "Filter (f) to find 'target_map.png'",
+        description: "Filter (f) to find 'target_map.png' in incoming",
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (!currentDir || !currentDir.children) return false;
@@ -512,7 +512,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'batch-select',
-        description: "Batch select uplink_v1.conf and uplink_v2.conf (Space)",
+        description: "Batch select uplink_v1.conf and uplink_v2.conf in protocols (Space)",
         check: (state) => {
            // We expect the user to be in 'protocols' and have both files selected
            const protocols = findNodeByName(state.fs, 'protocols');
@@ -705,7 +705,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1c',
-        description: "Copy 'uplink_v1.conf' to neural_net",
+        description: "Copy 'uplink_v1.conf' from datastore/active to neural_net",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           return !!net?.children?.find(c => c.name === 'uplink_v1.conf');
@@ -714,7 +714,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1d',
-        description: "Create 'vault' in datastore & copy key into it",
+        description: "Create 'vault' in datastore & copy access_key.pem into it",
         check: (state) => {
           const vault = findNodeByName(state.fs, 'vault');
           // Since we renamed it in L6, check for secure name OR original name (flexibility)
@@ -898,7 +898,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'rename-2',
-        description: "Forge identity: model.rs → kernel.so",
+        description: "Forge identity: model.rs → kernel.so (in systemd-core/weights)",
         check: (state) => {
           const sys = findNodeByName(state.fs, 'systemd-core');
           return !!sys?.children?.find(c => c.name === 'kernel.so') &&
@@ -933,7 +933,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-1b',
-        description: "Install daemon controller ('config' file)",
+        description: "Install daemon controller ('config' file in daemon directory)",
         check: (state) => {
           const daemon = findNodeByName(state.fs, 'daemon');
           return !!daemon?.children?.find(c => c.name === 'config');
@@ -942,7 +942,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-1c',
-        description: "Relocate vault to volatile storage (/tmp)",
+        description: "Relocate vault from datastore to volatile storage (/tmp)",
         check: (state) => {
           const tmp = findNodeByName(state.fs, 'tmp');
           const datastore = findNodeByName(state.fs, 'datastore');
@@ -1033,7 +1033,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-3b',
-        description: "Terminate 'mission_log.md'",
+        description: "Terminate 'mission_log.md' in datastore",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           return !docs?.children?.find(c => c.name === 'mission_log.md');
@@ -1066,7 +1066,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-4a',
-        description: "Deploy relay chain: sector_1/zone_A/node_X",
+        description: "Deploy relay chain in /home/guest: sector_1/zone_A/node_X",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const s1 = user?.children?.find(c => c.name === 'sector_1');
@@ -1077,7 +1077,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-4b',
-        description: "Deploy relay chain: grid_alpha/relay_9/proxy",
+        description: "Deploy relay chain in /home/guest: grid_alpha/relay_9/proxy",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const g1 = user?.children?.find(c => c.name === 'grid_alpha');
@@ -1103,7 +1103,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-5a',
-        description: "Wipe 'datastore', 'incoming', 'media'",
+        description: "Wipe 'datastore', 'incoming', 'media' from /home/guest",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const docs = user?.children?.find(c => c.name === 'datastore');
@@ -1115,7 +1115,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-5b',
-        description: "Wipe 'sector_1' and 'grid_alpha'",
+        description: "Wipe 'sector_1' and 'grid_alpha' from /home/guest",
         check: (state) => {
           const user = findNodeByName(state.fs, 'guest');
           const s1 = user?.children?.find(c => c.name === 'sector_1');
