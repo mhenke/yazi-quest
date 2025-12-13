@@ -695,7 +695,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1b',
-        description: "Generate 'weights/model.rs' inside neural_net",
+        description: "Generate 'weights/model.rs' inside workspace/neural_net",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           const weights = net?.children?.find(c => c.name === 'weights');
