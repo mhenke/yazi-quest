@@ -284,44 +284,134 @@ export const getRecursiveContent = (root: FileNode, startPathIds: string[]): { p
 
 export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
   const name = node.name;
-  
+
+  // ===========================================
   // 1. Core System Structure (Always Protected)
+  // ===========================================
   if (['root', 'home', 'guest', 'etc', 'tmp', 'workspace'].includes(name)) {
       return `System integrity protection: ${name}`;
   }
 
-  // 2. Episode Structural Directories (Deleted only in Ep 3 Finale - Level 15 / Index 14)
+  // ===========================================
+  // 2. Episode Structural Directories
+  // ===========================================
+  // datastore, incoming, media - Deleted only in L17 (index 16)
   if (['datastore', 'incoming', 'media'].includes(name)) {
-      if (levelIndex < 14) return `Sector protected by admin policy: ${name}`;
+      if (levelIndex < 16) return `Sector protected by admin policy: ${name}`;
   }
 
-  // 3. Specific Critical Files
+  // ===========================================
+  // 3. Level-Specific Asset Protection
+  // ===========================================
 
-  // access_key.pem
+  // --- access_key.pem ---
+  // Pre-exists, found in L6, copied in L8, moved in L11
   if (name === 'access_key.pem') {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
-      // Allowed cut/rename in:
-      // L6 (Index 5) - Secure Asset
-      // L9 (Index 8) - Neural Construction
-      // L11 (Index 10) - Live Migration
-      if ((action === 'cut' || action === 'rename') && ![5, 8, 10].includes(levelIndex)) {
+      // Allowed cut in: L8 (index 7) copy to vault, L11 (index 10) migration
+      if (action === 'cut' && ![7, 10].includes(levelIndex)) {
           return "Asset locked. Modification not authorized.";
       }
   }
 
-  // mission_log.md
+  // --- mission_log.md ---
+  // Pre-exists, moved in L11, deleted in L15
   if (name === 'mission_log.md') {
-      // Allowed delete in L13 (Trace Removal) - index 12
-      if (action === 'delete' && levelIndex !== 12) return "Mission log required for validation.";
-      // Allowed cut/rename in L9 and L10
-      if ((action === 'cut' || action === 'rename') && levelIndex !== 8 && levelIndex !== 9) return "Log file locked.";
+      // Allowed delete only in L15 (index 14)
+      if (action === 'delete' && levelIndex !== 14) return "Mission log required for validation.";
+      // Allowed cut in L11 (index 10) for migration
+      if (action === 'cut' && levelIndex !== 10) return "Log file locked.";
   }
 
-  // target_map.png
+  // --- target_map.png ---
+  // Pre-exists, moved in L3
   if (name === 'target_map.png') {
       if (action === 'delete') return "Intel target. Do not destroy.";
-      // Allowed cut in L3 (Asset Relocation) - index 2
-      if ((action === 'cut' || action === 'rename') && levelIndex !== 2) return "Map file anchored until capture sequence.";
+      // Allowed cut only in L3 (index 2)
+      if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
+  }
+
+  // --- protocols directory ---
+  // Created in L4 (index 3), used in L5 (index 4)
+  if (name === 'protocols') {
+      if (action === 'delete' && levelIndex < 5) return "Protocol directory required for uplink deployment.";
+      if (action === 'cut' && levelIndex < 5) return "Protocol directory anchored.";
+  }
+
+  // --- uplink config files ---
+  // Created in L4 (index 3), moved in L5 (index 4), uplink_v1 copied in L8 (index 7)
+  if (name === 'uplink_v1.conf') {
+      if (action === 'delete' && levelIndex < 8) return "Uplink configuration required for neural network.";
+      // Allowed cut in L5 (index 4) batch move, copy (yank) in L8 (index 7)
+      if (action === 'cut' && levelIndex !== 4) return "Uplink config locked.";
+  }
+  if (name === 'uplink_v2.conf') {
+      if (action === 'delete' && levelIndex < 5) return "Uplink configuration required for deployment.";
+      // Allowed cut only in L5 (index 4)
+      if (action === 'cut' && levelIndex !== 4) return "Uplink config locked.";
+  }
+
+  // --- active directory ---
+  // Created in L5 (index 4), used in L8 (index 7)
+  if (name === 'active') {
+      if (action === 'delete' && levelIndex < 8) return "Active deployment zone required.";
+      if (action === 'cut' && levelIndex < 8) return "Deployment zone anchored.";
+  }
+
+  // --- neural_net directory ---
+  // Created in L8 (index 7), renamed in L12 (index 11)
+  if (name === 'neural_net') {
+      if (action === 'delete' && levelIndex < 12) return "Neural network architecture required.";
+      if (action === 'cut' && levelIndex < 12) return "Neural network anchored.";
+      // Allowed rename only in L12 (index 11)
+      if (action === 'rename' && levelIndex !== 11) return "Neural network identity locked.";
+  }
+
+  // --- weights directory ---
+  // Created in L8 (index 7), used in L12 (index 11)
+  if (name === 'weights') {
+      if (action === 'delete' && levelIndex < 12) return "Weights directory required for camouflage.";
+      if (action === 'cut' && levelIndex < 12) return "Weights anchored.";
+  }
+
+  // --- model.rs file ---
+  // Created in L8 (index 7), renamed in L12 (index 11)
+  if (name === 'model.rs') {
+      if (action === 'delete' && levelIndex < 12) return "Model file required for camouflage.";
+      if (action === 'cut' && levelIndex < 12) return "Model file anchored.";
+      // Allowed rename only in L12 (index 11)
+      if (action === 'rename' && levelIndex !== 11) return "Model identity locked.";
+  }
+
+  // --- vault directory ---
+  // Created in L8 (index 7), moved in L13 (index 12)
+  if (name === 'vault') {
+      if (action === 'delete' && levelIndex < 13) return "Vault required for privilege escalation.";
+      // Allowed cut only in L13 (index 12)
+      if (action === 'cut' && levelIndex !== 12) return "Vault anchored until escalation.";
+  }
+
+  // --- backup_logs.zip archive ---
+  // Pre-exists, used in L10 (index 9)
+  if (name === 'backup_logs.zip') {
+      if (action === 'delete' && levelIndex < 10) return "Archive required for intelligence extraction.";
+      if (action === 'cut' && levelIndex < 10) return "Archive anchored.";
+  }
+
+  // --- daemon directory ---
+  // Created in L13 (index 12), copied in L14 (index 13)
+  if (name === 'daemon') {
+      // Allowed delete/cut after L14 (index 13) since it's cloned
+      if (action === 'delete' && levelIndex < 14) return "Daemon controller required for redundancy.";
+      // Allowed cut (for copy operation via yank) only in L14 (index 13)
+      if (action === 'cut' && levelIndex < 14) return "Daemon anchored until cloning.";
+  }
+
+  // --- sector_1 and grid_alpha ---
+  // Created in L16 (index 15), deleted in L17 (index 16)
+  if (name === 'sector_1' || name === 'grid_alpha') {
+      // Only deletable in L17 (index 16)
+      if (action === 'delete' && levelIndex !== 16) return "Relay infrastructure required for final phase.";
   }
 
   return null;
