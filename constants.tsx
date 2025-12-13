@@ -352,7 +352,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-1',
-        description: "Purge 'tracker_beacon.bin'",
+        description: "Purge 'tracker_beacon.bin' in incoming",
         check: (state) => {
           const incoming = findNodeByName(state.fs, 'incoming');
           const virus = incoming?.children?.find(c => c.name === 'tracker_beacon.bin');
@@ -407,7 +407,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'move-2',
-        description: "Deploy asset to 'media' (p)",
+        description: "Deploy asset to 'media' in /home/guest (p)",
         check: (state) => {
           const media = findNodeByName(state.fs, 'media');
           return !!media?.children?.find(c => c.name === 'target_map.png');
@@ -740,7 +740,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'stealth-1',
-        description: "Mark targets for elimination (Space on 2+ files)",
+        description: "Mark targets for elimination in /tmp (Space on 2+ files)",
         check: (state) => {
             const tmp = findNodeByName(state.fs, 'tmp');
             if (!tmp || !tmp.children) return false;
@@ -888,7 +888,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'rename-1',
-        description: "Forge identity: neural_net → systemd-core",
+        description: "Forge identity: neural_net → systemd-core (in workspace)",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'systemd-core') &&
@@ -997,7 +997,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'ep3-2c',
-        description: "Paste to spawn shadow copy (p)",
+        description: "Paste to spawn shadow copy in /etc (p)",
         check: (state) => {
           const etc = findNodeByName(state.fs, 'etc');
           const daemons = etc?.children?.filter(c =>
