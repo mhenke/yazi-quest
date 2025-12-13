@@ -705,7 +705,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1c',
-        description: "Copy 'uplink_v1.conf' from datastore/active to neural_net",
+        description: "Copy 'uplink_v1.conf' from datastore/active to workspace/neural_net",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           return !!net?.children?.find(c => c.name === 'uplink_v1.conf');
