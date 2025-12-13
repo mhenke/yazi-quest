@@ -1,6 +1,6 @@
 import React from 'react';
 import { Level, GameState } from '../types';
-import { CheckSquare, Square, HelpCircle, Lightbulb } from 'lucide-react';
+import { CheckSquare, Square, HelpCircle, Lightbulb, GitBranch } from 'lucide-react';
 
 interface MissionPaneProps {
   level: Level;
@@ -19,6 +19,11 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
         <div className="text-xs text-zinc-500 font-mono">
           Level {level.id} // {level.title}
         </div>
+        {level.coreSkill && (
+          <div className="mt-2 text-[10px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900/50">
+            SKILL: {level.coreSkill}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -31,20 +36,66 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
           </p>
         </div>
 
+        {level.environmentalClue && (
+          <div className="bg-yellow-950/20 border border-yellow-900/30 rounded p-3">
+            <h3 className="text-[10px] uppercase font-bold text-yellow-600 mb-1 tracking-widest">
+              Intel
+            </h3>
+            <p className="text-[10px] font-mono text-yellow-500/80 leading-relaxed">
+              {level.environmentalClue}
+            </p>
+          </div>
+        )}
+
+        {(level.buildsOn?.length || level.leadsTo?.length) && (
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded p-3">
+            <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest flex items-center gap-1">
+              <GitBranch size={10} />
+              Skill Tree
+            </h3>
+            <div className="space-y-1 text-[10px] font-mono">
+              {level.buildsOn && level.buildsOn.length > 0 && (
+                <div className="text-zinc-500">
+                  <span className="text-zinc-600">REQUIRES:</span>{' '}
+                  {level.buildsOn.map(id => `L${id}`).join(', ')}
+                </div>
+              )}
+              {level.leadsTo && level.leadsTo.length > 0 && (
+                <div className="text-zinc-500">
+                  <span className="text-zinc-600">UNLOCKS:</span>{' '}
+                  {level.leadsTo.map(id => `L${id}`).join(', ')}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 className="text-[10px] uppercase font-bold text-zinc-600 mb-2 tracking-widest">
             Objectives
           </h3>
           <div className="space-y-3">
             {level.tasks.map((task) => (
-              <div 
-                key={task.id} 
-                className={`flex gap-3 items-start transition-opacity duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
+              <div
+                key={task.id}
+                className={`flex gap-3 items-start transition-all duration-500 rounded px-2 py-1 -mx-2 ${
+                  task.completed
+                    ? 'opacity-60 bg-green-950/20 border-l-2 border-green-500'
+                    : 'opacity-100 border-l-2 border-transparent'
+                }`}
               >
-                <div className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}>
+                <div className={`mt-0.5 shrink-0 transition-all duration-300 ${
+                  task.completed
+                    ? 'text-green-500 scale-110'
+                    : 'text-zinc-600'
+                }`}>
                   {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
                 </div>
-                <div className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-600' : 'text-zinc-300'}`}>
+                <div className={`text-xs font-mono leading-tight transition-all duration-300 ${
+                  task.completed
+                    ? 'line-through text-green-600/70'
+                    : 'text-zinc-300'
+                }`}>
                   {task.description}
                 </div>
               </div>
