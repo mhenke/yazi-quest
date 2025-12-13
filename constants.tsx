@@ -159,8 +159,15 @@ export const INITIAL_FS: FileNode = {
                   ] 
                 },
 
-                // The Target
-                { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' },
+                // The Target - Now hidden inside a subfolder to necessitate recursive search
+                { 
+                  id: id(), 
+                  name: 'credentials', 
+                  type: 'dir', 
+                  children: [
+                      { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' }
+                  ]
+                },
                 
                 // Other files (Alphabetically after access_key)
                 { id: id(), name: 'account_settings.json', type: 'file', content: '{\n  "user": "guest",\n  "theme": "dark_mode",\n  "notifications": true,\n  "auto_save": false\n}' },
@@ -534,25 +541,39 @@ export const LEVELS: Level[] = [
     id: 6,
     episodeId: 2,
     title: "Recursive Search",
-    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans the current directory and all nested children instantly. Initiate the protocol, locate the asset, and teleport to it.",
+    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans from the current directory downwards. Initiate the protocol, locate the asset, and teleport to it.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Press 'z' to open recursive search. Type 'pem'. Use Arrow keys to select 'access_key.pem' and Enter to jump.",
     coreSkill: "Recursive Search (z)",
-    environmentalClue: "SEARCH SCOPE: ./... | TARGET: .pem",
+    environmentalClue: "SEARCH SCOPE: Current Dir (./) | TARGET: .pem",
     successMessage: "ASSET LOCATED. Jump complete.",
     buildsOn: [1, 2],
     leadsTo: [10],
     tasks: [
       {
         id: 'search-1',
-        description: "Initialize recursive search protocol (z)",
-        check: (state) => state.mode === 'fzf-current',
+        description: "Initialize recursive search (z) from current dir",
+        check: (state) => state.mode === 'fzf-current' || (state.mode === 'normal' && getNodeByPath(state.fs, state.currentPath)?.children?.some(c => c.name === 'access_key.pem')),
         completed: false
       },
       {
         id: 'search-2',
         description: "Query for cryptographic material ('pem')",
-        check: (state) => state.mode === 'fzf-current' && state.inputBuffer.includes('pem'),
+        check: (state) => {
+            // Check if typing query OR if target already found (fallback if user types fast)
+            const isTyping = state.mode === 'fzf-current' && state.inputBuffer.includes('pem');
+            
+            // If the user has successfully jumped to the file (Task 3 condition), this should also be true
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            const activeFilter = currentDir ? (state.filters[currentDir.id] || '') : '';
+            const visible = currentDir?.children ? (activeFilter 
+              ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+              : currentDir.children) : [];
+            const item = visible[state.cursorIndex];
+            const isFound = item && item.name === 'access_key.pem';
+
+            return isTyping || isFound;
+        },
         completed: false
       },
       {
@@ -794,12 +815,10 @@ export const LEVELS: Level[] = [
     leadsTo: [13],
     timeLimit: 120,
     onEnter: (fs) => {
-        const datastore = findNodeByName(fs, 'datastore');
-        if (datastore && datastore.children) {
-             const key = datastore.children.find(c => c.name === 'access_key.pem');
-             if (key) {
-                 key.name = 'access_key_secure.pem';
-             }
+        // Recursive search for the key because it might be in 'credentials' or root of datastore depending on prior actions
+        const key = findNodeByName(fs, 'access_key.pem');
+        if (key) {
+             key.name = 'access_key_secure.pem';
         }
         return fs;
     },
@@ -820,10 +839,16 @@ export const LEVELS: Level[] = [
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
-          const inDocs = docs?.children?.some(c => c.name.includes('access_key')) &&
-                         docs?.children?.some(c => c.name === 'mission_log.md');
+          
+          // Check if key is in datastore OR credentials subfolder
+          const creds = docs?.children?.find(c => c.name === 'credentials');
+          const inCreds = creds?.children?.some(c => c.name.includes('access_key'));
+          const inDocs = docs?.children?.some(c => c.name.includes('access_key'));
+          
+          const logInDocs = docs?.children?.some(c => c.name === 'mission_log.md');
+
           const notInWs = !ws?.children?.some(c => c.name.includes('access_key') || c.name === 'mission_log.md');
-          return inDocs && notInWs;
+          return (inDocs || inCreds) && logInDocs && notInWs;
         },
         completed: false
       }
