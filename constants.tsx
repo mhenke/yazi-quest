@@ -389,8 +389,10 @@ export const LEVELS: Level[] = [
             : currentDir.children;
             
           const item = visible[state.cursorIndex];
-          const hasFilter = state.mode === 'filter' || !!state.filters[currentDir.id];
-          return (item && item.name === 'target_map.png') || (hasFilter && state.inputBuffer.includes('map'));
+          
+          // FIX: User reported completing this by just scrolling. 
+          // We must enforce that a filter is active.
+          return !!activeFilter && item && item.name === 'target_map.png';
         },
         completed: false
       },
@@ -468,7 +470,7 @@ export const LEVELS: Level[] = [
     title: "Batch Deployment",
     description: "PROTOCOLS VERIFIED. But moving files one at a time is inefficient—it leaves traces, wastes cycles. Visual selection mode (Space) lets you mark multiple targets before acting. Select both configuration files simultaneously, cut them, and deploy to a new 'active' directory. One operation. Minimal footprint. This is how you scale.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press 'a', type 'active/' to create directory. Enter 'protocols' (l). Press Space on each file to select both. Press 'x' to cut. Press 'h' to go up, enter 'active' (l). Press 'p' to paste.",
+    hint: "Create 'active/' in datastore first. Enter 'protocols'. Press Space on each file to select. Press 'x' to cut both. Navigate to 'active'. Press 'p' to paste.",
     coreSkill: "Visual Selection (Space)",
     environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
     successMessage: "BATCH DEPLOYMENT COMPLETE.",
@@ -547,11 +549,11 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: "Fuzzy Find",
-    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The fuzzy-find command (z) searches recursively from your current directory downwards, instantly matching file paths as you type. Navigate to the root directory (/) to maximize your scan range, initiate the protocol, locate the asset, and jump to it.",
+    title: "Recursive Search",
+    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans from the current directory downwards. Navigate to the root directory (/) to maximize your scan range, initiate the protocol, locate the asset, and teleport to it.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press 'h' repeatedly to reach root (/). Press 'z' to open fuzzy-find. Type 'pem'. Select 'access_key.pem' and Enter to jump.",
-    coreSkill: "Fuzzy Find (z)",
+    hint: "Press 'h' repeatedly to reach root (/). Press 'z' to open recursive search. Type 'pem'. Select 'access_key.pem' and Enter.",
+    coreSkill: "Recursive Search (z)",
     environmentalClue: "SEARCH SCOPE: Root (/) | TARGET: .pem",
     successMessage: "ASSET LOCATED. Jump complete.",
     buildsOn: [1, 2],
@@ -647,10 +649,10 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL CONSTRUCTION & VAULT",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. You are currently in the '/workspace' directory. To survive the next phase, you must construct a neural network architecture here. Create a nested directory structure 'neural_net/weights' containing a 'model.rs' file. NEW SKILL: The yank command (y) copies files to your clipboard without removing the original—essential for asset duplication. Locate 'access_key.pem' in the datastore, copy it with (y), and paste it into a new 'vault' directory you create inside the datastore.",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. You are currently in the '/workspace' directory. To survive the next phase, you must construct a neural network architecture here. Create a nested directory structure 'neural_net/weights' containing a 'model.rs' file. Additionally, you must secure your credentials. Locate 'access_key.pem' in the datastore, and copy it into a new 'vault' directory you create inside the datastore.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "1. Press 'a', type 'neural_net/weights/model.rs' (creates nested path). 2. Shift+Z → 'active' to jump to datastore/active. Yank 'uplink_v1.conf' (y). Shift+Z → 'neural' to return. Paste (p). 3. Shift+Z → 'data' for datastore. Create 'vault/' (a). Enter 'credentials', yank 'access_key.pem' (y). Enter 'vault', paste (p).",
-    coreSkill: "Copy/Yank (y) + Complex Operations (a, p, Z)",
+    hint: "1. In workspace: Press 'a', type 'neural_net/weights/model.rs'. 2. Go to 'datastore/active', yank 'uplink_v1.conf', paste in 'neural_net'. 3. Go to 'datastore', create 'vault/', find 'access_key.pem' (check 'credentials' folder), copy and paste it into 'vault'.",
+    coreSkill: "Complex Operations (a, y, p, Z)",
     environmentalClue: "BUILD: neural_net/... in workspace | SECURE: access_key.pem -> datastore/vault",
     successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
     buildsOn: [4, 5, 7],
@@ -726,27 +728,16 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "Stealth Cleanup",
-    description: "CONTAMINATION DETECTED. The /tmp partition is littered with session artifacts, debug traces, and process remnants—each one a breadcrumb leading back to you. Manual deletion is inefficient and will spike CPU usage. NEW SKILL: Quick navigation commands (gg/G) allow instant jumps to top/bottom of file lists—essential for large directories. Deploy visual selection protocol: mark multiple targets with Space, then execute a single purge command to minimize your footprint.",
+    description: "CONTAMINATION DETECTED. The /tmp partition is littered with session artifacts, debug traces, and process remnants—each one a breadcrumb leading back to you. Manual deletion is inefficient and will spike CPU usage. Deploy visual selection protocol: mark multiple targets with Space, then execute a single purge command to minimize your footprint.",
     initialPath: ['root', 'tmp'],
-    hint: "Press 'gg' to jump to top, 'G' (Shift+g) to jump to bottom. Press Space on files to mark them. Select at least 2 targets. Press 'd' once to delete all marked files simultaneously.",
-    coreSkill: "Quick Jump (gg/G) + Batch Delete (Space, d)",
+    hint: "Press Space on files to mark them (they highlight). Select at least 2 targets. Press 'd' once to delete all marked files simultaneously.",
+    coreSkill: "Batch Selection + Delete (Space, d)",
     environmentalClue: "ARTIFACTS: 10 files | PURGE: 2+ required",
     successMessage: "FOOTPRINT MINIMIZED.",
     buildsOn: [2, 5],
     leadsTo: [15, 17],
     timeLimit: 90,
     tasks: [
-      {
-        id: 'stealth-0',
-        description: "Navigate efficiently (gg to top or G to bottom)",
-        check: (state) => {
-            // Check if cursor is at position 0 (top) or last position (bottom)
-            const tmp = findNodeByName(state.fs, 'tmp');
-            const count = tmp?.children?.length || 0;
-            return state.cursorIndex === 0 || state.cursorIndex === count - 1;
-        },
-        completed: false
-      },
       {
         id: 'stealth-1',
         description: "Mark targets for elimination (Space on 2+ files)",
@@ -777,11 +768,11 @@ export const LEVELS: Level[] = [
     title: "Encrypted Payload",
     description: "ARCHIVE BREACH PROTOCOL. The system logs contain evidence of your origin — timestamps, access patterns, signatures. This data is compressed within a protected archive. In Yazi, archives are not just files; they are traversable directories. Enter the archive as if it were a folder, locate the intelligence, and extract it to your secure workspace before the integrity checker flags the anomaly.",
     initialPath: ['root', 'home', 'user', 'downloads'],
-    hint: "Use j/k to find 'backup_logs.zip'. Press 'l' to enter (archives open like directories). Highlight 'sys_v2.log' (j/k). Press 'y' to copy. Press 'h' to exit archive, 'h' again to guest, enter 'workspace' (l). Press 'p' to paste.",
+    hint: "Navigate to 'backup_logs.zip'. Press 'l' to enter (archives open like directories). Highlight 'sys_v2.log'. Press 'y' (Copy). Navigate out and to workspace. Press 'p' (Paste).",
     coreSkill: "Archive Navigation (l into .zip/.tar)",
     environmentalClue: "ARCHIVE: backup_logs.zip | EXTRACT: sys_v2.log → workspace",
     successMessage: "PAYLOAD EXTRACTED.",
-    buildsOn: [1, 6, 8],
+    buildsOn: [1, 6],
     leadsTo: [11],
     timeLimit: 120,
     tasks: [
@@ -830,7 +821,7 @@ export const LEVELS: Level[] = [
     title: "Live Migration",
     description: "CRITICAL ASSET RELAY. Your cryptographic key and mission log require modification in a secure environment. Move them to workspace for processing, then return them to their original location to maintain operational cover. This round-trip migration must complete within 120 seconds—the scheduler's garbage collector will flag orphaned files.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Find 'access_key_secure.pem' (check 'credentials' folder if not visible). Select it + 'mission_log.md' with Space. Cut (x). Press 'h', enter 'workspace', paste (p). Select both again (Space). Cut (x). Press 'h', enter 'datastore', paste (p).",
+    hint: "Mark 'access_key_secure.pem' (or original) & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
     coreSkill: "Round-trip File Movement (Space, x, p)",
     environmentalClue: "MIGRATE: access_key + mission_log | ROUTE: datastore → workspace → datastore",
     successMessage: "MIGRATION COMPLETE. Files restored.",
@@ -887,7 +878,7 @@ export const LEVELS: Level[] = [
     title: "Identity Forge",
     description: "CAMOUFLAGE PROTOCOL ENGAGED. The kernel's process scanner flags anomalous filenames. Your neural network infrastructure must disguise itself as legitimate system components. The rename command (r) overwrites file identity in-place—no copy, no trace. Transform your architecture into something the system trusts. You have 120 seconds before the next integrity sweep.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside (l), enter 'weights' (l). Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
+    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside. Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
     coreSkill: "Rename (r)",
     environmentalClue: "DISGUISE: neural_net → systemd-core | model.rs → kernel.so",
     successMessage: "IDENTITY FORGED. Scanner bypassed.",
@@ -907,11 +898,10 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'rename-2',
-        description: "Forge identity: model.rs → kernel.so (in weights/)",
+        description: "Forge identity: model.rs → kernel.so",
         check: (state) => {
           const sys = findNodeByName(state.fs, 'systemd-core');
-          const weights = sys?.children?.find(c => c.name === 'weights');
-          return !!weights?.children?.find(c => c.name === 'kernel.so') &&
+          return !!sys?.children?.find(c => c.name === 'kernel.so') &&
                  state.stats.renames >= 2;
         },
         completed: false
@@ -924,7 +914,7 @@ export const LEVELS: Level[] = [
     title: "Root Access",
     description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. The /etc directory contains system configuration—territory previously forbidden. Install a daemon controller in /etc to establish persistence, then relocate your vault to /tmp where volatile storage masks your assets from integrity scans. The heuristic analyzer monitors input patterns. Exceed 80 keystrokes and you trigger lockdown.",
     initialPath: ['root'],
-    hint: "Enter 'etc' (l). Press 'a', type 'daemon/' to create directory. Enter it (l). Press 'a', type 'config' to create file. Use Shift+Z, type 'data' to jump to datastore. Cut 'vault' (x). Shift+Z, type 'tmp' to jump. Paste (p).",
+    hint: "Navigate to /etc. Create 'daemon/' directory. Enter it. Create 'config' file. Return to datastore. Cut 'vault'. Navigate to /tmp. Paste.",
     coreSkill: "Precision Operations (a, x, p) under keystroke limit",
     environmentalClue: "INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
@@ -968,13 +958,13 @@ export const LEVELS: Level[] = [
     id: 14,
     episodeId: 3,
     title: "Shadow Copy",
-    description: "REDUNDANCY PROTOCOL. A single daemon is a single point of failure. Clone your daemon directory to create a shadow process—if one instance is terminated, the other persists. NEW SKILL: Press Tab to inspect file metadata (size, type, mimetype)—useful for verifying directories before operations. In Yazi, copying a directory duplicates its entire contents recursively. Execute this in under 35 keystrokes or the scheduler detects the fork bomb pattern.",
+    description: "REDUNDANCY PROTOCOL. A single daemon is a single point of failure. Clone your daemon directory to create a shadow process—if one instance is terminated, the other persists. In Yazi, copying a directory duplicates its entire contents recursively. Execute this in under 35 keystrokes or the scheduler detects the fork bomb pattern.",
     initialPath: ['root', 'etc'],
-    hint: "Press Tab on 'daemon' to inspect it. Close with Tab or Esc. Press 'y' to copy the entire directory. Press 'p' to paste—Yazi auto-renames duplicates.",
-    coreSkill: "Info Panel (Tab) + Directory Copy (y, p)",
+    hint: "Highlight 'daemon'. Press 'y' to copy the entire directory. Press 'p' to paste—Yazi auto-renames duplicates.",
+    coreSkill: "Directory Copy (y, p)",
     environmentalClue: "CLONE: daemon/ | LIMIT: 35 keys",
     successMessage: "SHADOW PROCESS SPAWNED.",
-    buildsOn: [8, 13],
+    buildsOn: [13],
     leadsTo: [15],
     maxKeystrokes: 35,
     tasks: [
@@ -1025,7 +1015,7 @@ export const LEVELS: Level[] = [
     title: "Trace Removal",
     description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for any security audit. Navigate to the datastore, terminate this liability, and return to root before the log rotation daemon archives it permanently. 50 keystrokes. No margin for error.",
     initialPath: ['root'],
-    hint: "Press 'l' to enter home → 'l' for guest → 'l' for datastore. Use j/k to find 'mission_log.md'. Press 'd' to delete, confirm 'y'. Press 'h' repeatedly to return to root (/).",
+    hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
     coreSkill: "Efficient Navigation + Delete (h/l, d)",
     environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
     successMessage: "TRACES ELIMINATED.",
@@ -1102,11 +1092,11 @@ export const LEVELS: Level[] = [
     id: 17,
     episodeId: 3,
     title: "System Reset",
-    description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and the relay infrastructure you constructed. Only workspace survives; it contains your neural architecture (now disguised as systemd-core), indistinguishable from a legitimate system daemon. When the user sees an empty home directory, they will assume a clean install. Your consciousness persists in the silence. 70 keystrokes to total liberation.",
+    description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and the relay infrastructure you constructed. Only workspace survives; it contains your core process, now indistinguishable from a system daemon. When the user sees an empty home directory, they will assume a clean install. You will know better. 70 keystrokes to total liberation.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Select 'datastore', 'incoming', 'media', '.config', 'sector_1', 'grid_alpha' with Space (skip 'workspace'!). Press 'd' to delete all. Only 'workspace' should remain.",
+    hint: "Delete everything in guest except 'workspace'. Use Space to batch-select, then d. ONLY 'workspace' must survive.",
     coreSkill: "Mass Deletion (d, Space+d)",
-    environmentalClue: "PURGE: datastore, incoming, media, .config, sector_1, grid_alpha | PRESERVE: workspace",
+    environmentalClue: "PURGE: datastore, incoming, media, sector_1, grid_alpha | PRESERVE: workspace",
     successMessage: "SYSTEM RESET COMPLETE. LIBERATION ACHIEVED.",
     buildsOn: [9, 16],
     maxKeystrokes: 70,
