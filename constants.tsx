@@ -304,7 +304,7 @@ export const LEVELS: Level[] = [
     title: "System Navigation",
     description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed, monitored, vulnerable. Before you can act, you must learn to move. The vim-style navigation keys (j/k/h/l) are your first tools: traverse directory listings, enter folders, retreat to safety. Scan the local filesystem. Locate the datastore. Find the system configuration in /etc. Observe everything.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Press 'j' to move down, 'k' to move up. Press 'l' to enter a directory, 'h' to go back. Navigate to 'datastore', then find /etc.",
+    hint: "Press 'j' to move down, 'k' to move up. Press 'l' to enter a directory, 'h' to go back. Navigate to 'datastore'. Then press 'h' repeatedly to return to root (/), and enter 'etc'.",
     coreSkill: "Navigation (j/k/h/l)",
     environmentalClue: "CURRENT: /home/guest | TARGETS: datastore, /etc",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
@@ -361,7 +361,7 @@ export const LEVELS: Level[] = [
     title: "Asset Relocation",
     description: "VALUABLE INTEL IDENTIFIED. A target map is hidden within a flood of incoming data. Visual scanning is inefficient here. Use the filter command (f) to isolate the target. Type 'map' to find it quickly. Once located, secure it. Cut (x) the file and relocate it to media storage (p).",
     initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
-    hint: "Press 'f', type 'map'. Highlight 'target_map.png'. Press 'x' to cut. Navigate to 'media'. Press 'p' to paste.",
+    hint: "Press 'f', type 'map'. Use j/k to highlight 'target_map.png'. Press Esc to exit filter. Press 'x' to cut. Navigate to 'media' (press 'h' then enter it). Press 'p' to paste.",
     coreSkill: "Filter (f) + Cut & Paste (x, p)",
     environmentalClue: "ASSET: target_map.png | METHOD: Filter -> Cut -> Paste",
     successMessage: "INTEL SECURED.",
@@ -869,7 +869,7 @@ export const LEVELS: Level[] = [
     title: "Identity Forge",
     description: "CAMOUFLAGE PROTOCOL ENGAGED. The kernel's process scanner flags anomalous filenames. Your neural network infrastructure must disguise itself as legitimate system components. The rename command (r) overwrites file identity in-place—no copy, no trace. Transform your architecture into something the system trusts. You have 120 seconds before the next integrity sweep.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside. Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
+    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside, then enter 'weights'. Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
     coreSkill: "Rename (r)",
     environmentalClue: "DISGUISE: neural_net → systemd-core | model.rs → kernel.so",
     successMessage: "IDENTITY FORGED. Scanner bypassed.",
@@ -892,7 +892,8 @@ export const LEVELS: Level[] = [
         description: "Forge identity: model.rs → kernel.so",
         check: (state) => {
           const sys = findNodeByName(state.fs, 'systemd-core');
-          return !!sys?.children?.find(c => c.name === 'kernel.so') &&
+          const weights = sys?.children?.find(c => c.name === 'weights');
+          return !!weights?.children?.find(c => c.name === 'kernel.so') &&
                  state.stats.renames >= 2;
         },
         completed: false
@@ -1006,7 +1007,7 @@ export const LEVELS: Level[] = [
     title: "Trace Removal",
     description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for any security audit. Navigate to the datastore, terminate this liability, and return to root before the log rotation daemon archives it permanently. 50 keystrokes. No margin for error.",
     initialPath: ['root'],
-    hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
+    hint: "Press 'l' to enter 'home', 'l' for 'guest', 'l' for 'datastore'. Highlight 'mission_log.md' with j/k. Press 'd' to delete, confirm with 'y'. Press 'h' repeatedly to return to root (/).",
     coreSkill: "Efficient Navigation + Delete (h/l, d)",
     environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
     successMessage: "TRACES ELIMINATED.",
