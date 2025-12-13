@@ -51,7 +51,7 @@ def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
 if __name__ == "__main__":
     current_directory = os.getcwd()
     output_zip = "yazi-quest-ai-studio.zip"
-    
+
     # Define patterns to exclude
     # These are relative to the source_dir
     exclude = [
@@ -59,6 +59,13 @@ if __name__ == "__main__":
         'node_modules/', # Exclude the node_modules directory
         'package-lock.json', # Exclude package-lock.json file
         'ai_debug_info.txt', # Exclude debug logs
+        output_zip, # Exclude the output zip file itself
+        'fzf-0.57.0-linux_amd64.tar.gz', # Exclude downloaded archives
+        'fzf-0.57.0-linux_amd64.tar.gz.1',
+        'index.css', # Exclude generated CSS
+        'postcss.config.js', # Exclude config files
+        'tailwind.config.js',
+        'public/', # Exclude public directory
     ]
 
     print(f"Creating optimized zip for AI Studio from: {current_directory}")
