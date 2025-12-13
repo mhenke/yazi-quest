@@ -77,14 +77,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
 
   return (
     <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
-      {/* 1. Mode Block */}
-      <div className={`${modeBg} text-black font-bold px-3 flex items-center`}>
-        {modeText}
+      {/* 1. Mode Block (Pill Style) */}
+      <div className="flex items-center px-2 bg-zinc-900">
+        <div className={`${modeBg} text-black font-bold px-2 rounded h-4 flex items-center justify-center text-[10px] min-w-[36px]`}>
+          {modeText}
+        </div>
       </div>
       
-      {/* 2. Path Triangle (CSS Hack for shape or just color block) */}
-      <div className={`${modeBg} w-0 h-0 border-t-[24px] border-t-transparent border-l-[10px] border-l-zinc-900 -ml-[1px]`}></div>
-
       {/* 3. File Info / Name */}
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
         <span className="truncate mr-4 font-bold text-white">

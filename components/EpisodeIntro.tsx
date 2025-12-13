@@ -63,7 +63,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   }, [isTyping, onComplete, episode.lore]);
 
   return (
-    <div className="absolute inset-0 z-[60] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
+    <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}>

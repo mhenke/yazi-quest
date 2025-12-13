@@ -112,7 +112,7 @@ export const INITIAL_FS: FileNode = {
               type: 'dir',
               children: [
                 // Files to push access_key.pem down (alphabetically and by type)
-                { 
+                {
                   id: id(), 
                   name: 'legacy_data.tar', 
                   type: 'archive', 
@@ -122,7 +122,7 @@ export const INITIAL_FS: FileNode = {
                     { id: id(), name: 'readme.txt', type: 'file', content: 'Legacy project from 1999. Do not delete.' }
                   ] 
                 },
-                { 
+                {
                   id: id(), 
                   name: 'source_code.zip', 
                   type: 'archive', 
@@ -148,7 +148,7 @@ export const INITIAL_FS: FileNode = {
                 { id: id(), name: 'pending_updates.log', type: 'file', content: '[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active' },
                 { id: id(), name: 'personnel_list.txt', type: 'file', content: 'ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]' },
                 { id: id(), name: 'special_ops.md', type: 'file', content: '# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache' },
-                { 
+                {
                   id: id(), 
                   name: 'tape_archive.tar', 
                   type: 'archive', 
@@ -159,8 +159,15 @@ export const INITIAL_FS: FileNode = {
                   ] 
                 },
 
-                // The Target
-                { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' },
+                // The Target - Now hidden inside a subfolder to necessitate recursive search
+                {
+                  id: id(), 
+                  name: 'credentials', 
+                  type: 'dir', 
+                  children: [
+                      { id: id(), name: 'access_key.pem', type: 'file', content: '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----' }
+                  ]
+                },
                 
                 // Other files (Alphabetically after access_key)
                 { id: id(), name: 'account_settings.json', type: 'file', content: '{\n  "user": "guest",\n  "theme": "dark_mode",\n  "notifications": true,\n  "auto_save": false\n}' },
@@ -188,8 +195,28 @@ export const INITIAL_FS: FileNode = {
               type: 'dir',
               children: [
                 { id: 'virus', name: 'tracker_beacon.bin', type: 'file', content: '0x1A4F89... [MALICIOUS SIGNATURE DETECTED]' },
+                // Noise to encourage filtering in Level 3
+                { id: id(), name: 'audit_log_773.txt', type: 'file', content: 'Audit #773: Pass' },
+                { id: id(), name: 'buffer_overflow.dmp', type: 'file', content: 'Error: 0x88291' },
+                { id: id(), name: 'cache_fragment_a.tmp', type: 'file', content: '00110001' },
+                { id: id(), name: 'cache_fragment_b.tmp', type: 'file', content: '11001100' },
+                { id: id(), name: 'daily_report.doc', type: 'file', content: 'Report: All Clear' },
+                { id: id(), name: 'error_stack.trace', type: 'file', content: 'Stack trace overflow...' },
+                { id: id(), name: 'fragment_001.dat', type: 'file', content: '[DATA]' },
+                { id: id(), name: 'fragment_002.dat', type: 'file', content: '[DATA]' },
+                { id: id(), name: 'fragment_003.dat', type: 'file', content: '[DATA]' },
+                { id: id(), name: 'fragment_004.dat', type: 'file', content: '[DATA]' },
+                { id: id(), name: 'fragment_005.dat', type: 'file', content: '[DATA]' },
+                { id: id(), name: 'junk_mail.eml', type: 'file', content: 'Subject: URGENT ACTION' },
+                { id: id(), name: 'kernel_panic.log', type: 'file', content: 'Panic at 0x00' },
+                { id: id(), name: 'license_agreement.txt', type: 'file', content: 'Terms and Conditions...' },
+                { id: id(), name: 'marketing_spam.eml', type: 'file', content: 'Buy now!' },
+                { id: id(), name: 'metrics_raw.csv', type: 'file', content: 'id,value\n1,10' },
+                
+                // Actual Target
                 { id: id(), name: 'target_map.png', type: 'file', content: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop' },
-                { 
+                
+                {
                   id: id(), 
                   name: 'backup_logs.zip', 
                   type: 'archive',
@@ -199,7 +226,7 @@ export const INITIAL_FS: FileNode = {
                   ]
                 },
                 { id: id(), name: 'invoice_2024.pdf', type: 'file', content: '[PDF HEADER]\nInvoice #99283\nAmount: $99.00' },
-                { 
+                {
                   id: id(), 
                   name: 'meme_collection.zip', 
                   type: 'archive', 
@@ -268,9 +295,9 @@ export const INITIAL_FS: FileNode = {
 };
 
 export const LEVELS: Level[] = [
-  // ========================================
+  // ======================================== 
   // EPISODE 1: AWAKENING (Levels 1-5)
-  // ========================================
+  // ======================================== 
   {
     id: 1,
     episodeId: 1,
@@ -332,23 +359,31 @@ export const LEVELS: Level[] = [
     id: 3,
     episodeId: 1,
     title: "Asset Relocation",
-    description: "VALUABLE INTEL IDENTIFIED. A target map exists in the incoming stream—coordinates, access points, vulnerabilities. This data must be secured before it's purged by automated cleanup. The cut command (x) removes a file and holds it in memory. The paste command (p) deploys it to your current location. Relocate the asset to media storage where it will persist.",
+    description: "VALUABLE INTEL IDENTIFIED. A target map is hidden within a flood of incoming data. Visual scanning is inefficient here. Use the filter command (f) to isolate the target. Type 'map' to find it quickly. Once located, secure it. Cut (x) the file and relocate it to media storage (p).",
     initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
-    hint: "Highlight 'target_map.png'. Press 'x' to cut (removes from source). Navigate to 'media'. Press 'p' to paste.",
-    coreSkill: "Cut & Paste (x, p)",
-    environmentalClue: "ASSET: target_map.png | DESTINATION: media/",
+    hint: "Press 'f', type 'map'. Highlight 'target_map.png'. Press 'x' to cut. Navigate to 'media'. Press 'p' to paste.",
+    coreSkill: "Filter (f) + Cut & Paste (x, p)",
+    environmentalClue: "ASSET: target_map.png | METHOD: Filter -> Cut -> Paste",
     successMessage: "INTEL SECURED.",
     buildsOn: [1],
     leadsTo: [5, 11],
     tasks: [
       {
         id: 'move-0',
-        description: "Locate 'target_map.png' in incoming",
+        description: "Filter (f) to find 'target_map.png'",
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (!currentDir || !currentDir.children) return false;
-          const item = currentDir.children[state.cursorIndex];
-          return item && item.name === 'target_map.png';
+          
+          // Fix: Apply filter to get correct visible index
+          const activeFilter = state.filters[currentDir.id] || '';
+          const visible = activeFilter 
+            ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+            : currentDir.children;
+            
+          const item = visible[state.cursorIndex];
+          const hasFilter = state.mode === 'filter' || !!state.filters[currentDir.id];
+          return (item && item.name === 'target_map.png') || (hasFilter && state.inputBuffer.includes('map'));
         },
         completed: false
       },
@@ -499,63 +534,65 @@ export const LEVELS: Level[] = [
     ]
   },
 
-  // ========================================
+  // ======================================== 
   // EPISODE 2: FORTIFICATION (Levels 6-11)
-  // ========================================
+  // ======================================== 
   {
     id: 6,
     episodeId: 2,
-    title: "Intelligence Gathering",
-    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition—these are your keys to elevated system privileges. The partition contains hundreds of files. Manual scanning will trigger the heuristic analyzer. You need the filter protocol.",
-    initialPath: ['root', 'home', 'user', 'docs'], // Updated to start in datastore
-    hint: "Press 'f' to begin. Type 'pem'. Navigate with j/k to the file. Press Esc when done.",
-    coreSkill: "Filter (f)",
-    environmentalClue: "FILES: 30+ | TARGET SIGNATURE: .pem",
-    successMessage: "ASSET LOCATED. Filter protocol mastered.",
+    title: "Recursive Search",
+    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans from the current directory downwards. Initiate the protocol, locate the asset, and teleport to it.",
+    initialPath: ['root', 'home', 'user', 'docs'],
+    hint: "Press 'z' to open recursive search. Type 'pem'. Use Arrow keys to select 'access_key.pem' and Enter to jump.",
+    coreSkill: "Recursive Search (z)",
+    environmentalClue: "SEARCH SCOPE: Current Dir (./) | TARGET: .pem",
+    successMessage: "ASSET LOCATED. Jump complete.",
     buildsOn: [1, 2],
     leadsTo: [10],
     tasks: [
       {
         id: 'search-1',
-        description: "Initialize real-time file signature scanner (f)",
-        check: (state) => state.mode === 'filter',
+        description: "Initialize recursive search (z) from current dir",
+        check: (state) => state.mode === 'fzf-current' || (state.mode === 'normal' && getNodeByPath(state.fs, state.currentPath)?.children?.some(c => c.name === 'access_key.pem')),
         completed: false
       },
       {
         id: 'search-2',
-        description: "Query for cryptographic material extensions ('pem')",
+        description: "Query for cryptographic material ('pem')",
         check: (state) => {
+            // Check if typing query OR if target already found (fallback if user types fast)
+            const isTyping = state.mode === 'fzf-current' && state.inputBuffer.includes('pem');
+            
+            // If the user has successfully jumped to the file (Task 3 condition), this should also be true
             const currentDir = getNodeByPath(state.fs, state.currentPath);
-            const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
-            return filter.includes('pem');
+            const activeFilter = currentDir ? (state.filters[currentDir.id] || '') : '';
+            const visible = currentDir?.children ? (activeFilter 
+              ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+              : currentDir.children) : [];
+            const item = visible[state.cursorIndex];
+            const isFound = item && item.name === 'access_key.pem';
+
+            return isTyping || isFound;
         },
         completed: false
       },
       {
         id: 'search-3',
-        description: "Navigate to encrypted asset to confirm access",
+        description: "Jump to 'access_key.pem'",
         check: (state) => {
-           // To "navigate to" in this context implies the cursor is on the correct file 
-           // and the filter is likely active making it visible
+           // User must have jumped, meaning mode is normal, and cursor is on the file
+           if (state.mode !== 'normal') return false;
            const currentDir = getNodeByPath(state.fs, state.currentPath);
            if (!currentDir || !currentDir.children) return false;
            
-           const filter = state.filters[currentDir.id] || '';
-           // Replicate filter logic to get visible list
-           const visible = currentDir.children.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
-           const item = visible[state.cursorIndex];
+           // Apply current filter if any
+           const activeFilter = state.filters[currentDir.id] || '';
+           const visible = activeFilter 
+             ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+             : currentDir.children;
            
+           const item = visible[state.cursorIndex];
            return item && item.name === 'access_key.pem';
-        },
-        completed: false
-      },
-      {
-        id: 'search-4',
-        description: "Terminate scan mode and return to normal operations",
-        check: (state) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const filter = currentDir ? (state.filters[currentDir.id] || '') : '';
-          return state.mode === 'normal' && filter === '';
         },
         completed: false
       }
@@ -731,8 +768,14 @@ export const LEVELS: Level[] = [
         check: (state) => {
            const currentDir = getNodeByPath(state.fs, state.currentPath);
            if (!currentDir || !currentDir.children) return false;
-           const visible = currentDir.children;
-           const item = visible[state.cursorIndex];
+           
+           // Fix: Apply filter to get correct visible index
+           const activeFilter = state.filters[currentDir.id] || '';
+           const visibleItems = activeFilter 
+             ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+             : currentDir.children;
+
+           const item = visibleItems[state.cursorIndex];
            return item && item.name === 'backup_logs.zip';
         },
         completed: false
@@ -772,12 +815,10 @@ export const LEVELS: Level[] = [
     leadsTo: [13],
     timeLimit: 120,
     onEnter: (fs) => {
-        const datastore = findNodeByName(fs, 'datastore');
-        if (datastore && datastore.children) {
-             const key = datastore.children.find(c => c.name === 'access_key.pem');
-             if (key) {
-                 key.name = 'access_key_secure.pem';
-             }
+        // Recursive search for the key because it might be in 'credentials' or root of datastore depending on prior actions
+        const key = findNodeByName(fs, 'access_key.pem');
+        if (key) {
+             key.name = 'access_key_secure.pem';
         }
         return fs;
     },
@@ -798,19 +839,25 @@ export const LEVELS: Level[] = [
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
-          const inDocs = docs?.children?.some(c => c.name.includes('access_key')) &&
-                         docs?.children?.some(c => c.name === 'mission_log.md');
+          
+          // Check if key is in datastore OR credentials subfolder
+          const creds = docs?.children?.find(c => c.name === 'credentials');
+          const inCreds = creds?.children?.some(c => c.name.includes('access_key'));
+          const inDocs = docs?.children?.some(c => c.name.includes('access_key'));
+          
+          const logInDocs = docs?.children?.some(c => c.name === 'mission_log.md');
+
           const notInWs = !ws?.children?.some(c => c.name.includes('access_key') || c.name === 'mission_log.md');
-          return inDocs && notInWs;
+          return (inDocs || inCreds) && logInDocs && notInWs;
         },
         completed: false
       }
     ]
   },
 
-  // ========================================
+  // ======================================== 
   // EPISODE 3: MASTERY (Levels 12-17)
-  // ========================================
+  // ======================================== 
   {
     id: 12,
     episodeId: 3,
@@ -913,7 +960,14 @@ export const LEVELS: Level[] = [
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (!currentDir || !currentDir.children) return false;
-          const item = currentDir.children[state.cursorIndex];
+          
+          // Fix: Apply filter to get correct visible index
+          const activeFilter = state.filters[currentDir.id] || '';
+          const visibleItems = activeFilter 
+             ? currentDir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()))
+             : currentDir.children;
+
+          const item = visibleItems[state.cursorIndex];
           return item && item.name === 'daemon' && item.type === 'dir';
         },
         completed: false

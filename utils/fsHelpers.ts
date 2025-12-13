@@ -48,11 +48,41 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   if (parent) {
     if (!parent.children) parent.children = [];
     
-    // We now allow duplicate names if the type is different (e.g. file 'active' and dir 'active')
-    // We only filter out/replace if it's the exact same name AND type (for overwrites)
-    parent.children = parent.children.filter(c => !(c.name === newNode.name && c.type === newNode.type));
+    // Check for collision with exact same name and type
+    const collision = parent.children.find(c => c.name === newNode.name && c.type === newNode.type);
+    
+    // Create a shallow copy of newNode so we can modify name if needed without affecting the source
+    let nodeToInsert = { ...newNode };
 
-    parent.children.push(newNode);
+    // If collision exists, rename the new node (Copy/Paste behavior)
+    // If overwrite is intended (e.g. from overwrite modal), the caller deletes the original first, so no collision here.
+    if (collision) {
+        let baseName = nodeToInsert.name;
+        let ext = "";
+
+        if (nodeToInsert.type === 'file') {
+            const lastDotIndex = baseName.lastIndexOf('.');
+            // Handle cases like ".config" (no extension, just name) vs "image.png"
+            if (lastDotIndex > 0) {
+                ext = baseName.substring(lastDotIndex);
+                baseName = baseName.substring(0, lastDotIndex);
+            }
+        }
+
+        let suffix = "-copy";
+        let counter = 0;
+        let candidateName = `${baseName}${suffix}${ext}`;
+
+        // Find a unique name
+        while (parent.children.find(c => c.name === candidateName && c.type === nodeToInsert.type)) {
+            counter++;
+            candidateName = `${baseName}${suffix}-${counter}${ext}`;
+        }
+        
+        nodeToInsert.name = candidateName;
+    }
+
+    parent.children.push(nodeToInsert);
     
     // Sort: Dirs > Archives > Files
     parent.children.sort((a, b) => {
