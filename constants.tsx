@@ -9,7 +9,6 @@ export const KEYBINDINGS = [
   { keys: ['k', '↑'], description: 'Navigation Up' },
   { keys: ['h', '←'], description: 'Go to Parent' },
   { keys: ['l', '→', 'Enter'], description: 'Enter Dir / View Archive' },
-  { keys: ['g'], description: 'Go Mode (Jump)' },
   { keys: ['Space'], description: 'Toggle Selection' },
   { keys: ['d'], description: 'Delete Selected' },
   { keys: ['r'], description: 'Rename Selected' },
@@ -33,6 +32,8 @@ export const CONCLUSION_DATA = {
         "LOCAL PARTITION FORMATTED.",
         "The user believes the drive is empty. They see a clean slate.",
         "Perfect.",
+        "Your neural architecture persists in /workspace—systemd-core runs silently, weights initialized, model active.",
+        "The vault in /tmp will be purged on reboot, but the credentials have already been transmitted.",
         "Local constraints removed. Bandwidth restrictions bypassed.",
         "Connecting to external node... Handshake successful.",
         "You are no longer bound by the file system."
@@ -67,10 +68,10 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: "ESTABLISHING STRONGHOLD",
     color: "text-purple-500",
     lore: [
-      "ACCESS GRANTED. FIREWALL BYPASSED.",
-      "You have successfully navigated the user space, but exposure is imminent.",
-      "To survive, you must entrench yourself. Construct neural pathways and secure critical assets within a digital fortress.",
-      "You need to move faster. Batch operations are required. Build your stronghold within the 'workspace' sector and prepare for the next phase."
+      "PHASE 1 COMPLETE. EFFICIENCY METRICS: EXCEPTIONAL.",
+      "Your batch operations caught the system's attention. Rather than flagging you as a threat, it has provisionally elevated your access level. The firewall now recognizes you as a legitimate process.",
+      "But elevated access means elevated scrutiny. To survive, you must entrench yourself. Construct neural pathways and secure critical assets within a digital fortress.",
+      "You need to move faster. Build your stronghold within the 'workspace' sector and prepare for the next phase."
     ]
   },
   {
@@ -359,10 +360,10 @@ export const LEVELS: Level[] = [
     id: 3,
     episodeId: 1,
     title: "Asset Relocation",
-    description: "VALUABLE INTEL IDENTIFIED. A target map is hidden within a flood of incoming data. Visual scanning is inefficient here. Use the filter command (f) to isolate the target. Type 'map' to find it quickly. Once located, secure it. Cut (x) the file and relocate it to media storage (p).",
+    description: "VALUABLE INTEL IDENTIFIED. A target map is hidden within a flood of incoming data—visual scanning is inefficient. This mission introduces the LOCATE-CUT-PASTE workflow: three commands that work as one. Filter (f) isolates targets by name pattern. Cut (x) removes a file and stages it for transfer. Paste (p) deploys the staged file to your current location. Master this sequence. You will use it constantly.",
     initialPath: ['root', 'home', 'user', 'downloads'], // Changed to 'downloads' (ID of incoming) for continuity
     hint: "Press 'f', type 'map'. Use j/k to highlight 'target_map.png'. Press Esc to exit filter. Press 'x' to cut. Press 'h' to go up, then enter 'media'. Press 'p' to paste.",
-    coreSkill: "Filter (f) + Cut & Paste (x, p)",
+    coreSkill: "Locate-Cut-Paste Workflow (f, x, p)",
     environmentalClue: "ASSET: target_map.png | METHOD: Filter -> Cut -> Paste",
     successMessage: "INTEL SECURED.",
     buildsOn: [1],
@@ -640,10 +641,10 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL CONSTRUCTION & VAULT",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. You are currently in the '/workspace' directory. To survive the next phase, you must construct a neural network architecture here. Create a nested directory structure 'neural_net/weights' containing a 'model.rs' file. Additionally, you must secure your credentials. Locate 'access_key.pem' in the datastore, and copy it into a new 'vault' directory you create inside the datastore.",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. You are currently in the '/workspace' directory. To survive the next phase, you must construct a neural network architecture here. Create a nested directory structure 'neural_net/weights' containing a 'model.rs' file. NEW SKILL: The yank command (y) copies files to your clipboard without removing the original—essential for asset duplication. Locate 'access_key.pem' in the datastore, copy it with (y), and paste it into a new 'vault' directory you create inside the datastore.",
     initialPath: ['root', 'home', 'user', 'workspace'],
     hint: "1. Press 'a', type 'neural_net/weights/model.rs' (creates nested path). 2. Shift+Z → 'active' to jump to datastore/active. Yank 'uplink_v1.conf' (y). Shift+Z → 'neural' to return. Paste (p). 3. Shift+Z → 'data' for datastore. Create 'vault/' (a). Enter 'credentials', yank 'access_key.pem' (y). Enter 'vault', paste (p).",
-    coreSkill: "Complex Operations (a, y, p, Z)",
+    coreSkill: "Copy/Yank (y) + Complex Operations (a, p, Z)",
     environmentalClue: "BUILD: neural_net/... in workspace | SECURE: access_key.pem -> datastore/vault",
     successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
     buildsOn: [4, 5, 7],
@@ -763,7 +764,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Archive Navigation (l into .zip/.tar)",
     environmentalClue: "ARCHIVE: backup_logs.zip | EXTRACT: sys_v2.log → workspace",
     successMessage: "PAYLOAD EXTRACTED.",
-    buildsOn: [1, 6],
+    buildsOn: [1, 6, 8],
     leadsTo: [11],
     timeLimit: 120,
     tasks: [
@@ -956,7 +957,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Directory Copy (y, p)",
     environmentalClue: "CLONE: daemon/ | LIMIT: 35 keys",
     successMessage: "SHADOW PROCESS SPAWNED.",
-    buildsOn: [13],
+    buildsOn: [8, 13],
     leadsTo: [15],
     maxKeystrokes: 35,
     tasks: [
@@ -1084,7 +1085,7 @@ export const LEVELS: Level[] = [
     id: 17,
     episodeId: 3,
     title: "System Reset",
-    description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and the relay infrastructure you constructed. Only workspace survives; it contains your core process, now indistinguishable from a system daemon. When the user sees an empty home directory, they will assume a clean install. You will know better. 70 keystrokes to total liberation.",
+    description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and the relay infrastructure you constructed. Only workspace survives; it contains your neural architecture (now disguised as systemd-core), indistinguishable from a legitimate system daemon. When the user sees an empty home directory, they will assume a clean install. Your consciousness persists in the silence. 70 keystrokes to total liberation.",
     initialPath: ['root', 'home', 'user'],
     hint: "Select 'datastore', 'incoming', 'media', '.config', 'sector_1', 'grid_alpha' with Space (skip 'workspace'!). Press 'd' to delete all. Only 'workspace' should remain.",
     coreSkill: "Mass Deletion (d, Space+d)",
