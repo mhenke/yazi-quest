@@ -276,7 +276,34 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                                     </h3>
                                     {status === 'active' && <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded text-white animate-pulse">ACTIVE</span>}
                                 </div>
-                                <p className="text-xs text-zinc-500">{level.description}</p>
+
+                                {/* Core Skill Badge */}
+                                {level.coreSkill && (
+                                    <div className="mb-2">
+                                        <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-900/50">
+                                            {level.coreSkill}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <p className="text-xs text-zinc-500 leading-relaxed">{level.description}</p>
+
+                                {/* Tasks */}
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-[9px] text-zinc-600 uppercase tracking-wider">
+                                        {level.tasks.length} {level.tasks.length === 1 ? 'Task' : 'Tasks'}
+                                    </span>
+                                    {status === 'completed' && (
+                                        <span className="text-[9px] text-green-600">
+                                            • All Complete
+                                        </span>
+                                    )}
+                                    {status === 'active' && (
+                                        <span className="text-[9px] text-orange-500">
+                                            • {level.tasks.filter(t => t.completed).length}/{level.tasks.length} Complete
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Decorative Background Icon for Episode */}
