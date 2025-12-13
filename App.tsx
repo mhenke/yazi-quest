@@ -109,6 +109,7 @@ export default function App() {
       pendingOverwriteNode: null,
       showHelp: false,
       showHint: false,
+      showHidden: true, // Start with hidden files visible
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
       keystrokes: 0,
@@ -155,11 +156,19 @@ export default function App() {
     const state = stateRef.current;
     const dir = getNodeByPath(state.fs, state.currentPath);
     if (!dir || !dir.children) return [];
-    
+
+    // Filter hidden files (starting with .)
+    let items = state.showHidden
+      ? dir.children
+      : dir.children.filter(c => !c.name.startsWith('.'));
+
+    // Apply text filter if active
     const activeFilter = state.filters[dir.id];
-    if (!activeFilter) return dir.children;
-    
-    return dir.children.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    if (activeFilter) {
+      items = items.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    }
+
+    return items;
   }, []); // Empty dep, depends on ref
 
   // We need a render-phase version for the UI
@@ -537,6 +546,12 @@ export default function App() {
         if (e.key === 'm' && !e.ctrlKey && !e.metaKey && state.mode === 'normal') {
              // Toggle mute (dummy for now as we don't have audio engine fully hooked up in this snippet)
              setGameState(prev => ({ ...prev, settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled }, notification: `Sound: ${!prev.settings.soundEnabled ? 'ON' : 'OFF'}` }));
+             return;
+        }
+        if (e.key === '.' && state.mode === 'normal') {
+             // Toggle hidden files
+             e.preventDefault();
+             setGameState(prev => ({ ...prev, showHidden: !prev.showHidden, cursorIndex: 0, notification: `Hidden files: ${!prev.showHidden ? 'SHOWN' : 'HIDDEN'}` }));
              return;
         }
 

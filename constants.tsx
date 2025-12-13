@@ -21,6 +21,7 @@ export const KEYBINDINGS = [
   { keys: ['z'], description: 'FZF Find (Current Tree)' },
   { keys: ['Shift+z'], description: 'Zoxide Jump (History)' },
   { keys: ['Esc'], description: 'Exit Mode / Clear Filter' },
+  { keys: ['.'], description: 'Toggle Hidden Files' },
   { keys: ['Shift+h'], description: 'Toggle System Hint' },
   { keys: ['Shift+m'], description: 'Toggle Quest Map' },
   { keys: ['?'], description: 'Toggle Help' },
