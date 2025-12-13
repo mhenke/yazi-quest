@@ -526,7 +526,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'batch-move',
-        description: "Cut selection (x) & Paste to 'active'",
+        description: "Cut selection (x) & Paste to 'active' in datastore",
         check: (state) => {
           const active = findNodeByName(state.fs, 'active');
           const protocols = findNodeByName(state.fs, 'protocols');
@@ -806,7 +806,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'archive-2',
-        description: "Extract 'sys_v2.log' to workspace (y, then p)",
+        description: "Extract 'sys_v2.log' to workspace in /home/guest (y, then p)",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'sys_v2.log');
