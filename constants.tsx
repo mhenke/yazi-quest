@@ -346,7 +346,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-0',
-        description: "Enter 'incoming' data stream",
+        description: "Enter 'incoming' data stream in /home/guest",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'incoming',
         completed: false
       },
@@ -440,7 +440,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'nav-protocols',
-        description: "Enter 'protocols' sector",
+        description: "Navigate into 'protocols' sector in datastore",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'protocols',
         completed: false
       },
@@ -512,12 +512,12 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'batch-select',
-        description: "Batch select both files (Space)",
+        description: "Batch select uplink_v1.conf and uplink_v2.conf (Space)",
         check: (state) => {
            // We expect the user to be in 'protocols' and have both files selected
            const protocols = findNodeByName(state.fs, 'protocols');
            if (!protocols?.children) return false;
-           
+
            const selected = protocols.children.filter(c => state.selectedIds.includes(c.id));
            const names = selected.map(c => c.name);
            return names.includes('uplink_v1.conf') && names.includes('uplink_v2.conf');
@@ -778,7 +778,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'archive-0',
-        description: "Locate the archive 'backup_logs.zip' in incoming",
+        description: "Locate 'backup_logs.zip' archive in /home/guest/incoming",
         check: (state) => {
            const currentDir = getNodeByPath(state.fs, state.currentPath);
            if (!currentDir || !currentDir.children) return false;
@@ -839,7 +839,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'migration-1',
-        description: "Relocate key + mission_log.md to workspace",
+        description: "Relocate access_key + mission_log.md from datastore to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return ws?.children?.some(c => c.name.includes('access_key')) &&
@@ -970,7 +970,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-2a',
-        description: "Locate 'daemon' directory",
+        description: "Locate 'daemon' directory in /etc",
         check: (state) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (!currentDir || !currentDir.children) return false;
@@ -1025,7 +1025,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'ep3-3a',
-        description: "Infiltrate datastore sector",
+        description: "Infiltrate datastore sector in /home/guest",
         check: (state) => {
           return getNodeByPath(state.fs, state.currentPath)?.name === 'datastore';
         },
