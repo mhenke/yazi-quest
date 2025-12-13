@@ -15,6 +15,7 @@ import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
+import { InfoPanel } from './components/InfoPanel';
 import { Search, Folder, FileText, ChevronRight } from 'lucide-react';
 
 export default function App() {
@@ -110,6 +111,7 @@ export default function App() {
       showHelp: false,
       showHint: false,
       showHidden: true, // Start with hidden files visible
+      showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
       keystrokes: 0,
@@ -555,6 +557,12 @@ export default function App() {
              setGameState(prev => ({ ...prev, showHidden: !prev.showHidden, cursorIndex: 0, notification: `Hidden files: ${!prev.showHidden ? 'SHOWN' : 'HIDDEN'}` }));
              return;
         }
+        if (e.key === 'Tab' && state.mode === 'normal') {
+             // Toggle info panel
+             e.preventDefault();
+             setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
+             return;
+        }
 
         // Mode: NORMAL
         if (state.mode === 'normal') {
@@ -990,7 +998,8 @@ export default function App() {
 
         {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
         {gameState.showHint && <HintModal hint={currentLevel.hint} onClose={() => setGameState(prev => ({ ...prev, showHint: false }))} />}
-        
+        {gameState.showInfoPanel && <InfoPanel file={visibleItemsUI[gameState.cursorIndex] || null} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
+
         {gameState.mode === 'confirm-delete' && (
             <ConfirmationModal 
                 title="CONFIRM DELETION" 
