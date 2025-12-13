@@ -819,27 +819,23 @@ export const LEVELS: Level[] = [
     id: 11,
     episodeId: 2,
     title: "Live Migration",
-    description: "CRITICAL ASSET RELAY. Your cryptographic key and mission log require modification in a secure environment. Move them to workspace for processing, then return them to their original location to maintain operational cover. This round-trip migration must complete within 120 seconds—the scheduler's garbage collector will flag orphaned files.",
+    description: "CRITICAL ASSET RELAY. Your cryptographic key (in datastore/vault) and mission log (in datastore) require modification in a secure environment. Move each file individually to workspace—they're in different directories so batch selection won't work. Then return them to datastore. This round-trip migration must complete within 120 seconds.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Mark 'access_key_secure.pem' (or original) & 'mission_log.md' (Space). Cut (x). Nav to '../workspace'. Paste (p). Mark them again. Cut (x). Return to 'datastore'. Paste (p).",
-    coreSkill: "Round-trip File Movement (Space, x, p)",
-    environmentalClue: "MIGRATE: access_key + mission_log | ROUTE: datastore → workspace → datastore",
+    hint: "1. Go to datastore/vault, cut (x) access_key.pem, go to workspace, paste (p). 2. Go to datastore, cut (x) mission_log.md, go to workspace, paste (p). 3. Then cut both from workspace (use Space to select, then x), return to datastore, paste (p).",
+    coreSkill: "Round-trip File Movement (x, p)",
+    environmentalClue: "MIGRATE: vault/access_key.pem + datastore/mission_log.md → workspace → datastore",
     successMessage: "MIGRATION COMPLETE. Files restored.",
     buildsOn: [3, 5, 10],
     leadsTo: [13],
     timeLimit: 120,
     onEnter: (fs) => {
-        // Recursive search for the key because it might be in 'credentials' or root of datastore depending on prior actions
-        const key = findNodeByName(fs, 'access_key.pem');
-        if (key) {
-             key.name = 'access_key_secure.pem';
-        }
+        // No renaming needed - keep access_key.pem as is
         return fs;
     },
     tasks: [
       {
         id: 'migration-1',
-        description: "Relocate access_key + mission_log.md from /home/guest/datastore to workspace",
+        description: "Move 'access_key.pem' from datastore/vault and 'mission_log.md' from datastore to workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return ws?.children?.some(c => c.name.includes('access_key')) &&
@@ -849,7 +845,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'migration-2',
-        description: "Restore assets to /home/guest/datastore",
+        description: "Restore both assets to /home/guest/datastore",
         check: (state) => {
           const docs = findNodeByName(state.fs, 'datastore');
           const ws = findNodeByName(state.fs, 'workspace');
