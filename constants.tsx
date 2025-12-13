@@ -541,19 +541,24 @@ export const LEVELS: Level[] = [
     id: 6,
     episodeId: 2,
     title: "Recursive Search",
-    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans from the current directory downwards. Initiate the protocol, locate the asset, and teleport to it.",
+    description: "SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition tree—hidden in subdirectories or buried in lists. Manual traversal will leak execution time. The recursive search command (z) scans from the current directory downwards. Navigate to the root directory (/) to maximize your scan range, initiate the protocol, locate the asset, and teleport to it.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press 'z' to open recursive search. Type 'pem'. Use Arrow keys to select 'access_key.pem' and Enter to jump.",
+    hint: "Press 'h' repeatedly to reach root (/). Press 'z' to open recursive search. Type 'pem'. Select 'access_key.pem' and Enter.",
     coreSkill: "Recursive Search (z)",
-    environmentalClue: "SEARCH SCOPE: Current Dir (./) | TARGET: .pem",
+    environmentalClue: "SEARCH SCOPE: Root (/) | TARGET: .pem",
     successMessage: "ASSET LOCATED. Jump complete.",
     buildsOn: [1, 2],
     leadsTo: [10],
     tasks: [
       {
         id: 'search-1',
-        description: "Initialize recursive search (z) from current dir",
-        check: (state) => state.mode === 'fzf-current' || (state.mode === 'normal' && getNodeByPath(state.fs, state.currentPath)?.children?.some(c => c.name === 'access_key.pem')),
+        description: "Navigate to root (/) and initialize recursive search (z)",
+        check: (state) => {
+            const isAtRoot = state.currentPath.length === 1 && state.currentPath[0] === 'root';
+            // Task completes if searching at root OR if target is already found (bypass)
+            return (state.mode === 'fzf-current' && isAtRoot) || 
+                   (state.mode === 'normal' && getNodeByPath(state.fs, state.currentPath)?.children?.some(c => c.name === 'access_key.pem'));
+        },
         completed: false
       },
       {
@@ -635,11 +640,11 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL CONSTRUCTION & VAULT",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. Your workspace is now available. To survive the next phase, you must construct a neural network architecture while simultaneously securing your cryptographic keys in a fortified vault. The system's task scheduler is monitoring CPU usage—batch operations will help you stay under the detection threshold.",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. You are currently in the '/workspace' directory. To survive the next phase, you must construct a neural network architecture here. Create a nested directory structure 'neural_net/weights' containing a 'model.rs' file. Additionally, you must secure your credentials. Locate 'access_key.pem' in the datastore, and copy it into a new 'vault' directory you create inside the datastore.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "Use Shift+Z to jump to sources. Create 'neural_net/weights/model.rs'. Copy 'uplink_v1.conf' from '../datastore/active' here. Create 'vault' in datastore and copy 'access_key.pem' to it.",
+    hint: "1. In workspace: Press 'a', type 'neural_net/weights/model.rs'. 2. Go to 'datastore/active', yank 'uplink_v1.conf', paste in 'neural_net'. 3. Go to 'datastore', create 'vault/', find 'access_key.pem' (check 'credentials' folder), copy and paste it into 'vault'.",
     coreSkill: "Complex Operations (a, y, p, Z)",
-    environmentalClue: "BUILD: neural_net/weights/model.rs | SECURE: vault/access_key.pem",
+    environmentalClue: "BUILD: neural_net/... in workspace | SECURE: access_key.pem -> datastore/vault",
     successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
     buildsOn: [4, 5, 7],
     leadsTo: [12],
@@ -672,7 +677,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'combo-1a',
-        description: "Initialize neural network housing ('neural_net')",
+        description: "Construct 'neural_net' directory in /workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
           return !!ws?.children?.find(c => c.name === 'neural_net');
@@ -681,7 +686,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1b',
-        description: "Establish weight parameter storage ('weights/model.rs')",
+        description: "Generate 'weights/model.rs' inside neural_net",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           const weights = net?.children?.find(c => c.name === 'weights');
@@ -691,7 +696,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1c',
-        description: "Deploy uplink configuration to neural core",
+        description: "Copy 'uplink_v1.conf' to neural_net",
         check: (state) => {
           const net = findNodeByName(state.fs, 'neural_net');
           return !!net?.children?.find(c => c.name === 'uplink_v1.conf');
@@ -700,7 +705,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1d',
-        description: "Secure vault access in datastore",
+        description: "Create 'vault' in datastore & copy key into it",
         check: (state) => {
           const vault = findNodeByName(state.fs, 'vault');
           // Since we renamed it in L6, check for secure name OR original name (flexibility)
