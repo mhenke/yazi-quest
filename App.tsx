@@ -123,6 +123,7 @@ export default function App() {
 
   const [bulkRenameContent, setBulkRenameContent] = useState("");
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [pendingGKey, setPendingGKey] = useState(false);
   const prevAllTasksCompleteRef = useRef(false);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
@@ -617,11 +618,25 @@ export default function App() {
                     setGameState(prev => ({ ...prev, mode: 'filter', inputBuffer: currentFilter }));
                 }
             }
+            else if (e.key === 'g' && !e.shiftKey) {
+                 // Vim-style gg to jump to top
+                 if (pendingGKey) {
+                     // Second 'g' - jump to top
+                     setGameState(prev => ({ ...prev, cursorIndex: 0 }));
+                     setPendingGKey(false);
+                 } else {
+                     // First 'g' - wait for second
+                     setPendingGKey(true);
+                     setTimeout(() => setPendingGKey(false), 1000); // Clear after 1s
+                 }
+            }
             else if (e.key === 'G') {
+                 // Shift+G - jump to bottom
                  setGameState(prev => {
                      const count = getVisibleItems().length;
                      return { ...prev, cursorIndex: count - 1 };
                 });
+                 setPendingGKey(false); // Clear pending g if any
             }
             else if (e.key === 'Z' && e.shiftKey) { // Z - Zoxide Jump (History)
                  e.preventDefault();

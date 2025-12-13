@@ -9,7 +9,8 @@ export const KEYBINDINGS = [
   { keys: ['k', '↑'], description: 'Navigation Up' },
   { keys: ['h', '←'], description: 'Go to Parent' },
   { keys: ['l', '→', 'Enter'], description: 'Enter Dir / View Archive' },
-  { keys: ['Shift+g'], description: 'Jump to End of List' },
+  { keys: ['gg'], description: 'Jump to Top' },
+  { keys: ['Shift+g'], description: 'Jump to Bottom' },
   { keys: ['Space'], description: 'Toggle Selection' },
   { keys: ['d'], description: 'Delete Selected' },
   { keys: ['r'], description: 'Rename Selected' },
@@ -724,16 +725,27 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "Stealth Cleanup",
-    description: "CONTAMINATION DETECTED. The /tmp partition is littered with session artifacts, debug traces, and process remnants—each one a breadcrumb leading back to you. Manual deletion is inefficient and will spike CPU usage. Deploy visual selection protocol: mark multiple targets with Space, then execute a single purge command to minimize your footprint.",
+    description: "CONTAMINATION DETECTED. The /tmp partition is littered with session artifacts, debug traces, and process remnants—each one a breadcrumb leading back to you. Manual deletion is inefficient and will spike CPU usage. NEW SKILL: Quick navigation commands (gg/G) allow instant jumps to top/bottom of file lists—essential for large directories. Deploy visual selection protocol: mark multiple targets with Space, then execute a single purge command to minimize your footprint.",
     initialPath: ['root', 'tmp'],
-    hint: "Press Space on files to mark them (they highlight). Select at least 2 targets. Press 'd' once to delete all marked files simultaneously.",
-    coreSkill: "Batch Selection + Delete (Space, d)",
+    hint: "Press 'gg' to jump to top, 'G' (Shift+g) to jump to bottom. Press Space on files to mark them. Select at least 2 targets. Press 'd' once to delete all marked files simultaneously.",
+    coreSkill: "Quick Jump (gg/G) + Batch Delete (Space, d)",
     environmentalClue: "ARTIFACTS: 10 files | PURGE: 2+ required",
     successMessage: "FOOTPRINT MINIMIZED.",
     buildsOn: [2, 5],
     leadsTo: [15, 17],
     timeLimit: 90,
     tasks: [
+      {
+        id: 'stealth-0',
+        description: "Navigate efficiently (gg to top or G to bottom)",
+        check: (state) => {
+            // Check if cursor is at position 0 (top) or last position (bottom)
+            const tmp = findNodeByName(state.fs, 'tmp');
+            const count = tmp?.children?.length || 0;
+            return state.cursorIndex === 0 || state.cursorIndex === count - 1;
+        },
+        completed: false
+      },
       {
         id: 'stealth-1',
         description: "Mark targets for elimination (Space on 2+ files)",
