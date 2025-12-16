@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(git pull:*)",
+      "WebSearch",
+      "WebFetch(domain:yazi-rs.github.io)",
+      "WebFetch(domain:ricoberger.de)",
+      "Bash(yazi --help:*)",
+      "Bash(yazi:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git rm:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}
