@@ -356,7 +356,9 @@ const INITIAL_FS_RAW = {
          { id: id(), name: 'socket_001.sock', type: 'file', content: '[SOCKET]' },
          { id: id(), name: 'metrics_buffer.json', type: 'file', content: '{"cpu": 99, "mem": 1024}' },
          { id: id(), name: 'ghost_process.pid', type: 'file', content: 'PID: 666' },
-         { id: id(), name: 'cache', type: 'dir', children: [] }
+         { id: id(), name: 'cache', type: 'dir', children: [] },
+         // Ensure sys_config.backup is here for Level 7
+         { id: id(), name: 'sys_config.backup', type: 'file', content: 'BACKUP CONFIGURATION\n[core]\nrecover=true' }
       ]
     }
   ]
@@ -794,32 +796,46 @@ export const LEVELS: Level[] = [
   {
     id: 7,
     episodeId: 2,
-    title: "Deep Scan Protocol",
-    description: "TRACE EVASION PROTOCOL. Manual traversal through nested directories leaves a linear trail for system monitors. Zoxide (Shift+Z) enables quantum jumps—bypassing direct tracing by leveraging a frequency-weighted index of your activity. Your history contains critical system coordinates: /tmp and /etc. Execute immediate teleportation to these zones, evading the security system's linear directory tracing.",
+    title: "Rapid Deployment",
+    description: "CRITICAL MISCONFIGURATION. A system backup is stranded in volatile storage (/tmp). It must be relocated to the persistent configuration sector (/etc) immediately. Use Zoxide (Shift+Z) to jump between sectors instantly.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press Shift+Z to open Zoxide. Type 'tmp' to filter for the target. Press Enter to jump. Repeat with 'etc'. Use Zoxide to bypass manual navigation.",
+    hint: "1. Shift+Z to '/tmp'. 2. Cut 'sys_config.backup' (x). 3. Shift+Z to '/etc'. 4. Paste (p).",
     coreSkill: "Zoxide Jump (Shift+Z)",
-    environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
-    successMessage: "QUANTUM JUMP CALIBRATED.",
-    buildsOn: [1],
-    leadsTo: [8, 12],
+    environmentalClue: "TARGET: /tmp/sys_config.backup → /etc/",
+    successMessage: "BACKUP SECURED.",
+    buildsOn: [1, 5],
+    leadsTo: [8],
+    onEnter: (fs) => {
+        // Ensure file exists
+        const tmp = findNodeByName(fs, 'tmp');
+        if (tmp && tmp.children && !tmp.children.find(c => c.name === 'sys_config.backup')) {
+             tmp.children.push({ id: Math.random().toString(36).substr(2, 9), name: 'sys_config.backup', type: 'file', content: 'CFG_BACKUP', parentId: tmp.id });
+        }
+        return fs;
+    },
     tasks: [
       {
-        id: 'fuzzy-1',
-        description: "Quantum jump to /tmp (Shift+Z → 'tmp' → Enter)",
-        check: (state) => {
-          return state.stats.fuzzyJumps >= 1 &&
-                 getNodeByPath(state.fs, state.currentPath)?.name === 'tmp';
-        },
+        id: 'rapid-1',
+        description: "Quantum jump to /tmp (Shift+Z)",
+        check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'tmp' && state.stats.fuzzyJumps > 0,
         completed: false
       },
       {
-        id: 'fuzzy-2',
+        id: 'rapid-2',
+        description: "Cut 'sys_config.backup' (x)",
+        check: (state) => state.clipboard?.action === 'cut' && state.clipboard.nodes.some(n => n.name === 'sys_config.backup'),
+        completed: false
+      },
+      {
+        id: 'rapid-3',
         description: "Quantum jump to /etc",
-        check: (state) => {
-          return state.stats.fuzzyJumps >= 2 &&
-                 getNodeByPath(state.fs, state.currentPath)?.name === 'etc';
-        },
+        check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'etc',
+        completed: false
+      },
+      {
+        id: 'rapid-4',
+        description: "Deploy backup to /etc (p)",
+        check: (state) => !!findNodeByName(state.fs, 'etc')?.children?.find(c => c.name === 'sys_config.backup'),
         completed: false
       }
     ]
@@ -828,16 +844,16 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL CONSTRUCTION & VAULT",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. To survive the next phase, construct a neural network in workspace: create 'neural_net/weights/model.rs'. Simultaneously, secure credentials: locate 'access_key.pem' in datastore and copy it into a new 'vault' directory.",
+    description: "ACCESS GRANTED. To survive, you must build a neural network. Note: Zoxide only learns paths you visit. You must physically enter the new 'neural_net' directory to seed it into your jump history for the future. Then, populate it and secure your credentials.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "1. Build tree: 'a' → 'neural_net/weights/model.rs'. Enter directories to add them to Zoxide history! 2. Shift+Z to 'active'. Yank 'uplink_v1.conf'. 3. Shift+Z to 'workspace'. Paste in 'neural_net'. 4. Shift+Z to 'datastore'. Create 'vault/'. 5. Find key in 'credentials', yank, paste in 'vault'.",
+    hint: "1. Create 'neural_net/' (a). 2. Enter it (l) - this is crucial for Zoxide! 3. Create 'weights/model.rs'. 4. Shift+Z to 'active', yank 'uplink_v1.conf'. 5. Shift+Z to 'neural_net', paste. 6. Handle the vault in datastore.",
     coreSkill: "Challenge: Full System Integration",
     environmentalClue: "BUILD: neural_net/... in workspace | MIGRATE: uplink_v1.conf -> neural_net/",
     successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 180, // 3 minutes
-    efficiencyTip: "Create nested paths instantly: 'a' → 'neural_net/weights/model.rs' creates the entire structure in one command.",
+    efficiencyTip: "Entering a directory once makes it available for instant Zoxide jumps later.",
     onEnter: (fs) => {
         // Ensure source file exists in ~/.config/uplink
         const guest = findNodeByName(fs, 'guest');
@@ -875,6 +891,15 @@ export const LEVELS: Level[] = [
           const ws = findNodeByName(state.fs, 'workspace');
           // STRICT CHECK: Must be a directory, not a file
           return !!ws?.children?.find(c => c.name === 'neural_net' && c.type === 'dir');
+        },
+        completed: false
+      },
+      {
+        id: 'combo-enter',
+        description: "Enter 'neural_net' to seed Zoxide history",
+        check: (state) => {
+          const current = getNodeByPath(state.fs, state.currentPath);
+          return current?.name === 'neural_net';
         },
         completed: false
       },

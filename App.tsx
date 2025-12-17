@@ -193,13 +193,21 @@ export default function App() {
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
-    if (!currentLevel.timeLimit || isLastLevel || gameState.showEpisodeIntro || gameState.isGameOver) return;
-
+    // If all tasks are complete, stop the timer immediately
     const allTasksComplete = currentLevel.tasks.every(t => t.completed);
     if (allTasksComplete) return;
 
+    if (!currentLevel.timeLimit || isLastLevel || gameState.showEpisodeIntro || gameState.isGameOver) return;
+
     const timer = setInterval(() => {
       setGameState(prev => {
+        // Double check completion inside interval to prevent race conditions
+        const level = LEVELS[prev.levelIndex];
+        if (level.tasks.every(t => t.completed)) {
+            clearInterval(timer);
+            return prev;
+        }
+
         if (prev.timeLeft === null || prev.timeLeft <= 0) {
             clearInterval(timer);
             return { ...prev, isGameOver: true, gameOverReason: 'time' };
@@ -209,7 +217,7 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentLevel.timeLimit, isLastLevel, gameState.showEpisodeIntro, gameState.isGameOver]);
+  }, [currentLevel.timeLimit, isLastLevel, gameState.showEpisodeIntro, gameState.isGameOver, currentLevel]);
 
   // Check Keystroke Limit
   useEffect(() => {
@@ -1033,7 +1041,7 @@ export default function App() {
 
             </div>
 
-            {/* Preview Pane */}
+            {/* Right: Preview Pane */}
             <PreviewPane 
                 node={visibleItems[gameState.cursorIndex]} 
                 level={currentLevel}
