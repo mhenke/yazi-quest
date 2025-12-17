@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
@@ -84,7 +85,8 @@ export default function App() {
         initialZoxide['/etc'] = { count: 10, lastAccess: now };
     }
     if (initialLevel.id === 8) {
-        initialZoxide['/home/guest/datastore/active'] = { count: 10, lastAccess: now };
+        // Updated to use the new secure path
+        initialZoxide['/home/guest/.config/uplink'] = { count: 10, lastAccess: now };
         initialZoxide['/home/guest/datastore'] = { count: 10, lastAccess: now };
     }
     if (initialLevel.id === 9) {

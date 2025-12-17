@@ -1,3 +1,4 @@
+
 import { FileNode } from '../types';
 
 // --- Query Helpers ---
@@ -340,13 +341,15 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
 
   if (name === 'access_key.pem') {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
-      if (action === 'cut' && ![7, 10].includes(levelIndex)) {
+      // Allow cut on Level 8 (index 7) and Level 10 (index 9)
+      if (action === 'cut' && ![7, 9].includes(levelIndex)) {
           return "Asset locked. Modification not authorized.";
       }
   }
 
   if (name === 'mission_log.md') {
-      if (action === 'delete' && levelIndex !== 14) return "Mission log required for validation.";
+      // Allow deletion on Level 14 (index 13)
+      if (action === 'delete' && levelIndex !== 13) return "Mission log required for validation.";
       if (action === 'cut' && levelIndex !== 10) return "Log file locked.";
   }
 
@@ -356,8 +359,9 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
   }
 
   if (name === 'protocols') {
-      if (action === 'delete' && levelIndex < 5) return "Protocol directory required for uplink deployment.";
-      if (action === 'cut' && levelIndex < 5) return "Protocol directory anchored.";
+      // Allow deletion on Level 5 (index 4)
+      if (action === 'delete' && levelIndex < 4) return "Protocol directory required for uplink deployment.";
+      if (action === 'cut' && levelIndex < 4) return "Protocol directory anchored.";
   }
 
   if (name === 'uplink_v1.conf') {
@@ -377,7 +381,8 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
   if (name === 'neural_net') {
       if (action === 'delete' && levelIndex < 12) return "Neural network architecture required.";
       if (action === 'cut' && levelIndex < 12) return "Neural network anchored.";
-      if (action === 'rename' && levelIndex !== 11) return "Neural network identity locked.";
+      // Allow rename on Level 11 (index 10)
+      if (action === 'rename' && levelIndex !== 10) return "Neural network identity locked.";
   }
 
   if (name === 'weights') {
@@ -388,7 +393,8 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
   if (name === 'model.rs') {
       if (action === 'delete' && levelIndex < 12) return "Model file required for camouflage.";
       if (action === 'cut' && levelIndex < 12) return "Model file anchored.";
-      if (action === 'rename' && levelIndex !== 11) return "Model identity locked.";
+      // Allow rename on Level 11 (index 10)
+      if (action === 'rename' && levelIndex !== 10) return "Model identity locked.";
   }
 
   if (name === 'vault') {
@@ -407,7 +413,7 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
   }
 
   if (name === 'sector_1' || name === 'grid_alpha') {
-      if (action === 'delete' && levelIndex !== 16) return "Relay infrastructure required for final phase.";
+      if (action === 'delete' && levelIndex !== 15) return "Relay infrastructure required for final phase.";
   }
 
   return null;
