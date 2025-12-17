@@ -88,6 +88,7 @@ export default function App() {
         // Updated to use the new secure path
         initialZoxide['/home/guest/.config/uplink'] = { count: 10, lastAccess: now };
         initialZoxide['/home/guest/datastore'] = { count: 10, lastAccess: now };
+        initialZoxide['/home/guest/workspace'] = { count: 10, lastAccess: now }; // Pre-seed workspace so user can jump back
     }
     if (initialLevel.id === 9) {
         initialZoxide['/tmp'] = { count: 10, lastAccess: now };

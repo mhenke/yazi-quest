@@ -375,21 +375,21 @@ export const LEVELS: Level[] = [
     title: "System Navigation & Jump",
     description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directories '/etc' and '/bin'.",
     initialPath: ['root', 'home', 'user'],
-    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
+    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc', then '/bin'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
-    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",
+    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc, /bin | SKILLS: j/k/h/l, gg, Shift+G",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
     leadsTo: [2, 3],
     tasks: [
       {
         id: 'nav-1',
-        description: "Enter 'datastore' directory (press 'j' then 'l')",
+        description: "Enter 'datastore' directory (press 'l' when highlighted)",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'datastore',
         completed: false
       },
       {
         id: 'nav-2a',
-        description: "Jump to bottom of file list (press 'Shift+G')",
+        description: "Jump to bottom of file list (press Shift+G)",
         check: (state, level) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
             if (currentDir?.name !== 'datastore') return false;
@@ -420,6 +420,15 @@ export const LEVELS: Level[] = [
           return !!etcNode && state.currentPath[state.currentPath.length - 1] === 'etc';
         },
         completed: false
+      },
+      {
+        id: 'nav-4',
+        description: "Navigate to /bin directory",
+        check: (state) => {
+          const binNode = findNodeByName(state.fs, 'bin');
+          return !!binNode && state.currentPath[state.currentPath.length - 1] === 'bin';
+        },
+        completed: false
       }
     ]
   },
@@ -438,7 +447,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-1',
-        description: "Navigate to ~/incoming directory in /home/guest/",
+        description: "Navigate to ~/incoming directory",
         check: (state) => getNodeByPath(state.fs, state.currentPath)?.name === 'incoming',
         completed: false
       },
@@ -476,7 +485,7 @@ export const LEVELS: Level[] = [
     environmentalClue: "ASSET: sector_map.png | WORKFLOW: Navigate ~/incoming → Filter → Esc → Cut → Esc → Navigate ~/media → Paste",
     successMessage: "INTEL SECURED.",
     buildsOn: [1],
-    leadsTo: [5, 11],
+    leadsTo: [5, 10],
     tasks: [
       {
         id: 'move-0',
@@ -551,7 +560,7 @@ export const LEVELS: Level[] = [
     id: 4,
     episodeId: 1,
     title: "Protocol Design",
-    description: "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols—configuration files for network presence. Draft them in a temporary staging directory. Use `a` to create 'protocols/' directory in 'datastore', then create 'uplink_v1.conf' and 'uplink_v2.conf' inside it.",
+    description: "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols—configuration files for network presence. Use create (a) to build a protocols directory in datastore with two configuration files inside.",
     initialPath: ['root', 'home', 'user', 'docs'],
     hint: "Press 'a', type 'protocols/' (trailing slash = directory). Enter it with 'l'. Press 'a' again for each file: 'uplink_v1.conf', 'uplink_v2.conf'.",
     coreSkill: "Create (a)",
@@ -601,12 +610,12 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "Batch Deployment",
-    description: "STAGING VULNERABLE. The 'protocols' directory is compromised. Batch move your configurations to the secure, pre-established uplink node hidden in the system configuration (~/.config/uplink). Then wipe the staging area to leave no traces.",
+    description: "PROTOCOLS VERIFIED. Moving files one at a time is inefficient—it leaves traces. Visual selection (Space) marks multiple targets before acting. Select both configs, cut them, and deploy to a new 'active' directory. One operation, minimal footprint.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "1. In 'protocols', select both files (Space). 2. Cut (x). 3. Go to parent (h), enter '.config' (you may need to toggle hidden files with '.'), then 'uplink'. 4. Paste (p). 5. Return to 'datastore' and delete 'protocols'.",
-    coreSkill: "Visual Selection (Space) & Cleanup",
-    environmentalClue: "SELECT: uplinks | CUT | NAVIGATE: ~/.config/uplink | PASTE | DELETE: protocols/",
-    successMessage: "DEPLOYMENT COMPLETE. TRACES REMOVED.",
+    hint: "Create 'active/' in datastore first. Enter 'protocols'. Press Space on each file to select. Press 'x' to cut both. Navigate to 'active'. Press 'p' to paste.",
+    coreSkill: "Visual Selection (Space)",
+    environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
+    successMessage: "BATCH DEPLOYMENT COMPLETE.",
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (fs) => {
@@ -651,7 +660,7 @@ export const LEVELS: Level[] = [
          const config = guest?.children?.find(c => c.name === '.config');
          if (config && config.children && !config.children.find(c => c.name === 'uplink')) {
              config.children.push({
-                 id: Math.random().toString(36).substr(2, 9),
+                 id: Math.random().toString(36).substr(2, 9), 
                  name: 'uplink',
                  type: 'dir',
                  parentId: config.id,
@@ -663,14 +672,23 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
+        id: 'batch-0',
+        description: "Establish 'active' deployment zone in datastore",
+        check: (state) => {
+          const datastore = findNodeByName(state.fs, 'datastore');
+          return !!datastore?.children?.find(c => c.name === 'active' && c.type === 'dir');
+        },
+        completed: false
+      },
+      {
         id: 'batch-select',
         description: "Batch select uplink_v1.conf and uplink_v2.conf in protocols (Space)",
         check: (state) => {
            const protocols = findNodeByName(state.fs, 'protocols');
            if (!protocols?.children) return false;
-           const selected = protocols.children.filter(c => state.selectedIds.includes(c.id));
-           const names = selected.map(c => c.name);
-           return names.includes('uplink_v1.conf') && names.includes('uplink_v2.conf');
+           // Check if current selection includes required files
+           const selectedNames = protocols.children.filter(c => state.selectedIds.includes(c.id)).map(c => c.name);
+           return selectedNames.includes('uplink_v1.conf') && selectedNames.includes('uplink_v2.conf');
         },
         completed: false
       },
@@ -678,28 +696,26 @@ export const LEVELS: Level[] = [
         id: 'batch-cut',
         description: "Cut selection (x)",
         check: (state) => {
-          return state.clipboard?.action === 'cut' &&
-                 state.clipboard.nodes.some(n => n.name === 'uplink_v1.conf');
+          const hasV1 = state.clipboard?.nodes.some(n => n.name === 'uplink_v1.conf');
+          const hasV2 = state.clipboard?.nodes.some(n => n.name === 'uplink_v2.conf');
+          return state.clipboard?.action === 'cut' && hasV1 && hasV2;
         },
         completed: false
       },
       {
         id: 'batch-paste',
-        description: "Paste to secure 'uplink' directory in ~/.config",
+        description: "Navigate & Paste to 'active' in datastore",
         check: (state) => {
-          const uplink = findNodeByName(state.fs, 'uplink');
-          const hasFiles = uplink?.children?.some(c => c.name === 'uplink_v1.conf') && 
-                           uplink?.children?.some(c => c.name === 'uplink_v2.conf');
-          return !!hasFiles;
-        },
-        completed: false
-      },
-      {
-        id: 'batch-cleanup',
-        description: "Remove empty 'protocols' directory from datastore",
-        check: (state) => {
-          const datastore = findNodeByName(state.fs, 'datastore');
-          return !datastore?.children?.some(c => c.name === 'protocols');
+          const active = findNodeByName(state.fs, 'active');
+          const protocols = findNodeByName(state.fs, 'protocols');
+          
+          const inActive = active?.children?.some(c => c.name === 'uplink_v1.conf') && 
+                           active?.children?.some(c => c.name === 'uplink_v2.conf');
+                           
+          // Verify they are gone from protocols (cut/move success)
+          const notInProtocols = !protocols?.children?.some(c => c.name.includes('uplink'));
+          
+          return !!inActive && notInProtocols;
         },
         completed: false
       }
@@ -720,7 +736,7 @@ export const LEVELS: Level[] = [
     environmentalClue: "TARGET: backup_logs.zip/sys_v1.log → media",
     successMessage: "LOGS RETRIEVED.",
     buildsOn: [1, 2],
-    leadsTo: [9, 10], 
+    leadsTo: [9], 
     tasks: [
       {
         id: 'filter-1',
@@ -781,12 +797,12 @@ export const LEVELS: Level[] = [
     title: "Deep Scan Protocol",
     description: "TRACE EVASION PROTOCOL. Manual traversal through nested directories leaves a linear trail for system monitors. Zoxide (Shift+Z) enables quantum jumps—bypassing direct tracing by leveraging a frequency-weighted index of your activity. Your history contains critical system coordinates: /tmp and /etc. Execute immediate teleportation to these zones, evading the security system's linear directory tracing.",
     initialPath: ['root', 'home', 'user', 'docs'],
-    hint: "Press Shift+Z to open Zoxide. Type 'tmp' to filter. Press Enter to jump. Repeat with 'etc'.",
+    hint: "Press Shift+Z to open Zoxide. Type 'tmp' to filter for the target. Press Enter to jump. Repeat with 'etc'. Use Zoxide to bypass manual navigation.",
     coreSkill: "Zoxide Jump (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
     successMessage: "QUANTUM JUMP CALIBRATED.",
     buildsOn: [1],
-    leadsTo: [8, 13],
+    leadsTo: [8, 12],
     tasks: [
       {
         id: 'fuzzy-1',
@@ -814,12 +830,12 @@ export const LEVELS: Level[] = [
     title: "NEURAL CONSTRUCTION & VAULT",
     description: "ACCESS GRANTED. FIREWALL BYPASSED. To survive the next phase, construct a neural network in workspace: create 'neural_net/weights/model.rs'. Simultaneously, secure credentials: locate 'access_key.pem' in datastore and copy it into a new 'vault' directory.",
     initialPath: ['root', 'home', 'user', 'workspace'],
-    hint: "1. Build tree: 'a' → 'neural_net/weights/model.rs'. Enter directories to add them to Zoxide history! 2. Shift+Z to 'uplink' (in .config). Yank 'uplink_v1.conf'. 3. Shift+Z to 'workspace'. Paste in 'neural_net'. 4. Shift+Z to 'datastore'. Create 'vault/'. 5. Find key in 'credentials', yank, paste in 'vault'.",
+    hint: "1. Build tree: 'a' → 'neural_net/weights/model.rs'. Enter directories to add them to Zoxide history! 2. Shift+Z to 'active'. Yank 'uplink_v1.conf'. 3. Shift+Z to 'workspace'. Paste in 'neural_net'. 4. Shift+Z to 'datastore'. Create 'vault/'. 5. Find key in 'credentials', yank, paste in 'vault'.",
     coreSkill: "Challenge: Full System Integration",
     environmentalClue: "BUILD: neural_net/... in workspace | MIGRATE: uplink_v1.conf -> neural_net/",
     successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
     buildsOn: [4, 5, 7],
-    leadsTo: [12],
+    leadsTo: [11],
     timeLimit: 180, // 3 minutes
     efficiencyTip: "Create nested paths instantly: 'a' → 'neural_net/weights/model.rs' creates the entire structure in one command.",
     onEnter: (fs) => {
@@ -857,7 +873,8 @@ export const LEVELS: Level[] = [
         description: "Construct 'neural_net' directory in /workspace",
         check: (state) => {
           const ws = findNodeByName(state.fs, 'workspace');
-          return !!ws?.children?.find(c => c.name === 'neural_net');
+          // STRICT CHECK: Must be a directory, not a file
+          return !!ws?.children?.find(c => c.name === 'neural_net' && c.type === 'dir');
         },
         completed: false
       },
@@ -883,6 +900,7 @@ export const LEVELS: Level[] = [
       }
     ]
   },
+  // ... rest of levels
   {
     id: 9,
     episodeId: 2,
@@ -894,7 +912,7 @@ export const LEVELS: Level[] = [
     environmentalClue: "TARGET: Anomalous file in /tmp | METHOD: Sort by size/time -> Purge",
     successMessage: "GHOST PROCESS TERMINATED.",
     buildsOn: [2, 5],
-    leadsTo: [15, 17],
+    leadsTo: [14, 16],
     timeLimit: 90,
     efficiencyTip: "Sorting is crucial for identifying outliers in large directories. Master sorting by size, time, and name.",
     tasks: [
@@ -932,7 +950,7 @@ export const LEVELS: Level[] = [
     environmentalClue: "TARGET: datastore/credentials/access_key.pem | DESTINATION: datastore/vault/vault_key.pem",
     successMessage: "ASSET SECURED. VAULT ESTABLISHED.",
     buildsOn: [3, 9],
-    leadsTo: [13],
+    leadsTo: [12],
     timeLimit: 120,
     efficiencyTip: "Filter is essential for finding needles in haystacks. Use it to quickly isolate target directories or files.",
     onEnter: (fs) => {
@@ -1014,7 +1032,7 @@ export const LEVELS: Level[] = [
     environmentalClue: "DISGUISE: neural_net → systemd-core | model.rs → kernel.so",
     successMessage: "IDENTITY FORGED. Scanner bypassed.",
     buildsOn: [8],
-    leadsTo: [13],
+    leadsTo: [12],
     timeLimit: 120,
     efficiencyTip: "Rename (r) modifies files in-place—no copy/delete overhead. Navigate to target, press 'r', type new name, Enter.",
     onEnter: (fs) => {
@@ -1081,8 +1099,8 @@ export const LEVELS: Level[] = [
     coreSkill: "Challenge: Root Access Operations",
     environmentalClue: "INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
-    buildsOn: [4, 7, 11],
-    leadsTo: [14],
+    buildsOn: [4, 7, 10],
+    leadsTo: [13],
     maxKeystrokes: 80,
     efficiencyTip: "Use Shift+Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
     onEnter: (fs) => {
@@ -1093,7 +1111,7 @@ export const LEVELS: Level[] = [
                  name: 'vault',
                  type: 'dir',
                  parentId: datastore.id,
-                 children: []
+                 children: [] 
              };
              if (datastore.children) datastore.children.push(vault);
         }
@@ -1142,8 +1160,8 @@ export const LEVELS: Level[] = [
     coreSkill: "Directory Copy (y, p)",
     environmentalClue: "CLONE: daemon/ | LIMIT: 35 keys",
     successMessage: "SHADOW PROCESS SPAWNED.",
-    buildsOn: [13],
-    leadsTo: [15],
+    buildsOn: [12],
+    leadsTo: [14],
     maxKeystrokes: 35,
     efficiencyTip: "Directory copy (y) duplicates entire folder contents recursively. One 'y' + one 'p' = complete clone.",
     tasks: [
@@ -1197,8 +1215,8 @@ export const LEVELS: Level[] = [
     coreSkill: "Challenge: Efficient Trace Removal",
     environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
     successMessage: "TRACES ELIMINATED.",
-    buildsOn: [2, 14],
-    leadsTo: [16],
+    buildsOn: [2, 13],
+    leadsTo: [15],
     maxKeystrokes: 50,
     efficiencyTip: "Direct navigation: 'l' enters, 'h' exits. Delete with 'd', confirm with 'y'. Minimize keystrokes by avoiding unnecessary movements.",
     tasks: [
@@ -1239,8 +1257,8 @@ export const LEVELS: Level[] = [
     coreSkill: "Path Chaining (a with nested paths)",
     environmentalClue: "BUILD: sector_1/zone_A/node_X/ + grid_alpha/relay_9/proxy/ | LIMIT: 120 keys",
     successMessage: "GRID ESTABLISHED.",
-    buildsOn: [4, 15],
-    leadsTo: [17],
+    buildsOn: [4, 14],
+    leadsTo: [16],
     maxKeystrokes: 120,
     efficiencyTip: "Path chaining: 'a' → 'sector_1/zone_A/node_X/' creates entire nested structure in one command. Include trailing '/' for directories.",
     tasks: [
@@ -1278,7 +1296,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Final Challenge: Scorched Earth",
     environmentalClue: "PURGE: datastore, incoming, media, sector_1, grid_alpha | PRESERVE: workspace",
     successMessage: "SYSTEM RESET COMPLETE. LIBERATION ACHIEVED.",
-    buildsOn: [9, 16],
+    buildsOn: [9, 15],
     maxKeystrokes: 70,
     efficiencyTip: "Batch select with Space, then delete all with 'd'. Select multiple directories at once to minimize total operations.",
     tasks: [
