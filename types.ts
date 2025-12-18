@@ -5,7 +5,7 @@ export interface FileNode {
   id: string;
   name: string;
   type: 'file' | 'dir' | 'archive';
-  parentId: string | null; // Null for root
+  parentId?: string | null; // Null for root
   children?: FileNode[]; // Only for type 'dir' or 'archive'
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
