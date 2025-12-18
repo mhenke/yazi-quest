@@ -37,12 +37,16 @@ export const KEYBINDINGS = [
   { keys: ["Ctrl+A"], description: "Select All Files" },
   { keys: ["Ctrl+R"], description: "Invert Selection" },
   { keys: ["gh"], description: "Goto Home Directory" },
-  { keys: ["gc"], description: "Goto Workspace/Config" },
+  { keys: ["gc"], description: "Goto Config Directory" },
+  { keys: ["gw"], description: "Goto Workspace" },
+  { keys: ["gi"], description: "Goto Incoming/Downloads" },
   { keys: ["gt"], description: "Goto Tmp Directory" },
-  { keys: ["gd"], description: "Goto Datastore (Ep2+)" },
+  { keys: ["gd"], description: "Goto Datastore" },
+  { keys: ["gr"], description: "Goto Root Directory" },
+  { keys: ["gD"], description: "Goto Dotfiles" },
   { keys: ["m"], description: "Toggle Sound" },
   { keys: ["Shift+H"], description: "Toggle System Hint" },
-  { keys: ["Shift+M"], description: "Toggle Quest Map" },
+  { keys: ["Alt+M"], description: "Toggle Quest Map" },
   { keys: ["?"], description: "Toggle Help" }
 ];
 
@@ -397,7 +401,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "del-1",
-        description: "Navigate to ~/incoming directory",
+        description: "Navigate to ~/incoming directory (h, l)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "incoming";
@@ -443,11 +447,13 @@ export const LEVELS: Level[] = [
         description: "Navigate to ~/incoming, filter (f) to find 'sector_map.png'",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          if (!currentDir || !currentDir.children) return false;
-          const filter = state.filters[currentDir.id] || "";
-          const visible = filter ? currentDir.children.filter(v => v.name.toLowerCase().includes(filter.toLowerCase())) : currentDir.children;
-          const selected = visible[state.cursorIndex];
-          return currentDir.name === "incoming" && !!filter && selected && selected.name === "sector_map.png";
+          if (currentDir?.name !== 'incoming' || !currentDir.children) return false;
+          const filterString = (state.filters[currentDir.id] || '').toLowerCase();
+          if (!filterString) return false;
+          const visibleFiles = currentDir.children.filter(file =>
+            file.name.toLowerCase().includes(filterString)
+          );
+          return visibleFiles.length === 1 && visibleFiles[0].name === 'sector_map.png';
         },
         completed: false
       },
@@ -495,18 +501,27 @@ export const LEVELS: Level[] = [
     id: 4,
     episodeId: 1,
     title: "Protocol Design",
-    description: "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols—configuration files for network presence. Use create (a) to build a protocols directory in datastore with two configuration files inside.",
-    initialPath: ["root", "home", "user", "docs"],
-    hint: "Press 'a', type 'protocols/' (trailing slash = directory). Enter it with 'l'. Press 'a' again for each file: 'uplink_v1.conf', 'uplink_v2.conf'.",
+    description: "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols. Navigate to the 'datastore' and use create (a) to build a 'protocols' directory with two configuration files inside.",
+    initialPath: null,
+    hint: "From your current location, navigate to the 'datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
     coreSkill: "Create (a)",
-    environmentalClue: "CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf",
+    environmentalClue: "NAVIGATE: datastore | CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf",
     successMessage: "PROTOCOLS ESTABLISHED.",
     buildsOn: [1],
     leadsTo: [5, 8, 16],
     tasks: [
       {
+        id: "nav-to-datastore",
+        description: "Navigate to the 'datastore' directory (h, l)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "datastore";
+        },
+        completed: false
+      },
+      {
         id: "create-1",
-        description: "Construct 'protocols' directory in datastore",
+        description: "Construct 'protocols/' directory in datastore (a)",
         check: (state: GameState) => {
           const datastore = findNodeByName(state.fs, "datastore");
           return !!datastore?.children?.find(r => r.name === "protocols" && r.type === "dir");
@@ -514,29 +529,20 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "nav-protocols",
-        description: "Navigate into 'protocols' sector in datastore",
-        check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "protocols";
-        },
-        completed: false
-      },
-      {
         id: "create-2",
-        description: "Generate 'uplink_v1.conf' in protocols",
+        description: "Enter 'protocols/' (l) and create 'uplink_v1.conf' (a)",
         check: (state: GameState) => {
-          const protocols = findNodeByName(state.fs, "protocols");
-          return !!protocols?.children?.find(r => r.name === "uplink_v1.conf");
+          const protocolsDir = findNodeByName(state.fs, "protocols");
+          return !!protocolsDir?.children?.find(r => r.name === "uplink_v1.conf");
         },
         completed: false
       },
       {
         id: "create-3",
-        description: "Generate 'uplink_v2.conf' in protocols",
+        description: "Generate 'uplink_v2.conf' in the same directory (a)",
         check: (state: GameState) => {
-          const protocols = findNodeByName(state.fs, "protocols");
-          return !!protocols?.children?.find(r => r.name === "uplink_v2.conf");
+          const protocolsDir = findNodeByName(state.fs, "protocols");
+          return !!protocolsDir?.children?.find(r => r.name === "uplink_v2.conf");
         },
         completed: false
       }
@@ -546,11 +552,11 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "EMERGENCY EVACUATION",
-    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active.",
-    initialPath: ["root", "home", "user", "docs"],
-    hint: "1. Navigate to datastore/protocols. 2. Select both uplink files (Space + Space). 3. Cut them (x). 4. Navigate to home (gh) then '.config'. 5. Create 'vault/active/' (a). 6. Enter active and Paste (p).",
-    coreSkill: "Batch Select (Space) & Secure Deployment",
-    environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink_* | DESTINATION: .config/vault/active/",
+    description: "QUARANTINE ALERT. Your activities have triggered a system lockdown. Security daemons are flagging the entire 'protocols' directory. You must evacuate the whole directory to the hidden stronghold in .config/vault/active.",
+    initialPath: null,
+    hint: "1. Select the 'protocols' directory and Cut it (x). 2. Navigate to home (gh) then '.config'. 3. Create the 'vault/active/' sector (a). 4. Enter 'active' and Paste the directory (p).",
+    coreSkill: "Directory Operations (x, p)",
+    environmentalClue: "THREAT: Quarantine lockdown | TARGET: protocols/ | DESTINATION: .config/vault/active/",
     successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
     buildsOn: [3, 4],
     leadsTo: [9],
@@ -575,18 +581,17 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "batch-select",
-        description: "Batch select both uplink files in datastore/protocols (Space twice) and Cut them (x)",
+        id: "cut-directory",
+        description: "The 'protocols' directory is compromised. Cut the entire directory (x).",
         check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
-                 state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
-                 state.clipboard.nodes.some(n => n.name === "uplink_v2.conf");
+                 state.clipboard.nodes.some(n => n.name === "protocols" && n.type === "dir");
         },
         completed: false
       },
       {
-        id: "batch-establish",
-        description: "Establish 'vault/active' sector in .config (create vault/active/)",
+        id: "establish-stronghold",
+        description: "Establish 'vault/active' sector in .config (a)",
         check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(v => v.name === "vault");
@@ -595,14 +600,14 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "batch-paste",
-        description: "Deploy assets to stronghold (navigate to vault/active, then p)",
+        id: "deploy-directory",
+        description: "Deploy the 'protocols' directory to the stronghold (p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
-          const inActive = active?.children?.some(x => x.name === "uplink_v1.conf") && active?.children?.some(x => x.name === "uplink_v2.conf");
-          const protocols = findNodeByName(state.fs, "protocols");
-          const notInProtocols = !protocols?.children?.some(x => x.name.includes("uplink"));
-          return !!inActive && !!notInProtocols;
+          const inActive = active?.children?.some(x => x.name === "protocols" && x.type === "dir");
+          const datastore = findNodeByName(state.fs, "datastore");
+          const notInDatastore = !datastore?.children?.some(x => x.name === "protocols");
+          return !!inActive && !!notInDatastore;
         },
         completed: false
       }
@@ -625,11 +630,19 @@ export const LEVELS: Level[] = [
       {
         id: 'filter-1',
         description: "Activate scanner: Filter (f) for backup_logs.zip'",
-        check: (state) => {
+        check: (state: GameState) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
-            if (currentDir?.name !== 'incoming') return false;
-            const filter = (state.filters[currentDir.id] || '').toLowerCase();
-            return filter === 'backup_l';
+            if (currentDir?.name !== 'incoming' || !currentDir.children) return false;
+
+            const filterString = (state.filters[currentDir.id] || '').toLowerCase();
+            if (!filterString) return false;
+
+            const visibleFiles = currentDir.children.filter(file =>
+                file.name.toLowerCase().includes(filterString)
+            );
+
+            // The filter should uniquely isolate the 'backup_logs.zip' file.
+            return visibleFiles.length === 1 && visibleFiles[0].name === 'backup_logs.zip';
         },
         completed: false
       },
@@ -682,8 +695,8 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "RAPID NAVIGATION",
     description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.",
-    initialPath: ["root", "home", "user", "docs"],
-    hint: "1. Press 'g' then 't' to jump to /tmp (gt). 2. Jump to bottom (Shift+G). 3. Delete 'sys_dump.log' (d). 4. Use Zoxide (Shift+Z → 'etc') to tunnel to /etc.",
+    initialPath: null,
+    hint: "You can jump to `/tmp` instantly using either the `g,t` command sequence or Zoxide (`Shift+Z` -> 'tmp'). Once there, jump to the bottom (`Shift+G`) to find and delete `sys_dump.log`. Finally, use Zoxide to jump to `/etc`.",
     coreSkill: "G-Command (gt) + Zoxide (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
     successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
@@ -732,11 +745,11 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL SYNAPSE & CALIBRATION",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. To survive the next phase, construct a neural network architecture in your workspace. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
-    initialPath: ["root", "home", "user", "workspace"],
-    hint: "1. Construct: 'a' → 'neural_net/'. 2. Calibrate: Enter 'neural_net/' (l). This adds it to Zoxide! 3. Shift+Z to 'active'. Yank 'uplink_v1.conf'. 4. Shift+Z to 'neural_net'. Paste (p). 5. Finally, build 'weights/model.rs' inside.",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. Navigate to your workspace to construct a neural network. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
+    initialPath: null,
+    hint: "1. Navigate to 'workspace'. 2. Construct: 'a' → 'neural_net/'. 3. Calibrate: Enter 'neural_net/' (l). 4. Jump to 'active' (Shift+Z), yank 'uplink_v1.conf', jump back, and paste (p). 5. Finally, build 'weights/model.rs' inside.",
     coreSkill: "Challenge: Full System Integration",
-    environmentalClue: "BUILD: neural_net/... | CALIBRATE: Enter dir to enable Zoxide | MIGRATE: uplink_v1.conf -> neural_net/",
+    environmentalClue: "NAVIGATE: workspace | BUILD: neural_net/... | MIGRATE: uplink_v1.conf -> neural_net/",
     successMessage: "ARCHITECTURE ESTABLISHED. Quantum Link Calibrated.",
     buildsOn: [4, 5, 7],
     leadsTo: [11],
@@ -763,17 +776,17 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "combo-1a",
-        description: "Construct 'neural_net' directory in /workspace",
+        id: "nav-to-workspace",
+        description: "Navigate to the 'workspace' directory",
         check: (state: GameState) => {
-          const workspace = findNodeByName(state.fs, "workspace");
-          return !!workspace?.children?.find(r => r.name === "neural_net");
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "workspace";
         },
         completed: false
       },
       {
-        id: "combo-1-calibrate",
-        description: "Calibrate Quantum Link: Enter 'neural_net' (adds to Shift+Z history)",
+        id: "combo-1-construct-calibrate",
+        description: "Construct 'neural_net/' and Calibrate the Quantum Link by entering it",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "neural_net";
@@ -782,7 +795,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "combo-1c",
-        description: "Quantum Jump to 'active' (Shift+Z), Yank 'uplink_v1.conf', then Jump back to 'neural_net' and Paste (p)",
+        description: "Relocate assets: Jump to 'active', yank 'uplink_v1.conf', jump back, and paste",
         check: (state: GameState) => {
           const neural_net = findNodeByName(state.fs, "neural_net");
           return !!neural_net?.children?.find(r => r.name === "uplink_v1.conf");
@@ -791,7 +804,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "combo-1b",
-        description: "Generate 'weights/model.rs' inside neural_net (path chaining: 'a' → 'weights/model.rs')",
+        description: "Finalize architecture: Create 'weights/model.rs' inside neural_net",
         check: (state: GameState) => {
           const neural_net = findNodeByName(state.fs, "neural_net");
           const weights = neural_net?.children?.find(v => v.name === "weights");
@@ -918,7 +931,7 @@ export const LEVELS: Level[] = [
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     timeLimit: 180,
-    maxKeystrokes: 50,
+    maxKeystrokes: 20,
     efficiencyTip: "Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly. Every keystroke counts!",
     onEnter: (fs: FileNode) => {
       const workspace = findNodeByName(fs, "workspace");
@@ -937,16 +950,40 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "purge-navigate-filter",
-        description: "Navigate to workspace (`gw`) and filter for 'neural' signatures (`f`)",
+        description: "Navigate to workspace and filter for 'neural' signatures",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "workspace" && (state.filters[currentDir.id] || "").includes("neural");
+
+          // 1. Check if we are in the correct directory
+          if (currentDir?.name !== "workspace" || !currentDir.children) {
+            return false;
+          }
+
+          // 2. Get the current filter string for this directory
+          const filterString = (state.filters[currentDir.id] || "").toLowerCase();
+          if (!filterString) return false; // A filter must be active
+
+          // 3. Determine the list of currently visible files based on the filter
+          const visibleFiles = currentDir.children.filter(file =>
+            file.name.toLowerCase().includes(filterString)
+          );
+
+          // 4. Verify the contents of the visible list
+          const hasAllNeuralFiles =
+            visibleFiles.some(f => f.name === "neural_sig_alpha.log") &&
+            visibleFiles.some(f => f.name === "neural_sig_beta.dat") &&
+            visibleFiles.some(f => f.name === "neural_sig_gamma.tmp");
+
+          const hasConfig = visibleFiles.some(f => f.name === "config.json");
+
+          // The task is complete if all three neural files are visible AND the config file is not.
+          return visibleFiles.length === 3 && hasAllNeuralFiles && !hasConfig;
         },
         completed: false
       },
       {
         id: "purge-isolate-extract",
-        description: "Isolate the largest signature by sorting by size (`,s`), then cut it (`x`)",
+        description: "Isolate the largest signature by sorting by size, then cut it",
         check: (state: GameState) => {
           return state.sortBy === "size" &&
                  state.clipboard?.action === "cut" && 
@@ -956,10 +993,19 @@ export const LEVELS: Level[] = [
       },
       {
         id: "purge-relocate",
-        description: "Jump to the `/tmp` buffer (`gt`) to prepare for disposal",
+        description: "Jump to the `/tmp` buffer",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "tmp";
+        },
+        completed: false
+      },
+      {
+        id: "purge-paste",
+        description: "Deposit the corrupted signature in /tmp",
+        check: (state: GameState) => {
+          const tmpDir = findNodeByName(state.fs, "tmp");
+          return !!tmpDir?.children?.some(f => f.name === "neural_sig_alpha.log");
         },
         completed: false
       }
@@ -989,7 +1035,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "ep3-1a",
-        description: "Infiltrate /etc — create 'daemon/' directory (a)",
+        description: "Infiltrate /etc — create 'daemon/' directory",
         check: (state: GameState) => {
           const etc = findNodeByName(state.fs, "etc");
           return !!etc?.children?.find(r => r.name === "daemon" && r.type === "dir");
@@ -998,7 +1044,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-1b",
-        description: "Install controller: create 'config' file in daemon/ (a)",
+        description: "Install controller: create 'config' file in daemon/",
         check: (state: GameState) => {
           const daemon = findNodeByName(state.fs, "daemon");
           return !!daemon?.children?.find(r => r.name === "config");
@@ -1007,7 +1053,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-1c",
-        description: "Relocate vault from hidden stronghold (x) to /tmp (p)",
+        description: "Relocate vault from hidden stronghold to /tmp",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           const config = findNodeByName(state.fs, ".config");
@@ -1023,17 +1069,26 @@ export const LEVELS: Level[] = [
     id: 13,
     episodeId: 3,
     title: "Shadow Copy",
-    description: "REDUNDANCY PROTOCOL. A single daemon is a single point of failure. Clone your daemon directory to create a shadow process—if one terminates, the other persists. Directory copy (y) duplicates entire contents recursively. Execute in under 35 keystrokes or the scheduler detects the fork bomb.",
-    initialPath: ["root", "etc"],
-    hint: "Highlight 'daemon'. Press 'y' to copy the entire directory. Press 'p' to paste—Yazi auto-renames duplicates.",
+    description: "REDUNDANCY PROTOCOL. A single daemon is a single point of failure. Navigate to `/etc` to clone your daemon directory, creating a shadow process that persists if one terminates. Directory copy (y) duplicates entire contents recursively. Execute in under 35 keystrokes or the scheduler detects the fork bomb.",
+    initialPath: null,
+    hint: "Navigate to `/etc`. Highlight 'daemon'. Press 'y' to copy the entire directory. Press 'p' to paste—Yazi auto-renames duplicates.",
     coreSkill: "Directory Copy (y, p)",
-    environmentalClue: "CLONE: daemon/ | LIMIT: 35 keys",
+    environmentalClue: "NAVIGATE: /etc | CLONE: daemon/ | LIMIT: 35 keys",
     successMessage: "SHADOW PROCESS SPAWNED.",
     buildsOn: [12],
     leadsTo: [14],
     maxKeystrokes: 35,
     efficiencyTip: "Directory copy (y) duplicates entire folder contents recursively. One 'y' + one 'p' = complete clone.",
     tasks: [
+      {
+        id: "nav-to-etc",
+        description: "Navigate to the `/etc` directory",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "etc";
+        },
+        completed: false
+      },
       {
         id: "ep3-2a",
         description: "Locate 'daemon' directory in /etc",
@@ -1047,7 +1102,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-2b",
-        description: "Capture directory to clipboard (y)",
+        description: "Capture directory to clipboard",
         check: (state: GameState) => {
           return state.clipboard?.action === "yank" && state.clipboard.nodes.some(d => d.name === "daemon" && d.type === "dir");
         },
@@ -1055,7 +1110,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-2c",
-        description: "Paste to spawn shadow copy in /etc (p)",
+        description: "Paste to spawn shadow copy in /etc",
         check: (state: GameState) => {
           const etc = findNodeByName(state.fs, "etc");
           const daemons = etc?.children?.filter(p => (p.name === "daemon" || p.name.startsWith("daemon")) && p.type === "dir");
@@ -1070,7 +1125,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "Trace Removal",
     description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for security audits. Navigate to datastore, terminate this liability, and return to root before the log rotation daemon archives it. 50 keystrokes. No margin for error.",
-    initialPath: ["root"],
+    initialPath: null,
     hint: "Jump to datastore (gd). Delete 'mission_log.md' (d, y). Return to root (gr).",
     coreSkill: "Challenge: Efficient Trace Removal",
     environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
@@ -1082,7 +1137,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "ep3-3a",
-        description: "Jump to datastore (g, then d)",
+        description: "Jump to datastore",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore";
@@ -1100,7 +1155,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-3c",
-        description: "Return to root (g, then r)",
+        description: "Return to root",
         check: (state: GameState) => state.currentPath.length === 1 && state.currentPath[0] === "root",
         completed: false
       }
