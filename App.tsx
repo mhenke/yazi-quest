@@ -71,30 +71,18 @@ export default function App() {
 
     // Initial Zoxide Data Logic
     const now = Date.now();
-    const initialPathStr = initialLevel.initialPath ? resolvePath(INITIAL_FS, initialLevel.initialPath) : '/';
-    const initialZoxide: Record<string, ZoxideEntry> = initialLevel.initialPath ? {
-        [initialPathStr]: { count: 1, lastAccess: now }
-    } : {};
+    const initialZoxide: Record<string, ZoxideEntry> = {
+        '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
+        '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
+        '/tmp': { count: 15, lastAccess: now - 1800000 },
+        '/etc': { count: 8, lastAccess: now - 86400000 },
+    };
 
-    // Pre-seed Zoxide for levels where it's critical
-    if (initialLevel.id === 2) {
-        initialZoxide['/home/user'] = { count: 10, lastAccess: now };
-    }
-    if (initialLevel.id === 5) {
-        initialZoxide['/home/guest/datastore/protocols'] = { count: 10, lastAccess: now };
-        initialZoxide['/home/guest/.config'] = { count: 5, lastAccess: now };
-    }
-    if (initialLevel.id === 7) {
-        initialZoxide['/tmp'] = { count: 10, lastAccess: now };
-        initialZoxide['/etc'] = { count: 10, lastAccess: now };
-    }
-    if (initialLevel.id === 8) {
-        initialZoxide['/home/guest/.config/uplink'] = { count: 10, lastAccess: now };
-        initialZoxide['/home/guest/datastore'] = { count: 10, lastAccess: now };
-        initialZoxide['/home/guest/workspace'] = { count: 10, lastAccess: now };
-    }
-    if (initialLevel.id === 9) {
-        initialZoxide['/tmp'] = { count: 10, lastAccess: now };
+    if (initialLevel.initialPath) {
+        const initialPathStr = resolvePath(INITIAL_FS, initialLevel.initialPath);
+        if (!initialZoxide[initialPathStr]) {
+            initialZoxide[initialPathStr] = { count: 1, lastAccess: now };
+        }
     }
 
     // Prepare File System with Level-Specific Overrides
@@ -250,26 +238,6 @@ export default function App() {
         const pathStr = resolvePath(fs, targetPath);
 
         let newZoxideData = { ...prev.zoxideData };
-        if (nextLevel.id === 2) {
-            newZoxideData['/home/user'] = { count: 10, lastAccess: now };
-        }
-        if (nextLevel.id === 5) {
-            newZoxideData['/home/guest/datastore/protocols'] = { count: 10, lastAccess: now };
-            newZoxideData['/home/guest/.config'] = { count: 5, lastAccess: now };
-        }
-        if (nextLevel.id === 7) {
-            newZoxideData['/tmp'] = { count: 10, lastAccess: now };
-            newZoxideData['/etc'] = { count: 10, lastAccess: now };
-        }
-        if (nextLevel.id === 8) {
-            newZoxideData['/home/guest/datastore/active'] = { count: 10, lastAccess: now };
-            newZoxideData['/home/guest/datastore'] = { count: 10, lastAccess: now };
-            newZoxideData['/home/guest/workspace'] = { count: 10, lastAccess: now };
-        }
-        if (nextLevel.id === 9) {
-            newZoxideData['/tmp'] = { count: 10, lastAccess: now };
-        }
-
         newZoxideData[pathStr] = {
             count: (newZoxideData[pathStr]?.count || 0) + 1,
             lastAccess: now
@@ -603,20 +571,22 @@ export default function App() {
     gameState: GameState,
     setGameState: React.Dispatch<React.SetStateAction<GameState>>
   ) => {
-    // 1. Calculate Candidates (re-calculating here to handle selection index logic)
+    // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
     const isZoxide = gameState.mode === 'zoxide-jump';
-    // FIX: Update candidates type to handle pathIds for FZF results and string path for zoxide
-    let candidates: { path: string, score?: number, pathIds?: string[] }[] = [];
+    let candidates: { path: string, score: number, pathIds?: string[] }[] = [];
     if (isZoxide) {
       candidates = Object.keys(gameState.zoxideData)
         .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .sort((a, b) => {
+          const diff = b.score - a.score;
+          if (Math.abs(diff) > 0.0001) return diff;
+          return a.path.localeCompare(b.path);
+        })
         .filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
     } else {
-      // FIX: Correct mapping from getRecursiveContent to ensure path is string and pathIds is string[]
       candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
         .filter(c => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
-        .map(c => ({ ...c, path: c.display, pathIds: c.path }));
+        .map(c => ({ path: c.display, score: 0, pathIds: c.path }));
     }
 
     if (e.key === 'Enter') {
@@ -638,10 +608,7 @@ export default function App() {
                 }));
             }
         } else {
-            // FZF: selected.path is relative display string.
-            // FIX: Use pathIds to jump correctly, avoiding any cast
             if (selected.pathIds && Array.isArray(selected.pathIds)) {
-                // Jump to the parent dir of the found file, or the found dir itself
                 const finalPath = selected.pathIds;
                 setGameState(prev => ({ ...prev, mode: 'normal', currentPath: finalPath.slice(0, -1) }));
             }
@@ -908,6 +875,8 @@ export default function App() {
         }
   };
 
+  const isFuzzyActive = gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current';
+
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
       {gameState.showEpisodeIntro && (
@@ -949,7 +918,7 @@ export default function App() {
             }}
         />
 
-        <div className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5">
+        <div className={`bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 ${isFuzzyActive ? 'opacity-30' : 'opacity-100'}`}>
           <div className="font-mono text-sm text-zinc-400">
             {(() => {
               const fullPath = resolvePath(gameState.fs, gameState.currentPath);

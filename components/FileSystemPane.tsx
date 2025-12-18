@@ -33,38 +33,30 @@ interface FileSystemPaneProps {
   onRenameCancel?: () => void;
 }
 
-// Helper for file styling based on extension/name
 const getFileStyle = (node: FileNode) => {
   if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
   if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
   
   const name = node.name.toLowerCase();
   
-  // Images
   if (/\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
     return { color: 'text-purple-400', icon: FileImage };
   }
-  // Executables / Binaries
   if (/\.(exe|bin|sh|bat)$/.test(name)) {
     return { color: 'text-green-400', icon: TerminalIcon };
   }
-  // Archives (File extensions)
   if (/\.(zip|tar|gz|7z|rar)$/.test(name)) {
     return { color: 'text-red-400', icon: FileArchive };
   }
-  // Configs / Data
   if (/\.(json|toml|yaml|conf|ini|xml)$/.test(name)) {
     return { color: 'text-cyan-400', icon: FileCog };
   }
-  // Code
   if (/\.(js|ts|tsx|py|rs|c|cpp|go|java)$/.test(name)) {
     return { color: 'text-yellow-400', icon: FileCode };
   }
-  // Keys / Secrets
   if (/\.(pem|key|lock)$/.test(name)) {
     return { color: 'text-amber-600', icon: FileLock };
   }
-  // Markdown / Text
   if (/\.(md|txt)$/.test(name)) {
     return { color: 'text-zinc-300', icon: FileText };
   }
@@ -72,11 +64,10 @@ const getFileStyle = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
-// Helper for size display
 const formatSize = (node: FileNode) => {
   if (node.type === 'dir' || node.type === 'archive') {
     const count = node.children?.length || 0;
-    return `${count}`; // Just the number for dirs
+    return `${count}`;
   }
   const bytes = node.content?.length || 0;
   if (bytes < 1024) return `${bytes}B`;
@@ -84,32 +75,29 @@ const formatSize = (node: FileNode) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
 };
 
-// Simulated modified time
 const getFakeDate = (node: FileNode) => {
     let hash = 0;
     for (let i = 0; i < node.id.length; i++) {
         hash = ((hash << 5) - hash) + node.id.charCodeAt(i);
         hash |= 0;
     }
-    const now = Date.now();
-    const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000); // within last 30 days
-    const date = new Date(now - offset);
+    const d = Date.now();
+    const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
+    const date = new Date(d - offset);
     return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 
-// Simulated permissions
 const getPermissions = (node: FileNode) => {
     return (node.type === 'dir' || node.type === 'archive') ? 'drwxr-xr-x' : '-rw-r--r--';
 };
 
-// Helper function to generate class names for list items
 const getListItemRowClasses = (
   isActive: boolean,
   isCursor: boolean,
   isMarked: boolean,
   isParent: boolean,
   isCut: boolean,
-  rowText: string // This will be the base text color/font
+  rowText: string
 ): string => {
   let rowBg = '';
   
@@ -121,7 +109,6 @@ const getListItemRowClasses = (
       }
   }
 
-  // Common base classes
   const baseClasses = `px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative`;
 
   return `
@@ -149,11 +136,9 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Scroll into view logic - runs whenever cursor changes, even if inactive (for parent context)
   useEffect(() => {
     if (listRef.current && cursorIndex >= 0) {
       const children = listRef.current.children;
-      // offset check to avoid crashes
       if (children[cursorIndex]) {
         children[cursorIndex].scrollIntoView({ block: 'nearest' });
       }
@@ -162,11 +147,15 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 
   const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
   const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
-  const finalClass = className || `${defaultWidth} ${bgColors}`;
+  
+  // Use className directly if it contains grid layout classes, otherwise append default bg/width
+  const finalClass = className?.includes('grid') 
+    ? className 
+    : `${defaultWidth} ${bgColors} ${className || ''}`;
 
   return (
     <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}>
-      <div ref={listRef} className="flex-1 overflow-y-auto py-1 scrollbar-hide relative">
+      <div ref={listRef} className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${className?.includes('grid') ? className : ''}`}>
         {items.length === 0 && (
           <div className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none">No items</div>
         )}
@@ -175,13 +164,11 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isMarked = selectedIds.includes(item.id);
           const { color, icon: Icon } = getFileStyle(item);
           
-          // Check clipboard status
           const inClipboard = clipboard?.nodes.some(n => n.id === item.id);
           const isCut = inClipboard && clipboard?.action === 'cut';
           const isYank = inClipboard && clipboard?.action === 'yank';
 
-          // Determine row styling base text color/font
-          let rowTextClass = ''; // Base text color for non-marked items
+          let rowTextClass = '';
           if (isCursor) {
               if (isActive) {
                   if (!isMarked) rowTextClass = 'text-white font-medium';
@@ -212,8 +199,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                     <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>{item.name}</span>
                 </span>
 
-                {/* Data Column (Linemode) */}
-                {linemode !== 'none' && (
+                {linemode !== 'none' && !className?.includes('grid') && (
                     <span className={`text-[10px] w-24 text-right font-mono tabular-nums shrink-0 ${isCursor ? 'text-zinc-500' : 'text-zinc-700'}`}>
                         {linemode === 'size' && formatSize(item)}
                         {linemode === 'mtime' && getFakeDate(item)}
@@ -221,14 +207,13 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                     </span>
                 )}
                 
-                {/* Status Indicators */}
                 <div className="flex items-center gap-2 min-w-[20px] justify-end">
                     {isCut && <Scissors size={10} className="text-red-500 animate-pulse" />}
                     {isYank && <Copy size={10} className="text-blue-400" />}
                     {isMarked && <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VIS]</span>}
                 </div>
                 
-                {(item.type === 'dir' || item.type === 'archive') && (
+                {(item.type === 'dir' || item.type === 'archive') && !className?.includes('grid') && (
                     <span className="text-zinc-700 shrink-0">
                         <ChevronRight size={12} strokeWidth={3} />
                     </span>

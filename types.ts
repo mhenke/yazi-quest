@@ -1,4 +1,3 @@
-
 export type NodeType = 'file' | 'dir' | 'archive';
 
 export interface FileNode {
@@ -75,12 +74,14 @@ export interface ZoxideEntry {
 
 // Calculate frecency score with time decay (matches real zoxide)
 // Recent visits weight higher: last hour ×4, last day ×2, last week ÷2, older ÷4
-export function calculateFrecency(entry: ZoxideEntry, now: number = Date.now()): number {
+export function calculateFrecency(entry: ZoxideEntry | undefined, now: number = Date.now()): number {
+  if (!entry) return 0;
+  
   const hourMs = 60 * 60 * 1000;
   const dayMs = 24 * hourMs;
   const weekMs = 7 * dayMs;
 
-  const elapsed = now - entry.lastAccess;
+  const elapsed = now - (entry.lastAccess || now);
 
   let multiplier: number;
   if (elapsed < hourMs) {
@@ -93,7 +94,7 @@ export function calculateFrecency(entry: ZoxideEntry, now: number = Date.now()):
     multiplier = 0.25;
   }
 
-  return entry.count * multiplier;
+  return (entry.count || 0) * multiplier;
 }
 
 export interface GameSettings {

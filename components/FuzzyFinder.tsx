@@ -27,25 +27,33 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
   const isZoxide = gameState.mode === 'zoxide-jump';
   const listRef = useRef<HTMLDivElement>(null);
 
-  // 1. Get Base History/Content
+  // 1. Get Base History/Content with explicit scores, sorted DESCENDING
   const baseItems = useMemo(() => {
     if (isZoxide) {
       return Object.keys(gameState.zoxideData)
         .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => {
+          const diff = b.score - a.score;
+          if (Math.abs(diff) > 0.0001) return diff;
+          return a.path.localeCompare(b.path);
+        });
     } else {
+      // For FZF, we'll assign a default score of 0
       return getRecursiveContent(gameState.fs, gameState.currentPath)
-        // Fix: Explicitly map properties to avoid 'path' name conflict between display string and string array
-        // (getRecursiveContent returns path: string[], we need path: string for filtering)
-        .map(c => ({ path: c.display, pathIds: c.path, type: c.type, id: c.id }));
+        .map(c => ({ 
+            path: c.display, 
+            pathIds: c.path, 
+            type: c.type, 
+            id: c.id, 
+            score: 0 
+        }));
     }
   }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
 
   const totalCount = baseItems.length;
 
-  // 2. Apply Filter
+  // 2. Apply Filter - preserve existing sort order from baseItems
   const filteredCandidates = useMemo(() => {
-    // Fix: line 46 - item.path is now guaranteed to be a string
     return baseItems.filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
   }, [baseItems, gameState.inputBuffer]);
 
@@ -54,13 +62,11 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
   const previewItems = useMemo(() => {
     if (!selectedCandidate) return [];
     if (isZoxide) {
-      // Fix: line 54 - selectedCandidate.path is now string
       const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
       return node?.children || [];
     } else {
         const typedCandidate = selectedCandidate as any;
         if (typedCandidate.pathIds && Array.isArray(typedCandidate.pathIds)) {
-            // Fix: Resolve full path from root for FZF preview items as pathIds are relative to currentPath
             const fullNodePath = [...gameState.currentPath, ...typedCandidate.pathIds];
             const parentPath = fullNodePath.slice(0, -1);
             const parentNode = getNodeByPath(gameState.fs, parentPath);
@@ -80,83 +86,131 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
   }, [gameState.fuzzySelectedIndex, filteredCandidates.length]);
 
   return (
-    <div className="absolute inset-0 z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-150">
+    <div className="absolute inset-0 z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-150 backdrop-blur-md">
       
       {/* Top: Header/Filter Bar */}
-      <div className="px-4 py-2 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
-          <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-600 font-bold">&gt;</span>
-              <span className="text-white font-bold min-w-[20px] px-1 border-b border-orange-500">
-                {gameState.inputBuffer || ' '}
-              </span>
-              <span className="text-zinc-600 font-bold">&lt;</span>
+      <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/80">
+          <div className="flex items-center gap-3 text-lg">
+              <span className="text-orange-500 font-black tracking-tighter">&gt;</span>
+              <div className="relative">
+                <span className="text-white font-bold min-w-[20px] px-1 border-b-2 border-orange-500">
+                  {gameState.inputBuffer || ' '}
+                </span>
+                {!gameState.inputBuffer && (
+                  <span className="absolute left-1 text-zinc-700 animate-pulse">Search...</span>
+                )}
+              </div>
           </div>
-          <div className="text-xs text-zinc-500 font-bold">
-              {filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0} / {totalCount}
+          <div className="flex items-center gap-4">
+              <div className="text-xs text-zinc-500 font-bold flex gap-2">
+                <span className="text-orange-500">{filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0}</span>
+                <span className="opacity-30">/</span>
+                <span>{totalCount}</span>
+              </div>
+              <div className="px-2 py-0.5 bg-zinc-800 rounded text-[10px] font-bold text-zinc-400 tracking-widest uppercase">
+                {isZoxide ? 'Zoxide' : 'FZF'}
+              </div>
           </div>
       </div>
 
-      {/* Top Half: Candidates List */}
-      <div className="h-2/5 overflow-y-auto border-b border-zinc-800" ref={listRef}>
-          {filteredCandidates.length === 0 ? (
-              <div className="p-8 text-center text-zinc-700 italic text-sm">
-                  No matching entries
-              </div>
-          ) : (
-              <div className="flex flex-col">
-                  {filteredCandidates.map((item, idx) => {
-                      const isSelected = idx === (gameState.fuzzySelectedIndex || 0);
-                      return (
-                          <div 
-                              // Fix: line 105 - item.path is string
-                              key={item.path + idx}
-                              className={`
-                                  px-4 py-1.5 flex items-center justify-between text-sm
-                                  ${isSelected ? 'bg-zinc-800 text-white font-bold' : 'text-zinc-500'}
-                              `}
-                          >
-                              <div className="truncate flex-1">
-                                  {item.path}
-                              </div>
-                              {isZoxide && (
-                                  <span className="text-[10px] opacity-30 ml-4">
-                                      {(item as any).score?.toFixed(1)}
-                                  </span>
-                              )}
-                          </div>
-                      );
-                  })}
-              </div>
-          )}
-      </div>
+      {/* Main Content Area: Split List and Preview */}
+      <div className="flex-1 flex flex-col min-h-0">
+        
+        {/* Candidates List */}
+        <div className="h-1/2 overflow-y-auto border-b border-zinc-800 scrollbar-hide" ref={listRef}>
+            {filteredCandidates.length === 0 ? (
+                <div className="p-12 text-center text-zinc-700 italic text-sm">
+                    No matching entries found in {isZoxide ? 'history' : 'this directory'}
+                </div>
+            ) : (
+                <div className="flex flex-col">
+                    {filteredCandidates.map((item, idx) => {
+                        const isSelected = idx === (gameState.fuzzySelectedIndex || 0);
+                        return (
+                            <div 
+                                key={item.path + idx}
+                                className={`
+                                    px-6 py-2 flex items-center text-sm transition-colors duration-100
+                                    ${isSelected ? 'bg-zinc-800/80 text-white' : 'text-zinc-500 hover:text-zinc-400'}
+                                `}
+                            >
+                                <div className="flex items-center gap-4 truncate flex-1">
+                                    {/* Active Indicator */}
+                                    <div className={`w-1 h-4 rounded-full transition-colors ${isSelected ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'bg-transparent'}`} />
+                                    
+                                    {/* Score Pill (Zoxide only) */}
+                                    {isZoxide && (
+                                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded tabular-nums min-w-[36px] text-center ${isSelected ? 'bg-orange-500/20 text-orange-400' : 'text-zinc-600'}`}>
+                                            {(item as any).score?.toFixed(1)}
+                                        </span>
+                                    )}
 
-      {/* Bottom Half: Directory Preview */}
-      <div className="flex-1 flex flex-col min-h-0 bg-black/20">
-          <div className="px-4 py-1 bg-zinc-900/30 text-[10px] uppercase font-bold text-zinc-600 tracking-widest border-b border-zinc-800/50">
-              Content Preview
-          </div>
-          <div className="flex-1 overflow-hidden relative">
-              {previewItems.length > 0 ? (
-                  <FileSystemPane 
-                      items={previewItems}
-                      isActive={false}
-                      selectedIds={[]}
-                      clipboard={null}
-                      linemode="size"
-                      className="w-full bg-transparent px-2"
-                  />
-              ) : (
-                  <div className="flex items-center justify-center h-full text-zinc-800 text-sm italic">
-                      {selectedCandidate ? 'Empty directory' : 'Select a path to preview'}
-                  </div>
+                                    {/* Path Text */}
+                                    <span className={`truncate ${isSelected ? 'font-bold' : ''}`}>
+                                      {item.path}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+
+        {/* Directory Preview Area - More Landscape */}
+        <div className="flex-1 flex flex-col min-h-0 bg-black/40 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] uppercase font-bold text-zinc-600 tracking-[0.2em] flex items-center gap-2">
+                  <div className="w-2 h-2 bg-zinc-800 rounded-sm" />
+                  Preview Contents
+              </div>
+              {selectedCandidate && (
+                <div className="text-[9px] text-zinc-500 font-mono italic truncate max-w-[50%]">
+                  {selectedCandidate.path}
+                </div>
               )}
-          </div>
+            </div>
+            
+            <div className="flex-1 border border-zinc-800/50 rounded overflow-hidden relative shadow-inner">
+                {previewItems.length > 0 ? (
+                    <div className="h-full w-full overflow-hidden">
+                      <FileSystemPane 
+                          items={previewItems}
+                          isActive={false}
+                          selectedIds={[]}
+                          clipboard={null}
+                          linemode="size"
+                          className="w-full bg-transparent grid grid-cols-2 lg:grid-cols-3 gap-x-4 h-full content-start"
+                      />
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-full text-zinc-800 text-sm font-bold tracking-widest uppercase opacity-50">
+                        {selectedCandidate ? 'Empty Directory' : 'Waiting for selection...'}
+                    </div>
+                )}
+            </div>
+        </div>
       </div>
 
-      {/* Tiny Status Footer */}
-      <div className="px-4 py-1 border-t border-zinc-900 text-[9px] text-zinc-700 flex justify-between bg-black">
-          <span>j/k: Navigate • Enter: Select • Esc: Cancel</span>
-          <span className="font-bold tracking-widest uppercase">{isZoxide ? 'ZOXIDE JUMP' : 'FZF FIND'}</span>
+      {/* Pro Status Footer */}
+      <div className="px-6 py-2 border-t border-zinc-900 flex justify-between bg-zinc-950 items-center">
+          <div className="flex gap-4">
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+              <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">J/K</span> Navigate
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+              <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">ENTER</span> Select
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+              <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">ESC</span> Cancel
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1 w-8 bg-zinc-800 rounded-full overflow-hidden">
+               <div className="h-full bg-orange-500 w-2/3" />
+            </div>
+            <span className="text-[10px] font-black text-zinc-600 tracking-tighter italic">YAZI-OS</span>
+          </div>
       </div>
 
     </div>
