@@ -598,11 +598,17 @@ export default function App() {
             const match = allDirs.find(d => d.display === selected.path);
             if (match) {
                 const now = Date.now();
+                
+                // Add specific "Quantum" feedback for Level 7
+                const isQuantum = gameState.levelIndex === 6;
+                const notification = isQuantum ? ">> QUANTUM TUNNEL ESTABLISHED <<" : `Jumped to ${selected.path}`;
+
                 setGameState(prev => ({
                     ...prev,
                     mode: 'normal',
                     currentPath: match.path,
                     cursorIndex: 0,
+                    notification,
                     stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                     zoxideData: { ...prev.zoxideData, [selected.path]: { count: (prev.zoxideData[selected.path]?.count || 0) + 1, lastAccess: now } }
                 }));
@@ -1080,11 +1086,17 @@ export default function App() {
                            const match = allDirs.find(d => d.display === path);
                            if (match) {
                                const now = Date.now();
+                               
+                               // Add specific "Quantum" feedback for Level 7
+                               const isQuantum = gameState.levelIndex === 6;
+                               const notification = isQuantum ? ">> QUANTUM TUNNEL ESTABLISHED <<" : `Jumped to ${path}`;
+
                                setGameState(prev => ({
                                    ...prev,
                                    mode: 'normal',
                                    currentPath: match.path,
                                    cursorIndex: 0,
+                                   notification,
                                    stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                                    zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } }
                                }));
