@@ -69,11 +69,13 @@ export default function App() {
     
     const showIntro = !skipIntro && isEpisodeStart && targetIndex < LEVELS.length;
 
-    // Initial Zoxide Data Logic
+    // Initial Zoxide Data Logic - Pre-seeding for Episode II flow
     const now = Date.now();
     const initialZoxide: Record<string, ZoxideEntry> = {
         '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
+        '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
         '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
+        '/home/guest/datastore/active': { count: 12, lastAccess: now - 900000 },
         '/tmp': { count: 15, lastAccess: now - 1800000 },
         '/etc': { count: 8, lastAccess: now - 86400000 },
     };

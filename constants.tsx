@@ -159,7 +159,7 @@ export const INITIAL_FS: FileNode = {
                 { id: generateId(), name: "ability_scores.csv", type: "file", content: "char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10" },
                 { id: generateId(), name: "about.md", type: "file", content: "# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive" },
                 { id: generateId(), name: "abstract_model.ts", type: "file", content: "export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: \"relu\" | \"sigmoid\";\n}" },
-                { id: generateId(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
+                { id: generateId(), name: "apex_pred predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
                 { id: generateId(), name: "expenditure_log.csv", type: "file", content: "date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee" },
                 { id: generateId(), name: "hyperloop_specs.pdf", type: "file", content: "[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION" },
                 { id: generateId(), name: "pending_updates.log", type: "file", content: "[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active" },
@@ -733,17 +733,17 @@ export const LEVELS: Level[] = [
   {
     id: 8,
     episodeId: 2,
-    title: "NEURAL CONSTRUCTION & VAULT",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. To survive the next phase, construct a neural network in workspace: create 'neural_net/weights/model.rs'. Simultaneously, secure credentials: locate 'access_key.pem' in datastore and copy it into a new 'vault' directory.",
+    title: "NEURAL SYNAPSE & CALIBRATION",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. To survive the next phase, construct a neural network architecture in your workspace. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
     initialPath: ["root", "home", "user", "workspace"],
-    hint: "1. Build tree: 'a' → 'neural_net/weights/model.rs'. Enter directories to add them to Zoxide history! 2. Shift+Z to 'active'. Yank 'uplink_v1.conf'. 3. Shift+Z to 'workspace'. Paste in 'neural_net'. 4. Shift+Z to 'datastore'. Create 'vault/'. 5. Find key in 'credentials', yank, paste in 'vault'.",
+    hint: "1. Construct: 'a' → 'neural_net/'. 2. Calibrate: Enter 'neural_net/' (l). This adds it to Zoxide! 3. Shift+Z to 'active'. Yank 'uplink_v1.conf'. 4. Shift+Z to 'neural_net'. Paste (p). 5. Finally, build 'weights/model.rs' inside.",
     coreSkill: "Challenge: Full System Integration",
-    environmentalClue: "BUILD: neural_net/... in workspace | MIGRATE: uplink_v1.conf -> neural_net/",
-    successMessage: "ARCHITECTURE ESTABLISHED. Assets vaulted.",
+    environmentalClue: "BUILD: neural_net/... | CALIBRATE: Enter dir to enable Zoxide | MIGRATE: uplink_v1.conf -> neural_net/",
+    successMessage: "ARCHITECTURE ESTABLISHED. Quantum Link Calibrated.",
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 180,
-    efficiencyTip: "Create nested paths instantly: 'a' → 'neural_net/weights/model.rs' creates the entire structure in one command.",
+    efficiencyTip: "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
     onEnter: (fs: FileNode) => {
       const datastore = findNodeByName(fs, "datastore");
       if (datastore && datastore.children) {
@@ -769,21 +769,30 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "combo-1b",
-        description: "Generate 'weights/model.rs' inside workspace/neural_net",
+        id: "combo-1-calibrate",
+        description: "Calibrate Quantum Link: Enter 'neural_net' (adds to Shift+Z history)",
         check: (state: GameState) => {
-          const neural_net = findNodeByName(state.fs, "neural_net");
-          const weights = neural_net?.children?.find(v => v.name === "weights");
-          return !!weights?.children?.find(v => v.name === "model.rs" || v.name === "model.ts" || v.name === "model.js");
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "neural_net";
         },
         completed: false
       },
       {
         id: "combo-1c",
-        description: "Copy 'uplink_v1.conf' from datastore/active to workspace/neural_net",
+        description: "Quantum Jump to 'active' (Shift+Z), Yank 'uplink_v1.conf', then Jump back to 'neural_net' and Paste (p)",
         check: (state: GameState) => {
           const neural_net = findNodeByName(state.fs, "neural_net");
           return !!neural_net?.children?.find(r => r.name === "uplink_v1.conf");
+        },
+        completed: false
+      },
+      {
+        id: "combo-1b",
+        description: "Generate 'weights/model.rs' inside neural_net (path chaining: 'a' → 'weights/model.rs')",
+        check: (state: GameState) => {
+          const neural_net = findNodeByName(state.fs, "neural_net");
+          const weights = neural_net?.children?.find(v => v.name === "weights");
+          return !!weights?.children?.find(v => v.name === "model.rs" || v.name === "model.ts" || v.name === "model.js");
         },
         completed: false
       }
