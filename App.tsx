@@ -833,6 +833,28 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Dotfiles not found' }));
             }
         } else if (e.key === 'c') {
+            const configPath = ['root', 'home', 'user', '.config'];
+            const configNode = getNodeByPath(gameState.fs, configPath);
+            if (configNode) {
+                const pathStr = resolvePath(gameState.fs, configPath);
+                setGameState(prev => ({ 
+                    ...prev, 
+                    currentPath: configPath, 
+                    cursorIndex: 0, 
+                    mode: 'normal', 
+                    notification: 'Jumped to config',
+                    zoxideData: {
+                        ...prev.zoxideData,
+                        [pathStr]: {
+                            count: (prev.zoxideData[pathStr]?.count || 0) + 1,
+                            lastAccess: now
+                        }
+                    }
+                }));
+            } else {
+                setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Config not found' }));
+            }
+        } else if (e.key === 'w') {
             const workspacePath = ['root', 'home', 'user', 'workspace'];
             const workspaceNode = getNodeByPath(gameState.fs, workspacePath);
             if (workspaceNode) {
@@ -872,16 +894,16 @@ export default function App() {
                 }
             }));
         } else if (e.key === 'd') {
-            const downloadsPath = ['root', 'home', 'user', 'downloads'];
-            const downloadsNode = getNodeByPath(gameState.fs, downloadsPath);
-            if (downloadsNode) {
-                const pathStr = resolvePath(gameState.fs, downloadsPath);
+            const datastorePath = ['root', 'home', 'user', 'datastore'];
+            const datastoreNode = getNodeByPath(gameState.fs, datastorePath);
+            if (datastoreNode) {
+                const pathStr = resolvePath(gameState.fs, datastorePath);
                 setGameState(prev => ({ 
                     ...prev, 
-                    currentPath: downloadsPath, 
+                    currentPath: datastorePath, 
                     cursorIndex: 0, 
                     mode: 'normal', 
-                    notification: 'Jumped to downloads',
+                    notification: 'Jumped to datastore',
                     zoxideData: {
                         ...prev.zoxideData,
                         [pathStr]: {
@@ -891,27 +913,29 @@ export default function App() {
                     }
                 }));
             } else {
-                const datastorePath = ['root', 'home', 'user', 'datastore'];
-                const datastoreNode = getNodeByPath(gameState.fs, datastorePath);
-                if (datastoreNode) {
-                    const pathStr = resolvePath(gameState.fs, datastorePath);
-                    setGameState(prev => ({ 
-                        ...prev, 
-                        currentPath: datastorePath, 
-                        cursorIndex: 0, 
-                        mode: 'normal', 
-                        notification: 'Jumped to datastore',
-                        zoxideData: {
-                            ...prev.zoxideData,
-                            [pathStr]: {
-                                count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                                lastAccess: now
-                            }
+                setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Datastore not found' }));
+            }
+        } else if (e.key === 'i') {
+            const incomingPath = ['root', 'home', 'user', 'incoming'];
+            const incomingNode = getNodeByPath(gameState.fs, incomingPath);
+            if (incomingNode) {
+                const pathStr = resolvePath(gameState.fs, incomingPath);
+                setGameState(prev => ({ 
+                    ...prev, 
+                    currentPath: incomingPath, 
+                    cursorIndex: 0, 
+                    mode: 'normal', 
+                    notification: 'Jumped to incoming',
+                    zoxideData: {
+                        ...prev.zoxideData,
+                        [pathStr]: {
+                            count: (prev.zoxideData[pathStr]?.count || 0) + 1,
+                            lastAccess: now
                         }
-                    }));
-                } else {
-                    setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Directory not found' }));
-                }
+                    }
+                }));
+            } else {
+                setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Incoming not found' }));
             }
         } else if (e.key === 'r') {
             const rootPath = ['root'];

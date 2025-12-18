@@ -19,8 +19,8 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
             <span className="text-zinc-300">Go to home</span>
           </div>
           <div className="flex gap-3">
-            <span className="text-orange-500 font-bold w-8">D</span>
-            <span className="text-zinc-300">Go to dotfiles</span>
+            <span className="text-orange-500 font-bold w-8">w</span>
+            <span className="text-zinc-300">Go to workspace</span>
           </div>
           <div className="flex gap-3">
             <span className="text-orange-500 font-bold w-8">g</span>
@@ -36,7 +36,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
           </div>
           <div className="flex gap-3">
             <span className="text-orange-500 font-bold w-8">d</span>
-            <span className="text-zinc-300">Go to downloads</span>
+            <span className="text-zinc-300">Go to datastore</span>
           </div>
           <div className="flex gap-3">
             <span className="text-orange-500 font-bold w-8">G</span>
@@ -54,6 +54,13 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
           <span className="text-orange-500 font-bold w-8">t</span>
           <span className="text-zinc-300">Go to tmp</span>
         </div>
+        <div className="flex gap-3">
+          <span className="text-orange-500 font-bold w-8">i</span>
+          <span className="text-zinc-300">Go to incoming</span>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs font-mono mt-1">
         <div className="flex gap-3">
           <span className="text-orange-500 font-bold w-8">r</span>
           <span className="text-zinc-300">Go to root</span>

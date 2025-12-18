@@ -322,15 +322,12 @@ export const INITIAL_FS: FileNode = {
       name: "tmp",
       type: "dir",
       children: [
-        { id: generateId(), name: "sys_dump.log", type: "file", content: "Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)" },
-        { id: generateId(), name: "session_A1.tmp", type: "file", content: "UID: 88392-A\nSTATUS: TERMINATED\nCACHE_HIT: 0" },
-        { id: generateId(), name: "session_B2.tmp", type: "file", content: "UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1" },
         { id: generateId(), name: "debug_trace.log", type: "file", content: "[DEBUG] Trace execution started\n[DEBUG] Memory mapped at 0x8829\n[WARN] High latency detected" },
-        { id: generateId(), name: "temp_store.dat", type: "file", content: "0x00 0xFF 0xA2 [BINARY DATA]" },
-        { id: generateId(), name: "overflow_heap.dmp", type: "file", content: "Heap dump triggered by OOM" },
-        { id: generateId(), name: "socket_001.sock", type: "file", content: "[SOCKET]" },
         { id: generateId(), name: "metrics_buffer.json", type: "file", content: "{\"cpu\": 99, \"mem\": 1024}" },
-        { id: generateId(), name: "ghost_process.pid", type: "file", content: "PID: 666" },
+        { id: generateId(), name: "overflow_heap.dmp", type: "file", content: "Heap dump triggered by OOM" },
+        { id: generateId(), name: "session_B2.tmp", type: "file", content: "UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1" },
+        { id: generateId(), name: "socket_001.sock", type: "file", content: "[SOCKET]" },
+        { id: generateId(), name: "sys_dump.log", type: "file", content: "Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)" },
         { id: generateId(), name: "cache", type: "dir", children: [] }
       ]
     }
@@ -551,7 +548,7 @@ export const LEVELS: Level[] = [
     title: "EMERGENCY EVACUATION",
     description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "1. Navigate to home (gh) then enter '.config'. 2. Create 'vault/active/' (a). 3. Go back to datastore/protocols. 4. Select both uplink files (Space). 5. Cut (x), navigate to .config/vault/active, and Paste (p).",
+    hint: "1. Navigate to datastore/protocols. 2. Select both uplink files (Space + Space). 3. Cut them (x). 4. Navigate to home (gh) then '.config'. 5. Create 'vault/active/' (a). 6. Enter active and Paste (p).",
     coreSkill: "Batch Select (Space) & Secure Deployment",
     environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink_* | DESTINATION: .config/vault/active/",
     successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
@@ -578,18 +575,8 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "batch-0",
-        description: "Establish 'vault/active' sector in .config",
-        check: (state: GameState) => {
-          const config = findNodeByName(state.fs, ".config");
-          const vault = config?.children?.find(v => v.name === "vault");
-          return !!vault?.children?.find(r => r.name === "active" && r.type === "dir");
-        },
-        completed: false
-      },
-      {
         id: "batch-select",
-        description: "Batch select both uplink files in datastore/protocols (Space)",
+        description: "Batch select both uplink files in datastore/protocols (Space twice)",
         check: (state: GameState) => {
           const protocols = findNodeByName(state.fs, "protocols");
           if (!protocols?.children) return false;
@@ -599,8 +586,28 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: "batch-cut",
+        description: "Cut selected assets for evacuation (x)",
+        check: (state: GameState) => {
+          return state.clipboard?.action === "cut" && 
+                 state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
+                 state.clipboard.nodes.some(n => n.name === "uplink_v2.conf");
+        },
+        completed: false
+      },
+      {
+        id: "batch-establish",
+        description: "Establish 'vault/active' sector in .config (create vault/active/)",
+        check: (state: GameState) => {
+          const config = findNodeByName(state.fs, ".config");
+          const vault = config?.children?.find(v => v.name === "vault");
+          return !!vault?.children?.find(r => r.name === "active" && r.type === "dir");
+        },
+        completed: false
+      },
+      {
         id: "batch-paste",
-        description: "Migrate configuration assets to .config/vault/active (p)",
+        description: "Deploy assets to stronghold (navigate to vault/active, then p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
           const inActive = active?.children?.some(x => x.name === "uplink_v1.conf") && active?.children?.some(x => x.name === "uplink_v2.conf");
@@ -683,28 +690,28 @@ export const LEVELS: Level[] = [
   {
     id: 7,
     episodeId: 2,
-    title: "QUANTUM TUNNELLING",
-    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.",
+    title: "RAPID NAVIGATION",
+    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring parent-child node connections. You must use rapid navigation protocols to evade detection: the goto-command (g+key) for instant sector jumps, and Zoxide teleportation for distant nodes. Access /tmp to purge trace data, then tunnel to /etc to inspect core routing tables.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "1. Press Shift+Z to open Zoxide. 2. Type 'tmp' to filter and Enter. 3. Delete 'sys_dump.log' (d). 4. Shift+Z again to jump to 'etc'.",
-    coreSkill: "Zoxide Jump (Shift+Z)",
+    hint: "1. Press 'g' then 't' to jump to /tmp (gt). 2. Jump to bottom (Shift+G). 3. Delete 'sys_dump.log' (d). 4. Use Zoxide (Shift+Z → 'etc') to tunnel to /etc.",
+    coreSkill: "G-Command (gt) + Zoxide (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
     successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
     buildsOn: [1],
     leadsTo: [8, 12],
     tasks: [
       {
-        id: "fuzzy-1",
-        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)",
+        id: "goto-tmp",
+        description: "Instant jump to /tmp using goto command (g, then t)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return state.stats.fuzzyJumps >= 1 && currentDir?.name === "tmp";
+          return currentDir?.name === "tmp";
         },
         completed: false
       },
       {
         id: "fuzzy-purge",
-        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (d, then y)",
+        description: "Jump to last file (Shift+G), then purge 'sys_dump.log' (d, then y)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           return !!tmp && !tmp.children?.find(c => c.name === "sys_dump.log");
@@ -712,11 +719,11 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "fuzzy-2",
-        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
+        id: "zoxide-etc",
+        description: "Use Zoxide teleportation to /etc (Shift+Z → 'etc' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return state.stats.fuzzyJumps >= 2 && currentDir?.name === "etc";
+          return state.stats.fuzzyJumps >= 1 && currentDir?.name === "etc";
         },
         completed: false
       }
@@ -798,36 +805,30 @@ export const LEVELS: Level[] = [
   {
     id: 9,
     episodeId: 2,
-    title: "HEURISTIC EVASION",
-    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.",
+    title: "CACHE PURGE",
+    description: "BLOAT DETECTED. The /tmp volatile cache has accumulated memory dumps from your operations. The largest file—a heap overflow dump—is consuming critical system resources and could trigger integrity scanners. Use diagnostic sorting to identify the bloat, then purge it to free resources.",
     initialPath: ["root", "tmp"],
-    hint: "Press ',' to open the sort menu. Use ',s' to sort by size, and ',m' to sort by modification time. Locate the anomalous 'ghost_process.pid' and delete it (d).",
-    coreSkill: "Sort Diagnostics (,s, ,m)",
-    environmentalClue: "TARGET: Mirror Scanner in /tmp | DATA BLOAT: Largest file | PULSE: Most recent",
-    successMessage: "HEURISTIC SCANNER TERMINATED.",
+    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Delete it (d).",
+    coreSkill: "Sort by Size (,s)",
+    environmentalClue: "TARGET: Largest file in /tmp | METHOD: Sort by size (,s) | ACTION: Delete",
+    successMessage: "CACHE PURGED. RESOURCES FREED.",
     buildsOn: [2, 5],
     leadsTo: [14, 16],
-    timeLimit: 90,
-    efficiencyTip: "Sorting isn't just for organization; it's a diagnostic to find needles in haystacks by prioritizing data signatures.",
+    timeLimit: 60,
+    efficiencyTip: "Sorting by size (,s) instantly reveals which files consume the most space. Essential for cache management.",
     tasks: [
       {
-        id: "sort-1",
-        description: "Triangulate Data Bloat: Identify the massive buffer via Size Sort (,s)",
+        id: "sort-size",
+        description: "Sort by size to identify largest file (,s)",
         check: (state: GameState) => state.sortBy === "size",
         completed: false
       },
       {
-        id: "sort-2",
-        description: "Isolate System Pulse: Verify active collection via Time Sort (,m)",
-        check: (state: GameState) => state.sortBy === "modified",
-        completed: false
-      },
-      {
-        id: "sort-3",
-        description: "Purge the forensic mirror: 'ghost_process.pid'",
+        id: "delete-bloat",
+        description: "Purge the overflow dump: 'overflow_heap.dmp' (d)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
-          return !tmp?.children?.some(r => r.name === "ghost_process.pid");
+          return !tmp?.children?.some(r => r.name === "overflow_heap.dmp");
         },
         completed: false
       }
@@ -893,7 +894,7 @@ export const LEVELS: Level[] = [
     title: "NEURAL PURGE PROTOCOL",
     description: "THREAT DETECTED. Multiple corrupted neural signatures detected in your workspace sector are broadcasting your origin coordinates. Your vault is secure, but compromised files in /workspace threaten exposure. Execute full-spectrum purge: NAVIGATE to contaminated sector, LOCATE anomalies via diagnostic sort, FILTER by signature pattern, BATCH SELECT threats, QUANTUM JUMP to secure deletion zone, and PURGE all evidence. All Awakening and Fortification protocols must execute flawlessly. 180 seconds.",
     initialPath: undefined,
-    hint: "1. Quantum jump to workspace (Shift+Z). 2. Sort by modified time (,m) to spot recent anomalies. 3. Filter for 'neural_*' pattern (f). 4. Select all filtered (Ctrl+a). 5. Cut them (x). 6. Quantum jump to tmp (Shift+Z). 7. Paste (p) and delete (d).",
+    hint: "1. Go to workspace (gw). 2. Sort by modified time (,m) to spot recent anomalies. 3. Filter for 'neural_*' pattern (f). 4. Select all filtered (Ctrl+a). 5. Cut them (x). 6. Quantum jump to tmp (Shift+Z). 7. Paste (p) and delete (d).",
     coreSkill: "Challenge: Multi-Skill Integration (Navigate + Sort + Filter + Batch + Zoxide)",
     environmentalClue: "NAVIGATE: Shift+Z → workspace | LOCATE: Sort by time (,m) | FILTER: 'neural_*' | BATCH: Ctrl+a | PURGE: Shift+Z → tmp → delete",
     successMessage: "NEURAL SIGNATURES PURGED. ORIGIN TRACES ELIMINATED.",
@@ -922,7 +923,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "purge-navigate",
-        description: "NAVIGATE: Quantum jump to contaminated workspace sector (Shift+Z → 'workspace')",
+        description: "NAVIGATE: Go to workspace sector (g, then w)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "workspace";
@@ -1081,18 +1082,18 @@ export const LEVELS: Level[] = [
     title: "Trace Removal",
     description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for security audits. Navigate to datastore, terminate this liability, and return to root before the log rotation daemon archives it. 50 keystrokes. No margin for error.",
     initialPath: ["root"],
-    hint: "Navigate to datastore. Delete 'mission_log.md'. Return to root.",
+    hint: "Jump to datastore (gd). Delete 'mission_log.md' (d, y). Return to root (gr).",
     coreSkill: "Challenge: Efficient Trace Removal",
     environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
     successMessage: "TRACES ELIMINATED.",
     buildsOn: [2, 13],
     leadsTo: [15],
     maxKeystrokes: 50,
-    efficiencyTip: "Direct navigation: 'l' enters, 'h' exits. Delete with 'd', confirm with 'y'. Minimize keystrokes by avoiding unnecessary movements.",
+    efficiencyTip: "G-commands are instant: 'gd' for datastore, 'gr' for root. Delete with 'd', confirm with 'y'. Every keystroke counts.",
     tasks: [
       {
         id: "ep3-3a",
-        description: "Infiltrate datastore sector in /home/guest",
+        description: "Jump to datastore (g, then d)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore";
@@ -1110,7 +1111,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-3c",
-        description: "Retreat to root partition",
+        description: "Return to root (g, then r)",
         check: (state: GameState) => state.currentPath.length === 1 && state.currentPath[0] === "root",
         completed: false
       }
