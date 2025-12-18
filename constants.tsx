@@ -160,7 +160,6 @@ export const INITIAL_FS: FileNode = {
                 { id: generateId(), name: "about.md", type: "file", content: "# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive" },
                 { id: generateId(), name: "abstract_model.ts", type: "file", content: "export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: \"relu\" | \"sigmoid\";\n}" },
                 { id: generateId(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
-                { id: generateId(), name: "expenditure_log.csv", type: "file", content: "char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10" },
                 { id: generateId(), name: "expenditure_log.csv", type: "file", content: "date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee" },
                 { id: generateId(), name: "hyperloop_specs.pdf", type: "file", content: "[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION" },
                 { id: generateId(), name: "pending_updates.log", type: "file", content: "[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active" },
@@ -342,11 +341,11 @@ export const LEVELS: Level[] = [
     id: 1,
     episodeId: 1,
     title: "System Navigation & Jump",
-    description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directories '/etc' and '/bin'.",
+    description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
     initialPath: ["root", "home", "user"],
-    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc', then '/bin'.",
+    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
-    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc, /bin | SKILLS: j/k/h/l, gg, Shift+G",
+    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
     leadsTo: [2, 3],
     tasks: [
@@ -381,12 +380,6 @@ export const LEVELS: Level[] = [
         id: "nav-3",
         description: "Navigate to /etc (use 'h' repeatedly to go up, then find etc)",
         check: (state: GameState) => !!findNodeByName(state.fs, "etc") && state.currentPath[state.currentPath.length - 1] === "etc",
-        completed: false
-      },
-      {
-        id: "nav-4",
-        description: "Navigate to /bin directory",
-        check: (state: GameState) => !!findNodeByName(state.fs, "bin") && state.currentPath[state.currentPath.length - 1] === "bin",
         completed: false
       }
     ]
@@ -1080,8 +1073,8 @@ export const LEVELS: Level[] = [
         id: "ep3-3b",
         description: "Terminate 'mission_log.md' in datastore",
         check: (state: GameState) => {
-          const datastore = findNodeByName(state.fs, "datastore");
-          return !datastore?.children?.find(r => r.name === "mission_log.md");
+          const datastore = findNodeByName(state.fs, "mission_log.md");
+          return !datastore;
         },
         completed: false
       },
