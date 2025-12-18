@@ -688,6 +688,14 @@ export const LEVELS: Level[] = [
     successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
     buildsOn: [1],
     leadsTo: [8, 12],
+    onEnter: (fs: FileNode) => {
+      const tmp = findNodeByName(fs, "tmp");
+      if (tmp && tmp.children) {
+        // Remove any file alphabetically after sys_dump.log to make Shift+G clean
+        tmp.children = tmp.children.filter(c => c.name <= "sys_dump.log" || c.type === 'dir');
+      }
+      return fs;
+    },
     tasks: [
       {
         id: "goto-tmp",
@@ -864,7 +872,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "secure-1",
-        description: "Capture the asset: Yank 'access_key.pem' (y)",
+        description: "Capture the asset: Yank 'access_key.pem' (gr, f, access_key.pem, return, y)",
         check: (state: GameState) => {
           return state.clipboard?.nodes.some(n => n.name === 'access_key.pem');
         },
@@ -905,7 +913,7 @@ export const LEVELS: Level[] = [
     id: 11,
     episodeId: 3,
     title: "NEURAL PURGE PROTOCOL",
-    description: "THREAT DETECTED. Corrupted neural signatures in your workspace are broadcasting your origin. Isolate the largest signature and relocate it to the volatile /tmp buffer using a precise sequence of diagnostic filters and jumps. Stay undetected. 180 seconds.",
+    description: "THREAT DETECTED. A corrupted neural signature in your workspace sector is broadcasting your origin coordinates. The system's diagnostic sweep is imminent. You must navigate to the workspace, isolate the anomalous signature using diagnostic filters and size analysis, extract the largest buffer, and teleport to the /tmp deletion zone. Efficiency is your only shield. 180 seconds.",
     initialPath: undefined,
     hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f). 3. Sort by size (,s). 4. Cut the largest signature (x). 5. Jump to tmp (gt).",
     coreSkill: "Challenge: Multi-Skill Integration (Navigate + Filter + Sort + Cut + Jump)",
