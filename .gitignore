@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI Studio export zips
+yazi-quest-ai-studio-*.zip

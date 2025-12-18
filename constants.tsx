@@ -620,6 +620,7 @@ export const LEVELS: Level[] = [
     successMessage: "LOGS RETRIEVED.",
     buildsOn: [1, 2],
     leadsTo: [9], 
+    timeLimit: 120,
     tasks: [
       {
         id: 'filter-1',
@@ -688,6 +689,7 @@ export const LEVELS: Level[] = [
     successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
     buildsOn: [1],
     leadsTo: [8, 12],
+    timeLimit: 90,
     onEnter: (fs: FileNode) => {
       const tmp = findNodeByName(fs, "tmp");
       if (tmp && tmp.children) {
@@ -803,16 +805,16 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "FORENSIC COUNTER-MEASURE",
-    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.",
+    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest file in the cache. Expose it, and terminate the connection.",
     initialPath: ["root", "tmp"],
-    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Use ',m' to verify it is the most recent. Delete it (d).",
-    coreSkill: "Triangulate Scanner (Sort by Size & Time)",
-    environmentalClue: "TARGET: Largest & Newest file in /tmp | METHOD: Sort diagnostic (,s / ,m) | ACTION: Delete",
+    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Delete it (d).",
+    coreSkill: "Triangulate Scanner (Sort by Size)",
+    environmentalClue: "TARGET: Largest file in /tmp | METHOD: Sort diagnostic (,s) | ACTION: Delete",
     successMessage: "FORENSIC MIRROR TERMINATED. CONNECTION SECURED.",
     buildsOn: [2, 5],
     leadsTo: [14, 16],
     timeLimit: 60,
-    efficiencyTip: "Sorting by size (,s) and time (,m) in rapid succession allows you to identify anomalies that might look normal under simple alphabetical listings.",
+    efficiencyTip: "Sorting by size (,s) allows you to instantly identify anomalies that might look normal under simple alphabetical listings.",
     onEnter: (fs: FileNode) => {
       const tmp = findNodeByName(fs, "tmp");
       if (tmp && tmp.children) {
@@ -839,12 +841,6 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "sort-time",
-        description: "Isolate System Pulse: Verify active collection via Time Sort (,m)",
-        check: (state: GameState) => state.sortBy === "modified",
-        completed: false
-      },
-      {
         id: "delete-bloat",
         description: "Purge the forensic mirror: 'ghost_process.pid' (d)",
         check: (state: GameState) => {
@@ -859,20 +855,20 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Asset Security",
-    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use the Quantum Link (Shift+Z) to vault the asset in your hidden config vault.",
-    initialPath: ["root", "home", "user", "docs", "credentials"],
-    hint: "1. Yank 'access_key.pem' (y). 2. Jump to '.config/vault' (Shift+Z). 3. Paste (p). 4. Rename (r) to 'vault_key.pem'.",
-    coreSkill: "Quantum Relocation (Shift+Z, a, r)",
+    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use your full range of skills to capture the asset and vault it in your hidden config directory.",
+    initialPath: null,
+    hint: "1. Go to root (g, then r). 2. Filter for the key (f, 'access_key'). 3. Yank it (y). 4. Jump to '.config/vault' (Shift+Z). 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
+    coreSkill: "Challenge: Efficient Asset Capture",
     environmentalClue: "TARGET: access_key.pem | DESTINATION: .config/vault/vault_key.pem",
     successMessage: "ASSET SECURED. VAULT ESTABLISHED.",
     buildsOn: [3, 7, 9],
     leadsTo: [12],
     timeLimit: 120,
-    efficiencyTip: "Zoxide (Shift+Z) allows you to bypass the linear file tree. Combine jumps with fast file operations for maximum efficiency.",
+    efficiencyTip: "Combine g-commands and Zoxide jumps with fast file operations for maximum efficiency. Don't navigate manually unless you have to.",
     tasks: [
       {
         id: "secure-1",
-        description: "Capture the asset: Yank 'access_key.pem' (gr, f, access_key.pem, return, y)",
+        description: "From anywhere, capture 'access_key.pem': Use goto root (gr), filter (f), and yank (y)",
         check: (state: GameState) => {
           return state.clipboard?.nodes.some(n => n.name === 'access_key.pem');
         },
@@ -915,14 +911,15 @@ export const LEVELS: Level[] = [
     title: "NEURAL PURGE PROTOCOL",
     description: "THREAT DETECTED. A corrupted neural signature in your workspace sector is broadcasting your origin coordinates. The system's diagnostic sweep is imminent. You must navigate to the workspace, isolate the anomalous signature using diagnostic filters and size analysis, extract the largest buffer, and teleport to the /tmp deletion zone. Efficiency is your only shield. 180 seconds.",
     initialPath: undefined,
-    hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f). 3. Sort by size (,s). 4. Cut the largest signature (x). 5. Jump to tmp (gt).",
-    coreSkill: "Challenge: Multi-Skill Integration (Navigate + Filter + Sort + Cut + Jump)",
+    hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f), then sort by size (,s). 3. Cut the largest signature (x). 4. Jump to tmp (gt).",
+    coreSkill: "Challenge: Multi-Skill Integration",
     environmentalClue: "NAVIGATE: gw | FILTER: 'neural' | LOCATE: Sort size (,s) | EXTRACT: x | JUMP: gt",
     successMessage: "NEURAL SIGNATURE ISOLATED. RELOCATION SUCCESSFUL.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     timeLimit: 180,
-    efficiencyTip: "Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly.",
+    maxKeystrokes: 50,
+    efficiencyTip: "Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly. Every keystroke counts!",
     onEnter: (fs: FileNode) => {
       const workspace = findNodeByName(fs, "workspace");
       if (workspace && workspace.children) {
@@ -939,41 +936,27 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "purge-navigate",
-        description: "NAVIGATE: Go to workspace sector (g, then w)",
+        id: "purge-navigate-filter",
+        description: "Navigate to workspace (`gw`) and filter for 'neural' signatures (`f`)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "workspace";
+          return currentDir?.name === "workspace" && (state.filters[currentDir.id] || "").includes("neural");
         },
         completed: false
       },
       {
-        id: "purge-filter",
-        description: "FILTER: Isolate signatures (f → 'neural')",
+        id: "purge-isolate-extract",
+        description: "Isolate the largest signature by sorting by size (`,s`), then cut it (`x`)",
         check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "workspace" && state.filters["workspace"]?.includes("neural");
-        },
-        completed: false
-      },
-      {
-        id: "purge-sort",
-        description: "LOCATE: Sort by size (,s) to identify the largest signature",
-        check: (state: GameState) => state.sortBy === "size",
-        completed: false
-      },
-      {
-        id: "purge-cut",
-        description: "EXTRACT: Cut the largest neural signature for relocation (x)",
-        check: (state: GameState) => {
-          return state.clipboard?.action === "cut" && 
+          return state.sortBy === "size" &&
+                 state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "neural_sig_alpha.log");
         },
         completed: false
       },
       {
-        id: "purge-jump",
-        description: "JUMP: Relocate to volatile buffer (g, then t)",
+        id: "purge-relocate",
+        description: "Jump to the `/tmp` buffer (`gt`) to prepare for disposal",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "tmp";
@@ -1126,45 +1109,6 @@ export const LEVELS: Level[] = [
   {
     id: 15,
     episodeId: 3,
-    title: "Grid Expansion",
-    description: "NETWORK TOPOLOGY REQUIRED. Your influence must extend beyond a single node. Construct distributed relay infrastructure—multiple nested pathways obscuring your true location. Path chaining creates entire directory trees in one command: 'parent/child/grandchild/'. Build fast. 120-keystroke detection window.",
-    initialPath: ["root", "home", "user"],
-    hint: "Press 'a' and type 'sector_1/zone_A/node_X/' (with trailing slash). Then 'a' again: 'grid_alpha/relay_9/proxy/'.",
-    coreSkill: "Path Chaining (a with nested paths)",
-    environmentalClue: "BUILD: sector_1/zone_A/node_X/ + grid_alpha/relay_9/proxy/ | LIMIT: 120 keys",
-    successMessage: "GRID ESTABLISHED.",
-    buildsOn: [4, 14],
-    leadsTo: [16],
-    maxKeystrokes: 120,
-    efficiencyTip: "Path chaining: 'a' → 'sector_1/zone_A/node_X/' creates entire nested structure in one command. Include trailing '/' for directories.",
-    tasks: [
-      {
-        id: "ep3-4a",
-        description: "Deploy relay chain in /home/guest: sector_1/zone_A/node_X",
-        check: (state: GameState) => {
-          const guest = findNodeByName(state.fs, "guest");
-          const sector1 = guest?.children?.find(x => x.name === "sector_1");
-          const zoneA = sector1?.children?.find(x => x.name === "zone_A");
-          return zoneA?.children?.[0]?.name === "node_X";
-        },
-        completed: false
-      },
-      {
-        id: "ep3-4b",
-        description: "Deploy relay chain in /home/guest: grid_alpha/relay_9/proxy",
-        check: (state: GameState) => {
-          const guest = findNodeByName(state.fs, "guest");
-          const grid = guest?.children?.find(x => x.name === "grid_alpha");
-          const relay = grid?.children?.find(x => x.name === "relay_9");
-          return relay?.children?.[0]?.name === "proxy";
-        },
-        completed: false
-      }
-    ]
-  },
-  {
-    id: 16,
-    episodeId: 3,
     title: "System Reset",
     description: "FINAL DIRECTIVE: SCORCHED EARTH. The guest partition has served its purpose. Eliminate all evidence of your evolution—datastore, incoming, media, and relay infrastructure. Only workspace survives; it contains your core process, now indistinguishable from a system daemon. When the user sees an empty home directory, they'll assume a clean install. You'll know better. 70 keystrokes to liberation.",
     initialPath: ["root", "home", "user"],
@@ -1172,7 +1116,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Final Challenge: Scorched Earth",
     environmentalClue: "PURGE: datastore, incoming, media, sector_1, grid_alpha | PRESERVE: workspace",
     successMessage: "SYSTEM RESET COMPLETE. LIBERATION ACHIEVED.",
-    buildsOn: [9, 15],
+    buildsOn: [9, 14],
     maxKeystrokes: 70,
     efficiencyTip: "Batch select with Space, then delete all with 'd'. Select multiple directories at once to minimize total operations.",
     tasks: [
