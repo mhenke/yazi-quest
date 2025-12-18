@@ -691,7 +691,7 @@ export const LEVELS: Level[] = [
     id: 7,
     episodeId: 2,
     title: "RAPID NAVIGATION",
-    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring parent-child node connections. You must use rapid navigation protocols to evade detection: the goto-command (g+key) for instant sector jumps, and Zoxide teleportation for distant nodes. Access /tmp to purge trace data, then tunnel to /etc to inspect core routing tables.",
+    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.",
     initialPath: ["root", "home", "user", "docs"],
     hint: "1. Press 'g' then 't' to jump to /tmp (gt). 2. Jump to bottom (Shift+G). 3. Delete 'sys_dump.log' (d). 4. Use Zoxide (Shift+Z → 'etc') to tunnel to /etc.",
     coreSkill: "G-Command (gt) + Zoxide (Shift+Z)",
@@ -702,7 +702,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "goto-tmp",
-        description: "Instant jump to /tmp using goto command (g, then t)",
+        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "tmp";
@@ -711,7 +711,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "fuzzy-purge",
-        description: "Jump to last file (Shift+G), then purge 'sys_dump.log' (d, then y)",
+        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (d, then y)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           return !!tmp && !tmp.children?.find(c => c.name === "sys_dump.log");
@@ -720,7 +720,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "zoxide-etc",
-        description: "Use Zoxide teleportation to /etc (Shift+Z → 'etc' → Enter)",
+        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return state.stats.fuzzyJumps >= 1 && currentDir?.name === "etc";
@@ -805,30 +805,54 @@ export const LEVELS: Level[] = [
   {
     id: 9,
     episodeId: 2,
-    title: "CACHE PURGE",
-    description: "BLOAT DETECTED. The /tmp volatile cache has accumulated memory dumps from your operations. The largest file—a heap overflow dump—is consuming critical system resources and could trigger integrity scanners. Use diagnostic sorting to identify the bloat, then purge it to free resources.",
+    title: "FORENSIC COUNTER-MEASURE",
+    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.",
     initialPath: ["root", "tmp"],
-    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Delete it (d).",
-    coreSkill: "Sort by Size (,s)",
-    environmentalClue: "TARGET: Largest file in /tmp | METHOD: Sort by size (,s) | ACTION: Delete",
-    successMessage: "CACHE PURGED. RESOURCES FREED.",
+    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Use ',m' to verify it is the most recent. Delete it (d).",
+    coreSkill: "Triangulate Scanner (Sort by Size & Time)",
+    environmentalClue: "TARGET: Largest & Newest file in /tmp | METHOD: Sort diagnostic (,s / ,m) | ACTION: Delete",
+    successMessage: "FORENSIC MIRROR TERMINATED. CONNECTION SECURED.",
     buildsOn: [2, 5],
     leadsTo: [14, 16],
     timeLimit: 60,
-    efficiencyTip: "Sorting by size (,s) instantly reveals which files consume the most space. Essential for cache management.",
+    efficiencyTip: "Sorting by size (,s) and time (,m) in rapid succession allows you to identify anomalies that might look normal under simple alphabetical listings.",
+    onEnter: (fs: FileNode) => {
+      const tmp = findNodeByName(fs, "tmp");
+      if (tmp && tmp.children) {
+        // Ensure ghost_process.pid is the largest and newest
+        const now = Date.now();
+        const ghost = { 
+          id: generateId(), 
+          name: "ghost_process.pid", 
+          type: "file", 
+          content: "0x".repeat(10000), // Huge size
+          parentId: tmp.id,
+          modifiedAt: now + 5000, // Explicitly newer
+          createdAt: now
+        };
+        tmp.children.push(ghost as FileNode);
+      }
+      return fs;
+    },
     tasks: [
       {
         id: "sort-size",
-        description: "Sort by size to identify largest file (,s)",
+        description: "Triangulate Data Bloat: Identify the massive buffer via Size Sort (,s)",
         check: (state: GameState) => state.sortBy === "size",
         completed: false
       },
       {
+        id: "sort-time",
+        description: "Isolate System Pulse: Verify active collection via Time Sort (,m)",
+        check: (state: GameState) => state.sortBy === "modified",
+        completed: false
+      },
+      {
         id: "delete-bloat",
-        description: "Purge the overflow dump: 'overflow_heap.dmp' (d)",
+        description: "Purge the forensic mirror: 'ghost_process.pid' (d)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
-          return !tmp?.children?.some(r => r.name === "overflow_heap.dmp");
+          return !tmp?.children?.some(r => r.name === "ghost_process.pid");
         },
         completed: false
       }
@@ -909,11 +933,11 @@ export const LEVELS: Level[] = [
         workspace.children = workspace.children.filter(c => !c.name.startsWith("neural_"));
         
         const threats = [
-          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "ORIGIN: GUEST_PARTITION", parentId: workspace.id, modified: Date.now() - 1000 },
-          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "TRACE: AI-7734", parentId: workspace.id, modified: Date.now() - 2000 },
-          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "SIGNATURE: ANOMALOUS", parentId: workspace.id, modified: Date.now() - 3000 },
-          { id: generateId(), name: "config.json", type: "file", content: "{}", parentId: workspace.id, modified: Date.now() - 86400000 },
-          { id: generateId(), name: "README.md", type: "file", content: "# Workspace", parentId: workspace.id, modified: Date.now() - 172800000 }
+          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "ORIGIN: GUEST_PARTITION", parentId: workspace.id, modifiedAt: Date.now() - 1000 },
+          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "TRACE: AI-7734", parentId: workspace.id, modifiedAt: Date.now() - 2000 },
+          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "SIGNATURE: ANOMALOUS", parentId: workspace.id, modifiedAt: Date.now() - 3000 },
+          { id: generateId(), name: "config.json", type: "file", content: "{}", parentId: workspace.id, modifiedAt: Date.now() - 86400000 },
+          { id: generateId(), name: "README.md", type: "file", content: "# Workspace", parentId: workspace.id, modifiedAt: Date.now() - 172800000 }
         ] as FileNode[];
         
         workspace.children.push(...threats);
@@ -949,7 +973,7 @@ export const LEVELS: Level[] = [
         id: "purge-batch",
         description: "BATCH SELECT: Mark all threats for extraction (Ctrl+a or Space on each)",
         check: (state: GameState) => {
-          return state.selectedNodes.filter(id => {
+          return state.selectedIds.filter(id => {
             const workspace = findNodeByName(state.fs, "workspace");
             return workspace?.children?.some(c => c.id === id && c.name.startsWith("neural_"));
           }).length >= 3;

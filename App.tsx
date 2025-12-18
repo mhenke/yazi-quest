@@ -135,7 +135,8 @@ export default function App() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const prevAllTasksCompleteRef = useRef(false);
   const gPressedRef = useRef(false);
-  const notificationTimerRef = useRef<NodeJS.Timeout | null>(null); 
+  // Fix: use ReturnType<typeof setTimeout> instead of NodeJS.Timeout for browser compatibility
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); 
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
