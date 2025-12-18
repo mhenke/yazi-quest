@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
@@ -62,7 +63,8 @@ export default function App() {
     // 5. Setup Initial State
     const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
     const initialLevel = LEVELS[effectiveIndex];
-    const isDevOverride = !!(epParam || lvlParam || tasksParam || debugParam);
+    // Fix: Removed undefined variables O, V, and w from the dev override check.
+    const isDevOverride = !!debugParam;
     
     const isEpisodeStart = targetIndex === 0 || 
                            (targetIndex > 0 && targetIndex < LEVELS.length && LEVELS[targetIndex].episodeId !== LEVELS[targetIndex - 1].episodeId);
@@ -75,7 +77,7 @@ export default function App() {
         '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
         '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
         '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
-        '/home/guest/datastore/active': { count: 12, lastAccess: now - 900000 },
+        '/home/guest/.config': { count: 30, lastAccess: now - 900000 },
         '/tmp': { count: 15, lastAccess: now - 1800000 },
         '/etc': { count: 8, lastAccess: now - 86400000 },
     };

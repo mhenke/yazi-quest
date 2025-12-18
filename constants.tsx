@@ -1,3 +1,4 @@
+
 import { FileNode, Level, Episode, GameState } from './types';
 import { getNodeByPath, findNodeByName } from './utils/fsHelpers';
 
@@ -547,13 +548,13 @@ export const LEVELS: Level[] = [
   {
     id: 5,
     episodeId: 1,
-    title: "Batch Deployment",
-    description: "PROTOCOLS VERIFIED. Moving files one at a time is inefficient—it leaves traces. Visual selection (Space) marks multiple targets before acting. Select both configs, cut them, and deploy to a new 'active' directory. One operation, minimal footprint.",
+    title: "EMERGENCY EVACUATION",
+    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "Create 'active/' in datastore first. Enter 'protocols'. Press Space on each file to select. Press 'x' to cut both. Navigate to 'active'. Press 'p' to paste.",
-    coreSkill: "Visual Selection (Space)",
-    environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
-    successMessage: "BATCH DEPLOYMENT COMPLETE.",
+    hint: "1. Navigate to home (gh) then enter '.config'. 2. Create 'active/' (a). 3. Go back to datastore/protocols. 4. Select both uplink files (Space). 5. Cut (x), navigate to .config/active, and Paste (p).",
+    coreSkill: "Batch Select (Space) & Secure Deployment",
+    environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink_* | DESTINATION: .config/active/",
+    successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (fs: FileNode) => {
@@ -578,16 +579,16 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-0",
-        description: "Establish 'active' deployment zone in datastore",
+        description: "Establish 'active' sector in .config",
         check: (state: GameState) => {
-          const datastore = findNodeByName(state.fs, "datastore");
-          return !!datastore?.children?.find(r => r.name === "active" && r.type === "dir");
+          const config = findNodeByName(state.fs, ".config");
+          return !!config?.children?.find(r => r.name === "active" && r.type === "dir");
         },
         completed: false
       },
       {
         id: "batch-select",
-        description: "Batch select uplink_v1.conf and uplink_v2.conf in protocols (Space)",
+        description: "Batch select both uplink files in datastore/protocols (Space)",
         check: (state: GameState) => {
           const protocols = findNodeByName(state.fs, "protocols");
           if (!protocols?.children) return false;
@@ -597,22 +598,12 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "batch-cut",
-        description: "Cut selection (x)",
-        check: (state: GameState) => {
-          const hasV1 = state.clipboard?.nodes.some(v => v.name === "uplink_v1.conf");
-          const hasV2 = state.clipboard?.nodes.some(v => v.name === "uplink_v2.conf");
-          return state.clipboard?.action === "cut" && !!hasV1 && !!hasV2;
-        },
-        completed: false
-      },
-      {
         id: "batch-paste",
-        description: "Navigate & Paste to 'active' in datastore",
+        description: "Migrate configuration assets to .config/active (p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
-          const protocols = findNodeByName(state.fs, "protocols");
           const inActive = active?.children?.some(x => x.name === "uplink_v1.conf") && active?.children?.some(x => x.name === "uplink_v2.conf");
+          const protocols = findNodeByName(state.fs, "protocols");
           const notInProtocols = !protocols?.children?.some(x => x.name.includes("uplink"));
           return !!inActive && !!notInProtocols;
         },
@@ -745,12 +736,12 @@ export const LEVELS: Level[] = [
     timeLimit: 180,
     efficiencyTip: "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
     onEnter: (fs: FileNode) => {
-      const datastore = findNodeByName(fs, "datastore");
-      if (datastore && datastore.children) {
-        let active = datastore.children.find(r => r.name === "active");
+      const config = findNodeByName(fs, ".config");
+      if (config && config.children) {
+        let active = config.children.find(r => r.name === "active");
         if (!active) {
-          active = { id: generateId(), name: "active", type: "dir", parentId: datastore.id, children: [] };
-          datastore.children.push(active);
+          active = { id: generateId(), name: "active", type: "dir", parentId: config.id, children: [] };
+          config.children.push(active);
         }
         if (active.children && !active.children.find(r => r.name === "uplink_v1.conf")) {
           active.children.push({ id: generateId(), name: "uplink_v1.conf", type: "file", content: "network_mode=active\nsecure=true", parentId: active.id });
@@ -801,33 +792,33 @@ export const LEVELS: Level[] = [
   {
     id: 9,
     episodeId: 2,
-    title: "Signal Triangulation",
-    description: "ANOMALY DETECTED. A ghost process is hiding in the /tmp directory, disguised as a normal session file. It has an unusually large file size and was modified at a different time than the others. Use the sort commands to isolate and purge it.",
+    title: "HEURISTIC EVASION",
+    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.",
     initialPath: ["root", "tmp"],
-    hint: "Press ',' to open the sort menu. Use ',s' to sort by size, and ',m' to sort by modification time. Find the outlier and delete it (d).",
-    coreSkill: "Sort Commands (,s, ,m)",
-    environmentalClue: "TARGET: Anomalous file in /tmp | METHOD: Sort by size/time -> Purge",
-    successMessage: "GHOST PROCESS TERMINATED.",
+    hint: "Press ',' to open the sort menu. Use ',s' to sort by size, and ',m' to sort by modification time. Locate the anomalous 'ghost_process.pid' and delete it (d).",
+    coreSkill: "Sort Diagnostics (,s, ,m)",
+    environmentalClue: "TARGET: Mirror Scanner in /tmp | DATA BLOAT: Largest file | PULSE: Most recent",
+    successMessage: "HEURISTIC SCANNER TERMINATED.",
     buildsOn: [2, 5],
     leadsTo: [14, 16],
     timeLimit: 90,
-    efficiencyTip: "Sorting is crucial for identifying outliers in large directories. Master sorting by size, time, and name.",
+    efficiencyTip: "Sorting isn't just for organization; it's a diagnostic to find needles in haystacks by prioritizing data signatures.",
     tasks: [
       {
         id: "sort-1",
-        description: "Sort by size to identify the large file (,s)",
+        description: "Triangulate Data Bloat: Identify the massive buffer via Size Sort (,s)",
         check: (state: GameState) => state.sortBy === "size",
         completed: false
       },
       {
         id: "sort-2",
-        description: "Sort by modification time to confirm the anomaly (,m)",
+        description: "Isolate System Pulse: Verify active collection via Time Sort (,m)",
         check: (state: GameState) => state.sortBy === "modified",
         completed: false
       },
       {
         id: "sort-3",
-        description: "Purge the anomalous file 'ghost_process.pid'",
+        description: "Purge the forensic mirror: 'ghost_process.pid'",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           return !tmp?.children?.some(r => r.name === "ghost_process.pid");
@@ -840,66 +831,50 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Asset Security",
-    description: "CRITICAL ASSET DETECTED. The 'access_key.pem' provides root-level escalation but is buried in the datastore's noise. Use filter (f) to find the 'credentials' directory, secure the key, create a 'vault' in the datastore, and move the key into it. Rename the key to 'vault_key.pem' to complete the process.",
-    initialPath: ["root", "home", "user", "docs"],
-    hint: "In datastore, press 'f', type 'cred'. Enter the 'credentials' dir. Cut (x) 'access_key.pem'. Go up (h). Create 'vault/' (a). Enter 'vault'. Paste (p). Rename (r) the key.",
-    coreSkill: "Filter, Secure, & Rename",
-    environmentalClue: "TARGET: datastore/credentials/access_key.pem | DESTINATION: datastore/vault/vault_key.pem",
+    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use the Quantum Link (Shift+Z) to vault the asset in your hidden config zone.",
+    initialPath: ["root", "home", "user", "docs", "credentials"],
+    hint: "1. Yank 'access_key.pem' (y). 2. Jump to '.config' (Shift+Z). 3. Create 'vault/' (a). 4. Enter 'vault'. 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
+    coreSkill: "Quantum Relocation (Shift+Z, a, r)",
+    environmentalClue: "TARGET: access_key.pem | DESTINATION: .config/vault/vault_key.pem",
     successMessage: "ASSET SECURED. VAULT ESTABLISHED.",
-    buildsOn: [3, 9],
+    buildsOn: [3, 7, 9],
     leadsTo: [12],
     timeLimit: 120,
-    efficiencyTip: "Filter is essential for finding needles in haystacks. Use it to quickly isolate target directories or files.",
-    onEnter: (fs: FileNode) => {
-      const datastore = findNodeByName(fs, "datastore");
-      if (datastore) {
-        let credentials = datastore.children?.find(r => r.name === "credentials");
-        if (!credentials) {
-          credentials = { id: generateId(), name: "credentials", type: "dir", parentId: datastore.id, children: [] };
-          if (datastore.children) datastore.children.push(credentials);
-        }
-        if (credentials && credentials.children && !credentials.children.find(r => r.name === "access_key.pem")) {
-          credentials.children.push({ id: generateId(), name: "access_key.pem", type: "file", content: "-----BEGIN PRIVATE KEY-----\n...", parentId: credentials.id });
-        }
-      }
-      return fs;
-    },
+    efficiencyTip: "Zoxide (Shift+Z) allows you to bypass the linear file tree. Combine jumps with fast file operations for maximum efficiency.",
     tasks: [
       {
         id: "secure-1",
-        description: "Use filter (f) to find the 'credentials' directory",
+        description: "Capture the asset: Yank 'access_key.pem' (y)",
         check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "datastore" && !!state.filters[currentDir.id];
+          return state.clipboard?.nodes.some(n => n.name === 'access_key.pem');
         },
         completed: false
       },
       {
         id: "secure-2",
-        description: "Create a 'vault' directory in the datastore",
+        description: "Quantum Jump to hidden stronghold (Shift+Z → '.config' → Enter)",
         check: (state: GameState) => {
-          const datastore = findNodeByName(state.fs, "datastore");
-          return !!datastore?.children?.find(r => r.name === "vault" && r.type === "dir");
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === ".config";
         },
         completed: false
       },
       {
         id: "secure-3",
-        description: "Move 'access_key.pem' from 'credentials' to 'vault'",
+        description: "Establish 'vault' and deploy asset (a, enter, p)",
         check: (state: GameState) => {
-          const vault = findNodeByName(state.fs, "vault");
-          const credentials = findNodeByName(state.fs, "credentials");
-          const inVault = !!vault?.children?.find(D => D.name === "access_key.pem");
-          const notInCreds = !credentials?.children?.find(D => D.name === "access_key.pem");
-          return inVault && notInCreds;
+          const config = findNodeByName(state.fs, ".config");
+          const vault = config?.children?.find(r => r.name === "vault");
+          return !!vault?.children?.some(n => n.name === "access_key.pem" || n.name === "vault_key.pem");
         },
         completed: false
       },
       {
         id: "secure-4",
-        description: "Rename 'access_key.pem' to 'vault_key.pem'",
+        description: "Camouflage identity: Rename asset to 'vault_key.pem' (r)",
         check: (state: GameState) => {
-          const vault = findNodeByName(state.fs, "vault");
+          const config = findNodeByName(state.fs, ".config");
+          const vault = config?.children?.find(v => v.name === "vault");
           return !!vault?.children?.find(r => r.name === "vault_key.pem");
         },
         completed: false
@@ -960,7 +935,7 @@ export const LEVELS: Level[] = [
     title: "Root Access",
     description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. The /etc directory—territory previously forbidden—demands infiltration. Install a daemon controller in /etc for persistence, then relocate your vault to /tmp where volatile storage masks assets from integrity scans. 80 keystrokes maximum.",
     initialPath: ["root"],
-    hint: "Navigate to /etc. Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Return to datastore. Cut 'vault' (x). Navigate to /tmp. Paste (p).",
+    hint: "Navigate to /etc. Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Return to .config. Cut 'vault' (x). Navigate to /tmp. Paste (p).",
     coreSkill: "Challenge: Root Access Operations",
     environmentalClue: "INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
@@ -969,9 +944,9 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 80,
     efficiencyTip: "Use Shift+Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
     onEnter: (fs: FileNode) => {
-      const datastore = findNodeByName(fs, "datastore");
-      if (datastore && datastore.children && !datastore.children.find(d => d.name === "vault")) {
-        datastore.children.push({ id: generateId(), name: "vault", type: "dir", parentId: datastore.id, children: [] });
+      const config = findNodeByName(fs, ".config");
+      if (config && config.children && !config.children.find(d => d.name === "vault")) {
+        config.children.push({ id: generateId(), name: "vault", type: "dir", parentId: config.id, children: [] });
       }
       return fs;
     },
@@ -996,13 +971,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-1c",
-        description: "Relocate vault from datastore (x) to /tmp (p)",
+        description: "Relocate vault from hidden stronghold (x) to /tmp (p)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
-          const datastore = findNodeByName(state.fs, "datastore");
+          const config = findNodeByName(state.fs, ".config");
           const inTmp = !!tmp?.children?.find(D => D.name === "vault");
-          const notInDs = !datastore?.children?.find(D => D.name === "vault");
-          return inTmp && notInDs;
+          const notInStronghold = !config?.children?.find(D => D.name === "vault");
+          return inTmp && notInStronghold;
         },
         completed: false
       }
