@@ -636,7 +636,8 @@ export default function App() {
     }
 
     if (e.key === 'Enter') {
-      const selected = candidates[gameState.fuzzySelectedIndex];
+      const idx = gameState.fuzzySelectedIndex || 0;
+      const selected = candidates[idx];
       if (selected) {
         if (isZoxide) {
             // Find path ids from string
@@ -658,11 +659,17 @@ export default function App() {
                     stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                     zoxideData: { ...prev.zoxideData, [selected.path]: { count: (prev.zoxideData[selected.path]?.count || 0) + 1, lastAccess: now } }
                 }));
+            } else {
+              // Fallback: If for some reason match is not found, close dialog
+              setGameState(prev => ({ ...prev, mode: 'normal' }));
             }
         } else {
             if (selected.pathIds && Array.isArray(selected.pathIds)) {
-                const finalPath = selected.pathIds;
+                // FZF Logic: Combine current path with selected relative pathIds
+                const finalPath = [...gameState.currentPath, ...selected.pathIds];
                 setGameState(prev => ({ ...prev, mode: 'normal', currentPath: finalPath.slice(0, -1) }));
+            } else {
+                setGameState(prev => ({ ...prev, mode: 'normal' }));
             }
         }
       } else {
@@ -671,9 +678,9 @@ export default function App() {
     } else if (e.key === 'Escape') {
       setGameState(prev => ({ ...prev, mode: 'normal' }));
     } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
-      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.min(candidates.length - 1, prev.fuzzySelectedIndex + 1) }));
+      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1) }));
     } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
-      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.max(0, prev.fuzzySelectedIndex - 1) }));
+      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1) }));
     } else if (e.key === 'Backspace') {
       setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1), fuzzySelectedIndex: 0 }));
     } else if (e.key.length === 1) {
@@ -1149,18 +1156,22 @@ export default function App() {
                                    stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                                    zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } }
                                }));
+                           } else {
+                               setGameState(prev => ({ ...prev, mode: 'normal' }));
                            }
                        } else {
                            // FZF Recursive logic (simplified for immediate update)
                            const candidates = getRecursiveContent(gameState.fs, gameState.currentPath);
                            const match = candidates.find(c => c.display === path);
                            if (match) {
-                               const fullPath = match.path;
+                               const fullPath = [...gameState.currentPath, ...match.path];
                                setGameState(prev => ({ 
                                    ...prev, 
                                    mode: 'normal', 
                                    currentPath: fullPath.slice(0, -1),
                                }));
+                           } else {
+                               setGameState(prev => ({ ...prev, mode: 'normal' }));
                            }
                        }
                    }}
