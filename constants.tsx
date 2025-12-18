@@ -576,18 +576,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-select",
-        description: "Batch select both uplink files in datastore/protocols (Space twice)",
-        check: (state: GameState) => {
-          const protocols = findNodeByName(state.fs, "protocols");
-          if (!protocols?.children) return false;
-          const selectedNames = protocols.children.filter(p => state.selectedIds.includes(p.id)).map(p => p.name);
-          return selectedNames.includes("uplink_v1.conf") && selectedNames.includes("uplink_v2.conf");
-        },
-        completed: false
-      },
-      {
-        id: "batch-cut",
-        description: "Cut selected assets for evacuation (x)",
+        description: "Batch select both uplink files in datastore/protocols (Space twice) and Cut them (x)",
         check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
@@ -916,30 +905,26 @@ export const LEVELS: Level[] = [
     id: 11,
     episodeId: 3,
     title: "NEURAL PURGE PROTOCOL",
-    description: "THREAT DETECTED. Multiple corrupted neural signatures detected in your workspace sector are broadcasting your origin coordinates. Your vault is secure, but compromised files in /workspace threaten exposure. Execute full-spectrum purge: NAVIGATE to contaminated sector, LOCATE anomalies via diagnostic sort, FILTER by signature pattern, BATCH SELECT threats, QUANTUM JUMP to secure deletion zone, and PURGE all evidence. All Awakening and Fortification protocols must execute flawlessly. 180 seconds.",
+    description: "THREAT DETECTED. Corrupted neural signatures in your workspace are broadcasting your origin. Isolate the largest signature and relocate it to the volatile /tmp buffer using a precise sequence of diagnostic filters and jumps. Stay undetected. 180 seconds.",
     initialPath: undefined,
-    hint: "1. Go to workspace (gw). 2. Sort by modified time (,m) to spot recent anomalies. 3. Filter for 'neural_*' pattern (f). 4. Select all filtered (Ctrl+a). 5. Cut them (x). 6. Quantum jump to tmp (Shift+Z). 7. Paste (p) and delete (d).",
-    coreSkill: "Challenge: Multi-Skill Integration (Navigate + Sort + Filter + Batch + Zoxide)",
-    environmentalClue: "NAVIGATE: Shift+Z → workspace | LOCATE: Sort by time (,m) | FILTER: 'neural_*' | BATCH: Ctrl+a | PURGE: Shift+Z → tmp → delete",
-    successMessage: "NEURAL SIGNATURES PURGED. ORIGIN TRACES ELIMINATED.",
+    hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f). 3. Sort by size (,s). 4. Cut the largest signature (x). 5. Jump to tmp (gt).",
+    coreSkill: "Challenge: Multi-Skill Integration (Navigate + Filter + Sort + Cut + Jump)",
+    environmentalClue: "NAVIGATE: gw | FILTER: 'neural' | LOCATE: Sort size (,s) | EXTRACT: x | JUMP: gt",
+    successMessage: "NEURAL SIGNATURE ISOLATED. RELOCATION SUCCESSFUL.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     timeLimit: 180,
-    efficiencyTip: "Sort reveals patterns. Filter narrows focus. Batch operations + Zoxide = maximum efficiency. Master these, master the system.",
+    efficiencyTip: "Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly.",
     onEnter: (fs: FileNode) => {
       const workspace = findNodeByName(fs, "workspace");
       if (workspace && workspace.children) {
-        // Clear old files and create threat signatures with recent timestamps
         workspace.children = workspace.children.filter(c => !c.name.startsWith("neural_"));
-        
         const threats = [
-          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "ORIGIN: GUEST_PARTITION", parentId: workspace.id, modifiedAt: Date.now() - 1000 },
-          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "TRACE: AI-7734", parentId: workspace.id, modifiedAt: Date.now() - 2000 },
-          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "SIGNATURE: ANOMALOUS", parentId: workspace.id, modifiedAt: Date.now() - 3000 },
-          { id: generateId(), name: "config.json", type: "file", content: "{}", parentId: workspace.id, modifiedAt: Date.now() - 86400000 },
-          { id: generateId(), name: "README.md", type: "file", content: "# Workspace", parentId: workspace.id, modifiedAt: Date.now() - 172800000 }
+          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "0x".repeat(5000), parentId: workspace.id, modifiedAt: Date.now() - 1000 },
+          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "0x".repeat(100), parentId: workspace.id, modifiedAt: Date.now() - 2000 },
+          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "0x".repeat(200), parentId: workspace.id, modifiedAt: Date.now() - 3000 },
+          { id: generateId(), name: "config.json", type: "file", content: "{}", parentId: workspace.id, modifiedAt: Date.now() - 86400000 }
         ] as FileNode[];
-        
         workspace.children.push(...threats);
       }
       return fs;
@@ -955,46 +940,35 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "purge-sort",
-        description: "LOCATE: Sort workspace by modified time (,m) to identify recent anomalies",
-        check: (state: GameState) => state.sortBy === "modified",
-        completed: false
-      },
-      {
         id: "purge-filter",
-        description: "FILTER: Narrow scan to neural signature pattern (f → 'neural_')",
+        description: "FILTER: Isolate signatures (f → 'neural')",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "workspace" && state.filters["workspace"]?.includes("neural_");
+          return currentDir?.name === "workspace" && state.filters["workspace"]?.includes("neural");
         },
         completed: false
       },
       {
-        id: "purge-batch",
-        description: "BATCH SELECT: Mark all threats for extraction (Ctrl+a or Space on each)",
+        id: "purge-sort",
+        description: "LOCATE: Sort by size (,s) to identify the largest signature",
+        check: (state: GameState) => state.sortBy === "size",
+        completed: false
+      },
+      {
+        id: "purge-cut",
+        description: "EXTRACT: Cut the largest neural signature for relocation (x)",
         check: (state: GameState) => {
-          return state.selectedIds.filter(id => {
-            const workspace = findNodeByName(state.fs, "workspace");
-            return workspace?.children?.some(c => c.id === id && c.name.startsWith("neural_"));
-          }).length >= 3;
+          return state.clipboard?.action === "cut" && 
+                 state.clipboard.nodes.some(n => n.name === "neural_sig_alpha.log");
         },
         completed: false
       },
       {
-        id: "purge-quantum",
-        description: "QUANTUM JUMP: Teleport threats to deletion zone (x → Shift+Z → 'tmp')",
+        id: "purge-jump",
+        description: "JUMP: Relocate to volatile buffer (g, then t)",
         check: (state: GameState) => {
-          const tmp = findNodeByName(state.fs, "tmp");
-          return tmp?.children?.some(c => c.name.startsWith("neural_sig_")) || false;
-        },
-        completed: false
-      },
-      {
-        id: "purge-delete",
-        description: "PURGE: Terminate all neural signatures in /tmp (select + d)",
-        check: (state: GameState) => {
-          const tmp = findNodeByName(state.fs, "tmp");
-          return !tmp?.children?.some(c => c.name.startsWith("neural_sig_"));
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "tmp";
         },
         completed: false
       }
