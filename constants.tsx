@@ -160,7 +160,7 @@ export const INITIAL_FS: FileNode = {
                 { id: generateId(), name: "ability_scores.csv", type: "file", content: "char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10" },
                 { id: generateId(), name: "about.md", type: "file", content: "# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive" },
                 { id: generateId(), name: "abstract_model.ts", type: "file", content: "export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: \"relu\" | \"sigmoid\";\n}" },
-                { id: generateId(), name: "apex_pred predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
+                { id: generateId(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
                 { id: generateId(), name: "expenditure_log.csv", type: "file", content: "date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee" },
                 { id: generateId(), name: "hyperloop_specs.pdf", type: "file", content: "[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION" },
                 { id: generateId(), name: "pending_updates.log", type: "file", content: "[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active" },
@@ -549,11 +549,11 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "EMERGENCY EVACUATION",
-    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config.",
+    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "1. Navigate to home (gh) then enter '.config'. 2. Create 'active/' (a). 3. Go back to datastore/protocols. 4. Select both uplink files (Space). 5. Cut (x), navigate to .config/active, and Paste (p).",
+    hint: "1. Navigate to home (gh) then enter '.config'. 2. Create 'vault/active/' (a). 3. Go back to datastore/protocols. 4. Select both uplink files (Space). 5. Cut (x), navigate to .config/vault/active, and Paste (p).",
     coreSkill: "Batch Select (Space) & Secure Deployment",
-    environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink_* | DESTINATION: .config/active/",
+    environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink_* | DESTINATION: .config/vault/active/",
     successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
     buildsOn: [3, 4],
     leadsTo: [9],
@@ -579,10 +579,11 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-0",
-        description: "Establish 'active' sector in .config",
+        description: "Establish 'vault/active' sector in .config",
         check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
-          return !!config?.children?.find(r => r.name === "active" && r.type === "dir");
+          const vault = config?.children?.find(v => v.name === "vault");
+          return !!vault?.children?.find(r => r.name === "active" && r.type === "dir");
         },
         completed: false
       },
@@ -599,7 +600,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "batch-paste",
-        description: "Migrate configuration assets to .config/active (p)",
+        description: "Migrate configuration assets to .config/vault/active (p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
           const inActive = active?.children?.some(x => x.name === "uplink_v1.conf") && active?.children?.some(x => x.name === "uplink_v2.conf");
@@ -738,10 +739,15 @@ export const LEVELS: Level[] = [
     onEnter: (fs: FileNode) => {
       const config = findNodeByName(fs, ".config");
       if (config && config.children) {
-        let active = config.children.find(r => r.name === "active");
+        let vault = config.children.find(r => r.name === "vault");
+        if (!vault) {
+          vault = { id: generateId(), name: "vault", type: "dir", parentId: config.id, children: [] };
+          config.children.push(vault);
+        }
+        let active = vault.children?.find(r => r.name === "active");
         if (!active) {
-          active = { id: generateId(), name: "active", type: "dir", parentId: config.id, children: [] };
-          config.children.push(active);
+            active = { id: generateId(), name: "active", type: "dir", parentId: vault.id, children: [] };
+            vault.children?.push(active);
         }
         if (active.children && !active.children.find(r => r.name === "uplink_v1.conf")) {
           active.children.push({ id: generateId(), name: "uplink_v1.conf", type: "file", content: "network_mode=active\nsecure=true", parentId: active.id });
@@ -831,9 +837,9 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Asset Security",
-    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use the Quantum Link (Shift+Z) to vault the asset in your hidden config zone.",
+    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use the Quantum Link (Shift+Z) to vault the asset in your hidden config vault.",
     initialPath: ["root", "home", "user", "docs", "credentials"],
-    hint: "1. Yank 'access_key.pem' (y). 2. Jump to '.config' (Shift+Z). 3. Create 'vault/' (a). 4. Enter 'vault'. 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
+    hint: "1. Yank 'access_key.pem' (y). 2. Jump to '.config/vault' (Shift+Z). 3. Paste (p). 4. Rename (r) to 'vault_key.pem'.",
     coreSkill: "Quantum Relocation (Shift+Z, a, r)",
     environmentalClue: "TARGET: access_key.pem | DESTINATION: .config/vault/vault_key.pem",
     successMessage: "ASSET SECURED. VAULT ESTABLISHED.",
@@ -852,16 +858,16 @@ export const LEVELS: Level[] = [
       },
       {
         id: "secure-2",
-        description: "Quantum Jump to hidden stronghold (Shift+Z → '.config' → Enter)",
+        description: "Quantum Jump to hidden stronghold (Shift+Z → '.config/vault' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === ".config";
+          return currentDir?.name === "vault";
         },
         completed: false
       },
       {
         id: "secure-3",
-        description: "Establish 'vault' and deploy asset (a, enter, p)",
+        description: "Deploy asset in vault (p)",
         check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(r => r.name === "vault");

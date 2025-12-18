@@ -63,7 +63,6 @@ export default function App() {
     // 5. Setup Initial State
     const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
     const initialLevel = LEVELS[effectiveIndex];
-    // Fix: Removed undefined variables O, V, and w from the dev override check.
     const isDevOverride = !!debugParam;
     
     const isEpisodeStart = targetIndex === 0 || 
@@ -78,6 +77,7 @@ export default function App() {
         '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
         '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
         '/home/guest/.config': { count: 30, lastAccess: now - 900000 },
+        '/home/guest/.config/vault': { count: 25, lastAccess: now - 800000 },
         '/tmp': { count: 15, lastAccess: now - 1800000 },
         '/etc': { count: 8, lastAccess: now - 86400000 },
     };
@@ -398,6 +398,14 @@ export default function App() {
         case 'y': 
             if (gameState.selectedIds.length > 0) {
                 const nodes = getVisibleItems(gameState).filter(n => gameState.selectedIds.includes(n.id));
+                // Add path-aware protection check for CUT
+                if (e.key === 'x') {
+                    const protectedItem = nodes.map(node => isProtected(gameState.fs, gameState.currentPath, node, gameState.levelIndex, 'cut')).find(res => res !== null);
+                    if (protectedItem) {
+                        setGameState(prev => ({ ...prev, notification: protectedItem }));
+                        return;
+                    }
+                }
                 setGameState(prev => ({
                     ...prev,
                     clipboard: { nodes, action: e.key === 'x' ? 'cut' : 'yank', originalPath: prev.currentPath },
@@ -405,6 +413,14 @@ export default function App() {
                     notification: `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`
                 }));
             } else if (currentItem) {
+                // Add path-aware protection check for CUT
+                if (e.key === 'x') {
+                    const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'cut');
+                    if (protection) {
+                        setGameState(prev => ({ ...prev, notification: protection }));
+                        return;
+                    }
+                }
                 setGameState(prev => ({
                     ...prev,
                     clipboard: { nodes: [currentItem], action: e.key === 'x' ? 'cut' : 'yank', originalPath: prev.currentPath },
@@ -553,7 +569,7 @@ export default function App() {
         const protectedItem = gameState.pendingDeleteIds
             .map(id => {
                 const item = visibleItems.find(i => i.id === id);
-                return item ? isProtected(item, gameState.levelIndex, 'delete') : null;
+                return item ? isProtected(gameState.fs, gameState.currentPath, item, gameState.levelIndex, 'delete') : null;
             })
             .find(res => res !== null);
 
@@ -567,6 +583,32 @@ export default function App() {
         }
     } else if (e.key === 'n' || e.key === 'Escape') {
         setGameState(prev => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
+    }
+  }, []);
+
+  const handleOverwriteConfirmKeyDown = useCallback((
+    e: KeyboardEvent,
+    gameState: GameState,
+    setGameState: React.Dispatch<React.SetStateAction<GameState>>
+  ) => {
+    if (e.key === 'y' || e.key === 'Enter') {
+        if (gameState.pendingOverwriteNode) {
+            // 1. Delete the existing node (regardless of type)
+            let newFs = deleteNode(gameState.fs, gameState.currentPath, gameState.pendingOverwriteNode.id);
+            
+            // 2. Add the new node with same name but new ID/content
+            // Note: createPath was originally called with inputBuffer. 
+            // We use inputBuffer again here.
+            const result = createPath(newFs, gameState.currentPath, gameState.inputBuffer);
+            
+            if (result.error) {
+                setGameState(prev => ({ ...prev, mode: 'normal', notification: result.error, inputBuffer: '', pendingOverwriteNode: null }));
+            } else {
+                setGameState(prev => ({ ...prev, fs: result.fs, mode: 'normal', inputBuffer: '', notification: 'REPLACED', pendingOverwriteNode: null }));
+            }
+        }
+    } else if (e.key === 'n' || e.key === 'Escape') {
+        setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '', pendingOverwriteNode: null }));
     }
   }, []);
 
@@ -697,6 +739,9 @@ export default function App() {
     }
     else if (gameState.mode === 'confirm-delete') {
         handleConfirmDeleteModeKeyDown(e, gameState, setGameState, visibleItems);
+    }
+    else if (gameState.mode === 'overwrite-confirm') {
+        handleOverwriteConfirmKeyDown(e, gameState, setGameState);
     }
     else if (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') {
         handleFuzzyModeKeyDown(e, gameState, setGameState);
@@ -852,7 +897,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, isLastLevel, getVisibleItems, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
+  }, [gameState, currentLevel, isLastLevel, getVisibleItems, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleOverwriteConfirmKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -905,7 +950,7 @@ export default function App() {
       )}
 
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
-      {gameState.showHint && <HintModal hint={currentLevel.hint} stage={gameState.hintStage} onClose={() => setGameState(prev => ({ ...prev, showHint: false, hintStage: 0 }))} />}
+      {gameState.showHint && <HintModal hint={currentLevel.hint} stage={gameState.hintStage} onClose={() => setGameState(prev => ({ ...prev, showHelp: false, hintStage: 0 }))} />}
       {gameState.showInfoPanel && <InfoPanel file={currentItem} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
       {gameState.mode === 'confirm-delete' && <ConfirmationModal title="Confirm Delete" detail={`Permanently delete ${gameState.selectedIds.length > 0 ? gameState.selectedIds.length + ' items' : currentItem?.name}?`} />}
       {showSuccessToast && <SuccessToast message={currentLevel.successMessage || "Sector Cleared"} levelTitle={currentLevel.title} onDismiss={advanceLevel} onClose={() => setShowSuccessToast(false)} />}

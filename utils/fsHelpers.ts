@@ -139,7 +139,7 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
   if (parent) {
     if (!parent.children) parent.children = [];
     
-    // Check for collision with exact same name and type
+    // Check for collision with exact same name AND type
     const collision = parent.children.find(c => c.name === newNode.name && c.type === newNode.type);
     
     // Ensure the new node has a fresh ID and deep-copied structure
@@ -167,7 +167,7 @@ export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNo
         let counter = 1;
         let candidateName = `${baseName}_${counter}${ext}`;
 
-        // Find a unique name
+        // Find a unique name (matching both name and type)
         while (parent.children.find(c => c.name === candidateName && c.type === nodeToInsert.type)) {
             counter++;
             candidateName = `${baseName}_${counter}${ext}`;
@@ -200,8 +200,14 @@ export const renameNode = (root: FileNode, parentPathIds: string[], nodeId: stri
   if (parent && parent.children) {
       const node = parent.children.find(c => c.id === nodeId);
       if (node) {
+          // Only block if another node with SAME name AND SAME type exists
+          const collision = parent.children.find(c => c.id !== nodeId && c.name === newName && c.type === node.type);
+          if (collision) {
+              return root; // Fail silently or could return error
+          }
+
           node.name = newName;
-          node.modifiedAt = Date.now(); // Update modified time on rename
+          node.modifiedAt = Date.now(); 
           // Re-sort after rename
           parent.children.sort((a, b) => {
             const typeScore = (t: string) => {
@@ -219,28 +225,15 @@ export const renameNode = (root: FileNode, parentPathIds: string[], nodeId: stri
   return newRoot;
 };
 
-// Helper to find an existing child by name and type
-const findExistingChild = (parent: FileNode, name: string, type?: 'dir' | 'file'): FileNode | null => {
-    if (!parent.children) return null;
-    return parent.children.find(c => c.name === name && (type ? c.type === type : true)) || null;
-};
-
 // Helper to generate collision info
-const generateCollisionInfo = (name: string, type: 'dir' | 'file'): { collision: true, collisionNode: FileNode } => {
+const generateCollisionInfo = (existingNode: FileNode): { collision: true, collisionNode: FileNode } => {
     return {
         collision: true,
-        collisionNode: {
-            id: Math.random().toString(36).substr(2, 9),
-            name: name,
-            type: type,
-            parentId: null,
-            children: type === 'dir' ? [] : undefined,
-            content: type === 'file' ? '' : undefined
-        }
+        collisionNode: existingNode
     };
 };
 
-// Updated createPath: Returns collision info instead of auto-renaming
+// Updated createPath: Allows coexistence if types are different
 export const createPath = (root: FileNode, parentPathIds: string[], pathStr: string): { fs: FileNode, error?: string, createdName?: string, collision?: boolean, collisionNode?: FileNode } => {
   const newRoot = cloneFS(root);
   let currentPath = [...parentPathIds];
@@ -258,28 +251,25 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
     const parent = getNodeByPath(newRoot, currentPath);
     if (!parent) return { fs: root, error: "Path resolution failed" };
     
-    // Check for existing node with SAME name
-    // We don't check type yet, because if a file exists with the same name where we need a dir, that's an error.
-    const existingAny = parent.children?.find(c => c.name === name);
+    // Check for existing node with SAME name AND SAME type
+    const existingTyped = parent.children?.find(c => c.name === name && c.type === type);
 
-    if (existingAny) {
-      if (!isLast) { // Intermediate segment (must be dir)
-         if (existingAny.type !== 'dir') {
-            return { fs: root, error: `Cannot create directory inside file: ${name}` };
-         }
-         // It exists and is valid (dir), traverse into it
-         currentPath.push(existingAny.id);
+    if (existingTyped) {
+      if (!isLast) { // Intermediate segment (matched an existing dir)
+         currentPath.push(existingTyped.id);
          continue;
-      } else { // Last segment
-         // Collision check: Only strict collision if same type
-         if (existingAny.type === type) {
-             return { fs: root, ...generateCollisionInfo(name, type) };
-         } else {
-             // Name exists but different type (e.g. dir 'foo' vs file 'foo'). 
-             // In many FS this is an error. Let's return error for safety.
-             return { fs: root, error: `Name conflict: ${name} already exists as a ${existingAny.type}` };
-         }
+      } else { // Last segment (collision with identical type)
+         return { fs: root, ...generateCollisionInfo(existingTyped) };
       }
+    } else {
+        // If it's an intermediate segment and we didn't find a DIRECTORY with that name
+        // (but might have found a FILE), we need to block it
+        if (!isLast) {
+            const existingFile = parent.children?.find(c => c.name === name && c.type !== 'dir');
+            if (existingFile) {
+                return { fs: root, error: `Cannot create directory path through file: ${name}` };
+            }
+        }
     }
     
     // Create new node
@@ -322,24 +312,27 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
 
 // --- Protection Helpers ---
 
-const checkCoreSystemProtection = (name: string): string | null => {
-  if (['root', 'home', 'guest', 'etc', 'tmp', 'workspace'].includes(name)) {
-      return `System integrity protection: ${name}`;
+const checkCoreSystemProtection = (path: string, node: FileNode): string | null => {
+  // Only protect directories if they are the intended system ones
+  if (node.type === 'dir' && ['/', '/home', '/home/guest', '/etc', '/tmp', '/bin'].includes(path)) {
+      return `System integrity protection: ${path}`;
   }
   return null;
 };
 
-const checkEpisodeStructuralProtection = (name: string, levelIndex: number): string | null => {
-  if (['datastore', 'incoming', 'media'].includes(name)) {
-      if (levelIndex < 16) return `Sector protected by admin policy: ${name}`;
+const checkEpisodeStructuralProtection = (path: string, node: FileNode, levelIndex: number): string | null => {
+  if (node.type === 'dir' && ['/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace'].includes(path)) {
+      if (levelIndex < 15) return `Sector protected by admin policy: ${node.name}`;
   }
   return null;
 };
 
-const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
+const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
   const name = node.name;
+  const isDir = node.type === 'dir';
+  const isFile = node.type === 'file';
 
-  if (name === 'access_key.pem') {
+  if (name === 'access_key.pem' && isFile) {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
       // Allow cut on Level 8 (index 7) and Level 10 (index 9)
       if (action === 'cut' && ![7, 9].includes(levelIndex)) {
@@ -347,89 +340,69 @@ const checkLevelSpecificAssetProtection = (node: FileNode, levelIndex: number, a
       }
   }
 
-  if (name === 'mission_log.md') {
+  if (name === 'mission_log.md' && isFile) {
       // Allow deletion on Level 14 (index 13)
       if (action === 'delete' && levelIndex !== 13) return "Mission log required for validation.";
-      if (action === 'cut' && levelIndex !== 10) return "Log file locked.";
   }
 
-  if (name === 'target_map.png') {
+  if (name === 'target_map.png' && isFile) {
       if (action === 'delete') return "Intel target. Do not destroy.";
       if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
   }
 
-  if (name === 'protocols') {
-      // Allow deletion on Level 5 (index 4)
+  // Specifically protect the protocols directory if it's the intended one
+  if (path === '/home/guest/datastore/protocols' && isDir) {
       if (action === 'delete' && levelIndex < 4) return "Protocol directory required for uplink deployment.";
       if (action === 'cut' && levelIndex < 4) return "Protocol directory anchored.";
   }
 
-  if (name === 'uplink_v1.conf') {
-      if (action === 'delete' && levelIndex < 8) return "Uplink configuration required for neural network.";
-      if (action === 'cut' && levelIndex !== 4) return "Uplink config locked.";
+  if (name === 'uplink_v1.conf' && isFile) {
+      if (action === 'delete' && levelIndex < 7) return "Uplink configuration required for neural network.";
   }
-  if (name === 'uplink_v2.conf') {
-      if (action === 'delete' && levelIndex < 5) return "Uplink configuration required for deployment.";
-      if (action === 'cut' && levelIndex !== 4) return "Uplink config locked.";
+  if (name === 'uplink_v2.conf' && isFile) {
+      if (action === 'delete' && levelIndex < 4) return "Uplink configuration required for deployment.";
   }
 
-  if (name === 'active') {
-      if (action === 'delete' && levelIndex < 8) return "Active deployment zone required.";
-      if (action === 'cut' && levelIndex < 8) return "Deployment zone anchored.";
+  // Path-aware check for active zone
+  if (path === '/home/guest/.config/vault/active' && isDir) {
+      if (action === 'delete' && levelIndex < 7) return "Active deployment zone required.";
+      if (action === 'cut' && levelIndex < 7) return "Deployment zone anchored.";
   }
 
-  if (name === 'neural_net') {
-      if (action === 'delete' && levelIndex < 12) return "Neural network architecture required.";
-      if (action === 'cut' && levelIndex < 12) return "Neural network anchored.";
-      // Allow rename on Level 11 (index 10)
-      if (action === 'rename' && levelIndex !== 10) return "Neural network identity locked.";
+  if (name === 'neural_net' && isDir && path.includes('workspace')) {
+      if (action === 'delete' && levelIndex < 11) return "Neural network architecture required.";
+      if (action === 'cut' && levelIndex < 11) return "Neural network anchored.";
   }
 
-  if (name === 'weights') {
-      if (action === 'delete' && levelIndex < 12) return "Weights directory required for camouflage.";
-      if (action === 'cut' && levelIndex < 12) return "Weights anchored.";
+  if (path === '/home/guest/.config/vault' && isDir) {
+      if (action === 'delete' && levelIndex < 12) return "Vault required for privilege escalation.";
+      if (action === 'cut' && levelIndex < 9) return "Vault anchored until escalation.";
   }
 
-  if (name === 'model.rs') {
-      if (action === 'delete' && levelIndex < 12) return "Model file required for camouflage.";
-      if (action === 'cut' && levelIndex < 12) return "Model file anchored.";
-      // Allow rename on Level 11 (index 10)
-      if (action === 'rename' && levelIndex !== 10) return "Model identity locked.";
+  if (name === 'backup_logs.zip' && node.type === 'archive') {
+      if (action === 'delete' && levelIndex < 9) return "Archive required for intelligence extraction.";
+      if (action === 'cut' && levelIndex < 9) return "Archive anchored.";
   }
 
-  if (name === 'vault') {
-      if (action === 'delete' && levelIndex < 13) return "Vault required for privilege escalation.";
-      if (action === 'cut' && levelIndex !== 12) return "Vault anchored until escalation.";
-  }
-
-  if (name === 'backup_logs.zip') {
-      if (action === 'delete' && levelIndex < 10) return "Archive required for intelligence extraction.";
-      if (action === 'cut' && levelIndex < 10) return "Archive anchored.";
-  }
-
-  if (name === 'daemon') {
-      if (action === 'delete' && levelIndex < 14) return "Daemon controller required for redundancy.";
-      if (action === 'cut' && levelIndex < 14) return "Daemon anchored until cloning.";
-  }
-
-  if (name === 'sector_1' || name === 'grid_alpha') {
-      if (action === 'delete' && levelIndex !== 15) return "Relay infrastructure required for final phase.";
+  if (name === 'daemon' && isDir && path.includes('/etc/')) {
+      if (action === 'delete' && levelIndex < 13) return "Daemon controller required for redundancy.";
+      if (action === 'cut' && levelIndex < 13) return "Daemon anchored until cloning.";
   }
 
   return null;
 };
 
-export const isProtected = (node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
-  const name = node.name;
+export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
+  const fullPath = resolvePath(root, [...parentPathIds, node.id]);
   let protectionMessage: string | null;
 
-  protectionMessage = checkCoreSystemProtection(name);
+  protectionMessage = checkCoreSystemProtection(fullPath, node);
   if (protectionMessage) return protectionMessage;
 
-  protectionMessage = checkEpisodeStructuralProtection(name, levelIndex);
+  protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
   if (protectionMessage) return protectionMessage;
 
-  protectionMessage = checkLevelSpecificAssetProtection(node, levelIndex, action);
+  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
   if (protectionMessage) return protectionMessage;
 
   return null;
