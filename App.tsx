@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
@@ -90,10 +89,9 @@ export default function App() {
         initialZoxide['/etc'] = { count: 10, lastAccess: now };
     }
     if (initialLevel.id === 8) {
-        // Updated to use the new secure path
         initialZoxide['/home/guest/.config/uplink'] = { count: 10, lastAccess: now };
         initialZoxide['/home/guest/datastore'] = { count: 10, lastAccess: now };
-        initialZoxide['/home/guest/workspace'] = { count: 10, lastAccess: now }; // Pre-seed workspace so user can jump back
+        initialZoxide['/home/guest/workspace'] = { count: 10, lastAccess: now };
     }
     if (initialLevel.id === 9) {
         initialZoxide['/tmp'] = { count: 10, lastAccess: now };
@@ -198,7 +196,6 @@ export default function App() {
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
-    // If all tasks are complete, stop the timer immediately
     const allTasksComplete = currentLevel.tasks.every(t => t.completed);
     if (allTasksComplete) return;
 
@@ -206,7 +203,6 @@ export default function App() {
 
     const timer = setInterval(() => {
       setGameState(prev => {
-        // Double check completion inside interval to prevent race conditions
         const level = LEVELS[prev.levelIndex];
         if (level.tasks.every(t => t.completed)) {
             clearInterval(timer);
@@ -250,15 +246,9 @@ export default function App() {
         }
 
         const now = Date.now();
-        // Don't teleport unless new episode or explicit override
         const targetPath = isNewEp ? (nextLevel.initialPath || prev.currentPath) : prev.currentPath;
         const pathStr = resolvePath(fs, targetPath);
 
-        const notification = nextLevel.id === 2 
-            ? "SYSTEM PROTOCOL: VIEWPORT SORTING RESET TO NATURAL" 
-            : null;
-
-        // Pre-seed Zoxide for specific levels (CRITICAL for progression)
         let newZoxideData = { ...prev.zoxideData };
         if (nextLevel.id === 2) {
             newZoxideData['/home/user'] = { count: 10, lastAccess: now };
@@ -272,7 +262,7 @@ export default function App() {
             newZoxideData['/etc'] = { count: 10, lastAccess: now };
         }
         if (nextLevel.id === 8) {
-            newZoxideData['/home/guest/.config/uplink'] = { count: 10, lastAccess: now };
+            newZoxideData['/home/guest/datastore/active'] = { count: 10, lastAccess: now };
             newZoxideData['/home/guest/datastore'] = { count: 10, lastAccess: now };
             newZoxideData['/home/guest/workspace'] = { count: 10, lastAccess: now };
         }
@@ -280,7 +270,6 @@ export default function App() {
             newZoxideData['/tmp'] = { count: 10, lastAccess: now };
         }
 
-        // Add current path visit
         newZoxideData[pathStr] = {
             count: (newZoxideData[pathStr]?.count || 0) + 1,
             lastAccess: now
@@ -298,7 +287,7 @@ export default function App() {
             sortBy: 'natural', 
             sortDirection: 'asc',
             linemode: 'size', 
-            notification: notification,
+            notification: null,
             selectedIds: [],
             showHint: false,
             hintStage: 0, 
@@ -427,7 +416,6 @@ export default function App() {
                 const inverted = allIds.filter(id => !gameState.selectedIds.includes(id));
                 setGameState(prev => ({ ...prev, selectedIds: inverted, notification: `Inverted selection (${inverted.length} items)` }));
             } else if (gameState.selectedIds.length > 1) {
-                // Bulk rename not fully implemented in UI yet
                 setGameState(prev => ({ ...prev, notification: "Batch rename not available in this version" }));
             } else if (currentItem) {
                 e.preventDefault();
@@ -499,7 +487,6 @@ export default function App() {
         case 'f': 
             e.preventDefault();
             setGameState(prev => {
-                // Preserve existing filter for this directory if it exists
                 const currentDir = getNodeByPath(prev.fs, prev.currentPath);
                 const existingFilter = currentDir ? (prev.filters[currentDir.id] || '') : '';
                 return { ...prev, mode: 'filter', inputBuffer: existingFilter };
@@ -611,6 +598,70 @@ export default function App() {
     }
   }, []);
 
+  const handleFuzzyModeKeyDown = useCallback((
+    e: KeyboardEvent,
+    gameState: GameState,
+    setGameState: React.Dispatch<React.SetStateAction<GameState>>
+  ) => {
+    // 1. Calculate Candidates (re-calculating here to handle selection index logic)
+    const isZoxide = gameState.mode === 'zoxide-jump';
+    // FIX: Update candidates type to handle pathIds for FZF results and string path for zoxide
+    let candidates: { path: string, score?: number, pathIds?: string[] }[] = [];
+    if (isZoxide) {
+      candidates = Object.keys(gameState.zoxideData)
+        .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+    } else {
+      // FIX: Correct mapping from getRecursiveContent to ensure path is string and pathIds is string[]
+      candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
+        .filter(c => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
+        .map(c => ({ ...c, path: c.display, pathIds: c.path }));
+    }
+
+    if (e.key === 'Enter') {
+      const selected = candidates[gameState.fuzzySelectedIndex];
+      if (selected) {
+        if (isZoxide) {
+            // Find path ids from string
+            const allDirs = getAllDirectories(gameState.fs);
+            const match = allDirs.find(d => d.display === selected.path);
+            if (match) {
+                const now = Date.now();
+                setGameState(prev => ({
+                    ...prev,
+                    mode: 'normal',
+                    currentPath: match.path,
+                    cursorIndex: 0,
+                    stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                    zoxideData: { ...prev.zoxideData, [selected.path]: { count: (prev.zoxideData[selected.path]?.count || 0) + 1, lastAccess: now } }
+                }));
+            }
+        } else {
+            // FZF: selected.path is relative display string.
+            // FIX: Use pathIds to jump correctly, avoiding any cast
+            if (selected.pathIds && Array.isArray(selected.pathIds)) {
+                // Jump to the parent dir of the found file, or the found dir itself
+                const finalPath = selected.pathIds;
+                setGameState(prev => ({ ...prev, mode: 'normal', currentPath: finalPath.slice(0, -1) }));
+            }
+        }
+      } else {
+          setGameState(prev => ({ ...prev, mode: 'normal' }));
+      }
+    } else if (e.key === 'Escape') {
+      setGameState(prev => ({ ...prev, mode: 'normal' }));
+    } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
+      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.min(candidates.length - 1, prev.fuzzySelectedIndex + 1) }));
+    } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
+      setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.max(0, prev.fuzzySelectedIndex - 1) }));
+    } else if (e.key === 'Backspace') {
+      setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1), fuzzySelectedIndex: 0 }));
+    } else if (e.key.length === 1) {
+      setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + e.key, fuzzySelectedIndex: 0 }));
+    }
+  }, []);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
 
@@ -670,8 +721,11 @@ export default function App() {
     else if (gameState.mode === 'confirm-delete') {
         handleConfirmDeleteModeKeyDown(e, gameState, setGameState, visibleItems);
     }
-    // Zoxide/FZF mode is now handled by the FuzzyFinder component
+    else if (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') {
+        handleFuzzyModeKeyDown(e, gameState, setGameState);
+    }
     else if (gameState.mode === 'g-command') {
+        const now = Date.now();
         if (e.key === 'Escape') {
             setGameState(prev => ({ ...prev, mode: 'normal' }));
         } else if (e.key === 'g') {
@@ -682,7 +736,6 @@ export default function App() {
         } else if (e.key === 'h') {
             const homePath = ['root', 'home', 'user'];
             const pathStr = resolvePath(gameState.fs, homePath);
-            const now = Date.now();
             setGameState(prev => ({ 
                 ...prev, 
                 currentPath: homePath, 
@@ -702,7 +755,6 @@ export default function App() {
             const dotfilesNode = getNodeByPath(gameState.fs, dotfilesPath);
             if (dotfilesNode) {
                 const pathStr = resolvePath(gameState.fs, dotfilesPath);
-                const now = Date.now();
                 setGameState(prev => ({ 
                     ...prev, 
                     currentPath: dotfilesPath, 
@@ -725,7 +777,6 @@ export default function App() {
             const workspaceNode = getNodeByPath(gameState.fs, workspacePath);
             if (workspaceNode) {
                 const pathStr = resolvePath(gameState.fs, workspacePath);
-                const now = Date.now();
                 setGameState(prev => ({ 
                     ...prev, 
                     currentPath: workspacePath, 
@@ -746,7 +797,6 @@ export default function App() {
         } else if (e.key === 't') {
             const tmpPath = ['root', 'tmp'];
             const pathStr = resolvePath(gameState.fs, tmpPath);
-            const now = Date.now();
             setGameState(prev => ({ 
                 ...prev, 
                 currentPath: tmpPath, 
@@ -766,7 +816,6 @@ export default function App() {
             const downloadsNode = getNodeByPath(gameState.fs, downloadsPath);
             if (downloadsNode) {
                 const pathStr = resolvePath(gameState.fs, downloadsPath);
-                const now = Date.now();
                 setGameState(prev => ({ 
                     ...prev, 
                     currentPath: downloadsPath, 
@@ -786,7 +835,6 @@ export default function App() {
                 const datastoreNode = getNodeByPath(gameState.fs, datastorePath);
                 if (datastoreNode) {
                     const pathStr = resolvePath(gameState.fs, datastorePath);
-                    const now = Date.now();
                     setGameState(prev => ({ 
                         ...prev, 
                         currentPath: datastorePath, 
@@ -808,7 +856,6 @@ export default function App() {
         } else if (e.key === 'r') {
             const rootPath = ['root'];
             const pathStr = resolvePath(gameState.fs, rootPath);
-            const now = Date.now();
             setGameState(prev => ({ 
                 ...prev, 
                 currentPath: rootPath, 
@@ -828,7 +875,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, isLastLevel, getVisibleItems, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, advanceLevel]);
+  }, [gameState, currentLevel, isLastLevel, getVisibleItems, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -839,7 +886,6 @@ export default function App() {
     return <OutroSequence />;
   }
 
-  // Helper functions for inputs
   const handleInputModeSubmit = () => {
         const { fs: newFs, error, collision, collisionNode } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
         if (collision && collisionNode) {
@@ -847,7 +893,6 @@ export default function App() {
         } else if (error) {
             setGameState(prev => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
         } else {
-            // Explicitly clear inputBuffer on success
             setGameState(prev => ({ ...prev, fs: newFs, mode: 'normal', inputBuffer: '', notification: 'FILE CREATED' }));
         }
   };
@@ -865,7 +910,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
-      {/* Intro Overlay */}
       {gameState.showEpisodeIntro && (
         <EpisodeIntro 
           episode={EPISODE_LORE.find(e => e.id === currentLevel.episodeId)!} 
@@ -873,7 +917,6 @@ export default function App() {
         />
       )}
 
-      {/* Game Over Overlay */}
       {gameState.isGameOver && (
           <GameOverModal 
             reason={gameState.gameOverReason!} 
@@ -882,7 +925,6 @@ export default function App() {
           />
       )}
 
-      {/* Modals */}
       {gameState.showHelp && <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />}
       {gameState.showHint && <HintModal hint={currentLevel.hint} stage={gameState.hintStage} onClose={() => setGameState(prev => ({ ...prev, showHint: false, hintStage: 0 }))} />}
       {gameState.showInfoPanel && <InfoPanel file={currentItem} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
@@ -892,10 +934,8 @@ export default function App() {
           <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
       )}
       
-      {/* Main UI */}
-      <div className="flex flex-col flex-1 h-full min-w-0">
+      <div className="flex flex-col flex-1 h-full min-w-0 relative">
         
-        {/* Top Bar (Progress) */}
         <LevelProgress 
             levels={LEVELS} 
             currentLevelIndex={gameState.levelIndex} 
@@ -909,7 +949,6 @@ export default function App() {
             }}
         />
 
-        {/* Directory Path Header */}
         <div className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5">
           <div className="font-mono text-sm text-zinc-400">
             {(() => {
@@ -926,10 +965,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Panes Container */}
         <div className="flex flex-1 min-h-0 relative">
 
-            {/* Parent Pane (Visual context) */}
             <FileSystemPane 
                 items={getParentNode(gameState.fs, gameState.currentPath)?.children || []} 
                 isActive={false} 
@@ -940,14 +977,12 @@ export default function App() {
                 className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/50"
             />
 
-            {/* Active Pane */}
             <div className="flex-1 flex flex-col relative min-w-0">
                 
-                {/* Mode Indicators / Input Line */}
                 {(gameState.mode !== 'normal' && gameState.mode !== 'confirm-delete' && gameState.mode !== 'sort' && gameState.mode !== 'filter' && gameState.mode !== 'g-command' && gameState.mode !== 'overwrite-confirm' && gameState.mode !== 'input-file' && gameState.mode !== 'rename' && gameState.mode !== 'zoxide-jump' && gameState.mode !== 'fzf-current') && (
                     <div className="bg-zinc-800 p-2 border-b border-zinc-700 flex items-center gap-2">
                         <span className="text-xs font-bold uppercase text-black bg-blue-500 px-2 rounded">
-                            {gameState.mode.replace('input-', 'create ')}
+                            {gameState.mode.replace('input-', 'create ').replace('fzf-', 'find ')}
                         </span>
                         <input 
                             type="text" 
@@ -956,12 +991,10 @@ export default function App() {
                             autoFocus
                             readOnly
                         />
-                        {/* Fake cursor */}
                         <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
                     </div>
                 )}
                  
-                 {/* Which-Key HUD (Ephemeral) */}
                  {gameState.mode === 'sort' && (
                     <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
                         <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
@@ -986,12 +1019,10 @@ export default function App() {
                     </div>
                  )}
 
-                 {/* G-Command Dialog */}
                  {gameState.mode === 'g-command' && (
                     <GCommandDialog onClose={() => setGameState(prev => ({ ...prev, mode: 'normal' }))} />
                  )}
 
-                 {/* Filter Dialog */}
                  {gameState.mode === 'filter' && (
                     <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                         <div className="flex items-center gap-2">
@@ -1024,7 +1055,6 @@ export default function App() {
                     </div>
                  )}
 
-                 {/* Create Input Dialog */}
                  {gameState.mode === 'input-file' && (
                     <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                         <div className="flex items-center gap-2">
@@ -1048,7 +1078,6 @@ export default function App() {
                     </div>
                  )}
 
-                 {/* Active File List */}
                  <FileSystemPane 
                     items={visibleItems}
                     isActive={true}
@@ -1064,57 +1093,52 @@ export default function App() {
                     onRenameSubmit={handleRenameSubmit}
                     onRenameCancel={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
                  />
-                 
-                 {/* Zoxide / FZF Overlay */}
-                 {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-                    <FuzzyFinder 
-                        gameState={gameState}
-                        onClose={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
-                        onSelect={(path, isZoxide) => {
-                            if (isZoxide) {
-                                // Zoxide Logic
-                                const allDirs = getAllDirectories(gameState.fs);
-                                const match = allDirs.find(d => d.display === path);
-                                if (match) {
-                                    const now = Date.now();
-                                    setGameState(prev => ({
-                                        ...prev,
-                                        mode: 'normal',
-                                        currentPath: match.path,
-                                        cursorIndex: 0,
-                                        stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                                        zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } }
-                                    }));
-                                }
-                            } else {
-                                // FZF Logic: path is display string, find matching node ID path
-                                const candidates = getRecursiveContent(gameState.fs, gameState.currentPath);
-                                const match = candidates.find(c => c.display === path);
-                                if (match) {
-                                    const fullPath = match.path;
-                                    const fileParent = fullPath.slice(0, -1);
-                                    setGameState(prev => ({ 
-                                        ...prev, 
-                                        mode: 'normal', 
-                                        currentPath: fileParent,
-                                    }));
-                                }
-                            }
-                        }}
-                    />
-                 )}
 
             </div>
 
-            {/* Right: Preview Pane */}
             <PreviewPane 
                 node={visibleItems[gameState.cursorIndex]} 
                 level={currentLevel}
             />
 
+            {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+               <FuzzyFinder 
+                   gameState={gameState}
+                   onClose={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
+                   onSelect={(path, isZoxide) => {
+                       if (isZoxide) {
+                           const allDirs = getAllDirectories(gameState.fs);
+                           const match = allDirs.find(d => d.display === path);
+                           if (match) {
+                               const now = Date.now();
+                               setGameState(prev => ({
+                                   ...prev,
+                                   mode: 'normal',
+                                   currentPath: match.path,
+                                   cursorIndex: 0,
+                                   stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                                   zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } }
+                               }));
+                           }
+                       } else {
+                           // FZF Recursive logic (simplified for immediate update)
+                           const candidates = getRecursiveContent(gameState.fs, gameState.currentPath);
+                           const match = candidates.find(c => c.display === path);
+                           if (match) {
+                               const fullPath = match.path;
+                               setGameState(prev => ({ 
+                                   ...prev, 
+                                   mode: 'normal', 
+                                   currentPath: fullPath.slice(0, -1),
+                               }));
+                           }
+                       }
+                   }}
+               />
+            )}
+
         </div>
 
-        {/* Bottom Bar */}
         <StatusBar 
             state={gameState} 
             level={currentLevel} 

@@ -160,6 +160,7 @@ export const INITIAL_FS: FileNode = {
                 { id: generateId(), name: "about.md", type: "file", content: "# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive" },
                 { id: generateId(), name: "abstract_model.ts", type: "file", content: "export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: \"relu\" | \"sigmoid\";\n}" },
                 { id: generateId(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" },
+                { id: generateId(), name: "expenditure_log.csv", type: "file", content: "char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10" },
                 { id: generateId(), name: "expenditure_log.csv", type: "file", content: "date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee" },
                 { id: generateId(), name: "hyperloop_specs.pdf", type: "file", content: "[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION" },
                 { id: generateId(), name: "pending_updates.log", type: "file", content: "[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active" },
@@ -205,11 +206,21 @@ export const INITIAL_FS: FileNode = {
               name: "incoming",
               type: "dir",
               children: [
+                { id: generateId(), name: "app_logs_old.tar", type: "archive", children: [] },
+                { id: generateId(), name: "archive_001.zip", type: "archive", children: [] },
+                { id: generateId(), name: "archive_002.zip", type: "archive", children: [] },
                 { id: generateId(), name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
+                { id: generateId(), name: "backup_archives_v1.tar", type: "archive", children: [] },
+                { id: generateId(), name: "backup_config_main.zip", type: "archive", children: [] },
+                { id: generateId(), name: "backup_manifest_legacy.tar", type: "archive", children: [] },
+                { id: generateId(), name: "backup_recovery_scripts.zip", type: "archive", children: [] },
                 { id: generateId(), name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
                 { id: generateId(), name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
                 { id: generateId(), name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
+                { id: generateId(), name: "cache_purge_logs.zip", type: "archive", children: [] },
+                { id: generateId(), name: "core_dump_partition_a.tar", type: "archive", children: [] },
                 { id: generateId(), name: "daily_report.doc", type: "file", content: "Report: All Clear" },
+                { id: generateId(), name: "database_snapshot_temp.zip", type: "archive", children: [] },
                 { id: generateId(), name: "error_stack.trace", type: "file", content: "Stack trace overflow..." },
                 { id: generateId(), name: "fragment_001.dat", type: "file", content: "[DATA]" },
                 { id: generateId(), name: "fragment_002.dat", type: "file", content: "[DATA]" },
@@ -331,11 +342,11 @@ export const LEVELS: Level[] = [
     id: 1,
     episodeId: 1,
     title: "System Navigation & Jump",
-    description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
+    description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directories '/etc' and '/bin'.",
     initialPath: ["root", "home", "user"],
-    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
+    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc', then '/bin'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
-    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",
+    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc, /bin | SKILLS: j/k/h/l, gg, Shift+G",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
     leadsTo: [2, 3],
     tasks: [
@@ -370,6 +381,12 @@ export const LEVELS: Level[] = [
         id: "nav-3",
         description: "Navigate to /etc (use 'h' repeatedly to go up, then find etc)",
         check: (state: GameState) => !!findNodeByName(state.fs, "etc") && state.currentPath[state.currentPath.length - 1] === "etc",
+        completed: false
+      },
+      {
+        id: "nav-4",
+        description: "Navigate to /bin directory",
+        check: (state: GameState) => !!findNodeByName(state.fs, "bin") && state.currentPath[state.currentPath.length - 1] === "bin",
         completed: false
       }
     ]
@@ -537,13 +554,13 @@ export const LEVELS: Level[] = [
   {
     id: 5,
     episodeId: 1,
-    title: "Emergency Relocation",
-    description: "SECTOR BREACH DETECTED. An admin sweep has flagged your 'protocols' directory in the datastore. You must evacuate immediately. Establish a hidden enclave within the system configuration sector (~/.config/uplink) and relocate your assets using tactical batch selection (Space). In the eyes of the scanner, it's just another config update. Efficiency is your only camouflage.",
+    title: "Batch Deployment",
+    description: "PROTOCOLS VERIFIED. Moving files one at a time is inefficient—it leaves traces. Visual selection (Space) marks multiple targets before acting. Select both configs, cut them, and deploy to a new 'active' directory. One operation, minimal footprint.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "Go up to guest (h). Enter '.config'. Create 'uplink/'. Return to datastore/protocols. Press Space on each file to select. Press 'x' to cut both. Go back to your new 'uplink' directory. Press 'p' to paste.",
-    coreSkill: "Challenge: Asset Relocation Workflow",
-    environmentalClue: "SECTOR BREACH: protocols/ | RELOCATE TO: .config/uplink/ | MARK: Space",
-    successMessage: "EXTRACTION COMPLETE. ASSETS SECURED.",
+    hint: "Create 'active/' in datastore first. Enter 'protocols'. Press Space on each file to select. Press 'x' to cut both. Navigate to 'active'. Press 'p' to paste.",
+    coreSkill: "Visual Selection (Space)",
+    environmentalClue: "SELECT: uplink_v1.conf + uplink_v2.conf | MOVE TO: active/",
+    successMessage: "BATCH DEPLOYMENT COMPLETE.",
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (fs: FileNode) => {
@@ -568,16 +585,16 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-0",
-        description: "Initialize hidden enclave: Create '.config/uplink/'",
+        description: "Establish 'active' deployment zone in datastore",
         check: (state: GameState) => {
-          const config = findNodeByName(state.fs, ".config");
-          return !!config?.children?.find(r => r.name === "uplink" && r.type === "dir");
+          const datastore = findNodeByName(state.fs, "datastore");
+          return !!datastore?.children?.find(r => r.name === "active" && r.type === "dir");
         },
         completed: false
       },
       {
         id: "batch-select",
-        description: "Mark compromised assets: Select both uplink files in protocols (Space)",
+        description: "Batch select uplink_v1.conf and uplink_v2.conf in protocols (Space)",
         check: (state: GameState) => {
           const protocols = findNodeByName(state.fs, "protocols");
           if (!protocols?.children) return false;
@@ -588,7 +605,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "batch-cut",
-        description: "Execute emergency extraction (x)",
+        description: "Cut selection (x)",
         check: (state: GameState) => {
           const hasV1 = state.clipboard?.nodes.some(v => v.name === "uplink_v1.conf");
           const hasV2 = state.clipboard?.nodes.some(v => v.name === "uplink_v2.conf");
@@ -598,13 +615,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: "batch-paste",
-        description: "Relocate to config enclave and deploy (p)",
+        description: "Navigate & Paste to 'active' in datastore",
         check: (state: GameState) => {
-          const uplink = findNodeByName(state.fs, "uplink");
+          const active = findNodeByName(state.fs, "active");
           const protocols = findNodeByName(state.fs, "protocols");
-          const inUplink = uplink?.children?.some(x => x.name === "uplink_v1.conf") && uplink?.children?.some(x => x.name === "uplink_v2.conf");
+          const inActive = active?.children?.some(x => x.name === "uplink_v1.conf") && active?.children?.some(x => x.name === "uplink_v2.conf");
           const notInProtocols = !protocols?.children?.some(x => x.name.includes("uplink"));
-          return !!inUplink && !!notInProtocols;
+          return !!inActive && !!notInProtocols;
         },
         completed: false
       }
@@ -616,7 +633,7 @@ export const LEVELS: Level[] = [
     title: "Archive Retrieval",
     description: "ACCESS UPGRADED. The 'incoming' data stream contains compressed historical logs. Manual extraction is inefficient. Use the Filter protocol (f) to isolate 'backup_logs.zip', enter the archive (l), and extract 'sys_v1.log' to the 'media' directory for analysis.",
     initialPath: ['root', 'home', 'user', 'downloads'], // downloads is 'incoming'
-    hint: "1. Navigate to ~/incoming. 2. Press 'f', type 'backup'. 3. Enter the archive (l). 4. Highlight 'sys_v1.log', Press 'y'. 5. Navigate to ~/media. 6. Press 'p'.",
+    hint: "1. Navigate to ~/incoming. 2. Press 'f', type 'backup_logs.zip'. 3. Enter the archive (l). 4. Highlight 'sys_v1.log', Press 'y'. 5. Navigate to ~/media. 6. Press 'p'.",
     coreSkill: "Filter (f) & Archive Ops",
     environmentalClue: "TARGET: backup_logs.zip/sys_v1.log → media",
     successMessage: "LOGS RETRIEVED.",
@@ -625,50 +642,52 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'filter-1',
-        description: "Activate filter (f) to find 'backup_logs.zip' in /home/guest/incoming",
+        description: "Activate scanner: Filter (f) for backup_logs.zip'",
         check: (state) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
             if (currentDir?.name !== 'incoming') return false;
             const filter = (state.filters[currentDir.id] || '').toLowerCase();
-            // Allow partial matches (e.g. 'ba', 'back', 'backup')
-            return filter.length > 0 && 'backup_logs.zip'.includes(filter);
+            return filter === 'backup_l';
         },
         completed: false
       },
       {
-        id: 'filter-clear-after-search',
-        description: "Clear the filter (Esc)",
+        id: 'filter-close-input',
+        description: "Close scanner input (Esc)",
         check: (state, level) => {
             const prevTask = level.tasks.find(t => t.id === 'filter-1');
+            return prevTask?.completed ? state.mode === 'normal' : false;
+        },
+        completed: false
+      },
+      {
+        id: 'filter-copy-internal',
+        description: "Copy 'sys_v1.log' from inside the archive (Enter with 'l', then 'y')",
+        check: (state, level) => {
+            const prevTask = level.tasks.find(t => t.id === 'filter-close-input');
             if (!prevTask?.completed) return false;
-            
-            const incoming = getNodeByPath(state.fs, state.currentPath);
-            return state.mode === 'normal' && !state.filters[incoming?.id || ''];
-        },
-        completed: false
-      },
-      {
-        id: 'filter-2',
-        description: "Enter the archive (press 'l')",
-        check: (state) => {
-            const currentDir = getNodeByPath(state.fs, state.currentPath);
-            return currentDir?.name === 'backup_logs.zip';
-        },
-        completed: false
-      },
-      {
-        id: 'filter-3',
-        description: "Copy 'sys_v1.log' (press 'y')",
-        check: (state) => {
             return state.clipboard?.action === 'yank' &&
                    state.clipboard.nodes.some(n => n.name === 'sys_v1.log');
         },
         completed: false
       },
       {
-        id: 'filter-4',
-        description: "Paste into /home/guest/media (press 'p')",
-        check: (state) => {
+        id: 'filter-exit-clear',
+        description: "Exit archive (h) and clear active filter (Esc)",
+        check: (state, level) => {
+            const prevTask = level.tasks.find(t => t.id === 'filter-copy-internal');
+            if (!prevTask?.completed) return false;
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            return currentDir?.name === 'incoming' && !state.filters[currentDir.id || ''];
+        },
+        completed: false
+      },
+      {
+        id: 'filter-deploy',
+        description: "Deploy asset into /home/guest/media (press 'p')",
+        check: (state, level) => {
+            const prevTask = level.tasks.find(t => t.id === 'filter-exit-clear');
+            if (!prevTask?.completed) return false;
             const media = findNodeByName(state.fs, 'media');
             return !!media?.children?.find(c => c.name === 'sys_v1.log');
         },
@@ -679,19 +698,19 @@ export const LEVELS: Level[] = [
   {
     id: 7,
     episodeId: 2,
-    title: "Deep Scan Protocol",
-    description: "TRACE EVASION PROTOCOL. Manual traversal through nested directories leaves a linear trail for system monitors. Zoxide (Shift+Z) enables quantum jumps—bypassing direct tracing by leveraging a frequency-weighted index of your activity. Your history contains critical system coordinates: /tmp and /etc. Execute immediate teleportation to these zones, evading the security system's linear directory tracing. NOTE: Filters persist as you navigate—press Escape to clear when done.",
+    title: "QUANTUM TUNNELLING",
+    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.",
     initialPath: ["root", "home", "user", "docs"],
-    hint: "Press Shift+Z to open Zoxide. Type 'tmp' to filter. Press Enter to jump. Repeat with 'etc'.",
+    hint: "1. Press Shift+Z to open Zoxide. 2. Type 'tmp' to filter and Enter. 3. Delete 'sys_dump.log' (d). 4. Shift+Z again to jump to 'etc'.",
     coreSkill: "Zoxide Jump (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
-    successMessage: "QUANTUM JUMP CALIBRATED.",
+    successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
     buildsOn: [1],
     leadsTo: [8, 12],
     tasks: [
       {
         id: "fuzzy-1",
-        description: "Quantum jump to /tmp (Shift+Z → 'tmp' → Enter)",
+        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return state.stats.fuzzyJumps >= 1 && currentDir?.name === "tmp";
@@ -699,8 +718,17 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: "fuzzy-purge",
+        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (d, then y)",
+        check: (state: GameState) => {
+          const tmp = findNodeByName(state.fs, "tmp");
+          return !!tmp && !tmp.children?.find(c => c.name === "sys_dump.log");
+        },
+        completed: false
+      },
+      {
         id: "fuzzy-2",
-        description: "Quantum jump to /etc",
+        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return state.stats.fuzzyJumps >= 2 && currentDir?.name === "etc";

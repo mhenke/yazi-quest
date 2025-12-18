@@ -1,9 +1,7 @@
-
 import React, { useEffect, useRef, useMemo } from 'react';
 import { calculateFrecency, GameState, FileNode } from '../types';
-import { getRecursiveContent, resolvePath } from '../utils/fsHelpers';
+import { getRecursiveContent, getNodeByPath } from '../utils/fsHelpers';
 import { FileSystemPane } from './FileSystemPane';
-import { FolderOpen, Search, MapPin } from 'lucide-react';
 
 interface FuzzyFinderProps {
   gameState: GameState;
@@ -11,7 +9,6 @@ interface FuzzyFinderProps {
   onClose: () => void;
 }
 
-// Helper to resolve string path back to FileNode for preview
 const findNodeFromPath = (root: FileNode, pathStr: string): FileNode | null => {
   if (pathStr === '/') return root;
   const parts = pathStr.split('/').filter(p => p);
@@ -30,201 +27,138 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
   const isZoxide = gameState.mode === 'zoxide-jump';
   const listRef = useRef<HTMLDivElement>(null);
 
-  // 1. Calculate Candidates
-  const candidates = useMemo(() => {
-    let results: { path: string, display?: string, score?: number, type?: string }[] = [];
-    
+  // 1. Get Base History/Content
+  const baseItems = useMemo(() => {
     if (isZoxide) {
-      results = Object.keys(gameState.zoxideData)
+      return Object.keys(gameState.zoxideData)
         .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-        .sort((a, b) => b.score - a.score)
-        .filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+        .sort((a, b) => b.score - a.score);
     } else {
-      // FZF Recursive
-      results = getRecursiveContent(gameState.fs, gameState.currentPath)
-        .filter(c => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
-        .map(c => ({ ...c, path: c.display }));
+      return getRecursiveContent(gameState.fs, gameState.currentPath)
+        // Fix: Explicitly map properties to avoid 'path' name conflict between display string and string array
+        // (getRecursiveContent returns path: string[], we need path: string for filtering)
+        .map(c => ({ path: c.display, pathIds: c.path, type: c.type, id: c.id }));
     }
-    return results;
-  }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath, gameState.inputBuffer]);
+  }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
 
-  // 2. Determine Preview Node
-  const selectedCandidate = candidates[gameState.fuzzySelectedIndex];
-  
-  const previewNode = useMemo(() => {
-    if (!selectedCandidate) return null;
-    
+  const totalCount = baseItems.length;
+
+  // 2. Apply Filter
+  const filteredCandidates = useMemo(() => {
+    // Fix: line 46 - item.path is now guaranteed to be a string
+    return baseItems.filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+  }, [baseItems, gameState.inputBuffer]);
+
+  // 3. Determine Preview Items
+  const selectedCandidate = filteredCandidates[gameState.fuzzySelectedIndex || 0];
+  const previewItems = useMemo(() => {
+    if (!selectedCandidate) return [];
     if (isZoxide) {
-        // Zoxide: Path is a directory path string
-        return findNodeFromPath(gameState.fs, selectedCandidate.path);
+      // Fix: line 54 - selectedCandidate.path is now string
+      const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
+      return node?.children || [];
     } else {
-        // FZF: Candidate is a file/dir inside current path
-        // We want to preview the containing folder of the result, or the folder itself if it is one?
-        // User request: "directory files at the bottom".
-        // For FZF (finding files), usually you want to see where the file is.
-        // Let's try to resolve the parent dir of the match.
-        // For simplicity in this layout, if it's a file match, show its parent's content.
-        // If it's a dir match, show the dir's content.
-        
-        // However, findNodeFromPath works from root. FZF paths here are relative/display paths usually?
-        // getRecursiveContent returns { path: string[], display: string ... }
-        // We can use the ID path to find the node easily.
-        
-        // Actually, let's keep it simple: finding the node using the full path logic
-        // But getRecursiveContent returns IDs path. We can use getNodeByPath from utils if we exported it, 
-        // but we are inside the component. We can assume we might need to find the node by traversing.
-        // Let's rely on finding the node by ID path since we have it in candidates for FZF.
-        
-        // Wait, 'candidates' for FZF has `path` property as `display` string in my map above? 
-        // "map(c => ({ path: c.display, ...c }))" -> yes.
-        // But `c` from getRecursiveContent has `path` as string[] (IDs).
-        // Let's use that.
-        
-        // We can import getNodeByPath from fsHelpers.
-        // Wait, I can't easily import `getNodeByPath` inside this useMemo if I don't change imports (I did).
-        // But `getNodeByPath` was not exported in the original provided file content? 
-        // Checking `utils/fsHelpers.ts`... Yes, it is exported.
-        return null; // Placeholder, logic below handles it cleaner without circular dependency risks if any.
+        const typedCandidate = selectedCandidate as any;
+        if (typedCandidate.pathIds && Array.isArray(typedCandidate.pathIds)) {
+            // Fix: Resolve full path from root for FZF preview items as pathIds are relative to currentPath
+            const fullNodePath = [...gameState.currentPath, ...typedCandidate.pathIds];
+            const parentPath = fullNodePath.slice(0, -1);
+            const parentNode = getNodeByPath(gameState.fs, parentPath);
+            return parentNode?.children || [];
+        }
+        return [];
     }
-  }, [selectedCandidate, isZoxide, gameState.fs]);
+  }, [selectedCandidate, isZoxide, gameState.fs, gameState.currentPath]);
 
-  // Refined Preview Logic with available imports
-  // We'll interpret the 'previewNode' slightly differently for rendering:
-  // If we can resolve the directory, we pass its children to FileSystemPane.
-  let previewItems: FileNode[] = [];
-  if (selectedCandidate) {
-      if (isZoxide) {
-          const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
-          if (node && node.children) previewItems = node.children;
-      } else {
-          // FZF Mode
-          // We want to show the file in context. 
-          // Since implementing full path resolution from IDs might be heavy here without direct import (or if I missed it),
-          // let's try to simulate context: show the current directory filtered? 
-          // Or just leave empty for FZF for now to strictly follow "Zoxide" requirements from prompt?
-          // The prompt specifically said "shift+z" (Zoxide). I will optimize for that.
-          // For FZF, I'll fallback to showing nothing or the current dir.
-      }
-  }
-
-  // Auto-scroll list
   useEffect(() => {
     if (listRef.current) {
-      const activeEl = listRef.current.children[gameState.fuzzySelectedIndex] as HTMLElement;
+      const activeEl = listRef.current.children[gameState.fuzzySelectedIndex || 0] as HTMLElement;
       if (activeEl) {
         activeEl.scrollIntoView({ block: 'nearest' });
       }
     }
-  }, [gameState.fuzzySelectedIndex, candidates.length]);
-
-  const accentColor = isZoxide ? 'text-purple-400' : 'text-blue-400';
-  const borderColor = isZoxide ? 'border-purple-500/30' : 'border-blue-500/30';
+  }, [gameState.fuzzySelectedIndex, filteredCandidates.length]);
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8 animate-in fade-in duration-200">
-      <div className={`w-full max-w-5xl h-[80vh] bg-zinc-950 border ${borderColor} shadow-2xl rounded-lg flex flex-col overflow-hidden`}>
-        
-        {/* Top: Filter Bar */}
-        <div className="p-4 border-b border-zinc-800 bg-zinc-900/50 flex items-center gap-4 shrink-0">
-            <div className={`font-bold text-lg uppercase tracking-wider flex items-center gap-2 ${accentColor}`}>
-                {isZoxide ? <MapPin size={20} /> : <Search size={20} />}
-                {isZoxide ? 'Zoxide' : 'FZF'}
-            </div>
-            <div className="h-6 w-px bg-zinc-800"></div>
-            <input 
-                type="text" 
-                className="flex-1 bg-transparent border-none outline-none text-lg font-mono text-white placeholder-zinc-600"
-                value={gameState.inputBuffer}
-                placeholder={isZoxide ? "Jump to directory..." : "Search files..."}
-                autoFocus
-                readOnly // Managed by App.tsx
-            />
-            <div className="text-xs text-zinc-500 font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
-                {candidates.length} results
-            </div>
-        </div>
-
-        {/* Middle: Candidates List */}
-        <div className="flex-1 min-h-0 overflow-y-auto" ref={listRef}>
-            {candidates.length === 0 ? (
-                <div className="p-8 text-center text-zinc-600 font-mono italic">
-                    No matching locations found
-                </div>
-            ) : (
-                <div className="w-full">
-                    {candidates.map((item, idx) => {
-                        const isSelected = idx === gameState.fuzzySelectedIndex;
-                        return (
-                            <div 
-                                key={item.path + idx}
-                                className={`
-                                    px-4 py-2 flex items-center justify-between font-mono text-sm cursor-pointer border-b border-zinc-900/50
-                                    ${isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900'}
-                                `}
-                                onClick={() => onSelect(item.path, isZoxide)}
-                            >
-                                <div className="flex items-center gap-3 truncate">
-                                    <FolderOpen size={14} className={isSelected ? 'text-blue-400' : 'text-zinc-600'} />
-                                    <span>{item.path}</span>
-                                </div>
-                                {isZoxide && item.score !== undefined && (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-16 h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-purple-500/50" 
-                                                style={{ width: `${Math.min(item.score * 5, 100)}%` }} 
-                                            />
-                                        </div>
-                                        <span className="text-xs text-zinc-600 w-8 text-right">{item.score.toFixed(1)}</span>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-zinc-700 w-full shrink-0 shadow-[0_1px_10px_rgba(0,0,0,0.5)]"></div>
-
-        {/* Bottom: Directory Preview */}
-        <div className="h-1/2 min-h-[200px] flex flex-col bg-zinc-900/30">
-            <div className="px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 flex items-center gap-2">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest">Previewing:</span>
-                <span className="text-xs font-mono text-zinc-300 truncate">
-                    {selectedCandidate ? selectedCandidate.path : '...'}
-                </span>
-            </div>
-            
-            <div className="flex-1 overflow-hidden relative">
-                {previewItems.length > 0 ? (
-                    <FileSystemPane 
-                        items={previewItems}
-                        isActive={false}
-                        selectedIds={[]}
-                        clipboard={null}
-                        linemode="size"
-                        className="w-full bg-transparent p-2"
-                    />
-                ) : (
-                    <div className="flex items-center justify-center h-full text-zinc-700 font-mono text-sm italic">
-                        {selectedCandidate ? 'Empty directory' : 'Select a location'}
-                    </div>
-                )}
-            </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-2 bg-zinc-950 border-t border-zinc-800 text-[10px] text-zinc-600 flex justify-between font-mono">
-            <div className="flex gap-4">
-                <span><strong className="text-zinc-400">↑/↓</strong> Navigate</span>
-                <span><strong className="text-zinc-400">Enter</strong> Jump</span>
-            </div>
-            <span><strong className="text-zinc-400">Esc</strong> Cancel</span>
-        </div>
-
+    <div className="absolute inset-0 z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-150">
+      
+      {/* Top: Header/Filter Bar */}
+      <div className="px-4 py-2 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+          <div className="flex items-center gap-2 text-sm">
+              <span className="text-zinc-600 font-bold">&gt;</span>
+              <span className="text-white font-bold min-w-[20px] px-1 border-b border-orange-500">
+                {gameState.inputBuffer || ' '}
+              </span>
+              <span className="text-zinc-600 font-bold">&lt;</span>
+          </div>
+          <div className="text-xs text-zinc-500 font-bold">
+              {filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0} / {totalCount}
+          </div>
       </div>
+
+      {/* Top Half: Candidates List */}
+      <div className="h-2/5 overflow-y-auto border-b border-zinc-800" ref={listRef}>
+          {filteredCandidates.length === 0 ? (
+              <div className="p-8 text-center text-zinc-700 italic text-sm">
+                  No matching entries
+              </div>
+          ) : (
+              <div className="flex flex-col">
+                  {filteredCandidates.map((item, idx) => {
+                      const isSelected = idx === (gameState.fuzzySelectedIndex || 0);
+                      return (
+                          <div 
+                              // Fix: line 105 - item.path is string
+                              key={item.path + idx}
+                              className={`
+                                  px-4 py-1.5 flex items-center justify-between text-sm
+                                  ${isSelected ? 'bg-zinc-800 text-white font-bold' : 'text-zinc-500'}
+                              `}
+                          >
+                              <div className="truncate flex-1">
+                                  {item.path}
+                              </div>
+                              {isZoxide && (
+                                  <span className="text-[10px] opacity-30 ml-4">
+                                      {(item as any).score?.toFixed(1)}
+                                  </span>
+                              )}
+                          </div>
+                      );
+                  })}
+              </div>
+          )}
+      </div>
+
+      {/* Bottom Half: Directory Preview */}
+      <div className="flex-1 flex flex-col min-h-0 bg-black/20">
+          <div className="px-4 py-1 bg-zinc-900/30 text-[10px] uppercase font-bold text-zinc-600 tracking-widest border-b border-zinc-800/50">
+              Content Preview
+          </div>
+          <div className="flex-1 overflow-hidden relative">
+              {previewItems.length > 0 ? (
+                  <FileSystemPane 
+                      items={previewItems}
+                      isActive={false}
+                      selectedIds={[]}
+                      clipboard={null}
+                      linemode="size"
+                      className="w-full bg-transparent px-2"
+                  />
+              ) : (
+                  <div className="flex items-center justify-center h-full text-zinc-800 text-sm italic">
+                      {selectedCandidate ? 'Empty directory' : 'Select a path to preview'}
+                  </div>
+              )}
+          </div>
+      </div>
+
+      {/* Tiny Status Footer */}
+      <div className="px-4 py-1 border-t border-zinc-900 text-[9px] text-zinc-700 flex justify-between bg-black">
+          <span>j/k: Navigate • Enter: Select • Esc: Cancel</span>
+          <span className="font-bold tracking-widest uppercase">{isZoxide ? 'ZOXIDE JUMP' : 'FZF FIND'}</span>
+      </div>
+
     </div>
   );
 };
