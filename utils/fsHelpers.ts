@@ -338,16 +338,23 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
       if (action === 'cut' && ![7, 9].includes(levelIndex)) {
           return "Asset locked. Modification not authorized.";
       }
+      // Allow rename only on Level 10 (index 9) after it's been moved to vault
+      if (action === 'rename' && levelIndex !== 9) {
+          return "Asset identity sealed. Rename not authorized.";
+      }
   }
 
   if (name === 'mission_log.md' && isFile) {
       // Allow deletion on Level 14 (index 13)
       if (action === 'delete' && levelIndex !== 13) return "Mission log required for validation.";
+      // Prevent rename to avoid hiding the log
+      if (action === 'rename' && levelIndex < 13) return "Mission log identity locked.";
   }
 
   if (name === 'target_map.png' && isFile) {
       if (action === 'delete') return "Intel target. Do not destroy.";
       if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
+      if (action === 'rename' && levelIndex < 2) return "Target signature locked.";
   }
 
   // Specifically protect the protocols directory if it's the intended one
@@ -367,11 +374,6 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
   if (path === '/home/guest/.config/vault/active' && isDir) {
       if (action === 'delete' && levelIndex < 7) return "Active deployment zone required.";
       if (action === 'cut' && levelIndex < 7) return "Deployment zone anchored.";
-  }
-
-  if (name === 'neural_net' && isDir && path.includes('workspace')) {
-      if (action === 'delete' && levelIndex < 11) return "Neural network architecture required.";
-      if (action === 'cut' && levelIndex < 11) return "Neural network anchored.";
   }
 
   if (path === '/home/guest/.config/vault' && isDir) {

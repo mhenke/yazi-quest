@@ -134,7 +134,8 @@ export default function App() {
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const prevAllTasksCompleteRef = useRef(false);
-  const gPressedRef = useRef(false); 
+  const gPressedRef = useRef(false);
+  const notificationTimerRef = useRef<NodeJS.Timeout | null>(null); 
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
@@ -159,6 +160,32 @@ export default function App() {
 
   const visibleItems = getVisibleItems(gameState);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
+
+  // Helper to show notification with auto-clear
+  const showNotification = useCallback((message: string, duration: number = 3000) => {
+    // Clear existing timer
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+    }
+    
+    // Set notification
+    setGameState(prev => ({ ...prev, notification: message }));
+    
+    // Auto-clear after duration
+    notificationTimerRef.current = setTimeout(() => {
+      setGameState(prev => ({ ...prev, notification: null }));
+      notificationTimerRef.current = null;
+    }, duration);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    };
+  }, []);
 
   // --- Task Checking & Level Progression ---
   useEffect(() => {
@@ -375,7 +402,8 @@ export default function App() {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 const allIds = items.map(item => item.id);
-                setGameState(prev => ({ ...prev, selectedIds: allIds, notification: `Selected all (${allIds.length} items)` }));
+                setGameState(prev => ({ ...prev, selectedIds: allIds }));
+                showNotification(`Selected all (${allIds.length} items)`, 2000);
             } else {
                 e.preventDefault();
                 setGameState(prev => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
@@ -386,7 +414,8 @@ export default function App() {
                 e.preventDefault();
                 const allIds = items.map(item => item.id);
                 const inverted = allIds.filter(id => !gameState.selectedIds.includes(id));
-                setGameState(prev => ({ ...prev, selectedIds: inverted, notification: `Inverted selection (${inverted.length} items)` }));
+                setGameState(prev => ({ ...prev, selectedIds: inverted }));
+                showNotification(`Inverted selection (${inverted.length} items)`, 2000);
             } else if (gameState.selectedIds.length > 1) {
                 setGameState(prev => ({ ...prev, notification: "Batch rename not available in this version" }));
             } else if (currentItem) {
@@ -402,7 +431,7 @@ export default function App() {
                 if (e.key === 'x') {
                     const protectedItem = nodes.map(node => isProtected(gameState.fs, gameState.currentPath, node, gameState.levelIndex, 'cut')).find(res => res !== null);
                     if (protectedItem) {
-                        setGameState(prev => ({ ...prev, notification: protectedItem }));
+                        showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
                         return;
                     }
                 }
@@ -417,7 +446,7 @@ export default function App() {
                 if (e.key === 'x') {
                     const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'cut');
                     if (protection) {
-                        setGameState(prev => ({ ...prev, notification: protection }));
+                        showNotification(`🔒 PROTECTED: ${protection}`, 4000);
                         return;
                     }
                 }
@@ -521,7 +550,8 @@ export default function App() {
     }
     if (e.key === 'Y' || e.key === 'X') { 
         e.preventDefault(); 
-        setGameState(prev => ({ ...prev, clipboard: null, notification: 'CLIPBOARD CLEARED' }));
+        setGameState(prev => ({ ...prev, clipboard: null }));
+        showNotification('CLIPBOARD CLEARED', 2000);
     }
   }, []); 
 
@@ -574,7 +604,8 @@ export default function App() {
             .find(res => res !== null);
 
         if (protectedItem) {
-            setGameState(prev => ({ ...prev, mode: 'normal', notification: protectedItem }));
+            setGameState(prev => ({ ...prev, mode: 'normal' }));
+            showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
         } else {
             gameState.pendingDeleteIds.forEach(id => {
                  newFs = deleteNode(newFs, gameState.currentPath, id);
@@ -932,8 +963,17 @@ export default function App() {
 
   const handleRenameSubmit = () => {
         if (currentItem) {
+            // Check protection before renaming
+            const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'rename');
+            if (protection) {
+                setGameState(prev => ({ ...prev, mode: 'normal' }));
+                showNotification(`🔒 PROTECTED: ${protection}`, 4000);
+                return;
+            }
+            
             const newFs = renameNode(gameState.fs, gameState.currentPath, currentItem.id, gameState.inputBuffer);
-            setGameState(prev => ({ ...prev, fs: newFs, mode: 'normal', notification: 'Renamed', stats: { ...prev.stats, renames: prev.stats.renames + 1 } }));
+            setGameState(prev => ({ ...prev, fs: newFs, mode: 'normal', stats: { ...prev.stats, renames: prev.stats.renames + 1 } }));
+            showNotification('Renamed', 2000);
         }
   };
 

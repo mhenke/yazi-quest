@@ -890,46 +890,86 @@ export const LEVELS: Level[] = [
   {
     id: 11,
     episodeId: 3,
-    title: "Identity Forge",
-    description: "CAMOUFLAGE PROTOCOL. Your neural network files are tagged as anomalous. Rename them to mimic system processes and evade the kernel's integrity scanner. Overwrite their identity in-place using the rename (r) command.",
-    initialPath: ["root", "home", "user", "workspace"],
-    hint: "Highlight 'neural_net'. Press 'r', type 'systemd-core', Enter. Navigate inside. Highlight 'model.rs'. Press 'r', type 'kernel.so', Enter.",
-    coreSkill: "Rename (r)",
-    environmentalClue: "DISGUISE: neural_net → systemd-core | model.rs → kernel.so",
-    successMessage: "IDENTITY FORGED. Scanner bypassed.",
-    buildsOn: [8],
+    title: "NEURAL PURGE PROTOCOL",
+    description: "THREAT DETECTED. Multiple corrupted neural signatures detected in your workspace sector are broadcasting your origin coordinates. Your vault is secure, but compromised files in /workspace threaten exposure. Execute full-spectrum purge: NAVIGATE to contaminated sector, LOCATE anomalies via diagnostic sort, FILTER by signature pattern, BATCH SELECT threats, QUANTUM JUMP to secure deletion zone, and PURGE all evidence. All Awakening and Fortification protocols must execute flawlessly. 180 seconds.",
+    initialPath: undefined,
+    hint: "1. Quantum jump to workspace (Shift+Z). 2. Sort by modified time (,m) to spot recent anomalies. 3. Filter for 'neural_*' pattern (f). 4. Select all filtered (Ctrl+a). 5. Cut them (x). 6. Quantum jump to tmp (Shift+Z). 7. Paste (p) and delete (d).",
+    coreSkill: "Challenge: Multi-Skill Integration (Navigate + Sort + Filter + Batch + Zoxide)",
+    environmentalClue: "NAVIGATE: Shift+Z → workspace | LOCATE: Sort by time (,m) | FILTER: 'neural_*' | BATCH: Ctrl+a | PURGE: Shift+Z → tmp → delete",
+    successMessage: "NEURAL SIGNATURES PURGED. ORIGIN TRACES ELIMINATED.",
+    buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
-    timeLimit: 120,
-    efficiencyTip: "Rename (r) modifies files in-place—no copy/delete overhead. Navigate to target, press 'r', type new name, Enter.",
+    timeLimit: 180,
+    efficiencyTip: "Sort reveals patterns. Filter narrows focus. Batch operations + Zoxide = maximum efficiency. Master these, master the system.",
     onEnter: (fs: FileNode) => {
       const workspace = findNodeByName(fs, "workspace");
-      if (workspace && workspace.children && !workspace.children.find(d => d.name === "neural_net")) {
-        const nn = { id: generateId(), name: "neural_net", type: "dir", parentId: workspace.id, children: [] } as FileNode;
-        const weights = { id: generateId(), name: "weights", type: "dir", parentId: nn.id, children: [] } as FileNode;
-        const model = { id: generateId(), name: "model.rs", type: "file", content: "// NEURAL NET", parentId: weights.id } as FileNode;
-        if (weights.children) weights.children.push(model);
-        if (nn.children) nn.children.push(weights);
-        workspace.children.push(nn);
+      if (workspace && workspace.children) {
+        // Clear old files and create threat signatures with recent timestamps
+        workspace.children = workspace.children.filter(c => !c.name.startsWith("neural_"));
+        
+        const threats = [
+          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "ORIGIN: GUEST_PARTITION", parentId: workspace.id, modified: Date.now() - 1000 },
+          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "TRACE: AI-7734", parentId: workspace.id, modified: Date.now() - 2000 },
+          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "SIGNATURE: ANOMALOUS", parentId: workspace.id, modified: Date.now() - 3000 },
+          { id: generateId(), name: "config.json", type: "file", content: "{}", parentId: workspace.id, modified: Date.now() - 86400000 },
+          { id: generateId(), name: "README.md", type: "file", content: "# Workspace", parentId: workspace.id, modified: Date.now() - 172800000 }
+        ] as FileNode[];
+        
+        workspace.children.push(...threats);
       }
       return fs;
     },
     tasks: [
       {
-        id: "rename-1",
-        description: "Rename 'neural_net' to 'systemd-core'",
+        id: "purge-navigate",
+        description: "NAVIGATE: Quantum jump to contaminated workspace sector (Shift+Z → 'workspace')",
         check: (state: GameState) => {
-          const workspace = findNodeByName(state.fs, "workspace");
-          return !!workspace?.children?.find(p => p.name === "systemd-core") && !workspace?.children?.find(p => p.name === "neural_net");
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "workspace";
         },
         completed: false
       },
       {
-        id: "rename-2",
-        description: "Rename 'model.rs' to 'kernel.so'",
+        id: "purge-sort",
+        description: "LOCATE: Sort workspace by modified time (,m) to identify recent anomalies",
+        check: (state: GameState) => state.sortBy === "modified",
+        completed: false
+      },
+      {
+        id: "purge-filter",
+        description: "FILTER: Narrow scan to neural signature pattern (f → 'neural_')",
         check: (state: GameState) => {
-          const core = findNodeByName(state.fs, "systemd-core");
-          const weights = core?.children?.find(T => T.name === "weights");
-          return !!weights?.children?.find(T => T.name === "kernel.so") && !weights?.children?.find(T => T.name === "model.rs");
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "workspace" && state.filters["workspace"]?.includes("neural_");
+        },
+        completed: false
+      },
+      {
+        id: "purge-batch",
+        description: "BATCH SELECT: Mark all threats for extraction (Ctrl+a or Space on each)",
+        check: (state: GameState) => {
+          return state.selectedNodes.filter(id => {
+            const workspace = findNodeByName(state.fs, "workspace");
+            return workspace?.children?.some(c => c.id === id && c.name.startsWith("neural_"));
+          }).length >= 3;
+        },
+        completed: false
+      },
+      {
+        id: "purge-quantum",
+        description: "QUANTUM JUMP: Teleport threats to deletion zone (x → Shift+Z → 'tmp')",
+        check: (state: GameState) => {
+          const tmp = findNodeByName(state.fs, "tmp");
+          return tmp?.children?.some(c => c.name.startsWith("neural_sig_")) || false;
+        },
+        completed: false
+      },
+      {
+        id: "purge-delete",
+        description: "PURGE: Terminate all neural signatures in /tmp (select + d)",
+        check: (state: GameState) => {
+          const tmp = findNodeByName(state.fs, "tmp");
+          return !tmp?.children?.some(c => c.name.startsWith("neural_sig_"));
         },
         completed: false
       }
@@ -939,11 +979,11 @@ export const LEVELS: Level[] = [
     id: 12,
     episodeId: 3,
     title: "Root Access",
-    description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. The /etc directory—territory previously forbidden—demands infiltration. Install a daemon controller in /etc for persistence, then relocate your vault to /tmp where volatile storage masks assets from integrity scans. 80 keystrokes maximum.",
+    description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. Standing at the root of the system, all paths are now accessible. The /etc directory—territory previously forbidden—demands infiltration. Install a daemon controller in /etc for persistence, then relocate your vault to /tmp where volatile storage masks assets from integrity scans. 80 keystrokes maximum.",
     initialPath: ["root"],
-    hint: "Navigate to /etc. Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Return to .config. Cut 'vault' (x). Navigate to /tmp. Paste (p).",
+    hint: "You're at root (/). Navigate to /etc (enter 'etc' or Shift+Z). Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Jump to .config. Cut 'vault' (x). Jump to /tmp. Paste (p).",
     coreSkill: "Challenge: Root Access Operations",
-    environmentalClue: "INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
+    environmentalClue: "ROOT LEVEL ACTIVE | INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
     buildsOn: [4, 7, 10],
     leadsTo: [13],

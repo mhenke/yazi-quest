@@ -149,7 +149,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
             </>
         ) : (
             state.notification && (
-                <div className="px-3 bg-zinc-800 text-yellow-400 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate">
+                <div className={`px-3 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate ${
+                    state.notification.startsWith('🔒') 
+                        ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse' 
+                        : 'bg-zinc-800 text-yellow-400'
+                }`}>
                 {state.notification}
                 </div>
             )
