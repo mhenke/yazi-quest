@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants';
-import { Check, Lock, MapPin, X, Map, Shield, Zap, Crown, HelpCircle, Lightbulb, GitBranch, CheckSquare, Square } from 'lucide-react';
+import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
 interface LevelProgressProps {
   levels: Level[];
@@ -23,10 +23,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
     onToggleMap?.(); // Notify parent if callback provided
   };
 
-  // Keyboard shortcut: Alt+M to toggle map
+  // Keyboard shortcut: Shift+M to toggle map
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'm' && e.altKey) {
+      if (e.key === 'M' && e.shiftKey) {
         e.preventDefault();
         handleToggleMap();
       }
@@ -75,22 +75,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
   const activeEpisode = episodes[activeTab] || episodes[0];
 
-  const getEpisodeStatus = (tabIndex: number) => {
-    const isThisComplete = completionStatus[tabIndex];
-    // If it's the first episode, active if not complete. 
-    // If not first, active if prev complete & this not complete.
-    const isPrevComplete = tabIndex === 0 ? true : completionStatus[tabIndex - 1];
 
-    if (isThisComplete) return 'completed';
-    if (isPrevComplete) return 'active';
-    return 'locked';
-  };
-
-  const statusMap = {
-      active: { text: "Active Level", icon: <MapPin size={14} />, class: "text-orange-400 border-orange-500/50 bg-orange-500/10" },
-      completed: { text: "Episode Complete", icon: <Check size={14} />, class: "text-green-400 border-green-500/50 bg-green-500/10" },
-      locked: { text: "Locked Data", icon: <Lock size={14} />, class: "text-zinc-500 border-zinc-700 bg-zinc-900" }
-  };
 
   // Keyboard navigation for Quest Map modal
   useEffect(() => {
@@ -164,10 +149,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
         <div className="flex items-center gap-6 overflow-hidden mr-4 h-8 flex-1">
             <button
                 onClick={handleToggleMap}
-                className="flex items-center gap-2 text-xs font-mono text-zinc-500 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
-                title="Quest Map [Alt+M]"
+                className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
+                title="Quest Map (Shift+M)"
             >
-                <Map size={14} className="text-zinc-600 group-hover:text-orange-500 transition-colors" />
+                <Map size={16} className="text-zinc-400 group-hover:text-orange-500 transition-colors" />
                 <span className="uppercase tracking-widest font-bold border-b border-transparent group-hover:border-zinc-500">Map</span>
             </button>
             
@@ -258,17 +243,17 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
             <div className="flex items-center gap-2">
                  <button
                    onClick={onToggleHint}
-                   className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-500 hover:text-yellow-500 transition-colors border border-transparent hover:border-zinc-700"
-                   title="Hint [Shift+H]"
+                   className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-yellow-400 transition-colors border border-transparent hover:border-zinc-700"
+                   title="Show Hint (Shift+H)"
                  >
-                   <Lightbulb size={18} />
+                   <Lightbulb size={20} />
                  </button>
                  <button
                    onClick={onToggleHelp}
-                   className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-500 hover:text-blue-500 transition-colors border border-transparent hover:border-zinc-700"
-                   title="Help [?]"
+                   className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors border border-transparent hover:border-zinc-700"
+                   title="Show Help (Shift+?)"
                  >
-                   <HelpCircle size={18} />
+                   <HelpCircle size={20} />
                  </button>
             </div>
         </div>
@@ -305,9 +290,9 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                 ))}
             </div>
 
-            {/* List Content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-black/20">
-              <div className="space-y-3">
+            {/* List Content - Simple Table of Contents */}
+            <div className="flex-1 overflow-y-auto bg-black/20">
+              <div className="divide-y divide-zinc-800/50">
                   {activeEpisode.levels.map((level, missionIdx) => {
                        // Calculate global index to check status against currentLevelIndex
                        const globalIdx = levels.findIndex(l => l.id === level.id);
@@ -320,11 +305,11 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                             key={level.id}
                             ref={el => { missionRefs.current[missionIdx] = el; }}
                             className={`
-                            p-4 rounded border flex items-center gap-4 transition-all duration-200 relative overflow-hidden cursor-pointer
-                            ${status === 'active' ? `bg-zinc-900 ${activeEpisode.border} border-l-4` : 'border-zinc-800/50 bg-zinc-900/30'}
-                            ${status === 'completed' ? 'opacity-60 hover:opacity-100' : ''}
-                            ${status === 'locked' ? 'opacity-40 grayscale' : ''}
-                            ${isKeyboardSelected ? 'ring-2 ring-white/30 scale-[1.02] shadow-xl' : ''}
+                            px-6 py-4 flex items-center gap-4 transition-all duration-200 cursor-pointer
+                            ${status === 'active' ? `bg-zinc-900/50 border-l-4 ${activeEpisode.border}` : ''}
+                            ${status === 'completed' ? 'opacity-50 hover:opacity-100' : ''}
+                            ${status === 'locked' ? 'opacity-30' : ''}
+                            ${isKeyboardSelected ? 'bg-zinc-800/50 ring-2 ring-inset ring-white/20' : 'hover:bg-zinc-900/30'}
                             `}
                             onClick={() => {
                               if (onJumpToLevel) {
@@ -335,140 +320,40 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                         >
                             {/* Status Icon */}
                             <div className={`
-                                w-8 h-8 rounded flex items-center justify-center font-bold text-sm shrink-0 shadow-inner
-                                ${status === 'completed' ? 'bg-zinc-800 text-green-500' : ''}
-                                ${status === 'active' ? `bg-zinc-800 ${activeEpisode.color}` : ''}
-                                ${status === 'locked' ? 'bg-zinc-900 text-zinc-700' : ''}
+                                w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0
+                                ${status === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : ''}
+                                ${status === 'active' ? `bg-zinc-800 ${activeEpisode.color} border ${activeEpisode.border}` : ''}
+                                ${status === 'locked' ? 'bg-zinc-900 text-zinc-700 border border-zinc-800' : ''}
                             `}>
-                                {status === 'completed' ? <Check size={16} /> : level.id}
+                                {status === 'completed' ? <Check size={14} strokeWidth={3} /> : level.id}
                             </div>
                             
-                            <div className="flex-1 z-10">
-                                <div className="flex items-center justify-between mb-1">
-                                    <div className="flex items-center gap-2">
-                                      <h3 className={`font-bold tracking-wide ${status === 'active' ? 'text-white' : 'text-zinc-400'}`}>
-                                          {level.title}
-                                      </h3>
-                                      {status === 'completed' && <span className="text-[9px] bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-800">✓ COMPLETE</span>}
-                                      {status === 'active' && <span className="text-[9px] bg-orange-900/30 text-orange-400 px-2 py-0.5 rounded border border-orange-800 animate-pulse">● ACTIVE</span>}
-                                      {status === 'locked' && <span className="text-[9px] bg-zinc-900 text-zinc-600 px-2 py-0.5 rounded border border-zinc-800">🔒 LOCKED</span>}
-                                    </div>
-                                </div>
-
-                                {/* Core Skill Badge */}
+                            {/* Level Title */}
+                            <div className="flex-1">
+                                <h3 className={`font-bold text-sm tracking-wide ${status === 'active' ? 'text-white' : status === 'completed' ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                                    {level.title}
+                                </h3>
                                 {level.coreSkill && (
-                                    <div className="mb-2">
-                                        <span className="text-[10px] font-bold font-mono text-cyan-300 bg-cyan-800/50 px-2 py-1 rounded border border-cyan-700/50">
-                                            {level.coreSkill}
-                                        </span>
-                                    </div>
+                                    <p className="text-xs text-zinc-600 font-mono mt-0.5">{level.coreSkill}</p>
                                 )}
+                            </div>
 
-                                <p className="text-xs text-zinc-500 leading-relaxed mb-3">{level.description}</p>
-
-                                {/* Intel / Environmental Clue */}
-                                {level.environmentalClue && (
-                                    <div className="bg-yellow-950/20 border border-yellow-900/30 rounded p-2 mb-3">
-                                        <h4 className="text-[9px] uppercase font-bold text-yellow-600 mb-1 tracking-widest">
-                                            Intel
-                                        </h4>
-                                        <p className="text-[10px] font-mono text-yellow-500/80 leading-relaxed">
-                                            {level.environmentalClue}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Skill Tree */}
-                                {(level.buildsOn?.length || level.leadsTo?.length) && (
-                                    <div className="bg-zinc-900/50 border border-zinc-800 rounded p-2 mb-3">
-                                        <h4 className="text-[9px] uppercase font-bold text-zinc-500 mb-1 tracking-widest flex items-center gap-1">
-                                            <GitBranch size={9} />
-                                            Skill Tree
-                                        </h4>
-                                        <div className="space-y-1 text-[10px] font-mono">
-                                            {level.buildsOn && level.buildsOn.length > 0 && (
-                                                <div className="text-zinc-500">
-                                                    <span className="text-zinc-600">REQUIRES:</span>{' '}
-                                                    {level.buildsOn.map(id => `L${id}`).join(', ')}
-                                                </div>
-                                            )}
-                                            {level.leadsTo && level.leadsTo.length > 0 && (
-                                                <div className="text-zinc-500">
-                                                    <span className="text-zinc-600">UNLOCKS:</span>{' '}
-                                                    {level.leadsTo.map(id => `L${id}`).join(', ')}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tasks - Expanded with Details */}
-                                <div className="mt-2">
-                                    <h4 className="text-[9px] text-zinc-600 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                        Objectives
-                                        {status === 'active' && (
-                                            <span className="text-orange-500">
-                                                • {level.tasks.filter(t => t.completed).length}/{level.tasks.length} Complete
-                                            </span>
-                                        )}
-                                        {status === 'completed' && (
-                                            <span className="text-green-600">
-                                                • All Complete
-                                            </span>
-                                        )}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {level.tasks.map((task) => (
-                                            <div
-                                                key={task.id}
-                                                className={`flex gap-2 items-start transition-all duration-300 rounded px-2 py-1 -mx-2 ${
-                                                    task.completed
-                                                        ? 'opacity-60 bg-green-950/20 border-l-2 border-green-500'
-                                                        : 'opacity-100 border-l-2 border-transparent'
-                                                }`}
-                                            >
-                                                <div className={`mt-0.5 shrink-0 transition-all duration-300 ${
-                                                    task.completed
-                                                        ? 'text-green-500 scale-110'
-                                                        : 'text-zinc-600'
-                                                }`}>
-                                                    {task.completed ? <CheckSquare size={12} /> : <Square size={12} />}
-                                                </div>
-                                                <div className={`text-[10px] font-mono leading-tight transition-all duration-300 ${
-                                                    task.completed
-                                                        ? 'line-through text-green-600/70'
-                                                        : 'text-zinc-400'
-                                                }`}>
-                                                    {task.description}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                            {/* Status Badge */}
+                            {status === 'active' && (
+                                <div className="flex items-center gap-1 text-xs text-orange-400 font-mono">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                                    <span className="text-[10px] uppercase tracking-wider">Active</span>
                                 </div>
-                            </div>
-
-                            {/* Decorative Background Icon for Episode */}
-                            <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none text-white scale-150">
-                                {React.createElement(activeEpisode.icon, { size: 80 })}
-                            </div>
+                            )}
+                            {status === 'completed' && (
+                                <Check size={16} className="text-green-500" strokeWidth={2} />
+                            )}
+                            {status === 'locked' && (
+                                <Lock size={14} className="text-zinc-700" />
+                            )}
                         </div>
                        );
                   })}
-              </div>
-              
-              {/* Episode Completion Status Footer */}
-              <div className="mt-8 text-center">
-                    {(() => {
-                        const statusKey = getEpisodeStatus(activeTab);
-                        const statusConfig = statusMap[statusKey as keyof typeof statusMap];
-                        
-                        return (
-                             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${statusConfig.class}`}>
-                                 {statusConfig.icon}
-                                 <span className="text-xs font-bold uppercase">{statusConfig.text}</span>
-                            </div>
-                        )
-                    })()}
               </div>
             </div>
           </div>

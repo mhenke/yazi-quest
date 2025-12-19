@@ -25,3 +25,7 @@ dist-ssr
 
 # AI Studio export zips
 yazi-quest-ai-studio-*.zip
+
+# Screenshots
+swappy-*.png
+Screenshot*.png

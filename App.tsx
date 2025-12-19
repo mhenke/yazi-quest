@@ -699,7 +699,20 @@ export default function App() {
             if (selected.pathIds && Array.isArray(selected.pathIds)) {
                 // FZF Logic: Combine current path with selected relative pathIds
                 const finalPath = [...gameState.currentPath, ...selected.pathIds];
-                setGameState(prev => ({ ...prev, mode: 'normal', currentPath: finalPath.slice(0, -1) }));
+                const parentPath = finalPath.slice(0, -1);
+                const fileId = finalPath[finalPath.length - 1];
+                
+                // Find the index of the selected file in the parent directory
+                const parentNode = getNodeByPath(gameState.fs, parentPath);
+                const fileIndex = parentNode?.children?.findIndex(c => c.id === fileId) ?? 0;
+                
+                setGameState(prev => ({ 
+                    ...prev, 
+                    mode: 'normal', 
+                    currentPath: parentPath,
+                    cursorIndex: fileIndex,
+                    notification: `Jumped to ${selected.path}`
+                }));
             } else {
                 setGameState(prev => ({ ...prev, mode: 'normal' }));
             }
@@ -751,7 +764,7 @@ export default function App() {
         return;
     }
     
-    if (e.key === '?' && gameState.mode === 'normal') {
+    if (e.key === '?' && e.shiftKey && gameState.mode === 'normal') {
         setGameState(prev => ({ ...prev, showHelp: true }));
         return;
     }
@@ -795,7 +808,7 @@ export default function App() {
             const visibleCount = getVisibleItems(gameState).length;
             setGameState(prev => ({ ...prev, cursorIndex: Math.max(0, visibleCount - 1), mode: 'normal', usedG: true }));
         } else if (e.key === 'h') {
-            const homePath = ['root', 'home', 'user'];
+            const homePath = ['root', 'home', 'guest'];
             const pathStr = resolvePath(gameState.fs, homePath);
             setGameState(prev => ({ 
                 ...prev, 
@@ -812,7 +825,7 @@ export default function App() {
                 }
             }));
         } else if (e.key === 'D') {
-            const dotfilesPath = ['root', 'home', 'user', '.config'];
+            const dotfilesPath = ['root', 'home', 'guest', '.config'];
             const dotfilesNode = getNodeByPath(gameState.fs, dotfilesPath);
             if (dotfilesNode) {
                 const pathStr = resolvePath(gameState.fs, dotfilesPath);
@@ -834,7 +847,7 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Dotfiles not found' }));
             }
         } else if (e.key === 'c') {
-            const configPath = ['root', 'home', 'user', '.config'];
+            const configPath = ['root', 'home', 'guest', '.config'];
             const configNode = getNodeByPath(gameState.fs, configPath);
             if (configNode) {
                 const pathStr = resolvePath(gameState.fs, configPath);
@@ -856,7 +869,7 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Config not found' }));
             }
         } else if (e.key === 'w') {
-            const workspacePath = ['root', 'home', 'user', 'workspace'];
+            const workspacePath = ['root', 'home', 'guest', 'workspace'];
             const workspaceNode = getNodeByPath(gameState.fs, workspacePath);
             if (workspaceNode) {
                 const pathStr = resolvePath(gameState.fs, workspacePath);
@@ -895,7 +908,7 @@ export default function App() {
                 }
             }));
         } else if (e.key === 'd') {
-            const datastorePath = ['root', 'home', 'user', 'datastore'];
+            const datastorePath = ['root', 'home', 'guest', 'datastore'];
             const datastoreNode = getNodeByPath(gameState.fs, datastorePath);
             if (datastoreNode) {
                 const pathStr = resolvePath(gameState.fs, datastorePath);
@@ -917,7 +930,7 @@ export default function App() {
                 setGameState(prev => ({ ...prev, mode: 'normal', notification: 'Datastore not found' }));
             }
         } else if (e.key === 'i') {
-            const incomingPath = ['root', 'home', 'user', 'incoming'];
+            const incomingPath = ['root', 'home', 'guest', 'incoming'];
             const incomingNode = getNodeByPath(gameState.fs, incomingPath);
             if (incomingNode) {
                 const pathStr = resolvePath(gameState.fs, incomingPath);

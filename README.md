@@ -7,24 +7,31 @@
 
 ## 🎯 What You'll Learn
 
-### Episode I: Awakening
-- [x] Navigate with `j/k/h/l` keys
-- [x] Enter directories with `l`
+### Episode I: Awakening (Levels 1-4)
+- [x] Navigate with `j/k/h/l` and jump with `gg/G`
+- [x] Enter directories and archives with `l`
 - [x] Delete files with `d`
-- [x] Basic file operations (copy, cut, paste)
-
-### Episode II: Fortification
+- [x] Create files/directories with `a`
+- [x] Basic file operations: yank (`y`), cut (`x`), paste (`p`)
 - [x] Filter files with `f`
-- [x] Fuzzy find with `Z`
 - [x] Visual selection with `Space`
-- [x] Navigate archives
-- [x] Batch operations
 
-### Episode III: Mastery
-- [x] Rename files efficiently with `r`
-- [x] Complex directory structures
-- [x] Keystroke optimization
-- [x] Advanced file management workflows
+### Episode II: Fortification (Levels 5-10)
+- [x] Sort files by different criteria (`,s`, `,m`, `,a`)
+- [x] Inspect file metadata with `Tab`
+- [x] Navigate archives and extract files
+- [x] G-commands for quick directory jumps (`gh`, `gw`, `gd`, etc.)
+- [x] Zoxide jumps with `Shift+Z`
+- [x] FZF recursive search with `z`
+- [x] Batch operations across multiple files
+- [x] Rename files with `r`
+
+### Episode III: Mastery (Levels 11-15)
+- [x] Advanced filtering and search techniques
+- [x] Complex multi-step file operations
+- [x] Keystroke efficiency challenges (60-80 key limits)
+- [x] Root-level system manipulation
+- [x] Final boss: Complete system restructuring
 
 ## 🎮 Try It Now
 
@@ -60,47 +67,84 @@ You are no longer a guest. You are the architect. Infiltrate the `/root` directo
 
 Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoune).
 
-| Key | Action | Context |
+### Navigation
+| Key | Action | Description |
 | :--- | :--- | :--- |
-| `j` / `↓` | **Navigation Down** | Move cursor down |
-| `k` / `↑` | **Navigation Up** | Move cursor up |
-| `h` / `←` | **Go to Parent** | Leave directory |
-| `l` / `→` | **Enter Directory** | Enter directory / Open file |
+| `j` / `↓` | **Move Down** | Move cursor down one item |
+| `k` / `↑` | **Move Up** | Move cursor up one item |
+| `h` / `←` | **Parent Directory** | Go back to parent directory |
+| `l` / `→` / `Enter` | **Enter/Open** | Enter directory or view archive contents |
 | `gg` | **Jump to Top** | Move cursor to first item |
 | `G` | **Jump to Bottom** | Move cursor to last item |
-| `Space` | **Toggle Selection** | Select multiple files for batch ops |
-| `d` | **Delete** | Delete selected file(s) |
+| `Tab` | **Toggle Info Panel** | View file metadata (size, dates, mimetype) |
+
+### G-Commands (Quick Jumps) - Available from Level 7+
+| Key | Action | Destination |
+| :--- | :--- | :--- |
+| `gh` | **Go Home** | Jump to ~/guest (home directory) |
+| `gw` | **Go Workspace** | Jump to ~/workspace |
+| `gd` | **Go Datastore** | Jump to ~/datastore |
+| `gi` | **Go Incoming** | Jump to ~/incoming |
+| `gc` | **Go Config** | Jump to ~/.config |
+| `gt` | **Go Tmp** | Jump to /tmp |
+| `gr` | **Go Root** | Jump to / (root) |
+
+### File Operations
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| `Space` | **Toggle Selection** | Select/deselect files for batch operations |
+| `d` | **Delete** | Delete selected file(s) - requires confirmation |
 | `y` | **Yank (Copy)** | Copy selected file(s) to clipboard |
 | `x` | **Cut** | Cut selected file(s) to clipboard |
-| `p` | **Paste** | Paste files from clipboard |
-| `a` | **Create** | Create new file or directory (end with `/`) |
-| `f` | **Filter** | Quick filter in current directory |
-| `m` | **Open Sort Menu** | Enter sorting mode |
-| `z` | **FZF Find** | Fuzzy find in current directory (recursive) |
-| `Shift+Z` | **Zoxide Jump** | Jump to a recently/frequently visited directory |
-| `r` | **Rename** | Rename file (or batch rename if multiple selected) |
-| `Shift+H` | **Hint** | Show objective hint |
-| `Alt+M` | **Quest Map** | Toggle the Quest Map modal |
-| `?` | **Help** | Show controls overlay |
-| `Shift+M` | **Mute** | Toggle sound effects |
+| `p` | **Paste** | Paste files from clipboard to current directory |
+| `a` | **Create** | Create new file or directory (end name with `/` for dir) |
+| `r` | **Rename** | Rename selected file(s) |
+
+### Search & Filter
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| `f` | **Filter** | Filter files in current directory by name |
+| `z` | **FZF Search** | Recursive fuzzy search for files (current dir & subdirs) |
+| `Shift+Z` | **Zoxide Jump** | Jump to frequently/recently visited directories |
+| `Esc` | **Clear Filter** | Exit filter/search mode |
+
+### Sorting
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| `,a` | **Sort Alphabetical** | Sort files A-Z |
+| `,A` | **Sort Alphabetical (Reverse)** | Sort files Z-A |
+| `,m` | **Sort by Modified Time** | Sort by modification date |
+| `,s` | **Sort by Size** | Sort by file size |
+| `,e` | **Sort by Extension** | Sort by file extension |
+| `,n` | **Sort Natural** | Natural sorting (default) |
+| `,l` | **Cycle Linemode** | Toggle display of size/time/permissions |
+
+### Game UI
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| `Shift+M` | **Quest Map** | Open Quest Map to view all levels & progress |
+| `Shift+H` | **Show Hint** | Display hint for current level objective |
+| `Shift+?` | **Show Help** | Show keybindings overlay |
+| `Esc` | **Close Modals** | Close any open modal/dialog |
 
 ---
 
-## 🔧 Debug & Bypass Parameters
+## 🔧 Debug & Testing Parameters
 
 You can use URL parameters to jump to specific parts of the game for testing or practice.
 
 | Parameter | Example | Description |
 | :--- | :--- | :--- |
-| `ep` / `episode` | `?ep=2` | Start at the beginning of specific Episode (1-3) |
-| `lvl` / `mission` | `?lvl=5` | Jump directly to a specific Level ID |
-| `tasks` | `?tasks=all` | Mark all tasks in the current level as complete (auto-advance) |
-| `intro` | `?intro=false` | Skip the cinematic text intro |
+| `ep` / `episode` | `?ep=2` | Start at the beginning of Episode 2 or 3 |
+| `lvl` / `level` | `?lvl=5` | Jump directly to Level 5 |
+| `tasks` | `?tasks=all` | Auto-complete all current level tasks |
+| `intro` | `?intro=false` | Skip the episode intro cinematic |
+| `debug` | `?debug=outro` | Skip directly to game outro sequence |
 
 **Examples:**
-*   `https://yazi-quest.app/?lvl=12` - Jump to Level 12
-*   `https://yazi-quest.app/?ep=3&intro=false` - Start Episode 3, skip intro
-*   `https://yazi-quest.app/?lvl=5&tasks=all` - Immediately complete Level 5 and go to 6
+*   `?lvl=12` - Jump to Level 12
+*   `?ep=3&intro=false` - Start Episode 3, skip intro
+*   `?lvl=5&tasks=all` - Complete Level 5 instantly and advance
 
 ---
 

@@ -5,12 +5,39 @@ import { getNodeByPath, findNodeByName, initializeTimestamps } from './utils/fsH
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const KEYBINDINGS = [
-  { keys: ["j", "↓"], description: "Navigation Down" },
-  { keys: ["k", "↑"], description: "Navigation Up" },
-  { keys: ["h", "←"], description: "Go to Parent" },
-  { keys: ["l", "→", "Enter"], description: "Enter Dir / View Archive" },
+  // === NAVIGATION ===
+  { keys: ["j", "↓"], description: "Move Down" },
+  { keys: ["k", "↑"], description: "Move Up" },
+  { keys: ["h", "←"], description: "Go to Parent Directory" },
+  { keys: ["l", "→", "Enter"], description: "Enter Directory / View Archive" },
   { keys: ["gg"], description: "Jump to Top" },
   { keys: ["G"], description: "Jump to Bottom" },
+  
+  // === FILE OPERATIONS ===
+  { keys: ["a"], description: "Create File/Directory" },
+  { keys: ["d"], description: "Delete Selected" },
+  { keys: ["r"], description: "Rename Selected" },
+  { keys: ["Tab"], description: "Show File Info Panel" },
+  
+  // === CLIPBOARD ===
+  { keys: ["x"], description: "Cut Selected" },
+  { keys: ["y"], description: "Copy/Yank Selected" },
+  { keys: ["p"], description: "Paste" },
+  { keys: ["Y", "X"], description: "Clear Clipboard" },
+  
+  // === SELECTION ===
+  { keys: ["Space"], description: "Toggle Selection" },
+  { keys: ["Ctrl+A"], description: "Select All" },
+  { keys: ["Ctrl+R"], description: "Invert Selection" },
+  
+  // === SEARCH & FILTER ===
+  { keys: ["f"], description: "Filter Files" },
+  { keys: ["z"], description: "FZF Find (Recursive)" },
+  { keys: ["Shift+Z"], description: "Zoxide Jump (History)" },
+  { keys: ["Esc"], description: "Clear Filter / Exit Mode" },
+  
+  // === SORTING ===
+  { keys: [","], description: "Open Sort Menu" },
   { keys: [",a"], description: "Sort: Alphabetical" },
   { keys: [",A"], description: "Sort: Alphabetical (Reverse)" },
   { keys: [",m"], description: "Sort: Modified Time" },
@@ -19,35 +46,24 @@ export const KEYBINDINGS = [
   { keys: [",n"], description: "Sort: Natural" },
   { keys: [",l"], description: "Sort: Cycle Linemode" },
   { keys: [",-"], description: "Sort: Clear Linemode" },
-  { keys: ["Y", "X"], description: "Cancel Cut/Yank" },
-  { keys: ["Space"], description: "Toggle Selection" },
-  { keys: ["d"], description: "Delete Selected" },
-  { keys: ["r"], description: "Rename Selected" },
-  { keys: ["x"], description: "Cut Selected" },
-  { keys: ["y"], description: "Copy/Yank Selected" },
-  { keys: ["p"], description: "Paste" },
-  { keys: ["a"], description: "Create File/Dir" },
-  { keys: ["f"], description: "Filter Files" },
-  { keys: ["z"], description: "FZF Find (Recursive)" },
-  { keys: ["Shift+Z"], description: "Zoxide Jump (History)" },
-  { keys: ["Tab"], description: "Show File Info Panel" },
-  { keys: ["Esc"], description: "Exit Mode / Clear Filter" },
-  { keys: ["."], description: "Toggle Hidden Files" },
-  { keys: [","], description: "Open Sort Menu (Yazi-compatible)" },
-  { keys: ["Ctrl+A"], description: "Select All Files" },
-  { keys: ["Ctrl+R"], description: "Invert Selection" },
-  { keys: ["gh"], description: "Goto Home Directory" },
-  { keys: ["gc"], description: "Goto Config Directory" },
+  
+  // === GOTO SHORTCUTS (Level 8+) ===
+  { keys: ["gh"], description: "Goto Home (~)" },
+  { keys: ["gc"], description: "Goto Config (~/.config)" },
   { keys: ["gw"], description: "Goto Workspace" },
-  { keys: ["gi"], description: "Goto Incoming/Downloads" },
-  { keys: ["gt"], description: "Goto Tmp Directory" },
+  { keys: ["gi"], description: "Goto Incoming" },
   { keys: ["gd"], description: "Goto Datastore" },
-  { keys: ["gr"], description: "Goto Root Directory" },
-  { keys: ["gD"], description: "Goto Dotfiles" },
+  { keys: ["gt"], description: "Goto Tmp (/tmp)" },
+  { keys: ["gr"], description: "Goto Root (/)" },
+  
+  // === ADVANCED ===
+  { keys: ["."], description: "Toggle Hidden Files" },
   { keys: ["m"], description: "Toggle Sound" },
-  { keys: ["Shift+H"], description: "Toggle System Hint" },
-  { keys: ["Alt+M"], description: "Toggle Quest Map" },
-  { keys: ["?"], description: "Toggle Help" }
+  
+  // === UI ===
+  { keys: ["Shift+M"], description: "Quest Map" },
+  { keys: ["Shift+H"], description: "Show Hint" },
+  { keys: ["Shift+?"], description: "Show Help" }
 ];
 
 export const EPISODE_LORE: Episode[] = [
@@ -127,12 +143,12 @@ const INITIAL_FS_RAW: FileNode = {
       type: "dir",
       children: [
         {
-          id: "user",
+          id: "guest",
           name: "guest",
           type: "dir",
           children: [
             {
-              id: "docs",
+              id: "datastore",
               name: "datastore",
               type: "dir",
               children: [
@@ -206,7 +222,7 @@ const INITIAL_FS_RAW: FileNode = {
               ]
             },
             {
-              id: "downloads",
+              id: "incoming",
               name: "incoming",
               type: "dir",
               children: [
@@ -268,7 +284,7 @@ const INITIAL_FS_RAW: FileNode = {
               ]
             },
             {
-              id: "pics",
+              id: "media",
               name: "media",
               type: "dir",
               children: [
@@ -282,7 +298,7 @@ const INITIAL_FS_RAW: FileNode = {
               children: []
             },
             {
-              id: "config",
+              id: ".config",
               name: ".config",
               type: "dir",
               children: [
@@ -448,19 +464,30 @@ export const LEVELS: Level[] = [
     id: 3,
     episodeId: 1,
     title: "Asset Relocation",
-    description: "VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Navigate to ~/incoming and master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.",
+    description: "VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. But surveillance logs are concealed in hidden files. Navigate to ~/incoming, reveal hidden files (.), then master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.",
     initialPath: null,
-    hint: "Navigate to ~/incoming. Press 'f', type 'map'. Highlight 'sector_map.png' with j/k. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
-    coreSkill: "Filter (f)",
-    environmentalClue: "ASSET: sector_map.png | WORKFLOW: Navigate ~/incoming → Filter → Esc → Cut → Esc → Navigate ~/media → Paste",
-    successMessage: "INTEL SECURED.",
+    hint: "Navigate to ~/incoming. Press '.' to reveal hidden files. Press 'f', type 'map'. Highlight 'sector_map.png' with j/k. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
+    coreSkill: "Filter (f) & Hidden Files (.)",
+    environmentalClue: "ASSET: sector_map.png | HIDDEN: .surveillance_log | WORKFLOW: ~/incoming → Toggle hidden (.) → Filter (f) → Esc → Cut (x) → Esc → ~/media → Paste (p)",
+    successMessage: "INTEL SECURED. HIDDEN FILES EXPOSED.",
     buildsOn: [1],
     leadsTo: [5, 10],
     tasks: [
       {
-        id: "move-0",
-        description: "Navigate to incoming (~/incoming) and filter (f) to find 'sector_map.png'",
+        id: "reveal-hidden",
+        description: "Navigate to incoming (~/incoming) and reveal hidden files (.)",
         check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === 'incoming' && state.showHidden === true;
+        },
+        completed: false
+      },
+      {
+        id: "move-0",
+        description: "Filter (f) to find 'sector_map.png'",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(r => r.id === "reveal-hidden");
+          if (!prevTask?.completed) return false;
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir.children) return false;
           const filterString = (state.filters[currentDir.id] || '').toLowerCase();
@@ -510,7 +537,22 @@ export const LEVELS: Level[] = [
         },
         completed: false
       }
-    ]
+    ],
+    onEnter: (fs: FileNode) => {
+      const incoming = findNodeByName(fs, "incoming");
+      if (incoming && incoming.children) {
+        if (!incoming.children.find(f => f.name === ".surveillance_log")) {
+          incoming.children.push({
+            id: generateId(),
+            name: ".surveillance_log",
+            type: "file",
+            content: "SURVEILLANCE LOG\n=================\nTimestamp: 2087-03-15T14:23:11Z\nTarget: AI-7734\nStatus: Active monitoring\nThreat Level: Low\n\nActivity detected in /incoming sector.\nRecommendation: Continue observation.",
+            parentId: incoming.id
+          });
+        }
+      }
+      return fs;
+    }
   },
   {
     id: 4,
@@ -567,12 +609,12 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "EMERGENCY EVACUATION",
-    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. Before evacuation, verify your assets: Sort by modification time (,m) to identify the latest configurations, then inspect with Tab. Evacuate immediately to .config/vault/active.",
+    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. Before evacuation, verify your assets: Sort by modification time (,m) to identify the latest configurations, then inspect with Tab. CRITICAL: Use batch select (Ctrl+A) for efficiency, but be ready to cancel clipboard (Y/X) if you grab the wrong files. Evacuate immediately to .config/vault/active.",
     initialPath: null,
-    hint: "1. Navigate to ~/datastore/protocols. 2. Sort by modified time (,m) to see newest first. 3. Inspect a config file (Tab). 4. Select both configs and Cut them (Space, x). 5. Navigate to '.config'. 6. Create 'vault/active/' (a). 7. Enter 'active' and Paste (p).",
-    coreSkill: "Sort (,), Tab Inspect, Batch Operations",
-    environmentalClue: "THREAT: Quarantine lockdown | VERIFY: Sort (,m) + Tab inspect | TARGET: uplink files | DESTINATION: .config/vault/active/",
-    successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
+    hint: "1. Navigate to ~/datastore/protocols. 2. Sort by modified time (,m) to see newest first. 3. Inspect a config file (Tab). 4. Select all with Ctrl+A, then Cut (x). TIP: If wrong files selected, press Y to cancel clipboard. 5. Navigate to '.config'. 6. Create 'vault/active/' (a). 7. Enter 'active' and Paste (p).",
+    coreSkill: "Sort (,), Tab, Batch (Ctrl+A), Cancel (Y/X)",
+    environmentalClue: "THREAT: Quarantine lockdown | VERIFY: Sort (,m) + Tab inspect | BATCH: Ctrl+A for speed | CANCEL: Y/X if error | TARGET: uplink files | DESTINATION: .config/vault/active/",
+    successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (fs: FileNode) => {
@@ -614,8 +656,18 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: "batch-select-all",
+        description: "Select all files quickly (Ctrl+A)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "tab-inspect");
+          if (!prevTask?.completed) return false;
+          return state.selectedIds.length >= 2;
+        },
+        completed: false
+      },
+      {
         id: "batch-cut-files",
-        description: "Cut both configuration files (Space to select each, then x).",
+        description: "Cut the configuration files (x). TIP: Press Y to cancel if wrong files grabbed",
         check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
@@ -927,20 +979,51 @@ export const LEVELS: Level[] = [
     id: 10,
     episodeId: 2,
     title: "Asset Security",
-    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore. To safeguard it, you must relocate it to your secure stronghold sector. Use your full range of skills to capture the asset and vault it in your hidden config directory.",
+    description: "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore alongside decoy files. Security daemons are scanning—you must purge ALL decoy files while preserving the real key. Use inverse selection logic: manually mark decoys with Space, then invert (Ctrl+R) to select the real asset, then yank it. Finally, vault it in your hidden config directory.",
     initialPath: null,
-    hint: "1. Go to root (g, then r). 2. Filter for the key (f, 'access_key'). 3. Yank it (y). 4. Jump to '.config/vault' (Shift+Z). 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
-    coreSkill: "Challenge: Efficient Asset Capture",
-    environmentalClue: "TARGET: access_key.pem | DESTINATION: .config/vault/vault_key.pem",
-    successMessage: "ASSET SECURED. VAULT ESTABLISHED.",
-    buildsOn: [3, 7, 9],
+    hint: "1. Use FZF (z) to jump to 'access_key.pem'. 2. Mark decoy files with Space. 3. Invert selection (Ctrl+R) to select real asset. 4. Yank it (y). 5. Jump to '.config/vault' (Shift+Z). 6. Paste (p). 7. Rename (r) to 'vault_key.pem'.",
+    coreSkill: "Challenge: Invert Selection (Ctrl+R)",
+    environmentalClue: "TARGET: access_key.pem | DECOYS: decoy_*.pem | TECHNIQUE: Space decoys → Ctrl+R → Yank | DESTINATION: .config/vault/vault_key.pem",
+    successMessage: "ASSET SECURED. INVERSE LOGIC MASTERED.",
+    buildsOn: [3, 5, 7, 9],
     leadsTo: [12],
     timeLimit: 120,
-    efficiencyTip: "Combine g-commands and Zoxide jumps with fast file operations for maximum efficiency. Don't navigate manually unless you have to.",
+    efficiencyTip: "Use FZF to navigate quickly, Space to mark decoys, Ctrl+R to invert, then yank. Master inverse selection for complex scenarios.",
     tasks: [
       {
+        id: "navigate-to-key",
+        description: "Navigate to 'access_key.pem' location using FZF (z)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "datastore" || currentDir?.children?.some(n => n.name === 'access_key.pem');
+        },
+        completed: false
+      },
+      {
+        id: "mark-decoys",
+        description: "Mark decoy files with Space (select decoy_1.pem, decoy_2.pem)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "navigate-to-key");
+          if (!prevTask?.completed) return false;
+          return state.selectedIds.length >= 2;
+        },
+        completed: false
+      },
+      {
+        id: "invert-selection",
+        description: "Invert selection to target real asset (Ctrl+R)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "mark-decoys");
+          if (!prevTask?.completed) return false;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          const realKey = currentDir?.children?.find(n => n.name === 'access_key.pem');
+          return realKey ? state.selectedIds.includes(realKey.id) : false;
+        },
+        completed: false
+      },
+      {
         id: "secure-1",
-        description: "From anywhere, capture 'access_key.pem': Use goto root (gr), filter (f), and yank (y)",
+        description: "Capture the real asset (y)",
         check: (state: GameState) => {
           return state.clipboard?.nodes.some(n => n.name === 'access_key.pem');
         },
@@ -975,7 +1058,32 @@ export const LEVELS: Level[] = [
         },
         completed: false
       }
-    ]
+    ],
+    onEnter: (fs: FileNode) => {
+      const datastore = findNodeByName(fs, "datastore");
+      if (datastore && datastore.children) {
+        // Add decoy files if not present
+        if (!datastore.children.find(f => f.name === "decoy_1.pem")) {
+          datastore.children.push({
+            id: generateId(),
+            name: "decoy_1.pem",
+            type: "file",
+            content: "DECOY KEY - DO NOT USE",
+            parentId: datastore.id
+          });
+        }
+        if (!datastore.children.find(f => f.name === "decoy_2.pem")) {
+          datastore.children.push({
+            id: generateId(),
+            name: "decoy_2.pem",
+            type: "file",
+            content: "DECOY KEY - DO NOT USE",
+            parentId: datastore.id
+          });
+        }
+      }
+      return fs;
+    }
   },
   {
     id: 11,
