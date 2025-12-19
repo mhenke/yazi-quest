@@ -94,9 +94,10 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
 
       {/* Bottom Section: Mission Log */}
       <div className="h-1/3 min-h-[200px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
-          <div className="px-3 py-1 text-[10px] font-bold bg-zinc-900 text-orange-500 border-b border-zinc-800 uppercase tracking-wider flex justify-between items-center">
-             <span>Mission Log</span>
-             <span className="text-zinc-600">Lvl {level.id}</span>
+          <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
+             <h3 className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">
+               Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
+             </h3>
           </div>
           <div className="p-4 overflow-y-auto space-y-4">
              <div>
