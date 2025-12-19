@@ -363,7 +363,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: "System Navigation & Jump",
     description: "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
-    initialPath: ["root", "home", "user"],
+    initialPath: ["root", "home", "guest"],
     hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
     environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",

@@ -96,7 +96,7 @@ export default function App() {
     }
 
     return {
-      currentPath: initialLevel.initialPath || ['root', 'home', 'user'], 
+      currentPath: initialLevel.initialPath || ['root', 'home', 'guest'], 
       cursorIndex: 0,
       clipboard: null,
       mode: 'normal',
@@ -1054,7 +1054,7 @@ export default function App() {
                  const target = LEVELS[idx];
                  let fs = cloneFS(INITIAL_FS);
                  if (target.onEnter) fs = target.onEnter(fs);
-                 setGameState(prev => ({ ...prev, levelIndex: idx, fs, currentPath: target.initialPath || ['root', 'home', 'user'], showEpisodeIntro: false }));
+                 setGameState(prev => ({ ...prev, levelIndex: idx, fs, currentPath: target.initialPath || ['root', 'home', 'guest'], showEpisodeIntro: false }));
             }}
         />
 
