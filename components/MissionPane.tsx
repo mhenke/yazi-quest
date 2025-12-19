@@ -16,8 +16,8 @@ export const MissionPane: React.FC<MissionPaneProps> = ({ level, gameState, onTo
         <h2 className="text-sm font-bold text-orange-500 uppercase tracking-wider mb-1">
           Mission Log
         </h2>
-        <div className="text-xs text-zinc-500 font-mono">
-          Level {level.id} // {level.title}
+        <div className="text-xs text-orange-500 font-mono font-bold uppercase">
+          Level {level.id}: {level.title}
         </div>
         {level.coreSkill && (
           <div className="mt-2 text-[10px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900/50">

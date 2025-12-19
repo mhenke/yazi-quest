@@ -4,6 +4,7 @@ import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecen
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
 import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, isProtected, getAllDirectories, resolvePath, getRecursiveContent } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
+import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { FileSystemPane } from './components/FileSystemPane';
 import { PreviewPane } from './components/PreviewPane';
@@ -140,24 +141,6 @@ export default function App() {
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
-
-  const getVisibleItems = useCallback((state: GameState) => {
-    const currentDir = getNodeByPath(state.fs, state.currentPath);
-    if (!currentDir || !currentDir.children) return [];
-
-    let items = [...currentDir.children];
-
-    if (!state.showHidden) {
-      items = items.filter(c => !c.name.startsWith('.'));
-    }
-
-    const filter = state.filters[currentDir.id] || '';
-    if (filter) {
-      items = items.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
-    }
-
-    return sortNodes(items, state.sortBy, state.sortDirection);
-  }, []); 
 
   const visibleItems = getVisibleItems(gameState);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
@@ -310,7 +293,6 @@ export default function App() {
     parent: FileNode | null,
     currentItem: FileNode | null,
     currentLevel: Level,
-    getVisibleItems: (state: GameState) => FileNode[],
     advanceLevel: () => void,
     gPressedRef: React.MutableRefObject<boolean>
   ) => {
@@ -784,7 +766,7 @@ export default function App() {
     }
 
     if (gameState.mode === 'normal') {
-        handleNormalModeKeyDown(e, gameState, setGameState, items, parent, currentItem, currentLevel, getVisibleItems, advanceLevel, gPressedRef);
+        handleNormalModeKeyDown(e, gameState, setGameState, items, parent, currentItem, currentLevel, advanceLevel, gPressedRef);
     }
     else if (gameState.mode === 'sort') {
         handleSortModeKeyDown(e, gameState, setGameState);
@@ -977,7 +959,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, isLastLevel, getVisibleItems, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleOverwriteConfirmKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
+  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleOverwriteConfirmKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

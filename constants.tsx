@@ -1,6 +1,7 @@
 
 import { FileNode, Level, Episode, GameState } from './types';
 import { getNodeByPath, findNodeByName, initializeTimestamps } from './utils/fsHelpers';
+import { getVisibleItems } from './utils/viewHelpers';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -440,11 +441,9 @@ export const LEVELS: Level[] = [
         id: "del-2b",
         description: "Inspect 'watcher_agent.sys' metadata (Tab to open info panel)",
         check: (state: GameState, level: Level) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          if (currentDir?.name !== "incoming") return false;
-          const currentItem = currentDir?.children?.[state.cursorIndex];
-          // Check if info panel is shown AND cursor is on the target file
-          // This task completes when Tab is pressed while on watcher_agent.sys
+          const visibleItems = getVisibleItems(state);
+          const currentItem = visibleItems[state.cursorIndex];
+          
           return state.showInfoPanel === true && currentItem?.name === "watcher_agent.sys";
         },
         completed: false
