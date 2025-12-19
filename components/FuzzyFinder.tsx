@@ -41,8 +41,9 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
           return a.path.localeCompare(b.path);
         });
     } else {
-      // For FZF, we'll assign a default score of 0
+      // For FZF, search FILES only (not directories)
       return getRecursiveContent(gameState.fs, gameState.currentPath)
+        .filter(c => c.type === 'file' || c.type === 'archive') // Only files and archives
         .map(c => ({ 
             path: c.display, 
             pathIds: c.path, 
@@ -116,11 +117,11 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
           </div>
       </div>
 
-      {/* Main Content Area: Split List and Preview */}
+      {/* Main Content Area: Split List and Preview (Zoxide) OR Just List (FZF) */}
       <div className="flex-1 flex flex-col min-h-0">
         
         {/* Candidates List */}
-        <div className="h-1/2 overflow-y-auto border-b border-zinc-800 scrollbar-hide" ref={listRef}>
+        <div className={`${isZoxide ? 'h-1/2 border-b border-zinc-800' : 'flex-1'} overflow-y-auto scrollbar-hide`} ref={listRef}>
             {filteredCandidates.length === 0 ? (
                 <div className="p-12 text-center text-zinc-700 italic text-sm">
                     No matching entries found in {isZoxide ? 'history' : 'this directory'}
@@ -160,7 +161,8 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
             )}
         </div>
 
-        {/* Directory Preview Area - More Landscape */}
+        {/* Directory Preview Area - Zoxide only */}
+        {isZoxide && (
         <div className="flex-1 flex flex-col min-h-0 bg-black/40 p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="text-[10px] uppercase font-bold text-zinc-600 tracking-[0.2em] flex items-center gap-2">
@@ -193,6 +195,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
                 )}
             </div>
         </div>
+        )}
       </div>
 
       {/* Pro Status Footer */}

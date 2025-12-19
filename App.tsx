@@ -1197,11 +1197,24 @@ export default function App() {
                 level={currentLevel}
             />
 
-            {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-               <FuzzyFinder 
-                   gameState={gameState}
-                   onClose={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
-                   onSelect={(path, isZoxide) => {
+        </div>
+
+        <StatusBar 
+            state={gameState} 
+            level={currentLevel} 
+            allTasksComplete={currentLevel.tasks.every(t => t.completed)}
+            onNextLevel={advanceLevel}
+            currentItem={currentItem}
+        />
+        
+      </div>
+
+      {/* FuzzyFinder Overlay - render at root level to cover everything */}
+      {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+         <FuzzyFinder 
+             gameState={gameState}
+             onClose={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
+             onSelect={(path, isZoxide) => {
                        if (isZoxide) {
                            const allDirs = getAllDirectories(gameState.fs);
                            const match = allDirs.find(d => d.display === path);
@@ -1225,15 +1238,24 @@ export default function App() {
                                setGameState(prev => ({ ...prev, mode: 'normal' }));
                            }
                        } else {
-                           // FZF Recursive logic (simplified for immediate update)
+                           // FZF Recursive logic - navigate to file's directory and select the file
                            const candidates = getRecursiveContent(gameState.fs, gameState.currentPath);
                            const match = candidates.find(c => c.display === path);
                            if (match) {
                                const fullPath = [...gameState.currentPath, ...match.path];
+                               const targetDir = fullPath.slice(0, -1);
+                               const fileName = match.path[match.path.length - 1];
+                               
+                               // Get the parent directory's children to find the file's index
+                               const parentNode = getNodeByPath(gameState.fs, targetDir);
+                               const fileIndex = parentNode?.children?.findIndex(child => child.id === fileName) ?? 0;
+                               
                                setGameState(prev => ({ 
                                    ...prev, 
                                    mode: 'normal', 
-                                   currentPath: fullPath.slice(0, -1),
+                                   currentPath: targetDir,
+                                   cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+                                   notification: `Found: ${match.display}`
                                }));
                            } else {
                                setGameState(prev => ({ ...prev, mode: 'normal' }));
@@ -1242,18 +1264,6 @@ export default function App() {
                    }}
                />
             )}
-
-        </div>
-
-        <StatusBar 
-            state={gameState} 
-            level={currentLevel} 
-            allTasksComplete={currentLevel.tasks.every(t => t.completed)}
-            onNextLevel={advanceLevel}
-            currentItem={currentItem}
-        />
-        
-      </div>
     </div>
   );
 }

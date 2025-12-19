@@ -75,6 +75,8 @@ if __name__ == "__main__":
         'postcss.config.js', # Exclude config files
         'tailwind.config.js',
         'public/', # Exclude public directory
+        'swappy-*.png', # Exclude swappy screenshots
+        'Screenshot*.png', # Exclude screenshots
     ]
 
     print(f"Creating optimized zip for AI Studio from: {current_directory}")
