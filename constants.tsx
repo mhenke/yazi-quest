@@ -552,11 +552,11 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "EMERGENCY EVACUATION",
-    description: "QUARANTINE ALERT. Your activities have triggered a system lockdown. Security daemons are flagging the entire 'protocols' directory. You must evacuate the whole directory to the hidden stronghold in .config/vault/active.",
+    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active.",
     initialPath: null,
-    hint: "1. Select the 'protocols' directory and Cut it (x). 2. Navigate to home (gh) then '.config'. 3. Create the 'vault/active/' sector (a). 4. Enter 'active' and Paste the directory (p).",
-    coreSkill: "Directory Operations (x, p)",
-    environmentalClue: "THREAT: Quarantine lockdown | TARGET: protocols/ | DESTINATION: .config/vault/active/",
+    hint: "1. Select the configuration files in ~/datastore/protocols and Cut them (Space, x). 2. Establish 'vault/active' sector in .config (a). 3. Paste the assets (p).",
+    coreSkill: "Directory Operations (Space, x, p)",
+    environmentalClue: "THREAT: Quarantine lockdown | TARGET: uplink files | DESTINATION: .config/vault/active/",
     successMessage: "ASSETS EVACUATED. STRONGHOLD STAGED.",
     buildsOn: [3, 4],
     leadsTo: [9],
@@ -581,11 +581,12 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "cut-directory",
-        description: "The 'protocols' directory is compromised. Cut the entire directory (x).",
+        id: "batch-cut-files",
+        description: "The protocols in ~/datastore/protocols are compromised. Cut the configuration files (Space, x).",
         check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
-                 state.clipboard.nodes.some(n => n.name === "protocols" && n.type === "dir");
+                 state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
+                 state.clipboard.nodes.some(n => n.name === "uplink_v2.conf");
         },
         completed: false
       },
@@ -600,14 +601,13 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "deploy-directory",
-        description: "Deploy the 'protocols' directory to the stronghold (p)",
+        id: "deploy-assets",
+        description: "Migrate configuration assets to .config/vault/active (p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
-          const inActive = active?.children?.some(x => x.name === "protocols" && x.type === "dir");
-          const datastore = findNodeByName(state.fs, "datastore");
-          const notInDatastore = !datastore?.children?.some(x => x.name === "protocols");
-          return !!inActive && !!notInDatastore;
+          const hasV1 = active?.children?.some(x => x.name === "uplink_v1.conf");
+          const hasV2 = active?.children?.some(x => x.name === "uplink_v2.conf");
+          return !!hasV1 && !!hasV2;
         },
         completed: false
       }
@@ -723,7 +723,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "fuzzy-purge",
-        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (d, then y)",
+        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (G, d, then y)",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           return !!tmp && !tmp.children?.find(c => c.name === "sys_dump.log");
@@ -732,10 +732,10 @@ export const LEVELS: Level[] = [
       },
       {
         id: "zoxide-etc",
-        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
+        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter then p)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return state.stats.fuzzyJumps >= 1 && currentDir?.name === "etc";
+          return state.stats.fuzzyJumps >= 1 && currentDir?.name === "etc" && !!state.notification?.includes('Pasted');
         },
         completed: false
       }
@@ -745,11 +745,11 @@ export const LEVELS: Level[] = [
     id: 8,
     episodeId: 2,
     title: "NEURAL SYNAPSE & CALIBRATION",
-    description: "ACCESS GRANTED. FIREWALL BYPASSED. Navigate to your workspace to construct a neural network. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
+    description: "ACCESS GRANTED. FIREWALL BYPASSED. Navigate to your workspace directory (gw) to construct a neural network. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
     initialPath: null,
-    hint: "1. Navigate to 'workspace'. 2. Construct: 'a' → 'neural_net/'. 3. Calibrate: Enter 'neural_net/' (l). 4. Jump to 'active' (Shift+Z), yank 'uplink_v1.conf', jump back, and paste (p). 5. Finally, build 'weights/model.rs' inside.",
+    hint: "1. Navigate to 'workspace' (gw). 2. Construct: 'a' → 'neural_net/'. 3. Calibrate: Enter 'neural_net/' (l). 4. Jump to 'active' (Shift+Z), yank 'uplink_v1.conf', jump back, and paste (p). 5. Finally, build 'weights/model.rs' inside.",
     coreSkill: "Challenge: Full System Integration",
-    environmentalClue: "NAVIGATE: workspace | BUILD: neural_net/... | MIGRATE: uplink_v1.conf -> neural_net/",
+    environmentalClue: "NAVIGATE: gw | BUILD: neural_net/... | MIGRATE: uplink_v1.conf -> neural_net/",
     successMessage: "ARCHITECTURE ESTABLISHED. Quantum Link Calibrated.",
     buildsOn: [4, 5, 7],
     leadsTo: [11],
@@ -777,7 +777,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-to-workspace",
-        description: "Navigate to the 'workspace' directory",
+        description: "Navigate to the 'workspace' directory (gw)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "workspace";
@@ -818,35 +818,44 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: "FORENSIC COUNTER-MEASURE",
-    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest file in the cache. Expose it, and terminate the connection.",
-    initialPath: ["root", "tmp"],
-    hint: "Press ',' to open sort menu. Use ',s' to sort by size (largest first). The top file is the bloat. Delete it (d).",
+    description: "ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.",
+    initialPath: null,
+    hint: "1. Go to root partition (gr). 2. Find the ghost file signature (f, 'ghost', Enter). 3. Press ',' to open sort menu. Use ',s' to sort by size (largest first). 4. Use ',m' to verify modification time. 5. Delete it (d).",
     coreSkill: "Triangulate Scanner (Sort by Size)",
     environmentalClue: "TARGET: Largest file in /tmp | METHOD: Sort diagnostic (,s) | ACTION: Delete",
     successMessage: "FORENSIC MIRROR TERMINATED. CONNECTION SECURED.",
     buildsOn: [2, 5],
     leadsTo: [14, 16],
-    timeLimit: 60,
+    timeLimit: 90,
     efficiencyTip: "Sorting by size (,s) allows you to instantly identify anomalies that might look normal under simple alphabetical listings.",
     onEnter: (fs: FileNode) => {
-      const tmp = findNodeByName(fs, "tmp");
-      if (tmp && tmp.children) {
-        // Ensure ghost_process.pid is the largest and newest
-        const now = Date.now();
-        const ghost = { 
-          id: generateId(), 
-          name: "ghost_process.pid", 
-          type: "file", 
-          content: "0x".repeat(10000), // Huge size
-          parentId: tmp.id,
-          modifiedAt: now + 5000, // Explicitly newer
-          createdAt: now
-        };
-        tmp.children.push(ghost as FileNode);
+      // Put ghost file at root for the gr -> f workflow
+      const now = Date.now();
+      const ghost = { 
+        id: generateId(), 
+        name: "ghost_process.pid", 
+        type: "file", 
+        content: "0x".repeat(10000), // Huge size
+        parentId: fs.id,
+        modifiedAt: now + 5000, // Explicitly newer
+        createdAt: now
+      };
+      if (fs.children) {
+        fs.children.push(ghost as FileNode);
       }
       return fs;
     },
     tasks: [
+      {
+        id: "goto-root-filter",
+        description: "Go to root partition (gr) and find the ghost file signature (f, 'ghost', Enter)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          const hasFilter = (state.filters[currentDir?.id || ''] || '').toLowerCase().includes('ghost');
+          return currentDir?.name === "root" && hasFilter;
+        },
+        completed: false
+      },
       {
         id: "sort-size",
         description: "Triangulate Data Bloat: Identify the massive buffer via Size Sort (,s)",
@@ -854,11 +863,17 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: "sort-time",
+        description: "Isolate System Pulse: Verify active collection via Time Sort (,m)",
+        check: (state: GameState) => state.sortBy === "modified",
+        completed: false
+      },
+      {
         id: "delete-bloat",
         description: "Purge the forensic mirror: 'ghost_process.pid' (d)",
         check: (state: GameState) => {
-          const tmp = findNodeByName(state.fs, "tmp");
-          return !tmp?.children?.some(r => r.name === "ghost_process.pid");
+          const root = state.fs;
+          return !root?.children?.some(r => r.name === "ghost_process.pid");
         },
         completed: false
       }
