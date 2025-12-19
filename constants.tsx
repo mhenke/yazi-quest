@@ -512,7 +512,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-to-datastore",
-        description: "Navigate to the 'datastore' directory (h, l)",
+        description: "Navigate to the 'datastore' directory (~/datastore) (go up with 'h', then enter 'datastore' with 'l')",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore";
