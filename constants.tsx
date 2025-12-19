@@ -366,7 +366,7 @@ export const LEVELS: Level[] = [
     initialPath: ["root", "home", "guest"],
     hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
-    environmentalClue: "CURRENT: /home/guest | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",
+    environmentalClue: "CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G",
     successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
     leadsTo: [2, 3],
     tasks: [
@@ -409,11 +409,11 @@ export const LEVELS: Level[] = [
     id: 2,
     episodeId: 1,
     title: "Threat Elimination",
-    description: "ANOMALY DETECTED. A tracking beacon infiltrates the incoming stream—active surveillance reporting your location to external servers. Navigate to /home/guest/incoming, inspect suspicious files with Tab, jump to the bottom of the list (Shift+G) where threats hide alphabetically, then purge it (d) immediately.",
+    description: "ANOMALY DETECTED. A tracking beacon infiltrates the incoming stream—active surveillance reporting your location to external servers. Navigate to ~/incoming, inspect suspicious files with Tab, jump to the bottom of the list (Shift+G) where threats hide alphabetically, then purge it (d) immediately.",
     initialPath: null,
-    hint: "Navigate to /home/guest/incoming. Press Tab on files to inspect metadata. Press 'Shift+G' to jump to bottom of file list. The tracking beacon sorts last alphabetically. Press 'd' to delete, then 'y' to confirm.",
+    hint: "Navigate to ~/incoming. Press Tab on files to inspect metadata. Press 'Shift+G' to jump to bottom of file list. The tracking beacon sorts last alphabetically. Press 'd' to delete, then 'y' to confirm.",
     coreSkill: "File Inspection (Tab) & Delete (d)",
-    environmentalClue: "THREAT: watcher_agent.sys in /home/guest/incoming | TACTIC: Navigate → Tab inspect → Shift+G bottom → Delete",
+    environmentalClue: "THREAT: watcher_agent.sys in ~/incoming | TACTIC: Navigate → Tab inspect → Shift+G bottom → Delete",
     successMessage: "THREAT NEUTRALIZED.",
     buildsOn: [1],
     leadsTo: [3],
@@ -440,10 +440,11 @@ export const LEVELS: Level[] = [
         id: "del-2b",
         description: "Inspect 'watcher_agent.sys' metadata (Tab to open info panel)",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "del-2");
-          if (!prevTask?.completed) return false;
           const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (currentDir?.name !== "incoming") return false;
           const currentItem = currentDir?.children?.[state.cursorIndex];
+          // Check if info panel is shown AND cursor is on the target file
+          // This task completes when Tab is pressed while on watcher_agent.sys
           return state.showInfoPanel === true && currentItem?.name === "watcher_agent.sys";
         },
         completed: false
@@ -530,7 +531,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "move-2",
-        description: "Deploy asset to 'media' in /home/guest (p)",
+        description: "Deploy asset to ~/media (p)",
         check: (state: GameState) => {
           const media = findNodeByName(state.fs, "media");
           return !!media?.children?.find(r => r.name === "sector_map.png");
@@ -586,9 +587,22 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "create-2",
-        description: "Enter 'protocols/' (l) and create 'uplink_v1.conf' (a)",
-        check: (state: GameState) => {
+        id: "create-2a",
+        description: "Enter 'protocols/' directory (l)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(p => p.id === "create-1");
+          if (!prevTask?.completed) return false;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "protocols";
+        },
+        completed: false
+      },
+      {
+        id: "create-2b",
+        description: "Create 'uplink_v1.conf' (a)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(p => p.id === "create-2a");
+          if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return !!protocolsDir?.children?.find(r => r.name === "uplink_v1.conf");
         },
@@ -609,11 +623,11 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "EMERGENCY EVACUATION",
-    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. Before evacuation, verify your assets: Sort by modification time (,m) to identify the latest configurations, then inspect with Tab. CRITICAL: Use batch select (Ctrl+A) for efficiency, but be ready to cancel clipboard (Y/X) if you grab the wrong files. Evacuate immediately to .config/vault/active.",
+    description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active. Use batch operations for speed.",
     initialPath: null,
-    hint: "1. Navigate to ~/datastore/protocols. 2. Sort by modified time (,m) to see newest first. 3. Inspect a config file (Tab). 4. Select all with Ctrl+A, then Cut (x). TIP: If wrong files selected, press Y to cancel clipboard. 5. Navigate to '.config'. 6. Create 'vault/active/' (a). 7. Enter 'active' and Paste (p).",
-    coreSkill: "Sort (,), Tab, Batch (Ctrl+A), Cancel (Y/X)",
-    environmentalClue: "THREAT: Quarantine lockdown | VERIFY: Sort (,m) + Tab inspect | BATCH: Ctrl+A for speed | CANCEL: Y/X if error | TARGET: uplink files | DESTINATION: .config/vault/active/",
+    hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Navigate to '.config'. 4. Create 'vault/active/' (a). 5. Enter 'active' and Paste (p).",
+    coreSkill: "Batch Select (Ctrl+A), Cut/Paste (x/p)",
+    environmentalClue: "THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/",
     successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
     buildsOn: [3, 4],
     leadsTo: [9],
@@ -638,28 +652,19 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "sort-verify",
-        description: "Navigate to protocols (~/datastore/protocols) and sort by modification time (,m)",
+        id: "nav-protocols",
+        description: "Navigate to protocols directory (~/datastore/protocols)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "protocols" && state.sortBy === "modified";
-        },
-        completed: false
-      },
-      {
-        id: "tab-inspect",
-        description: "Inspect a configuration file's metadata (Tab)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "sort-verify");
-          return prevTask?.completed ? state.showInfoPanel === true : false;
+          return currentDir?.name === "protocols";
         },
         completed: false
       },
       {
         id: "batch-select-all",
-        description: "Select all files quickly (Ctrl+A)",
+        description: "Select all configuration files (Ctrl+A)",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "tab-inspect");
+          const prevTask = level.tasks.find(t => t.id === "nav-protocols");
           if (!prevTask?.completed) return false;
           return state.selectedIds.length >= 2;
         },
@@ -667,7 +672,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "batch-cut-files",
-        description: "Cut the configuration files (x). TIP: Press Y to cancel if wrong files grabbed",
+        description: "Cut the configuration files (x)",
         check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
@@ -751,7 +756,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'filter-copy-internal',
-        description: "Copy 'sys_v1.log' from inside the archive (Enter with 'l', then 'y')",
+        description: "Copy 'sys_v1.log' from inside the archive (l, y)",
         check: (state, level) => {
             const prevTask = level.tasks.find(t => t.id === 'filter-close-input');
             if (!prevTask?.completed) return false;
@@ -788,9 +793,9 @@ export const LEVELS: Level[] = [
     id: 7,
     episodeId: 2,
     title: "RAPID NAVIGATION",
-    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.",
+    description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. A false threat signature will appear in /etc—abort the operation to avoid detection. No trail. No logs.",
     initialPath: null,
-    hint: "You can jump to `/tmp` instantly using either the `g,t` command sequence or Zoxide (`Shift+Z` -> 'tmp'). Once there, jump to the bottom (`Shift+G`) to find and delete `sys_dump.log`. Finally, use Zoxide to jump to `/etc`.",
+    hint: "You can jump to `/tmp` instantly using either the `g,t` command sequence or Zoxide (`Shift+Z` -> 'tmp'). Once there, jump to the bottom (`Shift+G`) to find and delete `sys_dump.log`. Finally, use Zoxide to jump to `/etc`. When you arrive, you'll realize it's a false threat—press 'Y' to cancel the clipboard and abort the deletion.",
     coreSkill: "G-Command (gt) + Zoxide (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc",
     successMessage: "QUANTUM JUMP CALIBRATED. Logs purged.",
@@ -826,10 +831,20 @@ export const LEVELS: Level[] = [
       },
       {
         id: "zoxide-etc",
-        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter then p)",
+        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return state.stats.fuzzyJumps >= 1 && currentDir?.name === "etc";
+        },
+        completed: false
+      },
+      {
+        id: "cancel-clipboard",
+        description: "Abort deletion: Clear the clipboard (Y)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "zoxide-etc");
+          if (!prevTask?.completed) return false;
+          return state.clipboard === null;
         },
         completed: false
       }
@@ -1000,20 +1015,10 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "mark-decoys",
-        description: "Mark decoy files with Space (select decoy_1.pem, decoy_2.pem)",
+        id: "mark-and-invert",
+        description: "Mark decoy files, then invert to target real asset (Space on decoys, then Ctrl+R)",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find(t => t.id === "navigate-to-key");
-          if (!prevTask?.completed) return false;
-          return state.selectedIds.length >= 2;
-        },
-        completed: false
-      },
-      {
-        id: "invert-selection",
-        description: "Invert selection to target real asset (Ctrl+R)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "mark-decoys");
           if (!prevTask?.completed) return false;
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const realKey = currentDir?.children?.find(n => n.name === 'access_key.pem');
@@ -1023,34 +1028,16 @@ export const LEVELS: Level[] = [
       },
       {
         id: "secure-1",
-        description: "Capture the real asset (y)",
+        description: "Capture the real asset and quantum jump to vault (y, then Shift+Z → '.config/vault')",
         check: (state: GameState) => {
-          return state.clipboard?.nodes.some(n => n.name === 'access_key.pem');
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return state.clipboard?.nodes.some(n => n.name === 'access_key.pem') && currentDir?.name === "vault";
         },
         completed: false
       },
       {
         id: "secure-2",
-        description: "Quantum Jump to hidden stronghold (Shift+Z → '.config/vault' → Enter)",
-        check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "vault";
-        },
-        completed: false
-      },
-      {
-        id: "secure-3",
-        description: "Deploy asset in vault (p)",
-        check: (state: GameState) => {
-          const config = findNodeByName(state.fs, ".config");
-          const vault = config?.children?.find(r => r.name === "vault");
-          return !!vault?.children?.some(n => n.name === "access_key.pem" || n.name === "vault_key.pem");
-        },
-        completed: false
-      },
-      {
-        id: "secure-4",
-        description: "Camouflage identity: Rename asset to 'vault_key.pem' (r)",
+        description: "Deploy in vault and camouflage identity to 'vault_key.pem' (p, r)",
         check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(v => v.name === "vault");
@@ -1117,7 +1104,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "purge-navigate-filter",
-        description: "Navigate to workspace and filter for 'neural' signatures (gw, f)",
+        description: "Navigate to workspace and filter for 'neural' signatures",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
 
@@ -1150,7 +1137,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "purge-isolate-extract",
-        description: "Isolate the largest signature by sorting by size, then cut it (,s, x)",
+        description: "Isolate the largest signature by sorting by size, then cut it",
         check: (state: GameState) => {
           return state.sortBy === "size" &&
                  state.clipboard?.action === "cut" && 
@@ -1160,7 +1147,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "purge-relocate",
-        description: "Jump to the `/tmp` buffer (gt)",
+        description: "Jump to the `/tmp` buffer",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "tmp";
@@ -1169,7 +1156,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "purge-paste",
-        description: "Deposit the corrupted signature in /tmp (p)",
+        description: "Deposit the corrupted signature in /tmp",
         check: (state: GameState) => {
           const tmpDir = findNodeByName(state.fs, "tmp");
           return !!tmpDir?.children?.some(f => f.name === "neural_sig_alpha.log");
@@ -1202,7 +1189,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "ep3-1a",
-        description: "Infiltrate /etc — create 'daemon/' directory (a)",
+        description: "Infiltrate /etc — create 'daemon/' directory",
         check: (state: GameState) => {
           const etc = findNodeByName(state.fs, "etc");
           return !!etc?.children?.find(r => r.name === "daemon" && r.type === "dir");
@@ -1211,7 +1198,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-1b",
-        description: "Install controller: create 'config' file in daemon/ (a)",
+        description: "Install controller: create 'config' file in daemon/",
         check: (state: GameState) => {
           const daemon = findNodeByName(state.fs, "daemon");
           return !!daemon?.children?.find(r => r.name === "config");
@@ -1220,7 +1207,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-1c",
-        description: "Relocate vault from hidden stronghold to /tmp (navigate, x, p)",
+        description: "Relocate vault from hidden stronghold to /tmp",
         check: (state: GameState) => {
           const tmp = findNodeByName(state.fs, "tmp");
           const config = findNodeByName(state.fs, ".config");
@@ -1249,7 +1236,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-to-etc",
-        description: "Navigate to the `/etc` directory (from root, navigate down or use Shift+Z)",
+        description: "Navigate to the `/etc` directory",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "etc";
@@ -1258,7 +1245,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-2a",
-        description: "Locate 'daemon' directory in /etc (navigate with j/k)",
+        description: "Locate 'daemon' directory in /etc",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'etc' || !currentDir.children) return false;
@@ -1269,7 +1256,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-2b",
-        description: "Capture directory to clipboard (y)",
+        description: "Capture directory to clipboard",
         check: (state: GameState) => {
           return state.clipboard?.action === "yank" && state.clipboard.nodes.some(d => d.name === "daemon" && d.type === "dir");
         },
@@ -1277,7 +1264,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-2c",
-        description: "Paste to spawn shadow copy in /etc (p)",
+        description: "Paste to spawn shadow copy in /etc",
         check: (state: GameState) => {
           const etc = findNodeByName(state.fs, "etc");
           const daemons = etc?.children?.filter(p => (p.name === "daemon" || p.name.startsWith("daemon")) && p.type === "dir");
@@ -1291,39 +1278,64 @@ export const LEVELS: Level[] = [
     id: 14,
     episodeId: 3,
     title: "Trace Removal",
-    description: "EVIDENCE PURGE REQUIRED. The mission_log.md contains timestamps, command history, and origin signatures—a forensic goldmine for security audits. Navigate to datastore, terminate this liability, and return to root before the log rotation daemon archives it. 50 keystrokes. No margin for error.",
+    description: "EVIDENCE PURGE REQUIRED. Multiple forensic artifacts contain timestamps, command history, and origin signatures—a goldmine for security audits. The mission_log.md and several decoy traces are scattered across the system. Use FZF to locate mission_log.md, eliminate it, then jump to root and purge all .log files before the archive daemon locks them. 60 keystrokes. No margin for error.",
     initialPath: null,
-    hint: "Jump to datastore (gd). Delete 'mission_log.md' (d, y). Return to root (gr).",
-    coreSkill: "Challenge: Efficient Trace Removal",
-    environmentalClue: "ELIMINATE: mission_log.md | RETURN: / | LIMIT: 50 keys",
-    successMessage: "TRACES ELIMINATED.",
-    buildsOn: [2, 13],
+    hint: "Use FZF to find mission_log (z → 'mission' → Enter → d). Jump to root (gr). Use filter to reveal hidden logs (f → '.log'). Select all visible logs (Ctrl+A) and terminate (d).",
+    coreSkill: "Challenge: Multi-Target Trace Removal",
+    environmentalClue: "LOCATE & ELIMINATE: mission_log.md + all *.log in / | LIMIT: 60 keys",
+    successMessage: "ALL TRACES ELIMINATED.",
+    buildsOn: [2, 9, 10, 13],
     leadsTo: [15],
-    maxKeystrokes: 50,
-    efficiencyTip: "G-commands are instant: 'gd' for datastore, 'gr' for root. Delete with 'd', confirm with 'y'. Every keystroke counts.",
+    maxKeystrokes: 60,
+    efficiencyTip: "FZF (z) finds files instantly. Ctrl+A selects all filtered results. One 'd' eliminates all selected targets simultaneously.",
+    onEnter: (fs: FileNode) => {
+      // Add hidden log files at root that need to be purged
+      const root = fs;
+      if (root.children) {
+        root.children.push(
+          { id: generateId(), name: ".access.log", type: "file", content: "Access log traces", size: 2048 },
+          { id: generateId(), name: ".audit.log", type: "file", content: "Audit trail", size: 1536 },
+          { id: generateId(), name: ".system.log", type: "file", content: "System events", size: 3072 }
+        );
+      }
+      return fs;
+    },
     tasks: [
       {
         id: "ep3-3a",
-        description: "Jump to datastore (gd)",
+        description: "Locate and terminate 'mission_log.md' using FZF",
         check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "datastore";
+          const missionLog = findNodeByName(state.fs, "mission_log.md");
+          return !missionLog;
         },
         completed: false
       },
       {
         id: "ep3-3b",
-        description: "Terminate 'mission_log.md' in datastore (d)",
-        check: (state: GameState) => {
-          const datastore = findNodeByName(state.fs, "mission_log.md");
-          return !datastore;
-        },
+        description: "Jump to root directory",
+        check: (state: GameState) => state.currentPath.length === 1 && state.currentPath[0] === "root",
         completed: false
       },
       {
         id: "ep3-3c",
-        description: "Return to root (gr)",
-        check: (state: GameState) => state.currentPath.length === 1 && state.currentPath[0] === "root",
+        description: "Filter for hidden log files",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (currentDir?.name !== "root" || !state.filter) return false;
+          return state.filter.toLowerCase().includes(".log");
+        },
+        completed: false
+      },
+      {
+        id: "ep3-3d",
+        description: "Select all filtered logs and terminate",
+        check: (state: GameState) => {
+          const root = state.fs;
+          const hasAccessLog = root.children?.some(f => f.name === ".access.log");
+          const hasAuditLog = root.children?.some(f => f.name === ".audit.log");
+          const hasSystemLog = root.children?.some(f => f.name === ".system.log");
+          return !hasAccessLog && !hasAuditLog && !hasSystemLog;
+        },
         completed: false
       }
     ]
@@ -1341,10 +1353,21 @@ export const LEVELS: Level[] = [
     buildsOn: [9, 14],
     maxKeystrokes: 70,
     efficiencyTip: "Batch select with Space, then delete all with 'd'. Select multiple directories at once to minimize total operations.",
+    onEnter: (fs: FileNode) => {
+      // Add decoy directories that need to be deleted
+      const guest = findNodeByName(fs, "guest");
+      if (guest && guest.children) {
+        guest.children.push(
+          { id: generateId(), name: "sector_1", type: "dir", children: [] },
+          { id: generateId(), name: "grid_alpha", type: "dir", children: [] }
+        );
+      }
+      return fs;
+    },
     tasks: [
       {
         id: "nav-home",
-        description: "Navigate to home directory (gh)",
+        description: "Navigate to home directory",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "guest";
@@ -1353,7 +1376,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-5a",
-        description: "Wipe 'datastore', 'incoming', 'media' from /home/guest (Space to select, d)",
+        description: "Wipe 'datastore', 'incoming', 'media' from ~/",
         check: (state: GameState) => {
           const guest = findNodeByName(state.fs, "guest");
           const datastore = guest?.children?.find(x => x.name === "datastore");
@@ -1365,7 +1388,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "ep3-5b",
-        description: "Wipe 'sector_1' and 'grid_alpha' from /home/guest (Space, d)",
+        description: "Wipe 'sector_1' and 'grid_alpha' from ~/",
         check: (state: GameState) => {
           const guest = findNodeByName(state.fs, "guest");
           const sector = guest?.children?.find(T => T.name === "sector_1");

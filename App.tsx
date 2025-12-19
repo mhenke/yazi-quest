@@ -803,10 +803,14 @@ export default function App() {
         if (e.key === 'Escape') {
             setGameState(prev => ({ ...prev, mode: 'normal' }));
         } else if (e.key === 'g') {
-            setGameState(prev => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: true }));
+            const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+            const inDatastore = currentDir?.name === 'datastore';
+            setGameState(prev => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: inDatastore ? true : prev.usedGG }));
         } else if (e.key === 'G') {
             const visibleCount = getVisibleItems(gameState).length;
-            setGameState(prev => ({ ...prev, cursorIndex: Math.max(0, visibleCount - 1), mode: 'normal', usedG: true }));
+            const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+            const inDatastore = currentDir?.name === 'datastore';
+            setGameState(prev => ({ ...prev, cursorIndex: Math.max(0, visibleCount - 1), mode: 'normal', usedG: inDatastore ? true : prev.usedG }));
         } else if (e.key === 'h') {
             const homePath = ['root', 'home', 'guest'];
             const pathStr = resolvePath(gameState.fs, homePath);

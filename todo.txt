@@ -1,36 +1,36 @@
-level 4
+level 2
 
-Target
-
-QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active.
-Objectives
-Establish 'vault/active' sector in .config
-Batch select both uplink files in datastore/protocols (Space)
-Migrate configuration assets to .config/vault/active (p)
-
-NEW ORDER for better flow
-
-batch and x
-establish
-then migrate/p
+ /home/guest/incoming should be ~/incoming. audit consistency of using ~ appropriately instead of /home/guest
 
 
-Target
 
-LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. No trail. No logs. NOTE: Filters persist as you navigate—press Escape to clear when done.
-Objectives
-Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)
-Eliminate trace evidence in /tmp: purge 'sys_dump.log' (d, then y)
-Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)
+level 3.
+
+i added protocols/uplink_v1.conf in one step and Enter 'protocols/' (l) and create 'uplink_v1.conf' (a) was completed. i never entered the directory
 
 
-remove the file below sys_dup.log so we can use shift-g to get to it and delete it
+level 5
+
+this seems busy busy work skip them
+- sort by modification time (,m)
+- Inspect a configuration file's metadata (Tab)
 
 
-the objects seem to have a prevfix which was not the norm. unclueare where to go to sort, seems busy work. maybe delete largest bloat, then rename or copy latest time sort.
+We need to implement this behavor shomewhere maybe on a single space selection TIP: Press Y to cancel if wrong files grabbed.
 
-ANOMALY DETECTED. A heuristic scanner is sweeping the /tmp sector, mirroring your neural signatures. It creates 'ghost' artifacts that capture your metadata. To survive, you must triangulate the scanner's current collection buffer—it's the largest and most recently modified file in the cache. Expose it, and terminate the connection.
-Objectives
-Triangulate Data Bloat: Identify the massive buffer via Size Sort (,s)
-Isolate System Pulse: Verify active collection via Time Sort (,m)
-Purge the forensic mirror: 'ghost_process.pid'
+remove the tip from level 5.
+
+level 6
+ (Enter with 'l', then 'y') doesn't fit our pattern in objectives it should be (l,y) i think
+
+level 7
+add the Press y to cancel step after jumping to etc. maybe frame it in the lore that we need to purge something there but then decided it is not a threat
+
+
+
+level 10
+see what you can combine in a logical task. i like what we are doing here just too many objects. example
+Invert selection to target real asset (Ctrl+R)
+Capture the real asset (y)
+
+could be: Invert selection to target real asset and capture the real asset (Ctrl+R, y)
