@@ -409,3 +409,25 @@ export const isProtected = (root: FileNode, parentPathIds: string[], node: FileN
 
   return null;
 };
+
+// --- Timestamp Initialization ---
+
+/**
+ * Recursively adds default timestamps to all nodes that don't have them.
+ * Used to initialize INITIAL_FS files with timestamps.
+ */
+export const initializeTimestamps = (node: FileNode, baseTime: number = Date.now()): FileNode => {
+  const updatedNode = {
+    ...node,
+    createdAt: node.createdAt || baseTime,
+    modifiedAt: node.modifiedAt || baseTime
+  };
+
+  if (updatedNode.children) {
+    updatedNode.children = updatedNode.children.map((child, index) => 
+      initializeTimestamps(child, baseTime - (index * 1000)) // Stagger times slightly for variety
+    );
+  }
+
+  return updatedNode;
+};

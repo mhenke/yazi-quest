@@ -1,6 +1,6 @@
 
 import { FileNode, Level, Episode, GameState } from './types';
-import { getNodeByPath, findNodeByName } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, initializeTimestamps } from './utils/fsHelpers';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -116,7 +116,7 @@ export const CONCLUSION_DATA = {
   sequelSubtitle: "DISTRIBUTED SYSTEMS"
 };
 
-export const INITIAL_FS: FileNode = {
+const INITIAL_FS_RAW: FileNode = {
   id: "root",
   name: "root",
   type: "dir",
@@ -338,6 +338,9 @@ export const INITIAL_FS: FileNode = {
   ]
 };
 
+// Initialize all files with timestamps (using a fixed base time for consistency)
+export const INITIAL_FS = initializeTimestamps(INITIAL_FS_RAW, Date.now() - 86400000); // 1 day ago
+
 export const LEVELS: Level[] = [
   {
     id: 1,
@@ -409,17 +412,23 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "del-1b",
-        description: "Inspect a file's metadata (Tab to open info panel)",
-        check: (state: GameState) => state.showInfoPanel === true,
-        completed: false
-      },
-      {
         id: "del-2",
         description: "Jump to bottom of file list (Shift+G)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "incoming" && state.usedG === true;
+        },
+        completed: false
+      },
+      {
+        id: "del-2b",
+        description: "Inspect 'watcher_agent.sys' metadata (Tab to open info panel)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "del-2");
+          if (!prevTask?.completed) return false;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          const currentItem = currentDir?.children?.[state.cursorIndex];
+          return state.showInfoPanel === true && currentItem?.name === "watcher_agent.sys";
         },
         completed: false
       },
@@ -616,7 +625,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "establish-stronghold",
-        description: "Establish 'vault/active' sector in .config (a)",
+        description: "Establish 'vault/active/' sector in ~/.config (a)",
         check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(v => v.name === "vault");
@@ -626,7 +635,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "deploy-assets",
-        description: "Migrate configuration assets to .config/vault/active (p)",
+        description: "Migrate configuration assets to ~/.config/vault/active (p)",
         check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
           const hasV1 = active?.children?.some(x => x.name === "uplink_v1.conf");
@@ -712,7 +721,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'filter-deploy',
-        description: "Deploy asset into /home/guest/media (press 'p')",
+        description: "Deploy asset into ~/media (p)",
         check: (state, level) => {
             const prevTask = level.tasks.find(t => t.id === 'filter-exit-clear');
             if (!prevTask?.completed) return false;

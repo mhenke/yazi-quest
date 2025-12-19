@@ -61,6 +61,24 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   const size = formatSize(file);
   const mimetype = getMimetype(file);
 
+  // Format timestamp
+  const formatDate = (timestamp?: number): string => {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const created = formatDate(file.createdAt);
+  const modified = formatDate(file.modifiedAt);
+
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 shadow-2xl rounded-lg overflow-hidden">
@@ -82,11 +100,11 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-zinc-500">Created:</span>
-                <span className="text-zinc-300">-</span>
+                <span className="text-zinc-300">{created}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Modified:</span>
-                <span className="text-zinc-300">-</span>
+                <span className="text-zinc-300">{modified}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Mimetype:</span>
