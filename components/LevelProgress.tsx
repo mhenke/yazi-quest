@@ -262,7 +262,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
       {/* Legend Modal */}
       {showLegend && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900">
                <div className="flex items-center gap-3 justify-between">

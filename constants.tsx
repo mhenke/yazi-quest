@@ -483,45 +483,20 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "move-0",
-        description: "Filter (f) to find 'sector_map.png'",
+        id: "filter-and-cut",
+        description: "Filter (f) to find 'sector_map.png', exit filter mode (Esc), and cut the asset (x)",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find(r => r.id === "reveal-hidden");
           if (!prevTask?.completed) return false;
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          if (currentDir?.name !== 'incoming' || !currentDir.children) return false;
-          const filterString = (state.filters[currentDir.id] || '').toLowerCase();
-          if (!filterString) return false;
-          const visibleFiles = currentDir.children.filter(file =>
-            file.name.toLowerCase().includes(filterString)
-          );
-          return visibleFiles.length === 1 && visibleFiles[0].name === 'sector_map.png';
+          return state.clipboard?.action === "cut" && state.clipboard.nodes.some(p => p.name === "sector_map.png");
         },
         completed: false
       },
       {
-        id: "move-0b",
-        description: "Exit filter mode (Esc)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(r => r.id === "move-0");
-          return prevTask?.completed ? state.mode === "normal" : false;
-        },
-        completed: false
-      },
-      {
-        id: "move-1",
-        description: "Cut the asset (x)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(p => p.id === "move-0b");
-          return prevTask?.completed ? state.clipboard?.action === "cut" && state.clipboard.nodes.some(p => p.name === "sector_map.png") : false;
-        },
-        completed: false
-      },
-      {
-        id: "move-1b",
+        id: "clear-filter",
         description: "Clear the filter (Esc) to reset view",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(p => p.id === "move-1");
+          const prevTask = level.tasks.find(p => p.id === "filter-and-cut");
           if (!prevTask?.completed) return false;
           const incoming = findNodeByName(state.fs, "incoming");
           return incoming ? !state.filters[incoming.id] : true;
@@ -529,7 +504,7 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "move-2",
+        id: "deploy-asset",
         description: "Deploy asset to ~/media (p)",
         check: (state: GameState) => {
           const media = findNodeByName(state.fs, "media");
@@ -568,17 +543,8 @@ export const LEVELS: Level[] = [
     leadsTo: [5, 8, 16],
     tasks: [
       {
-        id: "nav-to-datastore",
-        description: "Navigate to datastore directory (~/datastore)",
-        check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "datastore";
-        },
-        completed: false
-      },
-      {
-        id: "create-1",
-        description: "Construct 'protocols/' directory in datastore (a)",
+        id: "nav-and-create-dir",
+        description: "Navigate to datastore (~/datastore) and construct 'protocols/' directory (a)",
         check: (state: GameState) => {
           const datastore = findNodeByName(state.fs, "datastore");
           return !!datastore?.children?.find(r => r.name === "protocols" && r.type === "dir");
@@ -586,29 +552,16 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
-        id: "create-2a",
-        description: "Enter 'protocols/' directory (l)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(p => p.id === "create-1");
-          if (!prevTask?.completed) return false;
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "protocols";
-        },
-        completed: false
-      },
-      {
-        id: "create-2b",
-        description: "Create 'uplink_v1.conf' (a)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(p => p.id === "create-2a");
-          if (!prevTask?.completed) return false;
+        id: "enter-and-create-v1",
+        description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
+        check: (state: GameState) => {
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return !!protocolsDir?.children?.find(r => r.name === "uplink_v1.conf");
         },
         completed: false
       },
       {
-        id: "create-3",
+        id: "create-v2",
         description: "Generate 'uplink_v2.conf' in the same directory (a)",
         check: (state: GameState) => {
           const protocolsDir = findNodeByName(state.fs, "protocols");
@@ -651,21 +604,11 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "nav-protocols",
-        description: "Navigate to protocols directory (~/datastore/protocols)",
+        id: "nav-and-select",
+        description: "Navigate to protocols (~/datastore/protocols) and select all files (Ctrl+A)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "protocols";
-        },
-        completed: false
-      },
-      {
-        id: "batch-select-all",
-        description: "Select all configuration files (Ctrl+A)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "nav-protocols");
-          if (!prevTask?.completed) return false;
-          return state.selectedIds.length >= 2;
+          return currentDir?.name === "protocols" && state.selectedIds.length >= 2;
         },
         completed: false
       },
