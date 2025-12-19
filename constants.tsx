@@ -383,7 +383,10 @@ export const LEVELS: Level[] = [
       {
         id: "nav-2a",
         description: "Jump to bottom of file list (press Shift+G)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "nav-1");
+          if (!prevTask?.completed) return false;
+          
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore" && state.usedG === true;
         },
@@ -392,7 +395,10 @@ export const LEVELS: Level[] = [
       {
         id: "nav-2b",
         description: "Jump to top of file list (press 'gg')",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "nav-2a");
+          if (!prevTask?.completed) return false;
+          
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore" && state.usedGG === true;
         },
@@ -401,7 +407,12 @@ export const LEVELS: Level[] = [
       {
         id: "nav-3",
         description: "Navigate to /etc (use 'h' repeatedly to go up, then find etc)",
-        check: (state: GameState) => !!findNodeByName(state.fs, "etc") && state.currentPath[state.currentPath.length - 1] === "etc",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "nav-2b");
+          if (!prevTask?.completed) return false;
+          
+          return !!findNodeByName(state.fs, "etc") && state.currentPath[state.currentPath.length - 1] === "etc";
+        },
         completed: false
       }
     ]
@@ -431,7 +442,10 @@ export const LEVELS: Level[] = [
       {
         id: "del-2",
         description: "Jump to bottom of file list (Shift+G)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "del-1");
+          if (!prevTask?.completed) return false;
+          
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "incoming" && state.usedG === true;
         },
@@ -441,6 +455,9 @@ export const LEVELS: Level[] = [
         id: "del-2b",
         description: "Inspect 'watcher_agent.sys' metadata (Tab to open info panel)",
         check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "del-2");
+          if (!prevTask?.completed) return false;
+          
           const visibleItems = getVisibleItems(state);
           const currentItem = visibleItems[state.cursorIndex];
           
@@ -451,7 +468,10 @@ export const LEVELS: Level[] = [
       {
         id: "del-3",
         description: "Purge 'watcher_agent.sys' (d, then y)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "del-2b");
+          if (!prevTask?.completed) return false;
+          
           const incoming = findNodeByName(state.fs, "incoming");
           const threat = incoming?.children?.find(p => p.name === "watcher_agent.sys");
           return !!incoming && !threat;
