@@ -506,7 +506,10 @@ export const LEVELS: Level[] = [
       {
         id: "deploy-asset",
         description: "Deploy asset to ~/media (p)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "clear-filter");
+          if (!prevTask?.completed) return false;
+          
           const media = findNodeByName(state.fs, "media");
           return !!media?.children?.find(r => r.name === "sector_map.png");
         },
@@ -554,7 +557,10 @@ export const LEVELS: Level[] = [
       {
         id: "enter-and-create-v1",
         description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "nav-and-create-dir");
+          if (!prevTask?.completed) return false;
+          
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return !!protocolsDir?.children?.find(r => r.name === "uplink_v1.conf");
         },
@@ -563,7 +569,10 @@ export const LEVELS: Level[] = [
       {
         id: "create-v2",
         description: "Generate 'uplink_v2.conf' in the same directory (a)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "enter-and-create-v1");
+          if (!prevTask?.completed) return false;
+          
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return !!protocolsDir?.children?.find(r => r.name === "uplink_v2.conf");
         },
@@ -615,7 +624,10 @@ export const LEVELS: Level[] = [
       {
         id: "batch-cut-files",
         description: "Cut the configuration files (x)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "nav-and-select");
+          if (!prevTask?.completed) return false;
+          
           return state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
                  state.clipboard.nodes.some(n => n.name === "uplink_v2.conf");
@@ -625,7 +637,10 @@ export const LEVELS: Level[] = [
       {
         id: "establish-stronghold",
         description: "Establish 'vault/active/' sector in ~/.config (a)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "batch-cut-files");
+          if (!prevTask?.completed) return false;
+          
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(v => v.name === "vault");
           return !!vault?.children?.find(r => r.name === "active" && r.type === "dir");
@@ -635,7 +650,10 @@ export const LEVELS: Level[] = [
       {
         id: "deploy-assets",
         description: "Migrate configuration assets to ~/.config/vault/active (p)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find(t => t.id === "establish-stronghold");
+          if (!prevTask?.completed) return false;
+          
           const active = findNodeByName(state.fs, "active");
           const hasV1 = active?.children?.some(x => x.name === "uplink_v1.conf");
           const hasV2 = active?.children?.some(x => x.name === "uplink_v2.conf");
@@ -666,6 +684,9 @@ export const LEVELS: Level[] = [
             const currentDir = getNodeByPath(state.fs, state.currentPath);
             if (currentDir?.name !== 'incoming') return false;
             
+            // Must have used filter at least once during this level
+            if (state.stats.filterUsage === 0) return false;
+            
             // Must be in normal mode (filter closed) and have the file
             return state.mode === 'normal' && 
                    currentDir.children?.some(f => f.name === 'backup_logs.zip');
@@ -675,7 +696,10 @@ export const LEVELS: Level[] = [
       {
         id: 'extract-from-archive',
         description: "Enter archive (l), copy 'sys_v1.log' (y), exit archive (h), and clear filter (Esc)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+            const prevTask = level.tasks.find(t => t.id === 'nav-and-filter');
+            if (!prevTask?.completed) return false;
+            
             const currentDir = getNodeByPath(state.fs, state.currentPath);
             return currentDir?.name === 'incoming' && 
                    !state.filters[currentDir.id || ''] &&
@@ -687,7 +711,10 @@ export const LEVELS: Level[] = [
       {
         id: 'deploy-log',
         description: "Deploy asset into ~/media (p)",
-        check: (state: GameState) => {
+        check: (state: GameState, level: Level) => {
+            const prevTask = level.tasks.find(t => t.id === 'extract-from-archive');
+            if (!prevTask?.completed) return false;
+            
             const media = findNodeByName(state.fs, 'media');
             return !!media?.children?.find(c => c.name === 'sys_v1.log');
         },
