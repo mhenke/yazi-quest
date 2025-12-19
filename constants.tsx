@@ -660,70 +660,34 @@ export const LEVELS: Level[] = [
     timeLimit: 120,
     tasks: [
       {
-        id: 'nav-incoming',
-        description: "Navigate to incoming directory (~/incoming)",
-        check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'incoming';
-        },
-        completed: false
-      },
-      {
-        id: 'filter-1',
-        description: "Activate scanner: Filter (f) for backup_logs.zip'",
+        id: 'nav-and-filter',
+        description: "Navigate to incoming (~/incoming), filter (f) for 'backup_logs.zip', and close filter (Esc)",
         check: (state: GameState) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
-            if (currentDir?.name !== 'incoming' || !currentDir.children) return false;
-
-            const filterString = (state.filters[currentDir.id] || '').toLowerCase();
-            if (!filterString) return false;
-
-            const visibleFiles = currentDir.children.filter(file =>
-                file.name.toLowerCase().includes(filterString)
-            );
-
-            // The filter should uniquely isolate the 'backup_logs.zip' file.
-            return visibleFiles.length === 1 && visibleFiles[0].name === 'backup_logs.zip';
+            if (currentDir?.name !== 'incoming') return false;
+            
+            // Must be in normal mode (filter closed) and have the file
+            return state.mode === 'normal' && 
+                   currentDir.children?.some(f => f.name === 'backup_logs.zip');
         },
         completed: false
       },
       {
-        id: 'filter-close-input',
-        description: "Close scanner input (Esc)",
-        check: (state, level) => {
-            const prevTask = level.tasks.find(t => t.id === 'filter-1');
-            return prevTask?.completed ? state.mode === 'normal' : false;
-        },
-        completed: false
-      },
-      {
-        id: 'filter-copy-internal',
-        description: "Copy 'sys_v1.log' from inside the archive (l, y)",
-        check: (state, level) => {
-            const prevTask = level.tasks.find(t => t.id === 'filter-close-input');
-            if (!prevTask?.completed) return false;
-            return state.clipboard?.action === 'yank' &&
+        id: 'extract-from-archive',
+        description: "Enter archive (l), copy 'sys_v1.log' (y), exit archive (h), and clear filter (Esc)",
+        check: (state: GameState) => {
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            return currentDir?.name === 'incoming' && 
+                   !state.filters[currentDir.id || ''] &&
+                   state.clipboard?.action === 'yank' &&
                    state.clipboard.nodes.some(n => n.name === 'sys_v1.log');
         },
         completed: false
       },
       {
-        id: 'filter-exit-clear',
-        description: "Exit archive (h) and clear active filter (Esc)",
-        check: (state, level) => {
-            const prevTask = level.tasks.find(t => t.id === 'filter-copy-internal');
-            if (!prevTask?.completed) return false;
-            const currentDir = getNodeByPath(state.fs, state.currentPath);
-            return currentDir?.name === 'incoming' && !state.filters[currentDir.id || ''];
-        },
-        completed: false
-      },
-      {
-        id: 'filter-deploy',
+        id: 'deploy-log',
         description: "Deploy asset into ~/media (p)",
-        check: (state, level) => {
-            const prevTask = level.tasks.find(t => t.id === 'filter-exit-clear');
-            if (!prevTask?.completed) return false;
+        check: (state: GameState) => {
             const media = findNodeByName(state.fs, 'media');
             return !!media?.children?.find(c => c.name === 'sys_v1.log');
         },
