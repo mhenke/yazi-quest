@@ -684,7 +684,9 @@ export const LEVELS: Level[] = [
         id: "reveal-hidden",
         description: "Reveal hidden files (.) in ~/ to access .config directory",
         check: (state: GameState) => {
-          return state.showHidden === true;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          // Must be in home directory (guest) and have showHidden enabled
+          return currentDir?.name === "guest" && state.showHidden === true;
         },
         completed: false
       },
@@ -959,7 +961,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "navigate-to-key",
-        description: "Navigate to 'access_key.pem' location using FZF (z)",
+        description: "Jump home (gh) and navigate to 'access_key.pem' using FZF (z)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore" || currentDir?.children?.some(n => n.name === 'access_key.pem');
@@ -1064,7 +1066,9 @@ export const LEVELS: Level[] = [
         id: "purge-isolate-extract",
         description: "Isolate the largest signature by sorting by size, then cut it",
         check: (state: GameState) => {
-          return state.sortBy === "size" &&
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === "workspace" &&
+                 state.sortBy === "size" &&
                  state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "neural_sig_alpha.log");
         },

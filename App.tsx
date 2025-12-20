@@ -243,7 +243,7 @@ export default function App() {
       const timer = setTimeout(() => {
         setThreatAlertMessage("🚨 QUARANTINE ALERT - Protocols flagged for lockdown");
         setShowThreatAlert(true);
-        setTimeout(() => setShowThreatAlert(false), 5000);
+        setTimeout(() => setShowThreatAlert(false), 10000);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -252,7 +252,7 @@ export default function App() {
       const timer = setTimeout(() => {
         setThreatAlertMessage("⚠️ CRITICAL ASSET EXPOSED - Security scan in progress");
         setShowThreatAlert(true);
-        setTimeout(() => setShowThreatAlert(false), 5000);
+        setTimeout(() => setShowThreatAlert(false), 10000);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -261,7 +261,7 @@ export default function App() {
       const timer = setTimeout(() => {
         setThreatAlertMessage("⚠️ EVIDENCE PURGE REQUIRED - Forensic audit imminent");
         setShowThreatAlert(true);
-        setTimeout(() => setShowThreatAlert(false), 5000);
+        setTimeout(() => setShowThreatAlert(false), 10000);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -276,7 +276,7 @@ export default function App() {
       const timer = setTimeout(() => {
         setThreatAlertMessage("⚠️ FALSE THREAT DETECTED - Abort clipboard operation");
         setShowThreatAlert(true);
-        setTimeout(() => setShowThreatAlert(false), 5000);
+        setTimeout(() => setShowThreatAlert(false), 10000);
       }, 2000);
       return () => clearTimeout(timer);
     }
