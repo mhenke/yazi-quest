@@ -496,12 +496,11 @@ export const LEVELS: Level[] = [
         id: 'filter-for-map',
         description: "Filter (f) for 'sector_map.png' and close the filter input (Esc)",
         check: (state: GameState) => {
-          // Must have used filter at least once AND selected sector_map.png
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming') return false;
           
-          const map = currentDir.children?.find(c => c.name === 'sector_map.png');
-          return state.stats.filterUsage > 0 && map && state.selectedIds.includes(map.id);
+          // Complete when filter has been applied (Enter pressed after typing filter)
+          return state.stats.filterUsage > 0 && !!state.filters[currentDir.id];
         },
         completed: false,
       },
@@ -514,7 +513,7 @@ export const LEVELS: Level[] = [
           
           const log = currentDir.children?.find(c => c.name === '.surveillance_log');
           const map = currentDir.children?.find(c => c.name === 'sector_map.png');
-          const filterIsCleared = !(state.filters[currentDir.id] || '');
+          const filterIsCleared = !state.filters[currentDir.id];
           
           return filterIsCleared && log && map && 
                  state.selectedIds.includes(log.id) && 
