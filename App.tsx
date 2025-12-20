@@ -983,7 +983,12 @@ export default function App() {
   };
 
   const handleFilterModeSubmit = () => {
-        setGameState(prev => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        setGameState(prev => ({ 
+          ...prev, 
+          mode: 'normal', 
+          inputBuffer: '',
+          stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 }
+        }));
   };
 
   const handleRenameSubmit = () => {

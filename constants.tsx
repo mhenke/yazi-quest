@@ -685,14 +685,10 @@ export const LEVELS: Level[] = [
         description: "Navigate to incoming (~/incoming), filter (f) for 'backup_logs.zip', and close filter (Esc)",
         check: (state: GameState) => {
             const currentDir = getNodeByPath(state.fs, state.currentPath);
-            if (currentDir?.name !== 'incoming') return false;
+            if (currentDir?.name !== 'incoming' || !currentDir) return false;
             
-            // Must have used filter at least once during this level
-            if (state.stats.filterUsage === 0) return false;
-            
-            // Must be in normal mode (filter closed) and have the file
-            return state.mode === 'normal' && 
-                   currentDir.children?.some(f => f.name === 'backup_logs.zip');
+            const filterStr = (state.filters[currentDir.id] || "").toLowerCase();
+            return state.mode === 'normal' && filterStr.includes('backup');
         },
         completed: false
       },
@@ -1134,7 +1130,7 @@ export const LEVELS: Level[] = [
         id: "ep3-1b",
         description: "Install controller: create 'config' file in daemon/",
         check: (state: GameState) => {
-          const daemon = findNodeByName(state.fs, "daemon");
+          const daemon = findNodeByName(state.fs, "config");
           return !!daemon?.children?.find(r => r.name === "config");
         },
         completed: false
