@@ -117,7 +117,7 @@ export default function App() {
       showHelp: false,
       showHint: false,
       hintStage: 0, 
-      showHidden: true,
+      showHidden: false,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
