@@ -308,13 +308,17 @@ export default function App() {
             lastAccess: now
         };
 
+        // Preserve cursor position if staying in same directory
+        const stayingInSameDir = JSON.stringify(targetPath) === JSON.stringify(prev.currentPath);
+        const newCursorIndex = stayingInSameDir ? prev.cursorIndex : 0;
+
         return {
             ...prev,
             levelIndex: nextIdx,
             fs: fs,
             levelStartFS: cloneFS(fs),
             currentPath: targetPath, 
-            cursorIndex: 0,
+            cursorIndex: newCursorIndex,
             filters: {},
             clipboard: null, 
             sortBy: 'natural', 
