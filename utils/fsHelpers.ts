@@ -390,6 +390,36 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
       if (action === 'cut' && levelIndex < 13) return "Daemon anchored until cloning.";
   }
 
+  // Protect decoy signal for Level 7
+  if (name === 'decoy_signal.trc' && isFile) {
+      if (action === 'delete' && levelIndex < 6) return "Decoy signature required for quantum navigation training.";
+      if (action === 'cut' && levelIndex !== 6) return "Decoy signature anchored.";
+  }
+
+  // Protect ghost process for Level 9
+  if (name === 'ghost_process.pid' && isFile) {
+      if (action === 'delete' && levelIndex !== 8) return "Ghost process marker required for forensic counter-measure.";
+      if (action === 'cut' && levelIndex < 8) return "Ghost process anchored.";
+  }
+
+  // Protect decoy PEM files for Level 10
+  if ((name === 'decoy_1.pem' || name === 'decoy_2.pem') && isFile) {
+      if (action === 'delete' && levelIndex < 9) return "Decoy key required for asset security training.";
+      if (action === 'cut' && levelIndex < 9) return "Decoy key anchored.";
+  }
+
+  // Protect hidden log files for Level 14
+  if ((name === '.access.log' || name === '.audit.log' || name === '.system.log') && isFile) {
+      if (action === 'delete' && levelIndex !== 13) return "System log required for trace removal protocol.";
+      if (action === 'cut' && levelIndex < 13) return "System log anchored.";
+  }
+
+  // Protect sector/grid directories for Level 15
+  if ((name === 'sector_1' || name === 'grid_alpha') && isDir && path.includes('/home/guest/')) {
+      if (action === 'delete' && levelIndex !== 14) return "Infrastructure directory required for final purge.";
+      if (action === 'cut' && levelIndex < 14) return "Infrastructure directory anchored.";
+  }
+
   return null;
 };
 

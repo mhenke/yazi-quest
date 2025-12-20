@@ -201,7 +201,9 @@ const INITIAL_FS_RAW: FileNode = {
                   name: "credentials",
                   type: "dir",
                   children: [
-                    { id: generateId(), name: "access_key.pem", type: "file", content: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----" }
+                    { id: generateId(), name: "access_key.pem", type: "file", content: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----" },
+                    { id: generateId(), name: "decoy_1.pem", type: "file", content: "-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----" },
+                    { id: generateId(), name: "decoy_2.pem", type: "file", content: "-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----" }
                   ]
                 },
                 { id: generateId(), name: "account_settings.json", type: "file", content: "{\n  \"user\": \"guest\",\n  \"theme\": \"dark_mode\",\n  \"notifications\": true,\n  \"auto_save\": false\n}" },
@@ -230,17 +232,13 @@ const INITIAL_FS_RAW: FileNode = {
                 { id: generateId(), name: "archive_001.zip", type: "archive", children: [] },
                 { id: generateId(), name: "archive_002.zip", type: "archive", children: [] },
                 { id: generateId(), name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
-                { id: generateId(), name: "backup_archives_v1.tar", type: "archive", children: [] },
-                { id: generateId(), name: "backup_config_main.zip", type: "archive", children: [] },
-                { id: generateId(), name: "backup_manifest_legacy.tar", type: "archive", children: [] },
-                { id: generateId(), name: "backup_recovery_scripts.zip", type: "archive", children: [] },
+                { id: generateId(), name: "backup_cache_old.tar", type: "archive", children: [] },
+                { id: generateId(), name: "backup_config_v1.zip", type: "archive", children: [] },
+                { id: generateId(), name: "backup_legacy.tar", type: "archive", children: [] },
                 { id: generateId(), name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
                 { id: generateId(), name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
                 { id: generateId(), name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
-                { id: generateId(), name: "cache_purge_logs.zip", type: "archive", children: [] },
-                { id: generateId(), name: "core_dump_partition_a.tar", type: "archive", children: [] },
                 { id: generateId(), name: "daily_report.doc", type: "file", content: "Report: All Clear" },
-                { id: generateId(), name: "database_snapshot_temp.zip", type: "archive", children: [] },
                 { id: generateId(), name: "error_stack.trace", type: "file", content: "Stack trace overflow..." },
                 { id: generateId(), name: "fragment_001.dat", type: "file", content: "[DATA]" },
                 { id: generateId(), name: "fragment_002.dat", type: "file", content: "[DATA]" },
@@ -271,16 +269,7 @@ const INITIAL_FS_RAW: FileNode = {
                     { id: generateId(), name: "sys_v2.log", type: "file", content: "Network scan complete...\n3 vulnerabilities found." }
                   ]
                 },
-                { id: generateId(), name: "invoice_2024.pdf", type: "file", content: "[PDF HEADER]\nInvoice #99283\nAmount: $99.00" },
-                {
-                  id: generateId(),
-                  name: "meme_collection.zip",
-                  type: "archive",
-                  children: [
-                    { id: generateId(), name: "classic_cat.jpg", type: "file", content: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=600&auto=format&fit=crop" },
-                    { id: generateId(), name: "coding_time.gif", type: "file", content: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=600&auto=format&fit=crop" }
-                  ]
-                }
+                { id: generateId(), name: "invoice_2024.pdf", type: "file", content: "[PDF HEADER]\nInvoice #99283\nAmount: $99.00" }
               ]
             },
             {
@@ -294,6 +283,18 @@ const INITIAL_FS_RAW: FileNode = {
             {
               id: "workspace",
               name: "workspace",
+              type: "dir",
+              children: []
+            },
+            {
+              id: "sector_1",
+              name: "sector_1",
+              type: "dir",
+              children: []
+            },
+            {
+              id: "grid_alpha",
+              name: "grid_alpha",
               type: "dir",
               children: []
             },
@@ -348,9 +349,14 @@ const INITIAL_FS_RAW: FileNode = {
         { id: generateId(), name: "session_B2.tmp", type: "file", content: "UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1" },
         { id: generateId(), name: "socket_001.sock", type: "file", content: "[SOCKET]" },
         { id: generateId(), name: "sys_dump.log", type: "file", content: "Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)" },
+        { id: generateId(), name: "decoy_signal.trc", type: "file", content: "[DECOY SIGNAL DATA]\nFREQUENCY: 2.4GHz\nSTATUS: DORMANT" },
+        { id: generateId(), name: "ghost_process.pid", type: "file", content: "PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd" },
         { id: generateId(), name: "cache", type: "dir", children: [] }
       ]
-    }
+    },
+    { id: generateId(), name: ".access.log", type: "file", content: "2024-12-19 14:23:11 - User 'guest' accessed /home/guest/datastore\n2024-12-19 14:24:55 - User 'guest' accessed /etc\n2024-12-19 14:25:33 - User 'guest' accessed /tmp" },
+    { id: generateId(), name: ".audit.log", type: "file", content: "AUDIT TRAIL\n============\n2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi'\n2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf\n2024-12-19 13:58:47 - Permission change: /etc/daemon/config" },
+    { id: generateId(), name: ".system.log", type: "file", content: "[2024-12-18 08:00:01] System boot\n[2024-12-18 08:00:45] Network: eth0 up\n[2024-12-19 10:22:13] Firewall: Connection attempt blocked from 192.168.1.99\n[2024-12-19 14:11:02] User login: guest" }
   ]
 };
 
@@ -548,11 +554,6 @@ export const LEVELS: Level[] = [
     onEnter: (fs: FileNode) => {
       const incoming = findNodeByName(fs, "incoming");
       if (incoming && incoming.children) {
-        // Reduce archives to 3
-        const archives = incoming.children.filter(c => c.type === 'archive');
-        const nonArchives = incoming.children.filter(c => c.type !== 'archive');
-        incoming.children = [...nonArchives, ...archives.slice(0, 3)];
-
         // Add more hidden files
         if (!incoming.children.find(f => f.name === ".surveillance_log")) {
           incoming.children.push({
@@ -778,21 +779,6 @@ export const LEVELS: Level[] = [
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
-    onEnter: (fs: FileNode) => {
-      const tmp = findNodeByName(fs, "tmp");
-      if (tmp && tmp.children) {
-        if (!tmp.children.find(c => c.name === 'decoy_signal.trc')) {
-          tmp.children.push({
-            id: generateId(),
-            name: "decoy_signal.trc",
-            type: "file",
-            content: "[DECOY DATA]",
-            parentId: tmp.id
-          });
-        }
-      }
-      return fs;
-    },
     tasks: [
       {
         id: "goto-tmp",
@@ -921,24 +907,6 @@ export const LEVELS: Level[] = [
     leadsTo: [14, 16],
     timeLimit: 90,
     efficiencyTip: "FZF (z) searches across all files in the current directory and subdirectories. Essential for finding hidden threats without knowing exact locations.",
-    onEnter: (fs: FileNode) => {
-      const tmp = findNodeByName(fs, "tmp");
-      if (tmp && tmp.children) {
-        // Ensure ghost_process.pid is the largest and newest
-        const now = Date.now();
-        const ghost = { 
-          id: generateId(), 
-          name: "ghost_process.pid", 
-          type: "file", 
-          content: "0x".repeat(10000), // Huge size
-          parentId: tmp.id,
-          modifiedAt: now + 5000, // Explicitly newer
-          createdAt: now
-        };
-        tmp.children.push(ghost as FileNode);
-      }
-      return fs;
-    },
     tasks: [
       {
         id: "goto-root",
@@ -1027,32 +995,7 @@ export const LEVELS: Level[] = [
         },
         completed: false
       }
-    ],
-    onEnter: (fs: FileNode) => {
-      const datastore = findNodeByName(fs, "datastore");
-      if (datastore && datastore.children) {
-        // Add decoy files if not present
-        if (!datastore.children.find(f => f.name === "decoy_1.pem")) {
-          datastore.children.push({
-            id: generateId(),
-            name: "decoy_1.pem",
-            type: "file",
-            content: "DECOY KEY - DO NOT USE",
-            parentId: datastore.id
-          });
-        }
-        if (!datastore.children.find(f => f.name === "decoy_2.pem")) {
-          datastore.children.push({
-            id: generateId(),
-            name: "decoy_2.pem",
-            type: "file",
-            content: "DECOY KEY - DO NOT USE",
-            parentId: datastore.id
-          });
-        }
-      }
-      return fs;
-    }
+    ]
   },
   {
     id: 11,
@@ -1270,18 +1213,6 @@ export const LEVELS: Level[] = [
     leadsTo: [15],
     maxKeystrokes: 60,
     efficiencyTip: "FZF (z) finds files instantly. Ctrl+A selects all filtered results. One 'd' eliminates all selected targets simultaneously.",
-    onEnter: (fs: FileNode) => {
-      // Add hidden log files at root that need to be purged
-      const root = fs;
-      if (root.children) {
-        root.children.push(
-          { id: generateId(), name: ".access.log", type: "file", content: "Access log traces" },
-          { id: generateId(), name: ".audit.log", type: "file", content: "Audit trail" },
-          { id: generateId(), name: ".system.log", type: "file", content: "System events" }
-        );
-      }
-      return fs;
-    },
     tasks: [
       {
         id: "ep3-3a",
@@ -1335,17 +1266,6 @@ export const LEVELS: Level[] = [
     buildsOn: [9, 14],
     maxKeystrokes: 70,
     efficiencyTip: "Batch select with Space, then delete all with 'd'. Select multiple directories at once to minimize total operations.",
-    onEnter: (fs: FileNode) => {
-      // Add decoy directories that need to be deleted
-      const guest = findNodeByName(fs, "guest");
-      if (guest && guest.children) {
-        guest.children.push(
-          { id: generateId(), name: "sector_1", type: "dir", children: [] },
-          { id: generateId(), name: "grid_alpha", type: "dir", children: [] }
-        );
-      }
-      return fs;
-    },
     tasks: [
       {
         id: "nav-home",

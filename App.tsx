@@ -17,6 +17,7 @@ import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
+import { ThreatAlert } from './components/ThreatAlert';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
 import { FuzzyFinder } from './components/FuzzyFinder';
@@ -133,6 +134,8 @@ export default function App() {
   });
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showThreatAlert, setShowThreatAlert] = useState(false);
+  const [threatAlertMessage, setThreatAlertMessage] = useState('');
   const prevAllTasksCompleteRef = useRef(false);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); 
 
@@ -228,6 +231,56 @@ export default function App() {
         setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
+
+  // --- Threat Alert System ---
+  useEffect(() => {
+    if (gameState.isGameOver || gameState.showEpisodeIntro) return;
+
+    const levelId = currentLevel.id;
+    
+    // Level start alerts (5, 10, 14)
+    if (levelId === 5) {
+      const timer = setTimeout(() => {
+        setThreatAlertMessage("🚨 QUARANTINE ALERT - Protocols flagged for lockdown");
+        setShowThreatAlert(true);
+        setTimeout(() => setShowThreatAlert(false), 5000);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    
+    if (levelId === 10) {
+      const timer = setTimeout(() => {
+        setThreatAlertMessage("⚠️ CRITICAL ASSET EXPOSED - Security scan in progress");
+        setShowThreatAlert(true);
+        setTimeout(() => setShowThreatAlert(false), 5000);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    
+    if (levelId === 14) {
+      const timer = setTimeout(() => {
+        setThreatAlertMessage("⚠️ EVIDENCE PURGE REQUIRED - Forensic audit imminent");
+        setShowThreatAlert(true);
+        setTimeout(() => setShowThreatAlert(false), 5000);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
+
+  // Level 7 special alert (after staging decoy)
+  useEffect(() => {
+    if (currentLevel.id !== 7) return;
+    
+    const stageDecoyTask = currentLevel.tasks.find(t => t.id === 'stage-decoy');
+    if (stageDecoyTask?.completed && !showThreatAlert) {
+      const timer = setTimeout(() => {
+        setThreatAlertMessage("⚠️ FALSE THREAT DETECTED - Abort clipboard operation");
+        setShowThreatAlert(true);
+        setTimeout(() => setShowThreatAlert(false), 5000);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentLevel.id, currentLevel.tasks, showThreatAlert]);
 
   const advanceLevel = useCallback(() => {
     setGameState(prev => {
@@ -1031,6 +1084,7 @@ export default function App() {
       {gameState.showInfoPanel && <InfoPanel file={currentItem} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
       {gameState.mode === 'confirm-delete' && <ConfirmationModal title="Confirm Delete" detail={`Permanently delete ${gameState.selectedIds.length > 0 ? gameState.selectedIds.length + ' items' : currentItem?.name}?`} />}
       {showSuccessToast && <SuccessToast message={currentLevel.successMessage || "Sector Cleared"} levelTitle={currentLevel.title} onDismiss={advanceLevel} onClose={() => setShowSuccessToast(false)} />}
+      {showThreatAlert && <ThreatAlert message={threatAlertMessage} onDismiss={() => setShowThreatAlert(false)} />}
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
           <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
       )}
