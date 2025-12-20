@@ -634,7 +634,7 @@ export const LEVELS: Level[] = [
     title: "EMERGENCY EVACUATION",
     description: "QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active. Use batch operations for speed.",
     initialPath: null,
-    hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Reveal hidden files (.) to see .config. 4. Navigate to '.config'. 5. Create 'vault/active/' (a). 6. Enter 'active' and Paste (p).",
+    hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Go to ~/, reveal hidden files (.) to see .config. 4. Navigate to '.config'. 5. Create 'vault/active/' (a). 6. Enter 'active' and Paste (p).",
     coreSkill: "Batch Select (Ctrl+A), Cut/Paste (x/p)",
     environmentalClue: "THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/",
     successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
@@ -661,14 +661,6 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "reveal-hidden",
-        description: "Reveal hidden files (.) to access .config directory",
-        check: (state: GameState) => {
-          return state.showHidden === true;
-        },
-        completed: false
-      },
-      {
         id: "nav-and-select",
         description: "Navigate to protocols (~/datastore/protocols) and select all files (Ctrl+A)",
         check: (state: GameState) => {
@@ -680,10 +672,7 @@ export const LEVELS: Level[] = [
       {
         id: "batch-cut-files",
         description: "Cut the configuration files (x)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "nav-and-select");
-          if (!prevTask?.completed) return false;
-          
+        check: (state: GameState) => {
           return state.clipboard?.action === "cut" && 
                  state.clipboard.nodes.some(n => n.name === "uplink_v1.conf") &&
                  state.clipboard.nodes.some(n => n.name === "uplink_v2.conf");
@@ -691,12 +680,17 @@ export const LEVELS: Level[] = [
         completed: false
       },
       {
+        id: "reveal-hidden",
+        description: "Reveal hidden files (.) in ~/ to access .config directory",
+        check: (state: GameState) => {
+          return state.showHidden === true;
+        },
+        completed: false
+      },
+      {
         id: "establish-stronghold",
         description: "Establish 'vault/active/' sector in ~/.config (a)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "batch-cut-files");
-          if (!prevTask?.completed) return false;
-          
+        check: (state: GameState) => {
           const config = findNodeByName(state.fs, ".config");
           const vault = config?.children?.find(v => v.name === "vault");
           return !!vault?.children?.find(r => r.name === "active" && r.type === "dir");
@@ -706,10 +700,7 @@ export const LEVELS: Level[] = [
       {
         id: "deploy-assets",
         description: "Migrate configuration assets to ~/.config/vault/active (p)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "establish-stronghold");
-          if (!prevTask?.completed) return false;
-          
+        check: (state: GameState) => {
           const active = findNodeByName(state.fs, "active");
           const hasV1 = active?.children?.some(x => x.name === "uplink_v1.conf");
           const hasV2 = active?.children?.some(x => x.name === "uplink_v2.conf");
