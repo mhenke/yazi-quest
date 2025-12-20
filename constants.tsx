@@ -474,7 +474,7 @@ export const LEVELS: Level[] = [
     title: "Intel Aggregation",
     description: "TWO INTEL ASSETS IDENTIFIED in the ~/incoming stream. A 'sector_map.png' is visible, but a '.surveillance_log' is concealed among other hidden system files. To operate efficiently, you must acquire both targets in a single operation. Reveal hidden files, select the log, then use the filter to isolate and select the map. Secure both assets in the ~/media vault.",
     initialPath: null,
-    hint: "1. In ~/incoming, toggle hidden (.). 2. Select '.surveillance_log' (Space). 3. Filter for 'map' (f) and exit input (Esc). 4. Add 'sector_map.png' to selection (Space). 5. Cut both (x). 6. Clear filter (Esc) & toggle hidden (.). 7. Go to ~/media & Paste (p).",
+    hint: "1. In ~/incoming, reveal hidden (.) and select '.surveillance_log' (Space). 2. Filter for 'map' (f), exit (Esc). 3. Add 'sector_map.png' (Space), reset filter (Esc). 4. Cut both (x) and toggle hidden off (.). 5. Go to ~/media & Paste (p).",
     coreSkill: "Multi-Select & Filter",
     environmentalClue: "ASSETS: .surveillance_log, sector_map.png | WORKFLOW: Select hidden → Filter → Select visible → Cut → Paste",
     successMessage: "INTEL AGGREGATED. TRACES CONCEALED.",
@@ -486,61 +486,57 @@ export const LEVELS: Level[] = [
         description: "In ~/incoming, reveal hidden files (.) and select '.surveillance_log' (Space)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          if (currentDir?.name !== 'incoming' || !state.showHidden) return false;
+          if (currentDir?.name !== 'incoming') return false;
           const log = currentDir.children?.find(c => c.name === '.surveillance_log');
           return log ? state.selectedIds.includes(log.id) : false;
         },
         completed: false
       },
       {
-        id: 'filter-and-exit-input',
-        description: "Filter (f) for 'sector_map.png' and close the filter input (Esc).",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === 'select-hidden-asset');
-          if (!prevTask?.completed) return false;
+        id: 'filter-for-map',
+        description: "Filter (f) for 'sector_map.png' and close the filter input (Esc)",
+        check: (state: GameState) => {
+          // Must have used filter at least once AND selected sector_map.png
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming') return false;
-          const filterIsActive = (state.filters[currentDir.id] || '').toLowerCase().includes('map');
-          return filterIsActive && state.mode === 'normal';
+          
+          const map = currentDir.children?.find(c => c.name === 'sector_map.png');
+          return state.stats.filterUsage > 0 && map && state.selectedIds.includes(map.id);
         },
         completed: false,
       },
       {
-        id: "select-and-cut",
-        description: "Add 'sector_map.png' to your selection (Space) then cut both assets (x)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "filter-and-exit-input");
-          if (!prevTask?.completed) return false;
-
-          const hasLog = state.clipboard?.nodes.some(n => n.name === '.surveillance_log');
-          const hasMap = state.clipboard?.nodes.some(n => n.name === 'sector_map.png');
+        id: "add-map-to-selection",
+        description: "Add 'sector_map.png' to your selection (Space) then reset the filter (Esc)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (currentDir?.name !== 'incoming') return false;
           
-          return state.clipboard?.action === "cut" && hasLog && hasMap;
+          const log = currentDir.children?.find(c => c.name === '.surveillance_log');
+          const map = currentDir.children?.find(c => c.name === 'sector_map.png');
+          const filterIsCleared = !(state.filters[currentDir.id] || '');
+          
+          return filterIsCleared && log && map && 
+                 state.selectedIds.includes(log.id) && 
+                 state.selectedIds.includes(map.id);
         },
         completed: false
       },
       {
-        id: 'cleanup-view',
-        description: "Clear the filter (Esc) and toggle hidden files off (.)",
-        check: (state: GameState, level: Level) => {
-            const prevTask = level.tasks.find(t => t.id === 'select-and-cut');
-            if (!prevTask?.completed) return false;
-
-            const currentDir = getNodeByPath(state.fs, state.currentPath);
-            if (currentDir?.name !== 'incoming') return false;
-
-            const filterIsCleared = !(state.filters[currentDir.id] || '');
-            return filterIsCleared && !state.showHidden;
+        id: 'cut-and-hide',
+        description: "Cut both assets (x) and toggle hidden files off (.)",
+        check: (state: GameState) => {
+          const hasLog = state.clipboard?.nodes.some(n => n.name === '.surveillance_log');
+          const hasMap = state.clipboard?.nodes.some(n => n.name === 'sector_map.png');
+          
+          return state.clipboard?.action === "cut" && hasLog && hasMap && !state.showHidden;
         },
         completed: false
       },
       {
         id: "deploy-both-assets",
         description: "Deploy both assets to ~/media (p)",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find(t => t.id === "cleanup-view");
-          if (!prevTask?.completed) return false;
-          
+        check: (state: GameState) => {
           const media = findNodeByName(state.fs, "media");
           const hasLog = media?.children?.some(c => c.name === '.surveillance_log');
           const hasMap = media?.children?.some(c => c.name === 'sector_map.png');
