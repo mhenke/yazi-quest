@@ -6,7 +6,8 @@ interface InfoPanelProps {
   onClose: () => void;
 }
 
-export const InfoPanel: React.FC<InfoPanelProps> = ({ file, _onClose }) => {
+// Fix: Change destructuring to use 'onClose' to match interface
+export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   if (!file) return null;
 
   // Format file size

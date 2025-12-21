@@ -1,20 +1,19 @@
 # Fixes Completed - 2024-12-15
 
-## File Naming & Persistence Issues (FIXED)
+## File Naming & Quest Alignment (UPDATED)
 
 ### Problem
-- `zzz_tracking_beacon.sys` was unrealistic (prefixed with "zzz" for sorting)
-- User reported files not persisting between levels
-- Concern about deleted files reappearing
+- `watcher_agent.sys` sorted near the bottom naturally (starts with 'w'), making the "jump to bottom" task redundant and lacking the need for a sort operation.
 
 ### Solution
-- ✅ Renamed to `watcher_agent.sys` (realistic, still sorts near bottom with 'w')
-- ✅ Verified no `onEnter` functions in Level 2/3 that reset filesystem
-- ✅ Files persist correctly - deletions/moves/creates carry forward
-- ✅ Updated all references: tasks, hints, environmental clues
+- ✅ Renamed to `agent_watcher.sys` (realistic, sorts near TOP of file list alphabetically).
+- ✅ Level 2 redesigned to force a reverse alphabetical sort (`,A`) which moves the agent from the top to the bottom.
+- ✅ Tasks now require: Navigate → Sort Reverse → Jump to Bottom → Tab Inspect → Delete.
+- ✅ Updated `isProtected` and Level 2 definitions to match new name.
 
 ### Files Changed
-- `constants.tsx`: Line 267 (file definition), Line 457 (task check), Line 433 (environmental clue)
+- `constants.tsx`: Renamed asset, updated Level 2 tasks, clues, and hints.
+- `utils/fsHelpers.ts`: Updated `isProtected` string match for `agent_watcher.sys`.
 
 ---
 
@@ -23,8 +22,8 @@
 ### Level 2 Structure (`/incoming`)
 - Multiple noise files (a-t range)
 - `sector_map.png` - middle of list (for Level 3 filter task)
-- Buffer files after sector_map: session_data, status_report, system_health, temp_cache, telemetry_data, test_results, thread_dump, timestamp
-- `watcher_agent.sys` - near bottom (starts with 'w')
+- `agent_watcher.sys` - near top initially (starts with 'a')
+- After sort (`,A`): `agent_watcher.sys` moves to bottom.
 
 ### Level 3 Uses Same Directory
 - Player filters for "map" to find `sector_map.png`
@@ -34,9 +33,9 @@
 ---
 
 ## Status
-- [x] Realistic filename
-- [x] Proper alphabetical positioning
+- [x] Realistic filename (`agent_watcher.sys`)
+- [x] Proper alphabetical positioning (requires sort to reach bottom)
+- [x] Level 2 redesigned for sort mastery
 - [x] File persistence verified
-- [x] Level 2 tasks updated
 - [x] Documentation updated
 - [x] Committed to feat/add-audit-documentation branch

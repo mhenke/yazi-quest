@@ -347,16 +347,14 @@ const checkEpisodeStructuralProtection = (path: string, node: FileNode, levelInd
   return null;
 };
 
-const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>): string | null => {
+const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>, usedTab?: boolean): string | null => {
   const name = node.name;
   const isDir = node.type === 'dir';
   const isFile = node.type === 'file';
 
-  // Protect watcher_agent for Level 2 - must inspect before deleting
-  if (name === 'watcher_agent.sys' && isFile && levelIndex === 1) {
-      const level2Tasks = completedTaskIds?.[2] || [];
-      const hasInspected = level2Tasks.includes('del-2b');
-      if (action === 'delete' && !hasInspected) return "Inspect the threat with Tab before elimination.";
+  // Protect agent_watcher for Level 2 - must inspect before deleting
+  if (name === 'agent_watcher.sys' && isFile && levelIndex === 1) {
+      if (action === 'delete' && !usedTab) return "Inspect the threat with Tab before elimination.";
       if (action === 'cut') return "Threat beacon anchored.";
   }
 
@@ -419,9 +417,9 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
       if (action === 'cut' && levelIndex < 13) return "Daemon anchored until cloning.";
   }
 
-  // Protect watcher_agent for Level 2 - must inspect before deleting
-  if (name === 'watcher_agent.sys' && isFile) {
-      if (action === 'delete' && levelIndex === 1) return "Inspect the threat with Tab before elimination.";
+  // Protect agent_watcher for Level 2 - must inspect before deleting
+  if (name === 'agent_watcher.sys' && isFile) {
+      if (action === 'delete' && levelIndex === 1 && !usedTab) return "Inspect the threat with Tab before elimination.";
       if (action === 'cut' && levelIndex < 2) return "Threat beacon anchored.";
   }
 
@@ -469,7 +467,7 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
   return null;
 };
 
-export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>): string | null => {
+export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>, usedTab?: boolean): string | null => {
   const fullPath = resolvePath(root, [...parentPathIds, node.id]);
   let protectionMessage: string | null;
 
@@ -479,7 +477,7 @@ export const isProtected = (root: FileNode, parentPathIds: string[], node: FileN
   protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
   if (protectionMessage) return protectionMessage;
 
-  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action, completedTaskIds);
+  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action, completedTaskIds, usedTab);
   if (protectionMessage) return protectionMessage;
 
   return null;

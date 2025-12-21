@@ -94,37 +94,47 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, completed
       </div>
 
       {/* Bottom Section: Mission Log */}
-      <div className="h-1/3 min-h-[200px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
-          <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
-             <h3 className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">
-               Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
+      <div className="h-1/2 min-h-[300px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0 transition-all duration-300 shadow-2xl">
+          <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+             <h3 className="text-[11px] font-bold text-orange-500 uppercase tracking-widest">
+               Mission Log: LVL {level.id} - <span className="normal-case text-zinc-100">{level.title}</span>
              </h3>
+             <div className="flex gap-1.5 items-center opacity-40">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
+                <span className="text-[8px] font-mono text-zinc-400 tracking-tighter">SECURE CONNECTION</span>
+             </div>
           </div>
-          <div className="p-4 overflow-y-auto space-y-4">
+          <div className="p-4 overflow-y-auto space-y-5 custom-scrollbar">
              <div>
-                <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-1 tracking-widest">Target</h3>
-                <p className="text-xs text-zinc-300 font-mono leading-relaxed">{level.description}</p>
+                <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-1.5 tracking-widest border-b border-zinc-800/50 w-fit pr-4">Target</h3>
+                <p className="text-sm text-zinc-300 font-mono leading-relaxed">{level.description}</p>
              </div>
              <div>
-                <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest">Objectives</h3>
-                <div className="space-y-2">
+                <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2.5 tracking-widest border-b border-zinc-800/50 w-fit pr-4">Objectives</h3>
+                <div className="space-y-2.5">
                     {level.tasks.map((task) => {
-                        const isCompleted = completedTaskIds.includes(task.id);
+                        const isCompleted = (completedTaskIds || []).includes(task.id);
                         return (
                         <div 
                             key={task.id} 
-                            className={`flex gap-3 items-start transition-all duration-500 ${isCompleted ? 'opacity-50' : 'opacity-100'}`}
+                            className={`flex gap-3.5 items-start transition-all duration-500 ${isCompleted ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
                         >
                             <div className={`mt-0.5 shrink-0 ${isCompleted ? 'text-green-500' : 'text-zinc-600'}`}>
-                            {isCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
+                            {isCompleted ? <CheckSquare size={16} /> : <Square size={16} />}
                             </div>
-                            <div className={`text-xs font-mono leading-tight ${isCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}>
+                            <div className={`text-sm font-mono leading-tight ${isCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}>
                             {task.description}
                             </div>
                         </div>
                         );
                     })}
                 </div>
+             </div>
+          </div>
+          <div className="mt-auto border-t border-zinc-800/30 px-3 py-1 bg-black/20">
+             <div className="flex justify-between items-center text-[9px] font-mono text-zinc-600">
+                <span>RECOVERY_MODE: ACTIVE</span>
+                <span>BUFFER: {completedTaskIds.length}/{level.tasks.length} SYNCED</span>
              </div>
           </div>
       </div>

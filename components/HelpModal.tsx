@@ -5,7 +5,8 @@ interface HelpModalProps {
   onClose: () => void;
 }
 
-export const HelpModal: React.FC<HelpModalProps> = ({ _onClose }) => {
+// Fix: Change destructuring to use 'onClose' to match interface
+export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-700 shadow-2xl p-6 relative">

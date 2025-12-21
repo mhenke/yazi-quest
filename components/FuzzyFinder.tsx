@@ -23,7 +23,8 @@ const findNodeFromPath = (root: FileNode, pathStr: string): FileNode | null => {
   return current;
 };
 
-export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, _onSelect, _onClose }) => {
+// Fix: Change destructuring to use 'onSelect' and 'onClose' to match interface
+export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, onClose }) => {
   const isZoxide = gameState.mode === 'zoxide-jump';
   const listRef = useRef<HTMLDivElement>(null);
   
@@ -69,7 +70,8 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, _onSelect, 
       const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
       return node?.children || [];
     } else {
-        const typedCandidate = selectedCandidate;
+        /* Fix: Cast selectedCandidate to FZF candidate type to access 'pathIds' property which is missing on Zoxide items */
+        const typedCandidate = selectedCandidate as { path: string; pathIds?: string[] };
         if (typedCandidate.pathIds && Array.isArray(typedCandidate.pathIds)) {
             const fullNodePath = [...gameState.currentPath, ...typedCandidate.pathIds];
             const parentPath = fullNodePath.slice(0, -1);

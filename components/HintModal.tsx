@@ -7,7 +7,8 @@ interface HintModalProps {
   onClose: () => void;
 }
 
-export const HintModal: React.FC<HintModalProps> = ({ hint, stage, _onClose }) => {
+// Fix: Change destructuring to use 'onClose' to match interface
+export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) => {
   // Parse hint into progressive stages
   // Split by sentence or period, show increasing amounts
   const sentences = hint.split(/\.\s+/).filter(s => s.trim());

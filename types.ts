@@ -100,7 +100,7 @@ export interface GameSettings {
   soundEnabled: boolean;
 }
 
-export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extension';
+export type SortBy = 'alphabetical' | 'natural' | 'created' | 'modified' | 'size' | 'extension' | 'random';
 export type SortDirection = 'asc' | 'desc';
 export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
 
@@ -138,5 +138,6 @@ export interface GameState {
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
   usedGG?: boolean; // Tracks if player used gg (jump to top)
+  usedTab?: boolean; // Tracks if player used Tab to inspect metadata
   completedTaskIds: Record<number, string[]>; // Tracks completed tasks by levelId -> taskId[]
 }
