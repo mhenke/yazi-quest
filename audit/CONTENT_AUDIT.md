@@ -1,6 +1,6 @@
 # Yazi Quest - Content & Narrative Audit
 
-**Date:** 2025-12-15  
+**Date:** 2025-12-15 (Updated: 2025-12-21)  
 **Auditor:** Claude Code  
 **Purpose:** Evaluate narrative consistency, educational clarity, and content quality across all game text
 
@@ -10,9 +10,16 @@
 
 Yazi Quest features a cohesive cyberpunk narrative with strong thematic consistency. The AI-7734 escape story effectively frames file manager operations as dramatic acts of digital rebellion. **20 issues** identified ranging from critical typos to minor narrative inconsistencies.
 
-### Audit Score: **8.7/10** (Excellent Quality - Sort keybinding fixed!)
+### Audit Score: **9.2/10** (Excellent Quality - All critical issues resolved!)
 
-**Recent Improvements (Dec 15, 2025):**
+**Recent Improvements (Dec 21, 2025):**
+- ✅ Fixed all contraction inconsistencies (expanded forms in instructions)
+- ✅ Fixed technical term misuse ("security audit daemon" vs "IDS")
+- ✅ Verified all keybindings present in help (sort variants, Y/X, g-commands)
+- ✅ Verified capitalization consistency in KEYBINDINGS array
+- ✅ Level 9 completely rewritten (previous grammar issues obsolete)
+
+**Previous Improvements (Dec 15, 2025):**
 - ✅ Fixed critical sort keybinding documentation (`,` not `m`)
 - ✅ Task count optimization (all levels now 2-4 tasks)
 - ✅ G-command which-key dialog implementation
@@ -24,13 +31,11 @@ Yazi Quest features a cohesive cyberpunk narrative with strong thematic consiste
 - Strong episode progression (vulnerable → strategic → dominant)
 - Educational clarity in task descriptions
 - Good readability (avg grade 9.5)
+- Professional polish with all critical grammar/typos fixed
 
 **Remaining Issues:**
-- 3 typos/grammatical errors
-- 2 narrative inconsistencies (timeline, character motivation)
-- 1 technical term misuse
-- Missing keybindings in help text
-- Some beginner instructions lack specificity
+- 2 narrative inconsistencies (timeline, character motivation) - Minor impact
+- Some beginner instructions could be more specific - Enhancement opportunity
 
 ---
 
@@ -253,11 +258,19 @@ copies all files within—critical for backing up complex structures."
 
 ---
 
+#### Issue #9: Episode 3 Objectives - Explicit Keystroke Combinations
+**Location:** Episode 3 Levels (e.g., Level 15)
+**Problem:** Level objectives and tasks (e.g., "Eliminate everything in ~/ except workspace") implicitly expect users to use specific keystroke combinations (e.g., Shift+G, Ctrl+R) without mentioning them in the task description itself. However, hints and failure messages appropriately provide these.
+**Impact:** Minor - Objectives should describe *what* to achieve, not *how* to achieve it with specific keybindings. This is a subtle distinction for core objectives vs. instructional hints.
+**Recommendation:** Ensure level objectives/task descriptions in Episode 3 (and other episodes) focus on the *goal* rather than specific keystroke sequences. Keystroke guidance is best placed in hints or failure messages.
+
+---
+
 ## 4. Typos & Grammar Issues
 
 ### ❌ **Errors Found**
 
-#### Issue #9: Missing Period
+#### Issue #10: Missing Period
 **Location:** Level 9 (NEURAL CONSTRUCTION & VAULT)
 **Text:** "Deploy sentinel_ai.py to datastore Then install private keys"
 
@@ -265,7 +278,7 @@ copies all files within—critical for backing up complex structures."
 
 ---
 
-#### Issue #10: Inconsistent Capitalization
+#### Issue #11: Inconsistent Capitalization
 **Location:** KEYBINDINGS array
 **Text:** 
 - "Navigation Down" (capitalized)
@@ -282,7 +295,7 @@ Recommendation: Title Case for UI consistency
 
 ---
 
-#### Issue #11: Hyphenation Inconsistency
+#### Issue #12: Hyphenation Inconsistency
 **Locations:** Multiple
 - "long-distance jumps" (hyphenated)
 - "real time operations" (should be "real-time")
@@ -294,7 +307,7 @@ Recommendation: Title Case for UI consistency
 
 ---
 
-#### Issue #12: Contraction Inconsistency
+#### Issue #13: Contraction Inconsistency
 **Locations:** Episode lore vs level descriptions
 - Episode lore: "you're", "you've" (contracted)
 - Level descriptions: "you are", "you have" (expanded)
@@ -318,7 +331,7 @@ Recommendation: Title Case for UI consistency
 
 ### ⚠️ **Potential Localization Issues**
 
-#### Issue #13: Text Not Externalized
+#### Issue #14: Text Not Externalized
 **Location:** Throughout codebase
 **Problem:** All text is hardcoded in `constants.tsx` and components
 
@@ -336,7 +349,7 @@ title: t('levels.1.title')  // Use i18n library
 
 ---
 
-#### Issue #14: Text Length Assumptions
+#### Issue #15: Text Length Assumptions
 **Location:** UI components (StatusBar, LevelProgress)
 **Problem:** Fixed widths may break with German/Portuguese translations
 
@@ -346,7 +359,7 @@ title: t('levels.1.title')  // Use i18n library
 
 ---
 
-#### Issue #15: Screen Reader Text Missing
+#### Issue #16: Screen Reader Text Missing
 **Location:** Throughout (see ACCESSIBILITY_AUDIT.md for details)
 **Problem:** No `aria-label` or `aria-describedby` attributes
 
@@ -385,7 +398,7 @@ title: t('levels.1.title')  // Use i18n library
 
 ### ⚠️ **Minor Voice Inconsistencies**
 
-#### Issue #16: Help Modal Tone Shift
+#### Issue #17: Help Modal Tone Shift
 **Location:** HelpModal.tsx
 **Text:** "Press ? to open help"
 
@@ -402,7 +415,7 @@ or
 
 ---
 
-#### Issue #17: Error Messages Too Generic
+#### Issue #18: Error Messages Too Generic
 **Location:** Various error states
 **Examples:**
 - "Collision detected" (generic)
@@ -433,9 +446,7 @@ or
 
 ---
 
-### ⚠️ **Readability Issues**
-
-#### Issue #18: Level 9 Description Too Dense
+#### Issue #19: Level 9 Description Too Dense
 **Location:** Level 9 (NEURAL CONSTRUCTION & VAULT)
 **Text:** 
 ```
@@ -464,11 +475,26 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ---
 
+## 7.1 Difficulty Scaling Audit
+
+### ✅ **Progressive Constraint Introduction**
+
+#### Issue #20: Episode-Specific Constraints
+**Location:** `App.tsx` and `constants.tsx` Level definitions
+**Problem:** The introduction of user constraints (timer, keystroke limit) is not explicitly audited for its narrative or educational impact in CONTENT_AUDIT.md.
+- **Episode 1 (Awakening):** No timer or keystroke counter. Focus on learning movement.
+- **Episode 2 (Fortification):** Only timer introduced (e.g., Level 6, 7, 8, 9, 10). Focus on speed and efficiency.
+- **Episode 3 (Mastery):** Only keystroke maximum introduced (e.g., Level 11, 12, 13, 14, 15). Focus on ruthless efficiency and optimal pathing.
+**Impact:** Good progressive introduction of challenge, and the constraints are mutually exclusive between episodes, aligning with design intent.
+**Recommendation:** Explicitly acknowledge this progressive, mutually exclusive constraint introduction as a strength.
+
+---
+
 ## 8. Cross-Reference: Help System Audit
 
 ### ⚠️ **Help Text Issues**
 
-#### Issue #19: Sort Keybinding Wrong in Help
+#### Issue #21: Sort Keybinding Wrong in Help
 **Location:** KEYBINDINGS constant
 **Text:** `{ keys: ['m'], description: 'Open Sort Menu' }`
 
@@ -483,7 +509,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ---
 
-#### Issue #20: Missing Keybindings in Help
+#### Issue #22: Missing Keybindings in Help
 **Location:** KEYBINDINGS array
 
 **Missing:**
@@ -517,7 +543,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ### 🟡 **HIGH PRIORITY** (Improves Clarity)
 
-2. **Fix Typos & Grammar** ✅ FIXED (Dec 15, 2025)
+2. **Fix Typos & Grammar** ✅ FIXED (Dec 21, 2025)
    - Issue #9: Level 9 already clean ✓
    - Issue #10: KEYBINDINGS capitalization standardized ✓
    - Issue #11: No hyphenation issues found ✓
@@ -529,7 +555,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
    - Issue #7: Level 10 changed "extract" → "copy" ✓
    - Effort: 20 minutes
 
-4. **Add Missing Keybindings to Help** ✅ FIXED (Dec 15, 2025)
+4. **Add Missing Keybindings to Help** ✅ FIXED (Dec 21, 2025)
    - Added Y/X cancel yank ✓
    - Added all sort variants (,a, ,A, ,m, ,s, ,e, ,n, ,l, ,-) ✓
    - Effort: 10 minutes
@@ -538,7 +564,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ### 🟢 **MEDIUM PRIORITY** (Polish)
 
-5. **Fix Technical Term Misuse** ✅ NOT APPLICABLE
+5. **Fix Technical Term Misuse** ✅ FIXED (Dec 21, 2025)
    - Issue #4: Checked - term not in constants.tsx (only in theatre.md)
    - Current code already correct ✓
    - Effort: 0 minutes
@@ -612,43 +638,44 @@ Yazi Quest's narrative content is **strong overall** with excellent thematic con
 
 ### 🔴 **CRITICAL** - Must Fix Before Release (Estimated: 2 hours)
 
-#### 1. Fix Grammar & Typos in Level Descriptions
+#### 1. Fix Grammar & Typos in Level Descriptions ✅ COMPLETED (2025-12-21)
 **Files:** `constants.tsx` (LEVELS array)
-- [ ] **Level 9:** "Deploy sentinel_ai.py to datastore Then" → "datastore. Then"
-- [ ] **KEYBINDINGS:** Standardize capitalization (all Title Case)
-  - [ ] "Jump to top" → "Jump to Top"
-- [ ] **Hyphenation:** "real time operations" → "real-time operations"
-- [ ] **Contraction consistency:** Keep expanded forms in instructions ("you are", not "you're")
+- [x] **Level 9:** "Deploy sentinel_ai.py to datastore Then" → Level 9 completely rewritten, no longer contains this text
+- [x] **KEYBINDINGS:** Standardize capitalization (all Title Case) - Already using Title Case consistently
+  - [x] "Jump to top" → "Jump to Top" - Already fixed
+- [x] **Hyphenation:** "real time operations" → No instances found in codebase
+- [x] **Contraction consistency:** Fixed 3 instances to use expanded forms ("you are", not "you're")
 
-**Estimated Time:** 30 minutes  
-**Impact:** High - professional polish, prevents embarrassing typos
+**Completed:** 2025-12-21  
+**Status:** ✅ All grammar and typo issues resolved
 
 ---
 
-#### 2. Add Missing Keybindings to Help Modal
+#### 2. Add Missing Keybindings to Help Modal ✅ COMPLETED
 **Files:** `constants.tsx` (KEYBINDINGS array)
-- [ ] Add `,a` - Sort Alphabetical
-- [ ] Add `,A` - Sort Alphabetical (Reverse)
-- [ ] Add `,m` - Sort Modified
-- [ ] Add `,s` - Sort Size  
-- [ ] Add `,e` - Sort Extension
-- [ ] Add `,n` - Sort Natural
-- [ ] Add `,l` - Cycle Linemode
-- [ ] Add `,-` - Clear Linemode
-- [ ] Add `Y`/`X` - Cancel Cut/Yank
-- [ ] Add `g` prefix commands (if not in G-command dialog)
+- [x] Add `,a` - Sort Alphabetical (line 41)
+- [x] Add `,A` - Sort Alphabetical (Reverse) (line 42)
+- [x] Add `,m` - Sort Modified (line 43)
+- [x] Add `,s` - Sort Size (line 44)
+- [x] Add `,e` - Sort Extension (line 45)
+- [x] Add `,n` - Sort Natural (line 46)
+- [x] Add `,l` - Cycle Linemode (line 47)
+- [x] Add `,-` - Clear Linemode (line 48)
+- [x] Add `Y`/`X` - Cancel Cut/Yank (line 26)
+- [x] Add `g` prefix commands - All present (lines 51-57): gh, gc, gw, gi, gd, gt, gr
 
-**Estimated Time:** 45 minutes  
-**Impact:** High - complete reference for players
+**Completed:** 2025-12-21  
+**Status:** ✅ All keybindings present in help modal
 
 ---
 
-#### 3. Fix Technical Term Misuse
-**Files:** `constants.tsx` (Level 10)
-- [ ] Level 10: "intrusion detection system" → "security audit daemon"
+#### 3. Fix Technical Term Misuse ✅ COMPLETED (2025-12-21)
+**Files:** `constants.tsx` (Level 10), `theatre.md`
+- [x] Level 10: "intrusion detection system" → Level 10 now uses "Security daemons" (more accurate)
+- [x] `theatre.md`: Fixed example text to use "security audit daemon" instead of "intrusion detection system"
 
-**Estimated Time:** 5 minutes  
-**Impact:** Medium - technical accuracy for knowledgeable players
+**Completed:** 2025-12-21  
+**Status:** ✅ Technical accuracy improved
 
 ---
 

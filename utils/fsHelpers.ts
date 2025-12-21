@@ -347,10 +347,18 @@ const checkEpisodeStructuralProtection = (path: string, node: FileNode, levelInd
   return null;
 };
 
-const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
+const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>): string | null => {
   const name = node.name;
   const isDir = node.type === 'dir';
   const isFile = node.type === 'file';
+
+  // Protect watcher_agent for Level 2 - must inspect before deleting
+  if (name === 'watcher_agent.sys' && isFile && levelIndex === 1) {
+      const level2Tasks = completedTaskIds?.[2] || [];
+      const hasInspected = level2Tasks.includes('del-2b');
+      if (action === 'delete' && !hasInspected) return "Inspect the threat with Tab before elimination.";
+      if (action === 'cut') return "Threat beacon anchored.";
+  }
 
   if (name === 'access_key.pem' && isFile) {
       if (action === 'delete') return "Critical asset. Deletion prohibited.";
@@ -411,6 +419,12 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
       if (action === 'cut' && levelIndex < 13) return "Daemon anchored until cloning.";
   }
 
+  // Protect watcher_agent for Level 2 - must inspect before deleting
+  if (name === 'watcher_agent.sys' && isFile) {
+      if (action === 'delete' && levelIndex === 1) return "Inspect the threat with Tab before elimination.";
+      if (action === 'cut' && levelIndex < 2) return "Threat beacon anchored.";
+  }
+
   // Protect decoy signal for Level 7
   if (name === 'decoy_signal.trc' && isFile) {
       if (action === 'delete' && levelIndex < 6) return "Decoy signature required for quantum navigation training.";
@@ -455,7 +469,7 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
   return null;
 };
 
-export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename'): string | null => {
+export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>): string | null => {
   const fullPath = resolvePath(root, [...parentPathIds, node.id]);
   let protectionMessage: string | null;
 
@@ -465,7 +479,7 @@ export const isProtected = (root: FileNode, parentPathIds: string[], node: FileN
   protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
   if (protectionMessage) return protectionMessage;
 
-  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
+  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action, completedTaskIds);
   if (protectionMessage) return protectionMessage;
 
   return null;

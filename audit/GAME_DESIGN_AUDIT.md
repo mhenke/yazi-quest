@@ -108,14 +108,14 @@ The following table assesses each level against the core design criteria.
 
 ---
 
-### 🟡 OPEN GAPS
+### ✅ RESOLVED GAPS
 
-#### 4.0.1 Directory Path Header Missing
+#### ✅ Directory Path Header Restored
 **Issue:** Yazi displays current directory path at top spanning all 3 columns.
-**Current Implementation:** Path only shown in status bar.
-**Impact:** Reduced spatial awareness, harder to verify current location.
-**Recommendation:** Restore directory header showing `~/path/to/dir` or `/absolute/path`.
-**Priority:** Low (nice-to-have for realism).
+**Resolution:** Path display spanning all 3 columns has been restored in the header, showing `~/path/to/dir` or `/absolute/path` with filter indicator.
+**Status:** ✅ FIXED (Dec 15, 2025)
+
+
 
 ---
 

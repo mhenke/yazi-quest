@@ -1,0 +1,12 @@
+steps:
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['ci']
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'build']
+  env:
+  - 'VITE_SENTRY_DSN=$(SENTRY_DSN)'
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/sentry-dsn/latest
+    env: 'SENTRY_DSN'

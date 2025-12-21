@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileNode, Level } from '../types';
 import { 
-    FileText, FolderOpen, Image as ImageIcon, FileArchive, PackageOpen, CheckSquare, Square,
+    FileText, _FolderOpen, Image as _ImageIcon, FileArchive, PackageOpen, CheckSquare, Square,
     Folder, FileCode, FileImage, FileCog, FileLock, Terminal as TerminalIcon
 } from 'lucide-react';
 

@@ -1,12 +1,66 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CONCLUSION_DATA } from '../constants';
 import { Terminal, Signal, UploadCloud } from 'lucide-react';
+import { trackEvent, trackError } from '../utils/telemetry';
 
 export const OutroSequence: React.FC = () => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(0);
   const [showTeaser, setShowTeaser] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Prefetch video resource proactively: add preload link and start loading metadata/content
+  useEffect(() => {
+    // Insert a <link rel="preload" as="video"> to hint browsers to fetch early
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = CONCLUSION_DATA.videoUrl;
+    link.as = 'video';
+    document.head.appendChild(link);
+
+    // Optionally use blob fallback if enabled via env
+    const useBlob = !!(import.meta as any).env?.VITE_OUTRO_USE_BLOB;
+    const vid = videoRef.current;
+    let objectUrl: string | undefined;
+
+    async function maybeFetchBlob() {
+      try {
+        if (!useBlob) return;
+        if (!vid) return;
+        trackEvent('outro_video_blob_fetch_start', { url: CONCLUSION_DATA.videoUrl });
+        const resp = await fetch(CONCLUSION_DATA.videoUrl, { mode: 'cors' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (vid) vid.src = objectUrl;
+        trackEvent('outro_video_blob_fetch_success');
+      } catch (e) {
+        trackError('outro_video_blob_fetch_failed', { error: (e && (e as Error).toString()) });
+      }
+    }
+
+    // Also instruct the video element to preload and begin loading when mounted (only if not using blob)
+    if (!useBlob && vid) {
+      try {
+        vid.preload = 'auto';
+        // call load to ensure browser starts fetching
+        vid.load();
+      } catch (_e) {
+        // ignore - some browsers restrict programmatic preloading
+      }
+    }
+
+    // Kick off blob fetch if enabled
+    maybeFetchBlob();
+
+    return () => {
+      // cleanup the added link
+      try { document.head.removeChild(link); } catch (_e) { /* ignore error if link already removed */ }
+      if (objectUrl) {
+        try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+      }
+    };
+  }, []);
 
   // Typewriter effect logic for lore
   useEffect(() => {
@@ -19,7 +73,9 @@ export const OutroSequence: React.FC = () => {
     const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
     let charIdx = 0;
 
-    setDisplayedLines(prev => [...prev, ""]);
+    setDisplayedLines(prev => {
+      return [...prev, ""];
+    });
 
     const interval = setInterval(() => {
       charIdx++;
@@ -41,13 +97,59 @@ export const OutroSequence: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentLineIdx]);
 
-  // Play video only when teaser is shown
+  // Play video when teaser is shown: wait for canplaythrough, with a short fallback timeout and telemetry
   useEffect(() => {
-    if (showTeaser && videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(e => console.error("Video play failed", e));
-    }
+    if (!showTeaser) return;
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    let played = false;
+
+    const onCanPlayThrough = () => {
+      try {
+        trackEvent('video_canplaythrough');
+        if (!played) {
+          vid.currentTime = 0;
+          vid.play().then(() => {
+            played = true;
+            trackEvent('video_played_after_canplaythrough');
+          }).catch(e => trackError('video_play_failed_after_canplaythrough', { error: (e && (e as Error).toString()) }));
+        }
+      } catch (_e) {
+        // swallow
+      }
+    };
+
+    vid.addEventListener('canplaythrough', onCanPlayThrough);
+
+    // Try immediate play (muted autoplay may succeed in many browsers)
+    vid.currentTime = 0;
+    vid.play().then(() => {
+      played = true;
+      trackEvent('video_played_immediate');
+    }).catch(() => {
+      // will wait for canplaythrough or fallback
+    });
+
+    // Fallback: attempt play after 5s if still not playing
+    const fallback = window.setTimeout(() => {
+      if (!played) {
+        trackEvent('video_play_fallback');
+        vid.currentTime = 0;
+        vid.play().catch(e => trackError('video_play_failed_on_fallback', { error: (e && (e as Error).toString()) }));
+      }
+    }, 5000);
+
+    return () => {
+      vid.removeEventListener('canplaythrough', onCanPlayThrough);
+      clearTimeout(fallback);
+    };
   }, [showTeaser]);
+
+  // Telemetry: expose simple event when preload attempted
+  useEffect(() => {
+    trackEvent('outro_video_prefetch_attempted', { url: CONCLUSION_DATA.videoUrl });
+  }, []);
 
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
@@ -61,7 +163,7 @@ export const OutroSequence: React.FC = () => {
                  <h1 className="text-3xl font-bold tracking-wider glitch-text">{CONCLUSION_DATA.title}</h1>
              </div>
              <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
-                 // {CONCLUSION_DATA.subtitle}
+                 {/* // {CONCLUSION_DATA.subtitle} */}
              </p>
          </div>
 
@@ -114,10 +216,15 @@ export const OutroSequence: React.FC = () => {
                 </h3>
 
                 <div className="pt-8 md:pt-12">
-                    <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
+                    <a 
+                        href="https://github.com/mhenke/yazi-quest" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-zinc-400 hover:text-blue-400 transition-colors text-sm font-mono border border-zinc-700 hover:border-blue-500 px-4 py-2 rounded bg-black/80"
+                    >
                         <UploadCloud size={16} className="animate-bounce" />
-                        <span>Establishing Remote Uplink...</span>
-                    </div>
+                        <span>Establishing Remote Uplink → GitHub Repository</span>
+                    </a>
                 </div>
             </div>
           )}

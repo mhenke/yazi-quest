@@ -120,7 +120,7 @@ const getListItemRowClasses = (
   `;
 };
 
-export const FileSystemPane: React.FC<FileSystemPaneProps> = ({ 
+export const FileSystemPane = React.memo<FileSystemPaneProps>(({ 
   items, 
   isActive, 
   cursorIndex = -1,
@@ -248,4 +248,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
       </div>
     </div>
   );
-};
+});
+
+FileSystemPane.displayName = 'FileSystemPane';

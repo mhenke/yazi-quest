@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
@@ -25,10 +25,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
     console.log('[LevelProgress] completedTaskIds prop:', completedTaskIds);
   }, [currentLevelIndex, completedTaskIds]);
 
-  const handleToggleMap = () => {
+  const handleToggleMap = useCallback(() => {
     setShowLegend(prev => !prev);
     onToggleMap?.(); // Notify parent if callback provided
-  };
+  }, [onToggleMap]);
 
   // Keyboard shortcut: Shift+M to toggle map
   useEffect(() => {
@@ -41,7 +41,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleToggleMap]);
 
   // Helper icons for the 3 episodes (mapped by index)
   // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
@@ -72,13 +72,15 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
   // Sync modal tab with current episode when opening
   useEffect(() => {
     if (showLegend) {
-        setActiveTab(currentEpisodeIdx);
-        // Find the current level within the episode and select it
-        const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
-        const currentLevelInEpisode = currentEpisodeLevels.findIndex(l => levels.indexOf(l) === currentLevelIndex);
-        setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
+        setTimeout(() => {
+            setActiveTab(currentEpisodeIdx);
+            // Find the current level within the episode and select it
+            const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
+            const currentLevelInEpisode = currentEpisodeLevels.findIndex(l => levels.indexOf(l) === currentLevelIndex);
+            setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
+        }, 0);
     }
-  }, [showLegend, currentEpisodeIdx]);
+  }, [showLegend, currentEpisodeIdx, currentLevelIndex, episodes, levels]);
 
   const activeEpisode = episodes[activeTab] || episodes[0];
 

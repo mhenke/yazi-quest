@@ -5,17 +5,36 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm run type-check && vite build",
+    "build:skip-check": "vite build",
+    "analyze": "npm run build && echo 'Open dist/bundle-stats.html'",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^19.2.1",
+    "@sentry/browser": "^10.32.1",
+    "@sentry/google-cloud-serverless": "^10.32.1",
+    "@sentry/profiling-node": "^10.32.1",
     "lucide-react": "^0.556.0",
+    "react": "^19.2.1",
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^22.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "prettier": "^3.7.4",
+    "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

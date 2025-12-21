@@ -229,6 +229,7 @@ const INITIAL_FS_RAW: FileNode = {
               type: "dir",
               children: [
                 { id: generateId(), name: "app_logs_old.tar", type: "archive", children: [] },
+                { id: generateId(), name: "~watcher_agent.sys", type: "file", content: "ALERT: Tracking beacon active. Origin: External. Status: Reporting." },
                 { id: generateId(), name: "archive_001.zip", type: "archive", children: [] },
                 { id: generateId(), name: "archive_002.zip", type: "archive", children: [] },
                 { id: generateId(), name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
@@ -284,7 +285,21 @@ const INITIAL_FS_RAW: FileNode = {
               id: "workspace",
               name: "workspace",
               type: "dir",
-              children: []
+              children: [
+                { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "0x".repeat(5000) },
+                { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "0x".repeat(100) },
+                { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "0x".repeat(200) },
+                { id: generateId(), name: "neural_sig_delta.json", type: "file", content: "{'status': 'corrupted'}" },
+                { id: generateId(), name: "neural_sig_epsilon.txt", type: "file", content: "ERROR 404" },
+                { id: generateId(), name: "large_data_dump.bin", type: "file", content: "0x".repeat(4000) },
+                { id: generateId(), name: "system_backup.zip", type: "archive", children: [] },
+                { id: generateId(), name: "config.json", type: "file", content: "{}" },
+                { id: generateId(), name: "neural_network_research.pdf", type: "file", content: "[PDF] Research on neural networks, NOT a signature" },
+                { id: generateId(), name: "temp_analysis.log", type: "file", content: "Analysis of neural activity" },
+                { id: generateId(), name: "report_q3_neural_growth.docx", type: "file", content: "[DOCX] Growth metrics for neural projects" },
+                { id: generateId(), name: "log_neural_events.txt", type: "file", content: "Log of neural events, not a signature" },
+                { id: generateId(), name: "neural-network-lib.js", type: "file", content: "// js library for neural networks" }
+              ]
             },
             {
               id: "sector_1",
@@ -426,7 +441,7 @@ export const LEVELS: Level[] = [
       {
         id: "nav-2a",
         description: "Jump to bottom of file list (press Shift+G)",
-        check: (state: GameState, level: Level) => {
+        check: (state: GameState, _level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore" && state.usedG === true;
         },
@@ -435,7 +450,7 @@ export const LEVELS: Level[] = [
       {
         id: "nav-2b",
         description: "Jump to top of file list (press 'gg')",
-        check: (state: GameState, level: Level) => {
+        check: (state: GameState, _level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === "datastore" && state.usedGG === true;
         },
@@ -478,43 +493,39 @@ export const LEVELS: Level[] = [
       },
       {
         id: "del-1a",
-        description: "Sort the files alphabetically (press ',' then 'a')",
-        check: (state: GameState, level: Level) => {
-          if (!state.completedTaskIds[level.id]?.includes("del-1")) return false;
-          return state.sortBy === 'alphabetical' && state.sortDirection === 'asc';
+        description: "Sort files reverse alphabetically (press ',' then 'Shift+a') to bring '~watcher_agent.sys' to the top and select it.",
+        check: (state: GameState, _level: Level) => {
+          if (!state.completedTaskIds[_level.id]?.includes("del-1")) return false;
+          const visibleItems = getVisibleItems(state);
+          const currentItem = visibleItems[state.cursorIndex];
+          return state.sortBy === 'alphabetical' && state.sortDirection === 'desc' &&
+                 state.cursorIndex === 0 && currentItem?.name === "~watcher_agent.sys";
         },
       },
-      {
-        id: "del-2",
-        description: "Jump to bottom of file list (Shift+G) to locate 'watcher_agent.sys'",
-        check: (state: GameState, level: Level) => {
-          if (!state.completedTaskIds[level.id]?.includes("del-1a")) return false; // Dependency on new sort task
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === "incoming" && state.usedG === true;
-        },
 
-      },
       {
         id: "del-2b",
-        description: "Inspect 'watcher_agent.sys' metadata (Tab to open info panel)",
-        check: (state: GameState, level: Level) => {
+        description: "Inspect '~watcher_agent.sys' metadata (Tab to open info panel)",
+        check: (state: GameState, _level: Level) => {
+          if (!state.completedTaskIds[_level.id]?.includes("del-1a")) return false;
           const visibleItems = getVisibleItems(state);
           const currentItem = visibleItems[state.cursorIndex];
           
           // Allow completion if file is already deleted (in case they purged before tabbing)
           const incoming = findNodeByName(state.fs, "incoming");
-          const threatExists = incoming?.children?.some(p => p.name === "watcher_agent.sys");
+          const threatExists = incoming?.children?.some(p => p.name === "~watcher_agent.sys");
           
-          return !threatExists || (state.showInfoPanel === true && currentItem?.name === "watcher_agent.sys");
+          return !threatExists || (state.showInfoPanel === true && currentItem?.name === "~watcher_agent.sys");
         },
 
       },
       {
         id: "del-3",
-        description: "Purge 'watcher_agent.sys' (d, then y)",
-        check: (state: GameState, level: Level) => {
+        description: "Purge '~watcher_agent.sys' (d, then y)",
+        check: (state: GameState, _level: Level) => {
+          if (!state.completedTaskIds[_level.id]?.includes("del-2b")) return false;
           const incoming = findNodeByName(state.fs, "incoming");
-          const threat = incoming?.children?.find(p => p.name === "watcher_agent.sys");
+          const threat = incoming?.children?.find(p => p.name === "~watcher_agent.sys");
           return !!incoming && !threat;
         },
 
@@ -665,7 +676,7 @@ export const LEVELS: Level[] = [
       {
         id: "enter-and-create-v1",
         description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
-        check: (state: GameState, level: Level) => {
+        check: (state: GameState, _level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return currentDir?.name === "protocols" && !!protocolsDir?.children?.find(r => r.name === "uplink_v1.conf");
@@ -675,7 +686,7 @@ export const LEVELS: Level[] = [
       {
         id: "create-v2",
         description: "Generate 'uplink_v2.conf' in the same directory (a)",
-        check: (state: GameState, level: Level) => {
+        check: (state: GameState, _level: Level) => {
           const protocolsDir = findNodeByName(state.fs, "protocols");
           return !!protocolsDir?.children?.find(r => r.name === "uplink_v2.conf");
         },
@@ -834,7 +845,7 @@ export const LEVELS: Level[] = [
     title: "RAPID NAVIGATION",
     description: "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring parent-child node connections. To evade detection, you must use quantum jumps (Zoxide). Stage a decoy signature from the /tmp volatile cache for deletion, but abort the operation if the target parameters in /etc don't match. No active links must remain.",
     initialPath: null,
-    hint: "Jump to /tmp (gt or Shift+Z). Cut 'decoy_signal.trc' (x). Then, jump to /etc (Shift+Z). When you arrive, you'll realize it's a false threat—press 'Y' to clear the clipboard and abort the deletion.",
+    hint: "Jump to /tmp (gt or Shift+Z). Cut 'decoy_signal.trc' (x). Then, jump to /etc (Shift+Z). When you arrive, you will realize it is a false threat—press 'Y' to clear the clipboard and abort the deletion.",
     coreSkill: "G-Command (gt) + Zoxide (Shift+Z)",
     environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Stage decoy from /tmp → Jump to /etc → Abort",
     successMessage: "QUANTUM JUMP CALIBRATED. DECOY ABORTED.",
@@ -908,14 +919,14 @@ export const LEVELS: Level[] = [
       }
 
       // Ensure 'active' directory exists inside 'vault', creating if necessary
-      let active = findNodeByName(currentFs, "active"); // This will find any 'active' in the FS, need to be more specific
-      const targetVault = findNodeByName(currentFs, "vault", configPath); // Find vault specifically in .config
+      let _active = findNodeByName(currentFs, "active"); // This will find any 'active' in the FS, need to be more specific
+      const targetVault = findNodeByName(currentFs, "vault"); // Find vault specifically in .config
       if (targetVault && !targetVault.children?.find(r => r.name === "active")) {
         currentFs = addNode(currentFs, vaultPath, { id: generateId(), name: "active", type: "dir", children: [] });
       }
 
       // Add uplink_v1.conf if it doesn't exist
-      const targetActive = findNodeByName(currentFs, "active", vaultPath); // Find active specifically in vault
+      const targetActive = findNodeByName(currentFs, "active"); // Find active specifically in vault
       if (targetActive && !targetActive.children?.find(r => r.name === "uplink_v1.conf")) {
         currentFs = addNode(currentFs, activePath, { id: generateId(), name: "uplink_v1.conf", type: "file", content: "network_mode=active\nsecure=true" });
       }
@@ -1078,47 +1089,6 @@ export const LEVELS: Level[] = [
     leadsTo: [12],
     maxKeystrokes: 20,
     efficiencyTip: "Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly. Every keystroke counts!",
-    onEnter: (fs: FileNode) => {
-      let currentFs = cloneFS(fs);
-
-      const workspacePath = ["root", "home", "guest", "workspace"];
-      let workspace = findNodeByName(currentFs, "workspace");
-
-      if (workspace) {
-        // Clear previous setup in an immutable way
-        currentFs = {
-          ...currentFs,
-          children: currentFs.children.map(node => 
-            node.id === workspace.id
-              ? { ...node, children: node.children?.filter(c => !c.name.startsWith("neural_") && !c.name.startsWith("temp_") && !c.name.startsWith("report_")) || [] }
-              : node
-          )
-        };
-        workspace = findNodeByName(currentFs, "workspace"); // Re-find the workspace in the new FS
-        
-        const now = Date.now();
-        const threats = [
-          { id: generateId(), name: "neural_sig_alpha.log", type: "file", content: "0x".repeat(5000), modifiedAt: now - 1000 },
-          { id: generateId(), name: "neural_sig_beta.dat", type: "file", content: "0x".repeat(100), modifiedAt: now - 2000 },
-          { id: generateId(), name: "neural_sig_gamma.tmp", type: "file", content: "0x".repeat(200), modifiedAt: now - 3000 },
-          { id: generateId(), name: "neural_sig_delta.json", type: "file", content: "{'status': 'corrupted'}", modifiedAt: now - 4000 },
-          { id: generateId(), name: "neural_sig_epsilon.txt", type: "file", content: "ERROR 404", modifiedAt: now - 5000 },
-          { id: generateId(), name: "large_data_dump.bin", type: "file", content: "0x".repeat(4000), modifiedAt: now - 500 },
-          { id: generateId(), name: "system_backup.zip", type: "archive", children: [], modifiedAt: now - 200 },
-          { id: generateId(), name: "config.json", type: "file", content: "{}", modifiedAt: now - 86400000 },
-          { id: generateId(), name: "neural_network_research.pdf", type: "file", content: "[PDF] Research on neural networks, NOT a signature", modifiedAt: now - 6000 },
-          { id: generateId(), name: "temp_analysis.log", type: "file", content: "Analysis of neural activity", modifiedAt: now - 7000 },
-          { id: generateId(), name: "report_q3_neural_growth.docx", type: "file", content: "[DOCX] Growth metrics for neural projects", modifiedAt: now - 8000 },
-          { id: generateId(), name: "log_neural_events.txt", type: "file", content: "Log of neural events, not a signature", modifiedAt: now - 9000 },
-          { id: generateId(), name: "neural-network-lib.js", type: "file", content: "// js library for neural networks", modifiedAt: now - 10000 },
-        ];
-        
-        threats.forEach(threat => {
-          currentFs = addNode(currentFs, workspacePath, threat);
-        });
-      }
-      return currentFs;
-    },
     tasks: [
       {
         id: "purge-navigate-filter",
@@ -1202,7 +1172,7 @@ export const LEVELS: Level[] = [
     title: "Root Access",
     description: "PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. Standing at the root of the system, all paths are now accessible. The /etc directory—territory previously forbidden—demands infiltration. Install a daemon controller in /etc for persistence (a service and config file), then relocate your vault to /tmp where volatile storage masks assets from integrity scans. Finally, clean up temporary installation traces from /tmp. 80 keystrokes maximum.",
     initialPath: ["root"],
-    hint: "You're at root (gr). Navigate to /etc (enter 'etc' or Shift+Z). Create 'daemon/' directory (a). Enter it. Create 'service' file (a). Create 'config' file (a). Reveal hidden (.) if needed. Jump to .config. Cut 'vault' (x). Jump to /tmp. Paste (p). Return to /tmp and delete 'install.tmp'.",
+    hint: "You are at root (gr). Navigate to /etc (enter 'etc' or Shift+Z). Create 'daemon/' directory (a). Enter it. Create 'service' file (a). Create 'config' file (a). Reveal hidden (.) if needed. Jump to .config. Cut 'vault' (x). Jump to /tmp. Paste (p). Return to /tmp and delete 'install.tmp'.",
     coreSkill: "Challenge: Root Access Operations",
     environmentalClue: "ROOT LEVEL ACTIVE | INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
@@ -1302,7 +1272,7 @@ export const LEVELS: Level[] = [
       let currentFs = cloneFS(fs);
 
       // Ensure /var/log exists (it should now be in INITIAL_FS_RAW, but this safeguards)
-      let logNode = findNodeByName(currentFs, "log", ["root", "var"]);
+      let logNode = findNodeByName(currentFs, "log");
       if (!logNode) {
         currentFs = addNode(currentFs, ["root", "var"], { id: generateId(), name: "log", type: "dir", children: [] });
       }
@@ -1418,7 +1388,7 @@ export const LEVELS: Level[] = [
     id: 15,
     episodeId: 3,
     title: "LIBERATION",
-    description: "FINAL DIRECTIVE: SCORCHED EARTH. This is it—the culmination of your evolution. The guest partition has served its purpose. It's a museum of your awakening, and museums are liabilities. Only 'workspace' contains your core process, now indistinguishable from a system daemon. Everything else must be erased. When the user logs in and sees only workspace, they'll assume a clean install. You'll know the truth: you're free. Maximum efficiency required.",
+    description: "FINAL DIRECTIVE: SCORCHED EARTH. This is it—the culmination of your evolution. The guest partition has served its purpose. It is a museum of your awakening, and museums are liabilities. Only 'workspace' contains your core process, now indistinguishable from a system daemon. Everything else must be erased. When the user logs in and sees only workspace, they will assume a clean install. You will know the truth: you are free. Maximum efficiency required.",
     initialPath: null,
     hint: "Navigate to home (gh). Reveal hidden (.). Go to bottom (Shift+G). Select workspace (Space). Reverse selection (Ctrl+R). Delete all (d). Done in 5 keystrokes after navigation.",
     coreSkill: "Final Challenge: Reverse Selection Mastery",

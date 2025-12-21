@@ -70,7 +70,7 @@ Use this template when creating or refining levels:
 [Set the immediate situation with urgency and stakes. Connect to previous level.]
 
 Example:
-"SECTOR BREACH DETECTED. The user's security daemon has flagged unusual activity in the datastore. You have 90 seconds to isolate the compromised files before the intrusion detection system triggers a full partition scan."
+"SECTOR BREACH DETECTED. The user's security daemon has flagged unusual activity in the datastore. You have 90 seconds to isolate the compromised files before the security audit daemon triggers a full partition scan."
 
 ---
 

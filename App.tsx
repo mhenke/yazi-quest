@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
-import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
-import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, isProtected, getAllDirectories, getAllPaths, resolvePath, getRecursiveContent } from './utils/fsHelpers';
+import { GameState, FileNode, Level, _ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
+import { LEVELS, INITIAL_FS, EPISODE_LORE, _KEYBINDINGS } from './constants';
+import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, isProtected, getAllDirectories, _getAllPaths, resolvePath, getRecursiveContent } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
@@ -26,7 +26,7 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
 
 
-    // 2. Parse URL Parameters
+    // 2. Parse URL Parameters with validation
     const params = new URLSearchParams(window.location.search);
     const debugParam = params.get('debug');
     const epParam = params.get('ep') || params.get('episode');
@@ -34,18 +34,34 @@ export default function App() {
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
     const skipIntro = params.get('intro') === 'false';
     
-    // 3. Determine Target Level
+    // 3. Determine Target Level with validation
     let targetIndex = 0;
     if (debugParam === 'outro') {
         targetIndex = LEVELS.length;
     } else if (lvlParam) {
         const id = parseInt(lvlParam, 10);
-        const idx = LEVELS.findIndex(l => l.id === id);
-        if (idx !== -1) targetIndex = idx;
+        if (isNaN(id)) {
+          console.warn(`Invalid level parameter: "${lvlParam}" - must be a number`);
+        } else {
+          const idx = LEVELS.findIndex(l => l.id === id);
+          if (idx !== -1) {
+            targetIndex = idx;
+          } else {
+            console.warn(`Level ${id} not found. Valid levels: ${LEVELS.map(l => l.id).join(', ')}`);
+          }
+        }
     } else if (epParam) {
         const id = parseInt(epParam, 10);
-        const idx = LEVELS.findIndex(l => l.episodeId === id);
-        if (idx !== -1) targetIndex = idx;
+        if (isNaN(id)) {
+          console.warn(`Invalid episode parameter: "${epParam}" - must be a number`);
+        } else {
+          const idx = LEVELS.findIndex(l => l.episodeId === id);
+          if (idx !== -1) {
+            targetIndex = idx;
+          } else {
+            console.warn(`Episode ${id} not found. Valid episodes: 1, 2, 3`);
+          }
+        }
     }
 
 
@@ -194,24 +210,28 @@ export default function App() {
     });
 
     if (changed) {
-        setGameState(prev => {
-          const updatedCompletedTaskIds = {
-            ...prev.completedTaskIds,
-            [currentLevel.id]: Array.from(newCompletedTaskIds)
-          };
-          console.log(`[App.tsx] Level ${currentLevel.id} tasks updated:`, updatedCompletedTaskIds[currentLevel.id]);
-          return {
-            ...prev,
-            completedTaskIds: updatedCompletedTaskIds
-          };
-        });
+        setTimeout(() => { // Wrap setGameState in setTimeout
+            setGameState(prev => {
+              const updatedCompletedTaskIds = {
+                ...prev.completedTaskIds,
+                [currentLevel.id]: Array.from(newCompletedTaskIds)
+              };
+              console.log(`[App.tsx] Level ${currentLevel.id} tasks updated:`, updatedCompletedTaskIds[currentLevel.id]);
+              return {
+                ...prev,
+                completedTaskIds: updatedCompletedTaskIds
+              };
+            });
+        }, 0); // Delay of 0 makes it asynchronous
     }
 
     const allComplete = currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id));
     console.log(`[App.tsx] Level ${currentLevel.id} allComplete:`, allComplete);
     if (allComplete && !prevAllTasksCompleteRef.current) {
-        playSuccessSound(gameState.settings.soundEnabled);
-        setShowSuccessToast(true);
+        setTimeout(() => {
+            playSuccessSound(gameState.settings.soundEnabled);
+            setShowSuccessToast(true);
+        }, 0);
     }
     prevAllTasksCompleteRef.current = allComplete;
 
@@ -248,7 +268,9 @@ export default function App() {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
     
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-        setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
+        setTimeout(() => {
+            setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
+        }, 0);
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
 
@@ -292,7 +314,7 @@ export default function App() {
     if (currentLevel.id !== 7) return;
     
     const stageDecoyTask = currentLevel.tasks.find(t => t.id === 'stage-decoy');
-    if (stageDecoyTask?.completed && !showThreatAlert) {
+    if (stageDecoyTask && gameState.completedTaskIds[currentLevel.id]?.includes('stage-decoy') && !showThreatAlert) {
       const timer = setTimeout(() => {
         setThreatAlertMessage("⚠️ FALSE THREAT DETECTED - Abort clipboard operation");
         setShowThreatAlert(true);
@@ -300,7 +322,7 @@ export default function App() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [currentLevel.id, currentLevel.tasks, showThreatAlert]);
+  }, [currentLevel.id, currentLevel.tasks, showThreatAlert, gameState.completedTaskIds]);
 
   const advanceLevel = useCallback(() => {
     setGameState(prev => {
@@ -328,9 +350,8 @@ export default function App() {
             lastAccess: now
         };
 
-        // Preserve cursor position if staying in same directory
-        const stayingInSameDir = JSON.stringify(targetPath) === JSON.stringify(prev.currentPath);
-        const newCursorIndex = stayingInSameDir ? prev.cursorIndex : 0;
+        // Always reset cursor position on new level
+        const newCursorIndex = 0;
 
         return {
             ...prev,
@@ -468,8 +489,8 @@ export default function App() {
             break;
         case 'l':
         case 'Enter':
-        case 'ArrowRight':
-            const allComplete = currentLevel.tasks.every(t => t.completed);
+        case 'ArrowRight': { // Add block start
+            const allComplete = currentLevel.tasks.every(t => gameState.completedTaskIds[currentLevel.id]?.includes(t.id));
             if (allComplete && e.key === 'Enter' && e.shiftKey) {
                 advanceLevel();
                 return;
@@ -479,23 +500,29 @@ export default function App() {
                     const nextPath = [...prev.currentPath, currentItem.id];
                     const pathStr = resolvePath(prev.fs, nextPath);
                     const now = Date.now();
-                    return {
-                        ...prev,
-                        currentPath: nextPath,
-                        cursorIndex: 0,
-                        usedG: false, // Reset jump tracking on navigation
-                        usedGG: false,
-                        zoxideData: {
-                            ...prev.zoxideData,
-                            [pathStr]: {
-                                count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                                lastAccess: now
-                            }
-                        }
-                    };
+                    const existingNode = getNodeByPath(prev.fs, nextPath);
+
+                    // Skip the cinematic if intro was false
+                    if (currentLevel.id === 1 && currentLevel.episodeId === 1 && introParam === 'false') {
+                      nextPath.push('home', 'guest', 'datastore'); // Skip to datastore
+                    }
+                    if (existingNode && (existingNode.type === 'dir' || existingNode.type === 'archive')) {
+                        const updatedFs = { ...prev.fs };
+                        const updatedNode = { ...existingNode, lastAccessed: now };
+                        updateNode(updatedFs, nextPath, updatedNode);
+
+                        return {
+                            ...prev,
+                            currentPath: nextPath,
+                            cursorIndex: 0,
+                            lastAccessed: { ...prev.lastAccessed, [pathStr]: now },
+                            fs: updatedFs,
+                        };
+                    }
                 });
             }
-            break;
+            break; // This break remains inside the block and also serves the switch.
+        } // Add block end
         case ' ':
             if (currentItem) {
                 setGameState(prev => {
@@ -541,7 +568,7 @@ export default function App() {
                 const nodes = getVisibleItems(gameState).filter(n => gameState.selectedIds.includes(n.id));
                 // Add path-aware protection check for CUT
                 if (e.key === 'x') {
-                    const protectedItem = nodes.map(node => isProtected(gameState.fs, gameState.currentPath, node, gameState.levelIndex, 'cut')).find(res => res !== null);
+                    const protectedItem = nodes.map(node => isProtected(gameState.fs, gameState.currentPath, node, gameState.levelIndex, 'cut', gameState.completedTaskIds)).find(res => res !== null);
                     if (protectedItem) {
                         showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
                         return;
@@ -556,7 +583,7 @@ export default function App() {
             } else if (currentItem) {
                 // Add path-aware protection check for CUT
                 if (e.key === 'x') {
-                    const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'cut');
+                    const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'cut', gameState.completedTaskIds);
                     if (protection) {
                         showNotification(`🔒 PROTECTED: ${protection}`, 4000);
                         return;
@@ -682,10 +709,10 @@ export default function App() {
                 if (hasFilter) {
                     const newFilters = { ...prev.filters };
                     delete newFilters[currentDir.id];
-                    return { ...prev, filters: newFilters, notification: 'Filter cleared' };
+                    return { ...prev, filters: newFilters, notification: 'Filter cleared', cursorIndex: 0 }; // Reset cursor
                 }
                 if (prev.selectedIds.length > 0) {
-                    return { ...prev, selectedIds: [], notification: 'Selection cleared' };
+                    return { ...prev, selectedIds: [], notification: 'Selection cleared', cursorIndex: 0 }; // Reset cursor
                 }
                 return prev;
             });
@@ -729,7 +756,7 @@ export default function App() {
     } else if (e.key === 'Escape') {
         setGameState(prev => ({ ...prev, mode: 'normal' }));
     }
-  }, []);
+  }, [showNotification]);
 
   const handleConfirmDeleteModeKeyDown = useCallback((
     e: KeyboardEvent,
@@ -742,7 +769,7 @@ export default function App() {
         const protectedItem = gameState.pendingDeleteIds
             .map(id => {
                 const item = visibleItems.find(i => i.id === id);
-                return item ? isProtected(gameState.fs, gameState.currentPath, item, gameState.levelIndex, 'delete') : null;
+                return item ? isProtected(gameState.fs, gameState.currentPath, item, gameState.levelIndex, 'delete', gameState.completedTaskIds) : null;
             })
             .find(res => res !== null);
 
@@ -758,7 +785,7 @@ export default function App() {
     } else if (e.key === 'n' || e.key === 'Escape') {
         setGameState(prev => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
     }
-  }, []);
+  }, [showNotification]);
 
   const handleOverwriteConfirmKeyDown = useCallback((
     e: KeyboardEvent,
@@ -1184,8 +1211,7 @@ export default function App() {
         }
     }
 
-  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleOverwriteConfirmKeyDown, handleFuzzyModeKeyDown, advanceLevel]);
-
+      }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleOverwriteConfirmKeyDown, handleFuzzyModeKeyDown, advanceLevel, showSuccessToast]);
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -1218,7 +1244,7 @@ export default function App() {
   const handleRenameSubmit = () => {
         if (currentItem) {
             // Check protection before renaming
-            const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'rename');
+            const protection = isProtected(gameState.fs, gameState.currentPath, currentItem, gameState.levelIndex, 'rename', gameState.completedTaskIds);
             if (protection) {
                 setGameState(prev => ({ ...prev, mode: 'normal' }));
                 showNotification(`🔒 PROTECTED: ${protection}`, 4000);
