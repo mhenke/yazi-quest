@@ -6,17 +6,24 @@ import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } f
 interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
+  completedTaskIds: Record<number, string[]>;
   onToggleHint: () => void;
   onToggleHelp: () => void;
   onToggleMap?: () => void;
   onJumpToLevel?: (levelIndex: number) => void;
 }
 
-export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLevelIndex, onToggleHint, onToggleHelp, onToggleMap, onJumpToLevel }) => {
+export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLevelIndex, completedTaskIds, onToggleHint, onToggleHelp, onToggleMap, onJumpToLevel }) => {
   const [showLegend, setShowLegend] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [selectedMissionIdx, setSelectedMissionIdx] = useState<number>(0);
   const missionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Debugging logs for LevelProgress
+  useEffect(() => {
+    console.log(`[LevelProgress] Rendered. currentLevelIndex: ${currentLevelIndex}`);
+    console.log('[LevelProgress] completedTaskIds prop:', completedTaskIds);
+  }, [currentLevelIndex, completedTaskIds]);
 
   const handleToggleMap = () => {
     setShowLegend(prev => !prev);
@@ -335,6 +342,26 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({ levels, currentLev
                                 </h3>
                                 {level.coreSkill && (
                                     <p className="text-xs text-zinc-600 font-mono mt-0.5">{level.coreSkill}</p>
+                                )}
+
+                                {/* Task list for active level */}
+                                {status === 'active' && (
+                                  <div className="mt-2 pt-2 border-t border-zinc-800">
+                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Tasks:</p>
+                                    {level.tasks.map(task => {
+                                      const isTaskCompleted = (completedTaskIds[level.id] || []).includes(task.id);
+                                      console.log(`[LevelProgress] Task: ${task.id}, Completed: ${isTaskCompleted}`);
+                                      return (
+                                        <div key={task.id} className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-1">
+                                          {isTaskCompleted ? 
+                                            <Check size={12} className="text-green-500" /> : 
+                                            <div className="w-3 h-3 border border-zinc-600 rounded-sm" />
+                                          }
+                                          <span>{task.description}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 )}
                             </div>
 

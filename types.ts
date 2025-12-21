@@ -19,7 +19,6 @@ export interface LevelTask {
   id: string;
   description: string;
   check: (gameState: GameState, level: Level) => boolean;
-  completed: boolean;
 }
 
 export interface Level {
@@ -139,4 +138,5 @@ export interface GameState {
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
   usedGG?: boolean; // Tracks if player used gg (jump to top)
+  completedTaskIds: Record<number, string[]>; // Tracks completed tasks by levelId -> taskId[]
 }

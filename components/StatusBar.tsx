@@ -10,9 +10,10 @@ interface StatusBarProps {
   allTasksComplete: boolean;
   onNextLevel: () => void;
   currentItem: FileNode | null;
+  showHidden: boolean; // Add this prop
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComplete, onNextLevel, currentItem }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComplete, onNextLevel, currentItem, showHidden }) => {
   // Yazi Style Colors
   // Normal: Blue/Cyan
   // Input: Green
@@ -33,7 +34,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
     modeText = 'VIS';
   }
 
-  const completedTasks = level.tasks.filter(t => t.completed).length;
+  const completedTasks = level.tasks.filter(t => (state.completedTaskIds[level.id] || []).includes(t.id)).length;
   const totalTasks = level.tasks.length;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -182,6 +183,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state, level, allTasksComp
 
       {/* 5. Stats Block (Yazi Style) */}
       <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
+        {/* Hidden Files Indicator */}
+        {showHidden && (
+            <span className="font-mono text-[10px] uppercase text-yellow-400 font-bold hidden sm:inline mr-1">
+                H:
+            </span>
+        )}
+
         {/* Sort Indicator */}
         <span className={`font-mono text-[10px] uppercase hidden sm:inline mr-1 ${isCustomSort ? 'text-orange-400 font-bold' : 'text-zinc-500'}`}>
             {getSortLabel(state.sortBy, state.sortDirection)}

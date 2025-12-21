@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem, ZoxideEntry, calculateFrecency, Linemode } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
-import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, isProtected, getAllDirectories, resolvePath, getRecursiveContent } from './utils/fsHelpers';
+import { getNodeByPath, getParentNode, deleteNode, addNode, renameNode, cloneFS, createPath, isProtected, getAllDirectories, getAllPaths, resolvePath, getRecursiveContent } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
@@ -24,8 +24,7 @@ import { FuzzyFinder } from './components/FuzzyFinder';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    // 1. Clean Slate for Tasks
-    LEVELS.forEach(l => l.tasks.forEach(t => t.completed = false));
+
 
     // 2. Parse URL Parameters
     const params = new URLSearchParams(window.location.search);
@@ -49,23 +48,29 @@ export default function App() {
         if (idx !== -1) targetIndex = idx;
     }
 
-    // 4. Handle Task Completion (Bypass)
-    if (tasksParam && targetIndex < LEVELS.length) {
-        if (tasksParam === 'all') {
-            LEVELS[targetIndex].tasks.forEach(t => t.completed = true);
-        } else {
-            const ids = tasksParam.split(',');
-            LEVELS.forEach(l => l.tasks.forEach(t => {
-                if (ids.includes(t.id)) t.completed = true;
-            }));
-        }
-    }
+
 
     // 5. Setup Initial State
     const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
     const initialLevel = LEVELS[effectiveIndex];
     const isDevOverride = !!debugParam;
     
+    // Initialize completed tasks map
+    const initialCompletedTaskIds: Record<number, string[]> = {};
+    if (tasksParam && targetIndex < LEVELS.length) {
+        if (tasksParam === 'all') {
+            initialCompletedTaskIds[initialLevel.id] = initialLevel.tasks.map(t => t.id);
+        } else {
+            const ids = tasksParam.split(',');
+            initialCompletedTaskIds[initialLevel.id] = initialLevel.tasks.filter(t => ids.includes(t.id)).map(t => t.id);
+        }
+    }
+    LEVELS.forEach(l => {
+      if (!initialCompletedTaskIds[l.id]) {
+        initialCompletedTaskIds[l.id] = [];
+      }
+    });
+
     const isEpisodeStart = targetIndex === 0 || 
                            (targetIndex > 0 && targetIndex < LEVELS.length && LEVELS[targetIndex].episodeId !== LEVELS[targetIndex - 1].episodeId);
     
@@ -129,7 +134,8 @@ export default function App() {
       settings: { soundEnabled: true },
       fuzzySelectedIndex: 0,
       usedG: false,
-      usedGG: false
+      usedGG: false,
+      completedTaskIds: initialCompletedTaskIds,
     };
   });
 
@@ -176,19 +182,33 @@ export default function App() {
     if (isLastLevel || gameState.isGameOver) return;
 
     let changed = false;
+    const currentLevelCompletedTasks = gameState.completedTaskIds[currentLevel.id] || [];
+    const newCompletedTaskIds = new Set(currentLevelCompletedTasks);
+
     currentLevel.tasks.forEach(task => {
-        if (!task.completed && task.check(gameState, currentLevel)) {
-            task.completed = true;
+        if (!newCompletedTaskIds.has(task.id) && task.check(gameState, currentLevel)) {
+            newCompletedTaskIds.add(task.id);
             changed = true;
             playTaskCompleteSound(gameState.settings.soundEnabled);
         }
     });
 
     if (changed) {
-        setGameState(prev => ({ ...prev }));
+        setGameState(prev => {
+          const updatedCompletedTaskIds = {
+            ...prev.completedTaskIds,
+            [currentLevel.id]: Array.from(newCompletedTaskIds)
+          };
+          console.log(`[App.tsx] Level ${currentLevel.id} tasks updated:`, updatedCompletedTaskIds[currentLevel.id]);
+          return {
+            ...prev,
+            completedTaskIds: updatedCompletedTaskIds
+          };
+        });
     }
 
-    const allComplete = currentLevel.tasks.every(t => t.completed);
+    const allComplete = currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id));
+    console.log(`[App.tsx] Level ${currentLevel.id} allComplete:`, allComplete);
     if (allComplete && !prevAllTasksCompleteRef.current) {
         playSuccessSound(gameState.settings.soundEnabled);
         setShowSuccessToast(true);
@@ -199,7 +219,7 @@ export default function App() {
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
-    const allTasksComplete = currentLevel.tasks.every(t => t.completed);
+    const allTasksComplete = currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id));
     if (allTasksComplete) return;
 
     if (!currentLevel.timeLimit || isLastLevel || gameState.showEpisodeIntro || gameState.isGameOver) return;
@@ -207,7 +227,7 @@ export default function App() {
     const timer = setInterval(() => {
       setGameState(prev => {
         const level = LEVELS[prev.levelIndex];
-        if (level.tasks.every(t => t.completed)) {
+        if (level.tasks.every(t => (prev.completedTaskIds[level.id] || []).includes(t.id))) {
             clearInterval(timer);
             return prev;
         }
@@ -333,12 +353,62 @@ export default function App() {
             keystrokes: 0,
             usedG: false, 
             usedGG: false,
-            zoxideData: newZoxideData
+            zoxideData: newZoxideData,
+            completedTaskIds: {
+              ...prev.completedTaskIds,
+              [nextLevel.id]: [] // Initialize completed tasks for the new level
+            }
         };
     });
     setShowSuccessToast(false);
+    prevAllTasksCompleteRef.current = false; // Reset the ref for the new level
   }, []);
 
+  const resetCurrentLevel = useCallback(() => {
+    setGameState(prev => {
+      const currentLevelToReset = LEVELS[prev.levelIndex];
+      
+      return {
+        ...prev,
+        fs: cloneFS(prev.levelStartFS), // Restore filesystem to its state at the start of the level
+        currentPath: currentLevelToReset.initialPath || ['root', 'home', 'guest'], // Reset path to level's initial path
+        cursorIndex: 0,
+        clipboard: null,
+        mode: 'normal',
+        inputBuffer: '',
+        filters: {},
+        sortBy: 'natural',
+        sortDirection: 'asc',
+        linemode: 'size',
+        history: [],
+        notification: null,
+        selectedIds: [],
+        pendingDeleteIds: [],
+        pendingOverwriteNode: null,
+        showHelp: false,
+        showHint: false,
+        hintStage: 0,
+        showHidden: false,
+        showInfoPanel: false,
+        showEpisodeIntro: false, // Ensure intro doesn't replay on retry
+        timeLeft: currentLevelToReset.timeLimit || null,
+        keystrokes: 0,
+        isGameOver: false,
+        gameOverReason: undefined,
+        fuzzySelectedIndex: 0,
+        usedG: false,
+        usedGG: false,
+        completedTaskIds: {
+          ...prev.completedTaskIds,
+          [currentLevelToReset.id]: [] // Reset completed tasks for the current level
+        }
+      };
+    });
+    setShowSuccessToast(false); // Hide any success toasts
+    setShowThreatAlert(false); // Hide any threat alerts
+    prevAllTasksCompleteRef.current = false; // Reset the ref
+  }, []); // Dependencies are stable or part of setGameState updater
+  
   const handleNormalModeKeyDown = useCallback((
     e: KeyboardEvent,
     gameState: GameState,
@@ -552,7 +622,38 @@ export default function App() {
             });
             break;
         case '.': 
-            setGameState(prev => ({ ...prev, showHidden: !prev.showHidden }));
+            setGameState(prev => {
+                const visibleItems = getVisibleItems(prev);
+                const currentItem = visibleItems[prev.cursorIndex];
+                const newShowHidden = !prev.showHidden;
+                
+                // If toggling to hide files and current item is hidden, reset cursor
+                if (!newShowHidden && currentItem?.name.startsWith('.')) {
+                    return { ...prev, showHidden: newShowHidden, cursorIndex: 0 };
+                }
+                
+                            // Otherwise, try to maintain cursor on the same file
+                
+                            if (currentItem) {
+                
+                                const newVisibleItems = getVisibleItems({ ...prev, showHidden: newShowHidden });
+                
+                                const newIndex = newVisibleItems.findIndex(item => item.id === currentItem.id);
+                
+                                // If item found, update to new index, else reset to 0
+                
+                                return { ...prev, showHidden: newShowHidden, cursorIndex: newIndex !== -1 ? newIndex : 0 };
+                
+                            }
+                
+                            
+                
+                            // If there was no current item, just toggle showHidden and reset cursor
+                
+                            return { ...prev, showHidden: newShowHidden, cursorIndex: 0 };
+                
+                
+            });
             break;
         case ',': 
             setGameState(prev => ({ ...prev, mode: 'sort' }));
@@ -713,7 +814,7 @@ export default function App() {
       const selected = candidates[idx];
       if (selected) {
         if (isZoxide) {
-            // Find path ids from string
+            // Find path ids from string - zoxide only works with directories
             const allDirs = getAllDirectories(gameState.fs);
             const match = allDirs.find(d => d.display === selected.path);
             if (match) {
@@ -743,17 +844,53 @@ export default function App() {
                 const parentPath = finalPath.slice(0, -1);
                 const fileId = finalPath[finalPath.length - 1];
                 
-                // Find the index of the selected file in the parent directory
-                const parentNode = getNodeByPath(gameState.fs, parentPath);
-                const fileIndex = parentNode?.children?.findIndex(c => c.id === fileId) ?? 0;
-                
-                setGameState(prev => ({ 
-                    ...prev, 
-                    mode: 'normal', 
-                    currentPath: parentPath,
-                    cursorIndex: fileIndex,
-                    notification: `Jumped to ${selected.path}`
-                }));
+            setGameState(prev => {
+              // Get the current timestamp for zoxide history
+              const now = Date.now();
+              // Resolve the full path string for the parent directory for zoxide
+              const parentPathString = resolvePath(prev.fs, parentPath);
+
+              // First update the path
+              const newState = { 
+                  ...prev, 
+                  currentPath: parentPath, // Navigate to parent directory
+                  mode: 'normal' as const,
+                  notification: `Jumped to ${selected.path}`,
+                  // Update zoxide data for the parent directory when a file is selected via FZF
+                  zoxideData: { 
+                      ...prev.zoxideData, 
+                      [parentPathString]: { 
+                          count: (prev.zoxideData[parentPathString]?.count || 0) + 1, 
+                          lastAccess: now 
+                      } 
+                  }
+              };
+              
+              // Now get visible items with the new state to find the correct index
+              const parentNode = getNodeByPath(prev.fs, parentPath);
+              if (!parentNode || !parentNode.children) {
+                  return { ...newState, cursorIndex: 0 };
+              }
+              
+              // Apply same filtering/sorting as getVisibleItems
+              let items = [...parentNode.children];
+              if (!prev.showHidden) {
+                  items = items.filter(c => !c.name.startsWith('.'));
+              }
+              const filter = prev.filters[parentNode.id] || '';
+              if (filter) {
+                  items = items.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+              }
+              const sortedItems = sortNodes(items, prev.sortBy, prev.sortDirection);
+              
+              // Find the file in the sorted visible items
+              const fileIndex = sortedItems.findIndex(c => c.id === fileId);
+              
+              return {
+                  ...newState,
+                  cursorIndex: fileIndex >= 0 ? fileIndex : 0
+              };
+            });
             } else {
                 setGameState(prev => ({ ...prev, mode: 'normal' }));
             }
@@ -763,9 +900,9 @@ export default function App() {
       }
     } else if (e.key === 'Escape') {
       setGameState(prev => ({ ...prev, mode: 'normal' }));
-    } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
+    } else if (e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
       setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1) }));
-    } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
+    } else if (e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
       setGameState(prev => ({ ...prev, fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1) }));
     } else if (e.key === 'Backspace') {
       setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1), fuzzySelectedIndex: 0 }));
@@ -781,30 +918,60 @@ export default function App() {
         return;
     }
 
-    setGameState(prev => {
-        const isCosmetic = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key);
-        const newKeystrokes = isCosmetic ? prev.keystrokes : prev.keystrokes + 1;
-        return { ...prev, keystrokes: newKeystrokes };
-    });
+    // Check if all tasks are complete for the current level
+    const allTasksCompleteForCurrentLevel = currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id));
+    
+    // Only increment keystrokes if the level is not yet complete
+    if (!allTasksCompleteForCurrentLevel) {
+        setGameState(prev => {
+            const isCosmetic = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key);
+            const newKeystrokes = isCosmetic ? prev.keystrokes : prev.keystrokes + 1;
+            return { ...prev, keystrokes: newKeystrokes };
+        });
+    }
 
     const items = getVisibleItems(gameState);
     const parent = getParentNode(gameState.fs, gameState.currentPath);
     const currentItem = items[gameState.cursorIndex] || null;
 
-    if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
-        if (e.key === 'Escape' || e.key === 'Tab' || e.key === '?' || (e.key === 'H' && e.shiftKey)) {
-             setGameState(prev => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false }));
+    // Handle Escape key to dismiss modals/toasts
+    if (e.key === 'Escape') {
+        if (gameState.showHelp) {
+            setGameState(prev => ({ ...prev, showHelp: false }));
+            return;
         }
-        return;
+        if (gameState.showHint) {
+            setGameState(prev => ({ ...prev, showHint: false }));
+            return;
+        }
+        if (gameState.showInfoPanel) {
+            setGameState(prev => ({ ...prev, showInfoPanel: false }));
+            return;
+        }
+        if (showSuccessToast) {
+            setShowSuccessToast(false);
+            return;
+        }
     }
     
-    const allTasksComplete = currentLevel.tasks.every(t => t.completed);
-    if (allTasksComplete && e.key === 'Enter' && e.shiftKey) {
+    // Check for Shift+Enter to advance level when all tasks are complete OR success toast is showing
+    const allTasksCompleteCurrent = currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id));
+
+    if ((allTasksCompleteCurrent || showSuccessToast) && e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         advanceLevel();
         return;
     }
+
+    // Other modals/panels (Help, Hint, InfoPanel) dismissal logic
+    // This handles cases where they might be open but Escape wasn't the key.
+    // E.g., Tab key in normal mode opens InfoPanel, another Tab closes it.
+    if ((gameState.showHelp || gameState.showHint || gameState.showInfoPanel) && (e.key === 'Tab' || e.key === '?' || (e.key === 'H' && e.shiftKey))) {
+        setGameState(prev => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false }));
+        return;
+    }
     
+    // Original logic for opening help/hint/info panel
     if (e.key === '?' && e.shiftKey && gameState.mode === 'normal') {
         setGameState(prev => ({ ...prev, showHelp: true }));
         return;
@@ -1078,7 +1245,7 @@ export default function App() {
       {gameState.isGameOver && (
           <GameOverModal 
             reason={gameState.gameOverReason!} 
-            onRestart={() => window.location.reload()} 
+            onRestart={resetCurrentLevel} 
             efficiencyTip={currentLevel.efficiencyTip}
           />
       )}
@@ -1087,7 +1254,7 @@ export default function App() {
       {gameState.showHint && <HintModal hint={currentLevel.hint} stage={gameState.hintStage} onClose={() => setGameState(prev => ({ ...prev, showHelp: false, hintStage: 0 }))} />}
       {gameState.showInfoPanel && <InfoPanel file={currentItem} onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))} />}
       {gameState.mode === 'confirm-delete' && <ConfirmationModal title="Confirm Delete" detail={`Permanently delete ${gameState.selectedIds.length > 0 ? gameState.selectedIds.length + ' items' : currentItem?.name}?`} />}
-      {showSuccessToast && <SuccessToast message={currentLevel.successMessage || "Sector Cleared"} levelTitle={currentLevel.title} onDismiss={advanceLevel} onClose={() => setShowSuccessToast(false)} />}
+      {showSuccessToast && <SuccessToast message={currentLevel.successMessage || "Sector Cleared"} levelTitle={currentLevel.title} onDismiss={() => setShowSuccessToast(false)} onClose={() => setShowSuccessToast(false)} />}
       {showThreatAlert && <ThreatAlert message={threatAlertMessage} onDismiss={() => setShowThreatAlert(false)} />}
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
           <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
@@ -1098,6 +1265,7 @@ export default function App() {
         <LevelProgress 
             levels={LEVELS} 
             currentLevelIndex={gameState.levelIndex} 
+            completedTaskIds={gameState.completedTaskIds}
             onToggleHint={() => setGameState(prev => ({ ...prev, showHint: !prev.showHint }))}
             onToggleHelp={() => setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }))}
             onJumpToLevel={(idx) => {
@@ -1258,6 +1426,7 @@ export default function App() {
             <PreviewPane 
                 node={visibleItems[gameState.cursorIndex]} 
                 level={currentLevel}
+                completedTaskIds={gameState.completedTaskIds[currentLevel.id] || []}
             />
 
         </div>
@@ -1265,9 +1434,10 @@ export default function App() {
         <StatusBar 
             state={gameState} 
             level={currentLevel} 
-            allTasksComplete={currentLevel.tasks.every(t => t.completed)}
+            allTasksComplete={currentLevel.tasks.every(t => (gameState.completedTaskIds[currentLevel.id] || []).includes(t.id))}
             onNextLevel={advanceLevel}
             currentItem={currentItem}
+            showHidden={gameState.showHidden}
         />
         
       </div>
@@ -1307,19 +1477,55 @@ export default function App() {
                            if (match) {
                                const fullPath = [...gameState.currentPath, ...match.path];
                                const targetDir = fullPath.slice(0, -1);
-                               const fileName = match.path[match.path.length - 1];
+                               const fileId = match.path[match.path.length - 1];
                                
-                               // Get the parent directory's children to find the file's index
-                               const parentNode = getNodeByPath(gameState.fs, targetDir);
-                               const fileIndex = parentNode?.children?.findIndex(child => child.id === fileName) ?? 0;
-                               
-                               setGameState(prev => ({ 
-                                   ...prev, 
-                                   mode: 'normal', 
-                                   currentPath: targetDir,
-                                   cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-                                   notification: `Found: ${match.display}`
-                               }));
+                               setGameState(prev => {
+                                   // Get the current timestamp for zoxide history
+                                   const now = Date.now();
+                                   // Resolve the full path string for the parent directory for zoxide
+                                   const parentPathString = resolvePath(prev.fs, targetDir);
+
+                                   // First update the path
+                                   const newState = { 
+                                       ...prev, 
+                                       currentPath: targetDir,
+                                       mode: 'normal' as const,
+                                       notification: `Found: ${match.display}`,
+                                       // Update zoxide data for the parent directory when a file is selected via FZF
+                                       zoxideData: { 
+                                           ...prev.zoxideData, 
+                                           [parentPathString]: { 
+                                               count: (prev.zoxideData[parentPathString]?.count || 0) + 1, 
+                                               lastAccess: now 
+                                           } 
+                                       }
+                                   };
+                                   
+                                   // Now get visible items with the new state to find the correct index
+                                   const parentNode = getNodeByPath(prev.fs, targetDir);
+                                   if (!parentNode || !parentNode.children) {
+                                       return { ...newState, cursorIndex: 0 };
+                                   }
+                                   
+                                   // Apply same filtering/sorting as getVisibleItems
+                                   let items = [...parentNode.children];
+                                   if (!prev.showHidden) {
+                                       items = items.filter(c => !c.name.startsWith('.'));
+                                   }
+                                   const filter = prev.filters[parentNode.id] || '';
+                                   if (filter) {
+                                       items = items.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+                                   }
+                                   const sortedItems = sortNodes(items, prev.sortBy, prev.sortDirection);
+                                   
+                                   // Find the file in the sorted visible items
+                                   const fileIndex = sortedItems.findIndex(child => child.id === fileId);
+                                   
+                                   return {
+                                       ...newState,
+                                       cursorIndex: fileIndex >= 0 ? fileIndex : 0
+                                   };
+                               });
                            } else {
                                setGameState(prev => ({ ...prev, mode: 'normal' }));
                            }

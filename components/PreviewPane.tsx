@@ -8,6 +8,7 @@ import {
 interface PreviewPaneProps {
   node: FileNode | null;
   level: Level;
+  completedTaskIds: string[];
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -26,7 +27,7 @@ const getPreviewIcon = (node: FileNode) => {
     return { color: 'text-zinc-400', icon: FileText };
 };
 
-export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
+export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, completedTaskIds }) => {
   const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
   const isArchiveDir = node?.type === 'archive';
@@ -107,19 +108,22 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
              <div>
                 <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest">Objectives</h3>
                 <div className="space-y-2">
-                    {level.tasks.map((task) => (
-                    <div 
-                        key={task.id} 
-                        className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
-                    >
-                        <div className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}>
-                        {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+                    {level.tasks.map((task) => {
+                        const isCompleted = completedTaskIds.includes(task.id);
+                        return (
+                        <div 
+                            key={task.id} 
+                            className={`flex gap-3 items-start transition-all duration-500 ${isCompleted ? 'opacity-50' : 'opacity-100'}`}
+                        >
+                            <div className={`mt-0.5 shrink-0 ${isCompleted ? 'text-green-500' : 'text-zinc-600'}`}>
+                            {isCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
+                            </div>
+                            <div className={`text-xs font-mono leading-tight ${isCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}>
+                            {task.description}
+                            </div>
                         </div>
-                        <div className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}>
-                        {task.description}
-                        </div>
-                    </div>
-                    ))}
+                        );
+                    })}
                 </div>
              </div>
           </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, RotateCcw, Zap } from 'lucide-react';
 
 interface GameOverModalProps {
@@ -8,6 +8,17 @@ interface GameOverModalProps {
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ reason, onRestart, efficiencyTip }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        onRestart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onRestart]);
+
   return (
     <div className="absolute inset-0 z-[100] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="w-full max-w-md bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-8 text-center relative overflow-hidden">
@@ -41,11 +52,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ reason, onRestart,
             </div>
 
             <button 
-                onClick={onRestart}
                 className="group flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-sm font-bold tracking-widest uppercase transition-all hover:scale-105 shadow-lg shadow-red-900/50 focus:outline-none focus:ring-2 focus:ring-red-400"
             >
                 <RotateCcw size={18} className="group-hover:-rotate-180 transition-transform duration-500" />
-                <span>Reinitialize</span>
+                <span>Reinitialize (Shift+Enter)</span>
             </button>
         </div>
       </div>

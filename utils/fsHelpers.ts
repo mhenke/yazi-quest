@@ -72,6 +72,23 @@ export const getAllDirectories = (root: FileNode): { path: string[], display: st
     return results;
 };
 
+export const getAllPaths = (root: FileNode): { path: string[], display: string, type: string }[] => {
+    const results: { path: string[], display: string, type: string }[] = [];
+    
+    const traverse = (node: FileNode, currentPathIds: string[], currentPathStr: string) => {
+        results.push({ path: currentPathIds, display: currentPathStr, type: node.type });
+        if (node.children) {
+            for (const child of node.children) {
+                const childPathStr = currentPathStr === '/' ? `/${child.name}` : `${currentPathStr}/${child.name}`;
+                traverse(child, [...currentPathIds, child.id], childPathStr);
+            }
+        }
+    };
+
+    traverse(root, [root.id], '/');
+    return results;
+};
+
 export const getRecursiveContent = (root: FileNode, startPathIds: string[]): { path: string[], display: string, type: string, id: string }[] => {
     const startNode = getNodeByPath(root, startPathIds);
     if (!startNode) return [];
@@ -320,8 +337,12 @@ const checkCoreSystemProtection = (path: string, node: FileNode): string | null 
 };
 
 const checkEpisodeStructuralProtection = (path: string, node: FileNode, levelIndex: number): string | null => {
-  if (node.type === 'dir' && ['/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace'].includes(path)) {
-      if (levelIndex < 15) return `Sector protected by admin policy: ${node.name}`;
+  if (node.type === 'dir' && ['/home/guest/datastore', '/home/guest/incoming', '/home/guest/media'].includes(path)) {
+      if (levelIndex < 14) return `Sector protected by admin policy: ${node.name}`;
+  }
+  // Workspace is always protected
+  if (node.type === 'dir' && path === '/home/guest/workspace') {
+      return `CRITICAL: Workspace contains your core process. Cannot be deleted.`;
   }
   return null;
 };
@@ -416,8 +437,19 @@ const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIn
 
   // Protect sector/grid directories for Level 15
   if ((name === 'sector_1' || name === 'grid_alpha') && isDir && path.includes('/home/guest/')) {
-      if (action === 'delete' && levelIndex !== 14) return "Infrastructure directory required for final purge.";
+      if (action === 'delete' && levelIndex < 14) return "Infrastructure directory required for final purge.";
       if (action === 'cut' && levelIndex < 14) return "Infrastructure directory anchored.";
+  }
+
+  // Protect hidden files/directories in ~/ for Level 15
+  if (path.includes('/home/guest/') && (name === '.config' || name === '.cache' || name === '.local')) {
+      if (action === 'delete' && levelIndex < 14) return "Configuration directory required for final purge.";
+      if (action === 'cut' && levelIndex < 14) return "Configuration directory anchored.";
+  }
+
+  if (path.includes('/home/guest/') && (name === '.bashrc' || name === '.bash_history' || name === '.profile')) {
+      if (action === 'delete' && levelIndex < 14) return "Shell configuration required for final purge.";
+      if (action === 'cut' && levelIndex < 14) return "Shell configuration anchored.";
   }
 
   return null;

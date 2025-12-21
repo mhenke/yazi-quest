@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 interface ThreatAlertProps {
@@ -7,6 +7,17 @@ interface ThreatAlertProps {
 }
 
 export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onDismiss();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onDismiss]);
+
   return (
     <div 
       className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] animate-in zoom-in-95 fade-in duration-300"
@@ -34,8 +45,8 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) 
           </p>
         </div>
 
-        <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest cursor-pointer hover:text-orange-400 transition-colors" onClick={onDismiss}>
-          Click to dismiss
+        <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
+          Press ESC to dismiss
         </div>
       </div>
     </div>
