@@ -295,6 +295,16 @@ export default function App() {
           break;
         case 'g': setUiState(prev => ({ ...prev, mode: 'g-command' })); break;
         case 'G': setUiState(prev => ({ ...prev, cursorIndex: visibleItems.length - 1, usedG: true })); break;
+        case 'J': {
+          const el = document.querySelector('.preview-main-scroll');
+          if (el instanceof HTMLElement) el.scrollBy({ top: 120, behavior: 'smooth' });
+          break;
+        }
+        case 'K': {
+          const el = document.querySelector('.preview-main-scroll');
+          if (el instanceof HTMLElement) el.scrollBy({ top: -120, behavior: 'smooth' });
+          break;
+        }
         case 'd':
           if (uiState.selectedIds.length > 0 || currentItem) {
             setUiState(prev => ({
@@ -317,6 +327,11 @@ export default function App() {
               notification: `${targets.length} asset(s) ${e.key === 'x' ? 'cut' : 'yanked'}`
             }));
           }
+          break;
+        case 'Y':
+        case 'X':
+          setUiState(prev => ({ ...prev, clipboard: null }));
+          showNotification('Clipboard cleared — yank/cut aborted', 3000);
           break;
         case 'p': {
           const pasteResult = performPaste(uiState.clipboard, levelIndex);

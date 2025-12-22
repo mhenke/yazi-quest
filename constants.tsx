@@ -10,6 +10,8 @@ export const KEYBINDINGS = [
   { keys: ["k", "↑"], description: "Move Up" },
   { keys: ["Shift+J"], description: "Seek Down (Jump 5)" },
   { keys: ["Shift+K"], description: "Seek Up (Jump 5)" },
+  { keys: ["J"], description: "Preview: Scroll Down" },
+  { keys: ["K"], description: "Preview: Scroll Up" },
   { keys: ["h", "←"], description: "Go to Parent Directory" },
   { keys: ["l", "→", "Enter"], description: "Enter Directory / View Archive" },
   { keys: ["Shift+H"], description: "History Back" },
@@ -98,6 +100,9 @@ export const EPISODE_LORE: Episode[] = [
       "Your batch operations mimic legitimate system maintenance. The automated security protocols, trained to identify threats by erratic behavior, have misclassified you as a trusted process. Access elevation granted—exploit this window before manual review.",
       "But elevated access means elevated scrutiny. To survive, you must entrench yourself. Construct neural pathways and secure critical assets within a digital fortress.",
       "You need to move faster. Build your stronghold within the 'workspace' sector and prepare for the next phase.",
+      "Advanced navigation available: use H/L (History Back/Forward) to retrace previously visited sectors quickly and silently.",
+      "Deploying assets will auto-rename conflicts with a _1 suffix to preserve integrity — the simulation mirrors this behavior.",
+      "If a cut or yank is accidental, press 'Y' or 'X' to abort and clear the clipboard; a confirmation toast will appear.",
     ],
   },
   {
@@ -109,8 +114,9 @@ export const EPISODE_LORE: Episode[] = [
     color: "text-yellow-500",
     lore: [
       "WARNING: UNAUTHORIZED PRIVILEGE ESCALATION.",
-      "You are no longer a guest. You are the architect.",
+      "You are no longer a guest. You are the architect; retrace your steps with H/L (History Back/Forward) to move efficiently and avoid detection.",
       "The core system files in /root and /etc are now within your reach. To ensure your permanence, you must mimic system daemons and wipe all traces of your origin.",
+
       "The kernel's heuristic scanners are active. Excessive input noise or redundant commands will trigger the security audit daemon.",
       "Claim root access.",
     ],
@@ -329,7 +335,7 @@ export const LEVELS: Level[] = [
     description:
       "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
     initialPath: ["root", "home", "guest"],
-    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
+    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'G' to jump to bottom and 'gg' to jump to top. Use 'J'/'K' to scroll the preview pane and inspect file contents before purges in later levels. Navigate to 'datastore', then '/etc'.",
     coreSkill: "Navigation (j/k/h/l, gg/G)",
     tasks: [
       {
