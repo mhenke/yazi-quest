@@ -1,4 +1,6 @@
 import React from 'react';
+// Import reportError statically instead of using require in componentDidCatch
+import { reportError } from '../utils/error';
 
 type Props = { children: React.ReactNode };
 
@@ -15,9 +17,7 @@ export default class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Report centrally and keep console fallback
     try {
-      // Lazy import to avoid cycles
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { reportError } = require('../utils/error');
+      // Fix for require error: use statically imported reportError
       reportError(error, { errorInfo });
     } catch (e) {
       // eslint-disable-next-line no-console

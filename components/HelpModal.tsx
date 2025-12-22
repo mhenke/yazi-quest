@@ -33,7 +33,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           ))}
         </div>
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
-          Query command reference (?) • Press Esc to close
+          Query command reference (Ctrl+Shift+?) • Press Esc to close
         </div>
       </div>
     </div>

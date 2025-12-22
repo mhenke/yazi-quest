@@ -133,12 +133,12 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 ### Game UI
 
-| Key       | Action           | Description                                  |
-| :-------- | :--------------- | :------------------------------------------- |
-| `Shift+M` | **Quest Map**    | Open Quest Map to view all levels & progress |
-| `Shift+H` | **Show Hint**    | Display hint for current level objective     |
-| `Shift+?` | **Show Help**    | Show keybindings overlay                     |
-| `Esc`     | **Close Modals** | Close any open modal/dialog                  |
+| Key               | Action           | Description                                  |
+| :---------------- | :--------------- | :------------------------------------------- |
+| `Ctrl+Shift+M`    | **Quest Map**    | Open Quest Map to view all levels & progress |
+| `Ctrl+Shift+H`    | **Show Hint**    | Display hint for current level objective     |
+| `Ctrl+Shift+?`    | **Show Help**    | Show keybindings overlay                     |
+| `Esc`             | **Close Modals** | Close any open modal/dialog                  |
 
 ---
 

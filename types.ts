@@ -30,7 +30,7 @@ export interface Level {
   tasks: LevelTask[];
   initialPath: string[] | null; // Path of IDs (null = stay in current)
   hint: string;
-  onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
+  onEnter?: (fs: FileNode) => FileNode;
   seedMode?: 'always' | 'fresh'; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
@@ -127,7 +127,8 @@ export interface GameState {
     | 'fzf-current'
     | 'overwrite-confirm'
     | 'sort'
-    | 'g-command';
+    | 'g-command'
+    | 'find';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   sortBy: SortBy; // Global sticky sort setting
@@ -135,6 +136,8 @@ export interface GameState {
   linemode: Linemode; // Controls the visible data column (size, mtime, etc.)
   zoxideData: Record<string, ZoxideEntry>; // Frecency tracking: pathString -> {count, lastAccess}
   history: string[]; // Log of actions
+  pathHistory: string[][]; // Navigation history stack
+  pathHistoryIndex: number; // Current position in history stack
   levelIndex: number;
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
@@ -143,6 +146,7 @@ export interface GameState {
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
+  showHelpShortcut?: string; // Optional help text or shortcut
   showHint: boolean; // Toggle for hint modal
   hintStage: number; // Progressive hint disclosure (0=vague, 1=partial, 2=detailed)
   showHidden: boolean; // Toggle for showing hidden files (starting with .)
@@ -157,6 +161,9 @@ export interface GameState {
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
   usedGG?: boolean; // Tracks if player used gg (jump to top)
+  usedSeek?: boolean; // Tracks if player used Shift+J/K (seek)
+  findQuery?: string; // Find query (highlights but doesn't hide)
+  findCurrentIndex?: number; // For cycling through results
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

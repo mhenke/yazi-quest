@@ -31,7 +31,14 @@ export function sortNodes(
 
     case 'alphabetical':
       // Pure alphabetical, ignore type
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
+      // Custom logic: underscores sort after letters so reversed puts them at top (Issue #5)
+      sorted.sort((a, b) => {
+        const aStart = a.name.startsWith('_');
+        const bStart = b.name.startsWith('_');
+        if (aStart && !bStart) return 1;
+        if (!aStart && bStart) return -1;
+        return a.name.localeCompare(b.name);
+      });
       break;
 
     case 'modified':
