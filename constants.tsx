@@ -1249,10 +1249,21 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'reset-sort',
+        description: "Reset sort to Natural (',' → n)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'extract-from-archive');
+          if (!prevTask?.completed) return false;
+
+          return state.sortBy === 'natural' && state.sortDirection === 'asc';
+        },
+        completed: false,
+      },
+      {
         id: 'deploy-log',
         description: 'Deploy asset into ~/media (p)',
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'extract-from-archive');
+          const prevTask = level.tasks.find((t) => t.id === 'reset-sort');
           if (!prevTask?.completed) return false;
 
           const media = findNodeByName(state.fs, 'media');
