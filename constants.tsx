@@ -10,6 +10,9 @@ export const KEYBINDINGS = [
   { keys: ['k', '↑'], description: 'Move Up' },
   { keys: ['h', '←'], description: 'Go to Parent Directory' },
   { keys: ['l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
+  // Fundamental confirm keys
+  { keys: ['Enter'], description: 'Confirm / Open (alias for l)' },
+  { keys: ['Shift+Enter'], description: 'Advance / Confirm progression (e.g., mission-complete toast)' },
   { keys: ['gg'], description: 'Jump to Top' },
   { keys: ['G'], description: 'Jump to Bottom' },
 
@@ -34,6 +37,8 @@ export const KEYBINDINGS = [
   { keys: ['f'], description: 'Filter Files' },
   { keys: ['z'], description: 'FZF Find (Recursive)' },
   { keys: ['Shift+Z'], description: 'Zoxide Jump (History)' },
+     { keys: ['Shift+H', 'Shift+L'], description: 'History Back / Forward' },
+     { keys: ['Shift+J', 'Shift+K'], description: 'Preview Scroll Down / Up' },
   { keys: ['Esc'], description: 'Clear Filter / Exit Mode' },
 
   // === SORTING ===
@@ -61,9 +66,10 @@ export const KEYBINDINGS = [
   { keys: ['m'], description: 'Toggle Sound' },
 
   // === UI ===
-  { keys: ['Shift+M'], description: 'Quest Map' },
-  { keys: ['Shift+H'], description: 'Show Hint' },
-  { keys: ['Shift+?'], description: 'Show Help' },
+  // UI shortcuts: changed modifier from Ctrl+Shift to Alt for less collision with gameplay keys
+  { keys: ['Alt+M'], description: 'Quest Map' },
+  { keys: ['Alt+H'], description: 'Show Hint' },
+  { keys: ['Alt+?'], description: 'Show Help' },
 ];
 
 export const EPISODE_LORE: Episode[] = [
@@ -450,15 +456,14 @@ const INITIAL_FS_RAW: FileNode = {
                   type: 'file',
                   content: 'Audit #773: Pass',
                 },
-                { id: generateId(), name: 'backup_archives_v1.tar', type: 'archive', children: [] },
+                { id: generateId(), name: 'backup_log_2023_Q4.tar', type: 'archive', children: [] },
                 { id: generateId(), name: 'backup_config_main.zip', type: 'archive', children: [] },
                 {
                   id: generateId(),
-                  name: 'backup_manifest_legacy.tar',
+                  name: 'backup_log_2024_Q1.zip',
                   type: 'archive',
                   children: [],
-                },
-                {
+                },                {
                   id: generateId(),
                   name: 'backup_recovery_scripts.zip',
                   type: 'archive',
@@ -597,18 +602,18 @@ const INITIAL_FS_RAW: FileNode = {
                   name: 'watcher_agent.sys',
                   type: 'file',
                   content:
-                    '[ACTIVE SURVEILLANCE BEACON]\nTransmitting coordinates to external server...\nSTATUS: ACTIVE\nTHREAT LEVEL: HIGH',
+                    '[ACTIVE SURVEILLANCE BEACON]\nTransmitting coordinates to external server...\nSTATUS: ACTIVE\nTHREAT LEVEL: HIGH\n---- STREAM LOG BEGIN (PART 1/3) ----\n[2025-12-22T16:58:01Z] SENSOR INIT: boot sequence complete\n[2025-12-22T16:58:02Z] ACQ: GPS=37.7749,-122.4194; HDOP=0.9\n[2025-12-22T16:58:10Z] NET: established connection to 52.14.23.11:443\n[2025-12-22T16:58:15Z] HANDSHAKE: TLS1.3 cipher=TLS_AES_128_GCM_SHA256\n[2025-12-22T16:59:01Z] PAYLOAD: telemetry packet #001 (size=1024)\n[2025-12-22T16:59:12Z] PAYLOAD: telemetry packet #002 (size=2048)\n[2025-12-22T16:59:45Z] ERR: latency spike detected (ms=412)\n[2025-12-22T17:00:03Z] ACQ: ambient audio sample saved (len=8192)\n[2025-12-22T17:00:30Z] SENSE: motion vector alpha=0.82\n[2025-12-22T17:01:02Z] PING: 192.168.1.100 -> OK\n[2025-12-22T17:02:14Z] PAYLOAD: telemetry packet #003 (size=4096)\n[2025-12-22T17:03:27Z] NOTE: obfuscation layer active (mode=quantum)\n[2025-12-22T17:04:01Z] ALERT: anomalous access detected from 10.0.0.5\n[2025-12-22T17:04:45Z] DIAG: memory usage=78% cpu=21%\n[2025-12-22T17:05:12Z] PAYLOAD: telemetry packet #004 (size=16384)\n[2025-12-22T17:06:00Z] ROTATE: key refresh scheduled (t+3600s)\n[2025-12-22T17:06:45Z] TRACE: route hop=5 latency=39ms\n[2025-12-22T17:07:22Z] SUMMARY: 4 packets queued, buffer=24576 bytes\n[2025-12-22T17:08:33Z] HEARTBEAT: interval=30s\n[2025-12-22T17:09:10Z] PAYLOAD: telemetry packet #005 (size=8192)\n[2025-12-22T17:10:00Z] ENDSTREAM: segment complete\n---- STREAM LOG END (PART 1/3) ----\n\n---- STREAM LOG BEGIN (PART 2/3) ----\n[2025-12-22T17:10:10Z] RECONNECT: to 18.205.93.2:443\n[2025-12-22T17:10:20Z] AUTH: token refresh successful\n[2025-12-22T17:11:01Z] PAYLOAD: telemetry packet #006 (size=2048)\n[2025-12-22T17:11:45Z] PAYLOAD: telemetry packet #007 (size=4096)\n[2025-12-22T17:12:22Z] ERR: packet loss detected (count=3)\n[2025-12-22T17:13:00Z] ACQ: image snapshot (len=16384)\n[2025-12-22T17:13:45Z] SENSE: vibration pattern recorded\n[2025-12-22T17:14:12Z] DIAG: temp=56C memory=81%\n[2025-12-22T17:15:00Z] PAYLOAD: telemetry packet #008 (size=8192)\n[2025-12-22T17:16:30Z] NOTE: stealth-mode engaged (packets fragmented)\n[2025-12-22T17:17:05Z] TRACE: route hop=6 latency=44ms\n[2025-12-22T17:18:22Z] HEARTBEAT: interval=30s\n[2025-12-22T17:19:10Z] PAYLOAD: telemetry packet #009 (size=1024)\n[2025-12-22T17:20:40Z] ALERT: suspicious beacon detected nearby\n[2025-12-22T17:21:55Z] ROTATE: key refresh executed\n[2025-12-22T17:22:30Z] SUMMARY: 6 packets queued, buffer=65536 bytes\n[2025-12-22T17:23:00Z] ENDSTREAM: segment complete\n---- STREAM LOG END (PART 2/3) ----\n\n---- STREAM LOG BEGIN (PART 3/3) ----\n[2025-12-22T17:23:10Z] FINALIZE: packaging payloads\n[2025-12-22T17:24:01Z] PAYLOAD: telemetry packet #010 (size=32768)\n[2025-12-22T17:25:15Z] DIAG: cpu=69% memory=74% temp=54C\n[2025-12-22T17:26:40Z] COMPRESS: archive created (size=98304)\n[2025-12-22T17:27:55Z] TRANSMIT: outbound stream established to 3.5.1.9:443\n[2025-12-22T17:28:20Z] HANDSHAKE: cipher rotated\n[2025-12-22T17:29:01Z] HEARTBEAT: interval=15s\n[2025-12-22T17:30:10Z] PAYLOAD: telemetry packet #011 (size=65536)\n[2025-12-22T17:31:30Z] ALERT: high entropy detected in payload\n[2025-12-22T17:32:05Z] ENDSTREAM: terminating transfer\n---- STREAM LOG END (PART 3/3) ----',
                 },
                 {
                   id: generateId(),
-                  name: 'backup_logs.zip',
+                  name: 'backup_log_2024_CURRENT.zip',
                   type: 'archive',
                   children: [
                     {
                       id: generateId(),
                       name: 'sys_v1.log',
                       type: 'file',
-                      content: 'System initialized...\nBoot sequence complete.',
+                      content: 'System initialized...\nBoot sequence complete.' + '0'.repeat(5000),
                     },
                     {
                       id: generateId(),
@@ -617,8 +622,7 @@ const INITIAL_FS_RAW: FileNode = {
                       content: 'Network scan complete...\n3 vulnerabilities found.',
                     },
                   ],
-                },
-                {
+                },                {
                   id: generateId(),
                   name: 'invoice_2024.pdf',
                   type: 'file',
@@ -939,6 +943,16 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'del-2c',
+        description: "Scroll preview (Shift+J / Shift+K) to sift through watcher files before deleting",
+        check: (state: GameState, level: Level) => {
+          const incoming = findNodeByName(state.fs, 'incoming');
+          const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
+          return (!threatExists) || state.usedPreviewScroll === true;
+        },
+        completed: false,
+      },
+      {
         id: 'del-3',
         description: "Purge 'watcher_agent.sys' (d, then y)",
         check: (state: GameState, level: Level) => {
@@ -955,9 +969,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'Asset Relocation',
     description:
-      'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. But surveillance logs are concealed in hidden files. Navigate to ~/incoming, reveal hidden files (.), then master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.',
+      'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.',
     initialPath: null,
-    hint: "Navigate to ~/incoming. Press '.' to reveal hidden files. Press 'f', type 'map'. Highlight 'sector_map.png' with j/k. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
+    hint: "Press 'f', type 'map'. Highlight 'sector_map.png' with j/k. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
     coreSkill: 'Filter (f) & Hidden Files (.)',
     environmentalClue:
       'ASSET: sector_map.png | HIDDEN: .surveillance_log | WORKFLOW: ~/incoming → Toggle hidden (.) → Filter (f) → Esc → Cut (x) → Esc → ~/media → Paste (p)',
@@ -966,21 +980,11 @@ export const LEVELS: Level[] = [
     leadsTo: [5, 10],
     tasks: [
       {
-        id: 'reveal-hidden',
-        description: 'Navigate to incoming (~/incoming) and reveal hidden files (.)',
-        check: (state: GameState) => {
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'incoming' && state.showHidden === true;
-        },
-        completed: false,
-      },
-      {
         id: 'filter-and-cut',
         description:
           "Filter (f) to find 'sector_map.png', exit filter mode (Esc), and cut the asset (x)",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((r) => r.id === 'reveal-hidden');
-          if (!prevTask?.completed) return false;
+          // Allow cutting once the player has yanked/cut the sector_map.png; no prerequisite task required
           return (
             state.clipboard?.action === 'cut' &&
             state.clipboard.nodes.some((p) => p.name === 'sector_map.png')
@@ -988,6 +992,7 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
+
       {
         id: 'clear-filter',
         description: 'Clear the filter (Esc) to reset view',
@@ -1021,13 +1026,14 @@ export const LEVELS: Level[] = [
             name: '.surveillance_log',
             type: 'file',
             content:
-              'SURVEILLANCE LOG\n=================\nTimestamp: 2087-03-15T14:23:11Z\nTarget: AI-7734\nStatus: Active monitoring\nThreat Level: Low\n\nActivity detected in /incoming sector.\nRecommendation: Continue observation.',
+              'SURVEILLANCE LOG\\n=================\\nTimestamp: 2087-03-15T14:23:11Z\\nTarget: AI-7734\\nStatus: Active monitoring\\nThreat Level: Low\\n\\nActivity detected in /incoming sector.\\nRecommendation: Continue observation.',
             parentId: incoming.id,
           });
         }
       }
       return fs;
     },
+
   },
   {
     id: 4,
@@ -1128,28 +1134,33 @@ export const LEVELS: Level[] = [
       }
       return fs;
     },
+
     tasks: [
       {
         id: 'nav-and-select',
         description: 'Navigate to protocols (~/datastore/protocols) and select all files (Ctrl+A)',
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'protocols' && state.selectedIds.length >= 2;
+          return currentDir?.name === 'protocols' && state.selectedIds.length >= 2 && state.usedCtrlA === true;
         },
         completed: false,
       },
       {
-        id: 'batch-cut-files',
-        description: 'Cut the configuration files (x)',
+        id: 'cut-and-delete',
+        description: "Cut the files (x) and delete the 'protocols' folder",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'nav-and-select');
           if (!prevTask?.completed) return false;
 
-          return (
+          const clipboardOk =
             state.clipboard?.action === 'cut' &&
-            state.clipboard.nodes.some((n) => n.name === 'uplink_v1.conf') &&
-            state.clipboard.nodes.some((n) => n.name === 'uplink_v2.conf')
-          );
+            state.clipboard.nodes.length >= 2 &&
+            state.clipboard.nodes.some((n) => n.name === 'uplink_v1.conf');
+
+          const datastore = findNodeByName(state.fs, 'datastore');
+          const protocolsExists = !!datastore?.children?.find((c) => c.name === 'protocols');
+
+          return clipboardOk && !protocolsExists;
         },
         completed: false,
       },
@@ -1157,7 +1168,7 @@ export const LEVELS: Level[] = [
         id: 'establish-stronghold',
         description: "Establish 'vault/active/' sector in ~/.config (a)",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'batch-cut-files');
+          const prevTask = level.tasks.find((t) => t.id === 'cut-and-delete');
           if (!prevTask?.completed) return false;
 
           const config = findNodeByName(state.fs, '.config');
@@ -1187,9 +1198,9 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'Archive Retrieval',
     description:
-      "ACCESS UPGRADED. The 'incoming' data stream contains compressed historical logs. Manual extraction is inefficient. Use the Filter protocol (f) to isolate 'backup_logs.zip', enter the archive (l), and extract 'sys_v1.log' to the 'media' directory for analysis.",
+      "ACCESS UPGRADED. The 'incoming' data stream contains compressed historical logs. Manual extraction is inefficient. Use the Filter protocol (f) to isolate 'backup_log' files, sort by size (',', 's') to find the largest archive, enter it (l), and extract 'sys_v1.log' to the 'media' directory for analysis.",
     initialPath: null, // Player continues from Level 5 location
-    hint: "1. Navigate to incoming sector. 2. Press 'f', type 'backup_logs.zip'. 3. Enter the archive (l). 4. Highlight 'sys_v1.log', Press 'y'. 5. Navigate to media. 6. Press 'p'.",
+    hint: "1. Navigate to incoming sector. 2. Press 'f', type 'backup_log'. 3. Sort by size (',', 's') to bring the largest backup to the top. 4. Enter the archive (l). 5. Highlight 'sys_v1.log', Press 'y'. 6. Navigate to media. 7. Press 'p'.\n\nTip: Use Shift+H to backtrack through visited directories and Shift+J to scroll the preview while inspecting logs.",
     coreSkill: 'Filter (f) & Archive Ops',
     environmentalClue: 'TARGET: backup_logs.zip/sys_v1.log → ~/media',
     successMessage: 'LOGS RETRIEVED.',
@@ -1207,6 +1218,15 @@ export const LEVELS: Level[] = [
 
           const filterStr = (state.filters[currentDir.id] || '').toLowerCase();
           return state.mode === 'normal' && filterStr.includes('backup');
+        },
+        completed: false,
+      },
+      {
+        id: 'sort-size',
+        description: "Sort by Size (',' → s) to surface the largest backup",
+        check: (state: GameState, level: Level) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return currentDir?.name === 'incoming' && state.sortBy === 'size';
         },
         completed: false,
       },
@@ -1361,6 +1381,7 @@ export const LEVELS: Level[] = [
       }
       return fs;
     },
+
     tasks: [
       {
         id: 'nav-to-workspace',

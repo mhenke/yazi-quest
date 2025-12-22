@@ -67,17 +67,18 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div
-          className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}
+          className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8`}
         >
           <div className="flex items-center gap-3 mb-2">
             <Terminal size={32} className={episode.color} />
             <h1
               className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
+              data-text={episode.title}
             >
               {episode.title}
             </h1>
           </div>
-          <p className="text-zinc-500 text-xl tracking-[0.2em] font-bold uppercase">
+          <p className={`${episode.color} opacity-70 text-xl tracking-[0.2em] font-bold uppercase`}>
             // {episode.subtitle}
           </p>
         </div>

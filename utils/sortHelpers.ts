@@ -1,5 +1,15 @@
 import { FileNode, SortBy, SortDirection } from '../types';
 
+const getNodeSize = (node: FileNode): number => {
+  if (node.type === 'file') {
+    return node.content?.length || 0;
+  }
+  if (node.children) {
+    return node.children.reduce((acc, child) => acc + getNodeSize(child), 0);
+  }
+  return 0;
+};
+
 /**
  * Sort files according to Yazi's sorting methods
  * Real Yazi: ,m (modified), ,a (alphabetical), ,s (size), ,e (extension), ,n (natural)
@@ -47,14 +57,8 @@ export function sortNodes(
     case 'size':
       // Sort by file size
       sorted.sort((a, b) => {
-        const sizeA =
-          a.type === 'dir' || a.type === 'archive'
-            ? a.children?.length || 0
-            : a.content?.length || 0;
-        const sizeB =
-          b.type === 'dir' || b.type === 'archive'
-            ? b.children?.length || 0
-            : b.content?.length || 0;
+        const sizeA = getNodeSize(a);
+        const sizeB = getNodeSize(b);
         return sizeA - sizeB;
       });
       break;

@@ -35,6 +35,7 @@ import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
+import { AlertToast } from './components/AlertToast';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
 import { FuzzyFinder } from './components/FuzzyFinder';
@@ -168,17 +169,37 @@ export default function App() {
       fuzzySelectedIndex: 0,
       usedG: false,
       usedGG: false,
+      usedPreviewScroll: false,
+      usedHistory: false,
     };
   });
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showAlertToast, setShowAlertToast] = useState(false);
+  const lastAlertShownRef = useRef<number | null>(null);
   const prevAllTasksCompleteRef = useRef(false);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
 
+  // Show quarantine alert toast once when entering Level with id 5
+  useEffect(() => {
+    if (isLastLevel || gameState.isGameOver) return;
+    const lvl = currentLevel;
+    if (lvl && lvl.id === 5 && lastAlertShownRef.current !== lvl.id) {
+      setShowAlertToast(true);
+      lastAlertShownRef.current = lvl.id;
+    }
+  }, [gameState.levelIndex, isLastLevel, gameState.isGameOver, currentLevel]);
+
   const visibleItems = React.useMemo(() => measure('visibleItems', () => getVisibleItems(gameState)), [gameState]);
+
+  const handleCloseAlert = useCallback(() => {
+    setShowAlertToast(false);
+    // Clear modal UI flags and ensure normal mode resumes
+    setGameState((prev) => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false, mode: 'normal' }));
+  }, []);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
   // Helper to show notification with auto-clear
@@ -368,6 +389,8 @@ export default function App() {
         keystrokes: 0,
         usedG: false,
         usedGG: false,
+        usedPreviewScroll: false,
+        usedHistory: false,
         zoxideData: newZoxideData,
       };
     });
@@ -431,6 +454,45 @@ export default function App() {
             };
           });
           break;
+        case 'J':
+          if (e.shiftKey) {
+            const previewEl = document.getElementById('preview-main') as HTMLElement | null;
+            if (previewEl) previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
+            setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
+          }
+          break;
+        case 'K':
+          if (e.shiftKey) {
+            const previewEl = document.getElementById('preview-main') as HTMLElement | null;
+            if (previewEl) previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
+            setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
+          }
+          break;
+        case 'H':
+          if (e.shiftKey) {
+            // History Back
+            setGameState((prev) => {
+              if (prev.historyIndex >= 0 && prev.history && prev.history.length > 0) {
+                const target = prev.history[prev.historyIndex];
+                return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: prev.historyIndex - 1, usedHistory: true };
+              }
+              return prev;
+            });
+          }
+          break;
+        case 'L':
+          if (e.shiftKey) {
+            // History Forward
+            setGameState((prev) => {
+              const nextIdx = (prev.historyIndex ?? -1) + 1;
+              if (prev.history && nextIdx < prev.history.length) {
+                const target = prev.history[nextIdx];
+                return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: nextIdx, usedHistory: true };
+              }
+              return prev;
+            });
+          }
+          break;
         case 'ArrowLeft':
           if (parent) {
             setGameState((prev) => ({
@@ -459,6 +521,7 @@ export default function App() {
                 cursorIndex: 0,
                 usedG: false, // Reset jump tracking on navigation
                 usedGG: false,
+                usedCtrlA: false,
                 zoxideData: {
                   ...prev.zoxideData,
                   [pathStr]: {
@@ -472,6 +535,14 @@ export default function App() {
           break;
         case ' ':
           if (currentItem) {
+            if (currentLevel.id === 5) {
+              const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+              if (currentDir?.name === 'protocols' && currentItem.name.startsWith('uplink_')) {
+                showNotification('Manual selection is too slow. Use batch operations for speed.', 4000);
+                break;
+              }
+            }
+
             setGameState((prev) => {
               const newSelected = prev.selectedIds.includes(currentItem.id)
                 ? prev.selectedIds.filter((id) => id !== currentItem.id)
@@ -488,7 +559,7 @@ export default function App() {
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             const allIds = items.map((item) => item.id);
-            setGameState((prev) => ({ ...prev, selectedIds: allIds }));
+            setGameState((prev) => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
             showNotification(`Selected all (${allIds.length} items)`, 2000);
           } else {
             e.preventDefault();
@@ -542,6 +613,7 @@ export default function App() {
                 nodes,
                 action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
+                authorized: e.key === 'x',
               },
               selectedIds: [],
               notification: `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
@@ -567,6 +639,7 @@ export default function App() {
                 nodes: [currentItem],
                 action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
+                authorized: e.key === 'x',
               },
               notification: `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
             }));
@@ -582,22 +655,62 @@ export default function App() {
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
-                  const addResult = addNode(newFs, gameState.currentPath, node);
-                  if (addResult.ok) {
-                    newFs = addResult.value;
-                    if (gameState.clipboard?.action === 'cut') {
-                      const deleteResult = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
-                      if (deleteResult.ok) {
-                        newFs = deleteResult.value;
-                      } else {
-                        // This should be rare, but we need to handle it.
+                  // For moves, delete original first (honoring authorization), then add to target
+                  if (gameState.clipboard?.action === 'cut') {
+                    const deleteResult = deleteNode(
+                      newFs,
+                      gameState.clipboard.originalPath,
+                      node.id,
+                      gameState.levelIndex,
+                      'cut',
+                      gameState.clipboard?.authorized === true
+                    );
+                    if (!deleteResult.ok) {
+                      // For a 'cut' operation, if the original is not found, it's not a failure.
+                      // It means it was already removed (e.g. parent dir deleted).
+                      if (deleteResult.error !== 'NotFound' && deleteResult.error !== 'InvalidPath') {
                         error = deleteResult.error;
                         errorNodeName = node.name;
                         break;
                       }
+                    } else {
+                      newFs = deleteResult.value;
                     }
-                  } else {
-                    error = addResult.error;
+                  }
+
+                  // Try to add; on Collision, emulate yazi behavior by appending _1/_2 ...
+                  let attempt = 0;
+                  let added = false;
+                  const maxAttempts = 10;
+                  let attemptName = node.name;
+
+                  while (!added && attempt < maxAttempts) {
+                    const nodeToAdd = { ...node, name: attemptName };
+                    const addResult = addNode(newFs, gameState.currentPath, nodeToAdd);
+                    if (addResult.ok) {
+                      newFs = addResult.value;
+                      added = true;
+                      break;
+                    } else {
+                      if (addResult.error === 'Collision') {
+                        // generate next candidate name (respect extension)
+                        attempt += 1;
+                        const dotIndex = node.name.lastIndexOf('.');
+                        const base = dotIndex > 0 ? node.name.slice(0, dotIndex) : node.name;
+                        const ext = dotIndex > 0 ? node.name.slice(dotIndex) : '';
+                        attemptName = `${base}_${attempt}${ext}`;
+                        continue;
+                      } else {
+                        error = addResult.error;
+                        errorNodeName = node.name;
+                        break;
+                      }
+                    }
+                  }
+
+                  if (!added && !error) {
+                    // exhausted attempts
+                    error = 'Collision';
                     errorNodeName = node.name;
                     break;
                   }
@@ -655,7 +768,7 @@ export default function App() {
                   }
 
                   if (gameState.clipboard?.action === 'cut') {
-                    const deleteResult = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
+                    const deleteResult = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex, 'cut', gameState.clipboard?.authorized === true);
                     if (deleteResult.ok) {
                       newFs = deleteResult.value;
                     } else {
@@ -1045,6 +1158,7 @@ export default function App() {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (showSuccessToast || showAlertToast) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
 
       if (['input-file', 'filter', 'rename'].includes(gameState.mode)) {
@@ -1089,6 +1203,8 @@ export default function App() {
             // fallback for older browsers
             el.scrollTop += delta;
           }
+          // mark that the preview was scrolled so level tasks can detect it
+          setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
           e.preventDefault();
           return;
         }
@@ -1371,6 +1487,8 @@ export default function App() {
       handleOverwriteConfirmKeyDown,
       handleFuzzyModeKeyDown,
       advanceLevel,
+      showSuccessToast,
+      showAlertToast,
     ]
   );
 
@@ -1446,6 +1564,40 @@ export default function App() {
 
   const isFuzzyActive = gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current';
 
+  // Dynamic overlay right position to align with start of preview column
+  const [overlayRight, setOverlayRight] = React.useState<string>('calc(50% - 8rem)');
+  const [overlayLeft, setOverlayLeft] = React.useState<string>('calc(16rem + 0.5rem)');
+
+  const updateOverlayPos = useCallback(() => {
+    const previewEl = document.getElementById('preview-main');
+    if (previewEl) {
+      const previewLeft = previewEl.getBoundingClientRect().left;
+      const rightPx = Math.max(0, Math.round(window.innerWidth - previewLeft));
+      setOverlayRight(`${rightPx}px`);
+    }
+
+    const leftPane = document.querySelector('.w-64') as HTMLElement | null;
+    if (leftPane) {
+      // place overlay starting after left pane plus a small gap (8px)
+      const leftPx = Math.round(leftPane.getBoundingClientRect().right + 8);
+      setOverlayLeft(`${leftPx}px`);
+    } else {
+      // fallback to small left margin
+      setOverlayLeft('8px');
+    }
+  }, []);
+
+  useEffect(() => {
+    updateOverlayPos();
+    window.addEventListener('resize', updateOverlayPos);
+    const mo = new MutationObserver(() => updateOverlayPos());
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+    return () => {
+      window.removeEventListener('resize', updateOverlayPos);
+      mo.disconnect();
+    };
+  }, [updateOverlayPos]);
+
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
       {gameState.showEpisodeIntro && (
@@ -1486,12 +1638,16 @@ export default function App() {
         />
       )}
       {showSuccessToast && (
-        <SuccessToast
-          message={currentLevel.successMessage || 'Sector Cleared'}
-          levelTitle={currentLevel.title}
-          onDismiss={advanceLevel}
-          onClose={() => setShowSuccessToast(false)}
-        />
+        <>
+          <SuccessToast
+            message={currentLevel.successMessage || 'Sector Cleared'}
+            levelTitle={currentLevel.title}
+            onDismiss={advanceLevel}
+            onClose={() => setShowSuccessToast(false)}
+          />
+          {/* Interaction blocker while success toast is visible (blocks clicks/scroll) */}
+          <div className="fixed inset-0 z-80 bg-black/30 pointer-events-auto" aria-hidden="true" />
+        </>
       )}
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
@@ -1583,73 +1739,7 @@ export default function App() {
                 </div>
               )}
 
-            {gameState.mode === 'sort' && (
-              <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
-                <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                    Sort Options
-                  </span>
-                  <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">n</span>{' '}
-                    <span className="text-zinc-400">Natural</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">N</span>{' '}
-                    <span className="text-zinc-400">Natural (rev)</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">a</span>{' '}
-                    <span className="text-zinc-400">A-Z</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">A</span>{' '}
-                    <span className="text-zinc-400">Z-A</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">m</span>{' '}
-                    <span className="text-zinc-400">Modified (new)</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">M</span>{' '}
-                    <span className="text-zinc-400">Modified (old)</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">s</span>{' '}
-                    <span className="text-zinc-400">Size (large)</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">S</span>{' '}
-                    <span className="text-zinc-400">Size (small)</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">e</span>{' '}
-                    <span className="text-zinc-400">Extension</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">E</span>{' '}
-                    <span className="text-zinc-400">Extension (rev)</span>
-                  </div>
-                  <div className="col-span-2 border-t border-zinc-800 my-1"></div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">l</span>{' '}
-                    <span className="text-zinc-400">Cycle Linemode</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">-</span>{' '}
-                    <span className="text-zinc-400">Clear Linemode</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {gameState.mode === 'g-command' && (
-              <GCommandDialog
-                onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-              />
-            )}
 
             {gameState.mode === 'filter' && (
               <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
@@ -1735,6 +1825,15 @@ export default function App() {
           />
         </div>
 
+        {showAlertToast && (
+          <AlertToast
+            message={currentLevel.description || 'QUARANTINE: Immediate action required.'}
+            levelTitle={currentLevel.title}
+            onDismiss={() => handleCloseAlert()}
+            onClose={() => handleCloseAlert()}
+          />
+        )}
+
         <StatusBar
           state={gameState}
           level={currentLevel}
@@ -1743,6 +1842,35 @@ export default function App() {
           currentItem={currentItem}
         />
       </div>
+
+      {/* Which-Key overlays (span left + middle columns) */}
+      {gameState.mode === 'g-command' && (
+        <GCommandDialog left={overlayLeft} right={overlayRight} onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))} />
+      )}
+
+      {gameState.mode === 'sort' && (
+        <div className="absolute bottom-6 m-2 z-50 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150" style={{ left: overlayLeft, right: overlayRight }}>
+          <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Sort Options</span>
+            <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">n</span> <span className="text-zinc-400">Natural</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">N</span> <span className="text-zinc-400">Natural (rev)</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">a</span> <span className="text-zinc-400">A-Z</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">A</span> <span className="text-zinc-400">Z-A</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">m</span> <span className="text-zinc-400">Modified (new)</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">M</span> <span className="text-zinc-400">Modified (old)</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">s</span> <span className="text-zinc-400">Size (large)</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">S</span> <span className="text-zinc-400">Size (small)</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">e</span> <span className="text-zinc-400">Extension</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">E</span> <span className="text-zinc-400">Extension (rev)</span></div>
+            <div className="col-span-2 border-t border-zinc-800 my-1"></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">l</span> <span className="text-zinc-400">Cycle Linemode</span></div>
+            <div className="flex gap-2"><span className="text-orange-500 font-bold">-</span> <span className="text-zinc-400">Clear Linemode</span></div>
+          </div>
+        </div>
+      )}
 
       {/* FuzzyFinder Overlay - render at root level to cover everything */}
       {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
