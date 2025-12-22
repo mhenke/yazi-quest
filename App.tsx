@@ -377,8 +377,6 @@ export default function App() {
         cursorIndex: 0,
         filters: {},
         clipboard: null,
-        sortBy: 'natural',
-        sortDirection: 'asc',
         linemode: 'size',
         notification: onEnterError ? 'Level initialization failed' : null,
         selectedIds: [],
