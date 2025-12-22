@@ -58,6 +58,7 @@ export interface ClipboardItem {
   nodes: FileNode[]; // Changed to array for batch operations
   action: 'yank' | 'cut';
   originalPath: string[]; // Path IDs where they came from
+  authorized?: boolean; // Whether the cut was authorized at time of clipboard creation (bypass protection on paste)
 }
 
 export interface GameStats {
@@ -157,6 +158,9 @@ export interface GameState {
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
   usedGG?: boolean; // Tracks if player used gg (jump to top)
+  usedPreviewScroll?: boolean; // Tracks if player used preview scroll (Shift+J/K)
+  usedHistory?: boolean; // Tracks if player used history navigation (Shift+H/Shift+L)
+  usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

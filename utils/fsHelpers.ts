@@ -131,7 +131,9 @@ export const deleteNode = (
   root: FileNode,
   parentPathIds: string[],
   nodeId: string,
-  levelIndex: number // For isProtected check
+  levelIndex: number, // For isProtected check
+  action: 'delete' | 'cut' = 'delete',
+  force: boolean = false
 ): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
@@ -144,7 +146,7 @@ export const deleteNode = (
     return { ok: false, error: 'NotFound' };
   }
 
-  const protectionMessage = isProtected(root, parentPathIds, nodeToDelete, levelIndex, 'delete');
+  const protectionMessage = force ? null : isProtected(root, parentPathIds, nodeToDelete, levelIndex, action);
   if (protectionMessage) {
     return { ok: false, error: 'Protected' };
   }
