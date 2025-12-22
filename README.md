@@ -7,31 +7,34 @@
 
 ## 🎯 What You'll Learn
 
-### Episode I: Awakening (Levels 1-6)
+### Episode I: Awakening (Levels 1-4)
 
 - [x] Navigate with `j/k/h/l` and jump with `gg/G`
-- [x] Sort files by various criteria (`,a`, `,m`, etc.)
-- [x] Delete files (`d`) and filter the view (`f`)
-- [x] Cut (`x`), paste (`p`), and create (`a`) files/directories
-- [x] Select multiple files (`Space`) for batch operations
+- [x] Enter directories and archives with `l`
+- [x] Delete files with `d`
+- [x] Create files/directories with `a`
+- [x] Basic file operations: yank (`y`), cut (`x`), paste (`p`)
+- [x] Filter files with `f`
+- [x] Visual selection with `Space`
 
-### Episode II: Fortification (Levels 7-12)
+### Episode II: Fortification (Levels 5-10)
 
-- [x] Use advanced filtering in noisy directories
-- [x] Jump to frequent directories with Zoxide (`Shift+Z`)
-- [x] Find files recursively with FZF fuzzy search (`z`)
-- [x] Combine multiple commands under time pressure
-- [x] Enter and inspect archives (`.zip`, `.tar`)
-- [x] Execute high-speed file migrations
+- [x] Sort files by different criteria (`,s`, `,m`, `,a`)
+- [x] Inspect file metadata with `Tab`
+- [x] Navigate archives and extract files
+- [x] G-commands for quick directory jumps (`gh`, `gw`, `gd`, etc.)
+- [x] Zoxide jumps with `Shift+Z`
+- [x] FZF recursive search with `z`
+- [x] Batch operations across multiple files
+- [x] Rename files with `r`
 
-### Episode III: Mastery (Levels 13-18)
+### Episode III: Mastery (Levels 11-15)
 
-- [x] Rename files and directories (`r`)
-- [x] Operate under strict keystroke limits
-- [x] Copy entire directory structures (`y`, `p`)
-- [x] Perform efficient, surgical file deletions
-- [x] Create deep, nested paths in a single command
-- [x] Execute a "scorched earth" file system wipe as a final challenge
+- [x] Advanced filtering and search techniques
+- [x] Complex multi-step file operations
+- [x] Keystroke efficiency challenges (60-80 key limits)
+- [x] Root-level system manipulation
+- [x] Final boss: Complete system restructuring
 
 ## 🎮 Try It Now
 
@@ -81,11 +84,9 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | `l` / `→` / `Enter` | **Enter/Open**        | Enter directory or view archive contents   |
 | `gg`                | **Jump to Top**       | Move cursor to first item                  |
 | `G`                 | **Jump to Bottom**    | Move cursor to last item                   |
-| `Shift+H`           | **History Back**      | Navigate back to a previous directory      |
-| `Shift+L`           | **History Forward**   | Navigate forward in your history           |
 | `Tab`               | **Toggle Info Panel** | View file metadata (size, dates, mimetype) |
 
-### G-Commands (Quick Jumps) - Available from Level 8+
+### G-Commands (Quick Jumps) - Available from Level 7+
 
 | Key  | Action           | Destination                      |
 | :--- | :--------------- | :------------------------------- |
@@ -106,16 +107,8 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | `y`     | **Yank (Copy)**      | Copy selected file(s) to clipboard                       |
 | `x`     | **Cut**              | Cut selected file(s) to clipboard                        |
 | `p`     | **Paste**            | Paste files from clipboard to current directory          |
-| `Y`/`X` | **Cancel Yank/Cut**  | Clear the clipboard                                      |
 | `a`     | **Create**           | Create new file or directory (end name with `/` for dir) |
 | `r`     | **Rename**           | Rename selected file(s)                                  |
-
-### Preview Pane
-
-| Key | Action            | Description                        |
-| :-- | :---------------- | :--------------------------------- |
-| `J` | **Scroll Down**   | Scroll down in the previewed file  |
-| `K` | **Scroll Up**     | Scroll up in the previewed file    |
 
 ### Search & Filter
 
@@ -140,12 +133,12 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 ### Game UI
 
-| Key               | Action           | Description                                  |
-| :---------------- | :--------------- | :------------------------------------------- |
-| `Ctrl+Shift+M`    | **Quest Map**    | Open Quest Map to view all levels & progress |
-| `Ctrl+Shift+H`    | **Show Hint**    | Display hint for current level objective     |
-| `Ctrl+Shift+?`    | **Show Help**    | Show keybindings overlay                     |
-| `Esc`             | **Close Modals** | Close any open modal/dialog                  |
+| Key       | Action           | Description                                  |
+| :-------- | :--------------- | :------------------------------------------- |
+| `Shift+M` | **Quest Map**    | Open Quest Map to view all levels & progress |
+| `Shift+H` | **Show Hint**    | Display hint for current level objective     |
+| `Shift+?` | **Show Help**    | Show keybindings overlay                     |
+| `Esc`     | **Close Modals** | Close any open modal/dialog                  |
 
 ---
 

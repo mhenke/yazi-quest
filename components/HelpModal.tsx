@@ -33,9 +33,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           ))}
         </div>
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
-          Query command reference (Ctrl+Shift+?) • Press Esc to close
-          <div className="mt-2 text-zinc-500">Note: Pasting will auto-rename conflicting files with a <span className="font-bold">_1</span> suffix to preserve integrity (no overwrite prompt).</div>
-          <div className="mt-1 text-zinc-500">Tip: Press <span className="font-bold">Y</span> or <span className="font-bold">X</span> to clear the clipboard and abort an accidental yank/cut; a confirmation toast will appear.</div>
+          Query command reference (?) • Press Esc to close
         </div>
       </div>
     </div>

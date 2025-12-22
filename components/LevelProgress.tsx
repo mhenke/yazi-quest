@@ -30,10 +30,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     onToggleMap?.(); // Notify parent if callback provided
   }, [onToggleMap]);
 
-  // Keyboard shortcut: Ctrl+Shift+M to toggle map
+  // Keyboard shortcut: Shift+M to toggle map
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'M' && e.ctrlKey && e.shiftKey) {
+      if (e.key === 'M' && e.shiftKey) {
         e.preventDefault();
         handleToggleMap();
       }
@@ -156,7 +156,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           <button
             onClick={handleToggleMap}
             className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
-            title="Quest Map (Ctrl+Shift+M)"
+            title="Quest Map (Shift+M)"
           >
             <Map
               size={16}
@@ -260,14 +260,14 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             <button
               onClick={onToggleHint}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-yellow-400 transition-colors border border-transparent hover:border-zinc-700"
-              title="Show Hint (Ctrl+Shift+H)"
+              title="Show Hint (Shift+H)"
             >
               <Lightbulb size={20} />
             </button>
             <button
               onClick={onToggleHelp}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors border border-transparent hover:border-zinc-700"
-              title="Show Help (Ctrl+Shift+?)"
+              title="Show Help (Shift+?)"
             >
               <HelpCircle size={20} />
             </button>

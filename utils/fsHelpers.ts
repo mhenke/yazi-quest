@@ -1,4 +1,4 @@
-import { FileNode, Result, FsError } from '../types';
+import { FileNode } from '../types';
 
 // --- Query Helpers ---
 
@@ -53,7 +53,6 @@ export const resolvePath = (root: FileNode, pathIds: string[]): string => {
   return pathString || '/';
 };
 
-// Fix for Error in file utils/fsHelpers.ts on line 56 & 65: Complete the function and fix variable name from currentPath to currentPathStr
 export const getAllDirectories = (root: FileNode): { path: string[]; display: string }[] => {
   const results: { path: string[]; display: string }[] = [];
 
@@ -74,246 +73,428 @@ export const getAllDirectories = (root: FileNode): { path: string[]; display: st
   return results;
 };
 
-// --- Modification Helpers ---
+export const getRecursiveContent = (
+  root: FileNode,
+  startPathIds: string[]
+): { path: string[]; display: string; type: string; id: string }[] => {
+  const startNode = getNodeByPath(root, startPathIds);
+  if (!startNode) return [];
 
-// Fix for Error in file App.tsx and hooks/useFilesystem.ts: Add cloneFS export
-export const cloneFS = (node: FileNode): FileNode => {
-  return JSON.parse(JSON.stringify(node));
-};
+  const results: { path: string[]; display: string; type: string; id: string }[] = [];
 
-// Fix for Error in file constants.tsx: Add initializeTimestamps export
-export const initializeTimestamps = (node: FileNode, now: number = Date.now()): FileNode => {
-  const newNode = {
-    ...node,
-    createdAt: node.createdAt || now,
-    modifiedAt: node.modifiedAt || now,
-  };
-  if (newNode.children) {
-    newNode.children = newNode.children.map((child, i) => initializeTimestamps(child, now - (i * 1000)));
-  }
-  return newNode;
-};
+  const traverse = (node: FileNode, prefixIds: string[], prefixStr: string) => {
+    if (node.children) {
+      for (const child of node.children) {
+        const childRelativePathIds = [...prefixIds, child.id];
+        const childDisplay = prefixStr ? `${prefixStr}/${child.name}` : child.name;
 
-// Fix for Error in file App.tsx and FuzzyFinder.tsx: Add getRecursiveContent export
-export const getRecursiveContent = (root: FileNode, pathIds: string[]): { path: string[]; display: string; type: 'file' | 'dir' | 'archive'; id: string }[] => {
-  const node = getNodeByPath(root, pathIds);
-  if (!node) return [];
+        results.push({
+          path: childRelativePathIds,
+          display: childDisplay,
+          type: child.type,
+          id: child.id,
+        });
 
-  const results: any[] = [];
-  const traverse = (n: FileNode, currentIds: string[], currentStr: string) => {
-    if (n.children) {
-      for (const child of n.children) {
-        const nextIds = [...currentIds, child.id];
-        const nextStr = currentStr ? `${currentStr}/${child.name}` : child.name;
-        results.push({ path: nextIds, display: nextStr, type: child.type, id: child.id });
-        if (child.type === 'dir' || child.type === 'archive') {
-          traverse(child, nextIds, nextStr);
+        if (child.children && (child.type === 'dir' || child.type === 'archive')) {
+          traverse(child, childRelativePathIds, childDisplay);
         }
       }
     }
   };
-  
-  traverse(node, [], "");
+
+  traverse(startNode, [], '');
   return results;
 };
 
-// Fix for Error in file hooks/useFilesystem.ts: Add deleteNode export
-export const deleteNode = (root: FileNode, pathIds: string[], nodeId: string, levelIndex: number): Result<FileNode, string> => {
+// --- Basic Helpers ---
+
+export const cloneFS = (node: FileNode): FileNode => {
+  return {
+    ...node,
+    children: node.children ? node.children.map(cloneFS) : undefined,
+  };
+};
+
+export const regenerateIds = (node: FileNode, newParentId: string | null = null): FileNode => {
+  const newId = Math.random().toString(36).substr(2, 9);
+  return {
+    ...node,
+    id: newId,
+    parentId: newParentId,
+    children: node.children ? node.children.map((child) => regenerateIds(child, newId)) : undefined,
+  };
+};
+
+// --- Modification Helpers ---
+
+export const deleteNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  nodeId: string,
+  levelIndex: number // For isProtected check
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
-  const parent = getNodeByPath(newRoot, pathIds);
-  
+  const parent = getNodeByPath(newRoot, parentPathIds);
   if (!parent || !parent.children) {
-    return { ok: false, error: 'Target directory not found' };
+    return { ok: false, error: 'InvalidPath' };
   }
-  
-  const originalLength = parent.children.length;
-  parent.children = parent.children.filter(c => c.id !== nodeId);
-  
-  if (parent.children.length === originalLength) {
-    return { ok: false, error: 'Target node not found' };
+
+  const nodeToDelete = parent.children.find((c) => c.id === nodeId);
+  if (!nodeToDelete) {
+    return { ok: false, error: 'NotFound' };
   }
-  
+
+  const protectionMessage = isProtected(root, parentPathIds, nodeToDelete, levelIndex, 'delete');
+  if (protectionMessage) {
+    return { ok: false, error: 'Protected' };
+  }
+
+  parent.children = parent.children.filter((c) => c.id !== nodeId);
   return { ok: true, value: newRoot };
 };
 
-// Fix for Error in file hooks/useFilesystem.ts: Add addNode export
-export const addNode = (root: FileNode, pathIds: string[], node: FileNode): Result<FileNode, string> => {
+export const addNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  newNode: FileNode
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
-  const target = getNodeByPath(newRoot, pathIds);
-  
-  if (!target) return { ok: false, error: 'Target directory not found' };
-  if (target.type === 'file') return { ok: false, error: 'Cannot add items to a file' };
-  
-  if (!target.children) target.children = [];
-  
-  const newNode = cloneFS(node);
-  newNode.parentId = target.id;
-  
-  // Check for conflicts
-  const conflict = target.children.find(c => c.name === newNode.name && c.type === newNode.type);
-  
-  if (conflict) {
-    // Basic conflict handling: rename with a numerical suffix
-    let counter = 1;
-    const lastDotIndex = newNode.name.lastIndexOf('.');
-    const hasExt = lastDotIndex !== -1;
-    const ext = hasExt ? newNode.name.split('.').pop() : '';
-    const base = hasExt ? newNode.name.slice(0, lastDotIndex) : newNode.name;
-    
-    while (target.children.find(c => c.name === `${base}_${counter}${hasExt ? '.' + ext : ''}`)) {
-      counter++;
-    }
-    newNode.name = `${base}_${counter}${hasExt ? '.' + ext : ''}`;
-  }
-  
-  target.children.push(newNode);
-  
-  // Sort children by type (dir -> archive -> file) then name
-  target.children.sort((a, b) => {
-    if (a.type !== b.type) {
-      if (a.type === 'dir') return -1;
-      if (b.type === 'dir') return 1;
-      if (a.type === 'archive') return -1;
-      if (b.type === 'archive') return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
-  
-  return { ok: true, value: newRoot };
-};
-
-// Fix for Error in file hooks/useFilesystem.ts: Add renameNode export
-export const renameNode = (root: FileNode, pathIds: string[], nodeId: string, newName: string, levelIndex: number): Result<FileNode, string> => {
-  const newRoot = cloneFS(root);
-  const parent = getNodeByPath(newRoot, pathIds);
-  
-  if (!parent || !parent.children) return { ok: false, error: 'Target directory not found' };
-  
-  const node = parent.children.find(c => c.id === nodeId);
-  if (!node) return { ok: false, error: 'Target node not found' };
-  
-  if (parent.children.find(c => c.id !== nodeId && c.name === newName && c.type === node.type)) {
-    return { ok: false, error: `A ${node.type} named "${newName}" already exists` };
+  const parent = getNodeByPath(newRoot, parentPathIds);
+  if (!parent) {
+    return { ok: false, error: 'InvalidPath' };
   }
 
-  // Reservation Check
-  const protection = isProtected(newRoot, pathIds, { ...node, name: newName }, levelIndex, 'create');
-  if (protection) return { ok: false, error: protection };
-  
-  node.name = newName;
-  node.modifiedAt = Date.now();
-  
-  // Resort parent children after rename
+  if (!parent.children) parent.children = [];
+
+  // Check for collision with exact same name AND type
+  const collision = parent.children.find(
+    (c) => c.name === newNode.name && c.type === newNode.type
+  );
+
+  if (collision) {
+    return { ok: false, error: 'Collision' };
+  }
+
+  // Ensure the new node has a fresh ID and deep-copied structure
+  let nodeToInsert = regenerateIds(newNode, parent.id);
+
+  // Update timestamps
+  const now = Date.now();
+  nodeToInsert.createdAt = newNode.createdAt || now;
+  nodeToInsert.modifiedAt = now;
+
+  parent.children.push(nodeToInsert);
+
+  // Sort: Dirs > Archives > Files
   parent.children.sort((a, b) => {
-    if (a.type !== b.type) {
-      if (a.type === 'dir') return -1;
-      if (b.type === 'dir') return 1;
-      if (a.type === 'archive') return -1;
-      if (b.type === 'archive') return 1;
-    }
+    const typeScore = (t: string) => {
+      if (t === 'dir') return 0;
+      if (t === 'archive') return 1;
+      return 2;
+    };
+    const scoreA = typeScore(a.type);
+    const scoreB = typeScore(b.type);
+    if (scoreA !== scoreB) return scoreA - scoreB;
     return a.name.localeCompare(b.name);
   });
 
   return { ok: true, value: newRoot };
 };
 
-// Fix for Error in file hooks/useFilesystem.ts: Add createPath export
-export const createPath = (root: FileNode, currentPathIds: string[], pathStr: string, levelIndex: number = 0): { fs: FileNode; error?: string; createdName?: string; collision?: boolean; collisionNode?: FileNode } => {
+export const renameNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  nodeId: string,
+  newName: string,
+  levelIndex: number // For isProtected check
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
-  let currentPath = [...currentPathIds];
-  const parts = pathStr.split('/').filter(p => p.length > 0);
-  const isDir = pathStr.endsWith('/');
+  const parent = getNodeByPath(newRoot, parentPathIds);
+  if (!parent || !parent.children) {
+    return { ok: false, error: 'InvalidPath' };
+  }
 
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    const isLast = i === parts.length - 1;
-    const type = isLast ? (isDir ? 'dir' : 'file') : 'dir';
-    
+  const nodeToRename = parent.children.find((c) => c.id === nodeId);
+  if (!nodeToRename) {
+    return { ok: false, error: 'NotFound' };
+  }
+
+  const protectionMessage = isProtected(root, parentPathIds, nodeToRename, levelIndex, 'rename');
+  if (protectionMessage) {
+    return { ok: false, error: 'Protected' };
+  }
+
+  // Only block if another node with SAME name AND SAME type exists
+  const collision = parent.children.find(
+    (c) => c.id !== nodeId && c.name === newName && c.type === nodeToRename.type
+  );
+  if (collision) {
+    return { ok: false, error: 'Collision' };
+  }
+
+  nodeToRename.name = newName;
+  nodeToRename.modifiedAt = Date.now();
+  
+  // Re-sort after rename
+  parent.children.sort((a, b) => {
+    const typeScore = (t: string) => {
+      if (t === 'dir') return 0;
+      if (t === 'archive') return 1;
+      return 2;
+    };
+    const scoreA = typeScore(a.type);
+    const scoreB = typeScore(b.type);
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return a.name.localeCompare(b.name);
+  });
+
+  return { ok: true, value: newRoot };
+};
+
+// Helper to generate collision info
+const generateCollisionInfo = (
+  existingNode: FileNode
+): { collision: true; collisionNode: FileNode } => {
+  return {
+    collision: true,
+    collisionNode: existingNode,
+  };
+};
+
+// Updated createPath: Allows coexistence if types are different
+export const createPath = (
+  root: FileNode,
+  parentPathIds: string[],
+  pathStr: string
+): {
+  fs: FileNode;
+  error?: string;
+  createdName?: string;
+  collision?: boolean;
+  collisionNode?: FileNode;
+} => {
+  const newRoot = cloneFS(root);
+  let currentPath = [...parentPathIds];
+
+  const segments = pathStr.split('/').filter((s) => s.trim().length > 0);
+  const isDirTarget = pathStr.endsWith('/');
+
+  for (let i = 0; i < segments.length; i++) {
+    let name = segments[i];
+    const isLast = i === segments.length - 1;
+    // CRITICAL: If not last, it MUST be a dir. If last, it depends on isDirTarget.
+    const type: 'dir' | 'file' = !isLast ? 'dir' : isDirTarget ? 'dir' : 'file';
+
+    // Find parent in the NEW root
     const parent = getNodeByPath(newRoot, currentPath);
-    if (!parent) return { fs: root, error: 'Path resolution error' };
-    
-    if (!parent.children) parent.children = [];
-    
-    const existing = parent.children.find(c => c.name === part);
-    if (existing) {
-      if (isLast) {
-        return { fs: root, collision: true, collisionNode: existing };
+    if (!parent) return { fs: root, error: 'Path resolution failed' };
+
+    // Check for existing node with SAME name AND SAME type
+    const existingTyped = parent.children?.find((c) => c.name === name && c.type === type);
+
+    if (existingTyped) {
+      if (!isLast) {
+        // Intermediate segment (matched an existing dir)
+        currentPath.push(existingTyped.id);
+        continue;
+      } else {
+        // Last segment (collision with identical type)
+        return { fs: root, ...generateCollisionInfo(existingTyped) };
       }
-      if (existing.type === 'file') return { fs: root, error: `Cannot create path through file: ${part}` };
-      currentPath.push(existing.id);
-      continue;
+    } else {
+      // If it's an intermediate segment and we didn't find a DIRECTORY with that name
+      // (but might have found a FILE), we need to block it
+      if (!isLast) {
+        const existingFile = parent.children?.find((c) => c.name === name && c.type !== 'dir');
+        if (existingFile) {
+          return { fs: root, error: `Cannot create directory path through file: ${name}` };
+        }
+      }
     }
 
-    // Reservation Check
-    const protection = isProtected(newRoot, currentPath, { name: part, type, id: 'temp' } as any, levelIndex, 'create');
-    if (protection) return { fs: root, error: protection };
-    
+    // Create new node
     const newNode: FileNode = {
       id: Math.random().toString(36).substr(2, 9),
-      name: part,
-      type,
+      name: name,
+      type: type,
       parentId: parent.id,
-      children: type !== 'file' ? [] : undefined,
+      children: type === 'dir' ? [] : undefined,
       content: type === 'file' ? '' : undefined,
       createdAt: Date.now(),
       modifiedAt: Date.now(),
     };
-    
+
+    if (!parent.children) parent.children = [];
     parent.children.push(newNode);
+
+    // Sort: Dirs > Archives > Files
     parent.children.sort((a, b) => {
-      if (a.type !== b.type) {
-        if (a.type === 'dir') return -1;
-        if (b.type === 'dir') return 1;
-        if (a.type === 'archive') return -1;
-        if (b.type === 'archive') return 1;
-      }
+      const typeScore = (t: string) => {
+        if (t === 'dir') return 0;
+        if (t === 'archive') return 1;
+        return 2;
+      };
+      const scoreA = typeScore(a.type);
+      const scoreB = typeScore(b.type);
+      if (scoreA !== scoreB) return scoreA - scoreB;
       return a.name.localeCompare(b.name);
     });
-    
-    if (isLast) return { fs: newRoot, createdName: part };
+
+    if (isLast) {
+      return { fs: newRoot, createdName: name };
+    }
+
     currentPath.push(newNode.id);
   }
-  
+
   return { fs: newRoot };
 };
 
-// Fix for Error in file hooks/useFilesystem.ts: Add isProtected export with correct signature
-export const isProtected = (root: FileNode, pathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename' | 'create'): string | null => {
-  const pathStr = resolvePath(root, [...pathIds, node.id === 'temp' ? [] : node.id].flat() as string[]);
+// --- Protection Helpers ---
+
+const checkCoreSystemProtection = (path: string, node: FileNode): string | null => {
+  // Only protect directories if they are the intended system ones
+  if (node.type === 'dir' && ['/', '/home', '/home/guest', '/etc', '/tmp', '/bin'].includes(path)) {
+    return `System integrity protection: ${path}`;
+  }
+  return null;
+};
+
+const checkEpisodeStructuralProtection = (
+  path: string,
+  node: FileNode,
+  levelIndex: number
+): string | null => {
+  if (
+    node.type === 'dir' &&
+    [
+      '/home/guest/datastore',
+      '/home/guest/incoming',
+      '/home/guest/media',
+      '/home/guest/workspace',
+    ].includes(path)
+  ) {
+    if (levelIndex < 15) return `Sector protected by admin policy: ${node.name}`;
+  }
+  return null;
+};
+
+const checkLevelSpecificAssetProtection = (
+  path: string,
+  node: FileNode,
+  levelIndex: number,
+  action: 'delete' | 'cut' | 'rename'
+): string | null => {
   const name = node.name;
-  const level = levelIndex + 1; // Levels are 1-indexed in simulation logic
+  const isDir = node.type === 'dir';
+  const isFile = node.type === 'file';
 
-  // Proactive Reservation Block: Don't let users create or rename files into mission-critical names
-  if (action === 'create' || action === 'rename') {
-    if (name.startsWith('neural_') && pathStr.includes('/workspace')) {
-      return `🔒 ACCESS DENIED: Identifier reserved for neural process.`;
+  if (name === 'access_key.pem' && isFile) {
+    if (action === 'delete') return 'Critical asset. Deletion prohibited.';
+    // Allow cut on Level 8 (index 7) and Level 10 (index 9)
+    if (action === 'cut' && ![7, 9].includes(levelIndex)) {
+      return 'Asset locked. Modification not authorized.';
     }
-    if (name === 'systemd-core' && pathStr.includes('/workspace')) {
-      return `🔒 ACCESS DENIED: Signature conflict with kernel namespace.`;
+    // Allow rename only on Level 10 (index 9) after it's been moved to vault
+    if (action === 'rename' && levelIndex !== 9) {
+      return 'Asset identity sealed. Rename not authorized.';
     }
   }
 
-  // Base system directory protection
-  if (node.type === 'dir' && ['/', '/root', '/home', '/home/guest', '/etc', '/tmp', '/bin'].includes(pathStr)) {
-    return `System integrity protection: ${pathStr}`;
+  if (name === 'mission_log.md' && isFile) {
+    // Allow deletion on Level 14 (index 13)
+    if (action === 'delete' && levelIndex !== 13) return 'Mission log required for validation.';
+    // Prevent rename to avoid hiding the log
+    if (action === 'rename' && levelIndex < 13) return 'Mission log identity locked.';
   }
 
-  // Early-stage sector protection
-  if (level <= 6) {
-     if (node.type === 'dir' && ['/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace'].includes(pathStr)) {
-       return `Sector protected by admin policy: ${name}`;
-     }
+  if (name === 'target_map.png' && isFile) {
+    if (action === 'delete') return 'Intel target. Do not destroy.';
+    if (action === 'cut' && levelIndex !== 2) return 'Map file anchored until capture sequence.';
+    if (action === 'rename' && levelIndex < 2) return 'Target signature locked.';
   }
 
-  // Specific asset protection rules
-  if (name === 'access_key.pem') return 'Critical asset. Deletion prohibited.';
-  if (name === 'mission_log.md' && level < 14) return 'Mission log required for validation.';
-  if (name === 'target_map.png') return 'Intel target. Do not destroy.';
-  
-  if (pathStr === '/home/guest/datastore/protocols' && level < 5) return 'Protocol directory required for uplink deployment.';
-  if (name === 'uplink_v1.conf' && level < 8 && action === 'delete') return 'Uplink configuration required for neural network.';
-  
-  if (pathStr === '/home/guest/workspace' && action === 'delete') return 'CRITICAL: Workspace contains your core process. Cannot be deleted.';
+  // Specifically protect the protocols directory if it's the intended one
+  if (path === '/home/guest/datastore/protocols' && isDir) {
+    if (action === 'delete' && levelIndex < 4)
+      return 'Protocol directory required for uplink deployment.';
+    if (action === 'cut' && levelIndex < 4) return 'Protocol directory anchored.';
+  }
+
+  if (name === 'uplink_v1.conf' && isFile) {
+    if (action === 'delete' && levelIndex < 7)
+      return 'Uplink configuration required for neural network.';
+  }
+  if (name === 'uplink_v2.conf' && isFile) {
+    if (action === 'delete' && levelIndex < 4)
+      return 'Uplink configuration required for deployment.';
+  }
+
+  // Path-aware check for active zone
+  if (path === '/home/guest/.config/vault/active' && isDir) {
+    if (action === 'delete' && levelIndex < 7) return 'Active deployment zone required.';
+    if (action === 'cut' && levelIndex < 7) return 'Deployment zone anchored.';
+  }
+
+  if (path === '/home/guest/.config/vault' && isDir) {
+    if (action === 'delete' && levelIndex < 12) return 'Vault required for privilege escalation.';
+    if (action === 'cut' && levelIndex < 9) return 'Vault anchored until escalation.';
+  }
+
+  if (name === 'backup_logs.zip' && node.type === 'archive') {
+    if (action === 'delete' && levelIndex < 9)
+      return 'Archive required for intelligence extraction.';
+    if (action === 'cut' && levelIndex < 9) return 'Archive anchored.';
+  }
+
+  if (name === 'daemon' && isDir && path.includes('/etc/')) {
+    if (action === 'delete' && levelIndex < 13) return 'Daemon controller required for redundancy.';
+    if (action === 'cut' && levelIndex < 13) return 'Daemon anchored until cloning.';
+  }
 
   return null;
+};
+
+export const isProtected = (
+  root: FileNode,
+  parentPathIds: string[],
+  node: FileNode,
+  levelIndex: number,
+  action: 'delete' | 'cut' | 'rename'
+): string | null => {
+  const fullPath = resolvePath(root, [...parentPathIds, node.id]);
+  let protectionMessage: string | null;
+
+  protectionMessage = checkCoreSystemProtection(fullPath, node);
+  if (protectionMessage) return protectionMessage;
+
+  protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
+  if (protectionMessage) return protectionMessage;
+
+  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
+  if (protectionMessage) return protectionMessage;
+
+  return null;
+};
+
+// --- Timestamp Initialization ---
+
+/**
+ * Recursively adds default timestamps to all nodes that don't have them.
+ * Used to initialize INITIAL_FS files with timestamps.
+ */
+export const initializeTimestamps = (node: FileNode, baseTime: number = Date.now()): FileNode => {
+  const updatedNode = {
+    ...node,
+    createdAt: node.createdAt || baseTime,
+    modifiedAt: node.modifiedAt || baseTime,
+  };
+
+  if (updatedNode.children) {
+    updatedNode.children = updatedNode.children.map(
+      (child, index) => initializeTimestamps(child, baseTime - index * 1000) // Stagger times slightly for variety
+    );
+  }
+
+  return updatedNode;
 };

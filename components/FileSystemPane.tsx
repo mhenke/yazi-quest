@@ -24,7 +24,6 @@ interface FileSystemPaneProps {
   clipboard: ClipboardItem | null;
   linemode: Linemode;
   className?: string;
-  findQuery?: string;
   renameState?: {
     isRenaming: boolean;
     inputBuffer: string;
@@ -98,8 +97,7 @@ const getListItemRowClasses = (
   isMarked: boolean,
   isParent: boolean,
   isCut: boolean,
-  rowText: string,
-  isFindMatch: boolean
+  rowText: string
 ): string => {
   let rowBg = '';
 
@@ -109,8 +107,6 @@ const getListItemRowClasses = (
     } else {
       rowBg = 'bg-zinc-800/40';
     }
-  } else if (isFindMatch) {
-    rowBg = 'bg-blue-900/30';
   }
 
   const baseClasses = `px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative`;
@@ -121,7 +117,6 @@ const getListItemRowClasses = (
     ${isMarked ? 'text-yellow-400' : rowText}
     ${isParent && !isCursor ? 'opacity-50 grayscale' : ''}
     ${isCut ? 'opacity-50' : ''}
-    ${isFindMatch ? 'ring-1 ring-blue-500/50 ring-inset rounded-sm' : ''}
   `;
 };
 
@@ -134,7 +129,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   clipboard,
   linemode,
   className,
-  findQuery,
   renameState,
   onRenameChange,
   onRenameSubmit,
@@ -181,8 +175,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isCut = inClipboard && clipboard?.action === 'cut';
           const isYank = inClipboard && clipboard?.action === 'yank';
 
-          const isFindMatch = !!findQuery && item.name.toLowerCase().includes(findQuery.toLowerCase());
-
           let rowTextClass = '';
           if (isCursor) {
             if (isActive) {
@@ -203,8 +195,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                   isMarked,
                   isParent,
                   isCut,
-                  rowTextClass,
-                  isFindMatch
+                  rowTextClass
                 )}
               >
                 <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`}>
