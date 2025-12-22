@@ -97,6 +97,7 @@ export default function App() {
 
   const [uiState, setUiState] = useState({
     cursorIndex: 0,
+    visualAnchorIndex: null as number | null,
     clipboard: null as GameState['clipboard'],
     mode: 'normal' as GameState['mode'],
     inputBuffer: '',
@@ -156,6 +157,13 @@ export default function App() {
       setUiState(prev => ({ ...prev, notification: null }));
     }, duration);
   }, []);
+
+  // Calculate stress level for high keystroke levels
+  const stressLevel = useMemo(() => {
+    if (!currentLevel.maxKeystrokes) return 0;
+    const ratio = uiState.keystrokes / currentLevel.maxKeystrokes;
+    return ratio > 0.85 ? (ratio - 0.85) / 0.15 : 0;
+  }, [uiState.keystrokes, currentLevel.maxKeystrokes]);
 
   // --- Level Transition Side Effects ---
   useEffect(() => {
@@ -224,6 +232,7 @@ export default function App() {
     setUiState(prev => ({
       ...prev,
       cursorIndex: 0,
+      visualAnchorIndex: null,
       filters: {},
       clipboard: null,
       selectedIds: [],
@@ -272,8 +281,8 @@ export default function App() {
         case 'ArrowUp':
           setUiState(prev => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1) }));
           break;
-        case 'H': historyBack(); break;
-        case 'L': historyForward(); break;
+        case 'H': historyBack(); break; // Shift+H is Back in history
+        case 'L': historyForward(); break; // Shift+L is Forward in history
         case 'h': 
           const parent = getParentNode(fs, currentPath);
           if (parent) navigateTo(currentPath.slice(0, -1));
@@ -311,7 +320,6 @@ export default function App() {
           break;
         case 'p': {
           const pasteResult = performPaste(uiState.clipboard, levelIndex);
-          // Fix: Explicit narrowing for Result type to resolve Property 'error' access
           if (pasteResult.ok === false) {
             showNotification(pasteResult.error, 4000);
           } else {
@@ -360,7 +368,6 @@ export default function App() {
     } else if (uiState.mode === 'confirm-delete') {
       if (e.key === 'y' || e.key === 'Enter') {
         const delResult = performDelete(uiState.pendingDeleteIds, levelIndex);
-        // Fix: Use explicit narrowing to avoid Property 'error' does not exist error
         if (delResult.ok === false) {
           showNotification(delResult.error, 4000);
           setUiState(prev => ({ ...prev, mode: 'normal' }));
@@ -391,6 +398,14 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
+      {/* Stress Overlay Effect */}
+      {stressLevel > 0 && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-[60] bg-red-600/5 mix-blend-overlay animate-pulse"
+          style={{ opacity: stressLevel * 0.3 }}
+        />
+      )}
+
       {uiState.showEpisodeIntro && (
         <EpisodeIntro
           episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
@@ -521,7 +536,6 @@ export default function App() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const result = performRename(currentItem!.id, uiState.inputBuffer, levelIndex);
-                        // Fix: Explicitly narrow result to handle Property 'error' access error
                         if (result.ok === false) {
                           showNotification(result.error, 4000);
                         } else {

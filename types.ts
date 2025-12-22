@@ -112,6 +112,7 @@ export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
+  visualAnchorIndex: number | null; // For range selection (Visual Mode)
   clipboard: ClipboardItem | null;
   mode:
     | 'normal'
@@ -157,6 +158,7 @@ export interface GameState {
   isGameOver: boolean; // Flag for game over state
   gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
   stats: GameStats;
+  // Fix for Error in file types.ts on line 161: Cannot find name 'setSettings'. Corrected to 'GameSettings'.
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
@@ -166,5 +168,8 @@ export interface GameState {
   findCurrentIndex?: number; // For cycling through results
 }
 
-export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
+export type Result<T, E> = 
+  | { ok: true; value: T; error?: never } 
+  | { ok: false; error: E; value?: never };
+
 export type FsError = 'Collision' | 'Protected' | 'NotFound' | 'InvalidPath';

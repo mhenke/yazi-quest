@@ -617,8 +617,13 @@ export const LEVELS: Level[] = [
         { id: generateId(), name: "neural_sig_beta.dat", type: "file" as const, content: "DAT_B" },
       ];
 
+      // Safe seeding: only add if they don't exist. Reservation system prevents conflicts.
       if (!workspace.children) workspace.children = [];
-      workspace.children.push(...missionFiles);
+      missionFiles.forEach(file => {
+        if (!workspace.children?.find(c => c.name === file.name)) {
+          workspace.children?.push(file);
+        }
+      });
 
       return fs;
     },
