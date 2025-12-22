@@ -144,6 +144,7 @@ export default function App() {
       sortDirection: 'asc',
       linemode: 'size',
       history: [],
+      historyIndex: -1,
       zoxideData: initialZoxide,
       levelIndex: targetIndex,
       fs: fs,
@@ -277,6 +278,38 @@ export default function App() {
       setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
+
+  // History tracking refs: last path and skip-flag used when navigating history itself
+  const lastPathRef = useRef<string[]>(gameState.currentPath);
+  const skipHistoryPushRef = useRef(false);
+
+  // Push navigation history when currentPath changes (unless skipHistoryPushRef is set)
+  useEffect(() => {
+    if (skipHistoryPushRef.current) {
+      // clear the flag and update lastPath
+      skipHistoryPushRef.current = false;
+      lastPathRef.current = gameState.currentPath;
+      return;
+    }
+
+    const prevPath = lastPathRef.current;
+    if (!prevPath || JSON.stringify(prevPath) === JSON.stringify(gameState.currentPath)) {
+      lastPathRef.current = gameState.currentPath;
+      return;
+    }
+
+    setGameState((prev) => {
+      const idx = (prev.historyIndex ?? -1) + 1;
+      const truncated = prev.history.slice(0, idx);
+      return {
+        ...prev,
+        history: [...truncated, prevPath],
+        historyIndex: truncated.length,
+      };
+    });
+
+    lastPathRef.current = gameState.currentPath;
+  }, [gameState.currentPath]);
 
   const advanceLevel = useCallback(() => {
     setGameState((prev) => {
@@ -1045,6 +1078,22 @@ export default function App() {
         return;
       }
 
+      // Preview scrolling: Shift+J / Shift+K to scroll the preview pane
+      if ((e.key === 'J' || e.key === 'K') && gameState.mode === 'normal') {
+        const el = document.getElementById('preview-main');
+        if (el) {
+          const delta = e.key === 'J' ? 160 : -160;
+          try {
+            el.scrollBy({ top: delta, behavior: 'smooth' });
+          } catch (err) {
+            // fallback for older browsers
+            el.scrollTop += delta;
+          }
+          e.preventDefault();
+          return;
+        }
+      }
+
       const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
       if (allTasksComplete && e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
@@ -1056,13 +1105,31 @@ export default function App() {
         setGameState((prev) => ({ ...prev, showHelp: true }));
         return;
       }
+
+      // History navigation: Shift+H = back, Shift+L = forward
       if (e.key === 'H' && e.shiftKey && gameState.mode === 'normal') {
         setGameState((prev) => {
-          if (prev.showHint) {
-            const nextStage = (prev.hintStage + 1) % 3;
-            return { ...prev, hintStage: nextStage };
+          if (prev.historyIndex >= 0 && prev.history && prev.history.length > 0) {
+            const target = prev.history[prev.historyIndex];
+            if (!target) return prev;
+            skipHistoryPushRef.current = true;
+            return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: prev.historyIndex - 1 };
           }
-          return { ...prev, showHint: true, hintStage: 0 };
+          return prev;
+        });
+        return;
+      }
+
+      if (e.key === 'L' && e.shiftKey && gameState.mode === 'normal') {
+        setGameState((prev) => {
+          const nextIdx = (prev.historyIndex ?? -1) + 1;
+          if (prev.history && nextIdx < prev.history.length) {
+            const target = prev.history[nextIdx];
+            if (!target) return prev;
+            skipHistoryPushRef.current = true;
+            return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: nextIdx };
+          }
+          return prev;
         });
         return;
       }

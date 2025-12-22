@@ -54,7 +54,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
       {/* Content Display Section (No Header) */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {node ? (
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          <div id="preview-main" className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             {/* CASE 1: Image */}
             {isImage && (
               <div className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-zinc-800 rounded bg-zinc-900/30 p-4">
