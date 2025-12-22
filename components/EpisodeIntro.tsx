@@ -22,12 +22,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     let charIdx = 0;
 
     // Start with an empty line
-    setDisplayedLines(prev => [...prev, ""]);
+    setDisplayedLines((prev) => [...prev, '']);
 
     const interval = setInterval(() => {
       charIdx++;
-      
-      setDisplayedLines(prev => {
+
+      setDisplayedLines((prev) => {
         const newLines = [...prev];
         newLines[currentLineIdx] = currentLineText.slice(0, charIdx);
         return newLines;
@@ -36,7 +36,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       if (charIdx === currentLineText.length) {
         clearInterval(interval);
         setTimeout(() => {
-          setCurrentLineIdx(prev => prev + 1);
+          setCurrentLineIdx((prev) => prev + 1);
         }, 600); // Pause between lines
       }
     }, 30); // Typing speed
@@ -49,12 +49,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         if (isTyping) {
-            // Instant finish
-            setDisplayedLines(episode.lore);
-            setIsTyping(false);
-            setCurrentLineIdx(episode.lore.length);
+          // Instant finish
+          setDisplayedLines(episode.lore);
+          setIsTyping(false);
+          setCurrentLineIdx(episode.lore.length);
         } else {
-            onComplete();
+          onComplete();
         }
       }
     };
@@ -66,22 +66,29 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
-        <div className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}>
+        <div
+          className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}
+        >
           <div className="flex items-center gap-3 mb-2">
             <Terminal size={32} className={episode.color} />
-            <h1 className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}>
+            <h1
+              className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
+            >
               {episode.title}
             </h1>
           </div>
           <p className="text-zinc-500 text-xl tracking-[0.2em] font-bold uppercase">
-             {/* {episode.subtitle} */}
+            // {episode.subtitle}
           </p>
         </div>
 
         {/* Content */}
         <div className="space-y-4 min-h-[300px]">
           {displayedLines.map((line, idx) => (
-            <p key={idx} className="text-zinc-300 text-lg leading-relaxed border-l-2 border-zinc-800 pl-4">
+            <p
+              key={idx}
+              className="text-zinc-300 text-lg leading-relaxed border-l-2 border-zinc-800 pl-4"
+            >
               {line}
               {idx === displayedLines.length - 1 && isTyping && (
                 <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
@@ -91,14 +98,16 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         </div>
 
         {/* Footer */}
-        <div className={`pt-8 flex justify-end transition-opacity duration-500 ${!isTyping ? 'opacity-100' : 'opacity-0'}`}>
-           <button 
-             onClick={onComplete}
-             className={`flex items-center gap-2 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase animate-pulse`}
-           >
-             <span>Initialize System</span>
-             <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-           </button>
+        <div
+          className={`pt-8 flex justify-end transition-opacity duration-500 ${!isTyping ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <button
+            onClick={onComplete}
+            className={`flex items-center gap-2 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase animate-pulse`}
+          >
+            <span>Initialize System</span>
+            <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </div>
 

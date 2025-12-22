@@ -1,53 +1,51 @@
-import { Component, ReactNode, ErrorInfo } from "react";
+import React from 'react';
 
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
+type Props = { children: React.ReactNode };
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
+export default class ErrorBoundary extends React.Component<
+  Props,
+  { hasError: boolean; error: Error | null }
+> {
+  state = { hasError: false, error: null };
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
-  declare props: ErrorBoundaryProps;
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Yazi Quest Error:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Report centrally and keep console fallback
+    try {
+      // Lazy import to avoid cycles
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { reportError } = require('../utils/error');
+      reportError(error, { errorInfo });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('App Error:', error, errorInfo);
+    }
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-screen bg-black text-white">
-          <div className="max-w-2xl p-8 border border-red-500 rounded bg-black/80">
-            <h1 className="text-3xl font-bold text-red-500 mb-4 font-mono">
-              SYSTEM FAILURE
-            </h1>
-            <p className="text-zinc-300 mb-4 font-mono">
-              The game encountered a critical error. Your progress may have been lost.
-            </p>
-            {this.state.error && (
-              <pre className="bg-zinc-900 p-4 rounded text-xs text-red-400 mb-4 overflow-auto">
-                {this.state.error.toString()}
-              </pre>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-mono transition-colors"
-            >
-              RESTART GAME
-            </button>
+        <div className="h-screen w-screen flex items-center justify-center bg-zinc-900 text-zinc-200">
+          <div className="max-w-lg p-8 bg-zinc-800 border border-zinc-700 rounded">
+            <h1 className="text-xl font-bold mb-2">Application Error</h1>
+            <p className="mb-4">The application encountered an error. Refresh to try again.</p>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1 bg-blue-600 rounded"
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
       );
     }
-
-    return this.props.children;
+    // Cast to any to avoid rare typing conflicts in different TS configs
+    // props should normally exist on React.Component, but some toolchains treat this differently.
+    return (this as any).props.children;
   }
 }

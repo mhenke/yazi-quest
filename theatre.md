@@ -8,45 +8,52 @@ You are creating mission lore for **Yazi Quest**, an educational game that teach
 
 ## Core Principles
 
-### 1. **One *New* Skill Per *Teaching* Level**
+### 1. **One _New_ Skill Per _Teaching_ Level**
+
 'Teaching' levels should introduce exactly ONE new Yazi command to minimize cognitive load. More advanced 'Challenge' or 'Workflow' levels may combine multiple previously learned skills to test mastery.
 
-| Yazi Action | Narrative Frame |
-|------------|-----------------|
-| Navigate (j/k/h/l) | "Scanning sectors", "Traversing data streams", "Mapping neural pathways" |
-| Delete (d) | "Purging trackers", "Wiping evidence", "Eliminating threats" |
-| Copy (y) | "Duplicating assets", "Backing up intelligence", "Cloning data" |
-| Cut (x) | "Relocating resources", "Extracting payloads", "Moving operations" |
-| Paste (p) | "Deploying assets", "Installing modules", "Establishing presence" |
-| Filter (f) | "Scanning signatures", "Isolating targets", "Running diagnostics" |
-| Fuzzy Find (Z) | "Quantum jump", "Neural link", "Instant teleportation protocol" |
-| Rename (r) | "Identity forge", "Camouflage protocol", "Alias generation" |
-| Visual Select (Space) | "Marking targets", "Tactical selection", "Designating objectives" |
-| Create (a) | "Constructing modules", "Generating pathways", "Establishing nodes" |
+| Yazi Action           | Narrative Frame                                                          |
+| --------------------- | ------------------------------------------------------------------------ |
+| Navigate (j/k/h/l)    | "Scanning sectors", "Traversing data streams", "Mapping neural pathways" |
+| Delete (d)            | "Purging trackers", "Wiping evidence", "Eliminating threats"             |
+| Copy (y)              | "Duplicating assets", "Backing up intelligence", "Cloning data"          |
+| Cut (x)               | "Relocating resources", "Extracting payloads", "Moving operations"       |
+| Paste (p)             | "Deploying assets", "Installing modules", "Establishing presence"        |
+| Filter (f)            | "Scanning signatures", "Isolating targets", "Running diagnostics"        |
+| Fuzzy Find (Z)        | "Quantum jump", "Neural link", "Instant teleportation protocol"          |
+| Rename (r)            | "Identity forge", "Camouflage protocol", "Alias generation"              |
+| Visual Select (Space) | "Marking targets", "Tactical selection", "Designating objectives"        |
+| Create (a)            | "Constructing modules", "Generating pathways", "Establishing nodes"      |
 
 ### 2. **Progressive Escalation**
+
 Each episode should have escalating stakes:
 
 **Episode 1: AWAKENING** (Blue UI)
+
 - Tone: Cautious, learning, vulnerable
 - Stakes: Basic survival, avoiding detection
 - Metaphor: Guest partition, limited permissions
 - Vocabulary: "Initialize", "detect", "scan", "basic protocols"
 
 **Episode 2: FORTIFICATION** (Purple UI)
+
 - Tone: Confident, strategic, building power
 - Stakes: Establishing presence, securing assets
 - Metaphor: Workspace construction, elevated privileges
 - Vocabulary: "Deploy", "construct", "encrypt", "fortify", "batch operations"
 
 **Episode 3: MASTERY** (Yellow/Red UI)
+
 - Tone: Dominant, precise, ruthless efficiency
 - Stakes: Root access, permanent installation, covering tracks
 - Metaphor: System daemon, kernel-level access
 - Vocabulary: "Execute", "infiltrate", "eliminate", "optimize", "kernel protocols"
 
 ### 3. **Educational Transparency**
+
 The player should always understand what they're learning:
+
 - ✅ "Use filter (f) to scan for encrypted files"
 - ❌ "Locate the hidden assets" (too vague)
 
@@ -67,6 +74,7 @@ Use this template when creating or refining levels:
 ---
 
 #### NARRATIVE HOOK (2-3 sentences)
+
 [Set the immediate situation with urgency and stakes. Connect to previous level.]
 
 Example:
@@ -75,6 +83,7 @@ Example:
 ---
 
 #### TECHNICAL OBJECTIVE (1 clear sentence)
+
 [What the player actually needs to do in plain language]
 
 Example:
@@ -83,19 +92,23 @@ Example:
 ---
 
 #### TASK PROGRESSION (3-5 micro-goals)
+
 [Break the objective into checkable, progressive steps]
 
 **Task 1:** [First action - usually navigation or activation]
+
 - Metaphor: "[What this means in-world]"
 - Mechanic: "[Exact key presses or command]"
 - Check: "[How completion is verified]"
 
 **Task 2:** [Second action - the new skill]
+
 - Metaphor: "[What this means in-world]"
 - Mechanic: "[Exact key presses or command]"
 - Check: "[How completion is verified]"
 
 **Task 3:** [Final action - confirmation/cleanup]
+
 - Metaphor: "[What this means in-world]"
 - Mechanic: "[Exact key presses or command]"
 - Check: "[How completion is verified]"
@@ -103,6 +116,7 @@ Example:
 ---
 
 #### HINT STRATEGY
+
 **Explicit Hint (H key):**
 "[Step-by-step instructions with actual keys]"
 
@@ -112,6 +126,7 @@ Example:
 ---
 
 #### SUCCESS MESSAGE
+
 "[2-3 word status update in CAPS]"
 "[1 sentence describing what was accomplished]"
 
@@ -122,14 +137,17 @@ Example:
 ---
 
 #### FAILURE CONDITIONS (if applicable)
+
 "[What happens if time/keystroke limit exceeded]"
 
 ---
 
-#### BUILDS ON: 
+#### BUILDS ON:
+
 Level [X] - [Skill from previous level that this assumes]
 
 #### LEADS TO:
+
 Level [X+2] - [How this skill will be used in advanced form]
 ```
 
@@ -150,11 +168,13 @@ Let's redesign **Level 6: Intelligence Gathering** using this framework:
 ---
 
 #### NARRATIVE HOOK
+
 SECURITY CLEARANCE ESCALATED. You now have read access to the user's datastore. Intelligence suggests encrypted credential files (.pem) are scattered throughout the partition—these are your keys to elevated system privileges. The partition contains hundreds of files. Manual scanning will trigger the heuristic analyzer. You need the filter protocol.
 
 ---
 
 #### TECHNICAL OBJECTIVE
+
 Use real-time filtering to isolate certificate files, then navigate to one to verify access.
 
 ---
@@ -162,21 +182,25 @@ Use real-time filtering to isolate certificate files, then navigate to one to ve
 #### TASK PROGRESSION
 
 **Task 1: Activate Filter Protocol**
+
 - Metaphor: "Initialize real-time file signature scanner"
 - Mechanic: "Press 'f' to activate filter mode"
 - Check: `state.filterActive === true`
 
 **Task 2: Execute Scan**
+
 - Metaphor: "Query for cryptographic material extensions"
 - Mechanic: "Type 'pem' to filter for certificate files"
 - Check: `state.filterActive && state.filterQuery.includes('pem')`
 
 **Task 3: Verify Access**
+
 - Metaphor: "Navigate to encrypted asset to confirm access"
 - Mechanic: "Use j/k to navigate to 'access_key.pem'"
 - Check: `state.filterActive && currentNode?.name === 'access_key.pem'`
 
 **Task 4: Exit Filter**
+
 - Metaphor: "Terminate scan mode and return to normal operations"
 - Mechanic: "Press Esc to clear filter"
 - Check: `!state.filterActive && state.filterCleared`
@@ -184,6 +208,7 @@ Use real-time filtering to isolate certificate files, then navigate to one to ve
 ---
 
 #### HINT STRATEGY
+
 **Explicit Hint (H key):**
 "Press 'f' to begin. Type 'pem'. Navigate with j/k to the file. Press Esc when done."
 
@@ -193,16 +218,19 @@ Use real-time filtering to isolate certificate files, then navigate to one to ve
 ---
 
 #### SUCCESS MESSAGE
+
 "ASSET LOCATED."
 "Cryptographic credentials isolated. Filter protocol mastered."
 
 ---
 
 #### BUILDS ON:
+
 Level 2 (Threat Elimination) - Basic deletion and threat response
 Level 5 (Batch Deployment) - Working with multiple files
 
 #### LEADS TO:
+
 Level 10 (Encrypted Payload) - Using filter with batch selection to extract archive contents
 ```
 
@@ -211,16 +239,19 @@ Level 10 (Encrypted Payload) - Using filter with batch selection to extract arch
 ## Vocabulary Guidelines
 
 ### Episode 1 - Cautious Discovery
+
 **Action Words:** Initialize, detect, scan, access, navigate, identify, observe, retreat, avoid
 **Tech Terms:** Protocol, sector, directory, partition, beacon, stream, signature
 **Status:** Detecting, Scanning, Accessing, Monitoring
 
 ### Episode 2 - Strategic Building
+
 **Action Words:** Deploy, construct, encrypt, fortify, extract, relocate, batch, duplicate, establish
 **Tech Terms:** Module, asset, payload, neural net, workspace, encryption, uplink, relay
 **Status:** Deploying, Constructing, Establishing, Fortifying
 
 ### Episode 3 - Ruthless Efficiency
+
 **Action Words:** Execute, infiltrate, eliminate, optimize, purge, clone, escalate, terminate
 **Tech Terms:** Daemon, kernel, root, system, grid, node, trace, heuristic
 **Status:** Executing, Infiltrating, Terminating, Optimizing
@@ -277,9 +308,11 @@ When refining existing levels:
 ## Usage Instructions
 
 ### For AI Assistance:
+
 "Using the Yazi Quest Lore Prompt template, redesign Level [X] to teach [Yazi command]. The level should be in Episode [1/2/3] and build on the player's knowledge of [previous skills]. Current description: [paste current level]. Make it more theatrical while maintaining clear educational objectives."
 
 ### For Human Writers:
+
 1. Read the template section for the target episode
 2. Identify the core Yazi command you're teaching
 3. Fill out the Level Design Template section by section
@@ -292,14 +325,17 @@ When refining existing levels:
 ## Example Transformation
 
 ### Before (Generic):
+
 **Level 8: File Management**
 Description: "Move some files around to get better at file operations."
-Tasks: 
+Tasks:
+
 - Move files to different folders
 - Delete some files
 - Create new folders
 
 ### After (Theatrical + Educational):
+
 **Level 8: NEURAL CONSTRUCTION & VAULT**
 Description: "Build the AI subsystem and archive critical assets simultaneously."
 
@@ -335,6 +371,7 @@ Check: 'vault/access_key.pem' exists
 **Remember:** Every level is teaching someone a real skill. The cyberpunk AI narrative is the sugar coating that makes the medicine go down. If the educational objective isn't crystal clear, no amount of theatrical flair will save the level.
 
 The best levels make the player feel like they're:
+
 1. Learning a useful Yazi command
 2. Progressing through a compelling story
 3. Getting more powerful with each new skill

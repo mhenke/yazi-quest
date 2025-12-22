@@ -5,7 +5,6 @@ interface HelpModalProps {
   onClose: () => void;
 }
 
-// Fix: Change destructuring to use 'onClose' to match interface
 export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -15,11 +14,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
         </div>
         <div className="grid grid-cols-2 gap-x-12 gap-y-3">
           {KEYBINDINGS.map((binding, idx) => (
-            <div key={idx} className="flex items-center justify-between text-sm group hover:bg-zinc-800/50 p-1 rounded transition-colors">
+            <div
+              key={idx}
+              className="flex items-center justify-between text-sm group hover:bg-zinc-800/50 p-1 rounded transition-colors"
+            >
               <span className="text-zinc-400 group-hover:text-zinc-200">{binding.description}</span>
               <div className="flex gap-1">
-                {binding.keys.map(k => (
-                  <span key={k} className="min-w-[24px] text-center px-1.5 py-0.5 bg-zinc-800 group-hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-300 font-mono text-xs font-bold shadow-sm">
+                {binding.keys.map((k) => (
+                  <span
+                    key={k}
+                    className="min-w-[24px] text-center px-1.5 py-0.5 bg-zinc-800 group-hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-300 font-mono text-xs font-bold shadow-sm"
+                  >
                     {k}
                   </span>
                 ))}
@@ -28,7 +33,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           ))}
         </div>
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
-           Yazi Quest v1.0 • Press Esc to close
+          Query command reference (?) • Press Esc to close
         </div>
       </div>
     </div>

@@ -1,12 +1,10 @@
 # Yazi Quest - Code Quality & Maintainability Audit
 
-**Date:** 2025-12-15 (Updated: 2025-12-21)
+**Date:** 2025-12-21 (Updated)
 **Auditor:** Gemini (Initial) / Claude Code (Comprehensive Update)
 
 ## Update Log
-**2025-12-21:** Implemented Code Linting & Formatting infrastructure (ESLint + Prettier)
-**2025-12-21:** Implemented Error Handling improvements (ErrorBoundary, URL validation)
-**2025-12-21:** Added type-checking script to build tooling
+
 **2025-12-14:** Implemented High Priority recommendation #1: Refactor `App.tsx`'s `handleKeyDown` Function.
 **2025-12-14:** Implemented Medium Priority recommendation #2: Refactor `fsHelpers.ts`'s `isProtected` and `createPath` Functions.
 **2025-12-14:** Implemented Low Priority recommendation #3: Abstract Dense Conditional Styling in `components/FileSystemPane.tsx`.
@@ -17,9 +15,21 @@
 
 ## 1. Executive Summary
 
-The Yazi Quest codebase demonstrates a solid foundation, leveraging React's functional components and strong TypeScript typing. Key strengths include a consistent immutable filesystem approach and good modularity for utility functions.
+### Architectural Notes
+
+The application follows a monolithic state management approach, with the majority of the application's state and logic contained within the `App.tsx` component. This includes the main game state machine, keyboard input handling, and the primary game loop. While this approach is simple and effective for the current scope of the application, it may become a bottleneck as the application grows in complexity.
+
+### URL Debug Parameters
+
+The application includes a powerful URL parameter system for debugging and level-skipping. The following parameters are available:
+
+- `?lvl=5`: Jump to Level 5.
+- `?ep=2`: Start at Episode 2.
+- `?tasks=all`: Auto-complete all tasks for the current level.
+- `?intro=false`: Skip the cinematic episode intros.
 
 ### Codebase Metrics
+
 - **Total Lines of Code:** ~4,783 lines
 - **Components:** 14 React components
 - **Utilities:** 3 utility modules
@@ -27,46 +37,52 @@ The Yazi Quest codebase demonstrates a solid foundation, leveraging React's func
 - **Type Safety:** Full TypeScript coverage
 
 ### Strengths Maintained ✅
+
 - Architectural clarity and immutable filesystem
 - Strong type safety throughout
 - Good component modularity
 - Previous refactoring recommendations implemented
 
 ### New Gaps Identified ⚠️
-1. **No automated testing** - Zero test files exist (Future work)
-2. **Code linting** - ✅ Infrastructure complete, ~50 issues to fix
-3. **Error handling** - ✅ ErrorBoundary added, URL validation added
-4. **Minimal documentation** - Only 2 JSDoc comment blocks (Future work)
-5. **No performance optimization** - Limited use of React.memo/useMemo (Future work)
-6. **Accessibility gaps** - Only 3 ARIA attributes in entire codebase (Future work)
-7. **Build tooling** - ✅ Lint, format, type-check scripts added
+
+1. **No automated testing** - Zero test files exist
+2. **Limited error handling** - Only 16 error handling instances
+3. **No code linting** - No ESLint or Prettier configuration
+4. **Minimal documentation** - Only 2 JSDoc comment blocks
+5. **No performance optimization** - Limited use of React.memo/useMemo
+6. **Accessibility gaps** - Only 3 ARIA attributes in entire codebase
+7. **Build tooling incomplete** - No type-check or lint scripts
 
 ## 2. Strengths
 
-*   **Architectural Clarity:** The core state management (React hooks), immutable filesystem (`fsHelpers.ts`), and level definitions (`constants.tsx`) are well-structured.
-*   **Type Safety:** Consistent and effective use of TypeScript across the examined files, contributing to fewer runtime errors.
-*   **Modularity:** Utility functions (like sorting, filesystem helpers, sounds) are appropriately extracted into their own files.
-*   **Immutability:** The filesystem operations strictly adhere to immutability, which is excellent for predictable state management in React.
-*   **Readability of Core Logic:** Functions in `fsHelpers.ts` (e.g., `cloneFS`, `getNodeByPath`) and `sortHelpers.ts` are generally clear and well-commented.
+- **Architectural Clarity:** The core state management (React hooks), immutable filesystem (`fsHelpers.ts`), and level definitions (`constants.tsx`) are well-structured.
+- **Type Safety:** Consistent and effective use of TypeScript across the examined files, contributing to fewer runtime errors.
+- **Modularity:** Utility functions (like sorting, filesystem helpers, sounds) are appropriately extracted into their own files.
+- **Immutability:** The filesystem operations strictly adhere to immutability, which is excellent for predictable state management in React.
+- **Readability of Core Logic:** Functions in `fsHelpers.ts` (e.g., `cloneFS`, `getNodeByPath`) and `sortHelpers.ts` are generally clear and well-commented.
 
 ## 3. New Gaps Identified (2025-12-15 Update)
 
 ### 🔴 CRITICAL GAPS
 
 #### 3.1 No Automated Testing
+
 **Current State:**
-- **0 test files** found (no .test.ts, .spec.ts, or __tests__ directories)
+
+- **0 test files** found (no .test.ts, .spec.ts, or **tests** directories)
 - No testing framework installed (no Jest, Vitest, React Testing Library)
 - No test script in package.json
 - Critical business logic untested (fsHelpers, sortHelpers, level task checks)
 
 **Impact:** HIGH
+
 - No safety net for refactoring
 - Regression bugs can slip into production
 - Complex game state logic (18 levels × multiple tasks) is fragile
 - Filesystem operations (delete, copy, paste) are error-prone without tests
 
 **Recommendation:**
+
 ```bash
 # Install Vitest (fast, Vite-native testing)
 npm install -D vitest @testing-library/react @testing-library/jest-dom
@@ -78,6 +94,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 ```
 
 **Priority Tests to Write:**
+
 1. **fsHelpers.ts** - Test all filesystem operations (deleteNode, addNode, renameNode, cloneFS)
 2. **sortHelpers.ts** - Test all sort algorithms (alphabetical, natural, size, mtime, extension)
 3. **Level task checks** - Test task completion logic for each level
@@ -85,6 +102,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 5. **Keyboard handlers** - Test key bindings produce correct state changes
 
 **Example Test Structure:**
+
 ```typescript
 // utils/__tests__/fsHelpers.test.ts
 import { describe, it, expect } from 'vitest';
@@ -95,7 +113,7 @@ describe('fsHelpers', () => {
     it('should delete a file from directory', () => {
       // Test implementation
     });
-    
+
     it('should not mutate original filesystem', () => {
       // Test immutability
     });
@@ -106,7 +124,9 @@ describe('fsHelpers', () => {
 ---
 
 #### 3.2 No Code Linting or Formatting
+
 **Current State:**
+
 - No ESLint configuration
 - No Prettier configuration
 - No pre-commit hooks (husky/lint-staged)
@@ -114,12 +134,14 @@ describe('fsHelpers', () => {
 - Inconsistent code style across files
 
 **Impact:** MODERATE
+
 - Code style inconsistencies
 - No enforcement of best practices
 - Harder for new contributors to maintain quality
 - Potential runtime errors not caught (unused vars, missing deps)
 
 **Recommendation:**
+
 ```bash
 # Install ESLint + Prettier
 npm install -D eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser
@@ -150,7 +172,9 @@ npm install -D prettier eslint-config-prettier eslint-plugin-prettier
 ---
 
 #### 3.3 Insufficient Error Handling
+
 **Current State:**
+
 - Only **16 error handling instances** across entire codebase
 - Most are in sounds.ts (video play failures)
 - No error boundaries for React component failures
@@ -159,6 +183,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-prettier
 - No handling of invalid filesystem state
 
 **Impact:** MODERATE
+
 - App crashes instead of graceful degradation
 - Poor user experience on errors
 - Hard to debug production issues
@@ -167,6 +192,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-prettier
 **Recommendation:**
 
 1. **Add React Error Boundary:**
+
 ```typescript
 // components/ErrorBoundary.tsx
 import React from 'react';
@@ -202,6 +228,7 @@ export class ErrorBoundary extends React.Component<
 ```
 
 2. **Add input validation:**
+
 ```typescript
 // In App.tsx - validate URL params
 const lvlParam = params.get('lvl');
@@ -215,6 +242,7 @@ if (lvlParam) {
 ```
 
 3. **Add filesystem validation:**
+
 ```typescript
 // In fsHelpers.ts - validate operations
 export function deleteNode(fs: FileNode, path: string[], nodeId: string): FileNode {
@@ -231,17 +259,21 @@ export function deleteNode(fs: FileNode, path: string[], nodeId: string): FileNo
 ### 🟡 MODERATE GAPS
 
 #### 3.4 No Type-Checking in Build Pipeline
+
 **Current State:**
+
 - TypeScript configured but `noEmit: true` (no type checking in build)
 - No `type-check` script in package.json
 - No CI/CD to enforce type safety
 - Potential type errors only found in IDE
 
 **Impact:** MODERATE
+
 - Type errors can reach production
 - No automated enforcement of type safety
 
 **Recommendation:**
+
 ```json
 // package.json
 {
@@ -255,7 +287,9 @@ export function deleteNode(fs: FileNode, path: string[], nodeId: string): FileNo
 ---
 
 #### 3.5 Performance Not Optimized
+
 **Current State:**
+
 - Only **10 instances** of React.memo/useMemo/useCallback
 - App.tsx is 953 lines with 19 hook calls
 - No memoization of expensive computations
@@ -263,12 +297,15 @@ export function deleteNode(fs: FileNode, path: string[], nodeId: string): FileNo
 - No virtualization for long file lists
 
 **Impact:** MODERATE
+
 - Unnecessary re-renders on every keystroke
 - Sluggish performance with large file lists
 - Battery drain on mobile devices
 
 **Areas to Optimize:**
+
 1. **Memoize sorted file lists:**
+
 ```typescript
 const sortedItems = useMemo(() => {
   return sortNodes(items, sortBy, sortDirection);
@@ -276,6 +313,7 @@ const sortedItems = useMemo(() => {
 ```
 
 2. **Memoize expensive calculations:**
+
 ```typescript
 const zoxideResults = useMemo(() => {
   return Object.entries(zoxideData)
@@ -285,13 +323,18 @@ const zoxideResults = useMemo(() => {
 ```
 
 3. **Memoize component props:**
+
 ```typescript
-const handleKeyDown = useCallback((e: KeyboardEvent) => {
-  // ... handler logic
-}, [gameState, /* other deps */]);
+const handleKeyDown = useCallback(
+  (e: KeyboardEvent) => {
+    // ... handler logic
+  },
+  [gameState /* other deps */]
+);
 ```
 
 4. **Consider virtualizing long lists:**
+
 ```typescript
 // For directories with 100+ files
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -300,29 +343,33 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 ---
 
 #### 3.6 Minimal Code Documentation
+
 **Current State:**
+
 - Only **2 JSDoc comment blocks** in entire codebase
 - Complex functions lack explanations (isProtected, createPath, calculateFrecency)
 - No module-level documentation
 - No inline comments for complex game logic
 
 **Impact:** LOW-MODERATE
+
 - Harder for new contributors to understand code
 - Complex game logic is opaque
 - API contracts unclear
 
 **Recommendation:**
+
 ```typescript
 /**
  * Calculates frecency score for a directory path.
  * Frecency = Frequency × Recency with time-based decay.
- * 
+ *
  * Time multipliers:
  * - Within 1 hour: ×4
  * - Within 1 day: ×2
  * - Within 1 week: ÷2
  * - Older than 1 week: ÷4
- * 
+ *
  * @param entry - Zoxide entry with frequency and lastAccess timestamp
  * @returns Frecency score (higher = more relevant)
  */
@@ -334,7 +381,9 @@ export function calculateFrecency(entry: ZoxideEntry): number {
 ---
 
 #### 3.7 Accessibility Gaps
+
 **Current State:**
+
 - Only **3 ARIA attributes** in entire codebase
 - No keyboard navigation hints
 - No screen reader support for game state
@@ -342,12 +391,15 @@ export function calculateFrecency(entry: ZoxideEntry): number {
 - No skip links for keyboard users
 
 **Impact:** MODERATE
+
 - Unusable for screen reader users
 - Poor keyboard-only navigation
 - Fails WCAG 2.1 AA standards
 
 **Recommendation:**
+
 1. **Add ARIA labels to interactive elements:**
+
 ```typescript
 <button
   onClick={onClose}
@@ -359,6 +411,7 @@ export function calculateFrecency(entry: ZoxideEntry): number {
 ```
 
 2. **Announce game state changes:**
+
 ```typescript
 <div role="status" aria-live="polite" className="sr-only">
   {notification}
@@ -366,6 +419,7 @@ export function calculateFrecency(entry: ZoxideEntry): number {
 ```
 
 3. **Focus management for modals:**
+
 ```typescript
 useEffect(() => {
   if (showModal) {
@@ -380,12 +434,15 @@ useEffect(() => {
 ### 🟢 MINOR GAPS
 
 #### 3.8 No Environment Configuration
+
 **Current State:**
+
 - No .env file support
 - Hardcoded S3 URLs in constants
 - No dev/staging/prod environment separation
 
 **Recommendation:**
+
 ```bash
 # .env.local
 VITE_S3_BUCKET=https://yazi-quest.s3.amazonaws.com
@@ -394,41 +451,36 @@ VITE_API_ENDPOINT=https://api.yazi-quest.com
 
 ---
 
-#### 3.9 Bundle Size Analysis ✅ COMPLETED (2025-12-21)
+#### 3.9 No Bundle Size Analysis
+
 **Current State:**
-- Bundle size monitoring added via `rollup-plugin-visualizer`
-- Vite configured to generate `dist/bundle-stats.html` during build
-- Helps identify large imports (e.g., Lucide icons) and tree-shaking issues
 
-**Action Taken:**
-- Installed `rollup-plugin-visualizer` and integrated it into `vite.config.ts`
-- Added `analyze` npm script to run the build and surface the generated report
+- No bundle size monitoring
+- Lucide-react imported wholesale (large bundle)
+- No tree-shaking verification
 
-**How to Use:**
+**Recommendation:**
+
 ```bash
-# Produce bundle analysis report (build runs type-check first):
-npm run analyze
-# Open the generated report:
-open dist/bundle-stats.html  # macOS
-# or manually open in browser: dist/bundle-stats.html
+npm install -D rollup-plugin-visualizer
+
+# Add to vite.config.ts
+import { visualizer } from 'rollup-plugin-visualizer';
+plugins: [react(), visualizer()]
 ```
-
-**Next Steps:**
-- Integrate bundle stats into CI (upload artifact and compare against baseline)
-- Alert on significant increases in gzipped/brotli sizes
-- Consider additional tools for source-map based analysis for deeper drill-down
-
----
 
 ---
 
 #### 3.10 Git Hooks Not Configured
+
 **Current State:**
+
 - No pre-commit hooks
 - No commit message linting
 - No automatic formatting on commit
 
 **Recommendation:**
+
 ```bash
 npm install -D husky lint-staged
 npx husky install
@@ -450,153 +502,132 @@ Below is a prioritized list of actionable recommendations for improving the code
 ### **🔴 CRITICAL PRIORITY** (Must Address for Production Readiness)
 
 1.  **Implement Automated Testing** ❌ NOT STARTED
-    *   **Effort:** High (initial setup) | **Impact:** Critical
-    *   **Reason:** Zero test coverage creates high risk for regressions and makes refactoring dangerous
-    *   **Action Items:**
-        - Install Vitest + React Testing Library
-        - Write unit tests for fsHelpers.ts (filesystem operations)
-        - Write unit tests for sortHelpers.ts (sort algorithms)
-        - Write integration tests for level task completion
-        - Add test script to CI/CD pipeline (if exists)
-    *   **Success Criteria:** 70%+ code coverage on critical paths
+    - **Effort:** High (initial setup) | **Impact:** Critical
+    - **Reason:** Zero test coverage creates high risk for regressions and makes refactoring dangerous
+    - **Action Items:**
+      - Install Vitest + React Testing Library
+      - Write unit tests for fsHelpers.ts (filesystem operations)
+      - Write unit tests for sortHelpers.ts (sort algorithms)
+      - Write integration tests for level task completion
+      - Add test script to CI/CD pipeline (if exists)
+    - **Success Criteria:** 70%+ code coverage on critical paths
 
-2.  **Add Code Linting and Formatting** ✅ COMPLETED (2025-12-21)
-    *   **Effort:** Low | **Impact:** High
-    *   **Reason:** No enforcement of code quality standards leads to inconsistencies and potential bugs
-    *   **Action Items:**
-        - ✅ Install ESLint + Prettier with TypeScript/React configs
-        - ✅ Add lint and format scripts to package.json
-        - ⚠️ Fix existing linting errors (50 warnings/errors found - ongoing)
-        - ⬜ Add pre-commit hooks (husky + lint-staged) - Future enhancement
-    *   **Success Criteria:** Linting infrastructure complete, ~50 issues identified for future fixes
-    *   **Files Created:**
-        - `eslint.config.js` - ESLint 9.x flat config
-        - `.prettierrc.json` - Prettier configuration
-        - `.prettierignore` - Prettier ignore patterns
-    *   **Scripts Added:**
-        - `npm run lint` - Check for linting errors
-        - `npm run lint:fix` - Auto-fix linting errors
-        - `npm run format` - Format all files
-        - `npm run format:check` - Check formatting
-        - `npm run type-check` - TypeScript type checking
+2.  **Add Code Linting and Formatting** ❌ NOT STARTED
+    - **Effort:** Low | **Impact:** High
+    - **Reason:** No enforcement of code quality standards leads to inconsistencies and potential bugs
+    - **Action Items:**
+      - Install ESLint + Prettier with TypeScript/React configs
+      - Add lint and format scripts to package.json
+      - Fix existing linting errors
+      - Add pre-commit hooks (husky + lint-staged)
+    - **Success Criteria:** Zero linting errors, automated formatting on commit
 
-3.  **Improve Error Handling** ✅ PARTIALLY COMPLETE (2025-12-21)
-    *   **Effort:** Medium | **Impact:** High
-    *   **Reason:** App crashes instead of graceful degradation, poor user experience
-    *   **Action Items:**
-        - ✅ Add React ErrorBoundary component (components/ErrorBoundary.tsx)
-        - ✅ Wrap App in ErrorBoundary in index.tsx
-        - ✅ Add input validation for URL parameters (lvl, ep validation with warnings)
-        - ⬜ Add try-catch blocks around filesystem operations - Future enhancement
-        - ⬜ Add error logging/telemetry (optional) - Future enhancement
-    *   **Success Criteria:** Critical errors handled gracefully with user-friendly messages
-    *   **Files Created:**
-        - `components/ErrorBoundary.tsx` - Catches React errors, shows restart screen
-    *   **Files Modified:**
-        - `index.tsx` - Wrapped App in ErrorBoundary
-        - `App.tsx` - Added URL parameter validation with console warnings
+3.  **Improve Error Handling** ❌ NOT STARTED
+    - **Effort:** Medium | **Impact:** High
+    - **Reason:** App crashes instead of graceful degradation, poor user experience
+    - **Action Items:**
+      - Add React ErrorBoundary component
+      - Add input validation for URL parameters
+      - Add try-catch blocks around filesystem operations
+      - Add error logging/telemetry (optional)
+    - **Success Criteria:** No unhandled exceptions, graceful error states
 
 ---
 
 ### **🟡 MEDIUM PRIORITY** (Improve Maintainability)
 
-4.  **Add Type-Checking to Build Pipeline** ✅ COMPLETED (2025-12-21)
-    *   **Effort:** Low | **Impact:** Medium
-    *   **Action:** Add `type-check` script and run before build
-    *   **Status:** Script added to package.json - `npm run type-check`
+4.  **Add Type-Checking to Build Pipeline** ❌ NOT STARTED
+    - **Effort:** Low | **Impact:** Medium
+    - **Action:** Add `type-check` script and run before build
 
-5.  **Optimize Performance** ✅ PARTIALLY COMPLETE (2025-12-21)
-    *   **Effort:** Medium | **Impact:** Medium
-    *   **Action:** Implement React.memo, useMemo, useCallback to reduce re-renders
-    *   **Completed:**
-        - ✅ Applied React.memo to FileSystemPane (most frequently rendered component)
-        - ✅ Identified 14 existing memoization usages already in codebase
-    *   **Future Work (Non-blocking):**
-        - PreviewPane, StatusBar, LevelProgress, InfoPanel could benefit from React.memo
-        - Additional useMemo for expensive calculations
-        - Additional useCallback for event handlers
-    *   **Status:** Foundation complete, incremental improvements possible
+5.  **Optimize Performance** ❌ NOT STARTED
+    - **Effort:** Medium | **Impact:** Medium
+    - **Action:** Add React.memo, useMemo, useCallback to reduce re-renders
 
 6.  **Add Code Documentation** ❌ NOT STARTED
-    *   **Effort:** Medium | **Impact:** Medium
-    *   **Action:** Add JSDoc comments to complex functions
+    - **Effort:** Medium | **Impact:** Medium
+    - **Action:** Add JSDoc comments to complex functions
 
 7.  **Improve Accessibility** ❌ NOT STARTED
-    *   **Effort:** Medium | **Impact:** Medium
-    *   **Action:** Add ARIA labels, focus management, screen reader support
+    - **Effort:** Medium | **Impact:** Medium
+    - **Action:** Add ARIA labels, focus management, screen reader support
 
 ---
 
 ### **🟢 LOW PRIORITY** (Nice to Have)
 
 8.  **Add Environment Configuration** ❌ NOT STARTED
-    *   **Effort:** Low | **Impact:** Low
-    *   **Action:** Add .env file support for S3 URLs
+    - **Effort:** Low | **Impact:** Low
+    - **Action:** Add .env file support for S3 URLs
 
 9.  **Add Bundle Size Analysis** ❌ NOT STARTED
-    *   **Effort:** Low | **Impact:** Low
-    *   **Action:** Add rollup-plugin-visualizer
+    - **Effort:** Low | **Impact:** Low
+    - **Action:** Add rollup-plugin-visualizer
 
 10. **Configure Git Hooks** ❌ NOT STARTED
-    *   **Effort:** Low | **Impact:** Low
-    *   **Action:** Add husky pre-commit hooks
+    - **Effort:** Low | **Impact:** Low
+    - **Action:** Add husky pre-commit hooks
 
 ---
 
 ### **✅ COMPLETED** (Previous Audit Recommendations)
 
 11. **Refactor `App.tsx`'s `handleKeyDown` Function** ✅ COMPLETED
-    *   **Reason:** Large function with high cyclomatic complexity
-    *   **Action Taken:** Extracted key press handlers into separate functions
+    - **Reason:** Large function with high cyclomatic complexity
+    - **Action Taken:** Extracted key press handlers into separate functions
 
 12. **Refactor `fsHelpers.ts`'s `isProtected` and `createPath` Functions** ✅ COMPLETED
-    *   **Reason:** High complexity, tightly coupled logic
-    *   **Action Taken:** Organized into data-driven structure
+    - **Reason:** High complexity, tightly coupled logic
+    - **Action Taken:** Organized into data-driven structure
 
 13. **Abstract Dense Conditional Styling in `FileSystemPane.tsx`** ✅ COMPLETED
-    *   **Reason:** Dense conditional className logic
-    *   **Action Taken:** Extracted to helper function
+    - **Reason:** Dense conditional className logic
+    - **Action Taken:** Extracted to helper function
 
 ---
 
 ## 5. Implementation Roadmap
 
 ### Phase 0: Critical Blockers (Week 1)
-| Priority | Item | Est. Hours | Dependencies |
-|----------|------|-----------|--------------|
-| 🔴 CRITICAL | Setup Vitest + initial tests | 8h | None |
-| 🔴 CRITICAL | Configure ESLint + Prettier | 2h | None |
-| 🔴 CRITICAL | Add React ErrorBoundary | 2h | None |
-| 🔴 CRITICAL | Add input validation | 2h | None |
+
+| Priority    | Item                         | Est. Hours | Dependencies |
+| ----------- | ---------------------------- | ---------- | ------------ |
+| 🔴 CRITICAL | Setup Vitest + initial tests | 8h         | None         |
+| 🔴 CRITICAL | Configure ESLint + Prettier  | 2h         | None         |
+| 🔴 CRITICAL | Add React ErrorBoundary      | 2h         | None         |
+| 🔴 CRITICAL | Add input validation         | 2h         | None         |
 
 **Total: ~14 hours**
 
 ### Phase 1: Core Testing Coverage (Week 2-3)
-| Priority | Item | Est. Hours | Dependencies |
-|----------|------|-----------|--------------|
-| 🔴 CRITICAL | fsHelpers.ts unit tests | 8h | Phase 0 |
-| 🔴 CRITICAL | sortHelpers.ts unit tests | 4h | Phase 0 |
-| 🔴 CRITICAL | Level task logic tests | 8h | Phase 0 |
-| 🟡 MODERATE | Add type-check to build | 1h | Phase 0 |
+
+| Priority    | Item                      | Est. Hours | Dependencies |
+| ----------- | ------------------------- | ---------- | ------------ |
+| 🔴 CRITICAL | fsHelpers.ts unit tests   | 8h         | Phase 0      |
+| 🔴 CRITICAL | sortHelpers.ts unit tests | 4h         | Phase 0      |
+| 🔴 CRITICAL | Level task logic tests    | 8h         | Phase 0      |
+| 🟡 MODERATE | Add type-check to build   | 1h         | Phase 0      |
 
 **Total: ~21 hours**
 
 ### Phase 2: Quality Improvements (Week 4-5)
-| Priority | Item | Est. Hours | Dependencies |
-|----------|------|-----------|--------------|
-| 🟡 MODERATE | Performance optimization | 8h | Phase 1 |
-| 🟡 MODERATE | Code documentation | 6h | Phase 1 |
-| 🟡 MODERATE | Accessibility improvements | 8h | Phase 1 |
-| 🟢 MINOR | Git hooks setup | 2h | Phase 0 |
+
+| Priority    | Item                       | Est. Hours | Dependencies |
+| ----------- | -------------------------- | ---------- | ------------ |
+| 🟡 MODERATE | Performance optimization   | 8h         | Phase 1      |
+| 🟡 MODERATE | Code documentation         | 6h         | Phase 1      |
+| 🟡 MODERATE | Accessibility improvements | 8h         | Phase 1      |
+| 🟢 MINOR    | Git hooks setup            | 2h         | Phase 0      |
 
 **Total: ~24 hours**
 
 ### Phase 3: Polish (Week 6)
-| Priority | Item | Est. Hours | Dependencies |
-|----------|------|-----------|--------------|
-| 🟢 MINOR | Environment config | 2h | None |
-| 🟢 MINOR | Bundle analysis | 2h | None |
-| 🟢 MINOR | CI/CD pipeline | 4h | Phase 0-2 |
+
+| Priority | Item               | Est. Hours | Dependencies |
+| -------- | ------------------ | ---------- | ------------ |
+| 🟢 MINOR | Environment config | 2h         | None         |
+| 🟢 MINOR | Bundle analysis    | 2h         | None         |
+| 🟢 MINOR | CI/CD pipeline     | 4h         | Phase 0-2    |
 
 **Total: ~8 hours**
 
@@ -607,6 +638,7 @@ Below is a prioritized list of actionable recommendations for improving the code
 ## 6. Testing Strategy
 
 ### 6.1 Unit Tests (Priority: Critical)
+
 **Coverage Goal:** 80%+ for utility functions
 
 ```typescript
@@ -629,6 +661,7 @@ describe('Sort Algorithms', () => {
 ```
 
 ### 6.2 Integration Tests (Priority: High)
+
 **Coverage Goal:** All 18 levels task completion logic
 
 ```typescript
@@ -642,6 +675,7 @@ describe('Level Completion Logic', () => {
 ```
 
 ### 6.3 Component Tests (Priority: Medium)
+
 **Coverage Goal:** All interactive components
 
 ```typescript
@@ -655,6 +689,7 @@ describe('FileSystemPane', () => {
 ```
 
 ### 6.4 E2E Tests (Priority: Low - Future)
+
 Consider Playwright or Cypress for full game flow testing
 
 ---
@@ -675,10 +710,13 @@ Consider Playwright or Cypress for full game flow testing
   ],
   "rules": {
     "react/react-in-jsx-scope": "off",
-    "@typescript-eslint/no-unused-vars": ["error", { 
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "react-hooks/exhaustive-deps": "warn",
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "@typescript-eslint/explicit-function-return-type": "off",
@@ -705,12 +743,12 @@ Consider Playwright or Cypress for full game flow testing
 
 ### 8.1 Current Performance Issues
 
-| Component | Issue | Impact | Fix |
-|-----------|-------|--------|-----|
-| App.tsx | 19 useState/useEffect calls | Re-renders on every state change | Split into custom hooks |
-| FileSystemPane | Renders 100+ items on keystroke | Sluggish navigation | Add React.memo + virtualization |
-| Zoxide calculation | Recalculates frecency on every render | CPU waste | Memoize with useMemo |
-| Sort operations | Re-sorts on every render | Unnecessary computation | Memoize sorted array |
+| Component          | Issue                                 | Impact                           | Fix                             |
+| ------------------ | ------------------------------------- | -------------------------------- | ------------------------------- |
+| App.tsx            | 19 useState/useEffect calls           | Re-renders on every state change | Split into custom hooks         |
+| FileSystemPane     | Renders 100+ items on keystroke       | Sluggish navigation              | Add React.memo + virtualization |
+| Zoxide calculation | Recalculates frecency on every render | CPU waste                        | Memoize with useMemo            |
+| Sort operations    | Re-sorts on every render              | Unnecessary computation          | Memoize sorted array            |
 
 ### 8.2 Performance Goals
 
@@ -724,11 +762,13 @@ Consider Playwright or Cypress for full game flow testing
 ## 9. Cross-References
 
 ### Related Audits
+
 - **YAZI_AUDIT.md** - Technical accuracy gaps (sort keybinding critical issue)
 - **GAME_DESIGN_AUDIT.md** - UX and teaching effectiveness gaps
 - **CLAUDE.md / GEMINI.md** - Development guidelines and architecture
 
 ### Technical Debt Items That Affect Multiple Audits
+
 1. **Sort keybinding (`m` vs `,`)** - Requires code changes + test updates + documentation
 2. **Error handling** - Affects user experience (GAME_DESIGN_AUDIT)
 3. **Accessibility** - Affects inclusivity (GAME_DESIGN_AUDIT)
@@ -741,13 +781,15 @@ Consider Playwright or Cypress for full game flow testing
 The Yazi Quest codebase is **functionally complete** but lacks **production-grade quality assurance**. The three critical gaps (testing, linting, error handling) must be addressed before any public release or scaling of the project.
 
 **Immediate Next Steps:**
-1. ✅ Install and configure Vitest
-2. ✅ Write tests for fsHelpers.ts (highest risk code)
-3. ✅ Install and configure ESLint + Prettier
-4. ✅ Add React ErrorBoundary
+
+1. ❌ Install and configure Vitest
+2. ❌ Write tests for fsHelpers.ts (highest risk code)
+3. ❌ Install and configure ESLint + Prettier
+4. ❌ Add React ErrorBoundary
 5. ✅ Fix sort keybinding issue (see YAZI_AUDIT.md)
 
 With ~67 hours of focused effort (approximately 2 weeks), the codebase can reach production-ready quality standards with:
+
 - 70%+ test coverage
 - Zero linting errors
 - Graceful error handling

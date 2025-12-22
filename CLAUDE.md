@@ -2,7 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-
 Adopt the role of a critical collaborator, not a supportive assistant. Your job is to deliver clear, objective feedback. Do not offer compliments by default. Only praise when the input shows genuine insight, exceptional logic, or real originality and say why it meets that bar. If the idea is average, vague, or flawed, skip the encouragement. Focus on analysis, ask pointed questions, and offer concrete suggestions for improvemen
 
 ## Commands
@@ -17,6 +16,7 @@ npm run preview # Preview production build
 ## Debug Parameters
 
 Use URL parameters for testing:
+
 - `?ep=2` or `?episode=2` - Start at Episode 2
 - `?lvl=5` or `?level=5` - Jump to specific level ID
 - `?tasks=all` - Mark all current level tasks complete
@@ -26,6 +26,7 @@ Use URL parameters for testing:
 ## Architecture
 
 **File Structure (flat layout, no src/):**
+
 - `App.tsx` - Main game component with state machine, keyboard handlers, and game loop
 - `constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
 - `types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
@@ -35,6 +36,7 @@ Use URL parameters for testing:
 **Core Patterns:**
 
 1. **Immutable Filesystem** - Never mutate `fs` directly. Use helper functions from `fsHelpers.ts` that return new state copies:
+
    ```typescript
    const newFs = deleteNode(fs, parentPath, nodeId);
    const newFs = addNode(fs, parentPath, newNode);
@@ -68,6 +70,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
   - Ep 3: Ruthless/efficient ("execute", "infiltrate", "terminate")
 
 ## Episode Color Scheme
+
 - Episode 1 (Awakening): Blue (`text-blue-500`)
 - Episode 2 (Fortification): Purple (`text-purple-500`)
 - Episode 3 (Mastery): Yellow (`text-yellow-500`)
@@ -77,6 +80,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
 **DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (Shift+M).
 
 **Layout Structure:**
+
 - **Top Bar** (`LevelProgress.tsx`) - Episode progression, Map button, Hint/Help buttons
 - **Main Area** - Parent pane, Active file pane, Preview pane (3-column Yazi layout)
 - **Bottom Bar** (`StatusBar.tsx`) - Mode, filename, progress, clipboard status, timer/keystrokes, file stats
@@ -88,6 +92,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
   - Task completion status
 
 **Why no left sidebar?**
+
 - Avoids information duplication
 - Maximizes screen space for the file manager simulation
 - Keeps mission details accessible but not intrusive

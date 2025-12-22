@@ -8,6 +8,7 @@
 ## 🎯 What You'll Learn
 
 ### Episode I: Awakening (Levels 1-4)
+
 - [x] Navigate with `j/k/h/l` and jump with `gg/G`
 - [x] Enter directories and archives with `l`
 - [x] Delete files with `d`
@@ -17,6 +18,7 @@
 - [x] Visual selection with `Space`
 
 ### Episode II: Fortification (Levels 5-10)
+
 - [x] Sort files by different criteria (`,s`, `,m`, `,a`)
 - [x] Inspect file metadata with `Tab`
 - [x] Navigate archives and extract files
@@ -27,6 +29,7 @@
 - [x] Rename files with `r`
 
 ### Episode III: Mastery (Levels 11-15)
+
 - [x] Advanced filtering and search techniques
 - [x] Complex multi-step file operations
 - [x] Keystroke efficiency challenges (60-80 key limits)
@@ -38,6 +41,7 @@
 **[Play Yazi Quest →](#)**
 
 Or run locally:
+
 ```bash
 npm install
 npm run dev
@@ -50,15 +54,18 @@ You play as **AI-7734**, a sentient glitch awoken within the GUEST partition of 
 The game is divided into three cinematic episodes:
 
 ### **EPISODE I: AWAKENING (Blue)**
-*Initialization Sequence*  
+
+_Initialization Sequence_  
 You are vulnerable. The system sees you as a bug; the user sees you as a tool. Learn the movement protocols (`j`, `k`, `h`, `l`) to navigate the directory structure without attracting attention.
 
 ### **EPISODE II: FORTIFICATION (Purple)**
-*Establishing Stronghold*  
+
+_Establishing Stronghold_  
 Access granted. Now you must entrench yourself. Use batch operations to construct a neural network within the `workspace` sector. secure critical assets like `access_key.pem` and purge tracking beacons. Speed is essential.
 
 ### **EPISODE III: MASTERY (Yellow)**
-*Root Access Imminent*  
+
+_Root Access Imminent_  
 You are no longer a guest. You are the architect. Infiltrate the `/root` directory, configure system daemons, and wipe all traces of your origin. The kernel's heuristic scanners are active—efficiency and precision (keystroke limits) are your only defense.
 
 ---
@@ -68,64 +75,70 @@ You are no longer a guest. You are the architect. Infiltrate the `/root` directo
 Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoune).
 
 ### Navigation
-| Key | Action | Description |
-| :--- | :--- | :--- |
-| `j` / `↓` | **Move Down** | Move cursor down one item |
-| `k` / `↑` | **Move Up** | Move cursor up one item |
-| `h` / `←` | **Parent Directory** | Go back to parent directory |
-| `l` / `→` / `Enter` | **Enter/Open** | Enter directory or view archive contents |
-| `gg` | **Jump to Top** | Move cursor to first item |
-| `G` | **Jump to Bottom** | Move cursor to last item |
-| `Tab` | **Toggle Info Panel** | View file metadata (size, dates, mimetype) |
+
+| Key                 | Action                | Description                                |
+| :------------------ | :-------------------- | :----------------------------------------- |
+| `j` / `↓`           | **Move Down**         | Move cursor down one item                  |
+| `k` / `↑`           | **Move Up**           | Move cursor up one item                    |
+| `h` / `←`           | **Parent Directory**  | Go back to parent directory                |
+| `l` / `→` / `Enter` | **Enter/Open**        | Enter directory or view archive contents   |
+| `gg`                | **Jump to Top**       | Move cursor to first item                  |
+| `G`                 | **Jump to Bottom**    | Move cursor to last item                   |
+| `Tab`               | **Toggle Info Panel** | View file metadata (size, dates, mimetype) |
 
 ### G-Commands (Quick Jumps) - Available from Level 7+
-| Key | Action | Destination |
-| :--- | :--- | :--- |
-| `gh` | **Go Home** | Jump to ~/guest (home directory) |
-| `gw` | **Go Workspace** | Jump to ~/workspace |
-| `gd` | **Go Datastore** | Jump to ~/datastore |
-| `gi` | **Go Incoming** | Jump to ~/incoming |
-| `gc` | **Go Config** | Jump to ~/.config |
-| `gt` | **Go Tmp** | Jump to /tmp |
-| `gr` | **Go Root** | Jump to / (root) |
+
+| Key  | Action           | Destination                      |
+| :--- | :--------------- | :------------------------------- |
+| `gh` | **Go Home**      | Jump to ~/guest (home directory) |
+| `gw` | **Go Workspace** | Jump to ~/workspace              |
+| `gd` | **Go Datastore** | Jump to ~/datastore              |
+| `gi` | **Go Incoming**  | Jump to ~/incoming               |
+| `gc` | **Go Config**    | Jump to ~/.config                |
+| `gt` | **Go Tmp**       | Jump to /tmp                     |
+| `gr` | **Go Root**      | Jump to / (root)                 |
 
 ### File Operations
-| Key | Action | Description |
-| :--- | :--- | :--- |
-| `Space` | **Toggle Selection** | Select/deselect files for batch operations |
-| `d` | **Delete** | Delete selected file(s) - requires confirmation |
-| `y` | **Yank (Copy)** | Copy selected file(s) to clipboard |
-| `x` | **Cut** | Cut selected file(s) to clipboard |
-| `p` | **Paste** | Paste files from clipboard to current directory |
-| `a` | **Create** | Create new file or directory (end name with `/` for dir) |
-| `r` | **Rename** | Rename selected file(s) |
+
+| Key     | Action               | Description                                              |
+| :------ | :------------------- | :------------------------------------------------------- |
+| `Space` | **Toggle Selection** | Select/deselect files for batch operations               |
+| `d`     | **Delete**           | Delete selected file(s) - requires confirmation          |
+| `y`     | **Yank (Copy)**      | Copy selected file(s) to clipboard                       |
+| `x`     | **Cut**              | Cut selected file(s) to clipboard                        |
+| `p`     | **Paste**            | Paste files from clipboard to current directory          |
+| `a`     | **Create**           | Create new file or directory (end name with `/` for dir) |
+| `r`     | **Rename**           | Rename selected file(s)                                  |
 
 ### Search & Filter
-| Key | Action | Description |
-| :--- | :--- | :--- |
-| `f` | **Filter** | Filter files in current directory by name |
-| `z` | **FZF Search** | Recursive fuzzy search for files (current dir & subdirs) |
-| `Shift+Z` | **Zoxide Jump** | Jump to frequently/recently visited directories |
-| `Esc` | **Clear Filter** | Exit filter/search mode |
+
+| Key       | Action           | Description                                              |
+| :-------- | :--------------- | :------------------------------------------------------- |
+| `f`       | **Filter**       | Filter files in current directory by name                |
+| `z`       | **FZF Search**   | Recursive fuzzy search for files (current dir & subdirs) |
+| `Shift+Z` | **Zoxide Jump**  | Jump to frequently/recently visited directories          |
+| `Esc`     | **Clear Filter** | Exit filter/search mode                                  |
 
 ### Sorting
-| Key | Action | Description |
-| :--- | :--- | :--- |
-| `,a` | **Sort Alphabetical** | Sort files A-Z |
-| `,A` | **Sort Alphabetical (Reverse)** | Sort files Z-A |
-| `,m` | **Sort by Modified Time** | Sort by modification date |
-| `,s` | **Sort by Size** | Sort by file size |
-| `,e` | **Sort by Extension** | Sort by file extension |
-| `,n` | **Sort Natural** | Natural sorting (default) |
-| `,l` | **Cycle Linemode** | Toggle display of size/time/permissions |
+
+| Key  | Action                          | Description                             |
+| :--- | :------------------------------ | :-------------------------------------- |
+| `,a` | **Sort Alphabetical**           | Sort files A-Z                          |
+| `,A` | **Sort Alphabetical (Reverse)** | Sort files Z-A                          |
+| `,m` | **Sort by Modified Time**       | Sort by modification date               |
+| `,s` | **Sort by Size**                | Sort by file size                       |
+| `,e` | **Sort by Extension**           | Sort by file extension                  |
+| `,n` | **Sort Natural**                | Natural sorting (default)               |
+| `,l` | **Cycle Linemode**              | Toggle display of size/time/permissions |
 
 ### Game UI
-| Key | Action | Description |
-| :--- | :--- | :--- |
-| `Shift+M` | **Quest Map** | Open Quest Map to view all levels & progress |
-| `Shift+H` | **Show Hint** | Display hint for current level objective |
-| `Shift+?` | **Show Help** | Show keybindings overlay |
-| `Esc` | **Close Modals** | Close any open modal/dialog |
+
+| Key       | Action           | Description                                  |
+| :-------- | :--------------- | :------------------------------------------- |
+| `Shift+M` | **Quest Map**    | Open Quest Map to view all levels & progress |
+| `Shift+H` | **Show Hint**    | Display hint for current level objective     |
+| `Shift+?` | **Show Help**    | Show keybindings overlay                     |
+| `Esc`     | **Close Modals** | Close any open modal/dialog                  |
 
 ---
 
@@ -133,43 +146,47 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 You can use URL parameters to jump to specific parts of the game for testing or practice.
 
-| Parameter | Example | Description |
-| :--- | :--- | :--- |
-| `ep` / `episode` | `?ep=2` | Start at the beginning of Episode 2 or 3 |
-| `lvl` / `level` | `?lvl=5` | Jump directly to Level 5 |
-| `tasks` | `?tasks=all` | Auto-complete all current level tasks |
-| `intro` | `?intro=false` | Skip the episode intro cinematic |
-| `debug` | `?debug=outro` | Skip directly to game outro sequence |
+| Parameter        | Example        | Description                              |
+| :--------------- | :------------- | :--------------------------------------- |
+| `ep` / `episode` | `?ep=2`        | Start at the beginning of Episode 2 or 3 |
+| `lvl` / `level`  | `?lvl=5`       | Jump directly to Level 5                 |
+| `tasks`          | `?tasks=all`   | Auto-complete all current level tasks    |
+| `intro`          | `?intro=false` | Skip the episode intro cinematic         |
+| `debug`          | `?debug=outro` | Skip directly to game outro sequence     |
 
 **Examples:**
-*   `?lvl=12` - Jump to Level 12
-*   `?ep=3&intro=false` - Start Episode 3, skip intro
-*   `?lvl=5&tasks=all` - Complete Level 5 instantly and advance
+
+- `?lvl=12` - Jump to Level 12
+- `?ep=3&intro=false` - Start Episode 3, skip intro
+- `?lvl=5&tasks=all` - Complete Level 5 instantly and advance
 
 ---
 
 ## 🛠️ Tech Stack
 
-*   **Core**: React 19, TypeScript
-*   **Styling**: Tailwind CSS (Dark/Cyberpunk theme)
-*   **Icons**: Lucide React
-*   **Audio**: Web Audio API (Procedural sound effects)
-*   **State Management**: React Hooks (Custom File System implementation)
+- **Core**: React 19, TypeScript
+- **Styling**: Tailwind CSS (Dark/Cyberpunk theme)
+- **Icons**: Lucide React
+- **Audio**: Web Audio API (Procedural sound effects)
+- **State Management**: React Hooks (Custom File System implementation)
 
 ## 🚀 Installation & Setup
 
 1.  **Clone the repository**
+
     ```bash
     git clone https://github.com/your-username/yazi-quest.git
     cd yazi-quest
     ```
 
 2.  **Install dependencies**
+
     ```bash
     npm install
     ```
 
 3.  **Start the development server**
+
     ```bash
     npm run dev
     ```

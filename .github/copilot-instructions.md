@@ -11,6 +11,7 @@ Adopt the role of a critical collaborator, not a supportive assistant. Deliver c
 **Yazi Quest** is an interactive, browser-based game that teaches [Yazi](https://github.com/sxyazi/yazi) file manager keybindings through a cyberpunk narrative. The player is an AI escaping a secure system.
 
 **Core Technologies:**
+
 - **Framework:** React 19
 - **Language:** TypeScript
 - **Build Tool:** Vite
@@ -29,6 +30,7 @@ npm run preview # Preview production build
 ## Debug Parameters
 
 Use URL parameters for testing:
+
 - `?ep=2` or `?episode=2` - Start at Episode 2
 - `?lvl=5` or `?level=5` - Jump to specific level ID
 - `?tasks=all` - Mark all current level tasks complete
@@ -38,6 +40,7 @@ Use URL parameters for testing:
 ## Architecture
 
 **File Structure (flat layout, no src/):**
+
 - `App.tsx` - Main game component with state machine, keyboard handlers, and game loop
 - `constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
 - `types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
@@ -47,6 +50,7 @@ Use URL parameters for testing:
 **Core Patterns:**
 
 1. **Immutable Filesystem** - **NEVER mutate `fs` directly.** Use helper functions from `fsHelpers.ts` that return new state copies:
+
    ```typescript
    const newFs = deleteNode(fs, parentPath, nodeId);
    const newFs = addNode(fs, parentPath, newNode);
@@ -95,6 +99,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
 **DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (Shift+M).
 
 **Layout Structure:**
+
 - **Top Bar** (`LevelProgress.tsx`) - Episode progression, Map button, Hint/Help buttons
 - **Main Area** - Parent pane, Active file pane, Preview pane (3-column Yazi layout)
 - **Bottom Bar** (`StatusBar.tsx`) - Mode, filename, progress, clipboard status, timer/keystrokes, file stats
@@ -106,6 +111,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
   - Task completion status
 
 **Why no left sidebar?**
+
 - Avoids information duplication
 - Maximizes screen space for the file manager simulation
 - Keeps mission details accessible but not intrusive

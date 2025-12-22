@@ -17,6 +17,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ## ✅ What's Implemented CORRECTLY
 
 ### Navigation (100% Accurate)
+
 - ✓ **j/k** - Up/down navigation
 - ✓ **h** - Parent directory
 - ✓ **l/Enter** - Enter directory
@@ -25,12 +26,14 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 - ✓ **Cursor persistence** - Maintains position when possible
 
 ### Selection System (100% Accurate)
+
 - ✓ **Space** - Toggle selection **AND advance cursor** (critical combined action!)
 - ✓ Multi-select with Space
 - ✓ Visual selection indicators
 - ✓ Selection persists during cut/copy operations
 
 ### File Operations (95% Accurate)
+
 - ✓ **x** - Cut files (red visual indicator)
 - ✓ **y** - Copy/yank files (yellow visual indicator)
 - ✓ **p** - Paste files
@@ -40,6 +43,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 - ✓ **r** - Rename (single and bulk)
 
 ### Filter System (100% Accurate as of fix)
+
 - ✓ **f** - Filter files by name
 - ✓ **Filters persist** across operations (cut/copy/paste)
 - ✓ **Filters persist** when navigating directories
@@ -47,18 +51,21 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 - ✓ Directory-specific filters (each dir has own filter state)
 
 ### Archive Navigation (100% Accurate)
+
 - ✓ **Enter/l on archives** - Enters archive as virtual directory
 - ✓ Can navigate inside archives with j/k/h/l
 - ✓ Supports .zip and .tar formats
 - ✓ Preview files inside archives
 
 ### Preview Pane (95% Accurate)
+
 - ✓ Auto-updates as cursor moves
 - ✓ Shows file content for text files
 - ✓ Shows images with URLs
 - ✓ Shows archive contents
 
 ### Info Panel (Tab key) (100% Accurate)
+
 - ✓ **Tab** - Toggle file info panel
 - ✓ Shows mime-type
 - ✓ Shows file size
@@ -66,21 +73,35 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 - ✓ **Tab/Esc** - Close panel (keyboard-only)
 
 ### Search & Jump (95% Accurate)
+
 - ✓ **z** - FZF fuzzy find (current directory recursive)
 - ✓ **Z** - Zoxide jump (frecency-based directory history)
 - ✓ **Frecency algorithm** - Frequency × Recency with time decay ✓
 - ✓ Zoxide time multipliers: ×4 (<1hr), ×2 (<1day), ÷2 (<1week), ÷4 (older) ✓
 
 ### Hidden Files (100% Accurate)
+
 - ✓ **.** (period) - Toggle hidden files visibility
 - ✓ Hidden files filtered before text filters
 
 ### Help System (100% Accurate)
+
 - ✓ **?** - Toggle help modal
 - ✓ Shows comprehensive keybinding list
 - ✓ **Esc** - Close help
 
+### Sorting Commands (100% Accurate)
+
+- ✓ **,m** / **,M** - Sort by modified time (newest first/oldest first)
+- ✓ **,a** / **,A** - Sort alphabetically (A-Z/Z-A)
+- ✓ **,s** / **,S** - Sort by size (largest first/smallest first)
+- ✓ **,e** / **,E** - Sort by extension (A-Z/Z-A)
+- ✓ **,n** / **,N** - Sort naturally (asc/desc)
+- ✓ Cycles linemode with `,l` and clears with `,-`
+- ✓ Sort options persist during navigation and operations
+
 ### Sound/Settings (100% Accurate)
+
 - ✓ **m** - Toggle sound on/off
 
 ---
@@ -90,14 +111,16 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 1. **MODERATE: Paste Overwrite Behavior Differs**
 
 **Real Yazi:**
-- Automatically **renames** conflicting files with "_1" suffix (safe default)
+
+- Automatically **renames** conflicting files with "\_1" suffix (safe default)
 - No prompt by default
 - Use **P** (uppercase) to force overwrite
 - Philosophy: Prevent accidental overwrites
 
 **Yazi Quest:**
+
 - Shows **OverwriteModal** prompt asking user to confirm overwrite
-- No auto-rename with "_1" suffix
+- No auto-rename with "\_1" suffix
 - No P (force overwrite) option
 
 **Impact:** Moderate - Changes workflow muscle memory
@@ -108,10 +131,12 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 2. **MINOR: Y/X to Cancel Yank Not Implemented**
 
 **Real Yazi:**
+
 - **Y** or **X** - Cancel yank status (clear clipboard)
 - Useful when you change your mind after cutting/copying
 
 **Yazi Quest:**
+
 - Missing this feature
 - No way to cancel yank except by pasting or quitting
 
@@ -123,12 +148,14 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 3. **MINOR: Visual Mode (v/V) Not Implemented**
 
 **Real Yazi:**
+
 - **v** - Enter visual mode (Vim-style selection)
 - **V** - Enter visual unset mode
 - Navigate with j/k to expand selection range
 - **Esc** - Exit visual mode
 
 **Yazi Quest:**
+
 - No visual mode
 - Only Space for individual selection
 
@@ -137,33 +164,19 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 
 ---
 
-### 4. **MINOR: Sorting Commands Not Implemented**
-
-**Real Yazi:**
-- **,m** / **,M** - Sort by modified time (asc/desc)
-- **,a** / **,A** - Sort alphabetically
-- **,s** / **,S** - Sort by size
-- **,e** / **,E** - Sort by extension
-- **,r** - Sort randomly
-
-**Yazi Quest:**
-- Files always sorted: directories → archives → files (alphabetical within each type)
-- No user-controlled sorting
-
-**Impact:** Minor - Fixed sorting is fine for teaching
-**Recommendation:** Low priority (current sorting is predictable)
-
 ---
 
 ### 5. **MINOR: Advanced Navigation Keys Missing**
 
 **Real Yazi:**
+
 - **H** - Back in history
 - **L** - Forward in history
 - **Ctrl+u** / **Ctrl+d** - Half-page scroll
 - **Ctrl+b** / **Ctrl+f** - Full-page scroll
 
 **Yazi Quest:**
+
 - Only basic j/k/h/l/gg/G navigation
 
 **Impact:** Minor - Basic navigation is sufficient
@@ -174,11 +187,13 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 6. **MINOR: Preview Navigation (J/K in Preview) Missing**
 
 **Real Yazi:**
+
 - **J** - Seek down in preview pane
 - **K** - Seek up in preview pane
 - Allows scrolling long file previews
 
 **Yazi Quest:**
+
 - Preview pane is static (no scrolling)
 
 **Impact:** Minor - Preview pane is simplified
@@ -189,12 +204,14 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 7. **MINOR: Clipboard Path Copy (cc/cd/cf/cn) Missing**
 
 **Real Yazi:**
+
 - **cc** - Copy file path
 - **cd** - Copy directory path
 - **cf** - Copy filename
 - **cn** - Copy filename without extension
 
 **Yazi Quest:**
+
 - Not implemented
 
 **Impact:** Minor - Not needed for game objectives
@@ -205,12 +222,14 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 8. **MINOR: Symlink Operations Missing**
 
 **Real Yazi:**
+
 - **-** - Create symlink (absolute)
-- **_** - Create symlink (relative)
+- **\_** - Create symlink (relative)
 - **Ctrl+-** - Create hardlink
 - **gf** - Follow symlink
 
 **Yazi Quest:**
+
 - Not implemented
 
 **Impact:** Minor - Out of scope for beginner tutorial
@@ -221,6 +240,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 9. **MINOR: Tab Management Missing**
 
 **Real Yazi:**
+
 - **t** - New tab
 - **1-9** - Switch to tab 1-9
 - **[** / **]** - Previous/next tab
@@ -228,6 +248,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 - **Ctrl+c** - Close tab
 
 **Yazi Quest:**
+
 - Single-pane only (no tabs)
 
 **Impact:** Minor - Tabs are advanced feature
@@ -238,10 +259,12 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 10. **MINOR: Shell Command Execution Missing**
 
 **Real Yazi:**
+
 - **;** - Run shell command (non-blocking)
 - **:** - Run shell command (blocking)
 
 **Yazi Quest:**
+
 - Not implemented (game is sandboxed filesystem)
 
 **Impact:** None - Intentionally omitted
@@ -252,12 +275,14 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 11. **MINOR: Search Commands (s/S/n/N) Missing**
 
 **Real Yazi:**
+
 - **s** - Search filenames with fd
 - **S** - Search content with ripgrep
 - **/** / **?** - Find next/previous
 - **n** / **N** - Jump to next/previous found item
 
 **Yazi Quest:**
+
 - Only has **f** (filter) and **z** (fzf) and **Z** (zoxide)
 
 **Impact:** Minor - Filter and fzf cover most use cases
@@ -276,7 +301,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 🟡 MEDIUM PRIORITY (Nice to Have)
 
 1. **Fix paste overwrite behavior**
-   - Switch from modal prompt to auto-rename with "_1" suffix
+   - Switch from modal prompt to auto-rename with "\_1" suffix
    - OR keep modal but add note: "Note: Real Yazi auto-renames instead of prompting"
    - Add **P** (force overwrite) option
 
@@ -295,19 +320,19 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ### 🟢 LOW PRIORITY (Not Critical)
 
 3. Visual mode (v/V)
-4. Sorting commands (,m, ,a, etc.)
-5. Advanced navigation (H/L history, Ctrl+u/d)
-6. Preview scrolling (J/K)
-7. Clipboard path copy (cc/cd/cf/cn)
-8. Symlink operations
-9. Tab management
-10. Search commands (s/S/n/N)
+4. Advanced navigation (H/L history, Ctrl+u/d)
+5. Preview scrolling (J/K)
+6. Clipboard path copy (cc/cd/cf/cn)
+7. Symlink operations
+8. Tab management
+9. Search commands (s/S/n/N)
 
 ---
 
 ## Test Cases for Verification
 
 ### Filter Persistence ✅
+
 ```
 1. Navigate to /home/guest/incoming
 2. Press 'f', type 'map'
@@ -320,6 +345,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ```
 
 ### Space Toggle+Advance ✅
+
 ```
 1. Navigate to directory with multiple files
 2. Press Space on first file
@@ -327,6 +353,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ```
 
 ### Trailing Slash Directory Creation ✅
+
 ```
 1. Press 'a'
 2. Type 'protocols/' (with trailing slash)
@@ -335,6 +362,7 @@ Yazi Quest accurately implements **core navigation and file operations** matchin
 ```
 
 ### Zoxide Frecency ✅
+
 ```
 1. Visit /home/guest/datastore multiple times
 2. Visit /etc once

@@ -7,12 +7,11 @@ interface HintModalProps {
   onClose: () => void;
 }
 
-// Fix: Change destructuring to use 'onClose' to match interface
 export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) => {
   // Parse hint into progressive stages
   // Split by sentence or period, show increasing amounts
-  const sentences = hint.split(/\.\s+/).filter(s => s.trim());
-  
+  const sentences = hint.split(/\.\s+/).filter((s) => s.trim());
+
   let displayText = '';
   if (stage === 0 && sentences.length > 0) {
     // Vague: First sentence only or just the goal
@@ -25,7 +24,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
     // Detailed: Full walkthrough
     displayText = hint;
   }
-  
+
   const stageLabels = ['Hint (Vague)', 'Hint (Partial)', 'Hint (Detailed)'];
   const stageLabel = stageLabels[stage] || stageLabels[2];
   return (
@@ -36,8 +35,8 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
     >
       <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2 text-yellow-500">
-           <Lightbulb size={18} />
-           <h2 className="text-sm font-bold tracking-wider uppercase">{stageLabel}</h2>
+          <Lightbulb size={18} />
+          <h2 className="text-sm font-bold tracking-wider uppercase">{stageLabel}</h2>
         </div>
         {stage < 2 && (
           <div className="text-[9px] text-yellow-600 font-mono uppercase tracking-wider animate-pulse">
@@ -46,13 +45,9 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
         )}
       </div>
 
-      <p className="text-zinc-300 text-xs leading-relaxed font-mono">
-          {displayText}
-      </p>
+      <p className="text-zinc-300 text-xs leading-relaxed font-mono">{displayText}</p>
 
-      <div className="text-center text-[10px] text-zinc-600 font-mono mt-1">
-        Press Esc to close
-      </div>
+      <div className="text-center text-[10px] text-zinc-600 font-mono mt-1">Press Esc to close</div>
     </div>
   );
 };

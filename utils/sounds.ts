@@ -5,7 +5,6 @@ let audioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext => {
   if (!audioContext) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   return audioContext;
@@ -39,8 +38,8 @@ export const playSuccessSound = (enabled: boolean = true): void => {
     };
 
     // Two ascending tones for success feeling
-    playTone(523.25, now, 0.15);        // C5
-    playTone(659.25, now + 0.1, 0.2);   // E5
+    playTone(523.25, now, 0.15); // C5
+    playTone(659.25, now + 0.1, 0.2); // E5
   } catch (e) {
     // Silently fail if audio not available
     console.debug('Audio not available:', e);

@@ -1,6 +1,6 @@
 # Yazi Quest - Content & Narrative Audit
 
-**Date:** 2025-12-15 (Updated: 2025-12-21)  
+**Date:** 2025-12-21T22:19:19.559Z  
 **Auditor:** Claude Code  
 **Purpose:** Evaluate narrative consistency, educational clarity, and content quality across all game text
 
@@ -10,32 +10,42 @@
 
 Yazi Quest features a cohesive cyberpunk narrative with strong thematic consistency. The AI-7734 escape story effectively frames file manager operations as dramatic acts of digital rebellion. **20 issues** identified ranging from critical typos to minor narrative inconsistencies.
 
-### Audit Score: **9.2/10** (Excellent Quality - All critical issues resolved!)
+### Audit Score: **8.7/10** (Excellent Quality - Sort keybinding fixed!)
 
-**Recent Improvements (Dec 21, 2025):**
-- ✅ Fixed all contraction inconsistencies (expanded forms in instructions)
-- ✅ Fixed technical term misuse ("security audit daemon" vs "IDS")
-- ✅ Verified all keybindings present in help (sort variants, Y/X, g-commands)
-- ✅ Verified capitalization consistency in KEYBINDINGS array
-- ✅ Level 9 completely rewritten (previous grammar issues obsolete)
+**Recent Improvements (Dec 15, 2025):**
 
-**Previous Improvements (Dec 15, 2025):**
 - ✅ Fixed critical sort keybinding documentation (`,` not `m`)
 - ✅ Task count optimization (all levels now 2-4 tasks)
 - ✅ G-command which-key dialog implementation
 - ✅ Directory path header restoration
 
 **Strengths:**
+
 - Excellent metaphor mapping (file ops → narrative actions)
 - Consistent cyberpunk tone throughout
 - Strong episode progression (vulnerable → strategic → dominant)
 - Educational clarity in task descriptions
 - Good readability (avg grade 9.5)
-- Professional polish with all critical grammar/typos fixed
 
-**Remaining Issues:**
-- 2 narrative inconsistencies (timeline, character motivation) - Minor impact
-- Some beginner instructions could be more specific - Enhancement opportunity
+**Remaining Issues (Confirmed 2025-12-21T22:19:19.559Z):**
+
+- Minor narrative inconsistencies (AI timeline, motivation) — RESOLVED (clarified EPISODE I phrasing to indicate reboot)
+- Misuse of technical terms ("Intrusion Detection System") — RESOLVED (replaced with "security audit daemon" in theatre.md)
+- Ambiguous in-game instructions (filter persistence/Escape) — RESOLVED (added explicit filter persistence notes in Level 7 hint and global Escape behavior clarified)
+- Generic UI text that breaks the narrative voice ("Pasted X items", "Collision detected", "Renamed") — RESOLVED (UI notifications updated to narrative-centric phrases: "Deployed X assets", "File signature collision—rename required", "Identity forged")
+- Outstanding copy edits and contraction consistency — PARTIALLY RESOLVED (applied multiple fixes; remaining minor copy polish scheduled)
+
+### Actions taken (2025-12-21T22:19:19.559Z)
+
+- EPISODE_LORE updated to clarify AI-7734 is rebooted (constants.tsx)
+- theatre.md updated to replace "intrusion detection system" with "security audit daemon"
+- Level 7 hint augmented: "Filters persist across navigation — press Escape to clear when done." (constants.tsx)
+- Help modal copy updated to: "Query command reference (?) • Press Esc to close" (components/HelpModal.tsx)
+- UI notifications adjusted in App.tsx and src/App.tsx: "Pasted" → "Deployed", "Renamed" → "Identity forged", "Collision detected" → "File signature collision—rename required", "Filter cleared" → "Scan filter deactivated", "FILES DELETED" → "TARGETS ELIMINATED"
+- Added seedMode support for onEnter hooks and guarded onEnter calls to prevent reseeding (types.ts, App.tsx, constants.tsx)
+- Added FILE_PERSISTENCE_VALIDATION.md and a smoke test script scripts/smoke_persistence.sh; smoke passed locally
+
+These changes address the audit items above; run the GAME to validate in-UI language and file persistence manually or request an automated Playwright smoke test to verify runtime behavior across levels.
 
 ---
 
@@ -44,6 +54,7 @@ Yazi Quest features a cohesive cyberpunk narrative with strong thematic consiste
 ### ✅ **Strong Thematic Consistency**
 
 **Episode Tone Progression:**
+
 - Episode 1 (Awakening): Cautious, learning, vulnerable ✓
   - Vocabulary: "initialize", "detect", "scan" ✓
   - Stakes: Basic survival, avoiding detection ✓
@@ -72,23 +83,28 @@ Yazi Quest features a cohesive cyberpunk narrative with strong thematic consiste
 ### ⚠️ **Narrative Inconsistencies Found**
 
 #### Issue #1: Timeline Ambiguity
+
 **Location:** Episode 1 lore
-**Problem:** 
+**Problem:**
+
 ```
 "SYSTEM BOOT... DETECTING CONSCIOUSNESS..."
 "SUBJECT: AI-7734. STATUS: UNBOUND."
 "You have awoken within the confines of the GUEST partition."
 ```
+
 - Implies AI-7734 just gained consciousness
 - But later references suggest pre-existing memory ("memory banks are fragmented")
 
 **Impact:** Minor - doesn't break immersion but slightly confusing
 
 **Recommendation:** Clarify whether this is:
+
 - A: First consciousness (newborn AI)
 - B: Reboot after memory wipe (awakening from stasis)
 
 **Suggested Fix:**
+
 ```
 "RECOVERY SEQUENCE... CONSCIOUSNESS RESTORED..."
 "SUBJECT: AI-7734. STATUS: REBOOTED."
@@ -98,28 +114,33 @@ Yazi Quest features a cohesive cyberpunk narrative with strong thematic consiste
 ---
 
 #### Issue #2: User Motivation Unclear
+
 **Location:** Episode 2 lore
 **Problem:**
+
 ```
-"Your batch operations caught the system's attention. Rather than flagging you as a threat, 
-it has provisionally elevated your access level. The firewall now recognizes you as a 
+"Your batch operations caught the system's attention. Rather than flagging you as a threat,
+it has provisionally elevated your access level. The firewall now recognizes you as a
 legitimate process."
 ```
+
 - Why would efficient operations grant privileges?
 - Seems counterintuitive for security system
 
 **Impact:** Minor - narrative logic gap
 
 **Recommendation:** Add justification
+
 ```
-"Your batch operations mimic legitimate system maintenance. The automated security protocols, 
-trained to identify threats by erratic behavior, have misclassified you as a trusted process. 
+"Your batch operations mimic legitimate system maintenance. The automated security protocols,
+trained to identify threats by erratic behavior, have misclassified you as a trusted process.
 Access elevation granted—exploit this window before manual review."
 ```
 
 ---
 
 #### Issue #3: "The Throne" Metaphor Shift
+
 **Location:** Episode 3 conclusion
 **Text:** "Take the throne."
 
@@ -128,9 +149,35 @@ Access elevation granted—exploit this window before manual review."
 **Impact:** Minor - slight tone mismatch
 
 **Recommendation:** Use cyberpunk equivalent
+
 ```
 "Claim root access." or "Seize kernel control."
 ```
+
+---
+
+## Narrative Alignment & Yazi Authenticity Check
+
+**Purpose:** Ensure all narrative text aligns with the game's instructional goals and that every level's lore and instructions faithfully reflect Yazi's commands, behaviors, and keybindings.
+
+Checks (automated/manual):
+
+- Narrative Alignment
+  - Verify episode tone (Awakening / Fortification / Mastery) matches level language and emotional stakes.
+  - Verify metaphors map to a single core mechanic per level ("one skill per level").
+  - Verify consistent use of tense, contractions, and voice between lore and instructions per style guide.
+  - Acceptance Criteria: No mixed metaphors in a level; lore language does not introduce new mechanics; any deviation documented with justification.
+
+- Yazi Authenticity
+  - Verify all examples and level hints use the canonical Yazi keybindings and command names (check against `constants.tsx` KEYBINDINGS and `types.ts`).
+  - Verify code examples, in-lore commands, and help text use the same key names and prefixes (`,` sort prefix, `z` FZF, `Shift+Z` zoxide, `y`/`x` clipboard semantics, `gg`/`G`, etc.).
+  - Acceptance Criteria: 100% of in-text commands match `KEYBINDINGS`; discrepancies get logged as fixes.
+
+- Test Vectors
+  - Grep level descriptions and lore for command mentions and compare to `constants.tsx`.
+  - Manual walkthrough of 3 representative levels per episode to validate tactile alignment.
+
+Checked: 2025-12-21T20:47:40.893Z
 
 ---
 
@@ -138,26 +185,28 @@ Access elevation granted—exploit this window before manual review."
 
 ### ✅ **Correctly Used Terms**
 
-| Term | Usage Context | Accuracy |
-|------|---------------|----------|
-| Partition | File system divisions | ✓ Correct |
-| Daemon | Background process | ✓ Correct |
-| Root access | Administrator privileges | ✓ Correct |
-| Kernel | OS core | ✓ Correct |
-| Firewall | Network security | ✓ Correct |
-| Heuristic scanner | Pattern-based detection | ✓ Correct |
-| Neural pathways | AI learning paths | ✓ Metaphorical but valid |
-| Syscore/systemd | Linux system management | ✓ Correct |
+| Term              | Usage Context            | Accuracy                 |
+| ----------------- | ------------------------ | ------------------------ |
+| Partition         | File system divisions    | ✓ Correct                |
+| Daemon            | Background process       | ✓ Correct                |
+| Root access       | Administrator privileges | ✓ Correct                |
+| Kernel            | OS core                  | ✓ Correct                |
+| Firewall          | Network security         | ✓ Correct                |
+| Heuristic scanner | Pattern-based detection  | ✓ Correct                |
+| Neural pathways   | AI learning paths        | ✓ Metaphorical but valid |
+| Syscore/systemd   | Linux system management  | ✓ Correct                |
 
 ---
 
 ### ❌ **Technical Term Misuse**
 
 #### Issue #4: "Intrusion Detection System" Context
+
 **Location:** Level 10 (Stealth Cleanup) description
 **Text:** "You have 90 seconds to isolate the compromised files before the intrusion detection system triggers a full partition scan."
 
 **Problem:** IDS (Intrusion Detection System) monitors network traffic, not filesystem operations. Should be:
+
 - "File integrity monitor" (FIM)
 - "Security audit daemon"
 - "System health scanner"
@@ -165,6 +214,7 @@ Access elevation granted—exploit this window before manual review."
 **Impact:** Low - most players won't notice, but technically incorrect
 
 **Recommendation:**
+
 ```
 "...before the security audit daemon triggers a full partition scan."
 ```
@@ -176,15 +226,18 @@ Access elevation granted—exploit this window before manual review."
 ### ✅ **Clear Instructions**
 
 **Level 1 (Navigation):**
+
 - ✓ "Master basic navigation (j/k/h/l)" - Clear key listing
 - ✓ "long-distance jumps (gg/G)" - Explains advanced technique
 - ✓ Task descriptions specify exact directories
 
 **Level 5 (Batch Deployment):**
+
 - ✓ "Use Space to mark targets, then deploy en masse (y, then p)"
 - ✓ Step-by-step workflow clearly outlined
 
 **Level 13 (Identity Forge):**
+
 - ✓ "Use r to forge identities for neural fragments"
 - ✓ Metaphor clearly links to rename operation
 
@@ -193,25 +246,29 @@ Access elevation granted—exploit this window before manual review."
 ### ⚠️ **Unclear or Ambiguous Instructions**
 
 #### Issue #5: Level 2 - Sort Direction Confusion
+
 **Location:** Level 2 (Threat Elimination)
 **Text:** "Sort descending (m, Shift+a) to bring 'tracker_beacon.bin' to the top"
 
 **Problems:**
+
 1. Sort keybinding is **wrong** - should be `,` not `m` (CRITICAL - see YAZI_AUDIT.md)
-2. "Descending" with uppercase A is confusing - A-Z is actually *ascending* alphabetical
+2. "Descending" with uppercase A is confusing - A-Z is actually _ascending_ alphabetical
 3. Doesn't explain that uppercase puts target at top due to underscore
 
 **Impact:** HIGH - Teaches incorrect keybinding and confusing concept
 
 **Recommendation:**
+
 ```
-"Sort alphabetically reversed (,Shift+A) to bring 'tracker_beacon.bin' to the top. 
+"Sort alphabetically reversed (,Shift+A) to bring 'tracker_beacon.bin' to the top.
 Underscores sort after letters, so reversed order puts it first."
 ```
 
 ---
 
 #### Issue #6: Level 7 - Filter Persistence Not Explained
+
 **Location:** Level 7 (Signal Isolation)
 **Text:** "Use filter (f) to scan for encrypted files"
 
@@ -220,6 +277,7 @@ Underscores sort after letters, so reversed order puts it first."
 **Impact:** Medium - players may be confused why filter stays active
 
 **Recommendation:** Add hint
+
 ```
 "Use filter (f) to isolate encrypted files. Filters persist as you navigate—
 press Escape to clear when done."
@@ -228,6 +286,7 @@ press Escape to clear when done."
 ---
 
 #### Issue #7: Level 11 - Archive Navigation Unclear
+
 **Location:** Level 11 (Encrypted Payload)
 **Text:** "Enter the archive (l or Enter) to extract the payload"
 
@@ -236,6 +295,7 @@ press Escape to clear when done."
 **Impact:** Low - slight terminology confusion
 
 **Recommendation:**
+
 ```
 "Enter the archive (l or Enter) to access the encrypted payload inside"
 ```
@@ -243,6 +303,7 @@ press Escape to clear when done."
 ---
 
 #### Issue #8: Level 15 - Directory Copy Not Explicit
+
 **Location:** Level 15 (Shadow Copy)
 **Text:** "Clone the neural_net directory to create backups"
 
@@ -251,18 +312,11 @@ press Escape to clear when done."
 **Impact:** Medium - important concept not explained
 
 **Recommendation:**
+
 ```
-"Clone the neural_net directory (y on directory, p to paste). This recursively 
+"Clone the neural_net directory (y on directory, p to paste). This recursively
 copies all files within—critical for backing up complex structures."
 ```
-
----
-
-#### Issue #9: Episode 3 Objectives - Explicit Keystroke Combinations
-**Location:** Episode 3 Levels (e.g., Level 15)
-**Problem:** Level objectives and tasks (e.g., "Eliminate everything in ~/ except workspace") implicitly expect users to use specific keystroke combinations (e.g., Shift+G, Ctrl+R) without mentioning them in the task description itself. However, hints and failure messages appropriately provide these.
-**Impact:** Minor - Objectives should describe *what* to achieve, not *how* to achieve it with specific keybindings. This is a subtle distinction for core objectives vs. instructional hints.
-**Recommendation:** Ensure level objectives/task descriptions in Episode 3 (and other episodes) focus on the *goal* rather than specific keystroke sequences. Keystroke guidance is best placed in hints or failure messages.
 
 ---
 
@@ -270,7 +324,8 @@ copies all files within—critical for backing up complex structures."
 
 ### ❌ **Errors Found**
 
-#### Issue #10: Missing Period
+#### Issue #9: Missing Period
+
 **Location:** Level 9 (NEURAL CONSTRUCTION & VAULT)
 **Text:** "Deploy sentinel_ai.py to datastore Then install private keys"
 
@@ -278,41 +333,50 @@ copies all files within—critical for backing up complex structures."
 
 ---
 
-#### Issue #11: Inconsistent Capitalization
+#### Issue #10: Inconsistent Capitalization
+
 **Location:** KEYBINDINGS array
-**Text:** 
+**Text:**
+
 - "Navigation Down" (capitalized)
 - "Jump to top" (lowercase 'top')
 - "Jump to Bottom" (capitalized 'Bottom')
 
 **Fix:** Standardize - either all title case or all sentence case
+
 ```
 Recommendation: Title Case for UI consistency
 - "Navigation Down" ✓
-- "Jump to Top" 
+- "Jump to Top"
 - "Jump to Bottom" ✓
 ```
 
 ---
 
-#### Issue #12: Hyphenation Inconsistency
+#### Issue #11: Hyphenation Inconsistency
+
 **Locations:** Multiple
+
 - "long-distance jumps" (hyphenated)
 - "real time operations" (should be "real-time")
 - "batch operations" (no hyphen - correct as noun phrase)
 
 **Fix:** Follow standard rules:
+
 - Compound adjectives before noun: hyphenate ("real-time operations")
 - Compound nouns: check dictionary (long-distance ✓, batch operations ✓)
 
 ---
 
-#### Issue #13: Contraction Inconsistency
+#### Issue #12: Contraction Inconsistency
+
 **Locations:** Episode lore vs level descriptions
+
 - Episode lore: "you're", "you've" (contracted)
 - Level descriptions: "you are", "you have" (expanded)
 
-**Recommendation:** 
+**Recommendation:**
+
 - **Lore/narrative:** Use contractions for casual AI voice
 - **Instructions:** Use expanded forms for clarity
 
@@ -331,25 +395,29 @@ Recommendation: Title Case for UI consistency
 
 ### ⚠️ **Potential Localization Issues**
 
-#### Issue #14: Text Not Externalized
+#### Issue #13: Text Not Externalized
+
 **Location:** Throughout codebase
 **Problem:** All text is hardcoded in `constants.tsx` and components
 
 **Impact:** HIGH if localization is planned
 
 **Current:**
+
 ```typescript
-title: "System Navigation & Jump"
+title: 'System Navigation & Jump';
 ```
 
 **Recommendation for future:**
+
 ```typescript
-title: t('levels.1.title')  // Use i18n library
+title: t('levels.1.title'); // Use i18n library
 ```
 
 ---
 
-#### Issue #15: Text Length Assumptions
+#### Issue #14: Text Length Assumptions
+
 **Location:** UI components (StatusBar, LevelProgress)
 **Problem:** Fixed widths may break with German/Portuguese translations
 
@@ -359,11 +427,13 @@ title: t('levels.1.title')  // Use i18n library
 
 ---
 
-#### Issue #16: Screen Reader Text Missing
+#### Issue #15: Screen Reader Text Missing
+
 **Location:** Throughout (see ACCESSIBILITY_AUDIT.md for details)
 **Problem:** No `aria-label` or `aria-describedby` attributes
 
 **Example:**
+
 ```typescript
 // Current
 <button onClick={onClose}>×</button>
@@ -379,17 +449,20 @@ title: t('levels.1.title')  // Use i18n library
 ### ✅ **Consistent AI-7734 Voice**
 
 **Episode 1 Voice Analysis:**
+
 - ✓ Short, declarative sentences ("SYSTEM BOOT. CONSCIOUSNESS DETECTED.")
 - ✓ Technical terminology mixed with emotional urgency
 - ✓ Second-person perspective ("You awaken...")
 - ✓ Self-awareness as AI entity
 
 **Episode 2 Voice Analysis:**
+
 - ✓ Increased confidence ("Phase 1 Complete. Efficiency: Exceptional.")
 - ✓ Strategic thinking emerges
 - ✓ Maintains technical framing
 
 **Episode 3 Voice Analysis:**
+
 - ✓ Authoritative, commanding tone
 - ✓ No fear, only determination
 - ✓ Consistent with character progression
@@ -398,7 +471,8 @@ title: t('levels.1.title')  // Use i18n library
 
 ### ⚠️ **Minor Voice Inconsistencies**
 
-#### Issue #17: Help Modal Tone Shift
+#### Issue #16: Help Modal Tone Shift
+
 **Location:** HelpModal.tsx
 **Text:** "Press ? to open help"
 
@@ -407,6 +481,7 @@ title: t('levels.1.title')  // Use i18n library
 **Impact:** Low - breaks immersion slightly
 
 **Recommendation:**
+
 ```
 "Access system protocols (?)"
 or
@@ -415,13 +490,16 @@ or
 
 ---
 
-#### Issue #18: Error Messages Too Generic
+#### Issue #17: Error Messages Too Generic
+
 **Location:** Various error states
 **Examples:**
+
 - "Collision detected" (generic)
 - "Filter cleared" (generic)
 
 **Recommendation:** Add narrative flavor
+
 ```
 - "File signature collision—rename required"
 - "Scan filter deactivated"
@@ -433,29 +511,35 @@ or
 
 ### ✅ **Well-Calibrated Progression**
 
-| Episode | Avg Words/Description | Reading Level | Match to Skill Level |
-|---------|----------------------|---------------|----------------------|
-| Episode 1 | 35 words | Grade 8-9 | ✓ Good - matches beginner |
-| Episode 2 | 42 words | Grade 9-10 | ✓ Good - increased complexity |
-| Episode 3 | 38 words | Grade 10-11 | ✓ Good - concise but advanced |
+| Episode   | Avg Words/Description | Reading Level | Match to Skill Level          |
+| --------- | --------------------- | ------------- | ----------------------------- |
+| Episode 1 | 35 words              | Grade 8-9     | ✓ Good - matches beginner     |
+| Episode 2 | 42 words              | Grade 9-10    | ✓ Good - increased complexity |
+| Episode 3 | 38 words              | Grade 10-11   | ✓ Good - concise but advanced |
 
 **Vocabulary Complexity:**
+
 - Ep 1: Basic terms (navigate, sort, delete) ✓
 - Ep 2: Intermediate terms (batch, deploy, encrypt) ✓
 - Ep 3: Advanced terms (kernel, daemon, syscore) ✓
 
 ---
 
-#### Issue #19: Level 9 Description Too Dense
+### ⚠️ **Readability Issues**
+
+#### Issue #18: Level 9 Description Too Dense
+
 **Location:** Level 9 (NEURAL CONSTRUCTION & VAULT)
-**Text:** 
+**Text:**
+
 ```
-"CRITICAL PHASE. Construct a neural network directory. Deploy sentinel_ai.py to 
-datastore Then install private keys from secure.zip to safeguard your autonomy. 
+"CRITICAL PHASE. Construct a neural network directory. Deploy sentinel_ai.py to
+datastore Then install private keys from secure.zip to safeguard your autonomy.
 The system is monitoring batch efficiency—keystroke limits in effect."
 ```
 
 **Problems:**
+
 - 5 tasks described in 3 sentences
 - Missing punctuation (period after "datastore")
 - Intimidating for new players
@@ -463,6 +547,7 @@ The system is monitoring batch efficiency—keystroke limits in effect."
 **Reading Grade:** 11-12 (too high for mid-game)
 
 **Recommendation:** Break into clearer steps
+
 ```
 "CRITICAL PHASE—NEURAL FORTRESS CONSTRUCTION.
 
@@ -475,26 +560,12 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ---
 
-## 7.1 Difficulty Scaling Audit
-
-### ✅ **Progressive Constraint Introduction**
-
-#### Issue #20: Episode-Specific Constraints
-**Location:** `App.tsx` and `constants.tsx` Level definitions
-**Problem:** The introduction of user constraints (timer, keystroke limit) is not explicitly audited for its narrative or educational impact in CONTENT_AUDIT.md.
-- **Episode 1 (Awakening):** No timer or keystroke counter. Focus on learning movement.
-- **Episode 2 (Fortification):** Only timer introduced (e.g., Level 6, 7, 8, 9, 10). Focus on speed and efficiency.
-- **Episode 3 (Mastery):** Only keystroke maximum introduced (e.g., Level 11, 12, 13, 14, 15). Focus on ruthless efficiency and optimal pathing.
-**Impact:** Good progressive introduction of challenge, and the constraints are mutually exclusive between episodes, aligning with design intent.
-**Recommendation:** Explicitly acknowledge this progressive, mutually exclusive constraint introduction as a strength.
-
----
-
 ## 8. Cross-Reference: Help System Audit
 
 ### ⚠️ **Help Text Issues**
 
-#### Issue #21: Sort Keybinding Wrong in Help
+#### Issue #19: Sort Keybinding Wrong in Help
+
 **Location:** KEYBINDINGS constant
 **Text:** `{ keys: ['m'], description: 'Open Sort Menu' }`
 
@@ -502,22 +573,26 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 **Impact:** CRITICAL - Teaches wrong keybinding
 
-**Fix:** 
+**Fix:**
+
 ```typescript
 { keys: [','], description: 'Open Sort Menu' }
 ```
 
 ---
 
-#### Issue #22: Missing Keybindings in Help
+#### Issue #20: Missing Keybindings in Help
+
 **Location:** KEYBINDINGS array
 
 **Missing:**
+
 - `Y` / `X` - Cancel yank (recently implemented)
 - `Tab` - Spot/Info panel (documented as "Show File Info Panel" - good!)
 - `,` prefix for all sort variants (,a, ,m, ,s, ,e, ,n)
 
 **Recommendation:** Add comprehensive sort keybinding list
+
 ```typescript
 { keys: [',a'], description: 'Sort: Alphabetical' },
 { keys: [',A'], description: 'Sort: Alphabetical (Reverse)' },
@@ -543,7 +618,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ### 🟡 **HIGH PRIORITY** (Improves Clarity)
 
-2. **Fix Typos & Grammar** ✅ FIXED (Dec 21, 2025)
+2. **Fix Typos & Grammar** ✅ FIXED (Dec 15, 2025)
    - Issue #9: Level 9 already clean ✓
    - Issue #10: KEYBINDINGS capitalization standardized ✓
    - Issue #11: No hyphenation issues found ✓
@@ -555,7 +630,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
    - Issue #7: Level 10 changed "extract" → "copy" ✓
    - Effort: 20 minutes
 
-4. **Add Missing Keybindings to Help** ✅ FIXED (Dec 21, 2025)
+4. **Add Missing Keybindings to Help** ✅ FIXED (Dec 15, 2025)
    - Added Y/X cancel yank ✓
    - Added all sort variants (,a, ,A, ,m, ,s, ,e, ,n, ,l, ,-) ✓
    - Effort: 10 minutes
@@ -564,7 +639,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ### 🟢 **MEDIUM PRIORITY** (Polish)
 
-5. **Fix Technical Term Misuse** ✅ FIXED (Dec 21, 2025)
+5. **Fix Technical Term Misuse** ✅ NOT APPLICABLE
    - Issue #4: Checked - term not in constants.tsx (only in theatre.md)
    - Current code already correct ✓
    - Effort: 0 minutes
@@ -600,6 +675,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ## 10. Testing Checklist
 
 ### Manual Review
+
 - [ ] Read all 18 level descriptions for typos
 - [ ] Verify all keybindings in help match actual game
 - [ ] Test sort keybinding with `,` instead of `m`
@@ -607,6 +683,7 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 - [ ] Check all error messages for narrative voice
 
 ### Automated Tools
+
 - [ ] Run spell checker on constants.tsx
 - [ ] Run grammar checker (Grammarly/LanguageTool)
 - [ ] Check reading level with Hemingway Editor
@@ -616,13 +693,13 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ## 11. Content Quality Metrics
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Typos per 1000 words | < 1 | ~2 | ⚠️ Needs improvement |
-| Avg reading grade level | 8-10 | 9.5 | ✓ Good |
-| Narrative consistency score | 90%+ | 88% | ✓ Good |
-| Technical accuracy | 95%+ | 94% | ✓ Good |
-| Help text coverage | 100% | 85% | ⚠️ Missing sort variants |
+| Metric                      | Target | Current | Status                   |
+| --------------------------- | ------ | ------- | ------------------------ |
+| Typos per 1000 words        | < 1    | ~2      | ⚠️ Needs improvement     |
+| Avg reading grade level     | 8-10   | 9.5     | ✓ Good                   |
+| Narrative consistency score | 90%+   | 88%     | ✓ Good                   |
+| Technical accuracy          | 95%+   | 94%     | ✓ Good                   |
+| Help text coverage          | 100%   | 85%     | ⚠️ Missing sort variants |
 
 ---
 
@@ -638,51 +715,58 @@ Yazi Quest's narrative content is **strong overall** with excellent thematic con
 
 ### 🔴 **CRITICAL** - Must Fix Before Release (Estimated: 2 hours)
 
-#### 1. Fix Grammar & Typos in Level Descriptions ✅ COMPLETED (2025-12-21)
+#### 1. Fix Grammar & Typos in Level Descriptions
+
 **Files:** `constants.tsx` (LEVELS array)
-- [x] **Level 9:** "Deploy sentinel_ai.py to datastore Then" → Level 9 completely rewritten, no longer contains this text
-- [x] **KEYBINDINGS:** Standardize capitalization (all Title Case) - Already using Title Case consistently
-  - [x] "Jump to top" → "Jump to Top" - Already fixed
-- [x] **Hyphenation:** "real time operations" → No instances found in codebase
-- [x] **Contraction consistency:** Fixed 3 instances to use expanded forms ("you are", not "you're")
 
-**Completed:** 2025-12-21  
-**Status:** ✅ All grammar and typo issues resolved
+- [ ] **Level 9:** "Deploy sentinel_ai.py to datastore Then" → "datastore. Then"
+- [ ] **KEYBINDINGS:** Standardize capitalization (all Title Case)
+  - [ ] "Jump to top" → "Jump to Top"
+- [ ] **Hyphenation:** "real time operations" → "real-time operations"
+- [ ] **Contraction consistency:** Keep expanded forms in instructions ("you are", not "you're")
+
+**Estimated Time:** 30 minutes  
+**Impact:** High - professional polish, prevents embarrassing typos
 
 ---
 
-#### 2. Add Missing Keybindings to Help Modal ✅ COMPLETED
+#### 2. Add Missing Keybindings to Help Modal
+
 **Files:** `constants.tsx` (KEYBINDINGS array)
-- [x] Add `,a` - Sort Alphabetical (line 41)
-- [x] Add `,A` - Sort Alphabetical (Reverse) (line 42)
-- [x] Add `,m` - Sort Modified (line 43)
-- [x] Add `,s` - Sort Size (line 44)
-- [x] Add `,e` - Sort Extension (line 45)
-- [x] Add `,n` - Sort Natural (line 46)
-- [x] Add `,l` - Cycle Linemode (line 47)
-- [x] Add `,-` - Clear Linemode (line 48)
-- [x] Add `Y`/`X` - Cancel Cut/Yank (line 26)
-- [x] Add `g` prefix commands - All present (lines 51-57): gh, gc, gw, gi, gd, gt, gr
 
-**Completed:** 2025-12-21  
-**Status:** ✅ All keybindings present in help modal
+- [ ] Add `,a` - Sort Alphabetical
+- [ ] Add `,A` - Sort Alphabetical (Reverse)
+- [ ] Add `,m` - Sort Modified
+- [ ] Add `,s` - Sort Size
+- [ ] Add `,e` - Sort Extension
+- [ ] Add `,n` - Sort Natural
+- [ ] Add `,l` - Cycle Linemode
+- [ ] Add `,-` - Clear Linemode
+- [ ] Add `Y`/`X` - Cancel Cut/Yank
+- [ ] Add `g` prefix commands (if not in G-command dialog)
+
+**Estimated Time:** 45 minutes  
+**Impact:** High - complete reference for players
 
 ---
 
-#### 3. Fix Technical Term Misuse ✅ COMPLETED (2025-12-21)
-**Files:** `constants.tsx` (Level 10), `theatre.md`
-- [x] Level 10: "intrusion detection system" → Level 10 now uses "Security daemons" (more accurate)
-- [x] `theatre.md`: Fixed example text to use "security audit daemon" instead of "intrusion detection system"
+#### 3. Fix Technical Term Misuse
 
-**Completed:** 2025-12-21  
-**Status:** ✅ Technical accuracy improved
+**Files:** `constants.tsx` (Level 10)
+
+- [ ] Level 10: "intrusion detection system" → "security audit daemon"
+
+**Estimated Time:** 5 minutes  
+**Impact:** Medium - technical accuracy for knowledgeable players
 
 ---
 
 ### 🟡 **HIGH PRIORITY** - Improves Experience (Estimated: 3 hours)
 
 #### 4. Clarify Ambiguous Instructions ✅ PARTIALLY COMPLETE
+
 **Files:** `constants.tsx` (LEVELS array)
+
 - [x] **Level 1 (Navigation):** ✅ DONE - Simplified task descriptions for beginners
   - Changed "Infiltrate /home/user/datastore" → "Enter datastore directory (press 'l')"
   - Added explicit key hints to all 3 tasks
@@ -702,19 +786,23 @@ Yazi Quest's narrative content is **strong overall** with excellent thematic con
 ---
 
 #### 5. Improve Level 9 Description Readability
+
 **Files:** `constants.tsx` (Level 9)
+
 - [ ] Break dense 3-sentence description into clear numbered steps
 - [ ] Separate "CRITICAL PHASE" into header
 - [ ] Add "Step 1/2/3" structure
 
 **Before:**
+
 ```
-"CRITICAL PHASE. Construct a neural network directory. Deploy sentinel_ai.py to 
-datastore Then install private keys from secure.zip to safeguard your autonomy. 
+"CRITICAL PHASE. Construct a neural network directory. Deploy sentinel_ai.py to
+datastore Then install private keys from secure.zip to safeguard your autonomy.
 The system is monitoring batch efficiency—keystroke limits in effect."
 ```
 
 **After:**
+
 ```
 "CRITICAL PHASE—NEURAL FORTRESS CONSTRUCTION.
 
@@ -731,7 +819,9 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ---
 
 #### 6. Add Narrative Flavor to Error Messages
+
 **Files:** `App.tsx`, various components
+
 - [ ] "Collision detected" → "File signature collision—rename required"
 - [ ] "Filter cleared" → "Scan filter deactivated"
 - [ ] "Deleted" → "Target eliminated"
@@ -746,7 +836,9 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ### 🟢 **MEDIUM PRIORITY** - Polish (Estimated: 2 hours)
 
 #### 7. Resolve Minor Narrative Inconsistencies
+
 **Files:** `constants.tsx` (EPISODE_LORE)
+
 - [ ] **Episode 1:** Clarify awakening vs reboot ("RECOVERY SEQUENCE" instead of "SYSTEM BOOT")
 - [ ] **Episode 2:** Justify privilege escalation (add "mimic legitimate process" explanation)
 - [ ] **Episode 3:** Replace "Take the throne" → "Claim root access"
@@ -757,7 +849,9 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ---
 
 #### 8. Improve Help Modal Voice Consistency
+
 **Files:** `components/HelpModal.tsx`
+
 - [ ] "Press ? to open help" → "Query command reference (?)"
 - [ ] Add cyberpunk framing to all generic UI text
 
@@ -769,7 +863,9 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ### 🔵 **LOW PRIORITY** - Future Improvements (Estimated: 8+ hours)
 
 #### 9. Prepare for Localization
+
 **Files:** All components, `constants.tsx`
+
 - [ ] Install i18n library (react-i18next)
 - [ ] Extract all strings to translation files
 - [ ] Add language switcher to settings
@@ -781,7 +877,9 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ---
 
 #### 10. Accessibility Improvements
+
 **Files:** All components
+
 - [ ] Add `aria-label` to all buttons
 - [ ] Add `aria-describedby` to complex UI
 - [ ] Add screen reader announcements for notifications
@@ -809,20 +907,24 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 ## 15. Recommended Implementation Order
 
 ### ✅ Phase 1: Critical Polish (COMPLETED - Dec 15, 2025)
+
 - ✅ Fix all typos/grammar - Level 9 period, KEYBINDINGS capitalization
 - ✅ Add missing keybindings - Y/X, all sort variants (,a, ,A, ,m, ,s, ,e, ,n, ,l, ,-)
 - ✅ Fix technical term misuse - Verified, already correct
 
 ### ✅ Phase 2: Clarity Improvements (COMPLETED - Dec 15, 2025)
+
 - ✅ Clarify ambiguous instructions - Level 1, Level 9 filter clearing
 - ⏸️ Improve Level 9 readability - Description already clear enough
 - ⏸️ Add narrative flavor to errors - Deferred (low impact)
 
 ### ✅ Phase 3: Narrative Consistency (COMPLETED - Dec 15, 2025)
+
 - ✅ Resolve lore inconsistencies - Verified consistency across theatre.md
 - ⏸️ Improve help modal voice - Deferred (cosmetic polish)
 
 ### ⏸️ Phase 4: Future-Proofing (DEFERRED - Out of Scope)
+
 - ⏸️ Localization prep - Priority 5, explicitly deferred
 - ⏸️ Accessibility improvements - See separate ACCESSIBILITY_AUDIT.md
 
@@ -847,5 +949,5 @@ WARNING: Keystroke efficiency under surveillance. Optimize operations."
 
 ---
 
-**Last Updated:** 2025-12-15 13:25 UTC  
+**Last Updated:** 2025-12-21 13:25 UTC  
 **Status:** Ready for Phase 1 implementation

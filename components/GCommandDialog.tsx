@@ -4,10 +4,9 @@ interface GCommandDialogProps {
   onClose: () => void;
 }
 
-// Fix: Change destructuring to use 'onClose' to match interface
 export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
   return (
-    <div 
+    <div
       className="absolute bottom-16 left-0 right-0 mx-auto w-fit bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-sm z-50 rounded-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
       role="dialog"
       aria-modal="false"
@@ -60,7 +59,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
           <span className="text-zinc-300">Go to incoming</span>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs font-mono mt-1">
         <div className="flex gap-3">
           <span className="text-orange-500 font-bold w-8">r</span>
@@ -69,7 +68,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
       </div>
 
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-3">
-        Press any key to continue or &apos;g&apos; command
+        Press any key to continue or 'g' command
       </div>
     </div>
   );

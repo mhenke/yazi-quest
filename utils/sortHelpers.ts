@@ -2,14 +2,7 @@ import { FileNode, SortBy, SortDirection } from '../types';
 
 /**
  * Sort files according to Yazi's sorting methods
- * Real Yazi alignment:
- * m -> modified
- * b -> created (birth)
- * a -> alphabetical
- * n -> natural
- * s -> size
- * e -> extension
- * r -> random
+ * Real Yazi: ,m (modified), ,a (alphabetical), ,s (size), ,e (extension), ,n (natural)
  */
 export function sortNodes(
   nodes: FileNode[],
@@ -18,70 +11,79 @@ export function sortNodes(
 ): FileNode[] {
   const sorted = [...nodes];
 
-  if (sortBy === 'random') {
-    // Random doesn't care about direction usually, but we'll shuffle
-    for (let i = sorted.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
-    }
-    return sorted;
-  }
-
-  // Type priority score (Real Yazi defaults to sorting directories first)
+  // Type priority score for natural sorting
   const typeScore = (type: string) => {
     if (type === 'dir') return 0;
     if (type === 'archive') return 1;
     return 2; // file
   };
 
-  const getSortValue = (node: FileNode) => {
-    switch (sortBy) {
-      case 'natural':
-        // Natural sort is numeric-aware and case-insensitive
-        return node.name;
-      case 'alphabetical':
-        // Standard strict string comparison (lexicographical)
-        return node.name;
-      case 'created':
-        return node.createdAt || 0;
-      case 'modified':
-        return node.modifiedAt || 0;
-      case 'size':
-        return node.type === 'dir' || node.type === 'archive'
-          ? (node.children?.length || 0)
-          : (node.content?.length || 0);
-      case 'extension':
-        return node.name.split('.').pop()?.toLowerCase() || '';
-      default:
-        return node.name;
-    }
-  };
+  switch (sortBy) {
+    case 'natural':
+      // Natural: dirs -> archives -> files, alphabetical within each type
+      sorted.sort((a, b) => {
+        const scoreA = typeScore(a.type);
+        const scoreB = typeScore(b.type);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.name.localeCompare(b.name);
+      });
+      break;
 
-  sorted.sort((a, b) => {
-    // 1. Dir-first logic (Baseline Yazi behavior)
-    const tA = typeScore(a.type);
-    const tB = typeScore(b.type);
-    if (tA !== tB) return tA - tB;
+    case 'alphabetical':
+      // Pure alphabetical, ignore type
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+      break;
 
-    // 2. Main sort criteria
-    const vA = getSortValue(a);
-    const vB = getSortValue(b);
+    case 'modified':
+      // Sort by modification time
+      sorted.sort((a, b) => {
+        const timeA = a.modifiedAt || 0;
+        const timeB = b.modifiedAt || 0;
+        if (timeA !== timeB) return timeA - timeB;
+        return a.name.localeCompare(b.name); // Fallback to name if same time
+      });
+      break;
 
-    let result = 0;
-    if (sortBy === 'natural' && typeof vA === 'string' && typeof vB === 'string') {
-      // Natural: Numeric aware, base sensitivity (case-insensitive)
-      result = vA.localeCompare(vB, undefined, { numeric: true, sensitivity: 'base' });
-    } else if (sortBy === 'alphabetical' && typeof vA === 'string' && typeof vB === 'string') {
-      // Alphabetical: Strict lexicographical (case-sensitive)
-      result = vA < vB ? -1 : vA > vB ? 1 : 0;
-    } else if (typeof vA === 'number' && typeof vB === 'number') {
-      result = vA - vB;
-    } else {
-      result = String(vA).localeCompare(String(vB));
-    }
+    case 'size':
+      // Sort by file size
+      sorted.sort((a, b) => {
+        const sizeA =
+          a.type === 'dir' || a.type === 'archive'
+            ? a.children?.length || 0
+            : a.content?.length || 0;
+        const sizeB =
+          b.type === 'dir' || b.type === 'archive'
+            ? b.children?.length || 0
+            : b.content?.length || 0;
+        return sizeA - sizeB;
+      });
+      break;
 
-    return sortDirection === 'asc' ? result : -result;
-  });
+    case 'extension':
+      // Sort by file extension
+      sorted.sort((a, b) => {
+        const extA = a.name.split('.').pop()?.toLowerCase() || '';
+        const extB = b.name.split('.').pop()?.toLowerCase() || '';
+        const extCompare = extA.localeCompare(extB);
+        if (extCompare !== 0) return extCompare;
+        return a.name.localeCompare(b.name); // Same extension, sort by name
+      });
+      break;
+
+    default:
+      // Fallback to natural
+      sorted.sort((a, b) => {
+        const scoreA = typeScore(a.type);
+        const scoreB = typeScore(b.type);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  // Apply direction
+  if (sortDirection === 'desc') {
+    sorted.reverse();
+  }
 
   return sorted;
 }
@@ -93,13 +95,17 @@ export function getSortLabel(sortBy: SortBy, sortDirection: SortDirection): stri
   const dirSymbol = sortDirection === 'asc' ? '↑' : '↓';
 
   switch (sortBy) {
-    case 'natural': return `Natural ${dirSymbol}`;
-    case 'alphabetical': return `Alphabetical ${dirSymbol}`;
-    case 'created': return `Created ${dirSymbol}`;
-    case 'modified': return `Modified ${dirSymbol}`;
-    case 'size': return `Size ${dirSymbol}`;
-    case 'extension': return `Extension ${dirSymbol}`;
-    case 'random': return `Random`;
-    default: return `Natural ${dirSymbol}`;
+    case 'natural':
+      return `Natural ${dirSymbol}`;
+    case 'alphabetical':
+      return `A-Z ${dirSymbol}`;
+    case 'modified':
+      return `Modified ${dirSymbol}`;
+    case 'size':
+      return `Size ${dirSymbol}`;
+    case 'extension':
+      return `Extension ${dirSymbol}`;
+    default:
+      return `Natural ${dirSymbol}`;
   }
 }

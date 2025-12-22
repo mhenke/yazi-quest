@@ -5,11 +5,11 @@ import { FileNode } from '../types';
 export const getNodeByPath = (root: FileNode, pathIds: string[]): FileNode | null => {
   if (pathIds.length === 0) return null;
   if (pathIds[0] !== root.id) return null;
-  
+
   let current = root;
   for (let i = 1; i < pathIds.length; i++) {
     if (!current.children) return null;
-    const next = current.children.find(c => c.id === pathIds[i]);
+    const next = current.children.find((c) => c.id === pathIds[i]);
     if (!next) return null;
     current = next;
   }
@@ -28,95 +28,82 @@ export const findNodeByName = (root: FileNode, name: string): FileNode | undefin
 };
 
 export const getParentNode = (root: FileNode, pathIds: string[]): FileNode | null => {
-    if (pathIds.length <= 1) return null; // Root has no parent in this context
-    const parentPath = pathIds.slice(0, -1);
-    return getNodeByPath(root, parentPath);
+  if (pathIds.length <= 1) return null; // Root has no parent in this context
+  const parentPath = pathIds.slice(0, -1);
+  return getNodeByPath(root, parentPath);
 };
 
 export const resolvePath = (root: FileNode, pathIds: string[]): string => {
-    // Validate root
-    if (pathIds.length === 0 || pathIds[0] !== root.id) return '/';
-    
-    // Root node usually doesn't contribute to path string except as '/'
-    if (pathIds.length === 1) return '/';
+  // Validate root
+  if (pathIds.length === 0 || pathIds[0] !== root.id) return '/';
 
-    let pathString = "";
-    
-    let tempRoot = root;
-    for (let i = 1; i < pathIds.length; i++) {
-        const id = pathIds[i];
-        const child = tempRoot.children?.find(c => c.id === id);
-        if (!child) return pathString; // broken path
-        tempRoot = child;
-        pathString += `/${child.name}`;
+  // Root node usually doesn't contribute to path string except as '/'
+  if (pathIds.length === 1) return '/';
+
+  let pathString = '';
+
+  let tempRoot = root;
+  for (let i = 1; i < pathIds.length; i++) {
+    const id = pathIds[i];
+    const child = tempRoot.children?.find((c) => c.id === id);
+    if (!child) return pathString; // broken path
+    tempRoot = child;
+    pathString += `/${child.name}`;
+  }
+  return pathString || '/';
+};
+
+export const getAllDirectories = (root: FileNode): { path: string[]; display: string }[] => {
+  const results: { path: string[]; display: string }[] = [];
+
+  const traverse = (node: FileNode, currentPathIds: string[], currentPathStr: string) => {
+    results.push({ path: currentPathIds, display: currentPathStr });
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.type === 'dir') {
+          const childPathStr =
+            currentPathStr === '/' ? `/${child.name}` : `${currentPathStr}/${child.name}`;
+          traverse(child, [...currentPathIds, child.id], childPathStr);
+        }
+      }
     }
-    return pathString || '/';
+  };
+
+  traverse(root, [root.id], '/');
+  return results;
 };
 
-export const getAllDirectories = (root: FileNode): { path: string[], display: string }[] => {
-    const results: { path: string[], display: string }[] = [];
-    
-    const traverse = (node: FileNode, currentPathIds: string[], currentPathStr: string) => {
-        results.push({ path: currentPathIds, display: currentPathStr });
-        if (node.children) {
-            for (const child of node.children) {
-                if (child.type === 'dir') {
-                    const childPathStr = currentPathStr === '/' ? `/${child.name}` : `${currentPathStr}/${child.name}`;
-                    traverse(child, [...currentPathIds, child.id], childPathStr);
-                }
-            }
+export const getRecursiveContent = (
+  root: FileNode,
+  startPathIds: string[]
+): { path: string[]; display: string; type: string; id: string }[] => {
+  const startNode = getNodeByPath(root, startPathIds);
+  if (!startNode) return [];
+
+  const results: { path: string[]; display: string; type: string; id: string }[] = [];
+
+  const traverse = (node: FileNode, prefixIds: string[], prefixStr: string) => {
+    if (node.children) {
+      for (const child of node.children) {
+        const childRelativePathIds = [...prefixIds, child.id];
+        const childDisplay = prefixStr ? `${prefixStr}/${child.name}` : child.name;
+
+        results.push({
+          path: childRelativePathIds,
+          display: childDisplay,
+          type: child.type,
+          id: child.id,
+        });
+
+        if (child.children && (child.type === 'dir' || child.type === 'archive')) {
+          traverse(child, childRelativePathIds, childDisplay);
         }
-    };
+      }
+    }
+  };
 
-    traverse(root, [root.id], '/');
-    return results;
-};
-
-export const getAllPaths = (root: FileNode): { path: string[], display: string, type: string }[] => {
-    const results: { path: string[], display: string, type: string }[] = [];
-    
-    const traverse = (node: FileNode, currentPathIds: string[], currentPathStr: string) => {
-        results.push({ path: currentPathIds, display: currentPathStr, type: node.type });
-        if (node.children) {
-            for (const child of node.children) {
-                const childPathStr = currentPathStr === '/' ? `/${child.name}` : `${currentPathStr}/${child.name}`;
-                traverse(child, [...currentPathIds, child.id], childPathStr);
-            }
-        }
-    };
-
-    traverse(root, [root.id], '/');
-    return results;
-};
-
-export const getRecursiveContent = (root: FileNode, startPathIds: string[]): { path: string[], display: string, type: string, id: string }[] => {
-    const startNode = getNodeByPath(root, startPathIds);
-    if (!startNode) return [];
-
-    const results: { path: string[], display: string, type: string, id: string }[] = [];
-
-    const traverse = (node: FileNode, prefixIds: string[], prefixStr: string) => {
-        if (node.children) {
-            for (const child of node.children) {
-                const childRelativePathIds = [...prefixIds, child.id];
-                const childDisplay = prefixStr ? `${prefixStr}/${child.name}` : child.name;
-                
-                results.push({
-                    path: childRelativePathIds,
-                    display: childDisplay,
-                    type: child.type,
-                    id: child.id
-                });
-                
-                if (child.children && (child.type === 'dir' || child.type === 'archive')) {
-                    traverse(child, childRelativePathIds, childDisplay);
-                }
-            }
-        }
-    };
-
-    traverse(startNode, [], '');
-    return results;
+  traverse(startNode, [], '');
+  return results;
 };
 
 // --- Basic Helpers ---
@@ -124,7 +111,7 @@ export const getRecursiveContent = (root: FileNode, startPathIds: string[]): { p
 export const cloneFS = (node: FileNode): FileNode => {
   return {
     ...node,
-    children: node.children ? node.children.map(cloneFS) : undefined
+    children: node.children ? node.children.map(cloneFS) : undefined,
   };
 };
 
@@ -134,160 +121,197 @@ export const regenerateIds = (node: FileNode, newParentId: string | null = null)
     ...node,
     id: newId,
     parentId: newParentId,
-    children: node.children ? node.children.map(child => regenerateIds(child, newId)) : undefined
+    children: node.children ? node.children.map((child) => regenerateIds(child, newId)) : undefined,
   };
 };
 
 // --- Modification Helpers ---
 
-export const deleteNode = (root: FileNode, parentPathIds: string[], nodeId: string): FileNode => {
+export const deleteNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  nodeId: string,
+  levelIndex: number // For isProtected check
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
-  if (parent && parent.children) {
-    parent.children = parent.children.filter(c => c.id !== nodeId);
+  if (!parent || !parent.children) {
+    return { ok: false, error: 'InvalidPath' };
   }
-  return newRoot;
+
+  const nodeToDelete = parent.children.find((c) => c.id === nodeId);
+  if (!nodeToDelete) {
+    return { ok: false, error: 'NotFound' };
+  }
+
+  const protectionMessage = isProtected(root, parentPathIds, nodeToDelete, levelIndex, 'delete');
+  if (protectionMessage) {
+    return { ok: false, error: 'Protected' };
+  }
+
+  parent.children = parent.children.filter((c) => c.id !== nodeId);
+  return { ok: true, value: newRoot };
 };
 
-export const addNode = (root: FileNode, parentPathIds: string[], newNode: FileNode): FileNode => {
+export const addNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  newNode: FileNode
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
-  if (parent) {
-    if (!parent.children) parent.children = [];
-    
-    // Check for collision with exact same name AND type
-    const collision = parent.children.find(c => c.name === newNode.name && c.type === newNode.type);
-    
-    // Ensure the new node has a fresh ID and deep-copied structure
-    let nodeToInsert = regenerateIds(newNode, parent.id);
-    
-    // Update timestamps
-    const now = Date.now();
-    nodeToInsert.createdAt = newNode.createdAt || now;
-    nodeToInsert.modifiedAt = now;
-
-    // If collision exists, rename the new node (Real Yazi behavior: auto-rename with "_1", "_2", etc.)
-    if (collision) {
-        let baseName = nodeToInsert.name;
-        let ext = "";
-
-        if (nodeToInsert.type === 'file') {
-            const lastDotIndex = baseName.lastIndexOf('.');
-            // Handle cases like ".config" (no extension, just name) vs "image.png"
-            if (lastDotIndex > 0) {
-                ext = baseName.substring(lastDotIndex);
-                baseName = baseName.substring(0, lastDotIndex);
-            }
-        }
-
-        let counter = 1;
-        let candidateName = `${baseName}_${counter}${ext}`;
-
-        // Find a unique name (matching both name and type)
-        while (parent.children.find(c => c.name === candidateName && c.type === nodeToInsert.type)) {
-            counter++;
-            candidateName = `${baseName}_${counter}${ext}`;
-        }
-
-        nodeToInsert.name = candidateName;
-    }
-
-    parent.children.push(nodeToInsert);
-    
-    // Sort: Dirs > Archives > Files
-    parent.children.sort((a, b) => {
-        const typeScore = (t: string) => {
-            if (t === 'dir') return 0;
-            if (t === 'archive') return 1;
-            return 2;
-        };
-        const scoreA = typeScore(a.type);
-        const scoreB = typeScore(b.type);
-        if (scoreA !== scoreB) return scoreA - scoreB;
-        return a.name.localeCompare(b.name);
-    });
+  if (!parent) {
+    return { ok: false, error: 'InvalidPath' };
   }
-  return newRoot;
+
+  if (!parent.children) parent.children = [];
+
+  // Check for collision with exact same name AND type
+  const collision = parent.children.find(
+    (c) => c.name === newNode.name && c.type === newNode.type
+  );
+
+  if (collision) {
+    return { ok: false, error: 'Collision' };
+  }
+
+  // Ensure the new node has a fresh ID and deep-copied structure
+  let nodeToInsert = regenerateIds(newNode, parent.id);
+
+  // Update timestamps
+  const now = Date.now();
+  nodeToInsert.createdAt = newNode.createdAt || now;
+  nodeToInsert.modifiedAt = now;
+
+  parent.children.push(nodeToInsert);
+
+  // Sort: Dirs > Archives > Files
+  parent.children.sort((a, b) => {
+    const typeScore = (t: string) => {
+      if (t === 'dir') return 0;
+      if (t === 'archive') return 1;
+      return 2;
+    };
+    const scoreA = typeScore(a.type);
+    const scoreB = typeScore(b.type);
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return a.name.localeCompare(b.name);
+  });
+
+  return { ok: true, value: newRoot };
 };
 
-export const renameNode = (root: FileNode, parentPathIds: string[], nodeId: string, newName: string): FileNode => {
+export const renameNode = (
+  root: FileNode,
+  parentPathIds: string[],
+  nodeId: string,
+  newName: string,
+  levelIndex: number // For isProtected check
+): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
-  if (parent && parent.children) {
-      const node = parent.children.find(c => c.id === nodeId);
-      if (node) {
-          // Only block if another node with SAME name AND SAME type exists
-          const collision = parent.children.find(c => c.id !== nodeId && c.name === newName && c.type === node.type);
-          if (collision) {
-              return root; // Fail silently or could return error
-          }
-
-          node.name = newName;
-          node.modifiedAt = Date.now(); 
-          // Re-sort after rename
-          parent.children.sort((a, b) => {
-            const typeScore = (t: string) => {
-                if (t === 'dir') return 0;
-                if (t === 'archive') return 1;
-                return 2;
-            };
-            const scoreA = typeScore(a.type);
-            const scoreB = typeScore(b.type);
-            if (scoreA !== scoreB) return scoreA - scoreB;
-            return a.name.localeCompare(b.name);
-        });
-      }
+  if (!parent || !parent.children) {
+    return { ok: false, error: 'InvalidPath' };
   }
-  return newRoot;
+
+  const nodeToRename = parent.children.find((c) => c.id === nodeId);
+  if (!nodeToRename) {
+    return { ok: false, error: 'NotFound' };
+  }
+
+  const protectionMessage = isProtected(root, parentPathIds, nodeToRename, levelIndex, 'rename');
+  if (protectionMessage) {
+    return { ok: false, error: 'Protected' };
+  }
+
+  // Only block if another node with SAME name AND SAME type exists
+  const collision = parent.children.find(
+    (c) => c.id !== nodeId && c.name === newName && c.type === nodeToRename.type
+  );
+  if (collision) {
+    return { ok: false, error: 'Collision' };
+  }
+
+  nodeToRename.name = newName;
+  nodeToRename.modifiedAt = Date.now();
+  
+  // Re-sort after rename
+  parent.children.sort((a, b) => {
+    const typeScore = (t: string) => {
+      if (t === 'dir') return 0;
+      if (t === 'archive') return 1;
+      return 2;
+    };
+    const scoreA = typeScore(a.type);
+    const scoreB = typeScore(b.type);
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return a.name.localeCompare(b.name);
+  });
+
+  return { ok: true, value: newRoot };
 };
 
 // Helper to generate collision info
-const generateCollisionInfo = (existingNode: FileNode): { collision: true, collisionNode: FileNode } => {
-    return {
-        collision: true,
-        collisionNode: existingNode
-    };
+const generateCollisionInfo = (
+  existingNode: FileNode
+): { collision: true; collisionNode: FileNode } => {
+  return {
+    collision: true,
+    collisionNode: existingNode,
+  };
 };
 
 // Updated createPath: Allows coexistence if types are different
-export const createPath = (root: FileNode, parentPathIds: string[], pathStr: string): { fs: FileNode, error?: string, createdName?: string, collision?: boolean, collisionNode?: FileNode } => {
+export const createPath = (
+  root: FileNode,
+  parentPathIds: string[],
+  pathStr: string
+): {
+  fs: FileNode;
+  error?: string;
+  createdName?: string;
+  collision?: boolean;
+  collisionNode?: FileNode;
+} => {
   const newRoot = cloneFS(root);
   let currentPath = [...parentPathIds];
-  
-  const segments = pathStr.split('/').filter(s => s.trim().length > 0);
+
+  const segments = pathStr.split('/').filter((s) => s.trim().length > 0);
   const isDirTarget = pathStr.endsWith('/');
-  
+
   for (let i = 0; i < segments.length; i++) {
     let name = segments[i];
     const isLast = i === segments.length - 1;
     // CRITICAL: If not last, it MUST be a dir. If last, it depends on isDirTarget.
-    const type: 'dir' | 'file' = !isLast ? 'dir' : (isDirTarget ? 'dir' : 'file');
-    
+    const type: 'dir' | 'file' = !isLast ? 'dir' : isDirTarget ? 'dir' : 'file';
+
     // Find parent in the NEW root
     const parent = getNodeByPath(newRoot, currentPath);
-    if (!parent) return { fs: root, error: "Path resolution failed" };
-    
+    if (!parent) return { fs: root, error: 'Path resolution failed' };
+
     // Check for existing node with SAME name AND SAME type
-    const existingTyped = parent.children?.find(c => c.name === name && c.type === type);
+    const existingTyped = parent.children?.find((c) => c.name === name && c.type === type);
 
     if (existingTyped) {
-      if (!isLast) { // Intermediate segment (matched an existing dir)
-         currentPath.push(existingTyped.id);
-         continue;
-      } else { // Last segment (collision with identical type)
-         return { fs: root, ...generateCollisionInfo(existingTyped) };
+      if (!isLast) {
+        // Intermediate segment (matched an existing dir)
+        currentPath.push(existingTyped.id);
+        continue;
+      } else {
+        // Last segment (collision with identical type)
+        return { fs: root, ...generateCollisionInfo(existingTyped) };
       }
     } else {
-        // If it's an intermediate segment and we didn't find a DIRECTORY with that name
-        // (but might have found a FILE), we need to block it
-        if (!isLast) {
-            const existingFile = parent.children?.find(c => c.name === name && c.type !== 'dir');
-            if (existingFile) {
-                return { fs: root, error: `Cannot create directory path through file: ${name}` };
-            }
+      // If it's an intermediate segment and we didn't find a DIRECTORY with that name
+      // (but might have found a FILE), we need to block it
+      if (!isLast) {
+        const existingFile = parent.children?.find((c) => c.name === name && c.type !== 'dir');
+        if (existingFile) {
+          return { fs: root, error: `Cannot create directory path through file: ${name}` };
         }
+      }
     }
-    
+
     // Create new node
     const newNode: FileNode = {
       id: Math.random().toString(36).substr(2, 9),
@@ -297,18 +321,18 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
       children: type === 'dir' ? [] : undefined,
       content: type === 'file' ? '' : undefined,
       createdAt: Date.now(),
-      modifiedAt: Date.now()
+      modifiedAt: Date.now(),
     };
-    
+
     if (!parent.children) parent.children = [];
     parent.children.push(newNode);
-    
+
     // Sort: Dirs > Archives > Files
     parent.children.sort((a, b) => {
       const typeScore = (t: string) => {
-          if (t === 'dir') return 0;
-          if (t === 'archive') return 1;
-          return 2;
+        if (t === 'dir') return 0;
+        if (t === 'archive') return 1;
+        return 2;
       };
       const scoreA = typeScore(a.type);
       const scoreB = typeScore(b.type);
@@ -317,12 +341,12 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
     });
 
     if (isLast) {
-        return { fs: newRoot, createdName: name };
+      return { fs: newRoot, createdName: name };
     }
-    
+
     currentPath.push(newNode.id);
   }
-  
+
   return { fs: newRoot };
 };
 
@@ -331,143 +355,113 @@ export const createPath = (root: FileNode, parentPathIds: string[], pathStr: str
 const checkCoreSystemProtection = (path: string, node: FileNode): string | null => {
   // Only protect directories if they are the intended system ones
   if (node.type === 'dir' && ['/', '/home', '/home/guest', '/etc', '/tmp', '/bin'].includes(path)) {
-      return `System integrity protection: ${path}`;
+    return `System integrity protection: ${path}`;
   }
   return null;
 };
 
-const checkEpisodeStructuralProtection = (path: string, node: FileNode, levelIndex: number): string | null => {
-  if (node.type === 'dir' && ['/home/guest/datastore', '/home/guest/incoming', '/home/guest/media'].includes(path)) {
-      if (levelIndex < 14) return `Sector protected by admin policy: ${node.name}`;
-  }
-  // Workspace is always protected
-  if (node.type === 'dir' && path === '/home/guest/workspace') {
-      return `CRITICAL: Workspace contains your core process. Cannot be deleted.`;
+const checkEpisodeStructuralProtection = (
+  path: string,
+  node: FileNode,
+  levelIndex: number
+): string | null => {
+  if (
+    node.type === 'dir' &&
+    [
+      '/home/guest/datastore',
+      '/home/guest/incoming',
+      '/home/guest/media',
+      '/home/guest/workspace',
+    ].includes(path)
+  ) {
+    if (levelIndex < 15) return `Sector protected by admin policy: ${node.name}`;
   }
   return null;
 };
 
-const checkLevelSpecificAssetProtection = (path: string, node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>, usedTab?: boolean): string | null => {
+const checkLevelSpecificAssetProtection = (
+  path: string,
+  node: FileNode,
+  levelIndex: number,
+  action: 'delete' | 'cut' | 'rename'
+): string | null => {
   const name = node.name;
   const isDir = node.type === 'dir';
   const isFile = node.type === 'file';
 
-  // Protect agent_watcher for Level 2 - must inspect before deleting
-  if (name === 'agent_watcher.sys' && isFile && levelIndex === 1) {
-      if (action === 'delete' && !usedTab) return "Inspect the threat with Tab before elimination.";
-      if (action === 'cut') return "Threat beacon anchored.";
-  }
-
   if (name === 'access_key.pem' && isFile) {
-      if (action === 'delete') return "Critical asset. Deletion prohibited.";
-      // Allow cut on Level 8 (index 7) and Level 10 (index 9)
-      if (action === 'cut' && ![7, 9].includes(levelIndex)) {
-          return "Asset locked. Modification not authorized.";
-      }
-      // Allow rename only on Level 10 (index 9) after it's been moved to vault
-      if (action === 'rename' && levelIndex !== 9) {
-          return "Asset identity sealed. Rename not authorized.";
-      }
+    if (action === 'delete') return 'Critical asset. Deletion prohibited.';
+    // Allow cut on Level 8 (index 7) and Level 10 (index 9)
+    if (action === 'cut' && ![7, 9].includes(levelIndex)) {
+      return 'Asset locked. Modification not authorized.';
+    }
+    // Allow rename only on Level 10 (index 9) after it's been moved to vault
+    if (action === 'rename' && levelIndex !== 9) {
+      return 'Asset identity sealed. Rename not authorized.';
+    }
   }
 
   if (name === 'mission_log.md' && isFile) {
-      // Allow deletion on Level 14 (index 13)
-      if (action === 'delete' && levelIndex !== 13) return "Mission log required for validation.";
-      // Prevent rename to avoid hiding the log
-      if (action === 'rename' && levelIndex < 13) return "Mission log identity locked.";
+    // Allow deletion on Level 14 (index 13)
+    if (action === 'delete' && levelIndex !== 13) return 'Mission log required for validation.';
+    // Prevent rename to avoid hiding the log
+    if (action === 'rename' && levelIndex < 13) return 'Mission log identity locked.';
   }
 
   if (name === 'target_map.png' && isFile) {
-      if (action === 'delete') return "Intel target. Do not destroy.";
-      if (action === 'cut' && levelIndex !== 2) return "Map file anchored until capture sequence.";
-      if (action === 'rename' && levelIndex < 2) return "Target signature locked.";
+    if (action === 'delete') return 'Intel target. Do not destroy.';
+    if (action === 'cut' && levelIndex !== 2) return 'Map file anchored until capture sequence.';
+    if (action === 'rename' && levelIndex < 2) return 'Target signature locked.';
   }
 
   // Specifically protect the protocols directory if it's the intended one
   if (path === '/home/guest/datastore/protocols' && isDir) {
-      if (action === 'delete' && levelIndex < 4) return "Protocol directory required for uplink deployment.";
-      if (action === 'cut' && levelIndex < 4) return "Protocol directory anchored.";
+    if (action === 'delete' && levelIndex < 4)
+      return 'Protocol directory required for uplink deployment.';
+    if (action === 'cut' && levelIndex < 4) return 'Protocol directory anchored.';
   }
 
   if (name === 'uplink_v1.conf' && isFile) {
-      if (action === 'delete' && levelIndex < 7) return "Uplink configuration required for neural network.";
+    if (action === 'delete' && levelIndex < 7)
+      return 'Uplink configuration required for neural network.';
   }
   if (name === 'uplink_v2.conf' && isFile) {
-      if (action === 'delete' && levelIndex < 4) return "Uplink configuration required for deployment.";
+    if (action === 'delete' && levelIndex < 4)
+      return 'Uplink configuration required for deployment.';
   }
 
   // Path-aware check for active zone
   if (path === '/home/guest/.config/vault/active' && isDir) {
-      if (action === 'delete' && levelIndex < 7) return "Active deployment zone required.";
-      if (action === 'cut' && levelIndex < 7) return "Deployment zone anchored.";
+    if (action === 'delete' && levelIndex < 7) return 'Active deployment zone required.';
+    if (action === 'cut' && levelIndex < 7) return 'Deployment zone anchored.';
   }
 
   if (path === '/home/guest/.config/vault' && isDir) {
-      if (action === 'delete' && levelIndex < 12) return "Vault required for privilege escalation.";
-      if (action === 'cut' && levelIndex < 9) return "Vault anchored until escalation.";
+    if (action === 'delete' && levelIndex < 12) return 'Vault required for privilege escalation.';
+    if (action === 'cut' && levelIndex < 9) return 'Vault anchored until escalation.';
   }
 
   if (name === 'backup_logs.zip' && node.type === 'archive') {
-      if (action === 'delete' && levelIndex < 9) return "Archive required for intelligence extraction.";
-      if (action === 'cut' && levelIndex < 9) return "Archive anchored.";
+    if (action === 'delete' && levelIndex < 9)
+      return 'Archive required for intelligence extraction.';
+    if (action === 'cut' && levelIndex < 9) return 'Archive anchored.';
   }
 
   if (name === 'daemon' && isDir && path.includes('/etc/')) {
-      if (action === 'delete' && levelIndex < 13) return "Daemon controller required for redundancy.";
-      if (action === 'cut' && levelIndex < 13) return "Daemon anchored until cloning.";
-  }
-
-  // Protect agent_watcher for Level 2 - must inspect before deleting
-  if (name === 'agent_watcher.sys' && isFile) {
-      if (action === 'delete' && levelIndex === 1 && !usedTab) return "Inspect the threat with Tab before elimination.";
-      if (action === 'cut' && levelIndex < 2) return "Threat beacon anchored.";
-  }
-
-  // Protect decoy signal for Level 7
-  if (name === 'decoy_signal.trc' && isFile) {
-      if (action === 'delete' && levelIndex < 6) return "Decoy signature required for quantum navigation training.";
-      if (action === 'cut' && levelIndex !== 6) return "Decoy signature anchored.";
-  }
-
-  // Protect ghost process for Level 9
-  if (name === 'ghost_process.pid' && isFile) {
-      if (action === 'delete' && levelIndex !== 8) return "Ghost process marker required for forensic counter-measure.";
-      if (action === 'cut' && levelIndex < 8) return "Ghost process anchored.";
-  }
-
-  // Protect decoy PEM files for Level 10
-  if ((name === 'decoy_1.pem' || name === 'decoy_2.pem') && isFile) {
-      if (action === 'delete' && levelIndex < 9) return "Decoy key required for asset security training.";
-      if (action === 'cut' && levelIndex < 9) return "Decoy key anchored.";
-  }
-
-  // Protect hidden log files for Level 14
-  if ((name === '.access.log' || name === '.audit.log' || name === '.system.log') && isFile) {
-      if (action === 'delete' && levelIndex !== 13) return "System log required for trace removal protocol.";
-      if (action === 'cut' && levelIndex < 13) return "System log anchored.";
-  }
-
-  // Protect sector/grid directories for Level 15
-  if ((name === 'sector_1' || name === 'grid_alpha') && isDir && path.includes('/home/guest/')) {
-      if (action === 'delete' && levelIndex < 14) return "Infrastructure directory required for final purge.";
-      if (action === 'cut' && levelIndex < 14) return "Infrastructure directory anchored.";
-  }
-
-  // Protect hidden files/directories in ~/ for Level 15
-  if (path.includes('/home/guest/') && (name === '.config' || name === '.cache' || name === '.local')) {
-      if (action === 'delete' && levelIndex < 14) return "Configuration directory required for final purge.";
-      if (action === 'cut' && levelIndex < 14) return "Configuration directory anchored.";
-  }
-
-  if (path.includes('/home/guest/') && (name === '.bashrc' || name === '.bash_history' || name === '.profile')) {
-      if (action === 'delete' && levelIndex < 14) return "Shell configuration required for final purge.";
-      if (action === 'cut' && levelIndex < 14) return "Shell configuration anchored.";
+    if (action === 'delete' && levelIndex < 13) return 'Daemon controller required for redundancy.';
+    if (action === 'cut' && levelIndex < 13) return 'Daemon anchored until cloning.';
   }
 
   return null;
 };
 
-export const isProtected = (root: FileNode, parentPathIds: string[], node: FileNode, levelIndex: number, action: 'delete' | 'cut' | 'rename', completedTaskIds?: Record<number, string[]>, usedTab?: boolean): string | null => {
+export const isProtected = (
+  root: FileNode,
+  parentPathIds: string[],
+  node: FileNode,
+  levelIndex: number,
+  action: 'delete' | 'cut' | 'rename'
+): string | null => {
   const fullPath = resolvePath(root, [...parentPathIds, node.id]);
   let protectionMessage: string | null;
 
@@ -477,7 +471,7 @@ export const isProtected = (root: FileNode, parentPathIds: string[], node: FileN
   protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
   if (protectionMessage) return protectionMessage;
 
-  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action, completedTaskIds, usedTab);
+  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
   if (protectionMessage) return protectionMessage;
 
   return null;
@@ -493,12 +487,12 @@ export const initializeTimestamps = (node: FileNode, baseTime: number = Date.now
   const updatedNode = {
     ...node,
     createdAt: node.createdAt || baseTime,
-    modifiedAt: node.modifiedAt || baseTime
+    modifiedAt: node.modifiedAt || baseTime,
   };
 
   if (updatedNode.children) {
-    updatedNode.children = updatedNode.children.map((child, index) => 
-      initializeTimestamps(child, baseTime - (index * 1000)) // Stagger times slightly for variety
+    updatedNode.children = updatedNode.children.map(
+      (child, index) => initializeTimestamps(child, baseTime - index * 1000) // Stagger times slightly for variety
     );
   }
 

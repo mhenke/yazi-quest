@@ -1,66 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CONCLUSION_DATA } from '../constants';
 import { Terminal, Signal, UploadCloud } from 'lucide-react';
-import { trackEvent, trackError } from '../utils/telemetry';
 
 export const OutroSequence: React.FC = () => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(0);
   const [showTeaser, setShowTeaser] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Prefetch video resource proactively: add preload link and start loading metadata/content
-  useEffect(() => {
-    // Insert a <link rel="preload" as="video"> to hint browsers to fetch early
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = CONCLUSION_DATA.videoUrl;
-    link.as = 'video';
-    document.head.appendChild(link);
-
-    // Optionally use blob fallback if enabled via env
-    const useBlob = !!(import.meta as any).env?.VITE_OUTRO_USE_BLOB;
-    const vid = videoRef.current;
-    let objectUrl: string | undefined;
-
-    async function maybeFetchBlob() {
-      try {
-        if (!useBlob) return;
-        if (!vid) return;
-        trackEvent('outro_video_blob_fetch_start', { url: CONCLUSION_DATA.videoUrl });
-        const resp = await fetch(CONCLUSION_DATA.videoUrl, { mode: 'cors' });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const blob = await resp.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (vid) vid.src = objectUrl;
-        trackEvent('outro_video_blob_fetch_success');
-      } catch (e) {
-        trackError('outro_video_blob_fetch_failed', { error: (e && (e as Error).toString()) });
-      }
-    }
-
-    // Also instruct the video element to preload and begin loading when mounted (only if not using blob)
-    if (!useBlob && vid) {
-      try {
-        vid.preload = 'auto';
-        // call load to ensure browser starts fetching
-        vid.load();
-      } catch (_e) {
-        // ignore - some browsers restrict programmatic preloading
-      }
-    }
-
-    // Kick off blob fetch if enabled
-    maybeFetchBlob();
-
-    return () => {
-      // cleanup the added link
-      try { document.head.removeChild(link); } catch (_e) { /* ignore error if link already removed */ }
-      if (objectUrl) {
-        try { URL.revokeObjectURL(objectUrl); } catch (e) {}
-      }
-    };
-  }, []);
 
   // Typewriter effect logic for lore
   useEffect(() => {
@@ -73,14 +19,12 @@ export const OutroSequence: React.FC = () => {
     const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
     let charIdx = 0;
 
-    setDisplayedLines(prev => {
-      return [...prev, ""];
-    });
+    setDisplayedLines((prev) => [...prev, '']);
 
     const interval = setInterval(() => {
       charIdx++;
-      
-      setDisplayedLines(prev => {
+
+      setDisplayedLines((prev) => {
         const newLines = [...prev];
         newLines[currentLineIdx] = currentLineText.slice(0, charIdx);
         return newLines;
@@ -89,7 +33,7 @@ export const OutroSequence: React.FC = () => {
       if (charIdx === currentLineText.length) {
         clearInterval(interval);
         setTimeout(() => {
-          setCurrentLineIdx(prev => prev + 1);
+          setCurrentLineIdx((prev) => prev + 1);
         }, 800);
       }
     }, 40);
@@ -97,139 +41,91 @@ export const OutroSequence: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentLineIdx]);
 
-  // Play video when teaser is shown: wait for canplaythrough, with a short fallback timeout and telemetry
+  // Play video only when teaser is shown
   useEffect(() => {
-    if (!showTeaser) return;
-    const vid = videoRef.current;
-    if (!vid) return;
-
-    let played = false;
-
-    const onCanPlayThrough = () => {
-      try {
-        trackEvent('video_canplaythrough');
-        if (!played) {
-          vid.currentTime = 0;
-          vid.play().then(() => {
-            played = true;
-            trackEvent('video_played_after_canplaythrough');
-          }).catch(e => trackError('video_play_failed_after_canplaythrough', { error: (e && (e as Error).toString()) }));
-        }
-      } catch (_e) {
-        // swallow
-      }
-    };
-
-    vid.addEventListener('canplaythrough', onCanPlayThrough);
-
-    // Try immediate play (muted autoplay may succeed in many browsers)
-    vid.currentTime = 0;
-    vid.play().then(() => {
-      played = true;
-      trackEvent('video_played_immediate');
-    }).catch(() => {
-      // will wait for canplaythrough or fallback
-    });
-
-    // Fallback: attempt play after 5s if still not playing
-    const fallback = window.setTimeout(() => {
-      if (!played) {
-        trackEvent('video_play_fallback');
-        vid.currentTime = 0;
-        vid.play().catch(e => trackError('video_play_failed_on_fallback', { error: (e && (e as Error).toString()) }));
-      }
-    }, 5000);
-
-    return () => {
-      vid.removeEventListener('canplaythrough', onCanPlayThrough);
-      clearTimeout(fallback);
-    };
+    if (showTeaser && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch((e) => console.error('Video play failed', e));
+    }
   }, [showTeaser]);
-
-  // Telemetry: expose simple event when preload attempted
-  useEffect(() => {
-    trackEvent('outro_video_prefetch_attempted', { url: CONCLUSION_DATA.videoUrl });
-  }, []);
 
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
-      
       {/* Narrative Section (Fades out when Teaser starts) */}
-      <div className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-         {/* Header */}
-         <div className="mb-12 border-l-4 border-red-600 pl-6 animate-in slide-in-from-left duration-1000">
-             <div className="flex items-center gap-3 text-red-500 mb-2">
-                 <Terminal size={28} />
-                 <h1 className="text-3xl font-bold tracking-wider glitch-text">{CONCLUSION_DATA.title}</h1>
-             </div>
-             <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
-                 {/* // {CONCLUSION_DATA.subtitle} */}
-             </p>
-         </div>
+      <div
+        className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      >
+        {/* Header */}
+        <div className="mb-12 border-l-4 border-red-600 pl-6 animate-in slide-in-from-left duration-1000">
+          <div className="flex items-center gap-3 text-red-500 mb-2">
+            <Terminal size={28} />
+            <h1 className="text-3xl font-bold tracking-wider glitch-text">
+              {CONCLUSION_DATA.title}
+            </h1>
+          </div>
+          <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
+            // {CONCLUSION_DATA.subtitle}
+          </p>
+        </div>
 
-         {/* Typewriter Text */}
-         <div className="space-y-4 font-mono">
-            {displayedLines.map((line, idx) => (
-                <p key={idx} className="text-zinc-300 text-lg md:text-xl leading-relaxed">
-                    <span className="text-red-500/50 mr-2">{'>'}</span>
-                    {line}
-                </p>
-            ))}
-         </div>
+        {/* Typewriter Text */}
+        <div className="space-y-4 font-mono">
+          {displayedLines.map((line, idx) => (
+            <p key={idx} className="text-zinc-300 text-lg md:text-xl leading-relaxed">
+              <span className="text-red-500/50 mr-2">{'>'}</span>
+              {line}
+            </p>
+          ))}
+        </div>
       </div>
 
       {/* Video Teaser Section */}
       <div className={`absolute inset-0 z-10 flex items-center justify-center`}>
-          
-          {/* Background Video Container - Fades in */}
-          <div className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-            <video 
-                ref={videoRef}
-                src={CONCLUSION_DATA.videoUrl}
-                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
-                muted 
-                playsInline
-            />
-             {/* Scanlines Effect */}
-            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-20" />
-          </div>
-          
-          {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
-          {showTeaser && (
-            <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-in fade-in zoom-in-95 duration-1000 delay-1000 fill-mode-forwards">
-                <div className="animate-pulse text-red-500 mb-2">
-                    <Signal size={48} />
-                </div>
+        {/* Background Video Container - Fades in */}
+        <div
+          className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        >
+          <video
+            ref={videoRef}
+            src={CONCLUSION_DATA.videoUrl}
+            className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
+            muted
+            playsInline
+          />
+          {/* Scanlines Effect */}
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-20" />
+        </div>
 
-                <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in slide-in-from-bottom-4 duration-1000">
-                    {CONCLUSION_DATA.overlayTitle}
-                </h2>
-                
-                <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
-                    {CONCLUSION_DATA.sequelTitle}
-                </h2>
-                
-                <div className="h-px w-32 bg-red-500" />
-                
-                <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
-                    {CONCLUSION_DATA.sequelSubtitle}
-                </h3>
-
-                <div className="pt-8 md:pt-12">
-                    <a 
-                        href="https://github.com/mhenke/yazi-quest" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-zinc-400 hover:text-blue-400 transition-colors text-sm font-mono border border-zinc-700 hover:border-blue-500 px-4 py-2 rounded bg-black/80"
-                    >
-                        <UploadCloud size={16} className="animate-bounce" />
-                        <span>Establishing Remote Uplink → GitHub Repository</span>
-                    </a>
-                </div>
+        {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
+        {showTeaser && (
+          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-in fade-in zoom-in-95 duration-1000 delay-1000 fill-mode-forwards">
+            <div className="animate-pulse text-red-500 mb-2">
+              <Signal size={48} />
             </div>
-          )}
-      </div>
 
+            <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in slide-in-from-bottom-4 duration-1000">
+              {CONCLUSION_DATA.overlayTitle}
+            </h2>
+
+            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
+              {CONCLUSION_DATA.sequelTitle}
+            </h2>
+
+            <div className="h-px w-32 bg-red-500" />
+
+            <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
+              {CONCLUSION_DATA.sequelSubtitle}
+            </h3>
+
+            <div className="pt-8 md:pt-12">
+              <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
+                <UploadCloud size={16} className="animate-bounce" />
+                <span>Establishing Remote Uplink...</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

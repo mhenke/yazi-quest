@@ -6,7 +6,6 @@ interface InfoPanelProps {
   onClose: () => void;
 }
 
-// Fix: Change destructuring to use 'onClose' to match interface
 export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   if (!file) return null;
 
@@ -38,23 +37,23 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
     // Files
     const ext = node.name.split('.').pop()?.toLowerCase();
     const mimeMap: Record<string, string> = {
-      'txt': 'text/plain',
-      'md': 'text/markdown',
-      'json': 'application/json',
-      'js': 'text/javascript',
-      'ts': 'text/typescript',
-      'tsx': 'text/typescript',
-      'rs': 'text/rust',
-      'conf': 'text/plain',
-      'log': 'text/plain',
-      'png': 'image/png',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'gif': 'image/gif',
-      'pdf': 'application/pdf',
-      'pem': 'application/x-pem-file',
-      'key': 'application/x-pem-file',
-      'bin': 'application/octet-stream',
+      txt: 'text/plain',
+      md: 'text/markdown',
+      json: 'application/json',
+      js: 'text/javascript',
+      ts: 'text/typescript',
+      tsx: 'text/typescript',
+      rs: 'text/rust',
+      conf: 'text/plain',
+      log: 'text/plain',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      pdf: 'application/pdf',
+      pem: 'application/x-pem-file',
+      key: 'application/x-pem-file',
+      bin: 'application/octet-stream',
     };
     return mimeMap[ext || ''] || 'application/octet-stream';
   };
@@ -66,14 +65,14 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   const formatDate = (timestamp?: number): string => {
     if (!timestamp) return '-';
     const date = new Date(timestamp);
-    return date.toLocaleString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
   };
 
@@ -97,7 +96,9 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
               <span className="text-zinc-400">Size:</span> {size}
             </div>
 
-            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">Base</h3>
+            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">
+              Base
+            </h3>
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-zinc-500">Created:</span>
@@ -116,7 +117,9 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
 
           {/* Plugins Section */}
           <div className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
-            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">Plugins</h3>
+            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">
+              Plugins
+            </h3>
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-zinc-500">Spotter:</span>
@@ -124,7 +127,9 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Previewer:</span>
-                <span className="text-zinc-300">{file.type === 'dir' ? 'folder' : file.type === 'archive' ? 'archive' : 'file'}</span>
+                <span className="text-zinc-300">
+                  {file.type === 'dir' ? 'folder' : file.type === 'archive' ? 'archive' : 'file'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Fetchers:</span>
