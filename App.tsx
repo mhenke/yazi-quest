@@ -175,6 +175,7 @@ export default function App() {
   });
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showFalseThreatAlert, setShowFalseThreatAlert] = useState(false);
   const [showAlertToast, setShowAlertToast] = useState(false);
   const lastAlertShownRef = useRef<number | null>(null);
   const prevAllTasksCompleteRef = useRef(false);
@@ -444,7 +445,7 @@ export default function App() {
           setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const inRequiredDir =
-              currentDir?.name === 'datastore' || currentDir?.name === 'incoming';
+              currentDir?.name === 'datastore' || currentDir?.name === 'incoming' || currentDir?.name === 'tmp';
             return {
               ...prev,
               cursorIndex: items.length - 1,
@@ -626,7 +627,15 @@ export default function App() {
                 gameState.levelIndex,
                 'cut'
               );
-              if (protection) {
+              if (protection === 'CUT_ABORT_SIGNAL') {
+                setShowFalseThreatAlert(true);
+                setGameState((prev) => ({
+                  ...prev,
+                  falseThreatActive: true,
+                  dynamicHint: "ALERT: System interception detected. Clear clipboard (Y) to abort the operation.",
+                }));
+                // DO NOT return here, allow clipboard to be populated
+              } else if (protection) {
                 showNotification(`🔒 PROTECTED: ${protection}`, 4000);
                 return;
               }
@@ -854,11 +863,14 @@ export default function App() {
       }
       if (e.key === 'Y' || e.key === 'X') {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, clipboard: null }));
+        if (e.key === 'Y' && showFalseThreatAlert) {
+          setShowFalseThreatAlert(false);
+        }
+        setGameState((prev) => ({ ...prev, clipboard: null, falseThreatActive: false, dynamicHint: undefined }));
         showNotification('CLIPBOARD CLEARED', 2000);
       }
     },
-    [showNotification]
+    [showNotification, showFalseThreatAlert]
   );
 
   const handleSortModeKeyDown = useCallback(
@@ -1156,7 +1168,7 @@ export default function App() {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (showSuccessToast || showAlertToast) return;
+      if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
 
       if (['input-file', 'filter', 'rename'].includes(gameState.mode)) {
@@ -1177,8 +1189,7 @@ export default function App() {
         if (
           e.key === 'Escape' ||
           e.key === 'Tab' ||
-          e.key === '?' ||
-          (e.key === 'H' && e.shiftKey)
+          e.key === '?'
         ) {
           setGameState((prev) => ({
             ...prev,
@@ -1220,20 +1231,18 @@ export default function App() {
         return;
       }
 
-      // History navigation: Shift+H = back, Shift+L = forward
-      if (e.key === 'H' && e.shiftKey && gameState.mode === 'normal') {
-        setGameState((prev) => {
-          if (prev.historyIndex >= 0 && prev.history && prev.history.length > 0) {
-            const target = prev.history[prev.historyIndex];
-            if (!target) return prev;
-            skipHistoryPushRef.current = true;
-            return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: prev.historyIndex - 1 };
-          }
-          return prev;
-        });
+      // Shift+H: show hint / progress hint stage (keep user in suspense)
+      if (e.key.toLowerCase() === 'h' && e.shiftKey && gameState.mode === 'normal') {
+        e.preventDefault();
+        setGameState((prev) => ({
+          ...prev,
+          showHint: true,
+          hintStage: Math.min((prev.hintStage || 0) + 1, 2),
+        }));
         return;
       }
 
+      // History navigation: Shift+L = forward (keep original behavior for L)
       if (e.key === 'L' && e.shiftKey && gameState.mode === 'normal') {
         setGameState((prev) => {
           const nextIdx = (prev.historyIndex ?? -1) + 1;
@@ -1286,7 +1295,7 @@ export default function App() {
         } else if (e.key === 'G') {
           const visibleCount = getVisibleItems(gameState).length;
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          const inRequiredDir = currentDir?.name === 'datastore' || currentDir?.name === 'incoming';
+          const inRequiredDir = currentDir?.name === 'datastore' || currentDir?.name === 'incoming' || currentDir?.name === 'tmp';
           setGameState((prev) => ({
             ...prev,
             cursorIndex: Math.max(0, visibleCount - 1),
@@ -1618,15 +1627,23 @@ export default function App() {
       )}
       {gameState.showHint && (
         <HintModal
-          hint={currentLevel.hint}
+          hint={gameState.dynamicHint || currentLevel.hint}
           stage={gameState.hintStage}
-          onClose={() => setGameState((prev) => ({ ...prev, showHelp: false, hintStage: 0 }))}
+          onClose={() => setGameState((prev) => ({ ...prev, showHint: false, hintStage: 0 }))}
         />
       )}
       {gameState.showInfoPanel && (
         <InfoPanel
           file={currentItem}
           onClose={() => setGameState((prev) => ({ ...prev, showInfoPanel: false }))}
+        />
+      )}
+      {showFalseThreatAlert && (
+        <AlertToast
+          message="WARNING: This is a False Threat! This file must NOT be moved from /etc. Your operation has been intercepted. Press 'Y' to clear your clipboard and abort the operation."
+          levelTitle="System Security Alert"
+          onDismiss={() => setShowFalseThreatAlert(false)}
+          onClose={() => setShowFalseThreatAlert(false)}
         />
       )}
       {gameState.mode === 'confirm-delete' && (
@@ -1820,6 +1837,7 @@ export default function App() {
           <PreviewPane
             node={visibleItems[gameState.cursorIndex]}
             level={{ ...currentLevel, tasks: [...currentLevel.tasks] }}
+            gameState={gameState}
           />
         </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileNode, Level } from '../types';
+import { FileNode, Level, GameState } from '../types';
 import {
   FileText,
   FolderOpen,
@@ -14,11 +14,13 @@ import {
   FileCog,
   FileLock,
   Terminal as TerminalIcon,
+  ArrowRight,
 } from 'lucide-react';
 
 interface PreviewPaneProps {
   node: FileNode | null;
   level: Level;
+  gameState: GameState; // Add gameState prop
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -40,7 +42,7 @@ const getPreviewIcon = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
-export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
+export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState }) => {
   const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
   const isArchiveDir = node?.type === 'archive';
@@ -48,6 +50,8 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
   // Treat archives as having children if they are dirs or zip files with children populated
   const hasChildren = node?.children && node.children.length > 0;
   const showChildren = node?.type === 'dir' || isArchiveDir || (isArchiveFile && hasChildren);
+
+  const firstIncompleteTaskIndex = level.tasks.findIndex(t => !t.completed);
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">
@@ -129,23 +133,28 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level }) => {
               Objectives
             </h3>
             <div className="space-y-2">
-              {level.tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
-                >
+              {level.tasks.map((task, index) => {
+                const taskDescription = typeof task.description === 'function' ? task.description(gameState) : task.description;
+                const isCurrentTask = index === firstIncompleteTaskIndex;
+
+                return (
                   <div
-                    className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
+                    key={task.id}
+                    className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
                   >
-                    {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+                    <div
+                      className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
+                    >
+                      {task.completed ? <CheckSquare size={14} /> : (isCurrentTask ? <ArrowRight size={14} className="animate-pulse" /> : <Square size={14} />)}
+                    </div>
+                    <div
+                      className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'} ${isCurrentTask ? 'font-bold' : ''}`}
+                    >
+                      {taskDescription}
+                    </div>
                   </div>
-                  <div
-                    className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
-                  >
-                    {task.description}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

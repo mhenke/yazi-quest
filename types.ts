@@ -9,6 +9,7 @@ export interface FileNode {
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
+  protected?: boolean; // If true, node cannot be deleted by player
 }
 
 export interface FileSystemState {
@@ -17,7 +18,7 @@ export interface FileSystemState {
 
 export interface LevelTask {
   id: string;
-  description: string;
+  description: string | ((gameState: GameState) => string);
   check: (gameState: GameState, level: Level) => boolean;
   completed: boolean;
 }
@@ -161,6 +162,8 @@ export interface GameState {
   usedPreviewScroll?: boolean; // Tracks if player used preview scroll (Shift+J/K)
   usedHistory?: boolean; // Tracks if player used history navigation (Shift+H/Shift+L)
   usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all
+  falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
+  dynamicHint?: string; // Optional runtime hint override for dynamic scenarios
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

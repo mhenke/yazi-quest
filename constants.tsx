@@ -1511,13 +1511,13 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'RAPID NAVIGATION',
     description:
-      "LINEAR TRAVERSAL IS COMPROMISED. The security daemon is monitoring the parent-child node connections. To evade detection, you must use the Zoxide Teleportation Protocol (Shift+Z) to 'blink' between distant system nodes. Access the /tmp volatile cache to dump your trace data, then tunnel to /etc to inspect the core routing tables. A false threat signature will appear in /etc—abort the operation to avoid detection. No active links must remain.",
+      "LINEAR TRAVERSAL IS COMPROMISED. To evade detection, use Zoxide Teleportation (Shift+Z) to 'blink' between distant nodes. Dump your trace data in /tmp. Then, attempt to quarantine a suspicious file in /etc.",
     initialPath: null,
-    hint: "You can jump to `/tmp` instantly using either the `g,t` command sequence or Zoxide (`Shift+Z` -> 'tmp'). Once there, jump to the bottom (`Shift+G`) to find and delete `sys_dump.log`. Finally, use Zoxide to jump to `/etc`. When you arrive, you'll realize it's a false threat—press 'Y' to clear the clipboard and abort the operation. Note: Filters persist across navigation — press Escape to clear when done.",
+    hint: "Jump to `/tmp` (Shift+Z → 'tmp'), then `Shift+G` to reach the bottom and delete `sys_dump.log`. Next, jump to `/etc` (Shift+Z → 'etc'), cut 'sys_patch.conf' (x), then jump to '~/.config/vault/' (Shift+Z → '~/.config/vault/' → Enter) to move it. If an alert triggers, clear the clipboard with Y to abort.",
 
     coreSkill: 'G-Command (gt) + Zoxide (Shift+Z)',
     environmentalClue:
-      'THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc',
+      'THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc | In /etc, target `sys_patch.conf`',
     successMessage: 'QUANTUM JUMP CALIBRATED. Logs purged.',
     buildsOn: [1],
     leadsTo: [8, 12],
@@ -1526,8 +1526,19 @@ export const LEVELS: Level[] = [
       const tmp = findNodeByName(fs, 'tmp');
       if (tmp && tmp.children) {
         // Non-destructive: only remove known demo artifact files (avoid overwriting player-created files)
-        const demoNames = new Set(['sys_dump.log']);
+        const demoNames = new Set([]);
         tmp.children = tmp.children.filter((c) => c.type === 'dir' || !demoNames.has(c.name));
+      }
+      const etc = findNodeByName(fs, 'etc');
+      if (etc && etc.children) {
+        if (!etc.children.some((c) => c.name === 'false_threat.conf')) {
+          etc.children.push({
+            id: generateId(),
+            name: 'sys_patch.conf',
+            type: 'file',
+            content: '# DUMMY FILE - DO NOT DELETE',
+          });
+        }
       }
       return fs;
     },
@@ -1542,11 +1553,12 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'fuzzy-purge',
-        description: "Eliminate trace evidence in /tmp: purge 'sys_dump.log' (gg, d, then y)",
+        id: 'purge-sys-dump',
+        description: "Jump to the bottom of the /tmp file list (Shift+G) and delete 'sys_dump.log' (d, then y)",
         check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
           const tmp = findNodeByName(state.fs, 'tmp');
-          return !!tmp && !tmp.children?.find((c) => c.name === 'sys_dump.log');
+          return currentDir?.name === 'tmp' && state.usedG === true && !!tmp && !tmp.children?.find((c) => c.name === 'sys_dump.log');
         },
         completed: false,
       },
@@ -1560,11 +1572,24 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'cancel-clipboard',
-        description: 'Abort operation: Clear the clipboard (Y)',
+        id: 'abort-false-threat-move',
+        description: (gameState: GameState) => {
+          if (gameState.falseThreatActive) {
+            return "Clear clipboard (Y) to abort operation.";
+          }
+          return "Move 'sys_patch.conf' (x) to '~/.config/vault/' (Shift+Z, active).";
+        },
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'zoxide-etc');
           if (!prevTask?.completed) return false;
+
+          // Phase 1: Check if cut happened and alert triggered
+          if (!state.falseThreatActive) {
+            const sysPatchInClipboard = state.clipboard?.action === 'cut' && state.clipboard.nodes.some((n) => n.name === 'sys_patch.conf');
+            return sysPatchInClipboard && state.falseThreatActive === true; // falseThreatActive is set when Alert is shown
+          }
+
+          // Phase 2: Check if clipboard is cleared (after alert)
           return state.clipboard === null;
         },
         completed: false,

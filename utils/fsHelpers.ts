@@ -385,7 +385,7 @@ const checkLevelSpecificAssetProtection = (
   path: string,
   node: FileNode,
   levelIndex: number,
-  action: 'delete' | 'cut' | 'rename'
+  action: 'delete' | 'cut' | 'rename' | 'add'
 ): string | null => {
   const name = node.name;
   const isDir = node.type === 'dir';
@@ -464,8 +464,13 @@ export const isProtected = (
   levelIndex: number,
   action: 'delete' | 'cut' | 'rename'
 ): string | null => {
-  const fullPath = resolvePath(root, [...parentPathIds, node.id]);
   let protectionMessage: string | null;
+
+  // 1. Check explicit 'protected' flag first
+  protectionMessage = checkNodeProtectedFlag(node);
+  if (protectionMessage) return protectionMessage;
+
+  const fullPath = resolvePath(root, [...parentPathIds, node.id]);
 
   protectionMessage = checkCoreSystemProtection(fullPath, node);
   if (protectionMessage) return protectionMessage;
@@ -476,6 +481,14 @@ export const isProtected = (
   protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
   if (protectionMessage) return protectionMessage;
 
+  return null;
+};
+
+
+const checkNodeProtectedFlag = (node: FileNode): string | null => {
+  if (node.protected) {
+    return '🔒 Permanently protected file. Cannot be deleted.';
+  }
   return null;
 };
 
