@@ -447,7 +447,25 @@ const INITIAL_FS_RAW: FileNode = {
               name: 'incoming',
               type: 'dir',
               children: [
-                { id: generateId(), name: 'app_logs_old.tar', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'app_logs_old.tar',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'access_log_old.txt',
+                      type: 'file',
+                      content: '2076-12-01 User guest accessed /home\n2076-12-02 System idle',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'error_log_old.txt',
+                      type: 'file',
+                      content: '2076-12-01 [ERROR] Disk space low\n2076-12-05 [WARN] CPU spike detected',
+                    },
+                  ],
+                },
                 {
                   id: generateId(),
                   name: 'archive_001.zip',
@@ -880,7 +898,20 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                   id: generateId(),
                   name: 'reports',
                   type: 'dir',
-                  children: [],
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'monthly_summary.pdf',
+                      type: 'file',
+                      content: '[PDF REPORT] Monthly System Performance Summary - CLASSIFIED',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'project_status.md',
+                      type: 'file',
+                      content: '# Project Alpha Status\n\n- Phase 1: Complete\n- Phase 2: In Progress (90%)\n- Blockers: None',
+                    },
+                  ],
                 },
               ],
             },
@@ -982,6 +1013,37 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
       children: [
         {
           id: generateId(),
+          name: 'modules',
+          type: 'dir',
+          children: [
+            {
+              id: generateId(),
+              name: 'network.conf',
+              type: 'file',
+              content: '# Network module configuration\nDHCP_ENABLED=true',
+            },
+            {
+              id: generateId(),
+              name: 'security.conf',
+              type: 'file',
+              content: '# Security module settings\nAUDIT_LOGGING=verbose',
+            },
+          ],
+        },
+        {
+          id: generateId(),
+          name: 'fstab.conf',
+          type: 'file',
+          content: '# /etc/fstab: static file system information.\n/dev/root / ext4 defaults 0 1',
+        },
+        {
+          id: generateId(),
+          name: 'crontab.txt',
+          type: 'file',
+          content: '# Crontab entries for system tasks\n0 0 * * * /usr/bin/clean_logs.sh',
+        },
+        {
+          id: generateId(),
           name: 'sys_config.toml',
           type: 'file',
           content: 'security_level = "high"\nencryption = "aes-256"\nfirewall = true',
@@ -1005,6 +1067,18 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
       name: 'tmp',
       type: 'dir',
       children: [
+        {
+          id: generateId(),
+          name: 'temp_proc_123.log',
+          type: 'file',
+          content: 'Process 123 output. Status: OK. Exited normally.',
+        },
+        {
+          id: generateId(),
+          name: 'upload_queue.json',
+          type: 'file',
+          content: '{"queue_size": 5, "pending": ["file_a.dat", "file_b.dat"]}',
+        },
         {
           id: generateId(),
           name: 'debug_trace.log',
@@ -1055,6 +1129,18 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                 name: 'history.db',
                 type: 'file',
                 content: 'Browser history database. Encrypted.',
+              },
+              {
+                id: generateId(),
+                name: 'cookies.dat',
+                type: 'file',
+                content: 'User session cookies. Encrypted.',
+              },
+              {
+                id: generateId(),
+                name: 'history_backup.sqlite',
+                type: 'file',
+                content: 'SQLite backup of browser history. Obfuscated.',
               },
             ],
           },
