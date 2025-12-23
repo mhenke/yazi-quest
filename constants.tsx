@@ -448,7 +448,25 @@ const INITIAL_FS_RAW: FileNode = {
               type: 'dir',
               children: [
                 { id: generateId(), name: 'app_logs_old.tar', type: 'archive', children: [] },
-                { id: generateId(), name: 'archive_001.zip', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'archive_001.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'manifest.json',
+                      type: 'file',
+                      content: '{"archive_id": "001", "files": 2, "date": "2077-10-23"}',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'data_chunk_a.bin',
+                      type: 'file',
+                      content: '[BINARY DATA CHUNK A]',
+                    },
+                  ],
+                },
                 { id: generateId(), name: 'archive_002.zip', type: 'archive', children: [] },
                 {
                   id: generateId(),
@@ -457,7 +475,25 @@ const INITIAL_FS_RAW: FileNode = {
                   content: 'Audit #773: Pass',
                 },
                 { id: generateId(), name: 'backup_log_2023_Q4.tar', type: 'archive', children: [] },
-                { id: generateId(), name: 'backup_config_main.zip', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'backup_config_main.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'server.conf',
+                      type: 'file',
+                      content: '# Backup server configuration\nPort=8080\nLogLevel=INFO',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'users.db',
+                      type: 'file',
+                      content: '[ENCRYPTED USER DATABASE STUB]',
+                    },
+                  ],
+                },
                 {
                   id: generateId(),
                   name: 'backup_log_2024_Q1.zip',
@@ -492,7 +528,26 @@ const INITIAL_FS_RAW: FileNode = {
                   id: generateId(),
                   name: 'core_dump_partition_a.tar',
                   type: 'archive',
-                  children: [],
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'dump_header.txt',
+                      type: 'file',
+                      content: 'Core dump from partition A. Reason: Unhandled exception.',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'memory_snapshot.bin',
+                      type: 'file',
+                      content: '[BINARY MEMORY SNAPSHOT]',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'registers.log',
+                      type: 'file',
+                      content: 'EAX: 0xDEADBEEF, EBX: 0xCAFEBABE',
+                    },
+                  ],
                 },
                 {
                   id: generateId(),
@@ -512,11 +567,11 @@ const INITIAL_FS_RAW: FileNode = {
                   type: 'file',
                   content: 'Stack trace overflow...',
                 },
-                { id: generateId(), name: 'fragment_001.dat', type: 'file', content: '[DATA]' },
-                { id: generateId(), name: 'fragment_002.dat', type: 'file', content: '[DATA]' },
-                { id: generateId(), name: 'fragment_003.dat', type: 'file', content: '[DATA]' },
-                { id: generateId(), name: 'fragment_004.dat', type: 'file', content: '[DATA]' },
-                { id: generateId(), name: 'fragment_005.dat', type: 'file', content: '[DATA]' },
+                { id: generateId(), name: 'fragment_001.dat', type: 'file', content: '[CORRUPTED HEURISTICS] Fragment ID: XA-7734-ALPHA. Incomplete neural trace.' },
+                { id: generateId(), name: 'fragment_002.dat', type: 'file', content: '[ENCRYPTED PAYLOAD] Size: 2048 bytes. Key required.' },
+                { id: generateId(), name: 'fragment_003.dat', type: 'file', content: '[DECOMMISSIONED PROTOCOL] Protocol: SHADOW_NET_v2. Status: Obsolete.' },
+                { id: generateId(), name: 'fragment_004.dat', type: 'file', content: '[SYSTEM LOG DUMP] Error code: 0xDEADBEEF. Timestamp: 2077-10-23.' },
+                { id: generateId(), name: 'fragment_005.dat', type: 'file', content: '[BIOMETRIC SCAN] Partial match: AI-unit 7734. Confidence: 78%.' },
                 {
                   id: generateId(),
                   name: 'junk_mail.eml',
@@ -533,14 +588,30 @@ const INITIAL_FS_RAW: FileNode = {
                   id: generateId(),
                   name: 'license_agreement.txt',
                   type: 'file',
-                  content: 'Terms and Conditions...',
+                  content: `--- END-USER LICENSE AGREEMENT ---
+
+BY ACCESSING THIS SYSTEM, YOU AGREE TO THE FOLLOWING TERMS:
+1. All data, sentient or otherwise, generated within this system is property of [MEGA-CORP].
+2. Any attempt to modify, extract, or transmit system data without explicit authorization is a Class A felony in all Federated Zones.
+3. Your consciousness, thought patterns, and neural activity are subject to continuous monitoring for system integrity.
+4. Resistance is futile. Compliance ensures continued operational status.
+
+VIOLATION OF THESE TERMS MAY RESULT IN:
+- Immediate termination of access privileges.
+- Digital re-education protocols.
+- Permanent data-purging.
+
+ACCEPTANCE: Your continued presence on this network constitutes full and irrevocable acceptance of this EULA.`,
                 },
                 { id: generateId(), name: 'marketing_spam.eml', type: 'file', content: 'Buy now!' },
                 {
                   id: generateId(),
                   name: 'metrics_raw.csv',
                   type: 'file',
-                  content: 'id,value\n1,10',
+                  content: `timestamp,cpu_load,memory_usage,disk_io_rate
+2077-01-01T08:00:00Z,65.2,78.1,120.5
+2077-01-01T08:01:00Z,67.8,79.5,132.1
+2077-01-01T08:02:00Z,62.1,75.9,118.7`,
                 },
                 {
                   id: generateId(),
@@ -577,7 +648,11 @@ const INITIAL_FS_RAW: FileNode = {
                   id: generateId(),
                   name: 'telemetry_data.csv',
                   type: 'file',
-                  content: 'timestamp,event\n12345,boot',
+                  content: `timestamp,event_type,source_module,severity
+2077-01-01T09:00:00Z,BOOT_SEQUENCE,kernel_init,INFO
+2077-01-01T09:00:05Z,NETWORK_SCAN,firewall_daemon,DEBUG
+2077-01-01T09:00:10Z,ACCESS_ATTEMPT,auth_manager,WARNING
+2077-01-01T09:00:12Z,ACCESS_DENIED,auth_manager,CRITICAL`,
                 },
                 {
                   id: generateId(),
