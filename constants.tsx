@@ -467,14 +467,50 @@ const INITIAL_FS_RAW: FileNode = {
                     },
                   ],
                 },
-                { id: generateId(), name: 'archive_002.zip', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'archive_002.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'corrupted_metadata.json',
+                      type: 'file',
+                      content: '{"status": "corrupted", "error": "checksum_mismatch"}',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'unknown_payload.bin',
+                      type: 'file',
+                      content: '[UNKNOWN BINARY PAYLOAD]',
+                    },
+                  ],
+                },
                 {
                   id: generateId(),
                   name: 'audit_log_773.txt',
                   type: 'file',
                   content: 'Audit #773: Pass',
                 },
-                { id: generateId(), name: 'backup_log_2023_Q4.tar', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'backup_log_2023_Q4.tar',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'system_audit.log',
+                      type: 'file',
+                      content: 'Audit log Q4 2023: System integrity verified. No anomalies.',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'network_traffic.csv',
+                      type: 'file',
+                      content: 'timestamp,source,destination,bytes\n2023-12-31,10.0.0.1,192.168.1.1,1024',
+                    },
+                  ],
+                },
                 {
                   id: generateId(),
                   name: 'backup_config_main.zip',
@@ -498,12 +534,38 @@ const INITIAL_FS_RAW: FileNode = {
                   id: generateId(),
                   name: 'backup_log_2024_Q1.zip',
                   type: 'archive',
-                  children: [],
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'access_log.txt',
+                      type: 'file',
+                      content: '2024-03-15 User AI-7734 accessed /datastore\n2024-03-16 System scan initiated',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'security_events.log',
+                      type: 'file',
+                      content: 'WARNING: Unauthorized access attempt detected from external IP.',
+                    },
+                  ],
                 },                {
                   id: generateId(),
                   name: 'backup_recovery_scripts.zip',
                   type: 'archive',
-                  children: [],
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'restore_system.sh',
+                      type: 'file',
+                      content: '#!/bin/bash\necho "Initiating system restore..."',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'verify_integrity.py',
+                      type: 'file',
+                      content: 'import hashlib\n# Script to verify data integrity',
+                    },
+                  ],
                 },
                 {
                   id: generateId(),
@@ -523,7 +585,25 @@ const INITIAL_FS_RAW: FileNode = {
                   type: 'file',
                   content: '11001100',
                 },
-                { id: generateId(), name: 'cache_purge_logs.zip', type: 'archive', children: [] },
+                {
+                  id: generateId(),
+                  name: 'cache_purge_logs.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'purge_report_2077.log',
+                      type: 'file',
+                      content: 'Cache purge initiated: 2077-01-01. Total space reclaimed: 10GB.',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'failed_purges.txt',
+                      type: 'file',
+                      content: 'Failed to purge: /tmp/locked_file.tmp (Permission denied)',
+                    },
+                  ],
+                },
                 {
                   id: generateId(),
                   name: 'core_dump_partition_a.tar',
@@ -559,7 +639,20 @@ const INITIAL_FS_RAW: FileNode = {
                   id: generateId(),
                   name: 'database_snapshot_temp.zip',
                   type: 'archive',
-                  children: [],
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'db_schema.sql',
+                      type: 'file',
+                      content: 'CREATE TABLE users (id INT, name VARCHAR(255));',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'users_table.csv',
+                      type: 'file',
+                      content: 'id,username,email\n1,admin,admin@example.com',
+                    },
+                  ],
                 },
                 {
                   id: generateId(),
@@ -744,7 +837,52 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
               id: 'workspace',
               name: 'workspace',
               type: 'dir',
-              children: [],
+              children: [
+                {
+                  id: generateId(),
+                  name: 'projects',
+                  type: 'dir',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'neural_net_v1.py',
+                      type: 'file',
+                      content: 'import tensorflow as tf\n# Basic neural net prototype',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'prototype.js',
+                      type: 'file',
+                      content: 'console.log("Hello from the prototype!");',
+                    },
+                  ],
+                },
+                {
+                  id: generateId(),
+                  name: 'logs',
+                  type: 'dir',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'activity.log',
+                      type: 'file',
+                      content: '2077-01-01 User login\n2077-01-01 File modified: prototype.js',
+                    },
+                    {
+                      id: generateId(),
+                      name: 'error_summary.txt',
+                      type: 'file',
+                      content: 'No critical errors detected in last 24h.',
+                    },
+                  ],
+                },
+                {
+                  id: generateId(),
+                  name: 'reports',
+                  type: 'dir',
+                  children: [],
+                },
+              ],
             },
             {
               id: '.config',
@@ -900,7 +1038,27 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
           content:
             'Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)',
         },
-        { id: generateId(), name: 'cache', type: 'dir', children: [] },
+        { id: generateId(), name: 'cache', type: 'dir', children: [
+          {
+            id: generateId(),
+            name: 'temp_data_01.tmp',
+            type: 'file',
+            content: 'Ephemeral data fragment. Auto-purge scheduled.',
+          },
+          {
+            id: generateId(),
+            name: 'browser_cache',
+            type: 'dir',
+            children: [
+              {
+                id: generateId(),
+                name: 'history.db',
+                type: 'file',
+                content: 'Browser history database. Encrypted.',
+              },
+            ],
+          },
+        ] },
       ],
     },
   ],
