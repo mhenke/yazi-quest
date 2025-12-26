@@ -87,14 +87,24 @@ const App: React.FC = () => {
     }
 
     return items;
-  }, [gameState.fs, gameState.currentPath, gameState.showHidden, gameState.filters, gameState.sortBy, gameState.sortDirection]);
+  }, [
+    gameState.fs,
+    gameState.currentPath,
+    gameState.showHidden,
+    gameState.filters,
+    gameState.sortBy,
+    gameState.sortDirection,
+  ]);
 
   // Ensure cursor is within bounds
   useEffect(() => {
     if (visibleItems.length === 0 && gameState.cursorIndex !== 0) {
-      setGameState((prev) => ({ ...prev, cursorIndex: 0 }));
+      setTimeout(() => setGameState((prev) => ({ ...prev, cursorIndex: 0 })), 0);
     } else if (visibleItems.length > 0 && gameState.cursorIndex >= visibleItems.length) {
-      setGameState((prev) => ({ ...prev, cursorIndex: visibleItems.length - 1 }));
+      setTimeout(
+        () => setGameState((prev) => ({ ...prev, cursorIndex: visibleItems.length - 1 })),
+        0
+      );
     }
   }, [visibleItems.length, gameState.cursorIndex]);
 
@@ -102,25 +112,27 @@ const App: React.FC = () => {
   useEffect(() => {
     const level = LEVELS[gameState.levelIndex];
     if (level) {
-      setGameState((prev) => {
-        let newPath = prev.currentPath;
-        if (level.initialPath) {
-          // Verify path exists, else fallback to root
-          const node = getNodeByPath(prev.fs, level.initialPath);
-          if (node) newPath = level.initialPath;
-        }
+      setTimeout(() => {
+        setGameState((prev) => {
+          let newPath = prev.currentPath;
+          if (level.initialPath) {
+            // Verify path exists, else fallback to root
+            const node = getNodeByPath(prev.fs, level.initialPath);
+            if (node) newPath = level.initialPath;
+          }
 
-        return {
-          ...prev,
-          timeLeft: level.timeLimit || null,
-          keystrokes: 0,
-          currentPath: newPath,
-          cursorIndex: 0,
-          usedG: false,
-          usedGG: false,
-          notification: `Level ${level.id}: ${level.title}`,
-        };
-      });
+          return {
+            ...prev,
+            timeLeft: level.timeLimit || null,
+            keystrokes: 0,
+            currentPath: newPath,
+            cursorIndex: 0,
+            usedG: false,
+            usedGG: false,
+            notification: `Level ${level.id}: ${level.title}`,
+          };
+        });
+      }, 0);
     }
   }, [gameState.levelIndex]);
 
@@ -170,7 +182,7 @@ const App: React.FC = () => {
 
     if (allTasksComplete) {
       playSuccessSound(gameState.settings.soundEnabled);
-      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(true), 0);
     }
   }, [gameState, showSuccess]);
 
@@ -309,7 +321,7 @@ const App: React.FC = () => {
             break;
           case 'l':
           case 'ArrowRight':
-          case 'Enter':
+          case 'Enter': {
             const item = visibleItems[gameState.cursorIndex];
             if (item && (item.type === 'dir' || item.type === 'archive')) {
               setGameState((prev) => ({
@@ -326,6 +338,7 @@ const App: React.FC = () => {
               }));
             }
             break;
+          }
           case 'G': // Shift+g
             setGameState((prev) => ({
               ...prev,
@@ -400,7 +413,8 @@ const App: React.FC = () => {
             }
             break;
           case 'x': // Cut
-          case 'y': // Copy
+          case 'y': {
+            // Copy
             const action = e.key === 'x' ? 'cut' : 'yank';
             const nodesToClip =
               gameState.selectedIds.length > 0
@@ -432,6 +446,7 @@ const App: React.FC = () => {
               }));
             }
             break;
+          }
           case 'p': // Paste
             if (gameState.clipboard) {
               setGameState((prev) => {

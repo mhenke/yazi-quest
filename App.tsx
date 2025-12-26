@@ -130,7 +130,14 @@ export default function App() {
           fs = initialLevel.onEnter(fs);
         }
       } catch (err) {
-        try { require('./utils/error').reportError(err, { phase: 'initialLevel.onEnter', level: initialLevel?.id }); } catch(e) { console.error('initialLevel.onEnter failed', err); }
+        try {
+          reportError(err, {
+            phase: 'initialLevel.onEnter',
+            level: initialLevel?.id,
+          });
+        } catch (e) {
+          console.error('initialLevel.onEnter failed', err);
+        }
       }
     }
 
@@ -189,17 +196,26 @@ export default function App() {
     if (isLastLevel || gameState.isGameOver) return;
     const lvl = currentLevel;
     if (lvl && lvl.id === 5 && lastAlertShownRef.current !== lvl.id) {
-      setShowAlertToast(true);
+      setTimeout(() => setShowAlertToast(true), 0);
       lastAlertShownRef.current = lvl.id;
     }
   }, [gameState.levelIndex, isLastLevel, gameState.isGameOver, currentLevel]);
 
-  const visibleItems = React.useMemo(() => measure('visibleItems', () => getVisibleItems(gameState)), [gameState]);
+  const visibleItems = React.useMemo(
+    () => measure('visibleItems', () => getVisibleItems(gameState)),
+    [gameState]
+  );
 
   const handleCloseAlert = useCallback(() => {
     setShowAlertToast(false);
     // Clear modal UI flags and ensure normal mode resumes
-    setGameState((prev) => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false, mode: 'normal' }));
+    setGameState((prev) => ({
+      ...prev,
+      showHelp: false,
+      showHint: false,
+      showInfoPanel: false,
+      mode: 'normal',
+    }));
   }, []);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
@@ -243,13 +259,13 @@ export default function App() {
     });
 
     if (changed) {
-      setGameState((prev) => ({ ...prev }));
+      setTimeout(() => setGameState((prev) => ({ ...prev })), 0);
     }
 
     const allComplete = currentLevel.tasks.every((t) => t.completed);
     if (allComplete && !prevAllTasksCompleteRef.current) {
       playSuccessSound(gameState.settings.soundEnabled);
-      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(true), 0);
     }
     prevAllTasksCompleteRef.current = allComplete;
   }, [gameState, currentLevel, isLastLevel]);
@@ -297,7 +313,10 @@ export default function App() {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
 
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-      setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
+      setTimeout(
+        () => setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' })),
+        0
+      );
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
 
@@ -355,7 +374,14 @@ export default function App() {
           fs = nextLevel.onEnter(fs);
         }
       } catch (err) {
-        try { require('./utils/error').reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id }); } catch(e) { console.error('nextLevel.onEnter failed', err); }
+        try {
+          reportError(err, {
+            phase: 'nextLevel.onEnter',
+            level: nextLevel?.id,
+          });
+        } catch (e) {
+          console.error('nextLevel.onEnter failed', err);
+        }
         onEnterError = err;
       }
 
@@ -445,7 +471,9 @@ export default function App() {
           setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const inRequiredDir =
-              currentDir?.name === 'datastore' || currentDir?.name === 'incoming' || currentDir?.name === 'tmp';
+              currentDir?.name === 'datastore' ||
+              currentDir?.name === 'incoming' ||
+              currentDir?.name === 'tmp';
             return {
               ...prev,
               cursorIndex: items.length - 1,
@@ -473,7 +501,13 @@ export default function App() {
             setGameState((prev) => {
               if (prev.historyIndex >= 0 && prev.history && prev.history.length > 0) {
                 const target = prev.history[prev.historyIndex];
-                return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: prev.historyIndex - 1, usedHistory: true };
+                return {
+                  ...prev,
+                  currentPath: target,
+                  cursorIndex: 0,
+                  historyIndex: prev.historyIndex - 1,
+                  usedHistory: true,
+                };
               }
               return prev;
             });
@@ -486,7 +520,13 @@ export default function App() {
               const nextIdx = (prev.historyIndex ?? -1) + 1;
               if (prev.history && nextIdx < prev.history.length) {
                 const target = prev.history[nextIdx];
-                return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: nextIdx, usedHistory: true };
+                return {
+                  ...prev,
+                  currentPath: target,
+                  cursorIndex: 0,
+                  historyIndex: nextIdx,
+                  usedHistory: true,
+                };
               }
               return prev;
             });
@@ -503,7 +543,7 @@ export default function App() {
           break;
         case 'l':
         case 'Enter':
-        case 'ArrowRight':
+        case 'ArrowRight': {
           const allComplete = currentLevel.tasks.every((t) => t.completed);
           if (allComplete && e.key === 'Enter' && e.shiftKey) {
             advanceLevel();
@@ -532,12 +572,16 @@ export default function App() {
             });
           }
           break;
+        }
         case ' ':
           if (currentItem) {
             if (currentLevel.id === 5) {
               const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
               if (currentDir?.name === 'protocols' && currentItem.name.startsWith('uplink_')) {
-                showNotification('Manual selection is too slow. Use batch operations for speed.', 4000);
+                showNotification(
+                  'Manual selection is too slow. Use batch operations for speed.',
+                  4000
+                );
                 break;
               }
             }
@@ -632,7 +676,8 @@ export default function App() {
                 setGameState((prev) => ({
                   ...prev,
                   falseThreatActive: true,
-                  dynamicHint: "ALERT: System interception detected. Clear clipboard (Y) to abort the operation.",
+                  dynamicHint:
+                    'ALERT: System interception detected. Clear clipboard (Y) to abort the operation.',
                 }));
                 // DO NOT return here, allow clipboard to be populated
               } else if (protection) {
@@ -675,7 +720,10 @@ export default function App() {
                     if (!deleteResult.ok) {
                       // For a 'cut' operation, if the original is not found, it's not a failure.
                       // It means it was already removed (e.g. parent dir deleted).
-                      if (deleteResult.error !== 'NotFound' && deleteResult.error !== 'InvalidPath') {
+                      if (
+                        deleteResult.error !== 'NotFound' &&
+                        deleteResult.error !== 'InvalidPath'
+                      ) {
                         error = deleteResult.error;
                         errorNodeName = node.name;
                         break;
@@ -734,7 +782,11 @@ export default function App() {
                   }));
                 }
               } catch (err) {
-                try { reportError(err, { phase: 'paste', action: 'p' }); } catch(e) { console.error(err); }
+                try {
+                  reportError(err, { phase: 'paste', action: 'p' });
+                } catch (e) {
+                  console.error(err);
+                }
                 showNotification('Paste failed', 4000);
               }
             }
@@ -755,7 +807,12 @@ export default function App() {
                   );
 
                   if (existingNode) {
-                    const deleteResult = deleteNode(newFs, gameState.currentPath, existingNode.id, gameState.levelIndex);
+                    const deleteResult = deleteNode(
+                      newFs,
+                      gameState.currentPath,
+                      existingNode.id,
+                      gameState.levelIndex
+                    );
                     if (deleteResult.ok) {
                       newFs = deleteResult.value;
                     } else {
@@ -764,9 +821,9 @@ export default function App() {
                       break;
                     }
                   }
-                  
+
                   const addResult = addNode(newFs, gameState.currentPath, node);
-                   if (addResult.ok) {
+                  if (addResult.ok) {
                     newFs = addResult.value;
                   } else {
                     error = addResult.error;
@@ -775,7 +832,14 @@ export default function App() {
                   }
 
                   if (gameState.clipboard?.action === 'cut') {
-                    const deleteResult = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex, 'cut', gameState.clipboard?.authorized === true);
+                    const deleteResult = deleteNode(
+                      newFs,
+                      gameState.clipboard.originalPath,
+                      node.id,
+                      gameState.levelIndex,
+                      'cut',
+                      gameState.clipboard?.authorized === true
+                    );
                     if (deleteResult.ok) {
                       newFs = deleteResult.value;
                     } else {
@@ -787,18 +851,21 @@ export default function App() {
                 }
 
                 if (error) {
-                    showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
+                  showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
                 } else {
-                    setGameState((prev) => ({
-                      ...prev,
-                      fs: newFs,
-                      clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
-                      notification: `Force deployed ${prev.clipboard?.nodes.length} assets`,
-                    }));
+                  setGameState((prev) => ({
+                    ...prev,
+                    fs: newFs,
+                    clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
+                    notification: `Force deployed ${prev.clipboard?.nodes.length} assets`,
+                  }));
                 }
-
               } catch (err) {
-                try { reportError(err, { phase: 'paste', action: 'P' }); } catch(e) { console.error(err); }
+                try {
+                  reportError(err, { phase: 'paste', action: 'P' });
+                } catch (e) {
+                  console.error(err);
+                }
                 showNotification('Force paste failed', 4000);
               }
             }
@@ -866,7 +933,12 @@ export default function App() {
         if (e.key === 'Y' && showFalseThreatAlert) {
           setShowFalseThreatAlert(false);
         }
-        setGameState((prev) => ({ ...prev, clipboard: null, falseThreatActive: false, dynamicHint: undefined }));
+        setGameState((prev) => ({
+          ...prev,
+          clipboard: null,
+          falseThreatActive: false,
+          dynamicHint: undefined,
+        }));
         showNotification('CLIPBOARD CLEARED', 2000);
       }
     },
@@ -981,7 +1053,11 @@ export default function App() {
             }));
           }
         } catch (err) {
-          try { reportError(err, { phase: 'delete-confirm' }); } catch(e) { console.error(err); }
+          try {
+            reportError(err, { phase: 'delete-confirm' });
+          } catch (e) {
+            console.error(err);
+          }
           showNotification('Delete failed', 4000);
         }
       } else if (e.key === 'n' || e.key === 'Escape') {
@@ -1019,7 +1095,11 @@ export default function App() {
           }
 
           // 2. Add the new node with same name but new ID/content
-          const createResult = createPath(deleteResult.value, gameState.currentPath, gameState.inputBuffer);
+          const createResult = createPath(
+            deleteResult.value,
+            gameState.currentPath,
+            gameState.inputBuffer
+          );
 
           if (createResult.error) {
             setGameState((prev) => ({
@@ -1186,11 +1266,7 @@ export default function App() {
       const currentItem = items[gameState.cursorIndex] || null;
 
       if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
-        if (
-          e.key === 'Escape' ||
-          e.key === 'Tab' ||
-          e.key === '?'
-        ) {
+        if (e.key === 'Escape' || e.key === 'Tab' || e.key === '?') {
           setGameState((prev) => ({
             ...prev,
             showHelp: false,
@@ -1295,7 +1371,10 @@ export default function App() {
         } else if (e.key === 'G') {
           const visibleCount = getVisibleItems(gameState).length;
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          const inRequiredDir = currentDir?.name === 'datastore' || currentDir?.name === 'incoming' || currentDir?.name === 'tmp';
+          const inRequiredDir =
+            currentDir?.name === 'datastore' ||
+            currentDir?.name === 'incoming' ||
+            currentDir?.name === 'tmp';
           setGameState((prev) => ({
             ...prev,
             cursorIndex: Math.max(0, visibleCount - 1),
@@ -1496,6 +1575,7 @@ export default function App() {
       advanceLevel,
       showSuccessToast,
       showAlertToast,
+      showFalseThreatAlert,
     ]
   );
 
@@ -1503,10 +1583,6 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  if (isLastLevel) {
-    return <OutroSequence />;
-  }
 
   const handleInputModeSubmit = () => {
     const {
@@ -1595,7 +1671,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    updateOverlayPos();
+    setTimeout(() => updateOverlayPos(), 0);
     window.addEventListener('resize', updateOverlayPos);
     const mo = new MutationObserver(() => updateOverlayPos());
     mo.observe(document.body, { childList: true, subtree: true, attributes: true });
@@ -1685,7 +1761,14 @@ export default function App() {
                 fs = target.onEnter(fs);
               }
             } catch (err) {
-              try { require('./utils/error').reportError(err, { phase: 'target.onEnter', level: target?.id }); } catch(e) { console.error('target.onEnter failed', err); }
+              try {
+                reportError(err, {
+                  phase: 'target.onEnter',
+                  level: target?.id,
+                });
+              } catch (e) {
+                console.error('target.onEnter failed', err);
+              }
               onEnterError = err;
             }
             setGameState((prev) => ({
@@ -1753,8 +1836,6 @@ export default function App() {
                   <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
                 </div>
               )}
-
-
 
             {gameState.mode === 'filter' && (
               <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
@@ -1861,29 +1942,74 @@ export default function App() {
 
       {/* Which-Key overlays (span left + middle columns) */}
       {gameState.mode === 'g-command' && (
-        <GCommandDialog left={overlayLeft} right={overlayRight} onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))} />
+        <GCommandDialog
+          left={overlayLeft}
+          right={overlayRight}
+          onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
+        />
       )}
 
       {gameState.mode === 'sort' && (
-        <div className="absolute bottom-6 m-2 z-50 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150" style={{ left: overlayLeft, right: overlayRight }}>
+        <div
+          className="absolute bottom-6 m-2 z-50 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150"
+          style={{ left: overlayLeft, right: overlayRight }}
+        >
           <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Sort Options</span>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              Sort Options
+            </span>
             <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">n</span> <span className="text-zinc-400">Natural</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">N</span> <span className="text-zinc-400">Natural (rev)</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">a</span> <span className="text-zinc-400">A-Z</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">A</span> <span className="text-zinc-400">Z-A</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">m</span> <span className="text-zinc-400">Modified (new)</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">M</span> <span className="text-zinc-400">Modified (old)</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">s</span> <span className="text-zinc-400">Size (large)</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">S</span> <span className="text-zinc-400">Size (small)</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">e</span> <span className="text-zinc-400">Extension</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">E</span> <span className="text-zinc-400">Extension (rev)</span></div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">n</span>{' '}
+              <span className="text-zinc-400">Natural</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">N</span>{' '}
+              <span className="text-zinc-400">Natural (rev)</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">a</span>{' '}
+              <span className="text-zinc-400">A-Z</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">A</span>{' '}
+              <span className="text-zinc-400">Z-A</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">m</span>{' '}
+              <span className="text-zinc-400">Modified (new)</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">M</span>{' '}
+              <span className="text-zinc-400">Modified (old)</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">s</span>{' '}
+              <span className="text-zinc-400">Size (large)</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">S</span>{' '}
+              <span className="text-zinc-400">Size (small)</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">e</span>{' '}
+              <span className="text-zinc-400">Extension</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">E</span>{' '}
+              <span className="text-zinc-400">Extension (rev)</span>
+            </div>
             <div className="col-span-2 border-t border-zinc-800 my-1"></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">l</span> <span className="text-zinc-400">Cycle Linemode</span></div>
-            <div className="flex gap-2"><span className="text-orange-500 font-bold">-</span> <span className="text-zinc-400">Clear Linemode</span></div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">l</span>{' '}
+              <span className="text-zinc-400">Cycle Linemode</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-orange-500 font-bold">-</span>{' '}
+              <span className="text-zinc-400">Clear Linemode</span>
+            </div>
           </div>
         </div>
       )}

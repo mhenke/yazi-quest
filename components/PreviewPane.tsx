@@ -51,7 +51,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
   const hasChildren = node?.children && node.children.length > 0;
   const showChildren = node?.type === 'dir' || isArchiveDir || (isArchiveFile && hasChildren);
 
-  const firstIncompleteTaskIndex = level.tasks.findIndex(t => !t.completed);
+  const firstIncompleteTaskIndex = level.tasks.findIndex((t) => !t.completed);
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">
@@ -134,7 +134,10 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
             </h3>
             <div className="space-y-2">
               {level.tasks.map((task, index) => {
-                const taskDescription = typeof task.description === 'function' ? task.description(gameState) : task.description;
+                const taskDescription =
+                  typeof task.description === 'function'
+                    ? task.description(gameState)
+                    : task.description;
                 const isCurrentTask = index === firstIncompleteTaskIndex;
 
                 return (
@@ -145,7 +148,13 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
                     <div
                       className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
                     >
-                      {task.completed ? <CheckSquare size={14} /> : (isCurrentTask ? <ArrowRight size={14} className="animate-pulse" /> : <Square size={14} />)}
+                      {task.completed ? (
+                        <CheckSquare size={14} />
+                      ) : isCurrentTask ? (
+                        <ArrowRight size={14} className="animate-pulse" />
+                      ) : (
+                        <Square size={14} />
+                      )}
                     </div>
                     <div
                       className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'} ${isCurrentTask ? 'font-bold' : ''}`}

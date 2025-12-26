@@ -146,7 +146,9 @@ export const deleteNode = (
     return { ok: false, error: 'NotFound' };
   }
 
-  const protectionMessage = force ? null : isProtected(root, parentPathIds, nodeToDelete, levelIndex, action);
+  const protectionMessage = force
+    ? null
+    : isProtected(root, parentPathIds, nodeToDelete, levelIndex, action);
   if (protectionMessage) {
     return { ok: false, error: 'Protected' };
   }
@@ -169,9 +171,7 @@ export const addNode = (
   if (!parent.children) parent.children = [];
 
   // Check for collision with exact same name AND type
-  const collision = parent.children.find(
-    (c) => c.name === newNode.name && c.type === newNode.type
-  );
+  const collision = parent.children.find((c) => c.name === newNode.name && c.type === newNode.type);
 
   if (collision) {
     return { ok: false, error: 'Collision' };
@@ -236,7 +236,7 @@ export const renameNode = (
 
   nodeToRename.name = newName;
   nodeToRename.modifiedAt = Date.now();
-  
+
   // Re-sort after rename
   parent.children.sort((a, b) => {
     const typeScore = (t: string) => {
@@ -483,7 +483,6 @@ export const isProtected = (
 
   return null;
 };
-
 
 const checkNodeProtectedFlag = (node: FileNode): string | null => {
   if (node.protected) {

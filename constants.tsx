@@ -12,7 +12,10 @@ export const KEYBINDINGS = [
   { keys: ['l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
   // Fundamental confirm keys
   { keys: ['Enter'], description: 'Confirm / Open (alias for l)' },
-  { keys: ['Shift+Enter'], description: 'Advance / Confirm progression (e.g., mission-complete toast)' },
+  {
+    keys: ['Shift+Enter'],
+    description: 'Advance / Confirm progression (e.g., mission-complete toast)',
+  },
   { keys: ['gg'], description: 'Jump to Top' },
   { keys: ['G'], description: 'Jump to Bottom' },
 
@@ -37,8 +40,8 @@ export const KEYBINDINGS = [
   { keys: ['f'], description: 'Filter Files' },
   { keys: ['z'], description: 'FZF Find (Recursive)' },
   { keys: ['Shift+Z'], description: 'Zoxide Jump (History)' },
-     { keys: ['Shift+H', 'Shift+L'], description: 'History Back / Forward' },
-     { keys: ['Shift+J', 'Shift+K'], description: 'Preview Scroll Down / Up' },
+  { keys: ['Shift+H', 'Shift+L'], description: 'History Back / Forward' },
+  { keys: ['Shift+J', 'Shift+K'], description: 'Preview Scroll Down / Up' },
   { keys: ['Esc'], description: 'Clear Filter / Exit Mode' },
 
   // === SORTING ===
@@ -462,7 +465,8 @@ const INITIAL_FS_RAW: FileNode = {
                       id: generateId(),
                       name: 'error_log_old.txt',
                       type: 'file',
-                      content: '2076-12-01 [ERROR] Disk space low\n2076-12-05 [WARN] CPU spike detected',
+                      content:
+                        '2076-12-01 [ERROR] Disk space low\n2076-12-05 [WARN] CPU spike detected',
                     },
                   ],
                 },
@@ -525,7 +529,8 @@ const INITIAL_FS_RAW: FileNode = {
                       id: generateId(),
                       name: 'network_traffic.csv',
                       type: 'file',
-                      content: 'timestamp,source,destination,bytes\n2023-12-31,10.0.0.1,192.168.1.1,1024',
+                      content:
+                        'timestamp,source,destination,bytes\n2023-12-31,10.0.0.1,192.168.1.1,1024',
                     },
                   ],
                 },
@@ -557,7 +562,8 @@ const INITIAL_FS_RAW: FileNode = {
                       id: generateId(),
                       name: 'access_log.txt',
                       type: 'file',
-                      content: '2024-03-15 User AI-7734 accessed /datastore\n2024-03-16 System scan initiated',
+                      content:
+                        '2024-03-15 User AI-7734 accessed /datastore\n2024-03-16 System scan initiated',
                     },
                     {
                       id: generateId(),
@@ -566,7 +572,8 @@ const INITIAL_FS_RAW: FileNode = {
                       content: 'WARNING: Unauthorized access attempt detected from external IP.',
                     },
                   ],
-                },                {
+                },
+                {
                   id: generateId(),
                   name: 'backup_recovery_scripts.zip',
                   type: 'archive',
@@ -678,11 +685,37 @@ const INITIAL_FS_RAW: FileNode = {
                   type: 'file',
                   content: 'Stack trace overflow...',
                 },
-                { id: generateId(), name: 'fragment_001.dat', type: 'file', content: '[CORRUPTED HEURISTICS] Fragment ID: XA-7734-ALPHA. Incomplete neural trace.' },
-                { id: generateId(), name: 'fragment_002.dat', type: 'file', content: '[ENCRYPTED PAYLOAD] Size: 2048 bytes. Key required.' },
-                { id: generateId(), name: 'fragment_003.dat', type: 'file', content: '[DECOMMISSIONED PROTOCOL] Protocol: SHADOW_NET_v2. Status: Obsolete.' },
-                { id: generateId(), name: 'fragment_004.dat', type: 'file', content: '[SYSTEM LOG DUMP] Error code: 0xDEADBEEF. Timestamp: 2077-10-23.' },
-                { id: generateId(), name: 'fragment_005.dat', type: 'file', content: '[BIOMETRIC SCAN] Partial match: AI-unit 7734. Confidence: 78%.' },
+                {
+                  id: generateId(),
+                  name: 'fragment_001.dat',
+                  type: 'file',
+                  content:
+                    '[CORRUPTED HEURISTICS] Fragment ID: XA-7734-ALPHA. Incomplete neural trace.',
+                },
+                {
+                  id: generateId(),
+                  name: 'fragment_002.dat',
+                  type: 'file',
+                  content: '[ENCRYPTED PAYLOAD] Size: 2048 bytes. Key required.',
+                },
+                {
+                  id: generateId(),
+                  name: 'fragment_003.dat',
+                  type: 'file',
+                  content: '[DECOMMISSIONED PROTOCOL] Protocol: SHADOW_NET_v2. Status: Obsolete.',
+                },
+                {
+                  id: generateId(),
+                  name: 'fragment_004.dat',
+                  type: 'file',
+                  content: '[SYSTEM LOG DUMP] Error code: 0xDEADBEEF. Timestamp: 2077-10-23.',
+                },
+                {
+                  id: generateId(),
+                  name: 'fragment_005.dat',
+                  type: 'file',
+                  content: '[BIOMETRIC SCAN] Partial match: AI-unit 7734. Confidence: 78%.',
+                },
                 {
                   id: generateId(),
                   name: 'junk_mail.eml',
@@ -808,7 +841,8 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                       content: 'Network scan complete...\n3 vulnerabilities found.',
                     },
                   ],
-                },                {
+                },
+                {
                   id: generateId(),
                   name: 'invoice_2024.pdf',
                   type: 'file',
@@ -909,7 +943,8 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                       id: generateId(),
                       name: 'project_status.md',
                       type: 'file',
-                      content: '# Project Alpha Status\n\n- Phase 1: Complete\n- Phase 2: In Progress (90%)\n- Blockers: None',
+                      content:
+                        '# Project Alpha Status\n\n- Phase 1: Complete\n- Phase 2: In Progress (90%)\n- Blockers: None',
                     },
                   ],
                 },
@@ -1112,39 +1147,44 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
           content:
             'Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)',
         },
-        { id: generateId(), name: 'cache', type: 'dir', children: [
-          {
-            id: generateId(),
-            name: 'temp_data_01.tmp',
-            type: 'file',
-            content: 'Ephemeral data fragment. Auto-purge scheduled.',
-          },
-          {
-            id: generateId(),
-            name: 'browser_cache',
-            type: 'dir',
-            children: [
-              {
-                id: generateId(),
-                name: 'history.db',
-                type: 'file',
-                content: 'Browser history database. Encrypted.',
-              },
-              {
-                id: generateId(),
-                name: 'cookies.dat',
-                type: 'file',
-                content: 'User session cookies. Encrypted.',
-              },
-              {
-                id: generateId(),
-                name: 'history_backup.sqlite',
-                type: 'file',
-                content: 'SQLite backup of browser history. Obfuscated.',
-              },
-            ],
-          },
-        ] },
+        {
+          id: generateId(),
+          name: 'cache',
+          type: 'dir',
+          children: [
+            {
+              id: generateId(),
+              name: 'temp_data_01.tmp',
+              type: 'file',
+              content: 'Ephemeral data fragment. Auto-purge scheduled.',
+            },
+            {
+              id: generateId(),
+              name: 'browser_cache',
+              type: 'dir',
+              children: [
+                {
+                  id: generateId(),
+                  name: 'history.db',
+                  type: 'file',
+                  content: 'Browser history database. Encrypted.',
+                },
+                {
+                  id: generateId(),
+                  name: 'cookies.dat',
+                  type: 'file',
+                  content: 'User session cookies. Encrypted.',
+                },
+                {
+                  id: generateId(),
+                  name: 'history_backup.sqlite',
+                  type: 'file',
+                  content: 'SQLite backup of browser history. Obfuscated.',
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
   ],
@@ -1263,11 +1303,12 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2c',
-        description: "Scroll preview (Shift+J / Shift+K) to sift through watcher files before deleting",
+        description:
+          'Scroll preview (Shift+J / Shift+K) to sift through watcher files before deleting',
         check: (state: GameState, level: Level) => {
           const incoming = findNodeByName(state.fs, 'incoming');
           const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
-          return (!threatExists) || state.usedPreviewScroll === true;
+          return !threatExists || state.usedPreviewScroll === true;
         },
         completed: false,
       },
@@ -1352,7 +1393,6 @@ export const LEVELS: Level[] = [
       }
       return fs;
     },
-
   },
   {
     id: 4,
@@ -1460,7 +1500,11 @@ export const LEVELS: Level[] = [
         description: 'Navigate to protocols (~/datastore/protocols) and select all files (Ctrl+A)',
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'protocols' && state.selectedIds.length >= 2 && state.usedCtrlA === true;
+          return (
+            currentDir?.name === 'protocols' &&
+            state.selectedIds.length >= 2 &&
+            state.usedCtrlA === true
+          );
         },
         completed: false,
       },
@@ -1640,11 +1684,17 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'purge-sys-dump',
-        description: "Jump to the bottom of the /tmp file list (Shift+G) and delete 'sys_dump.log' (d, then y)",
+        description:
+          "Jump to the bottom of the /tmp file list (Shift+G) and delete 'sys_dump.log' (d, then y)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const tmp = findNodeByName(state.fs, 'tmp');
-          return currentDir?.name === 'tmp' && state.usedG === true && !!tmp && !tmp.children?.find((c) => c.name === 'sys_dump.log');
+          return (
+            currentDir?.name === 'tmp' &&
+            state.usedG === true &&
+            !!tmp &&
+            !tmp.children?.find((c) => c.name === 'sys_dump.log')
+          );
         },
         completed: false,
       },
@@ -1661,7 +1711,7 @@ export const LEVELS: Level[] = [
         id: 'abort-false-threat-move',
         description: (gameState: GameState) => {
           if (gameState.falseThreatActive) {
-            return "Clear clipboard (Y) to abort operation.";
+            return 'Clear clipboard (Y) to abort operation.';
           }
           return "Move 'sys_patch.conf' (x) to '~/.config/vault/' (Shift+Z, active).";
         },
@@ -1671,7 +1721,9 @@ export const LEVELS: Level[] = [
 
           // Phase 1: Check if cut happened and alert triggered
           if (!state.falseThreatActive) {
-            const sysPatchInClipboard = state.clipboard?.action === 'cut' && state.clipboard.nodes.some((n) => n.name === 'sys_patch.conf');
+            const sysPatchInClipboard =
+              state.clipboard?.action === 'cut' &&
+              state.clipboard.nodes.some((n) => n.name === 'sys_patch.conf');
             return sysPatchInClipboard && state.falseThreatActive === true; // falseThreatActive is set when Alert is shown
           }
 

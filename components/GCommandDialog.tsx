@@ -71,7 +71,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose, right, 
       </div>
 
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-3">
-        Press any key to continue or 'g' command
+        Press any key to continue or g command
       </div>
     </div>
   );

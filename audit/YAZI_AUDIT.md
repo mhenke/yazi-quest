@@ -37,8 +37,8 @@ This list is verified against the current `App.tsx` and `constants.tsx`.
 ### 🟡 MODERATE GAPS
 
 1.  **Paste Overwrite Behavior:**
-    -   **Real Yazi:** Automatically renames conflicting files with a `_1` suffix.
-    -   **Yazi Quest:** Halts the operation and prompts the user with a confirmation modal (`overwrite-confirm` mode) to decide whether to replace the existing file. This is a deliberate pedagogical choice but differs from the default Yazi behavior. The `P` (force overwrite) command is not implemented.
+    - **Real Yazi:** Automatically renames conflicting files with a `_1` suffix.
+    - **Yazi Quest:** Halts the operation and prompts the user with a confirmation modal (`overwrite-confirm` mode) to decide whether to replace the existing file. This is a deliberate pedagogical choice but differs from the default Yazi behavior. The `P` (force overwrite) command is not implemented.
 
 ### 🟢 MINOR GAPS & Intentionally Omitted Features
 

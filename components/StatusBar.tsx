@@ -116,7 +116,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {activeFilter && (
         <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
           <Filter size={10} />
-          <span>FILTER: "{activeFilter}"</span>
+          <span>FILTER: {activeFilter}</span>
         </div>
       )}
 

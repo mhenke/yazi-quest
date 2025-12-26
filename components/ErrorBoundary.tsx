@@ -14,15 +14,18 @@ export default class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Report centrally and keep console fallback
-    try {
-      // Lazy import to avoid cycles
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { reportError } = require('../utils/error');
-      reportError(error, { errorInfo });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('App Error:', error, errorInfo);
-    }
+    // Lazy import to avoid cycles using dynamic import to satisfy linter
+    import('../utils/error')
+      .then(({ reportError }) => {
+        try {
+          reportError(error, { errorInfo });
+        } catch (e) {
+          console.error('App Error:', error, errorInfo);
+        }
+      })
+      .catch(() => {
+        console.error('App Error:', error, errorInfo);
+      });
   }
 
   render() {

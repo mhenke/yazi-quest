@@ -72,13 +72,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   // Sync modal tab with current episode when opening
   useEffect(() => {
     if (showLegend) {
-      setActiveTab(currentEpisodeIdx);
-      // Find the current level within the episode and select it
-      const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
-      const currentLevelInEpisode = currentEpisodeLevels.findIndex(
-        (l) => levels.indexOf(l) === currentLevelIndex
-      );
-      setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
+      // Defer state updates to avoid synchronous setState within an effect
+      setTimeout(() => {
+        setActiveTab(currentEpisodeIdx);
+        // Find the current level within the episode and select it
+        const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
+        const currentLevelInEpisode = currentEpisodeLevels.findIndex(
+          (l) => levels.indexOf(l) === currentLevelIndex
+        );
+        setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
+      }, 0);
     }
   }, [showLegend, currentEpisodeIdx, episodes, levels, currentLevelIndex]);
 

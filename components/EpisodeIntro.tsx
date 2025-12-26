@@ -79,7 +79,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
             </h1>
           </div>
           <p className={`${episode.color} opacity-70 text-xl tracking-[0.2em] font-bold uppercase`}>
-            // {episode.subtitle}
+            {episode.subtitle}
           </p>
         </div>
 

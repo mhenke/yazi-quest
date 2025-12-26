@@ -8,7 +8,12 @@ interface AlertToastProps {
   onClose: () => void;
 }
 
-export const AlertToast: React.FC<AlertToastProps> = ({ message, levelTitle, onDismiss, onClose }) => {
+export const AlertToast: React.FC<AlertToastProps> = ({
+  message,
+  levelTitle,
+  onDismiss,
+  onClose,
+}) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === 'Escape') {
@@ -22,7 +27,10 @@ export const AlertToast: React.FC<AlertToastProps> = ({ message, levelTitle, onD
   }, [onClose]);
 
   return (
-    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] animate-in zoom-in-95 fade-in duration-300" role="alert">
+    <div
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] animate-in zoom-in-95 fade-in duration-300"
+      role="alert"
+    >
       <div className="bg-red-950/95 border-2 border-red-600 shadow-2xl shadow-red-600/20 px-8 py-6 rounded-xl backdrop-blur-md min-w-[360px] max-w-md flex flex-col items-center text-center">
         <div className="bg-red-600 rounded-full p-3 mb-4 animate-pulse shadow-lg shadow-red-600/50">
           <AlertTriangle size={32} className="text-black" />
