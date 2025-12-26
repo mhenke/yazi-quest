@@ -56,8 +56,7 @@ const App: React.FC = () => {
     isGameOver: false,
     stats: { fuzzyJumps: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
     settings: { soundEnabled: true },
-    usedG: false,
-    usedGG: false,
+    lastAction: null,
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -127,8 +126,7 @@ const App: React.FC = () => {
             keystrokes: 0,
             currentPath: newPath,
             cursorIndex: 0,
-            usedG: false,
-            usedGG: false,
+            lastAction: null,
             notification: `Level ${level.id}: ${level.title}`,
           };
         });
@@ -166,6 +164,28 @@ const App: React.FC = () => {
     gameState.timeLeft,
   ]);
 
+  // Helper to evaluate a task's check (supports array of alternative checks)
+  const evaluateTaskCheck = (
+    check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>,
+    state: GameState,
+    level: Level
+  ) => {
+    if (Array.isArray(check)) {
+      return check.some((fn) => {
+        try {
+          return fn(state, level);
+        } catch (_e) {
+          return false;
+        }
+      });
+    }
+    try {
+      return (check as (s: GameState, l: Level) => boolean)(state, level);
+    } catch (_e) {
+      return false;
+    }
+  };
+
   // Check Level Completion
   useEffect(() => {
     if (gameState.isGameOver || showSuccess) return;
@@ -173,11 +193,11 @@ const App: React.FC = () => {
     const level = LEVELS[gameState.levelIndex];
     if (!level) return;
 
-    const allTasksComplete = level.tasks.every((t) => t.check(gameState, level));
+    const allTasksComplete = level.tasks.every((t) => evaluateTaskCheck(t.check, gameState, level));
 
     // Update task completion status in level object (for UI)
     level.tasks.forEach((t) => {
-      t.completed = t.check(gameState, level);
+      t.completed = evaluateTaskCheck(t.check, gameState, level);
     });
 
     if (allTasksComplete) {
@@ -234,6 +254,7 @@ const App: React.FC = () => {
       if (gameState.mode === 'input-file' || gameState.mode === 'filter') {
         if (e.key === 'Enter') {
           if (gameState.mode === 'input-file') {
+            const isDir = gameState.inputBuffer.endsWith('/');
             // Create file/dir logic
             const { fs, error } = createPath(
               gameState.fs,
@@ -254,6 +275,7 @@ const App: React.FC = () => {
                 mode: 'normal',
                 inputBuffer: '',
                 notification: `Created ${gameState.inputBuffer}`,
+                lastAction: { type: isDir ? 'CREATE_DIR' : 'CREATE_FILE', timestamp: Date.now() },
               }));
             }
           } else if (gameState.mode === 'filter') {
@@ -267,6 +289,7 @@ const App: React.FC = () => {
                   mode: 'normal',
                   inputBuffer: '',
                   stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 },
+                  lastAction: { type: 'FILTER', timestamp: Date.now() },
                 };
               }
               return { ...prev, mode: 'normal' };
@@ -283,6 +306,24 @@ const App: React.FC = () => {
           return;
         }
         return;
+      }
+
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        setGameState((prev) => ({
+          ...prev,
+          selectedIds: visibleItems.map((item) => item.id),
+          lastAction: { type: 'SELECT_ALL', timestamp: Date.now() },
+        }));
+        return;
+      }
+
+      if (e.shiftKey && (e.key === 'J' || e.key === 'K')) {
+        setGameState((prev) => ({
+          ...prev,
+          lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+        }));
+        // The actual scroll logic is in PreviewPane, this just records the action
       }
 
       // Normal Mode Navigation
@@ -343,7 +384,7 @@ const App: React.FC = () => {
             setGameState((prev) => ({
               ...prev,
               cursorIndex: visibleItems.length - 1,
-              usedG: true,
+              lastAction: { type: 'JUMP_BOTTOM', timestamp: Date.now() },
             }));
             break;
           case 'g':
@@ -355,42 +396,45 @@ const App: React.FC = () => {
           case 'd':
             if (gameState.selectedIds.length > 0 || visibleItems[gameState.cursorIndex]) {
               setGameState((prev) => {
-                let newFs = prev.fs;
                 const idsToDelete =
                   prev.selectedIds.length > 0
                     ? prev.selectedIds
                     : [visibleItems[prev.cursorIndex]?.id].filter(Boolean);
 
                 let errorMsg: string | null = null;
-                const currentItems = visibleItems;
+                let tempFs = prev.fs;
 
-                // Check protection
                 for (const id of idsToDelete) {
-                  // Find node in current view or fallback search if needed (assuming flat view of deletions)
-                  // In this simple model, selectedIds are typically from current view.
-                  const node = currentItems.find((n) => n.id === id);
+                  const node = visibleItems.find((n) => n.id === id);
                   if (node) {
-                    const reason = isProtected(node, prev.levelIndex, 'delete');
+                    // Correctly call isProtected before attempting deletion
+                    const reason = isProtected(prev.fs, prev.currentPath, node, 0, 'delete'); // levelIndex is dummy now
                     if (reason) {
                       errorMsg = reason;
+                      break;
+                    }
+
+                    // Attempt deletion
+                    const result = deleteNode(tempFs, prev.currentPath, id, 'delete', false);
+                    if (result.ok) {
+                      tempFs = result.value;
+                    } else {
+                      errorMsg = `Error: ${result.error}`;
                       break;
                     }
                   }
                 }
 
                 if (errorMsg) {
-                  return { ...prev, notification: errorMsg };
+                  return { ...prev, notification: errorMsg, selectedIds: [] };
                 }
-
-                idsToDelete.forEach((id) => {
-                  newFs = deleteNode(newFs, prev.currentPath, id);
-                });
 
                 return {
                   ...prev,
-                  fs: newFs,
+                  fs: tempFs,
                   selectedIds: [],
                   notification: `Deleted ${idsToDelete.length} items`,
+                  lastAction: { type: 'DELETE', timestamp: Date.now() },
                 };
               });
             }
@@ -422,18 +466,17 @@ const App: React.FC = () => {
                 : [visibleItems[gameState.cursorIndex]].filter(Boolean);
 
             if (nodesToClip.length > 0) {
-              // Protection check for CUT only
               if (action === 'cut') {
                 let errorMsg: string | null = null;
                 for (const node of nodesToClip) {
-                  const reason = isProtected(node, gameState.levelIndex, 'cut');
+                  const reason = isProtected(gameState.fs, gameState.currentPath, node, 0, 'cut'); // levelIndex is dummy now
                   if (reason) {
                     errorMsg = reason;
                     break;
                   }
                 }
                 if (errorMsg) {
-                  setGameState((prev) => ({ ...prev, notification: errorMsg }));
+                  setGameState((prev) => ({ ...prev, notification: errorMsg, selectedIds: [] }));
                   break;
                 }
               }
@@ -443,6 +486,7 @@ const App: React.FC = () => {
                 clipboard: { nodes: nodesToClip, action, originalPath: prev.currentPath },
                 selectedIds: [],
                 notification: `${action === 'cut' ? 'Cut' : 'Yanked'} ${nodesToClip.length} items`,
+                lastAction: { type: action === 'cut' ? 'CUT' : 'YANK', timestamp: Date.now() },
               }));
             }
             break;
@@ -450,23 +494,60 @@ const App: React.FC = () => {
           case 'p': // Paste
             if (gameState.clipboard) {
               setGameState((prev) => {
-                let newFs = prev.fs;
+                let tempFs = prev.fs;
                 const targetPath = prev.currentPath;
+                let errorMsg: string | null = null;
 
-                gameState.clipboard?.nodes.forEach((node) => {
-                  // If moving (cut), delete original first
-                  if (gameState.clipboard?.action === 'cut') {
-                    newFs = deleteNode(newFs, gameState.clipboard.originalPath, node.id);
+                // First, check if target directory is protected
+                const parentNode = getNodeByPath(tempFs, targetPath);
+                if (parentNode?.protected) {
+                  return {
+                    ...prev,
+                    notification: 'Permission Denied: Cannot paste into protected directory.',
+                  };
+                }
+
+                for (const node of prev.clipboard.nodes) {
+                  if (prev.clipboard?.action === 'cut') {
+                    const delResult = deleteNode(
+                      tempFs,
+                      prev.clipboard.originalPath,
+                      node.id,
+                      'cut',
+                      true
+                    ); // force delete
+                    if (delResult.ok) tempFs = delResult.value;
                   }
-                  // Add to new location (clone if copy)
-                  const nodeToAdd = gameState.clipboard?.action === 'yank' ? cloneFS(node) : node;
-                  newFs = addNode(newFs, targetPath, nodeToAdd);
-                });
 
-                const notif = `Deployed ${gameState.clipboard.nodes.length} assets`;
-                const newClipboard = gameState.clipboard?.action === 'cut' ? null : prev.clipboard;
+                  const nodeToAdd = prev.clipboard?.action === 'yank' ? cloneFS(node) : node;
+                  const addResult = addNode(tempFs, targetPath, nodeToAdd);
 
-                return { ...prev, fs: newFs, clipboard: newClipboard, notification: notif };
+                  if (addResult.ok) {
+                    tempFs = addResult.value;
+                  } else {
+                    errorMsg = `Error: ${addResult.error}`;
+                    if (prev.clipboard?.action === 'cut') {
+                      const rollbackResult = addNode(prev.fs, prev.clipboard.originalPath, node);
+                      if (rollbackResult.ok) tempFs = rollbackResult.value;
+                    }
+                    break;
+                  }
+                }
+
+                if (errorMsg) {
+                  return { ...prev, fs: tempFs, notification: errorMsg };
+                }
+
+                const notif = `Deployed ${prev.clipboard.nodes.length} assets`;
+                const newClipboard = prev.clipboard?.action === 'cut' ? null : prev.clipboard;
+
+                return {
+                  ...prev,
+                  fs: tempFs,
+                  clipboard: newClipboard,
+                  notification: notif,
+                  lastAction: { type: 'PASTE', timestamp: Date.now() },
+                };
               });
             }
             break;
@@ -486,7 +567,12 @@ const App: React.FC = () => {
       if (gameState.mode === 'g-command') {
         if (e.key === 'g') {
           // gg - go to top
-          setGameState((prev) => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: true }));
+          setGameState((prev) => ({
+            ...prev,
+            cursorIndex: 0,
+            mode: 'normal',
+            lastAction: { type: 'JUMP_TOP', timestamp: Date.now() },
+          }));
         } else {
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
         }

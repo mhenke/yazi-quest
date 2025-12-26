@@ -9,7 +9,8 @@ export interface FileNode {
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
-  protected?: boolean; // If true, node cannot be deleted by player
+  protected?: boolean; // If true, node cannot be deleted by player via general rule
+  protection?: { [key in 'delete' | 'cut' | 'rename' | 'add']?: string }; // Level-specific protection messages
 }
 
 export interface FileSystemState {
@@ -19,7 +20,9 @@ export interface FileSystemState {
 export interface LevelTask {
   id: string;
   description: string | ((gameState: GameState) => string);
-  check: (gameState: GameState, level: Level) => boolean;
+  // Allow a single check function or an array of alternative checks (OR semantics).
+  // A task is satisfied if ANY of the checks returns true.
+  check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>;
   completed: boolean;
 }
 
@@ -111,6 +114,31 @@ export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extensi
 export type SortDirection = 'asc' | 'desc';
 export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
 
+// Enumerate all possible player actions that are relevant for task validation.
+export type GameAction =
+  | 'JUMP_TOP'
+  | 'JUMP_BOTTOM'
+  | 'PREVIEW_SCROLL'
+  | 'HISTORY_NAV'
+  | 'SELECT_ALL'
+  | 'CREATE_FILE'
+  | 'CREATE_DIR'
+  | 'DELETE'
+  | 'RENAME'
+  | 'YANK'
+  | 'CUT'
+  | 'PASTE'
+  | 'FILTER'
+  | 'FZF'
+  | 'ZOXIDE_JUMP'
+  | 'INVERT_SELECTION';
+
+// Record of a specific action, including when it occurred.
+export interface ActionRecord {
+  type: GameAction;
+  timestamp: number;
+}
+
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
@@ -157,11 +185,7 @@ export interface GameState {
   stats: GameStats;
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
-  usedG?: boolean; // Tracks if player used G (jump to bottom)
-  usedGG?: boolean; // Tracks if player used gg (jump to top)
-  usedPreviewScroll?: boolean; // Tracks if player used preview scroll (Shift+J/K)
-  usedHistory?: boolean; // Tracks if player used history navigation (Shift+H/Shift+L)
-  usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all
+  lastAction: ActionRecord | null; // Tracks the last significant player action
   falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
   dynamicHint?: string; // Optional runtime hint override for dynamic scenarios
 }

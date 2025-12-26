@@ -7,6 +7,8 @@ import {
   ZoxideEntry,
   calculateFrecency,
   Linemode,
+  Result,
+  FsError,
 } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
 import {
@@ -245,13 +247,35 @@ export default function App() {
     };
   }, []);
 
+  // Helper to evaluate a task's check (supports array of alternative checks)
+  const evaluateTaskCheck = (
+    check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>,
+    state: GameState,
+    level: Level
+  ) => {
+    if (Array.isArray(check)) {
+      return check.some((fn) => {
+        try {
+          return fn(state, level);
+        } catch (_e) {
+          return false;
+        }
+      });
+    }
+    try {
+      return (check as (s: GameState, l: Level) => boolean)(state, level);
+    } catch (_e) {
+      return false;
+    }
+  };
+
   // --- Task Checking & Level Progression ---
   useEffect(() => {
     if (isLastLevel || gameState.isGameOver) return;
 
     let changed = false;
     currentLevel.tasks.forEach((task) => {
-      if (!task.completed && task.check(gameState, currentLevel)) {
+      if (!task.completed && evaluateTaskCheck(task.check, gameState, currentLevel)) {
         task.completed = true;
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
@@ -713,7 +737,6 @@ export default function App() {
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex,
                       'cut',
                       gameState.clipboard?.authorized === true
                     );
@@ -721,10 +744,10 @@ export default function App() {
                       // For a 'cut' operation, if the original is not found, it's not a failure.
                       // It means it was already removed (e.g. parent dir deleted).
                       if (
-                        deleteResult.error !== 'NotFound' &&
-                        deleteResult.error !== 'InvalidPath'
+                        (deleteResult as any).error !== 'NotFound' &&
+                        (deleteResult as any).error !== 'InvalidPath'
                       ) {
-                        error = deleteResult.error;
+                        error = (deleteResult as any).error;
                         errorNodeName = node.name;
                         break;
                       }
@@ -747,7 +770,7 @@ export default function App() {
                       added = true;
                       break;
                     } else {
-                      if (addResult.error === 'Collision') {
+                      if ((addResult as any).error === 'Collision') {
                         // generate next candidate name (respect extension)
                         attempt += 1;
                         const dotIndex = node.name.lastIndexOf('.');
@@ -756,7 +779,7 @@ export default function App() {
                         attemptName = `${base}_${attempt}${ext}`;
                         continue;
                       } else {
-                        error = addResult.error;
+                        error = (addResult as any).error;
                         errorNodeName = node.name;
                         break;
                       }
@@ -811,12 +834,13 @@ export default function App() {
                       newFs,
                       gameState.currentPath,
                       existingNode.id,
-                      gameState.levelIndex
+                      'delete',
+                      false
                     );
                     if (deleteResult.ok) {
                       newFs = deleteResult.value;
                     } else {
-                      error = deleteResult.error;
+                      error = (deleteResult as any).error;
                       errorNodeName = existingNode.name;
                       break;
                     }
@@ -826,7 +850,7 @@ export default function App() {
                   if (addResult.ok) {
                     newFs = addResult.value;
                   } else {
-                    error = addResult.error;
+                    error = (addResult as any).error;
                     errorNodeName = node.name;
                     break;
                   }
@@ -836,14 +860,13 @@ export default function App() {
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex,
                       'cut',
                       gameState.clipboard?.authorized === true
                     );
                     if (deleteResult.ok) {
                       newFs = deleteResult.value;
                     } else {
-                      error = deleteResult.error;
+                      error = (deleteResult as any).error;
                       errorNodeName = node.name;
                       break;
                     }
@@ -1031,11 +1054,11 @@ export default function App() {
           let error: FsError | null = null;
           gameState.pendingDeleteIds.forEach((id) => {
             if (error) return;
-            const result = deleteNode(newFs, gameState.currentPath, id, gameState.levelIndex);
+            const result = deleteNode(newFs, gameState.currentPath, id, 'delete', false);
             if (result.ok) {
               newFs = result.value;
             } else {
-              error = result.error;
+              error = (result as any).error;
             }
           });
 
@@ -1080,14 +1103,15 @@ export default function App() {
             gameState.fs,
             gameState.currentPath,
             gameState.pendingOverwriteNode.id,
-            gameState.levelIndex
+            'delete',
+            false
           );
 
           if (!deleteResult.ok) {
             setGameState((prev) => ({
               ...prev,
               mode: 'normal',
-              notification: `Overwrite failed: ${deleteResult.error}`,
+              notification: `Overwrite failed: ${(deleteResult as any).error}`,
               inputBuffer: '',
               pendingOverwriteNode: null,
             }));
@@ -1626,8 +1650,7 @@ export default function App() {
         gameState.fs,
         gameState.currentPath,
         currentItem.id,
-        gameState.inputBuffer,
-        gameState.levelIndex
+        gameState.inputBuffer
       );
 
       if (result.ok) {
@@ -1640,7 +1663,7 @@ export default function App() {
         showNotification('Identity forged', 2000);
       } else {
         setGameState((prev) => ({ ...prev, mode: 'normal' }));
-        showNotification(`Rename failed: ${result.error}`, 4000);
+        showNotification(`Rename failed: ${(result as any).error}`, 4000);
       }
     }
   };
