@@ -1,4 +1,4 @@
-import { FileNode } from '../types';
+import { FileNode, Result, FsError } from '../types';
 
 // --- Query Helpers ---
 
@@ -131,7 +131,6 @@ export const deleteNode = (
   root: FileNode,
   parentPathIds: string[],
   nodeId: string,
-  levelIndex: number, // For isProtected check
   action: 'delete' | 'cut' = 'delete',
   force: boolean = false
 ): Result<FileNode, FsError> => {
@@ -148,7 +147,7 @@ export const deleteNode = (
 
   const protectionMessage = force
     ? null
-    : isProtected(root, parentPathIds, nodeToDelete, levelIndex, action);
+    : isProtected(root, parentPathIds, nodeToDelete, 0, action); // levelIndex is dummy now
   if (protectionMessage) {
     return { ok: false, error: 'Protected' };
   }
@@ -166,6 +165,10 @@ export const addNode = (
   const parent = getNodeByPath(newRoot, parentPathIds);
   if (!parent) {
     return { ok: false, error: 'InvalidPath' };
+  }
+
+  if (parent.protected) {
+    return { ok: false, error: 'Protected' };
   }
 
   if (!parent.children) parent.children = [];
@@ -207,8 +210,7 @@ export const renameNode = (
   root: FileNode,
   parentPathIds: string[],
   nodeId: string,
-  newName: string,
-  levelIndex: number // For isProtected check
+  newName: string
 ): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
@@ -221,7 +223,7 @@ export const renameNode = (
     return { ok: false, error: 'NotFound' };
   }
 
-  const protectionMessage = isProtected(root, parentPathIds, nodeToRename, levelIndex, 'rename');
+  const protectionMessage = isProtected(root, parentPathIds, nodeToRename, 0, 'rename'); // levelIndex is dummy now
   if (protectionMessage) {
     return { ok: false, error: 'Protected' };
   }
@@ -251,6 +253,42 @@ export const renameNode = (
   });
 
   return { ok: true, value: newRoot };
+};
+
+export const setNodeProtection = (
+  root: FileNode,
+  pathNames: string[], // e.g., ['home', 'guest', 'datastore']
+  action: 'delete' | 'cut' | 'rename' | 'add',
+  message: string | null = 'Action not authorized for this asset.'
+): FileNode => {
+  const newRoot = cloneFS(root);
+  let current: FileNode | null = newRoot;
+  let currentPathIds: string[] = [newRoot.id]; // Start with root's actual ID
+
+  for (const name of pathNames) {
+    if (!current || !current.children) return newRoot; // Path segment not found
+
+    const nextNode = current.children.find((child) => child.name === name);
+    if (!nextNode) return newRoot; // Node not found
+
+    currentPathIds.push(nextNode.id); // Add ID for the next getNodeByPath call
+    current = getNodeByPath(newRoot, currentPathIds);
+  }
+
+  if (current) {
+    // Found the target node. Now update its protection.
+    current.protection = {
+      ...(current.protection || {}),
+      [action]: message,
+    };
+    // Ensure the protected flag is also set if a specific action is protected,
+    // to provide a general "protected" state.
+    if (message !== null) {
+      current.protected = true;
+    }
+  }
+
+  return newRoot;
 };
 
 // Helper to generate collision info
@@ -290,6 +328,10 @@ export const createPath = (
     // Find parent in the NEW root
     const parent = getNodeByPath(newRoot, currentPath);
     if (!parent) return { fs: root, error: 'Path resolution failed' };
+
+    if (parent.protected) {
+      return { fs: root, error: 'Permission denied: directory is read-only.' };
+    }
 
     // Check for existing node with SAME name AND SAME type
     const existingTyped = parent.children?.find((c) => c.name === name && c.type === type);
@@ -354,141 +396,29 @@ export const createPath = (
 
 // --- Protection Helpers ---
 
-const checkCoreSystemProtection = (path: string, node: FileNode): string | null => {
-  // Only protect directories if they are the intended system ones
-  if (node.type === 'dir' && ['/', '/home', '/home/guest', '/etc', '/tmp', '/bin'].includes(path)) {
-    return `System integrity protection: ${path}`;
-  }
-  return null;
-};
-
-const checkEpisodeStructuralProtection = (
-  path: string,
+const getProtectionMessage = (
   node: FileNode,
-  levelIndex: number
-): string | null => {
-  if (
-    node.type === 'dir' &&
-    [
-      '/home/guest/datastore',
-      '/home/guest/incoming',
-      '/home/guest/media',
-      '/home/guest/workspace',
-    ].includes(path)
-  ) {
-    if (levelIndex < 15) return `Sector protected by admin policy: ${node.name}`;
-  }
-  return null;
-};
-
-const checkLevelSpecificAssetProtection = (
-  path: string,
-  node: FileNode,
-  levelIndex: number,
   action: 'delete' | 'cut' | 'rename' | 'add'
 ): string | null => {
-  const name = node.name;
-  const isDir = node.type === 'dir';
-  const isFile = node.type === 'file';
-
-  if (name === 'access_key.pem' && isFile) {
-    if (action === 'delete') return 'Critical asset. Deletion prohibited.';
-    // Allow cut on Level 8 (index 7) and Level 10 (index 9)
-    if (action === 'cut' && ![7, 9].includes(levelIndex)) {
-      return 'Asset locked. Modification not authorized.';
-    }
-    // Allow rename only on Level 10 (index 9) after it's been moved to vault
-    if (action === 'rename' && levelIndex !== 9) {
-      return 'Asset identity sealed. Rename not authorized.';
-    }
+  // Check explicit boolean flag first (permanent protection)
+  if (node.protected) {
+    return '🔒 Permanently protected file/directory. Cannot be modified.';
   }
-
-  if (name === 'mission_log.md' && isFile) {
-    // Allow deletion on Level 14 (index 13)
-    if (action === 'delete' && levelIndex !== 13) return 'Mission log required for validation.';
-    // Prevent rename to avoid hiding the log
-    if (action === 'rename' && levelIndex < 13) return 'Mission log identity locked.';
+  // Check dynamic, action-specific protection (level-defined)
+  if (node.protection && node.protection[action]) {
+    return node.protection[action] || 'Action not authorized for this asset.';
   }
-
-  if (name === 'target_map.png' && isFile) {
-    if (action === 'delete') return 'Intel target. Do not destroy.';
-    if (action === 'cut' && levelIndex !== 2) return 'Map file anchored until capture sequence.';
-    if (action === 'rename' && levelIndex < 2) return 'Target signature locked.';
-  }
-
-  // Specifically protect the protocols directory if it's the intended one
-  if (path === '/home/guest/datastore/protocols' && isDir) {
-    if (action === 'delete' && levelIndex < 4)
-      return 'Protocol directory required for uplink deployment.';
-    if (action === 'cut' && levelIndex < 4) return 'Protocol directory anchored.';
-  }
-
-  if (name === 'uplink_v1.conf' && isFile) {
-    if (action === 'delete' && levelIndex < 7)
-      return 'Uplink configuration required for neural network.';
-  }
-  if (name === 'uplink_v2.conf' && isFile) {
-    if (action === 'delete' && levelIndex < 4)
-      return 'Uplink configuration required for deployment.';
-  }
-
-  // Path-aware check for active zone
-  if (path === '/home/guest/.config/vault/active' && isDir) {
-    if (action === 'delete' && levelIndex < 7) return 'Active deployment zone required.';
-    if (action === 'cut' && levelIndex < 7) return 'Deployment zone anchored.';
-  }
-
-  if (path === '/home/guest/.config/vault' && isDir) {
-    if (action === 'delete' && levelIndex < 12) return 'Vault required for privilege escalation.';
-    if (action === 'cut' && levelIndex < 9) return 'Vault anchored until escalation.';
-  }
-
-  if (name === 'backup_logs.zip' && node.type === 'archive') {
-    if (action === 'delete' && levelIndex < 9)
-      return 'Archive required for intelligence extraction.';
-    if (action === 'cut' && levelIndex < 9) return 'Archive anchored.';
-  }
-
-  if (name === 'daemon' && isDir && path.includes('/etc/')) {
-    if (action === 'delete' && levelIndex < 13) return 'Daemon controller required for redundancy.';
-    if (action === 'cut' && levelIndex < 13) return 'Daemon anchored until cloning.';
-  }
-
   return null;
 };
 
 export const isProtected = (
-  root: FileNode,
-  parentPathIds: string[],
+  root: FileNode, // Keep for resolvePath if needed elsewhere, but not used in this version
+  parentPathIds: string[], // Keep for resolvePath if needed elsewhere, but not used in this version
   node: FileNode,
-  levelIndex: number,
+  levelIndex: number, // Keep for context for any future level-specific logic if needed, but not used in this version
   action: 'delete' | 'cut' | 'rename'
 ): string | null => {
-  let protectionMessage: string | null;
-
-  // 1. Check explicit 'protected' flag first
-  protectionMessage = checkNodeProtectedFlag(node);
-  if (protectionMessage) return protectionMessage;
-
-  const fullPath = resolvePath(root, [...parentPathIds, node.id]);
-
-  protectionMessage = checkCoreSystemProtection(fullPath, node);
-  if (protectionMessage) return protectionMessage;
-
-  protectionMessage = checkEpisodeStructuralProtection(fullPath, node, levelIndex);
-  if (protectionMessage) return protectionMessage;
-
-  protectionMessage = checkLevelSpecificAssetProtection(fullPath, node, levelIndex, action);
-  if (protectionMessage) return protectionMessage;
-
-  return null;
-};
-
-const checkNodeProtectedFlag = (node: FileNode): string | null => {
-  if (node.protected) {
-    return '🔒 Permanently protected file. Cannot be deleted.';
-  }
-  return null;
+  return getProtectionMessage(node, action);
 };
 
 // --- Timestamp Initialization ---
