@@ -1,0 +1,33 @@
+/* Minimal stylesheet to satisfy dev server and set base fonts/colors */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg: #0f1724;
+  --muted: #94a3b8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial;
+  background: var(--bg);
+  color: #e6eef8;
+}
+
+/* basic scrollbar for custom-scrollbar class */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
