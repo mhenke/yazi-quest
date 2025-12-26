@@ -17,14 +17,14 @@ Yazi Quest accurately implements the majority of core navigational and operation
 ## ✅ What's Implemented CORRECTLY
 
 - **Navigation:** `j/k` (move), `h/l` (parent/enter), `gg`/`G` (jumps).
-- **History Navigation:** `Shift+H` (back) and `Shift+L` (forward) are implemented and functional.
-- **Preview Pane Scrolling:** `Shift+J` (down) and `Shift+K` (up) are implemented and functional.
+- **History Navigation:** `H` (back) and `L` (forward) are implemented and functional.
+- **Preview Pane Scrolling:** `J` (down) and `K` (up) are implemented and functional.
 - **Selection:** `Space` (select and advance), `Ctrl+A` (select all), `Ctrl+R` (invert).
 - **Core File Operations:** `d` (delete), `r` (rename), `a` (create), `y` (yank), `x` (cut).
 - **Clipboard:** Yank/cut/paste workflow is functional. `Y`/`X` correctly cancels the clipboard state.
 - **Filtering:** `f` command correctly filters items within a directory.
 - **Archive Navigation:** `l` correctly enters `.zip` and `.tar` files as if they were directories.
-- **Search & Jump:** `z` (FZF) and `Shift+Z` (Zoxide) are implemented and functional.
+- **Search & Jump:** `z` (FZF) and `Z` (Zoxide) are implemented and functional.
 - **Hidden Files:** `.` correctly toggles visibility of files prefixed with a dot.
 - **Sorting:** `,` correctly enters sort mode with variants for alpha, size, modified, etc.
 

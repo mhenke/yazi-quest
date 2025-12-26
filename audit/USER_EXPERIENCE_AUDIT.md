@@ -27,5 +27,5 @@
 ## 4. Audit Findings & Questions
 
 - **Finding:** The core user experience is solid. The feedback loop (action -> notification -> state change) is clear and immediate.
-- **Finding:** History Navigation (`Shift+H`/`Shift+L`) and Preview Pane Scrolling (`Shift+J`/`Shift+K`) have been re-implemented. This addresses a previous UX concern regarding navigation fluidity and content review.
+- **Finding:** History Navigation (`H`/`L`) and Preview Pane Scrolling (`J`/`K`) have been re-implemented. This addresses a previous UX concern regarding navigation fluidity and content review.
 - **Question:** The `PEDAGOGY_AUDIT.md` noted the removal of `visualAnchorIndex` from the `GameState` type. This confirms that Visual Mode is not a planned feature. Is this intentional, and should it be formally documented as "Out of Scope" to prevent it from being raised in future audits?

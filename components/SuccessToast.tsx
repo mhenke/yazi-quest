@@ -4,7 +4,7 @@ import { CheckCircle2, Zap } from 'lucide-react';
 interface SuccessToastProps {
   message: string;
   levelTitle: string;
-  onDismiss: () => void; // Shift+Enter - advances to next level
+  onDismiss: () => void; // Enter - advances to next level
   onClose: () => void; // Escape - just dismisses modal
 }
 

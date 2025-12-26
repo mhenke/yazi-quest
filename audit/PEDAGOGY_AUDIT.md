@@ -16,11 +16,11 @@ The pedagogical foundation of the game is sound. It correctly prioritizes and te
 
 Code verification confirms the following core features are implemented in a way that builds authentic Yazi muscle memory:
 
-- **Core Navigation**: `j/k` (move), `h/l` (enter/exit), `gg`/`G` (jumps), `Shift+H`/`Shift+L` (history), `Shift+J`/`Shift+K` (preview scroll).
+- **Core Navigation**: `j/k` (move), `h/l` (enter/exit), `gg`/`G` (jumps), `H`/`L` (history), `J`/`K` (preview scroll).
 - **Selection**: `Space` (select-and-advance), `Ctrl+A` (select all), `Ctrl+R` (invert).
 - **File Operations**: The `d`/`y`/`x`/`p`/`r`/`a` cycle for managing files is accurate.
-- **History Navigation**: `Shift+H` (back) and `Shift+L` (forward) are implemented and functional.
-- **Preview Pane Scrolling**: `Shift+J` (down) and `Shift+K` (up) are implemented and functional.
+- **History Navigation**: `H` (back) and `L` (forward) are implemented and functional.
+- **Preview Pane Scrolling**: `J` (down) and `K` (up) are implemented and functional.
 - **Filtering & Searching**: The distinction and use cases for `f` (filter) and `z` (fuzzy find) are taught effectively.
 - **Sorting:** The use of `,` as a prefix for sort mode is correct.
 

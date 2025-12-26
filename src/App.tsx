@@ -166,7 +166,9 @@ const App: React.FC = () => {
 
   // Helper to evaluate a task's check (supports array of alternative checks)
   const evaluateTaskCheck = (
-    check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>,
+    check:
+      | ((gameState: GameState, level: Level) => boolean)
+      | Array<(gameState: GameState, level: Level) => boolean>,
     state: GameState,
     level: Level
   ) => {

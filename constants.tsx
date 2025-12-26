@@ -18,7 +18,7 @@ export const KEYBINDINGS = [
   // Fundamental confirm keys
   { keys: ['Enter'], description: 'Confirm / Open (alias for l)' },
   {
-    keys: ['Shift+Enter'],
+    keys: ['Enter'],
     description: 'Advance / Confirm progression (e.g., mission-complete toast)',
   },
   { keys: ['gg'], description: 'Jump to Top' },
@@ -44,9 +44,9 @@ export const KEYBINDINGS = [
   // === SEARCH & FILTER ===
   { keys: ['f'], description: 'Filter Files' },
   { keys: ['z'], description: 'FZF Find (Recursive)' },
-  { keys: ['Shift+Z'], description: 'Zoxide Jump (History)' },
-  { keys: ['Shift+H', 'Shift+L'], description: 'History Back / Forward' },
-  { keys: ['Shift+J', 'Shift+K'], description: 'Preview Scroll Down / Up' },
+  { keys: ['Z'], description: 'Zoxide Jump (History)' },
+  { keys: ['H', 'L'], description: 'History Back / Forward' },
+  { keys: ['J', 'K'], description: 'Preview Scroll Down / Up' },
   { keys: ['Esc'], description: 'Clear Filter / Exit Mode' },
 
   // === SORTING ===
@@ -1206,17 +1206,17 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'System Navigation & Jump',
     description:
-      "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: Shift+G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
+      "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Learn j/k to move cursor, l/h to enter/exit directories. Master long jumps: G (bottom) and gg (top). Explore 'datastore', then locate system directory '/etc'.",
     initialPath: ['root', 'home', 'guest'],
-    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'Shift+G' to jump to bottom and 'gg' to jump to top. Navigate to 'datastore', then '/etc'.",
+    hint: "Press 'j'/'k' to move, 'l'/'h' to enter/exit. Inside a long list like `datastore`, press 'G' to jump to bottom and 'gg' to jump to top. Navigate to '~/datastore', then '/etc'.",
     coreSkill: 'Navigation (j/k/h/l, gg/G)',
-    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, Shift+G',
+    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
     successMessage: 'MOVEMENT PROTOCOLS INITIALIZED.',
     leadsTo: [2, 3],
     tasks: [
       {
         id: 'nav-1',
-        description: "Move to 'datastore' and enter",
+        description: "Move into '~/datastore' (j,l)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'datastore';
@@ -1225,12 +1225,12 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'nav-2a',
-        description: 'Jump to bottom of file list (press Shift+G)',
+        description: 'Jump to bottom of file list (press G)',
         check: (state: GameState, level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
             currentDir?.name === 'datastore' &&
-            (state.lastAction?.type === 'JUMP_BOTTOM' || (state as any).usedG === true)
+            (state.lastAction?.type === 'JUMP_BOTTOM' || state.usedG === true)
           );
         },
         completed: false,
@@ -1243,7 +1243,7 @@ export const LEVELS: Level[] = [
           // Accept explicit GG usage (or lastAction) — allow it even if a bottom jump occurred earlier
           return (
             currentDir?.name === 'datastore' &&
-            (state.lastAction?.type === 'JUMP_TOP' || (state as any).usedGG === true)
+            (state.lastAction?.type === 'JUMP_TOP' || state.usedGG === true)
           );
         },
         completed: false,
@@ -1271,7 +1271,7 @@ export const LEVELS: Level[] = [
     description:
       'INBOUND THREAT DETECTED. An external surveillance beacon has infiltrated the data stream. Location compromised. Terminate the signal. Navigate to ~/incoming, identify the alphabetically-sorted threat at the bottom of the list, inspect its contents, and purge it.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "Navigate to ~/incoming. Press 'Shift+G' to jump to the bottom of file list. The tracking beacon sorts last. Use Tab to inspect, Shift+J/K to scroll the preview, and 'd' to delete.",
+    hint: "Navigate to ~/incoming. Press 'G' to jump to the bottom of file list. The tracking beacon sorts last. Use Tab to inspect, J/K to scroll the preview, and 'd' to delete.",
     coreSkill: 'File Inspection (Tab) & Delete (d)',
     environmentalClue:
       'THREAT: watcher_agent.sys in ~/incoming | DIRECTIVE: Locate → Inspect → Purge',
@@ -1281,7 +1281,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-1',
-        description: "Navigate to 'incoming'",
+        description: "Navigate to '~/incoming'",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'incoming';
@@ -1290,11 +1290,15 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2',
-        description: 'STRATEGY: Jump to bottom of file list (Shift+G).',
+        description: 'STRATEGY: Jump to bottom of file list (G).',
         check: (state: GameState, level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'incoming' && state.lastAction?.type === 'JUMP_BOTTOM';
+          return (
+            currentDir?.name === 'incoming' &&
+            (state.lastAction?.type === 'JUMP_BOTTOM' || state.usedG === true)
+          );
         },
+
         completed: false,
       },
       {
@@ -1312,7 +1316,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2c',
-        description: 'TACTIC: Sift through threat data before purge (Shift+J / Shift+K).',
+        description: 'TACTIC: Sift through threat data before purge (J / K).',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2b');
           if (!prevTask?.completed) return false;
@@ -1321,10 +1325,14 @@ export const LEVELS: Level[] = [
           const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
           if (!threatExists) return false; // Cannot complete if already deleted
 
-          return state.lastAction?.type === 'PREVIEW_SCROLL';
+          // Accept either an explicit PREVIEW_SCROLL lastAction or the usedPreviewScroll flag
+          return (
+            state.lastAction?.type === 'PREVIEW_SCROLL' || state.usedPreviewScroll === true
+          );
         },
         completed: false,
       },
+
       {
         id: 'del-3',
         description: "DIRECTIVE: Terminate 'watcher_agent.sys' (d, then y).",
@@ -1425,9 +1433,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'Protocol Design',
     description:
-      "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols. Navigate to the 'datastore' and use create (a) to build a 'protocols' directory with two configuration files inside.",
+      "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols. Navigate to '~/datastore' and use create (a) to build a 'protocols' directory with two configuration files inside.",
     initialPath: ['root', 'home', 'guest'],
-    hint: "From your current location, navigate to the 'datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
+    hint: "From your current location, navigate to '~/datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
     coreSkill: 'Create (a)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf',
@@ -1467,7 +1475,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description: "Navigate to 'datastore', then create 'protocols/' (a)",
+        description: "Navigate to '~/datastore', then create 'protocols/' (a)",
         check: (state: GameState) => {
           const datastore = findNodeByName(state.fs, 'datastore');
           return !!datastore?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
@@ -1581,7 +1589,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-select',
-        description: "Move to 'protocols', enter, and select all (Ctrl+A)",
+        description: "Move to '~/datastore/protocols', enter, and select all (Ctrl+A)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
@@ -1647,7 +1655,7 @@ export const LEVELS: Level[] = [
     description:
       "ACCESS UPGRADED. The 'incoming' data stream contains compressed historical logs. Manual extraction is inefficient. Use the Filter protocol (f) to isolate 'backup_log' files, sort by size (',', 's') to find the largest archive, enter it (l), and extract 'sys_v1.log' to the 'media' directory for analysis.",
     initialPath: ['root', 'home', 'guest'], // Player continues from Level 5 location
-    hint: "1. Navigate to incoming sector. 2. Press 'f', type 'backup_log'. 3. Sort by size (',', 's') to bring the largest backup to the top. 4. Enter the archive (l). 5. Highlight 'sys_v1.log', Press 'y'. 6. Navigate to media. 7. Press 'p'.\n\nTip: Use Shift+H to backtrack through visited directories and Shift+J to scroll the preview while inspecting logs.",
+    hint: "1. Navigate to '~/incoming' sector. 2. Press 'f', type 'backup_log'. 3. Sort by size (',', 's') to bring the largest backup to the top. 4. Enter the archive (l). 5. Highlight 'sys_v1.log', Press 'y'. 6. Navigate to media. 7. Press 'p'.\n\nTip: Use H to backtrack through visited directories and J to scroll the preview while inspecting logs.",
     coreSkill: 'Filter (f) & Archive Ops',
     environmentalClue: 'TARGET: backup_logs.zip/sys_v1.log → ~/media',
     successMessage: 'LOGS RETRIEVED.',
@@ -1675,7 +1683,7 @@ export const LEVELS: Level[] = [
       {
         id: 'nav-and-filter',
         description:
-          "Navigate to 'incoming', filter for 'backup_log' (f), and exit filter mode (Esc)",
+          "Navigate to '~/incoming', filter for 'backup_log' (f), and exit filter mode (Esc)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir) return false;
@@ -1742,11 +1750,11 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'RAPID NAVIGATION',
     description:
-      "LINEAR TRAVERSAL IS COMPROMISED. To evade detection, use Zoxide Teleportation (Shift+Z) to 'blink' between distant nodes. Dump your trace data in /tmp. Then, attempt to quarantine a suspicious file in /etc.",
+      "LINEAR TRAVERSAL IS COMPROMISED. To evade detection, use Zoxide Teleportation (Z) to 'blink' between distant nodes. Dump your trace data in /tmp. Then, attempt to quarantine a suspicious file in /etc.",
     initialPath: null,
-    hint: "Jump to `/tmp` (Shift+Z → 'tmp'), then `Shift+G` to reach the bottom and delete `sys_dump.log`. Next, jump to `/etc` (Shift+Z → 'etc'), cut 'sys_patch.conf' (x), then jump to '~/.config/vault/' (Shift+Z → '~/.config/vault/' → Enter) to move it. If an alert triggers, clear the clipboard with Y to abort.",
+    hint: "Jump to `/tmp` (Z → 'tmp'), then `G` to reach the bottom and delete `sys_dump.log`. Next, jump to `/etc` (Z → 'etc'), cut 'sys_patch.conf' (x), then jump to '~/.config/vault/' (Z → '~/.config/vault/' → Enter) to move it. If an alert triggers, clear the clipboard with Y to abort.",
 
-    coreSkill: 'G-Command (gt) + Zoxide (Shift+Z)',
+    coreSkill: 'G-Command (gt) + Zoxide (Z)',
     environmentalClue:
       'THREAT: Linear Directory Tracing | COUNTERMEASURE: Zoxide Quantum Jumps to /tmp, /etc | In /etc, target `sys_patch.conf`',
     successMessage: 'QUANTUM JUMP CALIBRATED. Logs purged.',
@@ -1798,7 +1806,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'goto-tmp',
-        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)",
+        description: "Quantum tunnel to /tmp (Z → 'tmp' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'tmp';
@@ -1808,7 +1816,7 @@ export const LEVELS: Level[] = [
       {
         id: 'purge-sys-dump',
         description:
-          "Jump to the bottom of the /tmp file list (Shift+G) and delete 'sys_dump.log' (d, then y)",
+          "Jump to the bottom of the /tmp file list (G) and delete 'sys_dump.log' (d, then y)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const tmp = findNodeByName(state.fs, 'tmp');
@@ -1823,7 +1831,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'zoxide-etc',
-        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
+        description: "Quantum tunnel to /etc (Z → 'etc' → Enter)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return state.stats.fuzzyJumps >= 1 && currentDir?.name === 'etc';
@@ -1836,7 +1844,7 @@ export const LEVELS: Level[] = [
           if (gameState.falseThreatActive) {
             return 'Clear clipboard (Y) to abort operation.';
           }
-          return "Move 'sys_patch.conf' (x) to '~/.config/vault/' (Shift+Z, active).";
+          return "Move 'sys_patch.conf' (x) to '~/.config/vault/' (Z, active).";
         },
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'zoxide-etc');
@@ -1865,7 +1873,7 @@ export const LEVELS: Level[] = [
     description:
       "ACCESS GRANTED. FIREWALL BYPASSED. Navigate to your workspace to construct a neural network. IMPORTANT: Your Quantum Link (Zoxide) is blind to new sectors until they are physically visited. You must 'calibrate' the link by entering new directories to add them to your teleportation history. Construct the 'neural_net' core, calibrate it, then relocate your uplink assets using quantum jumps.",
     initialPath: null,
-    hint: "1. Navigate to 'workspace'. 2. Construct: 'a' → 'neural_net/'. 3. Calibrate: Enter 'neural_net/' (l). 4. Jump to 'active' (Shift+Z), yank 'uplink_v1.conf', jump back, and paste (p). 5. Finally, build 'weights/model.rs' inside.",
+    hint: "1. Navigate to '~/workspace'. 2. Construct: 'a' → 'neural_net/'. 3. Calibrate: Enter 'neural_net/' (l). 4. Jump to 'active' (Z), yank 'uplink_v1.conf', jump back, and paste (p). 5. Finally, build 'weights/model.rs' inside.",
     coreSkill: 'Challenge: Full System Integration',
     environmentalClue:
       'NAVIGATE: ~/workspace | BUILD: neural_net/... | MIGRATE: uplink_v1.conf -> neural_net/',
@@ -2044,7 +2052,7 @@ export const LEVELS: Level[] = [
     description:
       "CRITICAL ASSET EXPOSED. The 'access_key.pem' provides root-level escalation but is currently vulnerable in the datastore alongside decoy files. Security daemons are scanning—you must purge ALL decoy files while preserving the real key. Use inverse selection logic: manually mark decoys with Space, then invert (Ctrl+R) to select the real asset and capture it.",
     initialPath: null,
-    hint: "1. Use FZF (z) to jump to 'access_key.pem'. 2. Mark decoy files with Space. 3. Invert selection to target real asset and capture it (Ctrl+R, y). 4. Jump to '.config/vault' (Shift+Z). 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
+    hint: "1. Use FZF (z) to jump to 'access_key.pem'. 2. Mark decoy files with Space. 3. Invert selection to target real asset and capture it (Ctrl+R, y). 4. Jump to '.config/vault' (Z). 5. Paste (p). 6. Rename (r) to 'vault_key.pem'.",
     coreSkill: 'Challenge: Invert Selection (Ctrl+R)',
     environmentalClue:
       'TARGET: access_key.pem | DECOYS: decoy_*.pem | TECHNIQUE: Space decoys → Ctrl+R → Yank | DESTINATION: ~/.config/vault/vault_key.pem',
@@ -2057,7 +2065,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'navigate-to-key',
-        description: "Navigate to 'access_key.pem' location using FZF (z)",
+        description: "Locate 'access_key.pem' in '~/datastore/credentials' using FZF (z)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
@@ -2079,7 +2087,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'secure-1',
-        description: "Quantum jump to vault and deploy (Shift+Z → '.config/vault', p)",
+        description: "Quantum jump to vault and deploy (Z → '.config/vault', p)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
@@ -2274,7 +2282,7 @@ export const LEVELS: Level[] = [
     description:
       'PRIVILEGE ESCALATION INITIATED. You now operate at kernel level. Standing at the root of the system, all paths are now accessible. The /etc directory—territory previously forbidden—demands infiltration. Install a daemon controller in /etc for persistence, then relocate your vault to /tmp where volatile storage masks assets from integrity scans. 80 keystrokes maximum.',
     initialPath: ['root'],
-    hint: "You're at root (/). Navigate to /etc (enter 'etc' or Shift+Z). Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Jump to .config. Cut 'vault' (x). Jump to /tmp. Paste (p).",
+    hint: "You're at root (/). Navigate to /etc (enter 'etc' or Z). Create 'daemon/' directory (a). Enter it. Create 'config' file (a). Jump to .config. Cut 'vault' (x). Jump to /tmp. Paste (p).",
     coreSkill: 'Challenge: Root Access Operations',
     environmentalClue:
       'ROOT LEVEL ACTIVE | INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys',
@@ -2283,7 +2291,7 @@ export const LEVELS: Level[] = [
     leadsTo: [13],
     maxKeystrokes: 80,
     efficiencyTip:
-      "Use Shift+Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
+      "Use Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
       const home = findNodeByName(currentFs, 'home');
@@ -2563,7 +2571,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-home',
-        description: 'Navigate to home directory',
+        description: "Navigate to '~' (guest)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'guest';

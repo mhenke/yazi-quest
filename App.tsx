@@ -249,7 +249,9 @@ export default function App() {
 
   // Helper to evaluate a task's check (supports array of alternative checks)
   const evaluateTaskCheck = (
-    check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>,
+    check:
+      | ((gameState: GameState, level: Level) => boolean)
+      | Array<(gameState: GameState, level: Level) => boolean>,
     state: GameState,
     level: Level
   ) => {
@@ -509,14 +511,14 @@ export default function App() {
           if (e.shiftKey) {
             const previewEl = document.getElementById('preview-main') as HTMLElement | null;
             if (previewEl) previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
+            setGameState((prev) => ({ ...prev, usedPreviewScroll: true, lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() } }));
           }
           break;
         case 'K':
           if (e.shiftKey) {
             const previewEl = document.getElementById('preview-main') as HTMLElement | null;
             if (previewEl) previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
+            setGameState((prev) => ({ ...prev, usedPreviewScroll: true, lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() } }));
           }
           break;
         case 'H':
@@ -1301,7 +1303,7 @@ export default function App() {
         return;
       }
 
-      // Preview scrolling: Shift+J / Shift+K to scroll the preview pane
+      // Preview scrolling: J / K to scroll the preview pane
       if ((e.key === 'J' || e.key === 'K') && gameState.mode === 'normal') {
         const el = document.getElementById('preview-main');
         if (el) {
@@ -1331,7 +1333,7 @@ export default function App() {
         return;
       }
 
-      // Shift+H: show hint / progress hint stage (keep user in suspense)
+      // H: show hint / progress hint stage (keep user in suspense)
       if (e.key.toLowerCase() === 'h' && e.shiftKey && gameState.mode === 'normal') {
         e.preventDefault();
         setGameState((prev) => ({
@@ -1342,7 +1344,7 @@ export default function App() {
         return;
       }
 
-      // History navigation: Shift+L = forward (keep original behavior for L)
+      // History navigation: L = forward (keep original behavior for L)
       if (e.key === 'L' && e.shiftKey && gameState.mode === 'normal') {
         setGameState((prev) => {
           const nextIdx = (prev.historyIndex ?? -1) + 1;
@@ -1357,7 +1359,7 @@ export default function App() {
         return;
       }
       if (e.key === 'Tab' && gameState.mode === 'normal') {
-        setGameState((prev) => ({ ...prev, showInfoPanel: true }));
+        setGameState((prev) => ({ ...prev, showInfoPanel: true, lastAction: { type: 'INSPECT', timestamp: Date.now() } }));
         return;
       }
 

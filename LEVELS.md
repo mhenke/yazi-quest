@@ -43,12 +43,12 @@ This document outlines the 18 levels of Yazi Quest, their objectives, and the co
 
 **Level 8: Deep Scan Protocol**
 
-- **Concept:** Zoxide Jump (`Shift+Z`)
+- **Concept:** Zoxide Jump (`Z`)
 - **Task:** Efficiently jump to distant, previously visited directories without manual navigation.
 
 **Level 9: NEURAL CONSTRUCTION & VAULT**
 
-- **Concept:** Challenge: Full System Integration (`a`, `y`, `p`, `z`, `Shift+Z`)
+- **Concept:** Challenge: Full System Integration (`a`, `y`, `p`, `z`, `Z`)
 - **Task:** Construct complex nested structures and secure critical assets by combining multiple operations within a time limit.
 
 **Level 10: Stealth Cleanup**
@@ -63,7 +63,7 @@ This document outlines the 18 levels of Yazi Quest, their objectives, and the co
 
 **Level 12: Live Migration**
 
-- **Concept:** Challenge: High-Speed Migration (`z`, `Shift+Z`, `x`, `p`)
+- **Concept:** Challenge: High-Speed Migration (`z`, `Z`, `x`, `p`)
 - **Task:** Execute a round-trip migration of critical assets between directories, processed in a volatile sandbox, using advanced navigation and file operations efficiently.
 
 ## Episode 3: Mastery (Efficiency & Keystroke Limits)

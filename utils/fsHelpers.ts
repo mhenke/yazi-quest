@@ -134,7 +134,6 @@ export const deleteNode = (
   action: 'delete' | 'cut' = 'delete',
   force: boolean = false
 ): Result<FileNode, FsError> => {
-
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
   if (!parent || !parent.children) {

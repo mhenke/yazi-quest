@@ -22,7 +22,9 @@ export interface LevelTask {
   description: string | ((gameState: GameState) => string);
   // Allow a single check function or an array of alternative checks (OR semantics).
   // A task is satisfied if ANY of the checks returns true.
-  check: ((gameState: GameState, level: Level) => boolean) | Array<(gameState: GameState, level: Level) => boolean>;
+  check:
+    | ((gameState: GameState, level: Level) => boolean)
+    | Array<(gameState: GameState, level: Level) => boolean>;
   completed: boolean;
 }
 
@@ -186,6 +188,12 @@ export interface GameState {
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
   lastAction: ActionRecord | null; // Tracks the last significant player action
+  // Flags used for tracking whether specific one-off interactions have occurred
+  usedG?: boolean;
+  usedGG?: boolean;
+  usedPreviewScroll?: boolean;
+  usedHistory?: boolean;
+  usedCtrlA?: boolean;
   falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
   dynamicHint?: string; // Optional runtime hint override for dynamic scenarios
 }

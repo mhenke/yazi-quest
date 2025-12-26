@@ -23,7 +23,7 @@
 - [x] Inspect file metadata with `Tab`
 - [x] Navigate archives and extract files
 - [x] G-commands for quick directory jumps (`gh`, `gw`, `gd`, etc.)
-- [x] Zoxide jumps with `Shift+Z`
+- [x] Zoxide jumps with `Z`
 - [x] FZF recursive search with `z`
 - [x] Batch operations across multiple files
 - [x] Rename files with `r`
@@ -116,7 +116,7 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | :-------- | :--------------- | :------------------------------------------------------- |
 | `f`       | **Filter**       | Filter files in current directory by name                |
 | `z`       | **FZF Search**   | Recursive fuzzy search for files (current dir & subdirs) |
-| `Shift+Z` | **Zoxide Jump**  | Jump to frequently/recently visited directories          |
+| `Z` | **Zoxide Jump**  | Jump to frequently/recently visited directories          |
 | `Esc`     | **Clear Filter** | Exit filter/search mode                                  |
 
 ### Sorting
@@ -135,9 +135,9 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 | Key       | Action           | Description                                  |
 | :-------- | :--------------- | :------------------------------------------- |
-| `Shift+M` | **Quest Map**    | Open Quest Map to view all levels & progress |
-| `Shift+H` | **Show Hint**    | Display hint for current level objective     |
-| `Shift+?` | **Show Help**    | Show keybindings overlay                     |
+| `M` | **Quest Map**    | Open Quest Map to view all levels & progress |
+| `H` | **Show Hint**    | Display hint for current level objective     |
+| `?` | **Show Help**    | Show keybindings overlay                     |
 | `Esc`     | **Close Modals** | Close any open modal/dialog                  |
 
 ---
