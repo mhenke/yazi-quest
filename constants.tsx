@@ -1216,7 +1216,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-1',
-        description: "Move to 'datastore' (j) and enter (l)",
+        description: "Move to 'datastore' and enter",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'datastore';
@@ -1229,7 +1229,8 @@ export const LEVELS: Level[] = [
         check: (state: GameState, level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
-            currentDir?.name === 'datastore' && (state.lastAction?.type === 'JUMP_BOTTOM' || (state as any).usedG === true)
+            currentDir?.name === 'datastore' &&
+            (state.lastAction?.type === 'JUMP_BOTTOM' || (state as any).usedG === true)
           );
         },
         completed: false,
@@ -1239,16 +1240,17 @@ export const LEVELS: Level[] = [
         description: "Jump to top of file list (press 'gg')",
         check: (state: GameState, level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          // Require explicit GG usage (or explicit lastAction) and ensure Shift+G didn't just trigger the bottom jump
+          // Accept explicit GG usage (or lastAction) — allow it even if a bottom jump occurred earlier
           return (
-            currentDir?.name === 'datastore' && (state.lastAction?.type === 'JUMP_TOP' || (state as any).usedGG === true) && !(state as any).usedG
+            currentDir?.name === 'datastore' &&
+            (state.lastAction?.type === 'JUMP_TOP' || (state as any).usedGG === true)
           );
         },
         completed: false,
       },
       {
         id: 'nav-3',
-        description: "Return to root (h, h), move to 'etc' (j, j), and enter (l)",
+        description: "Return to root, move into 'etc'",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'nav-2b');
           if (!prevTask?.completed) return false;
@@ -1279,7 +1281,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-1',
-        description: "Navigate to 'incoming' (j, j, l)",
+        description: "Navigate to 'incoming'",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return currentDir?.name === 'incoming';
@@ -1291,10 +1293,7 @@ export const LEVELS: Level[] = [
         description: 'STRATEGY: Jump to bottom of file list (Shift+G).',
         check: (state: GameState, level: Level) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return (
-            currentDir?.name === 'incoming' &&
-            (state.lastAction?.type === 'JUMP_BOTTOM')
-          );
+          return currentDir?.name === 'incoming' && state.lastAction?.type === 'JUMP_BOTTOM';
         },
         completed: false,
       },
@@ -1322,9 +1321,7 @@ export const LEVELS: Level[] = [
           const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
           if (!threatExists) return false; // Cannot complete if already deleted
 
-          return (
-            state.lastAction?.type === 'PREVIEW_SCROLL'
-          );
+          return state.lastAction?.type === 'PREVIEW_SCROLL';
         },
         completed: false,
       },
@@ -1350,7 +1347,7 @@ export const LEVELS: Level[] = [
     description:
       'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.',
     initialPath: null,
-    hint: "Press 'f', type 'map'. Highlight 'sector_map.png' with j/k. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
+    hint: "Press 'f', type 'map'. Highlight 'sector_map.png'. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
     coreSkill: 'Filter (f) & Hidden Files (.)',
     environmentalClue:
       'ASSET: sector_map.png | HIDDEN: .surveillance_log | WORKFLOW: ~/incoming → Toggle hidden (.) → Filter (f) → Esc → Cut (x) → Esc → ~/media → Paste (p)',
@@ -1411,13 +1408,7 @@ export const LEVELS: Level[] = [
           });
         }
       }
-      // Protect target_map.png from being cut until capture sequence
-      currentFs = setNodeProtection(
-        currentFs,
-        ['home', 'guest', 'incoming', 'sector_map.png'],
-        'cut',
-        'Map file anchored until capture sequence.'
-      );
+
       // Protect .surveillance_log from deletion
       currentFs = setNodeProtection(
         currentFs,
@@ -1435,34 +1426,54 @@ export const LEVELS: Level[] = [
     title: 'Protocol Design',
     description:
       "EXTERNAL COMMUNICATION REQUIRED. To reach beyond this partition, you need uplink protocols. Navigate to the 'datastore' and use create (a) to build a 'protocols' directory with two configuration files inside.",
-        initialPath: ['root', 'home', 'guest'],
-        hint: "From your current location, navigate to the 'datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
-        coreSkill: 'Create (a)',
-        environmentalClue:
-          'NAVIGATE: ~/datastore | CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf',
-        successMessage: 'PROTOCOLS ESTABLISHED.',
-        onEnter: (fs: FileNode) => {
-          let currentFs = fs;
-          // Protect protocols directory from deletion and cut prior to relevant levels
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols'], 'delete', 'Protocol directory required for uplink deployment.');
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols'], 'cut', 'Protocol directory anchored.');
-          // Protect uplink files from deletion prior to relevant levels
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'], 'delete', 'Uplink configuration required for neural network.');
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols', 'uplink_v2.conf'], 'delete', 'Uplink configuration required for deployment.');
-          return currentFs;
+    initialPath: ['root', 'home', 'guest'],
+    hint: "From your current location, navigate to the 'datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
+    coreSkill: 'Create (a)',
+    environmentalClue:
+      'NAVIGATE: ~/datastore | CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf',
+    successMessage: 'PROTOCOLS ESTABLISHED.',
+    onEnter: (fs: FileNode) => {
+      let currentFs = fs;
+      // Protect protocols directory from deletion and cut prior to relevant levels
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols'],
+        'delete',
+        'Protocol directory required for uplink deployment.'
+      );
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols'],
+        'cut',
+        'Protocol directory anchored.'
+      );
+      // Protect uplink files from deletion prior to relevant levels
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'],
+        'delete',
+        'Uplink configuration required for neural network.'
+      );
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols', 'uplink_v2.conf'],
+        'delete',
+        'Uplink configuration required for deployment.'
+      );
+      return currentFs;
+    },
+    buildsOn: [1],
+    leadsTo: [5, 8, 16],
+    tasks: [
+      {
+        id: 'nav-and-create-dir',
+        description: "Navigate to 'datastore', then create 'protocols/' (a)",
+        check: (state: GameState) => {
+          const datastore = findNodeByName(state.fs, 'datastore');
+          return !!datastore?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
         },
-        buildsOn: [1],
-        leadsTo: [5, 8, 16],
-        tasks: [
-          {
-            id: 'nav-and-create-dir',
-            description: "Navigate to 'datastore' (j, l), then create 'protocols/' (a)",
-            check: (state: GameState) => {
-              const datastore = findNodeByName(state.fs, 'datastore');
-              return !!datastore?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
-            },
-            completed: false,
-          },
+        completed: false,
+      },
       {
         id: 'enter-and-create-v1',
         description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
@@ -1493,74 +1504,94 @@ export const LEVELS: Level[] = [
     title: 'EMERGENCY EVACUATION',
     description:
       'QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active. Use batch operations for speed.',
-        initialPath: ['root', 'home', 'guest', 'datastore'],
-        hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Navigate to '.config'. 4. Create 'vault/active/' (a). 5. Enter 'active' and Paste (p).",
-        coreSkill: 'Batch Select (Ctrl+A), Cut/Paste (x/p)',
-        environmentalClue:
-          'THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/',
-        successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',
-        buildsOn: [3, 4],
-        leadsTo: [9],
-        onEnter: (fs: FileNode) => {
-          let currentFs = fs;
-          const datastore = findNodeByName(currentFs, 'datastore');
-          if (datastore && datastore.children) {
-            let protocols = datastore.children.find((r) => r.name === 'protocols');
-            if (!protocols) {
-              protocols = {
-                id: generateId(),
-                name: 'protocols',
-                type: 'dir',
-                parentId: datastore.id,
-                children: [],
-              };
-              datastore.children.push(protocols);
-            }
-            if (protocols.children) {
-              if (!protocols.children.find((r) => r.name === 'uplink_v1.conf')) {
-                protocols.children.push({
-                  id: generateId(),
-                  name: 'uplink_v1.conf',
-                  type: 'file',
-                  content: 'conf_1',
-                  parentId: protocols.id,
-                });
-              }
-              if (!protocols.children.find((r) => r.name === 'uplink_v2.conf')) {
-                protocols.children.push({
-                  id: generateId(),
-                  name: 'uplink_v2.conf',
-                  type: 'file',
-                  content: 'conf_2',
-                  parentId: protocols.id,
-                });
-              }
-            }
+    initialPath: ['root', 'home', 'guest', 'datastore'],
+    hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Navigate to '.config'. 4. Create 'vault/active/' (a). 5. Enter 'active' and Paste (p).",
+    coreSkill: 'Batch Select (Ctrl+A), Cut/Paste (x/p)',
+    environmentalClue:
+      'THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/',
+    successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',
+    buildsOn: [3, 4],
+    leadsTo: [9],
+    onEnter: (fs: FileNode) => {
+      let currentFs = fs;
+      const datastore = findNodeByName(currentFs, 'datastore');
+      if (datastore && datastore.children) {
+        let protocols = datastore.children.find((r) => r.name === 'protocols');
+        if (!protocols) {
+          protocols = {
+            id: generateId(),
+            name: 'protocols',
+            type: 'dir',
+            parentId: datastore.id,
+            children: [],
+          };
+          datastore.children.push(protocols);
+        }
+        if (protocols.children) {
+          if (!protocols.children.find((r) => r.name === 'uplink_v1.conf')) {
+            protocols.children.push({
+              id: generateId(),
+              name: 'uplink_v1.conf',
+              type: 'file',
+              content: 'conf_1',
+              parentId: protocols.id,
+            });
           }
-          // Lift protection for protocols directory for cut/delete
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols'], 'delete', null);
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols'], 'cut', null);
-          // Lift protection for uplink files for delete
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'], 'delete', null);
-          currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'protocols', 'uplink_v2.conf'], 'delete', null);
-    
-          return currentFs;
+          if (!protocols.children.find((r) => r.name === 'uplink_v2.conf')) {
+            protocols.children.push({
+              id: generateId(),
+              name: 'uplink_v2.conf',
+              type: 'file',
+              content: 'conf_2',
+              parentId: protocols.id,
+            });
+          }
+        }
+      }
+      // Lift protection for protocols directory for cut/delete
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols'],
+        'delete',
+        null
+      );
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols'],
+        'cut',
+        null
+      );
+      // Lift protection for uplink files for delete
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'],
+        'delete',
+        null
+      );
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'protocols', 'uplink_v2.conf'],
+        'delete',
+        null
+      );
+
+      return currentFs;
+    },
+
+    tasks: [
+      {
+        id: 'nav-and-select',
+        description: "Move to 'protocols', enter, and select all (Ctrl+A)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return (
+            currentDir?.name === 'protocols' &&
+            state.selectedIds.length >= 2 &&
+            state.lastAction?.type === 'SELECT_ALL'
+          );
         },
-    
-        tasks: [
-          {
-            id: 'nav-and-select',
-            description: "Move to 'protocols' (j), enter (l), and select all (Ctrl+A)",
-            check: (state: GameState) => {
-              const currentDir = getNodeByPath(state.fs, state.currentPath);
-              return (
-                currentDir?.name === 'protocols' &&
-                state.selectedIds.length >= 2 &&
-                (state.lastAction?.type === 'SELECT_ALL')
-              );
-            },
-            completed: false,
-          },
+        completed: false,
+      },
       {
         id: 'cut-and-delete',
         description: "Cut the files (x) and delete the 'protocols' folder",
@@ -1644,7 +1675,7 @@ export const LEVELS: Level[] = [
       {
         id: 'nav-and-filter',
         description:
-          "Navigate to 'incoming' (j, j, l), filter for 'backup_log' (f), and exit filter mode (Esc)",
+          "Navigate to 'incoming', filter for 'backup_log' (f), and exit filter mode (Esc)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir) return false;
@@ -1783,7 +1814,7 @@ export const LEVELS: Level[] = [
           const tmp = findNodeByName(state.fs, 'tmp');
           return (
             currentDir?.name === 'tmp' &&
-            (state.lastAction?.type === 'JUMP_BOTTOM') &&
+            state.lastAction?.type === 'JUMP_BOTTOM' &&
             !!tmp &&
             !tmp.children?.find((c) => c.name === 'sys_dump.log')
           );
@@ -1811,17 +1842,18 @@ export const LEVELS: Level[] = [
           const prevTask = level.tasks.find((t) => t.id === 'zoxide-etc');
           if (!prevTask?.completed) return false;
 
-          // Phase 1: Check if cut happened and alert triggered
-          if (!state.falseThreatActive) {
-            const sysPatchInClipboard =
-              state.clipboard?.action === 'cut' &&
-              state.clipboard.nodes.some((n) => n.name === 'sys_patch.conf');
-            return sysPatchInClipboard && state.falseThreatActive === true; // falseThreatActive is set when Alert is shown
+          // If an alert has triggered, require clearing the clipboard
+          if (state.falseThreatActive) {
+            return state.clipboard === null;
           }
 
-          // Phase 2: Check if clipboard is cleared (after alert)
-          return state.clipboard === null;
+          // Otherwise, require the sys_patch.conf to be cut into the clipboard
+          const sysPatchInClipboard =
+            state.clipboard?.action === 'cut' &&
+            state.clipboard.nodes.some((n) => n.name === 'sys_patch.conf');
+          return !!sysPatchInClipboard;
         },
+
         completed: false,
       },
     ],
@@ -2296,9 +2328,11 @@ export const LEVELS: Level[] = [
         id: 'ep3-1b',
         description: "Install controller: create 'config' file in daemon/",
         check: (state: GameState) => {
-          const daemon = findNodeByName(state.fs, 'config');
+          const etc = findNodeByName(state.fs, 'etc');
+          const daemon = etc?.children?.find((c) => c.name === 'daemon');
           return !!daemon?.children?.find((r) => r.name === 'config');
         },
+
         completed: false,
       },
       {
@@ -2432,8 +2466,18 @@ export const LEVELS: Level[] = [
         }
       }
       // Lift mission_log.md protection for deletion and rename
-      currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'mission_log.md'], 'delete', null);
-      currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore', 'mission_log.md'], 'rename', null);
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'mission_log.md'],
+        'delete',
+        null
+      );
+      currentFs = setNodeProtection(
+        currentFs,
+        ['home', 'guest', 'datastore', 'mission_log.md'],
+        'rename',
+        null
+      );
       return currentFs;
     },
 
