@@ -1003,12 +1003,6 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                   type: 'file',
                   content: '[theme]\nprimary = "orange"\nsecondary = "blue"',
                 },
-                {
-                  id: generateId(),
-                  name: 'vault',
-                  type: 'dir',
-                  children: [],
-                },
               ],
             },
           ],
