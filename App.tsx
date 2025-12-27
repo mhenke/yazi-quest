@@ -28,6 +28,7 @@ import {
 import { sortNodes } from './utils/sortHelpers';
 import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+import { simulateCompletionOfLevel } from './utils/seedLevels';
 import { StatusBar } from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
@@ -169,7 +170,20 @@ export default function App() {
         }
       }
 
+      // Replace scattered seeding blocks with atomic per-level completion simulation
+      if (jumpedToLevel) {
+        for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
+          const lvl = LEVELS[i];
+          try {
+            fs = simulateCompletionOfLevel(fs, lvl.id);
+          } catch (err) {
+            reportError(err, { phase: 'simulateCompletion', level: lvl.id });
+          }
+        }
+      }
+
       // Ensure user-created artifacts from earlier lessons exist when jumping directly.
+      /*
       const makeId = () => Math.random().toString(36).substr(2, 9);
       const ensureAdded = (
         parentPath: string[],
@@ -514,6 +528,7 @@ export default function App() {
         ensureAdded(guestPath, { name: 'sector_1', type: 'dir' });
         ensureAdded(guestPath, { name: 'grid_alpha', type: 'dir' });
       }
+    */
     } catch (err) {
       try {
         reportError(err, {
