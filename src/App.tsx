@@ -411,14 +411,21 @@ const App: React.FC = () => {
                   const node = visibleItems.find((n) => n.id === id);
                   if (node) {
                     // Correctly call isProtected before attempting deletion
-                    const reason = isProtected(prev.fs, prev.currentPath, node, 0, 'delete'); // levelIndex is dummy now
+                    const reason = isProtected(node, LEVELS[prev.levelIndex].id, 'delete'); // use level id for protection checks
                     if (reason) {
                       errorMsg = reason;
                       break;
                     }
 
                     // Attempt deletion
-                    const result = deleteNode(tempFs, prev.currentPath, id, 'delete', false);
+                    const result = deleteNode(
+                      tempFs,
+                      prev.currentPath,
+                      id,
+                      'delete',
+                      false,
+                      LEVELS[prev.levelIndex].id
+                    );
                     if (!result.ok) {
                       errorMsg = `Error: ${(result as { ok: false; error: FsError }).error}`;
                       break;
@@ -471,7 +478,7 @@ const App: React.FC = () => {
               if (action === 'cut') {
                 let errorMsg: string | null = null;
                 for (const node of nodesToClip) {
-                  const reason = isProtected(gameState.fs, gameState.currentPath, node, 0, 'cut'); // levelIndex is dummy now
+                  const reason = isProtected(node, currentLevel.id, 'cut'); // use current level id for protection checks
                   if (reason) {
                     errorMsg = reason;
                     break;
@@ -516,7 +523,8 @@ const App: React.FC = () => {
                       prev.clipboard.originalPath,
                       node.id,
                       'cut',
-                      true
+                      true,
+                      LEVELS[prev.levelIndex].id
                     ); // force delete
                     if (delResult.ok) tempFs = delResult.value;
                   }

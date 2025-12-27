@@ -62,6 +62,7 @@ export default function App() {
     const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
     const skipIntro = params.get('intro') === 'false';
+    const hasJumpParams = !!(lvlParam || epParam || debugParam);
 
     // 3. Determine Target Level
     let targetIndex = 0;
@@ -77,6 +78,7 @@ export default function App() {
       if (idx !== -1) targetIndex = idx;
     }
     const jumpedToLevel = targetIndex > 0; // Treat any start beyond level 0 as a jump
+    const isFreshStart = !hasJumpParams && targetIndex === 0; // true when no jump/debug params provided
 
     // 4. Handle Task Completion (Bypass)
     if (tasksParam && targetIndex < LEVELS.length) {
