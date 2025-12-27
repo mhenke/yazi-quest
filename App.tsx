@@ -131,13 +131,37 @@ export default function App() {
         for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
           const lvl = LEVELS[i];
           if (lvl.onEnter) {
-            // onEnter functions are now strictly for protection management, so seedMode can be ignored here.
-            try {
-              fs = lvl.onEnter(fs);
-            } catch (err) {
-              reportError(err, { phase: 'initialLevelChain.onEnter', level: lvl.id });
+            // Respect seedMode: if a level is marked 'fresh' it should only seed on a truly fresh start
+            if (!lvl.seedMode || lvl.seedMode !== 'fresh' || isFreshStart) {
+              try {
+                fs = lvl.onEnter(fs);
+              } catch (err) {
+                reportError(err, { phase: 'initialLevelChain.onEnter', level: lvl.id });
+              }
             }
           }
+        }
+
+        // Auto-unprotect nodes whose releaseLevel is <= the target level id for jump initialization
+        try {
+          const targetLevelId = LEVELS[targetIndex]?.id;
+          if (typeof targetLevelId === 'number') {
+            const releasePass = (node: FileNode) => {
+              if (
+                node.protection &&
+                typeof node.protection.releaseLevel === 'number' &&
+                node.protection.releaseLevel !== -1 &&
+                node.protection.releaseLevel <= targetLevelId
+              ) {
+                // remove protection entirely when release level met
+                node.protection = undefined;
+              }
+              if (node.children) node.children.forEach(releasePass);
+            };
+            releasePass(fs);
+          }
+        } catch (err) {
+          reportError(err, { phase: 'initialLevel.releasePass' });
         }
       }
 
@@ -863,15 +887,7 @@ export default function App() {
             // Add path-aware protection check for CUT
             if (e.key === 'x') {
               const protectedItem = nodes
-                .map((node) =>
-                  isProtected(
-                    gameState.fs,
-                    gameState.currentPath,
-                    node,
-                    gameState.levelIndex,
-                    'cut'
-                  )
-                )
+                .map((node) => isProtected(node, currentLevel.id, 'cut'))
                 .find((res) => res !== null);
               if (protectedItem) {
                 showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
@@ -892,13 +908,7 @@ export default function App() {
           } else if (currentItem) {
             // Add path-aware protection check for CUT
             if (e.key === 'x') {
-              const protection = isProtected(
-                gameState.fs,
-                gameState.currentPath,
-                currentItem,
-                gameState.levelIndex,
-                'cut'
-              );
+              const protection = isProtected(currentItem, currentLevel.id, 'cut');
               if (protection === 'CUT_ABORT_SIGNAL') {
                 setShowFalseThreatAlert(true);
                 setGameState((prev) => ({
