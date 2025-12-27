@@ -306,7 +306,7 @@ export default function App() {
         }
       }
 
-      // L6: ensure backup archive contains sys_v1.log
+      // L6: ensure backup archive contains sys_v1.log and simulate extraction to ~/media (post-level completed state)
       if (jumpedToLevel && targetIndex > level6Idx) {
         const incomingPath = ['root', 'home', 'guest', 'incoming'];
         const incomingNode = getNodeByPath(fs, incomingPath);
@@ -317,6 +317,14 @@ export default function App() {
           const archivePath = ['root', 'home', 'guest', 'incoming', archive.id];
           ensureAdded(archivePath, { name: 'sys_v1.log', type: 'file', content: 'System log v1' });
         }
+
+        // Post-level: ensure sys_v1.log has been extracted to ~/media (simulate extraction)
+        try {
+          const mediaPath = ['root', 'home', 'guest', 'media'];
+          ensureAdded(mediaPath, { name: 'sys_v1.log', type: 'file', content: 'System log v1' });
+        } catch (err) {
+          reportError(err, { phase: 'initialLevel.postL6' });
+        }
       }
 
       // L7: ensure /etc/sys_patch.conf exists
@@ -325,7 +333,28 @@ export default function App() {
         ensureAdded(etcPath, { name: 'sys_patch.conf', type: 'file', content: 'patch=1\\n' });
       }
 
-      // L10: ensure decoys in datastore for inverse selection training
+      // L8: ensure neural_net dir and config exist in workspace (simulate post-level completion)
+      if (jumpedToLevel && targetIndex > level8Idx) {
+        try {
+          ensurePath(['root', 'home', 'guest'], 'workspace/neural_net/');
+          const workspaceNode = findNodeByName(fs, 'workspace');
+          const neuralNode = workspaceNode?.children?.find(
+            (c) => c.name === 'neural_net' && c.type === 'dir'
+          );
+          if (neuralNode) {
+            const basePath = ['root', 'home', 'guest', workspaceNode!.id, neuralNode.id];
+            ensureAdded(basePath, {
+              name: 'config.json',
+              type: 'file',
+              content: '{"neural":true}',
+            });
+          }
+        } catch (err) {
+          reportError(err, { phase: 'initialLevel.postL8' });
+        }
+      }
+
+      // L10: ensure decoys in datastore for inverse selection training and simulate moving access_key.pem into vault and cleaning decoys
       if (jumpedToLevel && targetIndex > level10Idx) {
         const datastorePath = ['root', 'home', 'guest', 'datastore'];
         ensureAdded(datastorePath, {
@@ -338,6 +367,59 @@ export default function App() {
           type: 'file',
           content: 'DECOY KEY - DO NOT USE',
         });
+
+        // Post-level completion: move access_key.pem into vault and delete decoys
+        try {
+          // find access_key in datastore/credentials
+          const credPath = ['root', 'home', 'guest', 'datastore', 'credentials'];
+          const credsNode = getNodeByPath(fs, credPath);
+          const accessNode = credsNode?.children?.find((c) => c.name === 'access_key.pem');
+          // ensure vault active exists
+          ensurePath(['root', 'home', 'guest'], '.config/vault/active/');
+          const configNode = findNodeByName(fs, '.config');
+          const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
+          const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
+          if (accessNode && activeNode) {
+            const protocolsPath = ['root', 'home', 'guest', 'datastore', 'credentials'];
+            const delRes = deleteNode(
+              fs,
+              protocolsPath,
+              accessNode.id,
+              'delete',
+              false,
+              targetLevelId ?? 0
+            );
+            if (delRes.ok) fs = delRes.value;
+            const activePath = [
+              'root',
+              'home',
+              'guest',
+              configNode!.id,
+              vaultNode!.id,
+              activeNode.id,
+            ];
+            ensureAdded(activePath, {
+              name: 'access_key.pem',
+              type: 'file',
+              content: 'ACCESS KEY',
+            });
+          }
+
+          // remove decoys from datastore
+          const dsNode = getNodeByPath(fs, datastorePath);
+          if (dsNode && dsNode.children) {
+            const decoys = ['decoy_1.pem', 'decoy_2.pem'];
+            for (const dname of decoys) {
+              const dn = dsNode.children.find((c) => c.name === dname && c.type === 'file');
+              if (dn) {
+                const r = deleteNode(fs, datastorePath, dn.id, 'delete', false, targetLevelId ?? 0);
+                if (r.ok) fs = r.value;
+              }
+            }
+          }
+        } catch (err) {
+          reportError(err, { phase: 'initialLevel.postL10' });
+        }
       }
 
       // L11: ensure workspace neural signature files exist
