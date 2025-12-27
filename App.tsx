@@ -257,7 +257,7 @@ export default function App() {
             content: 'network_mode=active\\nsecure=true',
           });
 
-          // Now remove originals from datastore/protocols to emulate a MOVE
+          // Move semantics: remove originals from datastore/protocols to emulate a MOVE
           try {
             const datastorePath = ['root', 'home', 'guest', 'datastore'];
             const datastoreNode = getNodeByPath(fs, datastorePath);
@@ -343,11 +343,32 @@ export default function App() {
           );
           if (neuralNode) {
             const basePath = ['root', 'home', 'guest', workspaceNode!.id, neuralNode.id];
+            // Ensure uplink present inside neural_net
             ensureAdded(basePath, {
-              name: 'config.json',
+              name: 'uplink_v1.conf',
               type: 'file',
-              content: '{"neural":true}',
+              content: 'network_mode=passive\\nsecure=false',
             });
+            // Ensure weights directory and model file exist as final artifact
+            ensurePath(basePath, 'weights/');
+            const weightDir = getNodeByPath(fs, basePath)?.children?.find(
+              (c) => c.name === 'weights' && c.type === 'dir'
+            );
+            if (weightDir) {
+              const weightPath = [
+                'root',
+                'home',
+                'guest',
+                workspaceNode!.id,
+                neuralNode.id,
+                weightDir.id,
+              ];
+              ensureAdded(weightPath, {
+                name: 'model.rs',
+                type: 'file',
+                content: '// model weights',
+              });
+            }
           }
         } catch (err) {
           reportError(err, { phase: 'initialLevel.postL8' });
@@ -417,6 +438,40 @@ export default function App() {
               }
             }
           }
+
+          // Ensure destination has vault_key.pem (simulate copy+rename) and ensure original access_key.pem still exists
+          try {
+            const configNode = findNodeByName(fs, '.config');
+            const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
+            const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
+            if (activeNode && configNode && vaultNode) {
+              const activePath = [
+                'root',
+                'home',
+                'guest',
+                configNode.id,
+                vaultNode.id,
+                activeNode.id,
+              ];
+              ensureAdded(activePath, {
+                name: 'vault_key.pem',
+                type: 'file',
+                content: 'ACCESS KEY',
+              });
+            }
+            // Ensure original access_key.pem exists in datastore/credentials
+            const credsPath = ['root', 'home', 'guest', 'datastore', 'credentials'];
+            const credsNode = getNodeByPath(fs, credsPath);
+            if (credsNode && !credsNode.children?.some((c) => c.name === 'access_key.pem')) {
+              ensureAdded(credsPath, {
+                name: 'access_key.pem',
+                type: 'file',
+                content: 'ACCESS KEY',
+              });
+            }
+          } catch (err) {
+            reportError(err, { phase: 'initialLevel.postL10.ensure' });
+          }
         } catch (err) {
           reportError(err, { phase: 'initialLevel.postL10' });
         }
@@ -428,6 +483,29 @@ export default function App() {
         ensureAdded(workspacePath, { name: 'neural_sig_alpha.log', type: 'file', content: '0x' });
         ensureAdded(workspacePath, { name: 'neural_sig_beta.dat', type: 'file', content: '0x' });
         ensureAdded(workspacePath, { name: 'neural_sig_gamma.tmp', type: 'file', content: '0x' });
+
+        // Post-level: simulate that the largest signature (neural_sig_alpha.log) was cut and pasted into /tmp
+        try {
+          const wsNode = getNodeByPath(fs, workspacePath);
+          const alpha = wsNode?.children?.find(
+            (c) => c.name === 'neural_sig_alpha.log' && c.type === 'file'
+          );
+          if (alpha) {
+            const del = deleteNode(
+              fs,
+              workspacePath,
+              alpha.id,
+              'delete',
+              false,
+              targetLevelId ?? 0
+            );
+            if (del.ok) fs = del.value;
+            const tmpPath = ['root', 'tmp'];
+            ensureAdded(tmpPath, { name: 'neural_sig_alpha.log', type: 'file', content: '0x' });
+          }
+        } catch (err) {
+          reportError(err, { phase: 'initialLevel.postL11' });
+        }
       }
 
       // L15: sector dirs under guest
