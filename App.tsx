@@ -126,12 +126,12 @@ export default function App() {
     let fs = cloneFS(INITIAL_FS);
     try {
       // If jumping into a later level (debug or direct link), run onEnter hooks for all previous levels
-      // so that files created by earlier lessons are present.
-      const isFreshStart = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-      for (let i = 0; i <= targetIndex && i < LEVELS.length; i++) {
-        const lvl = LEVELS[i];
-        if (lvl.onEnter) {
-          if (!lvl.seedMode || lvl.seedMode !== 'fresh' || isFreshStart) {
+      // so that protections/unprotections are applied for levels up to the target level.
+      if (jumpedToLevel) {
+        for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
+          const lvl = LEVELS[i];
+          if (lvl.onEnter) {
+            // onEnter functions are now strictly for protection management, so seedMode can be ignored here.
             try {
               fs = lvl.onEnter(fs);
             } catch (err) {
@@ -170,7 +170,7 @@ export default function App() {
       const level15Idx = LEVELS.findIndex((l) => l.id === 15);
 
       // L4: protocols + uplinks
-      if (targetIndex >= level4Idx) {
+      if (jumpedToLevel && targetIndex > level4Idx) {
         const datastorePath = ['root', 'home', 'guest', 'datastore'];
         const datastoreNode = getNodeByPath(fs, datastorePath);
         if (datastoreNode && !datastoreNode.children?.some((c) => c.name === 'protocols')) {
@@ -202,7 +202,7 @@ export default function App() {
       }
 
       // L5: ensure ~/.config/vault/active contains uplinks (moved from L4)
-      if (targetIndex >= level5Idx) {
+      if (jumpedToLevel && targetIndex > level5Idx) {
         ensurePath(['root', 'home', 'guest'], '.config/vault/active/');
         const configNode = findNodeByName(fs, '.config');
         const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
@@ -230,7 +230,7 @@ export default function App() {
       }
 
       // L6: ensure backup archive contains sys_v1.log
-      if (targetIndex >= level6Idx) {
+      if (jumpedToLevel && targetIndex > level6Idx) {
         const incomingPath = ['root', 'home', 'guest', 'incoming'];
         const incomingNode = getNodeByPath(fs, incomingPath);
         const archive = incomingNode?.children?.find(
@@ -243,13 +243,13 @@ export default function App() {
       }
 
       // L7: ensure /etc/sys_patch.conf exists
-      if (targetIndex >= level7Idx) {
+      if (jumpedToLevel && targetIndex > level7Idx) {
         const etcPath = ['root', 'etc'];
         ensureAdded(etcPath, { name: 'sys_patch.conf', type: 'file', content: 'patch=1\\n' });
       }
 
       // L8: neural_net may depend on uplink_v1 in ~/.config/vault/active
-      if (targetIndex >= level8Idx) {
+      if (jumpedToLevel && targetIndex > level8Idx) {
         const configNode = findNodeByName(fs, '.config');
         const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
         const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
@@ -271,7 +271,7 @@ export default function App() {
       }
 
       // L10: ensure decoys in datastore for inverse selection training
-      if (targetIndex >= level10Idx) {
+      if (jumpedToLevel && targetIndex > level10Idx) {
         const datastorePath = ['root', 'home', 'guest', 'datastore'];
         ensureAdded(datastorePath, {
           name: 'decoy_1.pem',
@@ -286,7 +286,7 @@ export default function App() {
       }
 
       // L11: ensure workspace neural signature files exist
-      if (targetIndex >= level11Idx) {
+      if (jumpedToLevel && targetIndex > level11Idx) {
         const workspacePath = ['root', 'home', 'guest', 'workspace'];
         ensureAdded(workspacePath, { name: 'neural_sig_alpha.log', type: 'file', content: '0x' });
         ensureAdded(workspacePath, { name: 'neural_sig_beta.dat', type: 'file', content: '0x' });
@@ -294,7 +294,7 @@ export default function App() {
       }
 
       // L15: sector dirs under guest
-      if (targetIndex >= level15Idx) {
+      if (jumpedToLevel && targetIndex > level15Idx) {
         const guestPath = ['root', 'home', 'guest'];
         ensureAdded(guestPath, { name: 'sector_1', type: 'dir' });
         ensureAdded(guestPath, { name: 'grid_alpha', type: 'dir' });
@@ -369,6 +369,35 @@ export default function App() {
       lastAlertShownRef.current = lvl.id;
     }
   }, [gameState.levelIndex, isLastLevel, gameState.isGameOver, currentLevel]);
+
+  // --- New useEffect for Level Start (onEnter) Logic & levelStartFS snapshot ---
+  useEffect(() => {
+    if (isLastLevel || gameState.isGameOver) return; // Don't run if game is over or finished
+    if (gameState.showEpisodeIntro) return; // Wait for intro to finish
+
+    let currentFs = gameState.fs; // Start with the FS state from initializer
+    let error: any = null;
+
+    // Apply onEnter for the current level (strictly for protection management)
+    if (currentLevel.onEnter) {
+      try {
+        currentFs = currentLevel.onEnter(currentFs);
+      } catch (err) {
+        reportError(err, { phase: 'onEnter.currentLevel', level: currentLevel.id });
+        error = err;
+      }
+    }
+
+    // This effect is designed to run once at the start of a level to apply protections.
+    // The state update is conditional and necessary to correctly set the starting FS.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGameState((prev) => ({
+      ...prev,
+      fs: currentFs, // Update FS with potential protection changes from onEnter
+      levelStartFS: cloneFS(currentFs), // Snapshot FS *after* onEnter has run for soft restart
+      notification: error ? `Level ${currentLevel.id} init error` : null, // Report any onEnter errors
+    }));
+  }, [gameState.levelIndex, gameState.showEpisodeIntro]);
 
   const visibleItems = React.useMemo(
     () => measure('visibleItems', () => getVisibleItems(gameState)),
@@ -556,27 +585,8 @@ export default function App() {
       const nextLevel = LEVELS[nextIdx];
       const isNewEp = nextLevel.episodeId !== LEVELS[prev.levelIndex].episodeId;
 
-      let fs = cloneFS(prev.fs);
-      let onEnterError: any = null;
-      try {
-        const isFresh = JSON.stringify(prev.fs) === JSON.stringify(INITIAL_FS);
-        if (
-          nextLevel.onEnter &&
-          (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)
-        ) {
-          fs = nextLevel.onEnter(fs);
-        }
-      } catch (err) {
-        try {
-          reportError(err, {
-            phase: 'nextLevel.onEnter',
-            level: nextLevel?.id,
-          });
-        } catch (e) {
-          console.error('nextLevel.onEnter failed', err);
-        }
-        onEnterError = err;
-      }
+      const fs = cloneFS(prev.fs);
+      const onEnterError: any = null;
 
       const now = Date.now();
       const targetPath = isNewEp ? nextLevel.initialPath || prev.currentPath : prev.currentPath;
@@ -1924,7 +1934,25 @@ export default function App() {
       {gameState.isGameOver && (
         <GameOverModal
           reason={gameState.gameOverReason!}
-          onRestart={() => window.location.reload()}
+          onRestart={() => {
+            setGameState((prev) => {
+              const level = LEVELS[prev.levelIndex];
+              return {
+                ...prev,
+                isGameOver: false,
+                fs: cloneFS(prev.levelStartFS), // Restore from snapshot
+                currentPath: level.initialPath || ['root', 'home', 'guest'],
+                cursorIndex: 0,
+                timeLeft: level.timeLimit || null,
+                keystrokes: 0,
+                showEpisodeIntro: false, // Don't show intro on restart
+                notification: 'Level Reset',
+                mode: 'normal',
+                inputBuffer: '',
+                selectedIds: [],
+              };
+            });
+          }}
           efficiencyTip={currentLevel.efficiencyTip}
         />
       )}

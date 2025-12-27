@@ -366,7 +366,10 @@ const INITIAL_FS_RAW: FileNode = {
                       type: 'file',
                       content:
                         '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----',
-                      protection: { delete: 'Critical asset. Deletion prohibited.' },
+                      protection: {
+                        delete: 'Critical asset. Deletion prohibited.',
+                        releaseLevel: 10,
+                      },
                     },
                   ],
                 },
@@ -872,7 +875,7 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                   type: 'file',
                   content:
                     'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
-                  protection: { delete: 'Intel target. Do not destroy.' },
+                  protection: { delete: 'Intel target. Do not destroy.', releaseLevel: -1 },
                 },
                 {
                   id: generateId(),
@@ -1004,14 +1007,7 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                   id: generateId(),
                   name: 'vault',
                   type: 'dir',
-                  children: [
-                    {
-                      id: generateId(),
-                      name: 'active',
-                      type: 'dir',
-                      children: [],
-                    },
-                  ],
+                  children: [],
                 },
               ],
             },
@@ -1197,6 +1193,16 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
           type: 'file',
           content:
             'Error: Connection reset by peer\nStack trace:\n  at core.net.TcpConnection.read (core/net.ts:42)\n  at processTicksAndRejections (internal/process/task_queues.js:95)',
+        },
+        {
+          id: generateId(),
+          name: 'ghost_process.pid',
+          type: 'file',
+          content: 'pid: 4242\nprocess: ghost\n',
+          protection: {
+            delete: 'Protected: Ghost process reserved until Level 9.',
+            releaseLevel: 9,
+          },
         },
         {
           id: generateId(),
@@ -1475,26 +1481,30 @@ export const LEVELS: Level[] = [
         currentFs,
         ['home', 'guest', 'datastore', 'protocols'],
         'delete',
-        'Protocol directory required for uplink deployment.'
+        'Protocol directory required for uplink deployment.',
+        5 // releaseLevel
       );
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', 'datastore', 'protocols'],
         'cut',
-        'Protocol directory anchored.'
+        'Protocol directory anchored.',
+        5 // releaseLevel
       );
       // Protect uplink files from deletion prior to relevant levels
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'],
         'delete',
-        'Uplink configuration required for neural network.'
+        'Uplink configuration required for neural network.',
+        5 // releaseLevel
       );
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', 'datastore', 'protocols', 'uplink_v2.conf'],
         'delete',
-        'Uplink configuration required for deployment.'
+        'Uplink configuration required for deployment.',
+        5 // releaseLevel
       );
       return currentFs;
     },
@@ -1756,32 +1766,20 @@ export const LEVELS: Level[] = [
     timeLimit: 90,
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      const tmp = findNodeByName(currentFs, 'tmp');
-      if (tmp && tmp.children) {
-        // Non-destructive: only remove known demo artifact files (avoid overwriting player-created files)
-        const demoNames = new Set([]);
-        tmp.children = tmp.children.filter((c) => c.type === 'dir' || !demoNames.has(c.name));
-      }
-
       // Protect active zone from deletion and cut before this level
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', '.config', 'vault', 'active'],
         'delete',
-        'Active deployment zone required.'
+        'Active deployment zone required.',
+        12 // releaseLevel
       );
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', '.config', 'vault', 'active'],
         'cut',
-        'Deployment zone anchored.'
-      );
-      // Protect uplink config for neural network
-      currentFs = setNodeProtection(
-        currentFs,
-        ['home', 'guest', 'datastore', 'protocols', 'uplink_v1.conf'],
-        'delete',
-        'Uplink configuration required for neural network.'
+        'Deployment zone anchored.',
+        12 // releaseLevel
       );
 
       return currentFs;
@@ -1873,13 +1871,15 @@ export const LEVELS: Level[] = [
         currentFs,
         ['home', 'guest', '.config', 'vault'],
         'delete',
-        'Vault required for privilege escalation.'
+        'Vault required for privilege escalation.',
+        12 // releaseLevel
       );
       currentFs = setNodeProtection(
         currentFs,
         ['home', 'guest', '.config', 'vault'],
         'cut',
-        'Vault anchored until escalation.'
+        'Vault anchored until escalation.',
+        12 // releaseLevel
       );
       return currentFs;
     },
@@ -1946,14 +1946,11 @@ export const LEVELS: Level[] = [
       'FZF (z) searches across all files in the current directory and subdirectories. Essential for finding hidden threats without knowing exact locations.',
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      const tmp = findNodeByName(currentFs, 'tmp');
-      if (tmp && tmp.children) {
-        // Non-destructive: only remove known demo artifact files (avoid overwriting player-created files)
-        const demoNames = new Set([]);
-        tmp.children = tmp.children.filter((c) => c.type === 'dir' || !demoNames.has(c.name));
-      }
       // Lift vault protection for cut
       currentFs = setNodeProtection(currentFs, ['home', 'guest', '.config', 'vault'], 'cut', null);
+      // Lift protection on ghost_process.pid so Level 9 can operate on it when level starts
+      currentFs = setNodeProtection(currentFs, ['tmp', 'ghost_process.pid'], 'delete', null);
+      currentFs = setNodeProtection(currentFs, ['tmp', 'ghost_process.pid'], 'cut', null);
       return currentFs;
     },
     tasks: [
@@ -2097,49 +2094,6 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 20,
     efficiencyTip:
       'Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly. Every keystroke counts!',
-    onEnter: (fs: FileNode) => {
-      const workspace = findNodeByName(fs, 'workspace');
-      if (workspace && workspace.children) {
-        workspace.children = workspace.children.filter((c) => !c.name.startsWith('neural_'));
-        const threats = [
-          {
-            id: generateId(),
-            name: 'neural_sig_alpha.log',
-            type: 'file',
-            content: '0x'.repeat(5000),
-            parentId: workspace.id,
-            modifiedAt: Date.now() - 1000,
-          },
-          {
-            id: generateId(),
-            name: 'neural_sig_beta.dat',
-            type: 'file',
-            content: '0x'.repeat(100),
-            parentId: workspace.id,
-            modifiedAt: Date.now() - 2000,
-          },
-          {
-            id: generateId(),
-            name: 'neural_sig_gamma.tmp',
-            type: 'file',
-            content: '0x'.repeat(200),
-            parentId: workspace.id,
-            modifiedAt: Date.now() - 3000,
-          },
-          {
-            id: generateId(),
-            name: 'config.json',
-            type: 'file',
-            content: '{}',
-            parentId: workspace.id,
-            modifiedAt: Date.now() - 86400000,
-          },
-        ] as FileNode[];
-        workspace.children.push(...threats);
-      }
-      return fs;
-    },
-    seedMode: 'fresh',
     tasks: [
       {
         id: 'purge-navigate-filter',

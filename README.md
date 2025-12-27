@@ -112,12 +112,12 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 ### Search & Filter
 
-| Key       | Action           | Description                                              |
-| :-------- | :--------------- | :------------------------------------------------------- |
-| `f`       | **Filter**       | Filter files in current directory by name                |
-| `z`       | **FZF Search**   | Recursive fuzzy search for files (current dir & subdirs) |
-| `Z` | **Zoxide Jump**  | Jump to frequently/recently visited directories          |
-| `Esc`     | **Clear Filter** | Exit filter/search mode                                  |
+| Key   | Action           | Description                                              |
+| :---- | :--------------- | :------------------------------------------------------- |
+| `f`   | **Filter**       | Filter files in current directory by name                |
+| `z`   | **FZF Search**   | Recursive fuzzy search for files (current dir & subdirs) |
+| `Z`   | **Zoxide Jump**  | Jump to frequently/recently visited directories          |
+| `Esc` | **Clear Filter** | Exit filter/search mode                                  |
 
 ### Sorting
 
@@ -133,12 +133,12 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 
 ### Game UI
 
-| Key       | Action           | Description                                  |
-| :-------- | :--------------- | :------------------------------------------- |
-| `M` | **Quest Map**    | Open Quest Map to view all levels & progress |
-| `H` | **Show Hint**    | Display hint for current level objective     |
-| `?` | **Show Help**    | Show keybindings overlay                     |
-| `Esc`     | **Close Modals** | Close any open modal/dialog                  |
+| Key   | Action           | Description                                  |
+| :---- | :--------------- | :------------------------------------------- |
+| `M`   | **Quest Map**    | Open Quest Map to view all levels & progress |
+| `H`   | **Show Hint**    | Display hint for current level objective     |
+| `?`   | **Show Help**    | Show keybindings overlay                     |
+| `Esc` | **Close Modals** | Close any open modal/dialog                  |
 
 ---
 

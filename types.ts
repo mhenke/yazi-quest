@@ -1,5 +1,13 @@
 export type NodeType = 'file' | 'dir' | 'archive';
 
+export interface FileProtection {
+  delete?: string;
+  cut?: string;
+  rename?: string;
+  add?: string;
+  releaseLevel?: number; // The level ID at which this protection is lifted
+}
+
 export interface FileNode {
   id: string;
   name: string;
@@ -10,7 +18,7 @@ export interface FileNode {
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
   protected?: boolean; // If true, node cannot be deleted by player via general rule
-  protection?: { [key in 'delete' | 'cut' | 'rename' | 'add']?: string }; // Level-specific protection messages
+  protection?: FileProtection; // Level-specific protection messages
 }
 
 export interface FileSystemState {
