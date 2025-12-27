@@ -124,22 +124,189 @@ export default function App() {
 
     // Prepare File System with Level-Specific Overrides
     let fs = cloneFS(INITIAL_FS);
-    if (initialLevel.onEnter) {
-      try {
-        // Only run 'fresh' seed hooks when starting from an untouched INITIAL_FS
-        const isFreshStart = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-        if (!initialLevel.seedMode || initialLevel.seedMode !== 'fresh' || isFreshStart) {
-          fs = initialLevel.onEnter(fs);
+    try {
+      // If jumping into a later level (debug or direct link), run onEnter hooks for all previous levels
+      // so that files created by earlier lessons are present.
+      const isFreshStart = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
+      for (let i = 0; i <= targetIndex && i < LEVELS.length; i++) {
+        const lvl = LEVELS[i];
+        if (lvl.onEnter) {
+          if (!lvl.seedMode || lvl.seedMode !== 'fresh' || isFreshStart) {
+            try {
+              fs = lvl.onEnter(fs);
+            } catch (err) {
+              reportError(err, { phase: 'initialLevelChain.onEnter', level: lvl.id });
+            }
+          }
         }
-      } catch (err) {
-        try {
-          reportError(err, {
-            phase: 'initialLevel.onEnter',
-            level: initialLevel?.id,
+      }
+
+      // Ensure user-created artifacts from earlier lessons exist when jumping directly.
+      const makeId = () => Math.random().toString(36).substr(2, 9);
+      const ensureAdded = (
+        parentPath: string[],
+        node: { name: string; type: 'file' | 'dir' | 'archive'; content?: string }
+      ) => {
+        const parent = getNodeByPath(fs, parentPath);
+        if (!parent) return;
+        const exists = parent.children?.some((c) => c.name === node.name && c.type === node.type);
+        if (exists) return;
+        const res = addNode(fs, parentPath, { id: makeId(), ...node } as any);
+        if (res.ok) fs = res.value;
+      };
+
+      const ensurePath = (basePath: string[], pathStr: string) => {
+        const res = createPath(fs, basePath, pathStr);
+        if (res.fs) fs = res.fs;
+      };
+
+      const level4Idx = LEVELS.findIndex((l) => l.id === 4);
+      const level5Idx = LEVELS.findIndex((l) => l.id === 5);
+      const level6Idx = LEVELS.findIndex((l) => l.id === 6);
+      const level7Idx = LEVELS.findIndex((l) => l.id === 7);
+      const level8Idx = LEVELS.findIndex((l) => l.id === 8);
+      const level10Idx = LEVELS.findIndex((l) => l.id === 10);
+      const level11Idx = LEVELS.findIndex((l) => l.id === 11);
+      const level15Idx = LEVELS.findIndex((l) => l.id === 15);
+
+      // L4: protocols + uplinks
+      if (targetIndex >= level4Idx) {
+        const datastorePath = ['root', 'home', 'guest', 'datastore'];
+        const datastoreNode = getNodeByPath(fs, datastorePath);
+        if (datastoreNode && !datastoreNode.children?.some((c) => c.name === 'protocols')) {
+          const addProt = addNode(fs, datastorePath, {
+            id: makeId(),
+            name: 'protocols',
+            type: 'dir',
+            children: [],
+          } as any);
+          if (addProt.ok) fs = addProt.value;
+        }
+        const updatedDatastore = getNodeByPath(fs, datastorePath);
+        const protocolsNode = updatedDatastore?.children?.find(
+          (c) => c.name === 'protocols' && c.type === 'dir'
+        );
+        if (protocolsNode) {
+          const protocolsPath = ['root', 'home', 'guest', 'datastore', protocolsNode.id];
+          ensureAdded(protocolsPath, {
+            name: 'uplink_v1.conf',
+            type: 'file',
+            content: 'network_mode=passive\\nsecure=false',
           });
-        } catch (e) {
-          console.error('initialLevel.onEnter failed', err);
+          ensureAdded(protocolsPath, {
+            name: 'uplink_v2.conf',
+            type: 'file',
+            content: 'network_mode=active\\nsecure=true',
+          });
         }
+      }
+
+      // L5: ensure ~/.config/vault/active contains uplinks (moved from L4)
+      if (targetIndex >= level5Idx) {
+        ensurePath(['root', 'home', 'guest'], '.config/vault/active/');
+        const configNode = findNodeByName(fs, '.config');
+        const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
+        const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
+        if (activeNode) {
+          const activePath = [
+            'root',
+            'home',
+            'guest',
+            configNode!.id,
+            vaultNode!.id,
+            activeNode.id,
+          ];
+          ensureAdded(activePath, {
+            name: 'uplink_v1.conf',
+            type: 'file',
+            content: 'network_mode=passive\\nsecure=false',
+          });
+          ensureAdded(activePath, {
+            name: 'uplink_v2.conf',
+            type: 'file',
+            content: 'network_mode=active\\nsecure=true',
+          });
+        }
+      }
+
+      // L6: ensure backup archive contains sys_v1.log
+      if (targetIndex >= level6Idx) {
+        const incomingPath = ['root', 'home', 'guest', 'incoming'];
+        const incomingNode = getNodeByPath(fs, incomingPath);
+        const archive = incomingNode?.children?.find(
+          (c) => c.name === 'backup_log_2024_CURRENT.zip' && c.type === 'archive'
+        );
+        if (archive) {
+          const archivePath = ['root', 'home', 'guest', 'incoming', archive.id];
+          ensureAdded(archivePath, { name: 'sys_v1.log', type: 'file', content: 'System log v1' });
+        }
+      }
+
+      // L7: ensure /etc/sys_patch.conf exists
+      if (targetIndex >= level7Idx) {
+        const etcPath = ['root', 'etc'];
+        ensureAdded(etcPath, { name: 'sys_patch.conf', type: 'file', content: 'patch=1\\n' });
+      }
+
+      // L8: neural_net may depend on uplink_v1 in ~/.config/vault/active
+      if (targetIndex >= level8Idx) {
+        const configNode = findNodeByName(fs, '.config');
+        const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
+        const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
+        if (activeNode) {
+          const activePath = [
+            'root',
+            'home',
+            'guest',
+            configNode!.id,
+            vaultNode!.id,
+            activeNode.id,
+          ];
+          ensureAdded(activePath, {
+            name: 'uplink_v1.conf',
+            type: 'file',
+            content: 'network_mode=passive\\nsecure=false',
+          });
+        }
+      }
+
+      // L10: ensure decoys in datastore for inverse selection training
+      if (targetIndex >= level10Idx) {
+        const datastorePath = ['root', 'home', 'guest', 'datastore'];
+        ensureAdded(datastorePath, {
+          name: 'decoy_1.pem',
+          type: 'file',
+          content: 'DECOY KEY - DO NOT USE',
+        });
+        ensureAdded(datastorePath, {
+          name: 'decoy_2.pem',
+          type: 'file',
+          content: 'DECOY KEY - DO NOT USE',
+        });
+      }
+
+      // L11: ensure workspace neural signature files exist
+      if (targetIndex >= level11Idx) {
+        const workspacePath = ['root', 'home', 'guest', 'workspace'];
+        ensureAdded(workspacePath, { name: 'neural_sig_alpha.log', type: 'file', content: '0x' });
+        ensureAdded(workspacePath, { name: 'neural_sig_beta.dat', type: 'file', content: '0x' });
+        ensureAdded(workspacePath, { name: 'neural_sig_gamma.tmp', type: 'file', content: '0x' });
+      }
+
+      // L15: sector dirs under guest
+      if (targetIndex >= level15Idx) {
+        const guestPath = ['root', 'home', 'guest'];
+        ensureAdded(guestPath, { name: 'sector_1', type: 'dir' });
+        ensureAdded(guestPath, { name: 'grid_alpha', type: 'dir' });
+      }
+    } catch (err) {
+      try {
+        reportError(err, {
+          phase: 'initialLevel.onEnter',
+          level: initialLevel?.id,
+        });
+      } catch (e) {
+        console.error('initialLevel.onEnter failed', err);
       }
     }
 
@@ -446,6 +613,11 @@ export default function App() {
       };
     });
     setShowSuccessToast(false);
+    // After advancing level, ensure the main app root regains focus so keyboard navigation remains on the navigator pane
+    setTimeout(() => {
+      const root = document.getElementById('app-root');
+      if (root) (root as HTMLElement).focus();
+    }, 0);
   }, []);
 
   const handleNormalModeKeyDown = useCallback(
@@ -461,16 +633,39 @@ export default function App() {
     ) => {
       switch (e.key) {
         case 'j':
-        case 'ArrowDown':
-          setGameState((prev) => ({
-            ...prev,
-            cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
-          }));
+        case 'ArrowDown': {
+          const previewEl = document.getElementById('preview-main') as HTMLElement | null;
+          if (previewEl && document.activeElement === previewEl) {
+            // Scroll preview when preview pane is focused
+            previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
+            setGameState((prev) => ({
+              ...prev,
+              usedPreviewScroll: true,
+              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+            }));
+          } else {
+            setGameState((prev) => ({
+              ...prev,
+              cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
+            }));
+          }
           break;
+        }
         case 'k':
-        case 'ArrowUp':
-          setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1) }));
+        case 'ArrowUp': {
+          const previewEl = document.getElementById('preview-main') as HTMLElement | null;
+          if (previewEl && document.activeElement === previewEl) {
+            previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
+            setGameState((prev) => ({
+              ...prev,
+              usedPreviewScroll: true,
+              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+            }));
+          } else {
+            setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1) }));
+          }
           break;
+        }
         case 'g':
           e.preventDefault();
           setGameState((prev) => ({ ...prev, mode: 'g-command' }));
@@ -511,14 +706,22 @@ export default function App() {
           if (e.shiftKey) {
             const previewEl = document.getElementById('preview-main') as HTMLElement | null;
             if (previewEl) previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({ ...prev, usedPreviewScroll: true, lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() } }));
+            setGameState((prev) => ({
+              ...prev,
+              usedPreviewScroll: true,
+              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+            }));
           }
           break;
         case 'K':
           if (e.shiftKey) {
             const previewEl = document.getElementById('preview-main') as HTMLElement | null;
             if (previewEl) previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({ ...prev, usedPreviewScroll: true, lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() } }));
+            setGameState((prev) => ({
+              ...prev,
+              usedPreviewScroll: true,
+              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+            }));
           }
           break;
         case 'H':
@@ -571,7 +774,7 @@ export default function App() {
         case 'Enter':
         case 'ArrowRight': {
           const allComplete = currentLevel.tasks.every((t) => t.completed);
-          if (allComplete && e.key === 'Enter' && e.shiftKey) {
+          if (allComplete && e.key === 'Enter') {
             advanceLevel();
             return;
           }
@@ -601,17 +804,6 @@ export default function App() {
         }
         case ' ':
           if (currentItem) {
-            if (currentLevel.id === 5) {
-              const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-              if (currentDir?.name === 'protocols' && currentItem.name.startsWith('uplink_')) {
-                showNotification(
-                  'Manual selection is too slow. Use batch operations for speed.',
-                  4000
-                );
-                break;
-              }
-            }
-
             setGameState((prev) => {
               const newSelected = prev.selectedIds.includes(currentItem.id)
                 ? prev.selectedIds.filter((id) => id !== currentItem.id)
@@ -1359,7 +1551,11 @@ export default function App() {
         return;
       }
       if (e.key === 'Tab' && gameState.mode === 'normal') {
-        setGameState((prev) => ({ ...prev, showInfoPanel: true, lastAction: { type: 'INSPECT', timestamp: Date.now() } }));
+        setGameState((prev) => ({
+          ...prev,
+          showInfoPanel: true,
+          lastAction: { type: 'INSPECT', timestamp: Date.now() },
+        }));
         return;
       }
 
@@ -1648,11 +1844,17 @@ export default function App() {
 
   const handleRenameSubmit = () => {
     if (currentItem) {
+      const input = gameState.inputBuffer.trim();
+      const forceFlag = ' --force';
+      const force = input.endsWith(forceFlag);
+      const newName = force ? input.slice(0, -forceFlag.length).trim() : input;
+
       const result = renameNode(
         gameState.fs,
         gameState.currentPath,
         currentItem.id,
-        gameState.inputBuffer
+        newName,
+        force
       );
 
       if (result.ok) {
@@ -1707,7 +1909,11 @@ export default function App() {
   }, [updateOverlayPos]);
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
+    <div
+      id="app-root"
+      tabIndex={-1}
+      className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative"
+    >
       {gameState.showEpisodeIntro && (
         <EpisodeIntro
           episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
@@ -1855,7 +2061,6 @@ export default function App() {
                     type="text"
                     className="bg-transparent border-none outline-none text-sm font-mono text-white w-full"
                     value={gameState.inputBuffer}
-                    autoFocus
                     readOnly
                   />
                   <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
@@ -1887,7 +2092,6 @@ export default function App() {
                       e.stopPropagation();
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
-                    autoFocus
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">
@@ -1914,7 +2118,6 @@ export default function App() {
                       e.stopPropagation();
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
-                    autoFocus
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">

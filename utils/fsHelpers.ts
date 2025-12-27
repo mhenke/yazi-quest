@@ -210,7 +210,8 @@ export const renameNode = (
   root: FileNode,
   parentPathIds: string[],
   nodeId: string,
-  newName: string
+  newName: string,
+  force: boolean = false // Added force parameter
 ): Result<FileNode, FsError> => {
   const newRoot = cloneFS(root);
   const parent = getNodeByPath(newRoot, parentPathIds);
@@ -228,18 +229,25 @@ export const renameNode = (
     return { ok: false, error: 'Protected' };
   }
 
-  // Only block if another node with SAME name AND SAME type exists
+  // Find if another node with SAME name AND SAME type exists
   const collision = parent.children.find(
     (c) => c.id !== nodeId && c.name === newName && c.type === nodeToRename.type
   );
+
   if (collision) {
-    return { ok: false, error: 'Collision' };
+    if (force) {
+      // If force is true, remove the colliding node
+      parent.children = parent.children.filter((c) => c.id !== collision.id);
+    } else {
+      // If force is false, return a collision error
+      return { ok: false, error: 'Collision' };
+    }
   }
 
   nodeToRename.name = newName;
   nodeToRename.modifiedAt = Date.now();
 
-  // Re-sort after rename
+  // Re-sort after rename (and potential removal of collision)
   parent.children.sort((a, b) => {
     const typeScore = (t: string) => {
       if (t === 'dir') return 0;

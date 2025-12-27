@@ -71,7 +71,14 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
       const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
       return node?.children || [];
     } else {
-      const typedCandidate = selectedCandidate as any;
+      type Candidate = {
+        path: string;
+        score?: number;
+        pathIds?: string[];
+        id?: string;
+        type?: string;
+      };
+      const typedCandidate = selectedCandidate as unknown as Candidate;
       if (typedCandidate.pathIds && Array.isArray(typedCandidate.pathIds)) {
         const fullNodePath = [...gameState.currentPath, ...typedCandidate.pathIds];
         const parentPath = fullNodePath.slice(0, -1);
@@ -166,7 +173,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
                         <span
                           className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded tabular-nums min-w-[36px] text-center ${isSelected ? (isQuantumLevel ? 'bg-purple-500/20 text-purple-400' : 'bg-orange-500/20 text-orange-400') : 'text-zinc-600'}`}
                         >
-                          {(item as any).score?.toFixed(1)}
+                          {((item as unknown as { score?: number }).score ?? 0).toFixed(1)}
                         </span>
                       )}
 

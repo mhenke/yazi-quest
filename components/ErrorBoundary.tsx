@@ -47,8 +47,7 @@ export default class ErrorBoundary extends React.Component<
         </div>
       );
     }
-    // Cast to any to avoid rare typing conflicts in different TS configs
-    // props should normally exist on React.Component, but some toolchains treat this differently.
-    return (this as any).props.children;
+    // props are typed via the component's generic Props, return children directly
+    return (this as unknown as React.Component<Props>).props.children;
   }
 }

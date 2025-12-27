@@ -17,7 +17,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
   // Keyboard handler for dismiss/close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.shiftKey) {
+      if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
         onDismiss(); // Advances to next level
@@ -54,7 +54,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
         </div>
 
         <div className="mt-4 text-[10px] text-green-500/70 font-mono uppercase tracking-widest animate-pulse">
-          Press SHIFT+ENTER to continue
+          Press Enter to continue
         </div>
       </div>
     </div>

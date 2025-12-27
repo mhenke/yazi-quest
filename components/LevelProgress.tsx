@@ -331,6 +331,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   return (
                     <div
                       key={level.id}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          if (onJumpToLevel) {
+                            onJumpToLevel(globalIdx);
+                            setShowLegend(false);
+                          }
+                        }
+                      }}
                       ref={(el) => {
                         missionRefs.current[missionIdx] = el;
                       }}

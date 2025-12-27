@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GameState, FileNode, Level, ClipboardItem } from './types';
-import { INITIAL_FS, LEVELS, EPISODE_LORE } from './constants';
+import { GameState, FileNode, Level, ClipboardItem, FsError } from '../types';
+import { INITIAL_FS, LEVELS, EPISODE_LORE } from '../constants';
 import {
   getNodeByPath,
   deleteNode,
@@ -8,22 +8,23 @@ import {
   createPath,
   cloneFS,
   isProtected,
-} from './utils/fsHelpers';
-import { sortNodes } from './utils/sortHelpers';
-import { playSuccessSound } from './utils/sounds';
+  renameNode,
+} from '../utils/fsHelpers';
+import { sortNodes } from '../utils/sortHelpers';
+import { playSuccessSound } from '../utils/sounds';
 
-import { FileSystemPane } from './components/FileSystemPane';
-import { PreviewPane } from './components/PreviewPane';
-import { StatusBar } from './components/StatusBar';
-import { LevelProgress } from './components/LevelProgress';
-import { MissionPane } from './components/MissionPane';
-import { HelpModal } from './components/HelpModal';
-import { HintModal } from './components/HintModal';
-import { EpisodeIntro } from './components/EpisodeIntro';
-import { GameOverModal } from './components/GameOverModal';
-import { SuccessToast } from './components/SuccessToast';
-import { InfoPanel } from './components/InfoPanel';
-import { GCommandDialog } from './components/GCommandDialog';
+import { FileSystemPane } from '../components/FileSystemPane';
+import { PreviewPane } from '../components/PreviewPane';
+import { StatusBar } from '../components/StatusBar';
+import { LevelProgress } from '../components/LevelProgress';
+
+import { HelpModal } from '../components/HelpModal';
+import { HintModal } from '../components/HintModal';
+import { EpisodeIntro } from '../components/EpisodeIntro';
+import { GameOverModal } from '../components/GameOverModal';
+import { SuccessToast } from '../components/SuccessToast';
+import { InfoPanel } from '../components/InfoPanel';
+import { GCommandDialog } from '../components/GCommandDialog';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({
@@ -418,12 +419,11 @@ const App: React.FC = () => {
 
                     // Attempt deletion
                     const result = deleteNode(tempFs, prev.currentPath, id, 'delete', false);
-                    if (result.ok) {
-                      tempFs = result.value;
-                    } else {
-                      errorMsg = `Error: ${result.error}`;
+                    if (!result.ok) {
+                      errorMsg = `Error: ${(result as { ok: false; error: FsError }).error}`;
                       break;
                     }
+                    tempFs = result.value;
                   }
                 }
 
@@ -524,16 +524,15 @@ const App: React.FC = () => {
                   const nodeToAdd = prev.clipboard?.action === 'yank' ? cloneFS(node) : node;
                   const addResult = addNode(tempFs, targetPath, nodeToAdd);
 
-                  if (addResult.ok) {
-                    tempFs = addResult.value;
-                  } else {
-                    errorMsg = `Error: ${addResult.error}`;
+                  if (!addResult.ok) {
+                    errorMsg = `Error: ${(addResult as { ok: false; error: FsError }).error}`;
                     if (prev.clipboard?.action === 'cut') {
                       const rollbackResult = addNode(prev.fs, prev.clipboard.originalPath, node);
                       if (rollbackResult.ok) tempFs = rollbackResult.value;
                     }
                     break;
                   }
+                  tempFs = addResult.value;
                 }
 
                 if (errorMsg) {
@@ -600,12 +599,6 @@ const App: React.FC = () => {
 
       <div className="flex-1 flex min-h-0 relative">
         {/* Left: Mission Pane */}
-        <MissionPane
-          level={currentLevel}
-          gameState={gameState}
-          onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
-          onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
-        />
 
         {/* Middle: Active File Pane */}
         <div className="flex-1 flex flex-col relative min-w-0 border-r border-zinc-800">

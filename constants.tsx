@@ -154,6 +154,24 @@ const INITIAL_FS_RAW: FileNode = {
   type: 'dir',
   children: [
     {
+      id: generateId(),
+      name: '.access.log',
+      type: 'file',
+      content: 'Access log traces',
+    },
+    {
+      id: generateId(),
+      name: '.audit.log',
+      type: 'file',
+      content: 'Audit trail',
+    },
+    {
+      id: generateId(),
+      name: '.system.log',
+      type: 'file',
+      content: 'System events',
+    },
+    {
       id: 'home',
       name: 'home',
       type: 'dir',
@@ -765,14 +783,6 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                 },
                 {
                   id: generateId(),
-                  name: 'sector_map.png',
-                  type: 'file',
-                  content:
-                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
-                  protection: { delete: 'Intel target. Do not destroy.' },
-                },
-                {
-                  id: generateId(),
                   name: 'session_data.bin',
                   type: 'file',
                   content: '[BINARY SESSION DATA]',
@@ -848,6 +858,21 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                       content: 'Network scan complete...\n3 vulnerabilities found.',
                     },
                   ],
+                },
+                {
+                  id: generateId(),
+                  name: '.surveillance_log',
+                  type: 'file',
+                  content:
+                    'SURVEILLANCE LOG\n=================\nTimestamp: 2087-03-15T14:23:11Z\nTarget: AI-7734\nStatus: Active monitoring\nThreat Level: Low\n\nActivity detected in /incoming sector.\nRecommendation: Continue observation.',
+                },
+                {
+                  id: generateId(),
+                  name: 'sector_map.png',
+                  type: 'file',
+                  content:
+                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
+                  protection: { delete: 'Intel target. Do not destroy.' },
                 },
                 {
                   id: generateId(),
@@ -975,6 +1000,19 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
                   type: 'file',
                   content: '[theme]\nprimary = "orange"\nsecondary = "blue"',
                 },
+                {
+                  id: generateId(),
+                  name: 'vault',
+                  type: 'dir',
+                  children: [
+                    {
+                      id: generateId(),
+                      name: 'active',
+                      type: 'dir',
+                      children: [],
+                    },
+                  ],
+                },
               ],
             },
           ],
@@ -1101,6 +1139,12 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
           name: 'resolv.conf',
           type: 'file',
           content: 'nameserver 8.8.8.8\nnameserver 1.1.1.1',
+        },
+        {
+          id: generateId(),
+          name: 'sys_patch.conf',
+          type: 'file',
+          content: '# DUMMY FILE - DO NOT DELETE',
         },
       ],
     },
@@ -1303,7 +1347,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2b',
-        description: "ANALYSIS: Inspect 'watcher_agent.sys' metadata (Tab).",
+        description: "Inspect 'watcher_agent.sys' metadata (Tab)",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2');
           if (!prevTask?.completed) return false;
@@ -1316,7 +1360,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2c',
-        description: 'TACTIC: Sift through threat data before purge (J / K).',
+        description: 'Sift through threat data (J/K)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2b');
           if (!prevTask?.completed) return false;
@@ -1326,16 +1370,14 @@ export const LEVELS: Level[] = [
           if (!threatExists) return false; // Cannot complete if already deleted
 
           // Accept either an explicit PREVIEW_SCROLL lastAction or the usedPreviewScroll flag
-          return (
-            state.lastAction?.type === 'PREVIEW_SCROLL' || state.usedPreviewScroll === true
-          );
+          return state.lastAction?.type === 'PREVIEW_SCROLL' || state.usedPreviewScroll === true;
         },
         completed: false,
       },
 
       {
         id: 'del-3',
-        description: "DIRECTIVE: Terminate 'watcher_agent.sys' (d, then y).",
+        description: "Terminate 'watcher_agent.sys' (d,y)",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2c');
           if (!prevTask?.completed) return false;
@@ -1366,7 +1408,7 @@ export const LEVELS: Level[] = [
       {
         id: 'filter-and-cut',
         description:
-          "Filter (f) to find 'sector_map.png', exit filter mode (Esc), and cut the asset (x)",
+          "Filter (f) in '~/incoming' to find 'sector_map.png', exit filter mode (Esc), and cut the asset (x)",
         check: (state: GameState, level: Level) => {
           // Allow cutting once the player has yanked/cut the sector_map.png; no prerequisite task required
           return (
@@ -1390,7 +1432,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-asset',
-        description: 'Deploy asset to ~/media (p)',
+        description: "Deploy asset to '~/media' (p)",
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'clear-filter');
           if (!prevTask?.completed) return false;
@@ -1403,20 +1445,6 @@ export const LEVELS: Level[] = [
     ],
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      const incoming = findNodeByName(currentFs, 'incoming');
-      if (incoming && incoming.children) {
-        if (!incoming.children.find((f) => f.name === '.surveillance_log')) {
-          incoming.children.push({
-            id: generateId(),
-            name: '.surveillance_log',
-            type: 'file',
-            content:
-              'SURVEILLANCE LOG\\n=================\\nTimestamp: 2087-03-15T14:23:11Z\\nTarget: AI-7734\\nStatus: Active monitoring\\nThreat Level: Low\\n\\nActivity detected in /incoming sector.\\nRecommendation: Continue observation.',
-            parentId: incoming.id,
-          });
-        }
-      }
-
       // Protect .surveillance_log from deletion
       currentFs = setNodeProtection(
         currentFs,
@@ -1523,39 +1551,7 @@ export const LEVELS: Level[] = [
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
       const datastore = findNodeByName(currentFs, 'datastore');
-      if (datastore && datastore.children) {
-        let protocols = datastore.children.find((r) => r.name === 'protocols');
-        if (!protocols) {
-          protocols = {
-            id: generateId(),
-            name: 'protocols',
-            type: 'dir',
-            parentId: datastore.id,
-            children: [],
-          };
-          datastore.children.push(protocols);
-        }
-        if (protocols.children) {
-          if (!protocols.children.find((r) => r.name === 'uplink_v1.conf')) {
-            protocols.children.push({
-              id: generateId(),
-              name: 'uplink_v1.conf',
-              type: 'file',
-              content: 'conf_1',
-              parentId: protocols.id,
-            });
-          }
-          if (!protocols.children.find((r) => r.name === 'uplink_v2.conf')) {
-            protocols.children.push({
-              id: generateId(),
-              name: 'uplink_v2.conf',
-              type: 'file',
-              content: 'conf_2',
-              parentId: protocols.id,
-            });
-          }
-        }
-      }
+
       // Lift protection for protocols directory for cut/delete
       currentFs = setNodeProtection(
         currentFs,
@@ -1589,15 +1585,12 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-select',
-        description: "Move to '~/datastore/protocols', enter, and select all (Ctrl+A)",
+        description: "Select both uplink files in '~/datastore/protocols' (Space)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return (
-            currentDir?.name === 'protocols' &&
-            state.selectedIds.length >= 2 &&
-            state.lastAction?.type === 'SELECT_ALL'
-          );
+          return currentDir?.name === 'protocols' && state.selectedIds.length >= 2;
         },
+
         completed: false,
       },
       {
@@ -1769,17 +1762,7 @@ export const LEVELS: Level[] = [
         const demoNames = new Set([]);
         tmp.children = tmp.children.filter((c) => c.type === 'dir' || !demoNames.has(c.name));
       }
-      const etc = findNodeByName(currentFs, 'etc');
-      if (etc && etc.children) {
-        if (!etc.children.some((c) => c.name === 'false_threat.conf')) {
-          etc.children.push({
-            id: generateId(),
-            name: 'sys_patch.conf',
-            type: 'file',
-            content: '# DUMMY FILE - DO NOT DELETE',
-          });
-        }
-      }
+
       // Protect active zone from deletion and cut before this level
       currentFs = setNodeProtection(
         currentFs,
@@ -1885,40 +1868,6 @@ export const LEVELS: Level[] = [
       "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      const config = findNodeByName(currentFs, '.config');
-      if (config && config.children) {
-        let vault = config.children.find((r) => r.name === 'vault');
-        if (!vault) {
-          vault = {
-            id: generateId(),
-            name: 'vault',
-            type: 'dir',
-            parentId: config.id,
-            children: [],
-          };
-          config.children.push(vault);
-        }
-        let active = vault.children?.find((r) => r.name === 'active');
-        if (!active) {
-          active = {
-            id: generateId(),
-            name: 'active',
-            type: 'dir',
-            parentId: vault.id,
-            children: [],
-          };
-          vault.children?.push(active);
-        }
-        if (active.children && !active.children.find((r) => r.name === 'uplink_v1.conf')) {
-          active.children.push({
-            id: generateId(),
-            name: 'uplink_v1.conf',
-            type: 'file',
-            content: 'network_mode=active\nsecure=true',
-            parentId: active.id,
-          });
-        }
-      }
       // Protect vault before relevant level
       currentFs = setNodeProtection(
         currentFs,
@@ -2113,24 +2062,6 @@ export const LEVELS: Level[] = [
       const datastore = findNodeByName(currentFs, 'datastore');
       if (datastore && datastore.children) {
         // Add decoy files if not present
-        if (!datastore.children.find((f) => f.name === 'decoy_1.pem')) {
-          datastore.children.push({
-            id: generateId(),
-            name: 'decoy_1.pem',
-            type: 'file',
-            content: 'DECOY KEY - DO NOT USE',
-            parentId: datastore.id,
-          });
-        }
-        if (!datastore.children.find((f) => f.name === 'decoy_2.pem')) {
-          datastore.children.push({
-            id: generateId(),
-            name: 'decoy_2.pem',
-            type: 'file',
-            content: 'DECOY KEY - DO NOT USE',
-            parentId: datastore.id,
-          });
-        }
       }
       // Lift protection for access_key.pem for cut and rename (after move)
       currentFs = setNodeProtection(
@@ -2294,16 +2225,7 @@ export const LEVELS: Level[] = [
       "Use Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      const home = findNodeByName(currentFs, 'home');
-      if (home && home.children && !home.children.find((f) => f.name === 'root')) {
-        home.children.push({
-          id: generateId(),
-          name: 'root',
-          type: 'dir',
-          parentId: home.id,
-          children: [],
-        });
-      }
+
       // Lift vault delete protection
       currentFs = setNodeProtection(
         currentFs,
@@ -2444,35 +2366,6 @@ export const LEVELS: Level[] = [
       "FZF (z) finds files instantly. Ctrl+A selects all filtered results. One 'd' eliminates all selected targets simultaneously.",
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
-      // Add hidden log files at root that need to be purged (idempotent)
-      const root = currentFs;
-      if (root.children) {
-        const names = new Set(['.access.log', '.audit.log', '.system.log']);
-        if (!root.children.some((c) => c.name === '.access.log')) {
-          root.children.push({
-            id: generateId(),
-            name: '.access.log',
-            type: 'file',
-            content: 'Access log traces',
-          });
-        }
-        if (!root.children.some((c) => c.name === '.audit.log')) {
-          root.children.push({
-            id: generateId(),
-            name: '.audit.log',
-            type: 'file',
-            content: 'Audit trail',
-          });
-        }
-        if (!root.children.some((c) => c.name === '.system.log')) {
-          root.children.push({
-            id: generateId(),
-            name: '.system.log',
-            type: 'file',
-            content: 'System events',
-          });
-        }
-      }
       // Lift mission_log.md protection for deletion and rename
       currentFs = setNodeProtection(
         currentFs,
@@ -2549,15 +2442,7 @@ export const LEVELS: Level[] = [
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
       // Add decoy directories that need to be deleted (idempotent)
-      const guest = findNodeByName(currentFs, 'guest');
-      if (guest && guest.children) {
-        if (!guest.children.find((c) => c.name === 'sector_1')) {
-          guest.children.push({ id: generateId(), name: 'sector_1', type: 'dir', children: [] });
-        }
-        if (!guest.children.find((c) => c.name === 'grid_alpha')) {
-          guest.children.push({ id: generateId(), name: 'grid_alpha', type: 'dir', children: [] });
-        }
-      }
+
       // Lift protection for datastore, incoming, media
       currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore'], 'delete', null);
       currentFs = setNodeProtection(currentFs, ['home', 'guest', 'datastore'], 'cut', null);
