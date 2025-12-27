@@ -196,6 +196,7 @@ export default function App() {
       const level10Idx = LEVELS.findIndex((l) => l.id === 10);
       const level11Idx = LEVELS.findIndex((l) => l.id === 11);
       const level15Idx = LEVELS.findIndex((l) => l.id === 15);
+      const targetLevelId = LEVELS[targetIndex]?.id ?? null;
 
       // L4: protocols + uplinks
       if (jumpedToLevel && targetIndex > level4Idx) {
@@ -229,7 +230,7 @@ export default function App() {
         }
       }
 
-      // L5: ensure ~/.config/vault/active contains uplinks (moved from L4)
+      // L5: ensure ~/.config/vault/active contains uplinks (moved from L4) — implement MOVE semantics
       if (jumpedToLevel && targetIndex > level5Idx) {
         ensurePath(['root', 'home', 'guest'], '.config/vault/active/');
         const configNode = findNodeByName(fs, '.config');
@@ -244,6 +245,7 @@ export default function App() {
             vaultNode!.id,
             activeNode.id,
           ];
+          // Ensure destination has the uplinks
           ensureAdded(activePath, {
             name: 'uplink_v1.conf',
             type: 'file',
@@ -254,6 +256,53 @@ export default function App() {
             type: 'file',
             content: 'network_mode=active\\nsecure=true',
           });
+
+          // Now remove originals from datastore/protocols to emulate a MOVE
+          try {
+            const datastorePath = ['root', 'home', 'guest', 'datastore'];
+            const datastoreNode = getNodeByPath(fs, datastorePath);
+            const protocolsNode = datastoreNode?.children?.find(
+              (c) => c.name === 'protocols' && c.type === 'dir'
+            );
+            if (protocolsNode && protocolsNode.children) {
+              const protocolsPath = ['root', 'home', 'guest', 'datastore', protocolsNode.id];
+              const toRemove = ['uplink_v1.conf', 'uplink_v2.conf'];
+              for (const fname of toRemove) {
+                const fnode = protocolsNode.children.find(
+                  (c) => c.name === fname && c.type === 'file'
+                );
+                if (fnode) {
+                  const delRes = deleteNode(
+                    fs,
+                    protocolsPath,
+                    fnode.id,
+                    'delete',
+                    false,
+                    targetLevelId ?? 0
+                  );
+                  if (delRes.ok) fs = delRes.value;
+                }
+              }
+              // If protocols dir became empty, remove it to reflect move semantics
+              const updatedProtocols = getNodeByPath(fs, protocolsPath);
+              if (
+                updatedProtocols &&
+                (!updatedProtocols.children || updatedProtocols.children.length === 0)
+              ) {
+                const removed = deleteNode(
+                  fs,
+                  datastorePath,
+                  updatedProtocols.id,
+                  'delete',
+                  false,
+                  targetLevelId ?? 0
+                );
+                if (removed.ok) fs = removed.value;
+              }
+            }
+          } catch (err) {
+            reportError(err, { phase: 'initialLevel.moveUplinks' });
+          }
         }
       }
 
@@ -274,28 +323,6 @@ export default function App() {
       if (jumpedToLevel && targetIndex > level7Idx) {
         const etcPath = ['root', 'etc'];
         ensureAdded(etcPath, { name: 'sys_patch.conf', type: 'file', content: 'patch=1\\n' });
-      }
-
-      // L8: neural_net may depend on uplink_v1 in ~/.config/vault/active
-      if (jumpedToLevel && targetIndex > level8Idx) {
-        const configNode = findNodeByName(fs, '.config');
-        const vaultNode = configNode?.children?.find((c) => c.name === 'vault');
-        const activeNode = vaultNode?.children?.find((c) => c.name === 'active');
-        if (activeNode) {
-          const activePath = [
-            'root',
-            'home',
-            'guest',
-            configNode!.id,
-            vaultNode!.id,
-            activeNode.id,
-          ];
-          ensureAdded(activePath, {
-            name: 'uplink_v1.conf',
-            type: 'file',
-            content: 'network_mode=passive\\nsecure=false',
-          });
-        }
       }
 
       // L10: ensure decoys in datastore for inverse selection training
