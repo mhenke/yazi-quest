@@ -13,6 +13,7 @@ import {
 import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
 import {
   getNodeByPath,
+  findNodeByName,
   getParentNode,
   deleteNode,
   addNode,
@@ -75,6 +76,7 @@ export default function App() {
       const idx = LEVELS.findIndex((l) => l.episodeId === id);
       if (idx !== -1) targetIndex = idx;
     }
+    const jumpedToLevel = targetIndex > 0; // Treat any start beyond level 0 as a jump
 
     // 4. Handle Task Completion (Bypass)
     if (tasksParam && targetIndex < LEVELS.length) {
