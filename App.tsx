@@ -182,7 +182,7 @@ export default function App() {
         }
       }
 
-      // Ensure user-created artifacts from earlier lessons exist when jumping directly.
+      // Post-level seeding handled by simulateCompletionOfLevel; legacy inline seeding removed.
       /*
       const makeId = () => Math.random().toString(36).substr(2, 9);
       const ensureAdded = (
