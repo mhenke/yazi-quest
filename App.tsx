@@ -1306,7 +1306,73 @@ export default function App() {
     []
   );
 
-  const handleKeyDown = useCallback(
+  function handleInputModeSubmit() {
+    const {
+      fs: newFs,
+      error,
+      collision,
+      collisionNode,
+    } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
+    if (collision && collisionNode) {
+      setGameState((prev) => ({
+        ...prev,
+        mode: 'overwrite-confirm',
+        pendingOverwriteNode: collisionNode,
+        notification: 'File signature collision—rename required',
+      }));
+    } else if (error) {
+      setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
+    } else {
+      setGameState((prev) => ({
+        ...prev,
+        fs: newFs,
+        mode: 'normal',
+        inputBuffer: '',
+        notification: 'FILE CREATED',
+      }));
+    }
+  }
+
+  function handleFilterModeSubmit() {
+    setGameState((prev) => ({
+      ...prev,
+      mode: 'normal',
+      inputBuffer: '',
+      stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 },
+    }));
+  }
+
+  function handleRenameSubmit() {
+    if (currentItem) {
+      const input = gameState.inputBuffer.trim();
+      const forceFlag = ' --force';
+      const force = input.endsWith(forceFlag);
+      const newName = force ? input.slice(0, -forceFlag.length).trim() : input;
+
+      const result = renameNode(
+        gameState.fs,
+        gameState.currentPath,
+        currentItem.id,
+        newName,
+        force
+      );
+
+      if (result.ok) {
+        setGameState((prev) => ({
+          ...prev,
+          fs: result.value,
+          mode: 'normal',
+          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
+        }));
+        showNotification('Identity forged', 2000);
+      } else {
+        setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        showNotification(`Rename failed: ${(result as any).error}`, 4000);
+      }
+    }
+  }
+
+const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
