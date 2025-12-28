@@ -1293,16 +1293,7 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
-      {
-        id: 'nav-2c',
-        description: 'Rename a file in datastore (r)',
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'nav-2b');
-          if (!prevTask?.completed) return false;
-          return state.lastAction?.type === 'RENAME';
-        },
-        completed: false,
-      },
+
       {
         id: 'nav-3',
         description: "Return to root, move into 'etc'",

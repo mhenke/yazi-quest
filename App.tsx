@@ -232,6 +232,7 @@ export default function App() {
       usedGG: false,
       usedPreviewScroll: false,
       usedPreviewScrollDirection: null,
+      usedPrevPreviewScrollDirection: null,
       usedHistory: false,
     };
   });
@@ -1494,6 +1495,7 @@ export default function App() {
           setGameState((prev) => ({
             ...prev,
             usedPreviewScroll: true,
+            usedPrevPreviewScrollDirection: prev.usedPreviewScrollDirection,
             usedPreviewScrollDirection: e.key === 'J' ? 'down' : 'up',
             lastAction: {
               type: 'PREVIEW_SCROLL',

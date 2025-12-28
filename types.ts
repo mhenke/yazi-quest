@@ -204,6 +204,7 @@ export interface GameState {
   usedGG?: boolean;
   usedPreviewScroll?: boolean;
   usedPreviewScrollDirection?: 'down' | 'up' | null;
+  usedPrevPreviewScrollDirection?: 'down' | 'up' | null;
   usedHistory?: boolean;
   usedCtrlA?: boolean;
   falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
