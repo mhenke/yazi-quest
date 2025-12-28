@@ -7,7 +7,7 @@
 
 ## 🎯 What You'll Learn
 
-### Episode I: Awakening (Levels 1-4)
+### Episode I: Awakening (Levels 1-5)
 
 - [x] Navigate with `j/k/h/l` and jump with `gg/G`
 - [x] Enter directories and archives with `l`
@@ -86,7 +86,7 @@ Yazi Quest mimics the default keybindings of Yazi (which are based on Vim/Kakoun
 | `G`                 | **Jump to Bottom**    | Move cursor to last item                   |
 | `Tab`               | **Toggle Info Panel** | View file metadata (size, dates, mimetype) |
 
-### G-Commands (Quick Jumps) - Available from Level 7+
+### G-Commands (Quick Jumps) - Available from Level 8+
 
 | Key  | Action           | Destination                      |
 | :--- | :--------------- | :------------------------------- |

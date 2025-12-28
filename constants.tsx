@@ -1395,9 +1395,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'Asset Relocation',
     description:
-      'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter (Esc), Cut (x) stages them, clear filter (Esc again), then Paste (p) in ~/media.',
+      'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter prompt (Esc), Cut (x) stages them, then clear the applied filter (Esc again), then Paste (p) in ~/media.',
     initialPath: null,
-    hint: "Press 'f', type 'map'. Highlight 'sector_map.png'. Press Esc to exit filter mode. Press 'x' to cut. Press Esc again to clear filter. Navigate to ~/media, then press 'p' to paste.",
+    hint: "Press 'f', type 'map'. Highlight 'sector_map.png'. Press Esc to exit the filter prompt. Press 'x' to cut. Press Esc again to clear the applied filter. Navigate to ~/media, then press 'p' to paste.",
     coreSkill: 'Filter (f) & Hidden Files (.)',
     environmentalClue:
       'ASSET: sector_map.png | HIDDEN: .surveillance_log | WORKFLOW: ~/incoming → Toggle hidden (.) → Filter (f) → Esc → Cut (x) → Esc → ~/media → Paste (p)',
@@ -1654,7 +1654,8 @@ export const LEVELS: Level[] = [
     initialPath: ['root', 'home', 'guest'], // Player continues from Level 5 location
     hint: "1. Navigate to '~/incoming' sector. 2. Press 'f', type 'backup_log'. 3. Sort by size (',', 's') to bring the largest backup to the top. 4. Enter the archive (l). 5. Highlight 'sys_v1.log', Press 'y'. 6. Navigate to media. 7. Press 'p'.\n\nTip: Use H to backtrack through visited directories and J to scroll the preview while inspecting logs.",
     coreSkill: 'Filter (f) & Archive Ops',
-    environmentalClue: 'TARGET: backup_logs.zip/sys_v1.log → ~/media',
+    environmentalClue:
+      'TARGET: backup_logs.zip/sys_v1.log → ~/media | SYSTEM ALERT: Integrity monitors active on critical files',
     successMessage: 'LOGS RETRIEVED.',
     buildsOn: [1, 2],
     leadsTo: [9],
@@ -2077,7 +2078,7 @@ export const LEVELS: Level[] = [
     description:
       "THREAT DETECTED. A corrupted neural signature in your workspace sector is broadcasting your origin coordinates. The system's diagnostic sweep is imminent. You must navigate to the workspace, isolate the anomalous signature using diagnostic filters and size analysis, extract the largest buffer, and teleport to the /tmp deletion zone. Efficiency is your only shield. 180 seconds.",
     initialPath: undefined,
-    hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f), then sort by size (,s). 3. Cut the largest signature (x). 4. Jump to tmp (gt).",
+    hint: "1. Go to workspace (gw). 2. Filter for 'neural' (f), then sort by size (,s). 3. Cut the largest signature (x). 4. Jump to tmp (gt). 5. Paste (p).",
     coreSkill: 'Challenge: Multi-Skill Integration',
     environmentalClue:
       "NAVIGATE: gw | FILTER: 'neural' | LOCATE: Sort size (,s) | EXTRACT: x | JUMP: gt",
@@ -2085,7 +2086,7 @@ export const LEVELS: Level[] = [
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     timeLimit: 180,
-    maxKeystrokes: 20,
+    maxKeystrokes: 30,
     efficiencyTip:
       'Filter reveals patterns. Sort narrows focus. Combining them allows you to find anomalies instantly. Every keystroke counts!',
     tasks: [
