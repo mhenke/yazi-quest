@@ -30,14 +30,8 @@ describe('Protection and onEnter idempotency tests', () => {
     expect(tmp).toBeTruthy();
 
     // set a protection with releaseLevel 10
-    const withProt = setNodeProtection(
-      base,
-      ['root', 'tmp', 'ghost_process.pid'],
-      'delete',
-      'locked',
-      10
-    );
-    const node = getNodeByPath(withProt, ['root', 'tmp', 'ghost_process.pid']);
+    const withProt = setNodeProtection(base, ['tmp', 'ghost_process.pid'], 'delete', 'locked', 10);
+    const node = findNodeByName(withProt, 'ghost_process.pid');
     expect(node).toBeTruthy();
     // level < 10 -> protected message
     expect(isProtected(node!, 9, 'delete')).toBe('locked');
@@ -51,20 +45,14 @@ describe('Protection and onEnter idempotency tests', () => {
 
   it('setNodeProtection sets and removes protections and releaseLevel', () => {
     const base = cloneFS(INITIAL_FS);
-    const fs1 = setNodeProtection(
-      base,
-      ['root', 'home', 'guest', 'datastore'],
-      'delete',
-      'nope',
-      5
-    );
-    const node = getNodeByPath(fs1, ['root', 'home', 'guest', 'datastore']);
+    const fs1 = setNodeProtection(base, ['home', 'guest', 'datastore'], 'delete', 'nope', 5);
+    const node = findNodeByName(fs1, 'datastore');
     expect(node).toBeTruthy();
     expect(node!.protection).toBeTruthy();
     expect(node!.protection!.releaseLevel).toBe(5);
 
-    const fs2 = setNodeProtection(fs1, ['root', 'home', 'guest', 'datastore'], 'delete', null);
-    const node2 = getNodeByPath(fs2, ['root', 'home', 'guest', 'datastore']);
+    const fs2 = setNodeProtection(fs1, ['home', 'guest', 'datastore'], 'delete', null);
+    const node2 = findNodeByName(fs2, 'datastore');
     expect(node2!.protection?.delete).toBeUndefined();
   });
 
