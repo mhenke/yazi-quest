@@ -217,7 +217,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                 <span
                   className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}
                 >
-                  <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
+                  <span data-testid={`file-item-${item.name}`} className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
                     {item.name}
                   </span>
                 </span>
@@ -258,6 +258,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                     </span>
                     <input
                       ref={renameInputRef}
+                      data-testid="rename-input"
                       type="text"
                       value={renameState?.inputBuffer}
                       onChange={(e) => onRenameChange?.(e.target.value)}

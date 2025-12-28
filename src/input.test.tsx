@@ -71,4 +71,76 @@ describe('Input Model Refactoring', () => {
     filterInput = screen.queryByTestId('filter-input');
     expect(filterInput).toBeNull();
   });
+
+  it('Create input should focus and accept typing', async () => {
+    window.history.pushState({}, 'Test page', '/?intro=false');
+    render(<App />);
+    const appRoot = screen.getByTestId('app-root');
+    appRoot.focus();
+
+    // Press 'a' to enter create file mode
+    fireEvent.keyDown(appRoot, { key: 'a', code: 'KeyA' });
+
+    const createInput = await screen.findByTestId('create-input');
+    expect(document.activeElement).toBe(createInput);
+
+    fireEvent.change(createInput, { target: { value: 'new_file.txt' } });
+    expect(createInput.value).toBe('new_file.txt');
+  });
+
+  it('Create input should submit on Enter', async () => {
+    window.history.pushState({}, 'Test page', '/?intro=false');
+    render(<App />);
+    const appRoot = screen.getByTestId('app-root');
+    appRoot.focus();
+
+    // Press 'a' to enter create file mode
+    fireEvent.keyDown(appRoot, { key: 'a', code: 'KeyA' });
+
+    const createInput = await screen.findByTestId('create-input');
+    fireEvent.change(createInput, { target: { value: 'new_file.txt' } });
+    
+    // Press Enter
+    fireEvent.keyDown(createInput, { key: 'Enter', code: 'Enter' });
+
+    // Input should be gone
+    expect(screen.queryByTestId('create-input')).toBeNull();
+    // A notification should appear
+    expect(await screen.findByText('FILE CREATED')).not.toBeNull();
+  });
+
+  it('FuzzyFinder input should focus and accept typing', async () => {
+    window.history.pushState({}, 'Test page', '/?intro=false');
+    render(<App />);
+    const appRoot = screen.getByTestId('app-root');
+    appRoot.focus();
+
+    // Press 'z' to enter fuzzy finder mode
+    fireEvent.keyDown(appRoot, { key: 'z', code: 'KeyZ' });
+
+    const fuzzyInput = await screen.findByTestId('fuzzy-input');
+    expect(document.activeElement).toBe(fuzzyInput);
+
+    fireEvent.change(fuzzyInput, { target: { value: 'test' } });
+    expect(fuzzyInput.value).toBe('test');
+  });
+
+  it('FuzzyFinder should close on Escape', async () => {
+    window.history.pushState({}, 'Test page', '/?intro=false');
+    render(<App />);
+    const appRoot = screen.getByTestId('app-root');
+    appRoot.focus();
+
+    // Press 'z' to enter fuzzy finder mode
+    fireEvent.keyDown(appRoot, { key: 'z', code: 'KeyZ' });
+
+    const fuzzyInput = await screen.findByTestId('fuzzy-input');
+    expect(fuzzyInput).not.toBeNull();
+
+    // Press Escape
+    fireEvent.keyDown(fuzzyInput, { key: 'Escape', code: 'Escape' });
+
+    // FuzzyFinder input should be gone
+    expect(screen.queryByTestId('fuzzy-input')).toBeNull();
+  });
 });

@@ -1983,6 +1983,7 @@ export default function App() {
                   </span>
                   <input
                     ref={createInputRef}
+                    data-testid="create-input"
                     type="text"
                     value={gameState.inputBuffer}
                     onChange={(e) =>

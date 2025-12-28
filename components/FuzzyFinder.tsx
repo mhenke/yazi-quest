@@ -118,6 +118,7 @@ export const FuzzyFinder = React.forwardRef<HTMLInputElement, FuzzyFinderProps>(
             </span>
             <input
               ref={ref}
+              data-testid="fuzzy-input"
               type="text"
               value={gameState.inputBuffer}
               onChange={(e) => onInputChange(e.target.value)}

@@ -87,6 +87,103 @@ describe('Level Jump Seeding Logic', () => {
     expect(postSimActive?.children?.some(c => c.name === 'uplink_v2.conf')).toBe(true);
   });
 
+  it('should correctly simulate the creation of the neural_net for Level 8', () => {
+    // 1. Get the state after Level 7 is completed.
+    let preLevel8State = cloneFS(INITIAL_FS);
+    for (let i = 1; i <= 7; i++) {
+      preLevel8State = simulateCompletionOfLevel(preLevel8State, i);
+    }
+    
+    // 2. Run the simulation for Level 8 completion
+    const simulatedState = simulateCompletionOfLevel(preLevel8State, 8);
+
+    // 3. Assert the final state
+    const neuralNet = findNodeByName(simulatedState, 'neural_net');
+    expect(neuralNet).toBeDefined();
+    expect(neuralNet?.type).toBe('dir');
+
+    const hasUplink = neuralNet?.children?.some(c => c.name === 'uplink_v1.conf');
+    expect(hasUplink).toBe(true);
+    
+    const weightsDir = neuralNet?.children?.find(c => c.name === 'weights');
+    expect(weightsDir).toBeDefined();
+    expect(weightsDir?.type).toBe('dir');
+
+    const hasModel = weightsDir?.children?.some(c => c.name === 'model.rs');
+    expect(hasModel).toBe(true);
+  });
+
+  it('should correctly simulate the extraction for Level 6', () => {
+    // 1. Get the state after Level 5 is completed.
+    let preLevel6State = cloneFS(INITIAL_FS);
+    for (let i = 1; i <= 5; i++) {
+      preLevel6State = simulateCompletionOfLevel(preLevel6State, i);
+    }
+
+    // 2. Run the simulation for Level 6 completion
+    const simulatedState = simulateCompletionOfLevel(preLevel6State, 6);
+
+    // 3. Assert the final state
+    const media = findNodeByName(simulatedState, 'media');
+    const incoming = findNodeByName(simulatedState, 'incoming');
+    const archive = incoming?.children?.find(c => c.name === 'backup_log_2024_CURRENT.zip');
+
+    // sys_v1.log should exist in media
+    expect(media?.children?.some(c => c.name === 'sys_v1.log')).toBe(true);
+    // sys_v1.log should exist inside the archive
+    expect(archive?.children?.some(c => c.name === 'sys_v1.log')).toBe(true);
+  });
+
+  it('should correctly simulate the asset security for Level 10', () => {
+    // 1. Get the state after Level 9 is completed.
+    let preLevel10State = cloneFS(INITIAL_FS);
+    for (let i = 1; i <= 9; i++) {
+      preLevel10State = simulateCompletionOfLevel(preLevel10State, i);
+    }
+    
+    // 2. Run the simulation for Level 10 completion
+    const simulatedState = simulateCompletionOfLevel(preLevel10State, 10);
+
+    // 3. Assert the final state
+    const datastore = findNodeByName(simulatedState, 'datastore');
+    const credentials = datastore?.children?.find(c => c.name === 'credentials');
+    const vaultActive = findNodeByName(simulatedState, 'active');
+
+    // Original access_key.pem should still exist
+    expect(credentials?.children?.some(c => c.name === 'access_key.pem')).toBe(true);
+
+    // vault_key.pem should exist in vault/active
+    expect(vaultActive?.children?.some(c => c.name === 'vault_key.pem')).toBe(true);
+
+    // Decoy files should be deleted from datastore
+    expect(datastore?.children?.some(c => c.name === 'decoy_1.pem')).toBe(false);
+    expect(datastore?.children?.some(c => c.name === 'decoy_2.pem')).toBe(false);
+  });
+
+  it('should correctly simulate the neural purge for Level 11', () => {
+    // 1. Get the state after Level 10 is completed.
+    let preLevel11State = cloneFS(INITIAL_FS);
+    for (let i = 1; i <= 10; i++) {
+      preLevel11State = simulateCompletionOfLevel(preLevel11State, i);
+    }
+    
+    // 2. Run the simulation for Level 11 completion
+    const simulatedState = simulateCompletionOfLevel(preLevel11State, 11);
+
+    // 3. Assert the final state
+    const workspace = findNodeByName(simulatedState, 'workspace');
+    const tmp = findNodeByName(simulatedState, 'tmp');
+
+    // neural_sig_alpha.log should be deleted from workspace
+    expect(workspace?.children?.some(c => c.name === 'neural_sig_alpha.log')).toBe(false);
+    // neural_sig_alpha.log should exist in /tmp
+    expect(tmp?.children?.some(c => c.name === 'neural_sig_alpha.log')).toBe(true);
+
+    // Other neural sig files should remain in workspace
+    expect(workspace?.children?.some(c => c.name === 'neural_sig_beta.dat')).toBe(true);
+    expect(workspace?.children?.some(c => c.name === 'neural_sig_gamma.tmp')).toBe(true);
+  });
+
   it('should correctly produce the post-level state for Level 15', () => {
     // 1. Define initial state (pre-L15)
     // The state before L15 should have the sector_1 and grid_alpha directories present.
