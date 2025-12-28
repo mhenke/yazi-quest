@@ -1603,7 +1603,15 @@ export const LEVELS: Level[] = [
           const prevTask = level.tasks.find((t) => t.id === 'duplicate-v1');
           if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, 'protocols');
-          return !!protocolsDir?.children?.find((r) => r.name === 'uplink_v2.conf');
+          if (!protocolsDir) return false;
+          // Accept explicit uplink_v2.conf or collision patterns indicating a v2 file, or a rename action
+          const explicit = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
+          const pattern = !!protocolsDir.children?.find((r) => /uplink.*(_2|v2|_v2)/i.test(r.name));
+          const renamed =
+            state.lastAction?.type === 'RENAME' &&
+            (state.lastAction as any).data?.newName &&
+            /uplink.*v?2/i.test((state.lastAction as any).data.newName);
+          return explicit || pattern || !!renamed;
         },
         completed: false,
       },
