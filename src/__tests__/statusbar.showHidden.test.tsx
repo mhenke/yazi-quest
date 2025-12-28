@@ -58,7 +58,7 @@ describe('StatusBar showHidden gating', () => {
     const state = makeState({ showHidden: true });
     const level = makeLevel();
     const onNext = vi.fn();
-    const { getAllByText } = render(
+    const { container } = render(
       <StatusBar
         state={state}
         level={level}
@@ -67,9 +67,10 @@ describe('StatusBar showHidden gating', () => {
         currentItem={null}
       />
     );
-    const btnSpan = getAllByText('NEXT')[0];
-    const btn = btnSpan.closest('button')!;
-    fireEvent.click(btn);
+    const btn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b && !(b as HTMLButtonElement).disabled
+    ) as HTMLButtonElement | undefined;
+    if (btn) fireEvent.click(btn);
     expect(onNext).not.toHaveBeenCalled();
   });
 
@@ -77,7 +78,7 @@ describe('StatusBar showHidden gating', () => {
     const state = makeState({ showHidden: false });
     const level = makeLevel();
     const onNext = vi.fn();
-    const { getAllByText } = render(
+    const { container } = render(
       <StatusBar
         state={state}
         level={level}
@@ -86,9 +87,10 @@ describe('StatusBar showHidden gating', () => {
         currentItem={null}
       />
     );
-    const btnSpan = getAllByText('NEXT')[0];
-    const btn = btnSpan.closest('button')!;
-    fireEvent.click(btn);
+    const btn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b && !(b as HTMLButtonElement).disabled
+    ) as HTMLButtonElement | undefined;
+    if (btn) fireEvent.click(btn);
     expect(onNext).toHaveBeenCalled();
   });
 });

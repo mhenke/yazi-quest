@@ -1361,7 +1361,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2c',
-        description: 'Sift through threat data (J/K)',
+        description: 'Sift through threat data (J only)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2b');
           if (!prevTask?.completed) return false;
@@ -1370,8 +1370,11 @@ export const LEVELS: Level[] = [
           const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
           if (!threatExists) return false; // Cannot complete if already deleted
 
-          // Accept either an explicit PREVIEW_SCROLL lastAction or the usedPreviewScroll flag
-          return state.lastAction?.type === 'PREVIEW_SCROLL' || state.usedPreviewScroll === true;
+          // Require an explicit PREVIEW_SCROLL down action (J) or recorded direction flag
+          const lastIsPreviewDown =
+            state.lastAction?.type === 'PREVIEW_SCROLL' &&
+            (state.lastAction as any).data?.direction === 'down';
+          return lastIsPreviewDown || state.usedPreviewScrollDirection === 'down';
         },
         completed: false,
       },
@@ -1399,6 +1402,9 @@ export const LEVELS: Level[] = [
       'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter prompt (Esc), Cut (x) stages them, then clear the applied filter (Esc again), then Paste (p) in ~/media.',
     initialPath: null,
     hint: "Press '.' to toggle hidden files first, then press 'f' and type 'map'. Highlight 'sector_map.png'. Press Esc to exit the filter prompt. Press 'x' to cut. Press Esc again to clear the applied filter. Navigate to ~/media, then press 'p' to paste.",
+    // Lore-friendly guidance shown when completion is blocked by visible dotfiles
+    hintEndHidden:
+      "SYSTEM: Your traces are visible. Re-hide dotfiles (press '.') to cloak your activity and complete the mission.",
 
     coreSkill: 'Filter (f) & Hidden Files (.)',
     environmentalClue:
@@ -1414,10 +1420,14 @@ export const LEVELS: Level[] = [
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir) return false;
-          // Require the player to toggle hidden files (.) before task can be completed
-          if (!state.showHidden) return false;
           const filterStr = (state.filters[currentDir.id] || '').toLowerCase();
-          return state.mode === 'normal' && filterStr.includes('map');
+          // Require that the player exited the filter via Escape and that the filter string matched
+          return (
+            state.mode === 'normal' &&
+            filterStr.includes('map') &&
+            state.lastAction?.type === 'FILTER_EXIT' &&
+            (state.lastAction as any).data?.method === 'esc'
+          );
         },
         completed: false,
       },
@@ -2303,6 +2313,9 @@ export const LEVELS: Level[] = [
       'EVIDENCE PURGE REQUIRED. Multiple forensic artifacts contain timestamps, command history, and origin signatures—a goldmine for security audits. The mission_log.md and several decoy traces are scattered across the system. Use FZF to locate mission_log.md, eliminate it, then jump to root and purge all .log files before the archive daemon locks them. 60 keystrokes. No margin for error.',
     initialPath: null,
     hint: "Use FZF to find mission_log (z → 'mission' → Enter → d). Jump to root (gr). Use filter to reveal hidden logs (f → '.log'). Select all visible logs (Ctrl+A) and terminate (d).",
+    // Lore-friendly guidance shown when mission completion is blocked by visible hidden logs
+    hintEndHidden:
+      "SYSTEM: Security traces still visible — re-hide dotfiles (press '.') before final purge.",
     coreSkill: 'Challenge: Multi-Target Trace Removal',
     environmentalClue: 'LOCATE & ELIMINATE: mission_log.md + all *.log in / | LIMIT: 60 keys',
     successMessage: 'ALL TRACES ELIMINATED.',

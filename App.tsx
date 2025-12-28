@@ -210,6 +210,7 @@ export default function App() {
       levelIndex: targetIndex,
       fs: fs,
       levelStartFS: cloneFS(fs),
+      levelStartShowHidden: false,
       notification: isDevOverride ? `DEV BYPASS ACTIVE` : null,
       selectedIds: [],
       pendingDeleteIds: [],
@@ -230,6 +231,7 @@ export default function App() {
       usedG: false,
       usedGG: false,
       usedPreviewScroll: false,
+      usedPreviewScrollDirection: null,
       usedHistory: false,
     };
   });
@@ -269,6 +271,7 @@ export default function App() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showFalseThreatAlert, setShowFalseThreatAlert] = useState(false);
   const [showAlertToast, setShowAlertToast] = useState(false);
+  const [showHiddenModal, setShowHiddenModal] = useState(false);
   const lastAlertShownRef = useRef<number | null>(null);
   const prevAllTasksCompleteRef = useRef(false);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -306,13 +309,16 @@ export default function App() {
 
     // This effect is designed to run once at the start of a level to apply protections.
     // The state update is conditional and necessary to correctly set the starting FS.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGameState((prev) => ({
-      ...prev,
-      fs: currentFs, // Update FS with potential protection changes from onEnter
-      levelStartFS: cloneFS(currentFs), // Snapshot FS *after* onEnter has run for soft restart
-      notification: error ? `Level ${currentLevel.id} init error` : null, // Report any onEnter errors
-    }));
+    // Use microtask to avoid synchronous setState-in-effect
+    setTimeout(() => {
+      setGameState((prev) => ({
+        ...prev,
+        fs: currentFs, // Update FS with potential protection changes from onEnter
+        levelStartFS: cloneFS(currentFs), // Snapshot FS *after* onEnter has run for soft restart
+        levelStartShowHidden: prev.showHidden,
+        notification: error ? `Level ${currentLevel.id} init error` : null, // Report any onEnter errors
+      }));
+    }, 0);
   }, [gameState.levelIndex, gameState.showEpisodeIntro]);
 
   const visibleItems = React.useMemo(
@@ -405,7 +411,13 @@ export default function App() {
     const allComplete = currentLevel.tasks.every((t) => t.completed);
     if (allComplete && !prevAllTasksCompleteRef.current) {
       playSuccessSound(gameState.settings.soundEnabled);
-      setTimeout(() => setShowSuccessToast(true), 0);
+      // If dotfiles are currently visible, block completion and show an instructional modal
+      if (gameState.showHidden) {
+        // Show a modal that instructs the player to re-hide dotfiles before completion.
+        setTimeout(() => setShowHiddenModal(true), 0);
+      } else {
+        setTimeout(() => setShowSuccessToast(true), 0);
+      }
     }
     prevAllTasksCompleteRef.current = allComplete;
   }, [gameState, currentLevel, isLastLevel]);
@@ -521,6 +533,7 @@ export default function App() {
         levelIndex: nextIdx,
         fs: fs,
         levelStartFS: cloneFS(fs),
+        levelStartShowHidden: false,
         currentPath: targetPath,
         cursorIndex: 0,
         filters: {},
@@ -1386,6 +1399,16 @@ export default function App() {
     (e: KeyboardEvent) => {
       if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
+      if (showHiddenModal) {
+        // While the modal is active only allow the dotfiles toggle to proceed; all other keys are ignored.
+        if (e.key === '.') {
+          setGameState((prev) => ({ ...prev, showHidden: false }));
+          setShowHiddenModal(false);
+          // After the player re-hides dotfiles, allow the success flow to continue.
+          setTimeout(() => setShowSuccessToast(true), 0);
+        }
+        return;
+      }
 
       const activeEl = document.activeElement;
       const isInputFocused =
@@ -1399,7 +1422,14 @@ export default function App() {
           if (gameState.mode === 'rename') handleRenameSubmit();
         }
         if (e.key === 'Escape') {
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            lastAction:
+              prev.mode === 'filter'
+                ? { type: 'FILTER_EXIT', timestamp: Date.now(), data: { method: 'esc' } }
+                : prev.lastAction,
+          }));
         }
         return; // Stop processing other keys
       }
@@ -1437,8 +1467,17 @@ export default function App() {
             // fallback for older browsers
             el.scrollTop += delta;
           }
-          // mark that the preview was scrolled so level tasks can detect it
-          setGameState((prev) => ({ ...prev, usedPreviewScroll: true }));
+          // mark that the preview was scrolled so level tasks can detect it and record direction
+          setGameState((prev) => ({
+            ...prev,
+            usedPreviewScroll: true,
+            usedPreviewScrollDirection: e.key === 'J' ? 'down' : 'up',
+            lastAction: {
+              type: 'PREVIEW_SCROLL',
+              timestamp: Date.now(),
+              data: { direction: e.key === 'J' ? 'down' : 'up' },
+            },
+          }));
           e.preventDefault();
           return;
         }
@@ -1732,6 +1771,7 @@ export default function App() {
       showSuccessToast,
       showAlertToast,
       showFalseThreatAlert,
+      showHiddenModal,
     ]
   );
 
@@ -1806,6 +1846,7 @@ export default function App() {
                 ...prev,
                 isGameOver: false,
                 fs: cloneFS(prev.levelStartFS), // Restore from snapshot
+                showHidden: prev.levelStartShowHidden ?? false,
                 currentPath: level.initialPath || ['root', 'home', 'guest'],
                 cursorIndex: 0,
                 timeLeft: level.timeLimit || null,
@@ -1899,6 +1940,8 @@ export default function App() {
               ...prev,
               levelIndex: idx,
               fs,
+              showHidden: false,
+              levelStartShowHidden: false,
               currentPath: target.initialPath || ['root', 'home', 'guest'],
               showEpisodeIntro: false,
               notification: onEnterError ? 'Level initialization failed' : null,
@@ -2192,6 +2235,22 @@ export default function App() {
             }
           }}
         />
+      )}
+
+      {showHiddenModal && (
+        <>
+          <div className="fixed inset-0 z-90 flex items-center justify-center">
+            <div className="bg-zinc-900 border border-zinc-700 p-6 rounded max-w-lg text-center shadow-2xl">
+              <h3 className="text-lg font-bold mb-2">Mission Incomplete</h3>
+              <p className="text-sm text-zinc-300 mb-4">
+                {(currentLevel as any).hintEndHidden ||
+                  'SYSTEM: Re-hide dotfiles (press .) to complete the mission.'}
+              </p>
+              <div className="text-xs text-zinc-500">Press . to re-hide dotfiles and continue.</div>
+            </div>
+          </div>
+          <div className="fixed inset-0 z-80 bg-black/30 pointer-events-auto" aria-hidden="true" />
+        </>
       )}
     </div>
   );

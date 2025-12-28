@@ -147,6 +147,8 @@ export type GameAction =
 export interface ActionRecord {
   type: GameAction;
   timestamp: number;
+  // Optional metadata for the action (direction, method, etc.)
+  data?: Record<string, any>;
 }
 
 export interface GameState {
@@ -178,6 +180,7 @@ export interface GameState {
   levelIndex: number;
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
+  levelStartShowHidden?: boolean; // Snapshot of showHidden at level start
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
@@ -200,6 +203,7 @@ export interface GameState {
   usedG?: boolean;
   usedGG?: boolean;
   usedPreviewScroll?: boolean;
+  usedPreviewScrollDirection?: 'down' | 'up' | null;
   usedHistory?: boolean;
   usedCtrlA?: boolean;
   falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
