@@ -1560,7 +1560,7 @@ export const LEVELS: Level[] = [
     description:
       'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. The correct workflow is critical: Cut, Paste in the new location, then return to Delete the original empty folder.',
     hint: '1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~/.config` and create the `vault/active/` path. 4. Paste the files (p). 5. Return and delete the empty `protocols` folder.',
-    coreSkill: 'Visual Selection (Space), Cut/Paste (x/p)',
+    coreSkill: 'Selection & Deployment (Space, Cut/Paste)',
     environmentalClue:
       'THREAT: Quarantine lockdown | TECHNIQUE: Select (Space) → Select (Space) → Cut (x) | TARGET: uplink files → ~/.config/vault/active/',
     successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',

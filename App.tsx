@@ -582,7 +582,11 @@ export default function App() {
             setGameState((prev) => ({
               ...prev,
               usedPreviewScroll: true,
-              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+              lastAction: {
+                type: 'PREVIEW_SCROLL',
+                timestamp: Date.now(),
+                data: { direction: 'down' },
+              },
             }));
           } else {
             setGameState((prev) => ({
@@ -600,7 +604,11 @@ export default function App() {
             setGameState((prev) => ({
               ...prev,
               usedPreviewScroll: true,
-              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+              lastAction: {
+                type: 'PREVIEW_SCROLL',
+                timestamp: Date.now(),
+                data: { direction: 'up' },
+              },
             }));
           } else {
             setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1) }));
@@ -650,7 +658,11 @@ export default function App() {
             setGameState((prev) => ({
               ...prev,
               usedPreviewScroll: true,
-              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+              lastAction: {
+                type: 'PREVIEW_SCROLL',
+                timestamp: Date.now(),
+                data: { direction: 'down' },
+              },
             }));
           }
           break;
@@ -661,7 +673,11 @@ export default function App() {
             setGameState((prev) => ({
               ...prev,
               usedPreviewScroll: true,
-              lastAction: { type: 'PREVIEW_SCROLL', timestamp: Date.now() },
+              lastAction: {
+                type: 'PREVIEW_SCROLL',
+                timestamp: Date.now(),
+                data: { direction: 'up' },
+              },
             }));
           }
           break;
@@ -767,9 +783,11 @@ export default function App() {
         case 'a':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            const allIds = items.map((item) => item.id);
-            setGameState((prev) => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
-            showNotification(`Selected all (${allIds.length} items)`, 2000);
+            // Disable global select-all in gameplay; enforce per-level selection with Space
+            showNotification(
+              'Select items with Space; Ctrl+A is disabled in gameplay contexts.',
+              2000
+            );
           } else {
             e.preventDefault();
             setGameState((prev) => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
