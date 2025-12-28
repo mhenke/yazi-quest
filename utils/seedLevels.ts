@@ -135,6 +135,15 @@ export const simulateCompletionOfLevel = (origFs: FileNode, levelId: number) => 
       });
     }
 
+    // Level 7: ensure /etc/sys_patch.conf exists (post-level state)
+    if (levelId === 7) {
+      fs = ensureAdded(fs, ['root', 'etc'], {
+        name: 'sys_patch.conf',
+        type: 'file',
+        content: 'patch=1\n',
+      });
+    }
+
     // Level 8: ensure neural_net exists, contains uplink and weights/model.rs
     if (levelId === 8) {
       fs = ensurePath(fs, ['root', 'home', 'guest'], 'workspace/neural_net/');
