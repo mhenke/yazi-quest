@@ -1088,7 +1088,12 @@ export default function App() {
             if (hasFilter) {
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
-              return { ...prev, filters: newFilters, notification: 'Scan filter deactivated' };
+              return {
+                ...prev,
+                filters: newFilters,
+                notification: 'Scan filter deactivated',
+                lastAction: { type: 'FILTER_EXIT', timestamp: Date.now(), data: { method: 'esc' } },
+              };
             }
             if (prev.selectedIds.length > 0) {
               return { ...prev, selectedIds: [], notification: 'Selection cleared' };
