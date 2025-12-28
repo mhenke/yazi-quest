@@ -1269,7 +1269,7 @@ export default function App() {
     ) => {
       // Typing is now handled natively by the input. This handler only deals with command keys.
       const isZoxide = gameState.mode === 'zoxide-jump';
-      
+
       const getFuzzyCandidates = () => {
         if (isZoxide) {
           return Object.keys(gameState.zoxideData)
@@ -1286,7 +1286,7 @@ export default function App() {
             .map((c) => ({ path: c.display, score: 0, pathIds: c.path }));
         }
       };
-      
+
       const candidates = getFuzzyCandidates();
 
       if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
@@ -1372,13 +1372,14 @@ export default function App() {
     }
   }
 
-const handleKeyDown = useCallback(
+  const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
 
       const activeEl = document.activeElement;
-      const isInputFocused = activeEl?.tagName === 'INPUT' && (activeEl as HTMLInputElement).type === 'text';
+      const isInputFocused =
+        activeEl?.tagName === 'INPUT' && (activeEl as HTMLInputElement).type === 'text';
 
       // If an input is focused, only process command keys and let the browser handle the rest.
       if (isInputFocused) {
@@ -1714,6 +1715,9 @@ const handleKeyDown = useCallback(
       handleConfirmDeleteModeKeyDown,
       handleOverwriteConfirmKeyDown,
       handleFuzzyModeKeyDown,
+      handleInputModeSubmit,
+      handleFilterModeSubmit,
+      handleRenameSubmit,
       advanceLevel,
       showSuccessToast,
       showAlertToast,
@@ -1725,72 +1729,6 @@ const handleKeyDown = useCallback(
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  function handleInputModeSubmit() {
-    const {
-      fs: newFs,
-      error,
-      collision,
-      collisionNode,
-    } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
-    if (collision && collisionNode) {
-      setGameState((prev) => ({
-        ...prev,
-        mode: 'overwrite-confirm',
-        pendingOverwriteNode: collisionNode,
-        notification: 'File signature collision—rename required',
-      }));
-    } else if (error) {
-      setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
-    } else {
-      setGameState((prev) => ({
-        ...prev,
-        fs: newFs,
-        mode: 'normal',
-        inputBuffer: '',
-        notification: 'FILE CREATED',
-      }));
-    }
-  }
-
-  function handleFilterModeSubmit() {
-    setGameState((prev) => ({
-      ...prev,
-      mode: 'normal',
-      inputBuffer: '',
-      stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 },
-    }));
-  }
-
-  function handleRenameSubmit() {
-    if (currentItem) {
-      const input = gameState.inputBuffer.trim();
-      const forceFlag = ' --force';
-      const force = input.endsWith(forceFlag);
-      const newName = force ? input.slice(0, -forceFlag.length).trim() : input;
-
-      const result = renameNode(
-        gameState.fs,
-        gameState.currentPath,
-        currentItem.id,
-        newName,
-        force
-      );
-
-      if (result.ok) {
-        setGameState((prev) => ({
-          ...prev,
-          fs: result.value,
-          mode: 'normal',
-          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
-        }));
-        showNotification('Identity forged', 2000);
-      } else {
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
-        showNotification(`Rename failed: ${(result as any).error}`, 4000);
-      }
-    }
-  }
 
   const isFuzzyActive = gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current';
 
@@ -2186,7 +2124,9 @@ const handleKeyDown = useCallback(
           ref={fuzzyInputRef}
           gameState={gameState}
           onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-          onInputChange={(value) => setGameState((prev) => ({ ...prev, inputBuffer: value, fuzzySelectedIndex: 0 }))}
+          onInputChange={(value) =>
+            setGameState((prev) => ({ ...prev, inputBuffer: value, fuzzySelectedIndex: 0 }))
+          }
           onSelect={(path, isZoxide) => {
             if (isZoxide) {
               const allDirs = getAllDirectories(gameState.fs);

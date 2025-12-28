@@ -1195,6 +1195,7 @@ ACCEPTANCE: Your continued presence on this network constitutes full and irrevoc
           content: 'pid: 4242\nprocess: ghost\n',
           protection: {
             delete: 'Protected: Ghost process reserved until Level 9.',
+            rename: 'Protected: Ghost process reserved until Level 9.',
             releaseLevel: 9,
           },
         },
@@ -1420,7 +1421,7 @@ export const LEVELS: Level[] = [
 
       {
         id: 'cut-and-clear-filter',
-        description: "Cut the asset (x) and clear the filter (Esc) to reset the view",
+        description: 'Cut the asset (x) and clear the filter (Esc) to reset the view',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((p) => p.id === 'filter-and-exit');
           if (!prevTask?.completed) return false;
@@ -1467,8 +1468,7 @@ export const LEVELS: Level[] = [
     initialPath: ['root', 'home', 'guest'],
     hint: "From your current location, navigate to '~/datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
     coreSkill: 'Create (a)',
-    environmentalClue:
-      '~/datastore | protocols/ → uplink_v1.conf, uplink_v2.conf',
+    environmentalClue: '~/datastore | protocols/ → uplink_v1.conf, uplink_v2.conf',
     successMessage: 'PROTOCOLS ESTABLISHED.',
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
@@ -1546,7 +1546,7 @@ export const LEVELS: Level[] = [
     title: 'EMERGENCY EVACUATION',
     description:
       'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. The correct workflow is critical: Cut, Paste in the new location, then return to Delete the original empty folder.',
-    hint: "1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~/.config` and create the `vault/active/` path. 4. Paste the files (p). 5. Return and delete the empty `protocols` folder.",
+    hint: '1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~/.config` and create the `vault/active/` path. 4. Paste the files (p). 5. Return and delete the empty `protocols` folder.',
     coreSkill: 'Visual Selection (Space), Cut/Paste (x/p)',
     environmentalClue:
       'THREAT: Quarantine lockdown | TECHNIQUE: Select (Space) → Select (Space) → Cut (x) | TARGET: uplink files → ~/.config/vault/active/',

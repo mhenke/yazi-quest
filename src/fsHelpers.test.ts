@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { addNode, getNodeByPath, cloneFS, createPath, findNodeByName, deleteNode } from '../utils/fsHelpers';
+import {
+  addNode,
+  getNodeByPath,
+  cloneFS,
+  createPath,
+  findNodeByName,
+  deleteNode,
+  renameNode,
+} from '../utils/fsHelpers';
 import { INITIAL_FS } from '../constants';
 import { FileNode } from '../types';
 
@@ -29,7 +37,7 @@ describe('fsHelpers.ts', () => {
 
       const parentNode = getNodeByPath(newFs, parentPath);
       expect(parentNode?.children).toBeDefined();
-      expect(parentNode?.children?.some(n => n.name === 'test_file.txt')).toBe(true);
+      expect(parentNode?.children?.some((n) => n.name === 'test_file.txt')).toBe(true);
     });
 
     it('should correctly add a new directory to an existing directory', () => {
@@ -51,7 +59,7 @@ describe('fsHelpers.ts', () => {
 
       const parentNode = getNodeByPath(newFs, parentPath);
       expect(parentNode?.children).toBeDefined();
-      expect(parentNode?.children?.some(n => n.name === 'test_dir')).toBe(true);
+      expect(parentNode?.children?.some((n) => n.name === 'test_dir')).toBe(true);
     });
 
     it('should return an error if adding a node to an invalid path', () => {
@@ -113,7 +121,7 @@ describe('fsHelpers.ts', () => {
       expect(getNodeByPath(initialFs, parentPath)).not.toBe(getNodeByPath(newFs, parentPath));
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.id === fileToDelete!.id)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.id === fileToDelete!.id)).toBe(false);
     });
 
     it('should correctly delete an existing directory', () => {
@@ -127,7 +135,7 @@ describe('fsHelpers.ts', () => {
       const newFs = result.value;
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.id === dirToDelete!.id)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.id === dirToDelete!.id)).toBe(false);
     });
 
     it('should return an error if trying to delete from an invalid parent path', () => {
@@ -173,7 +181,7 @@ describe('fsHelpers.ts', () => {
       const newFs = result.value;
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.id === protectedFile!.id)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.id === protectedFile!.id)).toBe(false);
     });
 
     it('should delete a protected node if releaseLevel is met', () => {
@@ -187,7 +195,7 @@ describe('fsHelpers.ts', () => {
       const newFs = result.value;
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.id === protectedFile!.id)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.id === protectedFile!.id)).toBe(false);
     });
   });
 
@@ -208,8 +216,8 @@ describe('fsHelpers.ts', () => {
       expect(getNodeByPath(initialFs, parentPath)).not.toBe(getNodeByPath(newFs, parentPath));
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.name === newName)).toBe(true);
-      expect(parentNode?.children?.some(n => n.name === fileToRename!.name)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.name === newName)).toBe(true);
+      expect(parentNode?.children?.some((n) => n.name === fileToRename!.name)).toBe(false);
     });
 
     it('should return an error if trying to rename from an invalid parent path', () => {
@@ -240,7 +248,14 @@ describe('fsHelpers.ts', () => {
       expect(fileToRename).toBeDefined();
       expect(collisionFile).toBeDefined();
 
-      const result = renameNode(initialFs, parentPath, fileToRename!.id, collisionFile!.name, 0, false);
+      const result = renameNode(
+        initialFs,
+        parentPath,
+        fileToRename!.id,
+        collisionFile!.name,
+        0,
+        false
+      );
       expect(result.ok).toBe(false);
       expect(result.error).toBe('Collision');
     });
@@ -259,8 +274,10 @@ describe('fsHelpers.ts', () => {
       const newFs = result.value;
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.name === newName && n.id === fileToRename!.id)).toBe(true); // Renamed file exists
-      expect(parentNode?.children?.some(n => n.id === fileToOverwrite!.id)).toBe(false); // Original collision file is gone
+      expect(
+        parentNode?.children?.some((n) => n.name === newName && n.id === fileToRename!.id)
+      ).toBe(true); // Renamed file exists
+      expect(parentNode?.children?.some((n) => n.id === fileToOverwrite!.id)).toBe(false); // Original collision file is gone
     });
 
     it('should return an error if trying to rename a protected node without releaseLevel met', () => {
@@ -286,9 +303,8 @@ describe('fsHelpers.ts', () => {
       const newFs = result.value;
 
       const parentNode = getNodeByPath(newFs, parentPath);
-      expect(parentNode?.children?.some(n => n.name === newName)).toBe(true);
-      expect(parentNode?.children?.some(n => n.name === fileToRename!.name)).toBe(false);
+      expect(parentNode?.children?.some((n) => n.name === newName)).toBe(true);
+      expect(parentNode?.children?.some((n) => n.name === fileToRename!.name)).toBe(false);
     });
   });
 });
-
