@@ -1660,7 +1660,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  const handleInputModeSubmit = () => {
+  function handleInputModeSubmit() {
     const {
       fs: newFs,
       error,
@@ -1685,18 +1685,18 @@ export default function App() {
         notification: 'FILE CREATED',
       }));
     }
-  };
+  }
 
-  const handleFilterModeSubmit = () => {
+  function handleFilterModeSubmit() {
     setGameState((prev) => ({
       ...prev,
       mode: 'normal',
       inputBuffer: '',
       stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 },
     }));
-  };
+  }
 
-  const handleRenameSubmit = () => {
+  function handleRenameSubmit() {
     if (currentItem) {
       const input = gameState.inputBuffer.trim();
       const forceFlag = ' --force';
@@ -1724,7 +1724,7 @@ export default function App() {
         showNotification(`Rename failed: ${(result as any).error}`, 4000);
       }
     }
-  };
+  }
 
   const isFuzzyActive = gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current';
 

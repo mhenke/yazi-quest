@@ -266,3 +266,6 @@ export const FuzzyFinder = React.forwardRef<HTMLInputElement, FuzzyFinderProps>(
     );
   }
 );
+
+FuzzyFinder.displayName = 'FuzzyFinder';
+
