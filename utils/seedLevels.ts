@@ -263,10 +263,24 @@ export const simulateCompletionOfLevel = (origFs: FileNode, levelId: number) => 
       }
     }
 
-    // Level 15: ensure sector dirs
+    // Level 15: remove sector dirs as the post-level "scorched earth" cleanup
     if (levelId === 15) {
-      fs = ensureAdded(fs, ['root', 'home', 'guest'], { name: 'sector_1', type: 'dir' });
-      fs = ensureAdded(fs, ['root', 'home', 'guest'], { name: 'grid_alpha', type: 'dir' });
+      try {
+        const guestPath = ['root', 'home', 'guest'];
+        const guestNode = getNodeByPath(fs, guestPath);
+        if (guestNode && guestNode.children) {
+          const targets = ['sector_1', 'grid_alpha'];
+          for (const t of targets) {
+            const node = guestNode.children.find((c) => c.name === t && c.type === 'dir');
+            if (node) {
+              const r = deleteNode(fs, guestPath, node.id, 'delete', false, 15);
+              if (r.ok) fs = r.value;
+            }
+          }
+        }
+      } catch (err) {
+        // swallow; caller will log
+      }
     }
   } catch (err) {
     // swallow errors; caller will log if needed
