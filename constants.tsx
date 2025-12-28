@@ -1294,6 +1294,16 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'nav-2c',
+        description: 'Rename a file in datastore (r)',
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'nav-2b');
+          if (!prevTask?.completed) return false;
+          return state.lastAction?.type === 'RENAME';
+        },
+        completed: false,
+      },
+      {
         id: 'nav-3',
         description: "Return to root, move into 'etc'",
         check: (state: GameState, level: Level) => {
@@ -1361,7 +1371,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-2c',
-        description: 'Sift through threat data (J only)',
+        description: 'Sift through threat data (J then K)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'del-2b');
           if (!prevTask?.completed) return false;
@@ -1370,11 +1380,11 @@ export const LEVELS: Level[] = [
           const threatExists = incoming?.children?.some((p) => p.name === 'watcher_agent.sys');
           if (!threatExists) return false; // Cannot complete if already deleted
 
-          // Require an explicit PREVIEW_SCROLL down action (J) or recorded direction flag
-          const lastIsPreviewDown =
-            state.lastAction?.type === 'PREVIEW_SCROLL' &&
-            (state.lastAction as any).data?.direction === 'down';
-          return lastIsPreviewDown || state.usedPreviewScrollDirection === 'down';
+          // Require a preview-scroll down (J) followed by a preview-scroll up (K)
+          return (
+            state.usedPrevPreviewScrollDirection === 'down' &&
+            state.usedPreviewScrollDirection === 'up'
+          );
         },
         completed: false,
       },
@@ -1442,7 +1452,10 @@ export const LEVELS: Level[] = [
           const clipboardOk =
             state.clipboard?.action === 'cut' &&
             state.clipboard.nodes.some((p) => p.name === 'sector_map.png');
-          return clipboardOk && (incoming ? !state.filters[incoming.id] : true);
+          const clearedWithEsc =
+            state.lastAction?.type === 'FILTER_EXIT' &&
+            (state.lastAction as any).data?.method === 'esc';
+          return clipboardOk && clearedWithEsc;
         },
         completed: false,
       },
@@ -1543,9 +1556,28 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'create-v2',
-        description: "Generate 'uplink_v2.conf' in the same directory (a)",
+        id: 'duplicate-v1',
+        description:
+          "Duplicate 'uplink_v1.conf' (y, p) to create a second config (prepare for rename)",
         check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'enter-and-create-v1');
+          if (!prevTask?.completed) return false;
+          const protocolsDir = findNodeByName(state.fs, 'protocols');
+          if (!protocolsDir) return false;
+          const v2Exists = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
+          const uplinkCount =
+            protocolsDir.children?.filter((c) => c.name.startsWith('uplink_v')).length || 0;
+          const pasted = state.lastAction?.type === 'PASTE' || state.clipboard?.action === 'yank';
+          return v2Exists || uplinkCount >= 2 || pasted;
+        },
+        completed: false,
+      },
+      {
+        id: 'rename-v2',
+        description: "Rename the duplicated file to 'uplink_v2.conf' (r)",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'duplicate-v1');
+          if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, 'protocols');
           return !!protocolsDir?.children?.find((r) => r.name === 'uplink_v2.conf');
         },
@@ -1603,7 +1635,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-cut',
-        description: "Cut both uplink files from '~/datastore/protocols' (Ctrl+A, x)",
+        description: "Cut both uplink files from '~/datastore/protocols' (Space, x)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           const clipboardOk =
