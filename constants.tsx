@@ -5,7 +5,7 @@ import {
   initializeTimestamps,
   setNodeProtection,
 } from './utils/fsHelpers';
-import { getVisibleItems } from './utils/viewHelpers';
+import { getVisibleItems, matchesFilter } from './utils/viewHelpers';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -1421,11 +1421,25 @@ export const LEVELS: Level[] = [
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir) return false;
-          const filterStr = (state.filters[currentDir.id] || '').toLowerCase();
-          // Require that the player exited the filter via Escape and that the filter string matched
+          const filterStr = state.filters[currentDir.id] || '';
+          const lastFilter =
+            state.lastAction?.type === 'FILTER_EXIT' && (state.lastAction as any).data?.filter
+              ? ((state.lastAction as any).data.filter as string)
+              : '';
+          const effectiveFilter = filterStr || lastFilter;
+          if (!effectiveFilter) return false;
+          // Determine visible files under the current filter using smart-case matching
+          const visible = (currentDir.children || []).filter((c) =>
+            matchesFilter(c.name, effectiveFilter)
+          );
+          // Require that the player exited the filter via Escape and that the filtered view included the target
           return (
             state.mode === 'normal' &&
-            filterStr.includes('map') &&
+            visible.some(
+              (f) =>
+                matchesFilter(f.name, effectiveFilter) &&
+                (f.name.toLowerCase().includes('sector') || f.name.toLowerCase().includes('map'))
+            ) &&
             state.lastAction?.type === 'FILTER_EXIT' &&
             (state.lastAction as any).data?.method === 'esc'
           );
@@ -1440,9 +1454,19 @@ export const LEVELS: Level[] = [
           const prevTask = level.tasks.find((p) => p.id === 'filter-and-exit');
           if (!prevTask?.completed) return false;
           const incoming = findNodeByName(state.fs, 'incoming');
+          const lastFilter =
+            state.lastAction?.type === 'FILTER_EXIT' && (state.lastAction as any).data?.filter
+              ? ((state.lastAction as any).data.filter as string)
+              : '';
           const clipboardOk =
             state.clipboard?.action === 'cut' &&
-            state.clipboard.nodes.some((p) => p.name === 'sector_map.png');
+            state.clipboard.nodes.some((p) => {
+              const name = p.name || '';
+              // Prefer matching against the active/last filter using smart-case; fall back to keyword check
+              return lastFilter
+                ? matchesFilter(name, lastFilter)
+                : name.toLowerCase().includes('sector_map');
+            });
           const clearedWithEsc =
             state.lastAction?.type === 'FILTER_EXIT' &&
             (state.lastAction as any).data?.method === 'esc';
@@ -1458,7 +1482,16 @@ export const LEVELS: Level[] = [
           if (!prevTask?.completed) return false;
 
           const media = findNodeByName(state.fs, 'media');
-          return !!media?.children?.find((r) => r.name === 'sector_map.png');
+          const lastFilter =
+            state.lastAction?.type === 'FILTER_EXIT' && (state.lastAction as any).data?.filter
+              ? ((state.lastAction as any).data.filter as string)
+              : '';
+          return !!media?.children?.find((r) => {
+            const name = r.name || '';
+            return lastFilter
+              ? matchesFilter(name, lastFilter)
+              : name.toLowerCase().includes('sector_map') || name.toLowerCase().includes('sector');
+          });
         },
         completed: false,
       },

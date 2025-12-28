@@ -33,7 +33,7 @@ The following features, previously claimed to be implemented in outdated audits,
 ## 2. Narrative & Voice
 
 - **Tone:** The cyberpunk aesthetic is consistent across level descriptions and UI notifications.
-- **Pacing:** The principle of "one new skill per teaching level" is generally followed, with challenge levels effectively combining previously learned skills. This is a sound pedagogical structure.
+- **Pacing:** The curriculum follows a topic-based learning approach, focusing on general Yazi workflows. Tasks within Episodes 1 and 2 are designed to combine up to two conceptual actions (excluding navigation after Level 1). Episode 3 levels serve as a culmination, featuring multiple complex operations that integrate previously learned skills into advanced workflows. This revised structure aims for a more realistic and progressive learning experience.
 - **Feedback:** UI notifications have been updated with narrative flavor (e.g., "TARGETS ELIMINATED"), which reinforces the game's theme.
 
 ---

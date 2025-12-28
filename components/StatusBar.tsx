@@ -3,6 +3,7 @@ import { GameState, Level, FileNode } from '../types';
 import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
 import { getNodeByPath } from '../utils/fsHelpers';
 import { getSortLabel } from '../utils/sortHelpers';
+import { matchesFilter } from '../utils/viewHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -51,7 +52,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const activeFilter = currentDir ? state.filters[currentDir.id] || '' : '';
 
   if (activeFilter) {
-    items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    items = items.filter((c) => matchesFilter(c.name, activeFilter));
   }
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;

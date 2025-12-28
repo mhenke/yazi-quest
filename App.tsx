@@ -1093,7 +1093,14 @@ export default function App() {
                 ...prev,
                 filters: newFilters,
                 notification: 'Scan filter deactivated',
-                lastAction: { type: 'FILTER_EXIT', timestamp: Date.now(), data: { method: 'esc' } },
+                lastAction: {
+                  type: 'FILTER_EXIT',
+                  timestamp: Date.now(),
+                  data: {
+                    method: 'esc',
+                    filter: (currentDir && prev.filters[currentDir.id]) || '',
+                  },
+                },
               };
             }
             if (prev.selectedIds.length > 0) {
@@ -1187,7 +1194,24 @@ export default function App() {
           notification: 'Linemode: None',
         }));
       } else if (e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        setGameState((prev) => {
+          const currentDir = getNodeByPath(prev.fs, prev.currentPath);
+          // If we're exiting filter prompt (mode === 'filter'), record a FILTER_EXIT action with method 'esc'
+          if (prev.mode === 'filter') {
+            const filterVal =
+              (currentDir && (prev.filters[currentDir.id] || prev.inputBuffer)) || '';
+            return {
+              ...prev,
+              mode: 'normal',
+              lastAction: {
+                type: 'FILTER_EXIT',
+                timestamp: Date.now(),
+                data: { method: 'esc', filter: filterVal },
+              },
+            };
+          }
+          return { ...prev, mode: 'normal' };
+        });
       }
     },
     []
@@ -1451,7 +1475,18 @@ export default function App() {
             mode: 'normal',
             lastAction:
               prev.mode === 'filter'
-                ? { type: 'FILTER_EXIT', timestamp: Date.now(), data: { method: 'esc' } }
+                ? {
+                    type: 'FILTER_EXIT',
+                    timestamp: Date.now(),
+                    data: {
+                      method: 'esc',
+                      filter:
+                        (getNodeByPath(prev.fs, prev.currentPath) &&
+                          (prev.filters[getNodeByPath(prev.fs, prev.currentPath)!.id] ||
+                            prev.inputBuffer)) ||
+                        '',
+                    },
+                  }
                 : prev.lastAction,
           }));
         }
