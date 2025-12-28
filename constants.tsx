@@ -1299,10 +1299,23 @@ export const LEVELS: Level[] = [
       },
 
       {
+        id: 'goto-root-gcmd',
+        description: 'Use g-command to jump to root (g → r)',
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'nav-2b');
+          if (!prevTask?.completed) return false;
+          return (
+            state.lastAction?.type === 'GOTO' && (state.lastAction as any).data?.target === 'root'
+          );
+        },
+        completed: false,
+      },
+
+      {
         id: 'nav-3',
         description: "Return to root, move into 'etc'",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'nav-2b');
+          const prevTask = level.tasks.find((t) => t.id === 'goto-root-gcmd');
           if (!prevTask?.completed) return false;
 
           return (
@@ -1479,6 +1492,18 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'z-jump-tmp',
+        description: "Jump to '/tmp' using Zoxide (Z → 'tmp') to learn quick jumps",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return (
+            currentDir?.name === 'tmp' &&
+            (state.stats?.fuzzyJumps >= 1 || state.lastAction?.type === 'ZOXIDE_JUMP')
+          );
+        },
+        completed: false,
+      },
+      {
         id: 'deploy-asset',
         description: "Deploy asset to '~/media' (p)",
         check: (state: GameState, level: Level) => {
@@ -1496,6 +1521,17 @@ export const LEVELS: Level[] = [
               ? matchesFilter(name, lastFilter)
               : name.toLowerCase().includes('sector_map') || name.toLowerCase().includes('sector');
           });
+        },
+        completed: false,
+      },
+      {
+        id: 'history-back-to-source',
+        description: 'After pasting, use History Back (Shift+H) to return to the source directory',
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'deploy-asset');
+          if (!prevTask?.completed) return false;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return state.usedHistory === true && currentDir?.name === 'incoming';
         },
         completed: false,
       },
@@ -1592,15 +1628,10 @@ export const LEVELS: Level[] = [
           if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, 'protocols');
           if (!protocolsDir) return false;
-          const v2Exists = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
-          const uplinkCount =
-            protocolsDir.children?.filter((c) => c.name.startsWith('uplink_v')).length || 0;
-          // Allow multiple valid flows: existing v2 file, multiple uplink matches (collision), or an explicit paste action
+          // Require an explicit paste action that produced an exact 'uplink_v2.conf' file
           return (
-            v2Exists ||
-            uplinkCount >= 2 ||
-            state.lastAction?.type === 'PASTE' ||
-            state.clipboard?.action === 'yank'
+            state.lastAction?.type === 'PASTE' &&
+            !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf')
           );
         },
         completed: false,
@@ -1613,14 +1644,8 @@ export const LEVELS: Level[] = [
           if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, 'protocols');
           if (!protocolsDir) return false;
-          // Accept explicit v2 file presence, common collision/name-patterns, or an explicit RENAME action
-          const explicit = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
-          const pattern = !!protocolsDir.children?.find((r) => /uplink.*(_2|v2|_v2)/i.test(r.name));
-          const renamed =
-            state.lastAction?.type === 'RENAME' &&
-            (state.lastAction as any).data?.newName &&
-            /uplink.*v?2/i.test((state.lastAction as any).data.newName);
-          return explicit || pattern || !!renamed;
+          // Strict: require an explicit file named exactly 'uplink_v2.conf'
+          return !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
         },
         completed: false,
       },
@@ -1631,8 +1656,8 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'EMERGENCY EVACUATION',
     description:
-      'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. The correct workflow is critical: Cut, Paste in the new location, then return to Delete the original empty folder.',
-    hint: '1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~` (guest), press `.` to show hidden files, then `.` again to hide them. 4. Navigate to `~/.config` and create the `vault/active/` path. 5. Paste the files (p). 6. Return and delete the empty `protocols` folder.',
+      'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. Do not attempt to delete the protocols folder; simply cut and move the uplink files, expose your hidden config, create the stronghold, paste the assets, and recloak.',
+    hint: '1. In `~/datastore/protocols`, press `Space` on both uplink files to select them. 2. Cut (x). 3. Navigate to `~` (guest) and press `.` to show hidden files. 4. Enter `~/.config` and create `vault/active/` (a). 5. Navigate into `~/.config/vault/active` and paste (p). 6. Return to `~` and press `.` to hide dotfiles again.',
     coreSkill: 'Selection & Deployment (Space, Cut/Paste)',
     environmentalClue:
       'THREAT: Quarantine lockdown | TECHNIQUE: Select (Space) → Select (Space) → Cut (x) | TARGET: uplink files → ~/.config/vault/active/',
@@ -1688,17 +1713,16 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'toggle-hidden-protocol',
-        description: 'Navigate to `~` (guest), toggle hidden files on (`.`), then off (`.`)',
+        id: 'goto-home-show-hidden',
+        description: 'Navigate to `~` (guest) and toggle hidden files on (`.`)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'nav-and-cut');
           if (!prevTask?.completed) return false;
-          // Check if the current directory is ~ (guest) and hidden files were toggled on and off.
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
-            currentDir?.name === 'protocols' && // Should navigate back to protocols
-            !state.showHidden && // Must end with hidden files off
-            state.lastAction?.type === 'TOGGLE_HIDDEN' // Track that toggle happened
+            currentDir?.name === 'guest' &&
+            state.showHidden === true &&
+            state.lastAction?.type === 'TOGGLE_HIDDEN'
           );
         },
         completed: false,
@@ -1707,7 +1731,7 @@ export const LEVELS: Level[] = [
         id: 'establish-stronghold',
         description: "Create the 'vault/active/' sector in `~/.config`",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'toggle-hidden-protocol'); // Update prevTask dependency
+          const prevTask = level.tasks.find((t) => t.id === 'goto-home-show-hidden');
           if (!prevTask?.completed) return false;
           const config = findNodeByName(state.fs, '.config');
           const vault = config?.children?.find((v) => v.name === 'vault');
@@ -1724,19 +1748,22 @@ export const LEVELS: Level[] = [
           const active = findNodeByName(state.fs, 'active');
           const hasV1 = active?.children?.some((x) => x.name === 'uplink_v1.conf');
           const hasV2 = active?.children?.some((x) => x.name === 'uplink_v2.conf');
-          return !!hasV1 && !!hasV2;
+          return !!hasV1 && !!hasV2 && state.lastAction?.type === 'PASTE';
         },
         completed: false,
       },
       {
-        id: 'delete-source',
-        description: "Return to `~/datastore` and delete the empty 'protocols' folder",
+        id: 'return-hide-hidden',
+        description: 'Return to `~` (guest) and toggle hidden files off (`.`)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'deploy-assets');
           if (!prevTask?.completed) return false;
-          const datastore = findNodeByName(state.fs, 'datastore');
-          const protocolsExists = !!datastore?.children?.find((c) => c.name === 'protocols');
-          return !protocolsExists;
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return (
+            currentDir?.name === 'guest' &&
+            state.showHidden === false &&
+            state.lastAction?.type === 'TOGGLE_HIDDEN'
+          );
         },
         completed: false,
       },
@@ -1878,6 +1905,19 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
+        id: 'goto-workspace-gcmd',
+        description: 'Jump directly to your workspace using the g-command (g → w)',
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return (
+            currentDir?.name === 'workspace' &&
+            state.lastAction?.type === 'GOTO' &&
+            (state.lastAction as any).data?.target === 'workspace'
+          );
+        },
+        completed: false,
+      },
+      {
         id: 'goto-tmp',
         description: "Quantum tunnel to /tmp (Z → 'tmp' → Enter)",
         check: (state: GameState) => {
@@ -1886,6 +1926,7 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
+
       {
         id: 'purge-sys-dump',
         description:
@@ -2109,6 +2150,24 @@ export const LEVELS: Level[] = [
           return (
             currentDir?.name === 'datastore' ||
             currentDir?.children?.some((n) => n.name === 'access_key.pem')
+          );
+        },
+        completed: false,
+      },
+      {
+        id: 'select-all-invert',
+        description: 'Select All (Ctrl+A) then Invert Selection (Ctrl+R) to isolate the real asset',
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'navigate-to-key');
+          if (!prevTask?.completed) return false;
+          const credentials = findNodeByName(state.fs, 'credentials');
+          const access = credentials?.children?.find((c) => c.name === 'access_key.pem');
+          if (!access) return false;
+          // Strict: require Ctrl+A was used, then an invert selection action, and the real asset is selected
+          return (
+            state.usedCtrlA === true &&
+            state.lastAction?.type === 'INVERT_SELECTION' &&
+            state.selectedIds.includes(access.id)
           );
         },
         completed: false,

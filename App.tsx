@@ -784,11 +784,21 @@ export default function App() {
         case 'a':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            // Disable global select-all in gameplay; enforce per-level selection with Space
-            showNotification(
-              'Select items with Space; Ctrl+A is disabled in gameplay contexts.',
-              2000
-            );
+            // Allow Ctrl+A when teaching select-all (Level 10), otherwise disable
+            if (currentLevel && currentLevel.id === 10) {
+              const allIds = items.map((item) => item.id);
+              setGameState((prev) => ({
+                ...prev,
+                selectedIds: allIds,
+                lastAction: { type: 'SELECT_ALL', timestamp: Date.now() },
+                usedCtrlA: true,
+              }));
+            } else {
+              showNotification(
+                'Select items with Space; Ctrl+A is disabled in gameplay contexts.',
+                2000
+              );
+            }
           } else {
             e.preventDefault();
             setGameState((prev) => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
@@ -799,7 +809,11 @@ export default function App() {
             e.preventDefault();
             const allIds = items.map((item) => item.id);
             const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
-            setGameState((prev) => ({ ...prev, selectedIds: inverted }));
+            setGameState((prev) => ({
+              ...prev,
+              selectedIds: inverted,
+              lastAction: { type: 'INVERT_SELECTION', timestamp: Date.now() },
+            }));
             showNotification(`Inverted selection (${inverted.length} items)`, 2000);
           } else if (gameState.selectedIds.length > 1) {
             setGameState((prev) => ({
@@ -1665,6 +1679,7 @@ export default function App() {
               cursorIndex: 0,
               mode: 'normal',
               notification: 'Jumped to dotfiles',
+              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: '.config' } },
               zoxideData: {
                 ...prev.zoxideData,
                 [pathStr]: {
@@ -1691,6 +1706,7 @@ export default function App() {
               cursorIndex: 0,
               mode: 'normal',
               notification: 'Jumped to config',
+              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: '.config' } },
               zoxideData: {
                 ...prev.zoxideData,
                 [pathStr]: {
@@ -1713,6 +1729,7 @@ export default function App() {
               cursorIndex: 0,
               mode: 'normal',
               notification: 'Jumped to workspace',
+              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'workspace' } },
               zoxideData: {
                 ...prev.zoxideData,
                 [pathStr]: {
@@ -1756,6 +1773,7 @@ export default function App() {
               cursorIndex: 0,
               mode: 'normal',
               notification: 'Jumped to datastore',
+              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'datastore' } },
               zoxideData: {
                 ...prev.zoxideData,
                 [pathStr]: {
@@ -1782,6 +1800,7 @@ export default function App() {
               cursorIndex: 0,
               mode: 'normal',
               notification: 'Jumped to incoming',
+              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'incoming' } },
               zoxideData: {
                 ...prev.zoxideData,
                 [pathStr]: {
