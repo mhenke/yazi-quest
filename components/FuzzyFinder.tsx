@@ -3,8 +3,6 @@ import { calculateFrecency, GameState, FileNode } from '../types';
 import { getRecursiveContent, getNodeByPath } from '../utils/fsHelpers';
 import { FileSystemPane } from './FileSystemPane';
 
-
-
 interface FuzzyFinderProps {
   gameState: GameState;
   onSelect: (path: string, isZoxide: boolean) => void;
@@ -255,7 +253,9 @@ export const FuzzyFinder = React.forwardRef<HTMLInputElement, FuzzyFinderProps>(
           </div>
           <div className="flex items-center gap-2">
             <div className="h-1 w-8 bg-zinc-800 rounded-full overflow-hidden">
-              <div className={`h-full w-2/3 ${isQuantumLevel ? 'bg-purple-500' : 'bg-orange-500'}`} />
+              <div
+                className={`h-full w-2/3 ${isQuantumLevel ? 'bg-purple-500' : 'bg-orange-500'}`}
+              />
             </div>
             <span className="text-[10px] font-black text-zinc-600 tracking-tighter italic uppercase">
               {isQuantumLevel ? 'Quantum-Sync' : 'Yazi-OS'}
@@ -268,4 +268,3 @@ export const FuzzyFinder = React.forwardRef<HTMLInputElement, FuzzyFinderProps>(
 );
 
 FuzzyFinder.displayName = 'FuzzyFinder';
-

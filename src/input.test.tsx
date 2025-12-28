@@ -99,7 +99,7 @@ describe('Input Model Refactoring', () => {
 
     const createInput = await screen.findByTestId('create-input');
     fireEvent.change(createInput, { target: { value: 'new_file.txt' } });
-    
+
     // Press Enter
     fireEvent.keyDown(createInput, { key: 'Enter', code: 'Enter' });
 

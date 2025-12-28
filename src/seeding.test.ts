@@ -53,22 +53,22 @@ describe('Level Jump Seeding Logic', () => {
 
     // 4. Assert equivalence
     const simulatedDatastore = findNodeByName(simulatedState, 'datastore');
-    const simulatedProtocols = simulatedDatastore?.children?.find(c => c.name === 'protocols');
-    
+    const simulatedProtocols = simulatedDatastore?.children?.find((c) => c.name === 'protocols');
+
     expect(simulatedProtocols).toBeDefined();
     expect(simulatedProtocols?.type).toBe('dir');
     expect(simulatedProtocols?.children).toHaveLength(2);
-    expect(simulatedProtocols?.children?.some(c => c.name === 'uplink_v1.conf')).toBe(true);
-    expect(simulatedProtocols?.children?.some(c => c.name === 'uplink_v2.conf')).toBe(true);
+    expect(simulatedProtocols?.children?.some((c) => c.name === 'uplink_v1.conf')).toBe(true);
+    expect(simulatedProtocols?.children?.some((c) => c.name === 'uplink_v2.conf')).toBe(true);
   });
 
   it('should correctly simulate the "move" operation for Level 5', () => {
     // 1. Get the state after Level 4 is completed.
     const preLevel5State = simulateCompletionOfLevel(cloneFS(INITIAL_FS), 4);
-    
+
     // Sanity check: ensure protocols dir exists before L5 simulation
     const preSimDatastore = findNodeByName(preLevel5State, 'datastore');
-    expect(preSimDatastore?.children?.some(c => c.name === 'protocols')).toBe(true);
+    expect(preSimDatastore?.children?.some((c) => c.name === 'protocols')).toBe(true);
 
     // 2. Run the simulation for Level 5 completion
     const simulatedState = simulateCompletionOfLevel(preLevel5State, 5);
@@ -78,13 +78,13 @@ describe('Level Jump Seeding Logic', () => {
     const postSimActive = findNodeByName(simulatedState, 'active');
 
     // Originals should be gone
-    expect(postSimDatastore?.children?.some(c => c.name === 'protocols')).toBe(false);
+    expect(postSimDatastore?.children?.some((c) => c.name === 'protocols')).toBe(false);
 
     // New files should exist in the new location
     expect(postSimActive).toBeDefined();
     expect(postSimActive?.children).toHaveLength(2);
-    expect(postSimActive?.children?.some(c => c.name === 'uplink_v1.conf')).toBe(true);
-    expect(postSimActive?.children?.some(c => c.name === 'uplink_v2.conf')).toBe(true);
+    expect(postSimActive?.children?.some((c) => c.name === 'uplink_v1.conf')).toBe(true);
+    expect(postSimActive?.children?.some((c) => c.name === 'uplink_v2.conf')).toBe(true);
   });
 
   it('should correctly simulate the creation of the neural_net for Level 8', () => {
@@ -93,7 +93,7 @@ describe('Level Jump Seeding Logic', () => {
     for (let i = 1; i <= 7; i++) {
       preLevel8State = simulateCompletionOfLevel(preLevel8State, i);
     }
-    
+
     // 2. Run the simulation for Level 8 completion
     const simulatedState = simulateCompletionOfLevel(preLevel8State, 8);
 
@@ -102,14 +102,14 @@ describe('Level Jump Seeding Logic', () => {
     expect(neuralNet).toBeDefined();
     expect(neuralNet?.type).toBe('dir');
 
-    const hasUplink = neuralNet?.children?.some(c => c.name === 'uplink_v1.conf');
+    const hasUplink = neuralNet?.children?.some((c) => c.name === 'uplink_v1.conf');
     expect(hasUplink).toBe(true);
-    
-    const weightsDir = neuralNet?.children?.find(c => c.name === 'weights');
+
+    const weightsDir = neuralNet?.children?.find((c) => c.name === 'weights');
     expect(weightsDir).toBeDefined();
     expect(weightsDir?.type).toBe('dir');
 
-    const hasModel = weightsDir?.children?.some(c => c.name === 'model.rs');
+    const hasModel = weightsDir?.children?.some((c) => c.name === 'model.rs');
     expect(hasModel).toBe(true);
   });
 
@@ -126,12 +126,12 @@ describe('Level Jump Seeding Logic', () => {
     // 3. Assert the final state
     const media = findNodeByName(simulatedState, 'media');
     const incoming = findNodeByName(simulatedState, 'incoming');
-    const archive = incoming?.children?.find(c => c.name === 'backup_log_2024_CURRENT.zip');
+    const archive = incoming?.children?.find((c) => c.name === 'backup_log_2024_CURRENT.zip');
 
     // sys_v1.log should exist in media
-    expect(media?.children?.some(c => c.name === 'sys_v1.log')).toBe(true);
+    expect(media?.children?.some((c) => c.name === 'sys_v1.log')).toBe(true);
     // sys_v1.log should exist inside the archive
-    expect(archive?.children?.some(c => c.name === 'sys_v1.log')).toBe(true);
+    expect(archive?.children?.some((c) => c.name === 'sys_v1.log')).toBe(true);
   });
 
   it('should correctly simulate the asset security for Level 10', () => {
@@ -140,24 +140,24 @@ describe('Level Jump Seeding Logic', () => {
     for (let i = 1; i <= 9; i++) {
       preLevel10State = simulateCompletionOfLevel(preLevel10State, i);
     }
-    
+
     // 2. Run the simulation for Level 10 completion
     const simulatedState = simulateCompletionOfLevel(preLevel10State, 10);
 
     // 3. Assert the final state
     const datastore = findNodeByName(simulatedState, 'datastore');
-    const credentials = datastore?.children?.find(c => c.name === 'credentials');
+    const credentials = datastore?.children?.find((c) => c.name === 'credentials');
     const vaultActive = findNodeByName(simulatedState, 'active');
 
     // Original access_key.pem should still exist
-    expect(credentials?.children?.some(c => c.name === 'access_key.pem')).toBe(true);
+    expect(credentials?.children?.some((c) => c.name === 'access_key.pem')).toBe(true);
 
     // vault_key.pem should exist in vault/active
-    expect(vaultActive?.children?.some(c => c.name === 'vault_key.pem')).toBe(true);
+    expect(vaultActive?.children?.some((c) => c.name === 'vault_key.pem')).toBe(true);
 
     // Decoy files should be deleted from datastore
-    expect(datastore?.children?.some(c => c.name === 'decoy_1.pem')).toBe(false);
-    expect(datastore?.children?.some(c => c.name === 'decoy_2.pem')).toBe(false);
+    expect(datastore?.children?.some((c) => c.name === 'decoy_1.pem')).toBe(false);
+    expect(datastore?.children?.some((c) => c.name === 'decoy_2.pem')).toBe(false);
   });
 
   it('should correctly simulate the neural purge for Level 11', () => {
@@ -166,7 +166,7 @@ describe('Level Jump Seeding Logic', () => {
     for (let i = 1; i <= 10; i++) {
       preLevel11State = simulateCompletionOfLevel(preLevel11State, i);
     }
-    
+
     // 2. Run the simulation for Level 11 completion
     const simulatedState = simulateCompletionOfLevel(preLevel11State, 11);
 
@@ -175,13 +175,13 @@ describe('Level Jump Seeding Logic', () => {
     const tmp = findNodeByName(simulatedState, 'tmp');
 
     // neural_sig_alpha.log should be deleted from workspace
-    expect(workspace?.children?.some(c => c.name === 'neural_sig_alpha.log')).toBe(false);
+    expect(workspace?.children?.some((c) => c.name === 'neural_sig_alpha.log')).toBe(false);
     // neural_sig_alpha.log should exist in /tmp
-    expect(tmp?.children?.some(c => c.name === 'neural_sig_alpha.log')).toBe(true);
+    expect(tmp?.children?.some((c) => c.name === 'neural_sig_alpha.log')).toBe(true);
 
     // Other neural sig files should remain in workspace
-    expect(workspace?.children?.some(c => c.name === 'neural_sig_beta.dat')).toBe(true);
-    expect(workspace?.children?.some(c => c.name === 'neural_sig_gamma.tmp')).toBe(true);
+    expect(workspace?.children?.some((c) => c.name === 'neural_sig_beta.dat')).toBe(true);
+    expect(workspace?.children?.some((c) => c.name === 'neural_sig_gamma.tmp')).toBe(true);
   });
 
   it('should correctly produce the post-level state for Level 15', () => {
@@ -200,7 +200,7 @@ describe('Level Jump Seeding Logic', () => {
     // 3. Assert equivalence (post-L15)
     // After level 15, 'sector_1' and 'grid_alpha' should be deleted.
     const simulatedGuest = findNodeByName(simulatedState, 'guest');
-    expect(simulatedGuest?.children?.some(c => c.name === 'sector_1')).toBe(false);
-    expect(simulatedGuest?.children?.some(c => c.name === 'grid_alpha')).toBe(false);
+    expect(simulatedGuest?.children?.some((c) => c.name === 'sector_1')).toBe(false);
+    expect(simulatedGuest?.children?.some((c) => c.name === 'grid_alpha')).toBe(false);
   });
 });

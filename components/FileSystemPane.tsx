@@ -217,7 +217,10 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                 <span
                   className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}
                 >
-                  <span data-testid={`file-item-${item.name}`} className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
+                  <span
+                    data-testid={`file-item-${item.name}`}
+                    className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}
+                  >
                     {item.name}
                   </span>
                 </span>

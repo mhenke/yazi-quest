@@ -238,6 +238,7 @@ export default function App() {
   const createInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const fuzzyInputRef = useRef<HTMLInputElement>(null);
+  const unusedVar = 'this should cause a lint error'; // Intentional lint error
 
   // Effect to manage input focus based on game mode
   useEffect(() => {
