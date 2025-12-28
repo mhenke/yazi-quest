@@ -1050,7 +1050,11 @@ export default function App() {
           });
           break;
         case '.':
-          setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
+          setGameState((prev) => ({
+            ...prev,
+            showHidden: !prev.showHidden,
+            lastAction: { type: 'TOGGLE_HIDDEN', timestamp: Date.now() },
+          }));
           break;
         case ',':
           setGameState((prev) => ({ ...prev, mode: 'sort' }));

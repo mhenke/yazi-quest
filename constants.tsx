@@ -1272,6 +1272,8 @@ export const LEVELS: Level[] = [
         id: 'nav-2a',
         description: 'Jump to bottom of file list (press G)',
         check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'nav-1');
+          if (!prevTask?.completed) return false;
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           return (
             currentDir?.name === 'datastore' &&
@@ -1284,6 +1286,8 @@ export const LEVELS: Level[] = [
         id: 'nav-2b',
         description: "Jump to top of file list (press 'gg')",
         check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'nav-1');
+          if (!prevTask?.completed) return false;
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           // Accept explicit GG usage (or lastAction) — allow it even if a bottom jump occurred earlier
           return (
@@ -1591,8 +1595,13 @@ export const LEVELS: Level[] = [
           const v2Exists = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
           const uplinkCount =
             protocolsDir.children?.filter((c) => c.name.startsWith('uplink_v')).length || 0;
-          const pasted = state.lastAction?.type === 'PASTE' || state.clipboard?.action === 'yank';
-          return v2Exists || uplinkCount >= 2 || pasted;
+          // Allow multiple valid flows: existing v2 file, multiple uplink matches (collision), or an explicit paste action
+          return (
+            v2Exists ||
+            uplinkCount >= 2 ||
+            state.lastAction?.type === 'PASTE' ||
+            state.clipboard?.action === 'yank'
+          );
         },
         completed: false,
       },
@@ -1604,7 +1613,7 @@ export const LEVELS: Level[] = [
           if (!prevTask?.completed) return false;
           const protocolsDir = findNodeByName(state.fs, 'protocols');
           if (!protocolsDir) return false;
-          // Accept explicit uplink_v2.conf or collision patterns indicating a v2 file, or a rename action
+          // Accept explicit v2 file presence, common collision/name-patterns, or an explicit RENAME action
           const explicit = !!protocolsDir.children?.find((r) => r.name === 'uplink_v2.conf');
           const pattern = !!protocolsDir.children?.find((r) => /uplink.*(_2|v2|_v2)/i.test(r.name));
           const renamed =
@@ -1623,7 +1632,7 @@ export const LEVELS: Level[] = [
     title: 'EMERGENCY EVACUATION',
     description:
       'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. The correct workflow is critical: Cut, Paste in the new location, then return to Delete the original empty folder.',
-    hint: '1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~/.config` and create the `vault/active/` path. 4. Paste the files (p). 5. Return and delete the empty `protocols` folder.',
+    hint: '1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~` (guest), press `.` to show hidden files, then `.` again to hide them. 4. Navigate to `~/.config` and create the `vault/active/` path. 5. Paste the files (p). 6. Return and delete the empty `protocols` folder.',
     coreSkill: 'Selection & Deployment (Space, Cut/Paste)',
     environmentalClue:
       'THREAT: Quarantine lockdown | TECHNIQUE: Select (Space) → Select (Space) → Cut (x) | TARGET: uplink files → ~/.config/vault/active/',
@@ -1679,10 +1688,26 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'toggle-hidden-protocol',
+        description: 'Navigate to `~` (guest), toggle hidden files on (`.`), then off (`.`)',
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'nav-and-cut');
+          if (!prevTask?.completed) return false;
+          // Check if the current directory is ~ (guest) and hidden files were toggled on and off.
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          return (
+            currentDir?.name === 'protocols' && // Should navigate back to protocols
+            !state.showHidden && // Must end with hidden files off
+            state.lastAction?.type === 'TOGGLE_HIDDEN' // Track that toggle happened
+          );
+        },
+        completed: false,
+      },
+      {
         id: 'establish-stronghold',
         description: "Create the 'vault/active/' sector in `~/.config`",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'nav-and-cut');
+          const prevTask = level.tasks.find((t) => t.id === 'toggle-hidden-protocol'); // Update prevTask dependency
           if (!prevTask?.completed) return false;
           const config = findNodeByName(state.fs, '.config');
           const vault = config?.children?.find((v) => v.name === 'vault');
