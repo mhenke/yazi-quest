@@ -147,8 +147,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </div>
             )}
             <button
-              onClick={onNextLevel}
-              className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
+              onClick={() => {
+                if (state.showHidden) return;
+                onNextLevel();
+              }}
+              disabled={state.showHidden}
+              title={
+                state.showHidden ? 'Re-hide dotfiles (.) before completing the level' : undefined
+              }
+              className={`px-4 ${state.showHidden ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-black'} font-bold border-l border-zinc-700 flex items-center gap-2 ${state.showHidden ? '' : 'animate-pulse'} transition-colors`}
             >
               <span className="hidden sm:inline">NEXT</span>
               <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">

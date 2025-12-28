@@ -8,9 +8,9 @@ You are creating mission lore for **Yazi Quest**, an educational game that teach
 
 ## Core Principles
 
-### 1. **One _New_ Skill Per _Teaching_ Level**
+### 1. **Focus on General Topics & Realistic Workflows**
 
-'Teaching' levels should introduce exactly ONE new Yazi command to minimize cognitive load. More advanced 'Challenge' or 'Workflow' levels may combine multiple previously learned skills to test mastery.
+Levels should focus on a general topic (e.g., "Navigation," "Quick Navigation," "File Management") and tasks should reflect realistic Yazi workflows. Tasks can combine up to two actions (e.g., cut and move, filter and escape) to reflect real-world usage patterns.
 
 | Yazi Action           | Narrative Frame                                                          |
 | --------------------- | ------------------------------------------------------------------------ |
@@ -262,7 +262,7 @@ Level 10 (Encrypted Payload) - Using filter with batch selection to extract arch
 
 Before finalizing any level, verify:
 
-- [ ] **Clear Skill:** Can you state in one sentence what Yazi command this teaches?
+- [ ] **Clear Topic/Workflow:** Can you state in one sentence what general topic or workflow this level teaches?
 - [ ] **Metaphor Match:** Does the narrative action logically correspond to the file operation?
 - [ ] **Progressive Build:** Does this assume knowledge from previous levels?
 - [ ] **Appropriate Tone:** Does the vocabulary match the episode's power level?
@@ -287,16 +287,13 @@ Before finalizing any level, verify:
 ❌ **Inconsistent Tone:** "Pwease be careful UwU" (Episode 3)
 ✅ **Consistent Tone:** "TERMINAL OVERRIDE REQUIRED. Eliminate all traces." (Episode 3)
 
-❌ **Teaching Multiple Skills:** "Learn filter, rename, and visual mode" (one level)
-✅ **Single Focus:** "Master the filter command to isolate specific file types" (one level)
-
 ---
 
 ## Iteration Protocol
 
 When refining existing levels:
 
-1. **Identify the Core Skill:** What ONE Yazi command is this teaching?
+1. **Identify the Core Topic/Workflow:** What general topic or Yazi workflow is this level teaching?
 2. **Strip to Essentials:** Remove any steps that don't directly serve learning that skill
 3. **Add Narrative Skin:** Wrap the mechanical steps in appropriate metaphor
 4. **Check Progression:** Does this build naturally from the previous level?

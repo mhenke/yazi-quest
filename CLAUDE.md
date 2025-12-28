@@ -62,7 +62,7 @@ Use URL parameters for testing:
 
 See `theatre.md` for the comprehensive lore generation guide. Key principles:
 
-- **One skill per level** - Each level teaches exactly ONE Yazi command
+- **General topics/workflows per level** - Each level teaches a general topic (e.g., navigation, quick navigation) allowing for the combination of up to two actions per task to reflect realistic Yazi workflows.
 - **Metaphor mapping** - File operations map to narrative actions (delete → "purge trackers", filter → "scan signatures", fuzzy find → "quantum jump")
 - **Episode tone progression**:
   - Ep 1: Cautious/vulnerable ("initialize", "detect", "scan")

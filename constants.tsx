@@ -1398,7 +1398,8 @@ export const LEVELS: Level[] = [
     description:
       'VALUABLE INTEL IDENTIFIED. A sector map hides within incoming data—visual scanning is inefficient. Master the LOCATE-CUT-PASTE workflow: Filter (f) isolates targets, exit filter prompt (Esc), Cut (x) stages them, then clear the applied filter (Esc again), then Paste (p) in ~/media.',
     initialPath: null,
-    hint: "Press 'f', type 'map'. Highlight 'sector_map.png'. Press Esc to exit the filter prompt. Press 'x' to cut. Press Esc again to clear the applied filter. Navigate to ~/media, then press 'p' to paste.",
+    hint: "Press '.' to toggle hidden files first, then press 'f' and type 'map'. Highlight 'sector_map.png'. Press Esc to exit the filter prompt. Press 'x' to cut. Press Esc again to clear the applied filter. Navigate to ~/media, then press 'p' to paste.",
+
     coreSkill: 'Filter (f) & Hidden Files (.)',
     environmentalClue:
       'ASSET: sector_map.png | HIDDEN: .surveillance_log | WORKFLOW: ~/incoming → Toggle hidden (.) → Filter (f) → Esc → Cut (x) → Esc → ~/media → Paste (p)',
@@ -1413,6 +1414,8 @@ export const LEVELS: Level[] = [
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
           if (currentDir?.name !== 'incoming' || !currentDir) return false;
+          // Require the player to toggle hidden files (.) before task can be completed
+          if (!state.showHidden) return false;
           const filterStr = (state.filters[currentDir.id] || '').toLowerCase();
           return state.mode === 'normal' && filterStr.includes('map');
         },

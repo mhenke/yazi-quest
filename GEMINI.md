@@ -55,7 +55,7 @@ The project uses `npm` as its package manager.
 - **State Management:** All application state is managed within the `App.tsx` component using React hooks. There are no external state management libraries like Redux or Zustand.
 
 - **Level Design:** Follow the principles outlined in `theatre.md`.
-  - **One Skill Per Level:** New concepts should be introduced in focused, dedicated levels.
+  - **Topic/Workflow Focused Levels:** New concepts are introduced within general topics (e.g., "Navigation," "Quick Navigation"). Tasks may combine up to two actions to reflect realistic Yazi usage.
   - **Metaphor Mapping:** File operations must map to clear narrative actions (e.g., `delete` -> "purge trackers").
   - **Progressive Tone:** The narrative tone should escalate across the three episodes (Awakening -> Fortification -> Mastery).
 

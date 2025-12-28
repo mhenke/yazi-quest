@@ -217,7 +217,7 @@ export default function App() {
       showHelp: false,
       showHint: false,
       hintStage: 0,
-      showHidden: true,
+      showHidden: false,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
@@ -371,14 +371,16 @@ export default function App() {
       return check.some((fn) => {
         try {
           return fn(state, level);
-        } catch (_e) {
+        } catch (e) {
+          reportError(e, { phase: 'evaluateTaskCheck.some', level: level.id });
           return false;
         }
       });
     }
     try {
       return (check as (s: GameState, l: Level) => boolean)(state, level);
-    } catch (_e) {
+    } catch (e) {
+      reportError(e, { phase: 'evaluateTaskCheck', level: level.id });
       return false;
     }
   };
@@ -701,6 +703,13 @@ export default function App() {
         case 'ArrowRight': {
           const allComplete = currentLevel.tasks.every((t) => t.completed);
           if (allComplete && e.key === 'Enter') {
+            if (gameState.showHidden) {
+              showNotification(
+                "SYSTEM: Your traces are visible — re-hide dotfiles before mission completion (press '.')",
+                5000
+              );
+              return;
+            }
             advanceLevel();
             return;
           }

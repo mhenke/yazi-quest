@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { cloneFS } from '../utils/fsHelpers';
 import { INITIAL_FS, LEVELS } from '../constants';
 import { simulateCompletionOfLevel } from '../utils/seedLevels';
+import { reportError } from '../utils/error';
 
 // Normalize structure by removing ids/timestamps and sorting children by name
 const normalize = (node: any): any => {
@@ -26,11 +27,7 @@ const appInitializerSim = (baseFs: any, targetIndex: number) => {
       const lvl = LEVELS[i];
       if (lvl.onEnter) {
         if (!lvl.seedMode || lvl.seedMode !== 'fresh' || isFreshStart) {
-          try {
-            fs = lvl.onEnter(fs);
-          } catch (e) {
-            // swallow for test
-          }
+          fs = lvl.onEnter(fs);
         }
       }
     }
@@ -55,11 +52,7 @@ const appInitializerSim = (baseFs: any, targetIndex: number) => {
     // apply post-level completion simulation for each prior level
     for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
       const lvl = LEVELS[i];
-      try {
-        fs = simulateCompletionOfLevel(fs, lvl.id);
-      } catch (e) {
-        // swallow
-      }
+      fs = simulateCompletionOfLevel(fs, lvl.id);
     }
   }
 
@@ -75,14 +68,11 @@ const sequentialPlaySim = (baseFs: any, targetIndex: number) => {
       try {
         fs = lvl.onEnter(fs);
       } catch (e) {
-        // swallow
+        reportError(e, `Error during onEnter in sequentialPlaySim for level ${lvl.id}`);
+        throw e;
       }
     }
-    try {
-      fs = simulateCompletionOfLevel(fs, lvl.id);
-    } catch (e) {
-      // swallow
-    }
+    fs = simulateCompletionOfLevel(fs, lvl.id);
   }
   return fs;
 };

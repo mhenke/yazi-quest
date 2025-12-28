@@ -22,6 +22,7 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        project: 'tsconfig.json',
       },
       globals: {
         console: 'readonly',
@@ -61,6 +62,11 @@ export default [
       'jsx-a11y/no-static-element-interactions': 'off',
       'react/prop-types': 'off',
       'no-undef': 'off', // TypeScript handles this
+      '@typescript-eslint/no-empty-function': [
+        'error',
+        { allow: ['arrowFunctions', 'methods', 'constructors'] },
+      ],
+      '@typescript-eslint/no-floating-promises': 'error',
     },
     settings: {
       react: {
