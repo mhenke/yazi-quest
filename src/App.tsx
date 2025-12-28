@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FileNode, Level, ClipboardItem, FsError } from '../types';
 import { INITIAL_FS, LEVELS, EPISODE_LORE } from '../constants';
 import {
@@ -61,6 +61,37 @@ const App: React.FC = () => {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const filterRef = useRef<HTMLInputElement | null>(null);
+  const inputFileRef = useRef<HTMLInputElement | null>(null);
+  const generalModeRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // Focus/select mode inputs when entering input modes so typing goes into the input
+    if (gameState.mode === 'filter') {
+      setTimeout(() => {
+        filterRef.current?.focus();
+        filterRef.current?.select?.();
+      }, 0);
+    } else if (
+      gameState.mode === 'input-file' ||
+      (gameState.mode && gameState.mode.startsWith && gameState.mode.startsWith('input-'))
+    ) {
+      setTimeout(() => {
+        inputFileRef.current?.focus();
+        inputFileRef.current?.select?.();
+      }, 0);
+    } else if (
+      gameState.mode !== 'normal' &&
+      !['confirm-delete', 'sort', 'g-command', 'overwrite-confirm', 'fzf-current'].includes(
+        gameState.mode
+      )
+    ) {
+      setTimeout(() => {
+        generalModeRef.current?.focus();
+      }, 0);
+    }
+  }, [gameState.mode]);
+
   const currentLevel = LEVELS[gameState.levelIndex];
 
   // Calculate visible items for current directory (memoized)
@@ -623,6 +654,7 @@ const App: React.FC = () => {
                   {gameState.mode.replace('input-', 'create ').replace('fzf-', 'find ')}
                 </span>
                 <input
+                  ref={generalModeRef}
                   type="text"
                   className="bg-transparent border-none outline-none text-sm font-mono text-white w-full"
                   value={gameState.inputBuffer}
@@ -655,6 +687,7 @@ const App: React.FC = () => {
                   Filter:
                 </span>
                 <input
+                  ref={filterRef}
                   type="text"
                   value={gameState.inputBuffer}
                   className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
@@ -677,6 +710,7 @@ const App: React.FC = () => {
                   Create:
                 </span>
                 <input
+                  ref={inputFileRef}
                   type="text"
                   value={gameState.inputBuffer}
                   className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"

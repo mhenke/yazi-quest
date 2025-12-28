@@ -234,6 +234,37 @@ export default function App() {
     };
   });
 
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  const createInputRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const fuzzyInputRef = useRef<HTMLInputElement>(null);
+
+  // Effect to manage input focus based on game mode
+  useEffect(() => {
+    switch (gameState.mode) {
+      case 'filter':
+        filterInputRef.current?.focus();
+        filterInputRef.current?.select(); // Select existing text for easy replacement
+        break;
+      case 'input-file':
+        createInputRef.current?.focus();
+        break;
+      case 'rename':
+        // Focus is handled inside FileSystemPane
+        break;
+      case 'zoxide-jump':
+      case 'fzf-current':
+        fuzzyInputRef.current?.focus();
+        break;
+      default:
+        // When leaving an input mode, ensure no input is unintentionally focused
+        if (filterInputRef.current === document.activeElement) filterInputRef.current.blur();
+        if (createInputRef.current === document.activeElement) createInputRef.current.blur();
+        if (fuzzyInputRef.current === document.activeElement) fuzzyInputRef.current.blur();
+        break;
+    }
+  }, [gameState.mode]);
+
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showFalseThreatAlert, setShowFalseThreatAlert] = useState(false);
   const [showAlertToast, setShowAlertToast] = useState(false);
@@ -1236,108 +1267,39 @@ export default function App() {
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>
     ) => {
-      // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
+      // Typing is now handled natively by the input. This handler only deals with command keys.
       const isZoxide = gameState.mode === 'zoxide-jump';
-      let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
-      if (isZoxide) {
-        candidates = Object.keys(gameState.zoxideData)
-          .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-          .sort((a, b) => {
-            const diff = b.score - a.score;
-            if (Math.abs(diff) > 0.0001) return diff;
-            return a.path.localeCompare(b.path);
-          })
-          .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
-      } else {
-        candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
-          .filter((c) => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
-          .map((c) => ({ path: c.display, score: 0, pathIds: c.path }));
-      }
-
-      if (e.key === 'Enter') {
-        const idx = gameState.fuzzySelectedIndex || 0;
-        const selected = candidates[idx];
-        if (selected) {
-          if (isZoxide) {
-            // Find path ids from string
-            const allDirs = getAllDirectories(gameState.fs);
-            const match = allDirs.find((d) => d.display === selected.path);
-            if (match) {
-              const now = Date.now();
-
-              // Add specific "Quantum" feedback for Level 7
-              const isQuantum = gameState.levelIndex === 6;
-              const notification = isQuantum
-                ? '>> QUANTUM TUNNEL ESTABLISHED <<'
-                : `Jumped to ${selected.path}`;
-
-              setGameState((prev) => ({
-                ...prev,
-                mode: 'normal',
-                currentPath: match.path,
-                cursorIndex: 0,
-                notification,
-                stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                zoxideData: {
-                  ...prev.zoxideData,
-                  [selected.path]: {
-                    count: (prev.zoxideData[selected.path]?.count || 0) + 1,
-                    lastAccess: now,
-                  },
-                },
-              }));
-            } else {
-              // Fallback: If for some reason match is not found, close dialog
-              setGameState((prev) => ({ ...prev, mode: 'normal' }));
-            }
-          } else {
-            if (selected.pathIds && Array.isArray(selected.pathIds)) {
-              // FZF Logic: Combine current path with selected relative pathIds
-              const finalPath = [...gameState.currentPath, ...selected.pathIds];
-              const parentPath = finalPath.slice(0, -1);
-              const fileId = finalPath[finalPath.length - 1];
-
-              // Find the index of the selected file in the parent directory
-              const parentNode = getNodeByPath(gameState.fs, parentPath);
-              const fileIndex = parentNode?.children?.findIndex((c) => c.id === fileId) ?? 0;
-
-              setGameState((prev) => ({
-                ...prev,
-                mode: 'normal',
-                currentPath: parentPath,
-                cursorIndex: fileIndex,
-                notification: `Jumped to ${selected.path}`,
-              }));
-            } else {
-              setGameState((prev) => ({ ...prev, mode: 'normal' }));
-            }
-          }
+      
+      const getFuzzyCandidates = () => {
+        if (isZoxide) {
+          return Object.keys(gameState.zoxideData)
+            .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+            .sort((a, b) => {
+              const diff = b.score - a.score;
+              if (Math.abs(diff) > 0.0001) return diff;
+              return a.path.localeCompare(b.path);
+            })
+            .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
         } else {
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
+          return getRecursiveContent(gameState.fs, gameState.currentPath)
+            .filter((c) => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
+            .map((c) => ({ path: c.display, score: 0, pathIds: c.path }));
         }
-      } else if (e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
-      } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
+      };
+      
+      const candidates = getFuzzyCandidates();
+
+      if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
+        e.preventDefault();
         setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
         }));
       } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
+        e.preventDefault();
         setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
-        }));
-      } else if (e.key === 'Backspace') {
-        setGameState((prev) => ({
-          ...prev,
-          inputBuffer: prev.inputBuffer.slice(0, -1),
-          fuzzySelectedIndex: 0,
-        }));
-      } else if (e.key.length === 1) {
-        setGameState((prev) => ({
-          ...prev,
-          inputBuffer: prev.inputBuffer + e.key,
-          fuzzySelectedIndex: 0,
         }));
       }
     },
@@ -1349,8 +1311,20 @@ export default function App() {
       if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
       if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
 
-      if (['input-file', 'filter', 'rename'].includes(gameState.mode)) {
-        return;
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl?.tagName === 'INPUT' && (activeEl as HTMLInputElement).type === 'text';
+
+      // If an input is focused, only process command keys and let the browser handle the rest.
+      if (isInputFocused) {
+        if (e.key === 'Enter') {
+          if (gameState.mode === 'filter') handleFilterModeSubmit();
+          if (gameState.mode === 'input-file') handleInputModeSubmit();
+          if (gameState.mode === 'rename') handleRenameSubmit();
+        }
+        if (e.key === 'Escape') {
+          setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        }
+        return; // Stop processing other keys
       }
 
       setGameState((prev) => {
@@ -1759,38 +1733,45 @@ export default function App() {
   const [overlayLeft, setOverlayLeft] = React.useState<string>('calc(16rem + 0.5rem)');
 
   const updateOverlayPos = useCallback(() => {
-    const previewEl = document.getElementById('preview-main');
-    if (previewEl) {
-      const previewLeft = previewEl.getBoundingClientRect().left;
-      const rightPx = Math.max(0, Math.round(window.innerWidth - previewLeft));
-      setOverlayRight(`${rightPx}px`);
-    }
+    if (typeof import.meta.vitest === 'undefined') {
+      const previewEl = document.getElementById('preview-main');
+      if (previewEl) {
+        const previewLeft = previewEl.getBoundingClientRect().left;
+        const rightPx = Math.max(0, Math.round(window.innerWidth - previewLeft));
+        setOverlayRight(`${rightPx}px`);
+      }
 
-    const leftPane = document.querySelector('.w-64') as HTMLElement | null;
-    if (leftPane) {
-      // place overlay starting after left pane plus a small gap (8px)
-      const leftPx = Math.round(leftPane.getBoundingClientRect().right + 8);
-      setOverlayLeft(`${leftPx}px`);
-    } else {
-      // fallback to small left margin
-      setOverlayLeft('8px');
+      const leftPane = document.querySelector('.w-64') as HTMLElement | null;
+      if (leftPane) {
+        // place overlay starting after left pane plus a small gap (8px)
+        const leftPx = Math.round(leftPane.getBoundingClientRect().right + 8);
+        setOverlayLeft(`${leftPx}px`);
+      } else {
+        // fallback to small left margin
+        setOverlayLeft('8px');
+      }
     }
   }, []);
 
   useEffect(() => {
-    setTimeout(() => updateOverlayPos(), 0);
-    window.addEventListener('resize', updateOverlayPos);
-    const mo = new MutationObserver(() => updateOverlayPos());
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true });
-    return () => {
-      window.removeEventListener('resize', updateOverlayPos);
-      mo.disconnect();
-    };
+    // This effect is for visual layout and causes issues in the JSDOM test environment.
+    // It is not necessary for testing game logic.
+    if (typeof import.meta.vitest === 'undefined') {
+      setTimeout(() => updateOverlayPos(), 0);
+      window.addEventListener('resize', updateOverlayPos);
+      const mo = new MutationObserver(() => updateOverlayPos());
+      mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+      return () => {
+        window.removeEventListener('resize', updateOverlayPos);
+        mo.disconnect();
+      };
+    }
   }, [updateOverlayPos]);
 
   return (
     <div
       id="app-root"
+      data-testid="app-root"
       tabIndex={-1}
       className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative"
     >
@@ -1972,6 +1953,8 @@ export default function App() {
                     Filter:
                   </span>
                   <input
+                    ref={filterInputRef}
+                    data-testid="filter-input"
                     type="text"
                     value={gameState.inputBuffer}
                     onChange={(e) => {
@@ -1982,12 +1965,6 @@ export default function App() {
                         if (currentDir) newFilters[currentDir.id] = val;
                         return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
                       });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === 'Escape') {
-                        handleFilterModeSubmit();
-                      }
-                      e.stopPropagation();
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
                   />
@@ -2005,16 +1982,12 @@ export default function App() {
                     Create:
                   </span>
                   <input
+                    ref={createInputRef}
                     type="text"
                     value={gameState.inputBuffer}
                     onChange={(e) =>
                       setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
                     }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleInputModeSubmit();
-                      if (e.key === 'Escape') setGameState((prev) => ({ ...prev, mode: 'normal' }));
-                      e.stopPropagation();
-                    }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
                   />
                 </div>
@@ -2143,8 +2116,10 @@ export default function App() {
       {/* FuzzyFinder Overlay - render at root level to cover everything */}
       {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
         <FuzzyFinder
+          ref={fuzzyInputRef}
           gameState={gameState}
           onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
+          onInputChange={(value) => setGameState((prev) => ({ ...prev, inputBuffer: value, fuzzySelectedIndex: 0 }))}
           onSelect={(path, isZoxide) => {
             if (isZoxide) {
               const allDirs = getAllDirectories(gameState.fs);

@@ -1406,27 +1406,29 @@ export const LEVELS: Level[] = [
     leadsTo: [5, 10],
     tasks: [
       {
-        id: 'filter-and-cut',
+        id: 'filter-and-exit',
         description:
-          "Filter (f) in '~/incoming' to find 'sector_map.png', exit filter mode (Esc), and cut the asset (x)",
-        check: (state: GameState, level: Level) => {
-          // Allow cutting once the player has yanked/cut the sector_map.png; no prerequisite task required
-          return (
-            state.clipboard?.action === 'cut' &&
-            state.clipboard.nodes.some((p) => p.name === 'sector_map.png')
-          );
+          "Filter (f) in '~/incoming' to find 'sector_map.png' and exit filter mode (Esc)",
+        check: (state: GameState) => {
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          if (currentDir?.name !== 'incoming' || !currentDir) return false;
+          const filterStr = (state.filters[currentDir.id] || '').toLowerCase();
+          return state.mode === 'normal' && filterStr.includes('map');
         },
         completed: false,
       },
 
       {
-        id: 'clear-filter',
-        description: 'Clear the filter (Esc) to reset view',
+        id: 'cut-and-clear-filter',
+        description: "Cut the asset (x) and clear the filter (Esc) to reset the view",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((p) => p.id === 'filter-and-cut');
+          const prevTask = level.tasks.find((p) => p.id === 'filter-and-exit');
           if (!prevTask?.completed) return false;
           const incoming = findNodeByName(state.fs, 'incoming');
-          return incoming ? !state.filters[incoming.id] : true;
+          const clipboardOk =
+            state.clipboard?.action === 'cut' &&
+            state.clipboard.nodes.some((p) => p.name === 'sector_map.png');
+          return clipboardOk && (incoming ? !state.filters[incoming.id] : true);
         },
         completed: false,
       },
@@ -1434,7 +1436,7 @@ export const LEVELS: Level[] = [
         id: 'deploy-asset',
         description: "Deploy asset to '~/media' (p)",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'clear-filter');
+          const prevTask = level.tasks.find((t) => t.id === 'cut-and-clear-filter');
           if (!prevTask?.completed) return false;
 
           const media = findNodeByName(state.fs, 'media');
@@ -1466,7 +1468,7 @@ export const LEVELS: Level[] = [
     hint: "From your current location, navigate to '~/datastore'. Once inside, press 'a' and type 'protocols/' (the trailing slash creates a directory). Enter it, then press 'a' again for each new file.",
     coreSkill: 'Create (a)',
     environmentalClue:
-      'NAVIGATE: ~/datastore | CREATE: protocols/ → uplink_v1.conf, uplink_v2.conf',
+      '~/datastore | protocols/ → uplink_v1.conf, uplink_v2.conf',
     successMessage: 'PROTOCOLS ESTABLISHED.',
     onEnter: (fs: FileNode) => {
       let currentFs = fs;
@@ -1543,12 +1545,11 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'EMERGENCY EVACUATION',
     description:
-      'QUARANTINE ALERT. Your activities in the datastore have triggered a defensive handshake from the system. Security daemons are flagging the protocols directory for lockdown. You must evacuate your configuration assets immediately to the hidden stronghold in .config/vault/active. Use batch operations for speed.',
-    initialPath: ['root', 'home', 'guest', 'datastore'],
-    hint: "1. Navigate to ~/datastore/protocols. 2. Select all files (Ctrl+A), then Cut (x). 3. Navigate to '.config'. 4. Create 'vault/active/' (a). 5. Enter 'active' and Paste (p).",
-    coreSkill: 'Batch Select (Ctrl+A), Cut/Paste (x/p)',
+      'QUARANTINE ALERT. A defensive daemon is flagging the `protocols` directory for lockdown. Evacuate your config assets to the hidden `.config/vault/active` stronghold immediately. The correct workflow is critical: Cut, Paste in the new location, then return to Delete the original empty folder.',
+    hint: "1. In `~/datastore/protocols`, press `Space` on each file to select them. 2. With both selected, Cut them (x). 3. Navigate to `~/.config` and create the `vault/active/` path. 4. Paste the files (p). 5. Return and delete the empty `protocols` folder.",
+    coreSkill: 'Visual Selection (Space), Cut/Paste (x/p)',
     environmentalClue:
-      'THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/',
+      'THREAT: Quarantine lockdown | TECHNIQUE: Select (Space) → Select (Space) → Cut (x) | TARGET: uplink files → ~/.config/vault/active/',
     successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',
     buildsOn: [3, 4],
     leadsTo: [9],
@@ -1588,41 +1589,24 @@ export const LEVELS: Level[] = [
 
     tasks: [
       {
-        id: 'nav-and-select',
-        description: "Select both uplink files in '~/datastore/protocols' (Space)",
+        id: 'nav-and-cut',
+        description: "Cut both uplink files from '~/datastore/protocols' (Ctrl+A, x)",
         check: (state: GameState) => {
           const currentDir = getNodeByPath(state.fs, state.currentPath);
-          return currentDir?.name === 'protocols' && state.selectedIds.length >= 2;
-        },
-
-        completed: false,
-      },
-      {
-        id: 'cut-and-delete',
-        description: "Cut the files (x) and delete the 'protocols' folder",
-        check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'nav-and-select');
-          if (!prevTask?.completed) return false;
-
           const clipboardOk =
             state.clipboard?.action === 'cut' &&
             state.clipboard.nodes.length >= 2 &&
             state.clipboard.nodes.some((n) => n.name === 'uplink_v1.conf');
-
-          const datastore = findNodeByName(state.fs, 'datastore');
-          const protocolsExists = !!datastore?.children?.find((c) => c.name === 'protocols');
-
-          return clipboardOk && !protocolsExists;
+          return currentDir?.name === 'protocols' && clipboardOk;
         },
         completed: false,
       },
       {
         id: 'establish-stronghold',
-        description: "Establish 'vault/active/' sector in ~/.config (a)",
+        description: "Create the 'vault/active/' sector in `~/.config`",
         check: (state: GameState, level: Level) => {
-          const prevTask = level.tasks.find((t) => t.id === 'cut-and-delete');
+          const prevTask = level.tasks.find((t) => t.id === 'nav-and-cut');
           if (!prevTask?.completed) return false;
-
           const config = findNodeByName(state.fs, '.config');
           const vault = config?.children?.find((v) => v.name === 'vault');
           return !!vault?.children?.find((r) => r.name === 'active' && r.type === 'dir');
@@ -1631,15 +1615,26 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: 'Migrate configuration assets to ~/.config/vault/active (p)',
+        description: 'Navigate to `.../active` and paste the assets (p)',
         check: (state: GameState, level: Level) => {
           const prevTask = level.tasks.find((t) => t.id === 'establish-stronghold');
           if (!prevTask?.completed) return false;
-
           const active = findNodeByName(state.fs, 'active');
           const hasV1 = active?.children?.some((x) => x.name === 'uplink_v1.conf');
           const hasV2 = active?.children?.some((x) => x.name === 'uplink_v2.conf');
           return !!hasV1 && !!hasV2;
+        },
+        completed: false,
+      },
+      {
+        id: 'delete-source',
+        description: "Return to `~/datastore` and delete the empty 'protocols' folder",
+        check: (state: GameState, level: Level) => {
+          const prevTask = level.tasks.find((t) => t.id === 'deploy-assets');
+          if (!prevTask?.completed) return false;
+          const datastore = findNodeByName(state.fs, 'datastore');
+          const protocolsExists = !!datastore?.children?.find((c) => c.name === 'protocols');
+          return !protocolsExists;
         },
         completed: false,
       },
