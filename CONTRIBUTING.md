@@ -25,3 +25,10 @@
 ## State Management
 
 - Do not mutate the `fs` state directly. Always use helper functions in `utils/fsHelpers.ts` which return a new state copy (immutability).
+
+## Development Workflow
+
+- `npm run dev`: Starts the local development server.
+- `npm run build`: Builds the application for production.
+- `npm run lint`: Lints the code using ESLint.
+- `npm run format`: Formats the code using Prettier.
