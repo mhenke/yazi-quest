@@ -1,3 +1,4 @@
+
 import { FileNode, SortBy, SortDirection } from '../../types';
 
 /**
@@ -91,21 +92,20 @@ export function sortNodes(
 /**
  * Get sort label for UI display
  */
-export function getSortLabel(sortBy: SortBy, sortDirection: SortDirection): string {
-  const dirSymbol = sortDirection === 'asc' ? '↑' : '↓';
-
+export function getSortLabel(sortBy: SortBy, _sortDirection: SortDirection): string {
+  // Direction symbol removed
   switch (sortBy) {
     case 'natural':
-      return `Natural ${dirSymbol}`;
+      return `Natural`;
     case 'alphabetical':
-      return `A-Z ${dirSymbol}`;
+      return `A-Z`;
     case 'modified':
-      return `Modified ${dirSymbol}`;
+      return `Modified`;
     case 'size':
-      return `Size ${dirSymbol}`;
+      return `Size`;
     case 'extension':
-      return `Extension ${dirSymbol}`;
+      return `Extension`;
     default:
-      return `Natural ${dirSymbol}`;
+      return `Natural`;
   }
 }

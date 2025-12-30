@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   GameState,
@@ -1222,12 +1221,14 @@ export default function App() {
              return;
         }
         
-        if (e.key === '?' && gameState.mode === 'normal') {
+        if (e.key === '?' && e.altKey && gameState.mode === 'normal') {
+            e.preventDefault();
             setGameState(prev => ({ ...prev, showHelp: true }));
             return;
         }
 
-        if (e.key === 'H' && e.shiftKey && gameState.mode === 'normal') {
+        if (e.key === 'h' && e.altKey && gameState.mode === 'normal') {
+            e.preventDefault();
             setGameState(prev => {
                 if (prev.showHint) {
                     const nextStage = (prev.hintStage + 1) % 3;
