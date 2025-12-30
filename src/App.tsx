@@ -176,6 +176,8 @@ export default function App() {
       usedGG: false,
       usedDown: false,
       usedUp: false,
+      usedPreviewDown: false,
+      usedPreviewUp: false,
       completedTaskIds,
     };
   });
@@ -395,6 +397,8 @@ export default function App() {
         usedGG: false,
         usedDown: false,
         usedUp: false,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
         zoxideData: newZoxideData,
         future: [],
         previewScroll: 0,
@@ -439,6 +443,8 @@ export default function App() {
         usedGG: false,
         usedDown: false,
         usedUp: false,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
         future: [],
         previewScroll: 0,
         completedTaskIds: newCompletedTaskIds,
@@ -559,7 +565,9 @@ export default function App() {
             ...prev,
             cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
             previewScroll: 0,
-            usedDown: true
+            usedDown: true,
+            usedPreviewDown: false,
+            usedPreviewUp: false
           }));
           break;
         case 'k':
@@ -568,17 +576,27 @@ export default function App() {
               ...prev, 
               cursorIndex: Math.max(0, prev.cursorIndex - 1), 
               previewScroll: 0,
-              usedUp: true 
+              usedUp: true,
+              usedPreviewDown: false,
+              usedPreviewUp: false
           }));
           break;
         case 'J':
           if (e.shiftKey) {
-            setGameState((prev) => ({ ...prev, previewScroll: prev.previewScroll + 1 }));
+            setGameState((prev) => ({ 
+              ...prev, 
+              previewScroll: prev.previewScroll + 1,
+              usedPreviewDown: true 
+            }));
           }
           break;
         case 'K':
           if (e.shiftKey) {
-            setGameState((prev) => ({ ...prev, previewScroll: Math.max(0, prev.previewScroll - 1) }));
+            setGameState((prev) => ({ 
+              ...prev, 
+              previewScroll: Math.max(0, prev.previewScroll - 1),
+              usedPreviewUp: true
+            }));
           }
           break;
         case 'g':
@@ -591,7 +609,9 @@ export default function App() {
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
-              previewScroll: 0
+              previewScroll: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false
             }));
           }
           break;
@@ -611,6 +631,8 @@ export default function App() {
                       currentPath: previousPath,
                       cursorIndex: 0,
                       previewScroll: 0,
+                      usedPreviewDown: false,
+                      usedPreviewUp: false,
                       notification: 'Navigated back'
                   };
               });
@@ -632,6 +654,8 @@ export default function App() {
                        currentPath: nextPath,
                        cursorIndex: 0,
                        previewScroll: 0,
+                       usedPreviewDown: false,
+                       usedPreviewUp: false,
                        notification: 'Navigated forward'
                    };
                });
@@ -655,7 +679,9 @@ export default function App() {
               ...prev,
               cursorIndex: items.length - 1,
               usedG: inRequiredDir ? true : prev.usedG,
-              previewScroll: 0
+              previewScroll: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false
             };
           });
           break;
@@ -665,7 +691,9 @@ export default function App() {
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
-              previewScroll: 0
+              previewScroll: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false
             }));
           }
           break;
@@ -688,6 +716,8 @@ export default function App() {
                 cursorIndex: 0,
                 usedG: false, // Reset jump tracking on navigation
                 usedGG: false,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
                 history: [...prev.history, prev.currentPath], // Push to history
                 future: [], // Clear future on new navigation
                 previewScroll: 0,
@@ -940,6 +970,8 @@ export default function App() {
               mode: 'zoxide-jump',
               inputBuffer: '',
               fuzzySelectedIndex: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false
             }));
           }
           break;
@@ -950,6 +982,8 @@ export default function App() {
               mode: 'fzf-current',
               inputBuffer: '',
               fuzzySelectedIndex: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false
             }));
           }
           break;
@@ -1028,6 +1062,8 @@ export default function App() {
                 inputBuffer: '',
                 history: [...prev.history, prev.currentPath],
                 future: [], // Reset future on new jump
+                usedPreviewDown: false,
+                usedPreviewUp: false,
                 stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                 zoxideData: {
                   ...prev.zoxideData,
@@ -1080,6 +1116,8 @@ export default function App() {
                     history: [...prev.history, prev.currentPath],
                     future: [], // Reset future
                     notification: `Found: ${selected.path}`,
+                    usedPreviewDown: false,
+                    usedPreviewUp: false,
                     stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
                  };
               });
@@ -1186,39 +1224,39 @@ export default function App() {
         } else if (gameState.mode === 'g-command') {
             // Inline handling for G-command map keys as they are simple
              if (e.key === 'Escape') setGameState(prev => ({ ...prev, mode: 'normal' }));
-             else if (e.key === 'g') setGameState(prev => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: true, previewScroll: 0 }));
+             else if (e.key === 'g') setGameState(prev => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: true, previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              else if (e.key === 'G') {
                  // gg handled above, Shift+G handled in normal mode
              }
              else if (e.key === 'h') {
                  const homePath = ['root', 'home', 'guest'];
-                 setGameState(prev => ({ ...prev, currentPath: homePath, cursorIndex: 0, mode: 'normal', notification: 'Jumped to home', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: homePath, cursorIndex: 0, mode: 'normal', notification: 'Jumped to home', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 'c') {
                  // goto .config
                  const path = ['root', 'home', 'guest', '.config'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to config', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to config', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 'w') {
                  // goto workspace
                  const path = ['root', 'home', 'guest', 'workspace'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to workspace', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to workspace', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 't') {
                  const path = ['root', 'tmp'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to tmp', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to tmp', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 'r') {
                  const path = ['root'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to root', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to root', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 'i') {
                  const path = ['root', 'home', 'guest', 'incoming'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to incoming', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to incoming', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else if (e.key === 'd') {
                  const path = ['root', 'home', 'guest', 'datastore'];
-                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to datastore', future: [], previewScroll: 0 }));
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to datastore', future: [], previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false }));
              }
              else {
                  setGameState(prev => ({ ...prev, mode: 'normal' }));
@@ -1343,6 +1381,8 @@ export default function App() {
                 showEpisodeIntro: false,
                 future: [],
                 previewScroll: 0,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
                 // Also reset completedTaskIds for the jumped level if we treat it as a fresh start, 
                 // but usually jump preserves state. Let's keep it simple.
              }));
@@ -1500,7 +1540,9 @@ export default function App() {
                                       stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
                                       zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } },
                                       future: [],
-                                      previewScroll: 0
+                                      previewScroll: 0,
+                                      usedPreviewDown: false,
+                                      usedPreviewUp: false
                                   }));
                              } else {
                                   setGameState(prev => ({ ...prev, mode: 'normal' }));

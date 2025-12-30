@@ -163,6 +163,8 @@ export interface GameState {
   usedGG?: boolean; // Tracks if player used gg (jump to top)
   usedDown?: boolean; // Tracks if player used j/down
   usedUp?: boolean; // Tracks if player used k/up
+  usedPreviewDown?: boolean; // Tracks if player used Shift+J
+  usedPreviewUp?: boolean; // Tracks if player used Shift+K
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level
 }
 
