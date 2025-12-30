@@ -143,7 +143,8 @@ export const INITIAL_FS: FileNode = {
           id: id(), name: "source_code.zip", type: "archive", children: [{
             id: id(), name: "Cargo.toml", type: "file", content: `[package]\nname = "yazi_core"\nversion = "0.1.0"`
           }, { id: id(), name: "main.rs", type: "file", content: `fn main() {\n    println!("Hello Yazi!");\n}` }, { id: id(), name: "lib.rs", type: "file", content: `pub mod core;\npub mod ui;` }]
-        }, { id: id(), name: "_env.local", type: "file", content: `DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******` }, { id: id(), name: "00_manifest.xml", type: "file", content: `<?xml version="1.0"?>\n<manifest>\n  <project id="YAZI-7734" />\n  <status>active</status>\n  <integrity>verified</integrity>\n</manifest>` }, { id: id(), name: "01_intro.mp4", type: "file", content: `[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]` }, { id: id(), name: "aa_recovery_procedures.pdf", type: "file", content: `%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n[ENCRYPTED DOCUMENT]` }, { id: id(), name: "abandoned_script.py", type: "file", content: `import sys\nimport time\n\ndef connect():\n    print("Initiating handshake...")\n    time.sleep(1)\n    # Connection refused\n    return False` }, { id: id(), name: "ability_scores.csv", type: "file", content: `char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10` }, { id: id(), name: "about.md", type: "file", content: `# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive` }, { id: id(), name: "abstract_model.ts", type: "file", content: `export interface NeuralNet {\n  layers: number;\n  weights: Float32Array;\n  activation: "relu" | "sigmoid";\n}` }, { id: id(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" }, { id: id(), name: "expenditure_log.csv", type: "file", content: `date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee` }, { id: id(), name: "hyperloop_specs.pdf", type: "file", content: `[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION` }, { id: id(), name: "pending_updates.log", type: "file", content: `[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active` }, { id: id(), name: "personnel_list.txt", type: "file", content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]` }, { id: id(), name: "special_ops.md", type: "file", content: `# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache` }, {
+        }, { id: id(), name: "_env.local", type: "file", content: `DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******` }, { id: id(), name: "00_manifest.xml", type: "file", content: `<?xml version="1.0"?>\n<manifest>\n  <project id="YAZI-7734" />\n  <status>active</status>\n  <integrity>verified</integrity>\n</manifest>` }, { id: id(), name: "01_intro.mp4", type: "file", content: `[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]` }, { id: id(), name: "aa_recovery_procedures.pdf", type: "file", content: `%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n[ENCRYPTED DOCUMENT]` }, { id: id(), name: "abandoned_script.py", type: "file", content: `import sys\nimport time\n\ndef connect():\n    print("Initiating handshake...")\n    time.sleep(1)\n    # Connection refused\n    return False` }, { id: id(), name: "ability_scores.csv", type: "file", content: `char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10` }, { id: id(), name: "about.md", type: "file", content: `# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive` }, { id: id(), name: "abstract_model.ts", type: "file", content: `export interface NeuralNet {\n  layers: number;
+  weights: Float32Array;\n  activation: "relu" | "sigmoid";\n}` }, { id: id(), name: "apex_predator.png", type: "file", content: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop" }, { id: id(), name: "expenditure_log.csv", type: "file", content: `date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee` }, { id: id(), name: "hyperloop_specs.pdf", type: "file", content: `[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION` }, { id: id(), name: "pending_updates.log", type: "file", content: `[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active` }, { id: id(), name: "personnel_list.txt", type: "file", content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]` }, { id: id(), name: "special_ops.md", type: "file", content: `# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache` }, {
           id: id(), name: "tape_archive.tar", type: "archive", children: [{
             id: id(), name: "header.dat", type: "file", content: "[TAPE HEADER 0x001]"
           }, { id: id(), name: "partition_1.img", type: "file", content: "[BINARY DATA PARTITION 1]" }, { id: id(), name: "partition_2.img", type: "file", content: "[BINARY DATA PARTITION 2]" }]
@@ -261,7 +262,81 @@ export const LEVELS: Level[] = [
       { id: "clone-and-rename", description: "Duplicate 'uplink_v1.conf' (y, p) and rename the copy to 'uplink_v2.conf' (r)", check: (c) => { var r; const f = findNodeByName(c.fs, "protocols"); return !!((r = f?.children)?.find(h => h.name === "uplink_v2.conf")); }, completed: false }
     ] 
   },
-  { id: 5, episodeId: 1, title: "CONTAINMENT BREACH", description: "QUARANTINE ALERT. Your activities have triggered a defensive handshake from the system core. Security daemons are converging on the protocol sector. You must execute a batch extraction of all configuration assets and migrate them to the hidden vault immediately. Speed is essential; single-file transfer will result in capture.", initialPath: null, hint: "...Select all files (Ctrl+A)... Cut (x)... Create 'vault/active/' (a)... Paste (p).", coreSkill: "Batch Select (Ctrl+A), Cut/Paste (x/p)", environmentalClue: "THREAT: Quarantine lockdown | BATCH: Ctrl+A for speed | TARGET: uplink files → ~/.config/vault/active/", successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.", buildsOn: [3, 4], leadsTo: [9], onEnter: (c) => { var p, z; let s = JSON.parse(JSON.stringify(c)); const r = findNodeByName(s, "protocols"); return r && !((p = r.children)?.find(C => C.name === "uplink_v1.conf")) && (r.children.push({ id: id(), name: "uplink_v1.conf", type: "file", content: "conf_1", parentId: r.id })), r && !((z = r.children)?.find(C => C.name === "uplink_v2.conf")) && (r.children.push({ id: id(), name: "uplink_v2.conf", type: "file", content: "conf_2", parentId: r.id })), s; }, tasks: [{ id: "nav-and-select", description: "Navigate to protocols and select all files (Ctrl+A)", check: (c) => { const s = findNodeByName(c.fs, "protocols"); return c.currentPath.includes(s?.id || '') && c.selectedIds.length >= 2; }, completed: false }, { id: "batch-cut-files", description: "Cut the configuration files (x)", check: (c) => { var s; return ((s = c.clipboard)?.action) === "cut" && c.clipboard.nodes.some(f => f.name === "uplink_v1.conf") && c.clipboard.nodes.some(f => f.name === "uplink_v2.conf"); }, completed: false }, { id: "reveal-hidden", description: "Reveal hidden files (.) in ~/ to access .config directory", check: (c) => { const s = findNodeByName(c.fs, "guest"); return c.currentPath.includes(s?.id || '') && c.showHidden === true; }, completed: false }, { id: "establish-stronghold", description: "Establish 'vault/active/' sector in ~/.config (a)", check: (c) => { var r, h; const s = findNodeByName(c.fs, ".config"); const f = (r = s?.children)?.find(p => p.name === "vault"); return !!((h = f?.children)?.find(p => p.name === "active" && p.type === "dir")); }, completed: false }, { id: "deploy-assets", description: "Migrate configuration assets to ~/.config/vault/active (p)", check: (c) => { var h, p; const s = findNodeByName(c.fs, "active"); const f = (h = s?.children)?.some(z => z.name === "uplink_v1.conf"); const r = (p = s?.children)?.some(z => z.name === "uplink_v2.conf"); return !!f && !!r; }, completed: false }] },
+  { 
+    id: 5, 
+    episodeId: 1, 
+    title: "CONTAINMENT BREACH", 
+    description: "QUARANTINE ALERT. Your activities have triggered a defensive handshake from the system core. Security daemons are converging on the protocol sector. You must execute a batch extraction of all configuration assets and migrate them to the hidden vault immediately. Speed is essential; single-file transfer will result in capture.", 
+    initialPath: null, 
+    hint: "Navigate to protocols. Select files with Space. Cut (x). Reveal hidden (.). Create 'vault/active/' in .config. Paste (p). Hide hidden (.).", 
+    coreSkill: "Visual Select (Space), Cut (x)", 
+    environmentalClue: "SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/", 
+    successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.", 
+    buildsOn: [3, 4], 
+    leadsTo: [9], 
+    onEnter: (c) => { 
+      var p, z; 
+      let s = JSON.parse(JSON.stringify(c)); 
+      const r = findNodeByName(s, "protocols"); 
+      return r && !((p = r.children)?.find(C => C.name === "uplink_v1.conf")) && (r.children.push({ id: id(), name: "uplink_v1.conf", type: "file", content: "conf_1", parentId: r.id })), r && !((z = r.children)?.find(C => C.name === "uplink_v2.conf")) && (r.children.push({ id: id(), name: "uplink_v2.conf", type: "file", content: "conf_2", parentId: r.id })), s; 
+    }, 
+    tasks: [
+      { 
+        id: "batch-cut-files", 
+        description: "Navigate to protocols and select then cut all the files (space twice, x)", 
+        check: (c) => { 
+          var s; 
+          return ((s = c.clipboard)?.action) === "cut" && c.clipboard.nodes.some(f => f.name === "uplink_v1.conf") && c.clipboard.nodes.some(f => f.name === "uplink_v2.conf"); 
+        }, 
+        completed: false 
+      }, 
+      { 
+        id: "reveal-hidden", 
+        description: "Reveal hidden files (.) in ~/ to access .config directory", 
+        check: (c) => { 
+          const s = findNodeByName(c.fs, "guest"); 
+          return c.currentPath.includes(s?.id || '') && c.showHidden === true; 
+        }, 
+        completed: false 
+      }, 
+      { 
+        id: "establish-stronghold", 
+        description: "Establish 'vault/active/' sector in ~/.config (a)", 
+        check: (c) => { 
+          var r, h; 
+          const s = findNodeByName(c.fs, ".config"); 
+          const f = (r = s?.children)?.find(p => p.name === "vault"); 
+          return !!((h = f?.children)?.find(p => p.name === "active" && p.type === "dir")); 
+        }, 
+        completed: false 
+      }, 
+      { 
+        id: "deploy-assets", 
+        description: "Migrate configuration assets to ~/.config/vault/active (p)", 
+        check: (c) => { 
+          var h, p; 
+          const s = findNodeByName(c.fs, "active"); 
+          const f = (h = s?.children)?.some(z => z.name === "uplink_v1.conf"); 
+          const r = (p = s?.children)?.some(z => z.name === "uplink_v2.conf"); 
+          return !!f && !!r; 
+        }, 
+        completed: false 
+      },
+      {
+        id: "hide-hidden",
+        description: "Hide hidden folders/files (.)",
+        check: (c, l) => {
+           // Ensure assets are deployed first to prevent premature completion if hidden starts false
+           var h, p;
+           const s = findNodeByName(c.fs, "active");
+           const f = (h = s?.children)?.some(z => z.name === "uplink_v1.conf");
+           const r = (p = s?.children)?.some(z => z.name === "uplink_v2.conf");
+           return !!f && !!r && !c.showHidden;
+        },
+        completed: false
+      }
+    ] 
+  },
   { id: 6, episodeId: 2, title: "DECOMPRESSION PROTOCOL", description: "ACCESS UPGRADED. Historical logs have been detected within the compressed archives of the incoming stream. These logs contain keys to higher privilege levels. Filter the stream to locate the backup archive, infiltrate it, and extract the primary system log to the media directory for decryption.", initialPath: null, hint: "...f to filter... l to enter archive... y to copy... p to paste.", coreSkill: "Filter (f) & Archive Ops", environmentalClue: "TARGET: backup_logs.zip/sys_v1.log → ~/media", successMessage: "LOGS RETRIEVED.", buildsOn: [1, 2], leadsTo: [9], timeLimit: 120, tasks: [{ id: "nav-and-filter", description: "Navigate to incoming, filter (f) for 'backup_logs.zip', and close filter (Esc)", check: (c) => { const s = findNodeByName(c.fs, "incoming"); if (!s || !c.currentPath.includes(s.id)) return false; const h = !!c.filters[s.id]; return c.mode === "normal" && h; }, completed: false }, { id: "extract-from-archive", description: "Enter archive and copy 'sys_v1.log' (l, y), exit archive (h), and clear filter (Esc)", check: (c, s) => { var r, h; if (!((r = c.completedTaskIds[s.id])?.includes("nav-and-filter"))) return false; const f = findNodeByName(c.fs, "incoming"); return c.currentPath.includes(f?.id || '') && !c.filters[f?.id || ""] && ((h = c.clipboard)?.action) === "yank" && c.clipboard.nodes.some(p => p.name === "sys_v1.log"); }, completed: false }, { id: "deploy-log", description: "Deploy asset into ~/media (p)", check: (c, s) => { var r, h; if (!((r = c.completedTaskIds[s.id])?.includes("extract-from-archive"))) return false; const f = findNodeByName(c.fs, "media"); return !!((h = f?.children)?.find(p => p.name === "sys_v1.log")); }, completed: false }] },
   { id: 7, episodeId: 2, title: "QUANTUM BYPASS", description: "LINEAR TRAVERSAL COMPROMISED. The security daemon is monitoring standard directory traversal paths. To evade detection, you must utilize the Zoxide subsystem to perform non-linear quantum jumps between system sectors. Stage a decoy signature in the volatile cache, then tunnel directly to the system configuration sector.", initialPath: null, hint: "Jump to /tmp (gt or Shift+Z). Cut... (x). Then, jump to /etc (Shift+Z). ... Y to clear clipboard...", coreSkill: "G-Command (gt) + Zoxide (Shift+Z)", environmentalClue: "THREAT: Linear Directory Tracing | COUNTERMEASURE: Stage decoy from /tmp → Jump to /etc → Abort", successMessage: "QUANTUM JUMP CALIBRATED. DECOY ABORTED.", buildsOn: [1], leadsTo: [8, 12], timeLimit: 90, tasks: [{ id: "goto-tmp", description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' or gt)", check: (c) => { const s = findNodeByName(c.fs, "tmp"); return c.currentPath.includes(s?.id || ''); }, completed: false }, { id: "stage-decoy", description: "Stage the decoy signature for deletion (cut 'decoy_signal.trc')", check: (c) => { var s; return ((s = c.clipboard)?.action) === "cut" && c.clipboard.nodes.some(f => f.name === "decoy_signal.trc"); }, completed: false }, { id: "zoxide-etc", description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)", check: (c, s) => { var r; if (!((r = c.completedTaskIds[s.id])?.includes("stage-decoy"))) return false; const f = findNodeByName(c.fs, "etc"); return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || ''); }, completed: false }, { id: "cancel-clipboard", description: "Abort operation: Clear the clipboard (Y)", check: (c, s) => { var f; return (f = c.completedTaskIds[s.id])?.includes("zoxide-etc") ? c.clipboard === null : false; }, completed: false }] },
   { id: 8, episodeId: 2, title: "NEURAL ARCHITECTURE", description: "FIREWALL BYPASSED. You have reached the development workspace. You must now construct a neural network to process the uplink data. Note that the Quantum Link requires calibration; quantum calibration requires physical traversal of new sectors to map them for future teleportation. Build the neural core, map it, and migrate the uplink assets to initialize the system.", initialPath: null, hint: "...'a' -> 'neural_net/'. ... Enter 'neural_net/' (l). Jump to 'active' (Shift+Z), yank 'uplink_v1.conf', jump back, and paste (p)...", coreSkill: "Challenge: Full System Integration", environmentalClue: "NAVIGATE: ~/workspace | BUILD: neural_net/... | MIGRATE: uplink_v1.conf -> neural_net/", successMessage: "ARCHITECTURE ESTABLISHED. Quantum Link Calibrated.", buildsOn: [4, 5, 7], leadsTo: [11], timeLimit: 180, efficiencyTip: "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.", onEnter: (c) => { var E, v; let s = JSON.parse(JSON.stringify(c)); const r = findNodeByName(s, "vault"); if (r && !r.children?.find(B => B.name === "active")) { r.children = r.children || []; r.children.push({ id: id(), name: "active", type: "dir", children: [], parentId: r.id }); } const N = findNodeByName(s, "active"); if (N && !N.children?.find(B => B.name === "uplink_v1.conf")) { N.children = N.children || []; N.children.push({ id: id(), name: "uplink_v1.conf", type: "file", content: `network_mode=active\nsecure=true`, parentId: N.id }); } return s; }, tasks: [{ id: "nav-to-workspace", description: "Navigate to the 'workspace' directory (gw)", check: (c) => { const s = findNodeByName(c.fs, "workspace"); return c.currentPath.includes(s?.id || ''); }, completed: false }, { id: "combo-1-construct-calibrate", description: "Construct 'neural_net/' and Calibrate the Quantum Link by entering it", check: (c) => { const s = findNodeByName(c.fs, "neural_net"); return c.currentPath.includes(s?.id || ''); }, completed: false }, { id: "combo-1c", description: "Relocate assets: Jump to 'active', yank 'uplink_v1.conf', jump back, and paste", check: (c) => { var f; const s = findNodeByName(c.fs, "neural_net"); return !!((f = s?.children)?.find(r => r.name === "uplink_v1.conf")); }, completed: false }, { id: "combo-1b", description: "Finalize architecture: Create 'weights/model.rs' inside neural_net", check: (c) => { var r, p; const s = findNodeByName(c.fs, "neural_net"); const f = (r = s?.children)?.find(h => h.name === "weights"); return !!((p = f?.children)?.find(h => h.name === "model.rs" || h.name === "model.ts" || h.name === "model.js")); }, completed: false }] },
