@@ -2,7 +2,7 @@
 
 ## Adding New Levels
 
-1. Add level definition to `src/constants.tsx`
+1. Add level definition to `src/constants.tsx`. Ensure all new components or utilities are placed in `src/components/` and `src/utils/` respectively.
 2. Implement check functions
 3. Test all tasks complete properly
 4. Update episode lore if needed

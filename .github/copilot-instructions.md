@@ -41,9 +41,13 @@ Use URL parameters for testing:
 
 **File Structure:**
 
-The project utilizes a mixed file structure:
-- Root Directory: Contains `index.tsx` (application entry point), shared types (`types.ts`), common UI components (`components/`), and utility functions (`utils/`).
-- `src/` Directory: Contains the primary application logic (`src/App.tsx`) and level-specific constants (`src/constants.tsx`).
+The project follows a standard React project structure where all source code is located within the `src/` directory.
+- `src/index.tsx`: Application entry point.
+- `src/App.tsx`: Main application component.
+- `src/constants.tsx`: Level definitions and other game constants.
+- `src/types.ts`: TypeScript type definitions.
+- `src/components/`: Reusable UI components.
+- `src/utils/`: Utility functions.
 
 **Core Patterns:**
 
