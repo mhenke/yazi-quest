@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { FileNode, ClipboardItem, Linemode } from '../types';
+import React, { useEffect, useRef } from "react";
+import { FileNode, ClipboardItem, Linemode } from "../types";
 import {
   Folder,
   FileText,
@@ -13,7 +13,7 @@ import {
   Scissors,
   Copy,
   PackageOpen,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface FileSystemPaneProps {
   items: FileNode[];
@@ -34,38 +34,38 @@ interface FileSystemPaneProps {
 }
 
 const getFileStyle = (node: FileNode) => {
-  if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
-  if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
+  if (node.type === "dir") return { color: "text-blue-400", icon: Folder };
+  if (node.type === "archive") return { color: "text-red-400", icon: PackageOpen };
 
   const name = node.name.toLowerCase();
 
   if (/\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
-    return { color: 'text-purple-400', icon: FileImage };
+    return { color: "text-purple-400", icon: FileImage };
   }
   if (/\.(exe|bin|sh|bat)$/.test(name)) {
-    return { color: 'text-green-400', icon: TerminalIcon };
+    return { color: "text-green-400", icon: TerminalIcon };
   }
   if (/\.(zip|tar|gz|7z|rar)$/.test(name)) {
-    return { color: 'text-red-400', icon: FileArchive };
+    return { color: "text-red-400", icon: FileArchive };
   }
   if (/\.(json|toml|yaml|conf|ini|xml)$/.test(name)) {
-    return { color: 'text-cyan-400', icon: FileCog };
+    return { color: "text-cyan-400", icon: FileCog };
   }
   if (/\.(js|ts|tsx|py|rs|c|cpp|go|java)$/.test(name)) {
-    return { color: 'text-yellow-400', icon: FileCode };
+    return { color: "text-yellow-400", icon: FileCode };
   }
   if (/\.(pem|key|lock)$/.test(name)) {
-    return { color: 'text-amber-600', icon: FileLock };
+    return { color: "text-amber-600", icon: FileLock };
   }
   if (/\.(md|txt)$/.test(name)) {
-    return { color: 'text-zinc-300', icon: FileText };
+    return { color: "text-zinc-300", icon: FileText };
   }
 
-  return { color: 'text-zinc-400', icon: FileText };
+  return { color: "text-zinc-400", icon: FileText };
 };
 
 const formatSize = (node: FileNode) => {
-  if (node.type === 'dir' || node.type === 'archive') {
+  if (node.type === "dir" || node.type === "archive") {
     const count = node.children?.length || 0;
     return `${count}`;
   }
@@ -84,11 +84,11 @@ const getFakeDate = (node: FileNode) => {
   const d = Date.now();
   const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
   const date = new Date(d - offset);
-  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 };
 
 const getPermissions = (node: FileNode) => {
-  return node.type === 'dir' || node.type === 'archive' ? 'drwxr-xr-x' : '-rw-r--r--';
+  return node.type === "dir" || node.type === "archive" ? "drwxr-xr-x" : "-rw-r--r--";
 };
 
 const getListItemRowClasses = (
@@ -99,13 +99,13 @@ const getListItemRowClasses = (
   isCut: boolean,
   rowText: string
 ): string => {
-  let rowBg = '';
+  let rowBg = "";
 
   if (isCursor) {
     if (isActive) {
-      rowBg = 'bg-zinc-800';
+      rowBg = "bg-zinc-800";
     } else {
-      rowBg = 'bg-zinc-800/40';
+      rowBg = "bg-zinc-800/40";
     }
   }
 
@@ -114,9 +114,9 @@ const getListItemRowClasses = (
   return `
     ${baseClasses}
     ${rowBg}
-    ${isMarked ? 'text-yellow-400' : rowText}
-    ${isParent && !isCursor ? 'opacity-50 grayscale' : ''}
-    ${isCut ? 'opacity-50' : ''}
+    ${isMarked ? "text-yellow-400" : rowText}
+    ${isParent && !isCursor ? "opacity-50 grayscale" : ""}
+    ${isCut ? "opacity-50" : ""}
   `;
 };
 
@@ -140,18 +140,18 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     if (listRef.current && cursorIndex >= 0) {
       const children = listRef.current.children;
       if (children[cursorIndex]) {
-        children[cursorIndex].scrollIntoView({ block: 'nearest' });
+        children[cursorIndex].scrollIntoView({ block: "nearest" });
       }
     }
   }, [cursorIndex]);
 
-  const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
-  const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
+  const defaultWidth = isParent ? "w-1/3" : "flex-1";
+  const bgColors = isParent ? "bg-zinc-950/50 text-zinc-600" : "bg-zinc-900/80 text-zinc-300";
 
   // Use className directly if it contains grid layout classes, otherwise append default bg/width
-  const finalClass = className?.includes('grid')
+  const finalClass = className?.includes("grid")
     ? className
-    : `${defaultWidth} ${bgColors} ${className || ''}`;
+    : `${defaultWidth} ${bgColors} ${className || ""}`;
 
   return (
     <div
@@ -159,7 +159,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     >
       <div
         ref={listRef}
-        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${className?.includes('grid') ? className : ''}`}
+        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${className?.includes("grid") ? className : ""}`}
       >
         {items.length === 0 && (
           <div className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none">
@@ -171,16 +171,16 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isMarked = selectedIds.includes(item.id);
           const { color, icon: Icon } = getFileStyle(item);
 
-          const inClipboard = clipboard?.nodes.some((n) => n.id === item.id);
-          const isCut = inClipboard && clipboard?.action === 'cut';
-          const isYank = inClipboard && clipboard?.action === 'yank';
+          const inClipboard = clipboard?.nodes.some(n => n.id === item.id);
+          const isCut = inClipboard && clipboard?.action === "cut";
+          const isYank = inClipboard && clipboard?.action === "yank";
 
-          let rowTextClass = '';
+          let rowTextClass = "";
           if (isCursor) {
             if (isActive) {
-              if (!isMarked) rowTextClass = 'text-white font-medium';
+              if (!isMarked) rowTextClass = "text-white font-medium";
             } else {
-              if (!isMarked) rowTextClass = 'text-zinc-400';
+              if (!isMarked) rowTextClass = "text-zinc-400";
             }
           }
 
@@ -198,29 +198,29 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                   rowTextClass
                 )}
               >
-                <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`}>
+                <span className={`${isMarked ? "text-yellow-500" : color} shrink-0`}>
                   <Icon
                     size={14}
-                    fill={item.type === 'dir' ? 'currentColor' : 'none'}
-                    fillOpacity={item.type === 'dir' ? 0.2 : 0}
+                    fill={item.type === "dir" ? "currentColor" : "none"}
+                    fillOpacity={item.type === "dir" ? 0.2 : 0}
                   />
                 </span>
 
                 <span
-                  className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}
+                  className={`truncate flex-1 flex items-center gap-2 ${isMarked ? "font-bold" : ""}`}
                 >
-                  <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
+                  <span className={`${isCut ? "line-through decoration-red-500/50" : ""}`}>
                     {item.name}
                   </span>
                 </span>
 
-                {linemode !== 'none' && !className?.includes('grid') && (
+                {linemode !== "none" && !className?.includes("grid") && (
                   <span
-                    className={`text-[10px] w-24 text-right font-mono tabular-nums shrink-0 ${isCursor ? 'text-zinc-500' : 'text-zinc-700'}`}
+                    className={`text-[10px] w-24 text-right font-mono tabular-nums shrink-0 ${isCursor ? "text-zinc-500" : "text-zinc-700"}`}
                   >
-                    {linemode === 'size' && formatSize(item)}
-                    {linemode === 'mtime' && getFakeDate(item)}
-                    {linemode === 'permissions' && getPermissions(item)}
+                    {linemode === "size" && formatSize(item)}
+                    {linemode === "mtime" && getFakeDate(item)}
+                    {linemode === "permissions" && getPermissions(item)}
                   </span>
                 )}
 
@@ -234,8 +234,8 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                   )}
                 </div>
 
-                {(item.type === 'dir' || item.type === 'archive') &&
-                  !className?.includes('grid') && (
+                {(item.type === "dir" || item.type === "archive") &&
+                  !className?.includes("grid") && (
                     <span className="text-zinc-700 shrink-0">
                       <ChevronRight size={12} strokeWidth={3} />
                     </span>
@@ -251,10 +251,10 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
                     <input
                       type="text"
                       value={renameState?.inputBuffer}
-                      onChange={(e) => onRenameChange?.(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') onRenameSubmit?.();
-                        if (e.key === 'Escape') onRenameCancel?.();
+                      onChange={e => onRenameChange?.(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") onRenameSubmit?.();
+                        if (e.key === "Escape") onRenameCancel?.();
                         e.stopPropagation();
                       }}
                       className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"

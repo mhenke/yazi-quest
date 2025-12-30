@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { CheckCircle2, Zap } from 'lucide-react';
+import React, { useEffect } from "react";
+import { CheckCircle2, Zap } from "lucide-react";
 
 interface SuccessToastProps {
   message: string;
@@ -17,18 +17,18 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
   // Keyboard handler for dismiss/close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.shiftKey) {
+      if (e.key === "Enter" && e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
         onDismiss(); // Advances to next level
-      } else if (e.key === 'Escape') {
+      } else if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
         onClose(); // Just dismisses modal, allows continued play
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onDismiss, onClose]);
 
   return (

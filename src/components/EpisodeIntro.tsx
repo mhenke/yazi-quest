@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Episode } from '../types';
-import { Terminal, ArrowRight } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Episode } from "../types";
+import { Terminal, ArrowRight } from "lucide-react";
 
 interface EpisodeIntroProps {
   episode: Episode;
@@ -22,12 +22,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     let charIdx = 0;
 
     // Start with an empty line
-    setDisplayedLines((prev) => [...prev, '']);
+    setDisplayedLines(prev => [...prev, ""]);
 
     const interval = setInterval(() => {
       charIdx++;
 
-      setDisplayedLines((prev) => {
+      setDisplayedLines(prev => {
         const newLines = [...prev];
         newLines[currentLineIdx] = currentLineText.slice(0, charIdx);
         return newLines;
@@ -36,7 +36,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       if (charIdx === currentLineText.length) {
         clearInterval(interval);
         setTimeout(() => {
-          setCurrentLineIdx((prev) => prev + 1);
+          setCurrentLineIdx(prev => prev + 1);
         }, 600); // Pause between lines
       }
     }, 30); // Typing speed
@@ -47,7 +47,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   // Handle Enter to skip or proceed
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         if (isTyping) {
           // Instant finish
           setDisplayedLines(episode.lore);
@@ -58,8 +58,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTyping, onComplete, episode.lore]);
 
   return (
@@ -67,7 +67,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div
-          className={`border-b-2 border-dashed ${episode.color.replace('text-', 'border-')} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}
+          className={`border-b-2 border-dashed ${episode.color.replace("text-", "border-")} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}
         >
           <div className="flex items-center gap-3 mb-2">
             <Terminal size={32} className={episode.color} />
@@ -99,7 +99,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
         {/* Footer */}
         <div
-          className={`pt-8 flex justify-end transition-opacity duration-500 ${!isTyping ? 'opacity-100' : 'opacity-0'}`}
+          className={`pt-8 flex justify-end transition-opacity duration-500 ${!isTyping ? "opacity-100" : "opacity-0"}`}
         >
           <button
             onClick={onComplete}

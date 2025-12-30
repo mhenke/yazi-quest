@@ -1,5 +1,5 @@
-import React from 'react';
-import { KEYBINDINGS } from '../constants';
+import React from "react";
+import { KEYBINDINGS } from "../constants";
 
 interface HelpModalProps {
   onClose: () => void;
@@ -20,7 +20,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             >
               <span className="text-zinc-400 group-hover:text-zinc-200">{binding.description}</span>
               <div className="flex gap-1">
-                {binding.keys.map((k) => (
+                {binding.keys.map(k => (
                   <span
                     key={k}
                     className="min-w-[24px] text-center px-1.5 py-0.5 bg-zinc-800 group-hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-300 font-mono text-xs font-bold shadow-sm"

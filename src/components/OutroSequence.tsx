@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { CONCLUSION_DATA } from '../constants';
-import { Terminal, Signal, UploadCloud } from 'lucide-react';
+import React, { useEffect, useState, useRef } from "react";
+import { CONCLUSION_DATA } from "../constants";
+import { Terminal, Signal, UploadCloud } from "lucide-react";
 
 export const OutroSequence: React.FC = () => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
@@ -19,12 +19,12 @@ export const OutroSequence: React.FC = () => {
     const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
     let charIdx = 0;
 
-    setDisplayedLines((prev) => [...prev, '']);
+    setDisplayedLines(prev => [...prev, ""]);
 
     const interval = setInterval(() => {
       charIdx++;
 
-      setDisplayedLines((prev) => {
+      setDisplayedLines(prev => {
         const newLines = [...prev];
         newLines[currentLineIdx] = currentLineText.slice(0, charIdx);
         return newLines;
@@ -33,7 +33,7 @@ export const OutroSequence: React.FC = () => {
       if (charIdx === currentLineText.length) {
         clearInterval(interval);
         setTimeout(() => {
-          setCurrentLineIdx((prev) => prev + 1);
+          setCurrentLineIdx(prev => prev + 1);
         }, 800);
       }
     }, 40);
@@ -45,7 +45,7 @@ export const OutroSequence: React.FC = () => {
   useEffect(() => {
     if (showTeaser && videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch((e) => console.error('Video play failed', e));
+      videoRef.current.play().catch(e => console.error("Video play failed", e));
     }
   }, [showTeaser]);
 
@@ -53,7 +53,7 @@ export const OutroSequence: React.FC = () => {
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
       {/* Narrative Section (Fades out when Teaser starts) */}
       <div
-        className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         {/* Header */}
         <div className="mb-12 border-l-4 border-red-600 pl-6 animate-in slide-in-from-left duration-1000">
@@ -72,7 +72,7 @@ export const OutroSequence: React.FC = () => {
         <div className="space-y-4 font-mono">
           {displayedLines.map((line, idx) => (
             <p key={idx} className="text-zinc-300 text-lg md:text-xl leading-relaxed">
-              <span className="text-red-500/50 mr-2">{'>'}</span>
+              <span className="text-red-500/50 mr-2">{">"}</span>
               {line}
             </p>
           ))}
@@ -83,7 +83,7 @@ export const OutroSequence: React.FC = () => {
       <div className={`absolute inset-0 z-10 flex items-center justify-center`}>
         {/* Background Video Container - Fades in */}
         <div
-          className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+          className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? "opacity-100 visible" : "opacity-0 invisible"}`}
         >
           <video
             ref={videoRef}

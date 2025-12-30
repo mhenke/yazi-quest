@@ -1,8 +1,8 @@
-import React from 'react';
-import { AlertTriangle, RotateCcw, Zap } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, RotateCcw, Zap } from "lucide-react";
 
 interface GameOverModalProps {
-  reason: 'time' | 'keystrokes';
+  reason: "time" | "keystrokes";
   onRestart: () => void;
   efficiencyTip?: string; // Level-specific tip from constants.tsx
 }
@@ -28,7 +28,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               CONNECTION LOST
             </h2>
             <p className="text-red-400 font-mono uppercase tracking-wider text-sm">
-              {reason === 'time' ? 'TIMEOUT EXCEEDED' : 'MAX KEYSTROKES EXCEEDED'}
+              {reason === "time" ? "TIMEOUT EXCEEDED" : "MAX KEYSTROKES EXCEEDED"}
             </p>
           </div>
 
@@ -39,9 +39,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </div>
             <p className="text-zinc-400 text-xs leading-relaxed font-mono">
               {efficiencyTip ||
-                (reason === 'time'
-                  ? 'The system traced your connection. Optimize your path and use batch operations.'
-                  : 'Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.')}
+                (reason === "time"
+                  ? "The system traced your connection. Optimize your path and use batch operations."
+                  : "Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.")}
             </p>
           </div>
 

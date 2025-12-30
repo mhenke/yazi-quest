@@ -42,6 +42,7 @@ Use URL parameters for testing:
 **File Structure:**
 
 The project follows a standard React project structure where all source code is located within the `src/` directory.
+
 - `src/index.tsx`: Application entry point.
 - `src/App.tsx`: Main application component.
 - `src/constants.tsx`: Level definitions and other game constants.

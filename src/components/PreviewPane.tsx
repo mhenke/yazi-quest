@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { FileNode, Level } from '../types';
+import React, { useEffect, useRef } from "react";
+import { FileNode, Level } from "../types";
 import {
   FileText,
   FolderOpen,
@@ -14,7 +14,7 @@ import {
   FileCog,
   FileLock,
   Terminal as TerminalIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface PreviewPaneProps {
   node: FileNode | null;
@@ -24,37 +24,37 @@ interface PreviewPaneProps {
 
 // Helper for preview icons (simplified version of FileSystemPane style)
 const getPreviewIcon = (node: FileNode) => {
-  if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
-  if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
+  if (node.type === "dir") return { color: "text-blue-400", icon: Folder };
+  if (node.type === "archive") return { color: "text-red-400", icon: PackageOpen };
 
   const name = node.name.toLowerCase();
   if (/\.(png|jpg|jpeg|gif|webp|svg)$/.test(name))
-    return { color: 'text-purple-400', icon: FileImage };
-  if (/\.(exe|bin|sh|bat)$/.test(name)) return { color: 'text-green-400', icon: TerminalIcon };
-  if (/\.(zip|tar|gz|7z|rar)$/.test(name)) return { color: 'text-red-400', icon: FileArchive };
+    return { color: "text-purple-400", icon: FileImage };
+  if (/\.(exe|bin|sh|bat)$/.test(name)) return { color: "text-green-400", icon: TerminalIcon };
+  if (/\.(zip|tar|gz|7z|rar)$/.test(name)) return { color: "text-red-400", icon: FileArchive };
   if (/\.(json|toml|yaml|conf|ini|xml)$/.test(name))
-    return { color: 'text-cyan-400', icon: FileCog };
+    return { color: "text-cyan-400", icon: FileCog };
   if (/\.(js|ts|tsx|py|rs|c|cpp|go|java)$/.test(name))
-    return { color: 'text-yellow-400', icon: FileCode };
-  if (/\.(pem|key|lock)$/.test(name)) return { color: 'text-amber-600', icon: FileLock };
+    return { color: "text-yellow-400", icon: FileCode };
+  if (/\.(pem|key|lock)$/.test(name)) return { color: "text-amber-600", icon: FileLock };
 
-  return { color: 'text-zinc-400', icon: FileText };
+  return { color: "text-zinc-400", icon: FileText };
 };
 
 export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewScroll = 0 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
-  const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
-  const isArchiveDir = node?.type === 'archive';
+  const isImage = node?.type === "file" && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
+  const isArchiveFile = node?.type === "file" && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
+  const isArchiveDir = node?.type === "archive";
 
   // Treat archives as having children if they are dirs or zip files with children populated
   const hasChildren = node?.children && node.children.length > 0;
-  const showChildren = node?.type === 'dir' || isArchiveDir || (isArchiveFile && hasChildren);
+  const showChildren = node?.type === "dir" || isArchiveDir || (isArchiveFile && hasChildren);
 
   useEffect(() => {
     if (scrollRef.current) {
-        // Simple scroll based on line height approx 20px
-        scrollRef.current.scrollTop = previewScroll * 20;
+      // Simple scroll based on line height approx 20px
+      scrollRef.current.scrollTop = previewScroll * 20;
     }
   }, [previewScroll, node]);
 
@@ -71,16 +71,16 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
                   src={node.content}
                   alt={node.name}
                   className="max-w-full max-h-full object-contain rounded shadow-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).parentElement!.innerText = '[Image Load Failed]';
+                  onError={e => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                    (e.target as HTMLImageElement).parentElement!.innerText = "[Image Load Failed]";
                   }}
                 />
               </div>
             )}
 
             {/* CASE 2: Text Content */}
-            {node.type === 'file' && !isImage && !showChildren && (
+            {node.type === "file" && !isImage && !showChildren && (
               <div className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-400">
                 {node.content || <span className="italic text-zinc-600">(Empty file)</span>}
               </div>
@@ -92,7 +92,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
                 {!node.children || node.children.length === 0 ? (
                   <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>
                 ) : (
-                  node.children.map((child) => {
+                  node.children.map(child => {
                     const { icon: Icon, color } = getPreviewIcon(child);
                     return (
                       <div
@@ -101,7 +101,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
                       >
                         <Icon size={12} className={color} />
                         <span
-                          className={`text-xs font-mono truncate ${child.type === 'dir' ? 'text-blue-300' : 'text-zinc-400'}`}
+                          className={`text-xs font-mono truncate ${child.type === "dir" ? "text-blue-300" : "text-zinc-400"}`}
                         >
                           {child.name}
                         </span>
@@ -138,18 +138,18 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
               Objectives
             </h3>
             <div className="space-y-2">
-              {level.tasks.map((task) => (
+              {level.tasks.map(task => (
                 <div
                   key={task.id}
-                  className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
+                  className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? "opacity-50" : "opacity-100"}`}
                 >
                   <div
-                    className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
+                    className={`mt-0.5 shrink-0 ${task.completed ? "text-green-500" : "text-zinc-600"}`}
                   >
                     {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
                   </div>
                   <div
-                    className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
+                    className={`text-xs font-mono leading-tight ${task.completed ? "line-through text-zinc-500 decoration-zinc-600" : "text-zinc-300"}`}
                   >
                     {task.description}
                   </div>
