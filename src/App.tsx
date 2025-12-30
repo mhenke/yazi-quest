@@ -1165,23 +1165,36 @@ export default function App() {
             return;
         }
 
-        // Count keystrokes
-        // Only count specific keys if needed, but for simplicity count mostly everything relevant
-        if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
-            setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
-        }
-
         const items = getVisibleItems(gameState);
         const parent = getParentNode(gameState.fs, gameState.currentPath);
         const current = items[gameState.cursorIndex] || null;
 
-        // Modal toggles
+        // Modal toggles (High Priority)
         if (e.key === 'Escape') {
              if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
                  setGameState(prev => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false }));
                  return;
              }
              // Handled in specific modes too
+        }
+
+        // Info Panel Toggle (Tab)
+        if (e.key === 'Tab') {
+             e.preventDefault(); // Always prevent default tab behavior in the app
+             if (gameState.mode === 'normal' || gameState.showInfoPanel) {
+                 setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
+             }
+             return;
+        }
+
+        // Blocking Modals - Stop processing if open
+        if (gameState.showHelp || gameState.showInfoPanel) {
+            return;
+        }
+
+        // Count keystrokes (only if no blocking modal)
+        if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
+            setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
         }
 
         const tasksComplete = currentLevel.tasks.every(t => t.completed);
@@ -1204,11 +1217,6 @@ export default function App() {
                 }
                 return { ...prev, showHint: true, hintStage: 0 };
             });
-            return;
-        }
-
-        if (e.key === 'Tab' && gameState.mode === 'normal') {
-            setGameState(prev => ({ ...prev, showInfoPanel: true }));
             return;
         }
 
