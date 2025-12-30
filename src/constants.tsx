@@ -1848,7 +1848,7 @@ export const LEVELS: Level[] = [
       {
         id: "rec-4-cleanup",
         description: "Use History Forward (L) to return to /tmp and delete 'system_recovery.zip'",
-        check: (c, s) => {
+        check: (c, _s) => {
           var r;
           if (!(r = c.completedTaskIds[s.id])?.includes("rec-3-restore")) return false;
           const f = findNodeByName(c.fs, "tmp");
@@ -1900,15 +1900,14 @@ export const LEVELS: Level[] = [
         description:
           "Identify the authorized license signature, inverse the targeting solution, and purge all unauthorized artifacts",
         check: c => {
-          var E, v, B, S, Q, K;
           const s = findNodeByName(c.fs, "root");
           if (!s) return false;
-          const f = (E = s.children)?.some(W => W.name === "boot.log");
-          const r = (v = s.children)?.some(W => W.name === "access.log");
-          const p = (B = s.children)?.some(W => W.name === ".access.log");
-          const h = (S = s.children)?.some(W => W.name === ".audit.log");
-          const A = (Q = s.children)?.some(W => W.name === ".system.log");
-          const N = (K = s.children)?.some(W => W.name === "license.txt");
+          const f = s.children?.some(W => W.name === "boot.log");
+          const r = s.children?.some(W => W.name === "access.log");
+          const p = s.children?.some(W => W.name === ".access.log");
+          const h = s.children?.some(W => W.name === ".audit.log");
+          const A = s.children?.some(W => W.name === ".system.log");
+          const N = s.children?.some(W => W.name === "license.txt");
           return !f && !r && !p && !h && !A && N;
         },
         completed: false,

@@ -5,7 +5,11 @@ let audioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext => {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext = new (
+      window.AudioContext ||
+      (window as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */
+        .webkitAudioContext
+    )();
   }
   return audioContext;
 };
@@ -40,7 +44,7 @@ export const playSuccessSound = (enabled: boolean = true): void => {
     // Two ascending tones for success feeling
     playTone(523.25, now, 0.15); // C5
     playTone(659.25, now + 0.1, 0.2); // E5
-  } catch (e) {
+  } catch (e: unknown) {
     // Silently fail if audio not available
     console.debug("Audio not available:", e);
   }
@@ -68,7 +72,7 @@ export const playTaskCompleteSound = (enabled: boolean = true): void => {
 
     oscillator.start(now);
     oscillator.stop(now + 0.08);
-  } catch (e) {
+  } catch (e: unknown) {
     console.debug("Audio not available:", e);
   }
 };
