@@ -1218,12 +1218,11 @@ export const LEVELS: Level[] = [
       {
         id: "hide-hidden",
         description: "Navigate to ~/ and to hide hidden folders/files (.)",
-        check: (c, l) => {
+        check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
-          var h, p;
           const s = findNodeByName(c.fs, "active");
-          const f = (h = s?.children)?.some(z => z.name === "uplink_v1.conf");
-          const r = (p = s?.children)?.some(z => z.name === "uplink_v2.conf");
+          const f = s?.children?.some(z => z.name === "uplink_v1.conf");
+          const r = s?.children?.some(z => z.name === "uplink_v2.conf");
           return !!f && !!r && !c.showHidden;
         },
         completed: false,
@@ -1261,14 +1260,13 @@ export const LEVELS: Level[] = [
         id: "extract-from-archive",
         description:
           "Enter archive and copy 'sys_v1.log' (l, y), exit archive (h), and clear filter (Esc)",
-        check: (c, s) => {
-          var r, h;
-          if (!(r = c.completedTaskIds[s.id])?.includes("nav-and-filter")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("nav-and-filter")) return false;
           const f = findNodeByName(c.fs, "incoming");
           return (
             c.currentPath.includes(f?.id || "") &&
             !c.filters[f?.id || ""] &&
-            (h = c.clipboard)?.action === "yank" &&
+            c.clipboard?.action === "yank" &&
             c.clipboard.nodes.some(p => p.name === "sys_v1.log")
           );
         },
@@ -1277,11 +1275,10 @@ export const LEVELS: Level[] = [
       {
         id: "deploy-log",
         description: "Deploy asset into ~/media (p)",
-        check: (c, s) => {
-          var r, h;
-          if (!(r = c.completedTaskIds[s.id])?.includes("extract-from-archive")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("extract-from-archive")) return false;
           const f = findNodeByName(c.fs, "media");
-          return !!(h = f?.children)?.find(p => p.name === "sys_v1.log");
+          return !!f?.children?.find(p => p.name === "sys_v1.log");
         },
         completed: false,
       },
@@ -1316,9 +1313,8 @@ export const LEVELS: Level[] = [
         id: "stage-decoy",
         description: "Stage the decoy signature for deletion (cut 'decoy_signal.trc')",
         check: c => {
-          var s;
           return (
-            (s = c.clipboard)?.action === "cut" &&
+            c.clipboard?.action === "cut" &&
             c.clipboard.nodes.some(f => f.name === "decoy_signal.trc")
           );
         },
@@ -1327,9 +1323,8 @@ export const LEVELS: Level[] = [
       {
         id: "zoxide-etc",
         description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
-        check: (c, s) => {
-          var r;
-          if (!(r = c.completedTaskIds[s.id])?.includes("stage-decoy")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("stage-decoy")) return false;
           const f = findNodeByName(c.fs, "etc");
           return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || "");
         },
@@ -1338,11 +1333,8 @@ export const LEVELS: Level[] = [
       {
         id: "cancel-clipboard",
         description: "Abort operation: Clear the clipboard (Y)",
-        check: (c, s) => {
-          var f;
-          return (f = c.completedTaskIds[s.id])?.includes("zoxide-etc")
-            ? c.clipboard === null
-            : false;
+        check: (c, _s) => {
+          return c.completedTaskIds[_s.id]?.includes("zoxide-etc") ? c.clipboard === null : false;
         },
         completed: false,
       },
@@ -1422,9 +1414,8 @@ export const LEVELS: Level[] = [
         description:
           "Relocate assets: Jump to 'active', yank 'uplink_v1.conf', jump back, and paste",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "neural_net");
-          return !!(f = s?.children)?.find(r => r.name === "uplink_v1.conf");
+          return !!s?.children?.find(r => r.name === "uplink_v1.conf");
         },
         completed: false,
       },
@@ -1432,10 +1423,9 @@ export const LEVELS: Level[] = [
         id: "combo-1b",
         description: "Finalize architecture: Create 'weights/model.rs' inside neural_net",
         check: c => {
-          var r, p;
           const s = findNodeByName(c.fs, "neural_net");
-          const f = (r = s?.children)?.find(h => h.name === "weights");
-          return !!(p = f?.children)?.find(
+          const f = s?.children?.find(h => h.name === "weights");
+          return !!f?.children?.find(
             h => h.name === "model.rs" || h.name === "model.ts" || h.name === "model.js"
           );
         },
@@ -1477,11 +1467,10 @@ export const LEVELS: Level[] = [
         id: "locate-ghost",
         description: "Filter for 'ghost' process and navigate to it",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "tmp");
           return (
             c.currentPath.includes(s?.id || "") &&
-            (f = s?.children)?.some(r => r.name === "ghost_process.pid")
+            s?.children?.some(r => r.name === "ghost_process.pid")
           );
         },
         completed: false,
@@ -1490,9 +1479,8 @@ export const LEVELS: Level[] = [
         id: "delete-ghost",
         description: "Terminate the ghost process (d, y)",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "tmp");
-          return !(f = s?.children)?.some(r => r.name === "ghost_process.pid");
+          return !s?.children?.some(r => r.name === "ghost_process.pid");
         },
         completed: false,
       },
@@ -1520,11 +1508,10 @@ export const LEVELS: Level[] = [
         id: "navigate-to-key",
         description: "Jump home (gh) and navigate to 'access_key.pem' using FZF (z)",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "credentials");
           return (
             c.currentPath.includes(s?.id || "") ||
-            (f = s?.children)?.some(r => r.name === "access_key.pem")
+            s?.children?.some(r => r.name === "access_key.pem")
           );
         },
         completed: false,
@@ -1532,10 +1519,9 @@ export const LEVELS: Level[] = [
       {
         id: "mark-invert-yank",
         description: "Invert selection to target real asset and capture it (Ctrl+R, y)",
-        check: (c, s) => {
-          var f, r;
-          return (f = c.completedTaskIds[s.id])?.includes("navigate-to-key")
-            ? (r = c.clipboard)?.nodes.some(h => h.name === "access_key.pem")
+        check: (c, _s) => {
+          return c.completedTaskIds[_s.id]?.includes("navigate-to-key")
+            ? c.clipboard?.nodes.some(h => h.name === "access_key.pem")
             : false;
         },
         completed: false,
@@ -1544,11 +1530,10 @@ export const LEVELS: Level[] = [
         id: "secure-1",
         description: "Quantum jump to vault and deploy (Shift+Z → '.config/vault', p)",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "vault");
           return (
             c.currentPath.includes(s?.id || "") &&
-            (f = s?.children)?.some(r => r.name === "access_key.pem")
+            s?.children?.some(r => r.name === "access_key.pem")
           );
         },
         completed: false,
@@ -1557,9 +1542,8 @@ export const LEVELS: Level[] = [
         id: "secure-2",
         description: "Camouflage identity in vault to 'vault_key.pem' (r)",
         check: c => {
-          var r, p;
           const s = findNodeByName(c.fs, "vault");
-          return !!(p = s?.children)?.find(h => h.name === "vault_key.pem");
+          return !!s?.children?.find(h => h.name === "vault_key.pem");
         },
         completed: false,
       },
@@ -1630,7 +1614,7 @@ export const LEVELS: Level[] = [
           },
         ];
         signatures.forEach(z => {
-          if (!r.children.some((n: any) => n.name === z.name)) r.children.push(z);
+          if (!r.children.some((_n: any) => _n.name === z.name)) r.children.push(z);
         });
       }
       return s;
