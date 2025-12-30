@@ -1634,12 +1634,11 @@ export const LEVELS: Level[] = [
         id: "purge-isolate-extract",
         description: "Isolate the largest signature pattern, then extract it for isolation",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "workspace");
           return (
             c.currentPath.includes(s?.id || "") &&
             c.sortBy === "size" &&
-            (f = c.clipboard)?.action === "cut" &&
+            c.clipboard?.action === "cut" &&
             c.clipboard.nodes.some(r => r.name === "neural_sig_alpha.log")
           );
         },
@@ -1658,20 +1657,18 @@ export const LEVELS: Level[] = [
         id: "purge-paste",
         description: "Deposit the corrupted signature in /tmp",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "tmp");
-          return !!(f = s?.children)?.some(r => r.name === "neural_sig_alpha.log");
+          return !!s?.children?.some(r => r.name === "neural_sig_alpha.log");
         },
         completed: false,
       },
       {
         id: "purge-cleanup-remaining",
         description: "Purge all remaining smaller neural signatures from workspace",
-        check: (c, s) => {
-          var r, h;
-          if (!(r = c.completedTaskIds[s.id])?.includes("purge-paste")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("purge-paste")) return false;
           const f = findNodeByName(c.fs, "workspace");
-          return !(h = f?.children)?.some(S => S.name.startsWith("neural_sig"));
+          return !f?.children?.some(S => S.name.startsWith("neural_sig"));
         },
         completed: false,
       },
