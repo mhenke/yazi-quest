@@ -202,6 +202,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* 5. Stats Block (Yazi Style) */}
       <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
+        {/* Hidden Files Indicator */}
+        <span
+          className={`font-mono text-[10px] uppercase hidden sm:inline mr-1 ${state.showHidden ? 'text-yellow-400 font-bold' : 'text-zinc-600'}`}
+        >
+          {state.showHidden ? 'H:ON' : 'H:OFF'}
+        </span>
+
         {/* Sort Indicator */}
         <span
           className={`font-mono text-[10px] uppercase hidden sm:inline mr-1 ${isCustomSort ? 'text-orange-400 font-bold' : 'text-zinc-500'}`}

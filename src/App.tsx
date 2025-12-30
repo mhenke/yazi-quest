@@ -1445,21 +1445,6 @@ export default function App() {
           />
 
           <div className="flex-1 flex flex-col relative min-w-0">
-             {gameState.mode !== 'normal' && !['confirm-delete', 'sort', 'g-command', 'overwrite-confirm', 'zoxide-jump', 'fzf-current'].includes(gameState.mode) && (
-                 <div className="bg-zinc-800 p-2 border-b border-zinc-700 flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase text-black bg-blue-500 px-2 rounded">
-                        {gameState.mode.replace('input-', 'create ').replace('fzf-', 'find ')}
-                    </span>
-                    <input 
-                        type="text" 
-                        className="bg-transparent border-none outline-none text-sm font-mono text-white w-full"
-                        value={gameState.inputBuffer}
-                        autoFocus
-                        readOnly
-                    />
-                     <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
-                 </div>
-             )}
 
              {gameState.mode === 'sort' && (
                  <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
