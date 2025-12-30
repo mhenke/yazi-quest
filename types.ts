@@ -1,13 +1,5 @@
 export type NodeType = 'file' | 'dir' | 'archive';
 
-export interface FileProtection {
-  delete?: string;
-  cut?: string;
-  rename?: string;
-  add?: string;
-  releaseLevel?: number; // The level ID at which this protection is lifted
-}
-
 export interface FileNode {
   id: string;
   name: string;
@@ -17,8 +9,6 @@ export interface FileNode {
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
-  protected?: boolean; // If true, node cannot be deleted by player via general rule
-  protection?: FileProtection; // Level-specific protection messages
 }
 
 export interface FileSystemState {
@@ -27,12 +17,8 @@ export interface FileSystemState {
 
 export interface LevelTask {
   id: string;
-  description: string | ((gameState: GameState) => string);
-  // Allow a single check function or an array of alternative checks (OR semantics).
-  // A task is satisfied if ANY of the checks returns true.
-  check:
-    | ((gameState: GameState, level: Level) => boolean)
-    | Array<(gameState: GameState, level: Level) => boolean>;
+  description: string;
+  check: (gameState: GameState, level: Level) => boolean;
   completed: boolean;
 }
 
@@ -72,11 +58,11 @@ export interface ClipboardItem {
   nodes: FileNode[]; // Changed to array for batch operations
   action: 'yank' | 'cut';
   originalPath: string[]; // Path IDs where they came from
-  authorized?: boolean; // Whether the cut was authorized at time of clipboard creation (bypass protection on paste)
 }
 
 export interface GameStats {
   fuzzyJumps: number;
+  fzfFinds: number;
   filterUsage: number;
   renames: number;
   archivesEntered: number;
@@ -124,33 +110,6 @@ export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extensi
 export type SortDirection = 'asc' | 'desc';
 export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
 
-// Enumerate all possible player actions that are relevant for task validation.
-export type GameAction =
-  | 'JUMP_TOP'
-  | 'JUMP_BOTTOM'
-  | 'PREVIEW_SCROLL'
-  | 'HISTORY_NAV'
-  | 'SELECT_ALL'
-  | 'CREATE_FILE'
-  | 'CREATE_DIR'
-  | 'DELETE'
-  | 'RENAME'
-  | 'YANK'
-  | 'CUT'
-  | 'PASTE'
-  | 'FILTER'
-  | 'FZF'
-  | 'ZOXIDE_JUMP'
-  | 'INVERT_SELECTION';
-
-// Record of a specific action, including when it occurred.
-export interface ActionRecord {
-  type: GameAction;
-  timestamp: number;
-  // Optional metadata for the action (direction, method, etc.)
-  data?: Record<string, any>;
-}
-
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
@@ -176,11 +135,13 @@ export interface GameState {
   sortDirection: SortDirection; // Global sticky sort direction
   linemode: Linemode; // Controls the visible data column (size, mtime, etc.)
   zoxideData: Record<string, ZoxideEntry>; // Frecency tracking: pathString -> {count, lastAccess}
-  history: string[]; // Log of actions
+  history: string[][]; // Stack of visited paths (Array of string arrays)
+  future: string[][]; // Stack of paths for forward navigation (L)
+  previewScroll: number; // Scroll offset index for preview pane
   levelIndex: number;
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
-  levelStartShowHidden?: boolean; // Snapshot of showHidden at level start
+  levelStartPath: string[]; // Path at start of level (for reset)
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
@@ -198,17 +159,8 @@ export interface GameState {
   stats: GameStats;
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
-  lastAction: ActionRecord | null; // Tracks the last significant player action
-  // Flags used for tracking whether specific one-off interactions have occurred
-  usedG?: boolean;
-  usedGG?: boolean;
-  usedPreviewScroll?: boolean;
-  usedPreviewScrollDirection?: 'down' | 'up' | null;
-  usedPrevPreviewScrollDirection?: 'down' | 'up' | null;
-  usedHistory?: boolean;
-  usedCtrlA?: boolean;
-  falseThreatActive?: boolean; // Tracks if the false threat scenario has been activated (e.g., cutting sys_patch.conf)
-  dynamicHint?: string; // Optional runtime hint override for dynamic scenarios
+  usedG?: boolean; // Tracks if player used G (jump to bottom)
+  usedGG?: boolean; // Tracks if player used gg (jump to top)
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

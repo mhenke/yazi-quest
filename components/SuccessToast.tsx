@@ -4,7 +4,7 @@ import { CheckCircle2, Zap } from 'lucide-react';
 interface SuccessToastProps {
   message: string;
   levelTitle: string;
-  onDismiss: () => void; // Enter - advances to next level
+  onDismiss: () => void; // Shift+Enter - advances to next level
   onClose: () => void; // Escape - just dismisses modal
 }
 
@@ -17,7 +17,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
   // Keyboard handler for dismiss/close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
         onDismiss(); // Advances to next level
@@ -54,7 +54,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
         </div>
 
         <div className="mt-4 text-[10px] text-green-500/70 font-mono uppercase tracking-widest animate-pulse">
-          Press Enter to continue
+          Press SHIFT+ENTER to continue
         </div>
       </div>
     </div>

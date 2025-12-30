@@ -8,12 +8,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --quiet",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md,css,js}\"",
-    "audit": "npm audit --audit-level=high"
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,css,js}\""
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -25,31 +23,23 @@
     ]
   },
   "dependencies": {
-    "lucide-react": "^0.556.0",
     "react": "^19.2.1",
+    "lucide-react": "^0.556.0",
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.1",
-    "@testing-library/user-event": "^14.6.1",
-    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@types/node": "^22.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.50.0",
-    "@typescript-eslint/parser": "^8.50.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "husky": "^9.1.7",
-    "jsdom": "^27.4.0",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.7.4",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
-    "vitest": "^4.0.16"
+    "eslint": "*",
+    "@typescript-eslint/parser": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "eslint-plugin-react": "*",
+    "eslint-plugin-react-hooks": "*",
+    "eslint-config-prettier": "*",
+    "prettier": "*",
+    "husky": "*",
+    "lint-staged": "*"
   }
 }

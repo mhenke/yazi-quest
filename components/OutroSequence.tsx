@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { CONCLUSION_DATA } from '../constants';
+import { CONCLUSION_DATA } from '../src/constants';
 import { Terminal, Signal, UploadCloud } from 'lucide-react';
 
 export const OutroSequence: React.FC = () => {
@@ -64,7 +64,7 @@ export const OutroSequence: React.FC = () => {
             </h1>
           </div>
           <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
-            {CONCLUSION_DATA.subtitle}
+            // {CONCLUSION_DATA.subtitle}
           </p>
         </div>
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { FileNode, Level, GameState } from '../types';
+import React, { useEffect, useRef } from 'react';
+import { FileNode, Level } from '../types';
 import {
   FileText,
   FolderOpen,
@@ -14,13 +14,12 @@ import {
   FileCog,
   FileLock,
   Terminal as TerminalIcon,
-  ArrowRight,
 } from 'lucide-react';
 
 interface PreviewPaneProps {
   node: FileNode | null;
   level: Level;
-  gameState: GameState; // Add gameState prop
+  previewScroll?: number;
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -42,7 +41,8 @@ const getPreviewIcon = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
-export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState }) => {
+export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewScroll = 0 }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
   const isArchiveDir = node?.type === 'archive';
@@ -51,14 +51,19 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
   const hasChildren = node?.children && node.children.length > 0;
   const showChildren = node?.type === 'dir' || isArchiveDir || (isArchiveFile && hasChildren);
 
-  const firstIncompleteTaskIndex = level.tasks.findIndex((t) => !t.completed);
+  useEffect(() => {
+    if (scrollRef.current) {
+        // Simple scroll based on line height approx 20px
+        scrollRef.current.scrollTop = previewScroll * 20;
+    }
+  }, [previewScroll, node]);
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">
       {/* Content Display Section (No Header) */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {node ? (
-          <div id="preview-main" className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             {/* CASE 1: Image */}
             {isImage && (
               <div className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-zinc-800 rounded bg-zinc-900/30 p-4">
@@ -115,7 +120,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
       </div>
 
       {/* Bottom Section: Mission Log */}
-      <div className="h-1/3 min-h-[200px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
+      <div className="h-[45%] min-h-[250px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
         <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
           <h3 className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">
             Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
@@ -133,37 +138,23 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, gameState
               Objectives
             </h3>
             <div className="space-y-2">
-              {level.tasks.map((task, index) => {
-                const taskDescription =
-                  typeof task.description === 'function'
-                    ? task.description(gameState)
-                    : task.description;
-                const isCurrentTask = index === firstIncompleteTaskIndex;
-
-                return (
+              {level.tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
+                >
                   <div
-                    key={task.id}
-                    className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
+                    className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
                   >
-                    <div
-                      className={`mt-0.5 shrink-0 ${task.completed ? 'text-green-500' : 'text-zinc-600'}`}
-                    >
-                      {task.completed ? (
-                        <CheckSquare size={14} />
-                      ) : isCurrentTask ? (
-                        <ArrowRight size={14} className="animate-pulse" />
-                      ) : (
-                        <Square size={14} />
-                      )}
-                    </div>
-                    <div
-                      className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'} ${isCurrentTask ? 'font-bold' : ''}`}
-                    >
-                      {taskDescription}
-                    </div>
+                    {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
                   </div>
-                );
-              })}
+                  <div
+                    className={`text-xs font-mono leading-tight ${task.completed ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
+                  >
+                    {task.description}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -62,7 +62,7 @@ Use URL parameters for testing:
 
 See `theatre.md` for the comprehensive lore generation guide. Key principles:
 
-- **General topics/workflows per level** - Each level teaches a general topic (e.g., navigation, quick navigation) allowing for the combination of up to two actions per task to reflect realistic Yazi workflows.
+- **One skill per level** - Each level teaches exactly ONE Yazi command
 - **Metaphor mapping** - File operations map to narrative actions (delete → "purge trackers", filter → "scan signatures", fuzzy find → "quantum jump")
 - **Episode tone progression**:
   - Ep 1: Cautious/vulnerable ("initialize", "detect", "scan")
@@ -77,14 +77,14 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
 
 ## UI Layout Guidelines
 
-**DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (M).
+**DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (Shift+M).
 
 **Layout Structure:**
 
 - **Top Bar** (`LevelProgress.tsx`) - Episode progression, Map button, Hint/Help buttons
 - **Main Area** - Parent pane, Active file pane, Preview pane (3-column Yazi layout)
 - **Bottom Bar** (`StatusBar.tsx`) - Mode, filename, progress, clipboard status, timer/keystrokes, file stats
-- **Quest Map Modal** - Accessed via M or Map button, shows all level details:
+- **Quest Map Modal** - Accessed via Shift+M or Map button, shows all level details:
   - Level title, description, core skill
   - Intel (environmentalClue)
   - Skill tree (buildsOn/leadsTo)

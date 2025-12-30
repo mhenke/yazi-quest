@@ -1,30 +1,37 @@
-type Payload = Record<string, unknown> | undefined;
+type Payload = Record<string, any> | undefined;
 
 // Minimal telemetry system with batching, optional Sentry integration, and configurable endpoint.
 const QUEUE: Array<{ name: string; payload?: Payload; ts: number }> = [];
 let FLUSH_INTERVAL = 10000; // 10s
 let MAX_QUEUE = 500;
-
-// Safely read env from import.meta without using `any`
-const metaEnv = import.meta as unknown as { env?: Record<string, string> };
-let telemetryEndpoint: string | undefined = metaEnv.env?.VITE_TELEMETRY_ENDPOINT || undefined;
-let telemetryDisabled = !!metaEnv.env?.VITE_TELEMETRY_DISABLED;
+let telemetryEndpoint: string | undefined = (import.meta as any).env?.VITE_TELEMETRY_ENDPOINT || undefined;
+let telemetryDisabled = !!(import.meta as any).env?.VITE_TELEMETRY_DISABLED;
 let sentinelInitialized = false;
 let flushTimer: number | undefined;
 
-type SentryModule = { init?: (opts: { dsn?: string }) => void };
-
 async function tryInitSentry() {
-  // Sentry removed - no-op
-  return;
+  const dsn = (import.meta as any).env?.VITE_SENTRY_DSN;
+  if (!dsn) return;
+  if (sentinelInitialized) return;
+  try {
+    // Attempt dynamic import; suppress TS error if package not installed
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const Sentry = await import('@sentry/browser');
+    if (Sentry && (Sentry as any).init) {
+      (Sentry as any).init({ dsn });
+      sentinelInitialized = true;
+      console.info('[telemetry] Sentry initialized');
+    }
+  } catch (e) {
+    // package not installed or init failed; ignore
+    console.warn('[telemetry] Sentry init failed or not installed', e);
+  }
 }
 
 function scheduleFlush() {
   if (flushTimer) return;
-  flushTimer = window.setInterval(
-    () => flushQueue().catch(() => {}),
-    FLUSH_INTERVAL
-  ) as unknown as number;
+  flushTimer = window.setInterval(() => flushQueue().catch(() => {}), FLUSH_INTERVAL) as unknown as number;
 }
 
 async function flushQueue() {
@@ -44,19 +51,11 @@ async function flushQueue() {
   try {
     const body = JSON.stringify({ events: payload });
     // Use sendBeacon if available for reliability on unload
-    type NavigatorWithBeacon = Navigator & {
-      sendBeacon?: (url: string, data: BodyInit) => boolean;
-    };
-    const nav = navigator as unknown as NavigatorWithBeacon;
-    if (nav && typeof nav.sendBeacon === 'function') {
+    if (navigator && (navigator as any).sendBeacon) {
       const blob = new Blob([body], { type: 'application/json' });
-      nav.sendBeacon(endpoint, blob);
+      (navigator as any).sendBeacon(endpoint, blob);
     } else {
-      await fetch(endpoint, {
-        method: 'POST',
-        body,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await fetch(endpoint, { method: 'POST', body, headers: { 'Content-Type': 'application/json' } });
     }
   } catch (e) {
     console.warn('[telemetry] flush failed, re-queueing', e);
@@ -67,12 +66,7 @@ async function flushQueue() {
   }
 }
 
-export function initTelemetry(opts?: {
-  endpoint?: string;
-  flushIntervalMs?: number;
-  maxQueue?: number;
-  disable?: boolean;
-}) {
+export function initTelemetry(opts?: { endpoint?: string; flushIntervalMs?: number; maxQueue?: number; disable?: boolean }) {
   if (opts) {
     if (opts.endpoint) telemetryEndpoint = opts.endpoint;
     if (opts.flushIntervalMs) FLUSH_INTERVAL = opts.flushIntervalMs;
@@ -90,13 +84,10 @@ export function trackEvent(name: string, payload?: Payload) {
   tryInitSentry().catch(() => {});
   // window.dataLayer integration
   try {
-    const win = window as unknown as { dataLayer?: Array<Record<string, unknown>> };
-    if (typeof window !== 'undefined' && Array.isArray(win.dataLayer)) {
-      win.dataLayer.push({ event: name, ...(payload || {}) });
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({ event: name, ...(payload || {}) });
     }
-  } catch (e) {
-    /* ignore */
-  }
+  } catch (e) {}
 
   QUEUE.push({ name, payload, ts: Date.now() });
   if (QUEUE.length >= MAX_QUEUE) {
@@ -111,19 +102,10 @@ export function trackError(name: string, payload?: Payload) {
   tryInitSentry().catch(() => {});
   // forward to Sentry if available
   try {
-    const win = window as unknown as {
-      Sentry?: { captureMessage?: (msg: string, opts?: object) => void };
-    };
-    if (
-      typeof window !== 'undefined' &&
-      win.Sentry &&
-      typeof win.Sentry.captureMessage === 'function'
-    ) {
-      win.Sentry.captureMessage(name, { level: 'error', extra: payload });
+    if (typeof window !== 'undefined' && (window as any).Sentry && (window as any).Sentry.captureMessage) {
+      (window as any).Sentry.captureMessage(name, { level: 'error', extra: payload });
     }
-  } catch (e) {
-    /* ignore */
-  }
+  } catch (e) {}
 
   QUEUE.push({ name: `[error] ${name}`, payload, ts: Date.now() });
   if (QUEUE.length >= MAX_QUEUE) {
@@ -137,3 +119,4 @@ initTelemetry({ endpoint: telemetryEndpoint, disable: telemetryDisabled });
 
 // Expose flush for manual flushing
 export { flushQueue as flushTelemetryQueue };
+

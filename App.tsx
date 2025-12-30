@@ -1,19 +1,18 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   GameState,
   FileNode,
   Level,
-  ClipboardItem,
   ZoxideEntry,
   calculateFrecency,
   Linemode,
-  Result,
   FsError,
+  Result,
 } from './types';
-import { LEVELS, INITIAL_FS, EPISODE_LORE, KEYBINDINGS } from './constants';
+import { LEVELS, INITIAL_FS, EPISODE_LORE } from './src/constants';
 import {
   getNodeByPath,
-  findNodeByName,
   getParentNode,
   deleteNode,
   addNode,
@@ -24,11 +23,10 @@ import {
   getAllDirectories,
   resolvePath,
   getRecursiveContent,
-} from './utils/fsHelpers';
-import { sortNodes } from './utils/sortHelpers';
-import { getVisibleItems } from './utils/viewHelpers';
-import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
-import { simulateCompletionOfLevel } from './utils/seedLevels';
+} from './src/utils/fsHelpers';
+import { sortNodes } from './src/utils/sortHelpers';
+import { getVisibleItems } from './src/utils/viewHelpers';
+import { playSuccessSound, playTaskCompleteSound } from './src/utils/sounds';
 import { StatusBar } from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
@@ -39,14 +37,14 @@ import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
-import { AlertToast } from './components/AlertToast';
+import { ThreatAlert } from './components/ThreatAlert';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
 import { FuzzyFinder } from './components/FuzzyFinder';
 import { MemoizedFileSystemPane } from './components/FileSystemPane';
 import { MemoizedPreviewPane } from './components/PreviewPane';
-import { reportError } from './utils/error';
-import { measure } from './utils/perf';
+import { reportError } from './src/utils/error';
+import { measure } from './src/utils/perf';
 
 const FileSystemPane = MemoizedFileSystemPane;
 const PreviewPane = MemoizedPreviewPane;
@@ -63,7 +61,6 @@ export default function App() {
     const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
     const skipIntro = params.get('intro') === 'false';
-    const hasJumpParams = !!(lvlParam || epParam || debugParam);
 
     // 3. Determine Target Level
     let targetIndex = 0;
@@ -78,8 +75,6 @@ export default function App() {
       const idx = LEVELS.findIndex((l) => l.episodeId === id);
       if (idx !== -1) targetIndex = idx;
     }
-    const jumpedToLevel = targetIndex > 0; // Treat any start beyond level 0 as a jump
-    const isFreshStart = !hasJumpParams && targetIndex === 0; // true when no jump/debug params provided
 
     // 4. Handle Task Completion (Bypass)
     if (tasksParam && targetIndex < LEVELS.length) {
@@ -120,6 +115,8 @@ export default function App() {
       '/etc': { count: 8, lastAccess: now - 86400000 },
     };
 
+    const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
+
     if (initialLevel.initialPath) {
       const initialPathStr = resolvePath(INITIAL_FS, initialLevel.initialPath);
       if (!initialZoxide[initialPathStr]) {
@@ -129,73 +126,20 @@ export default function App() {
 
     // Prepare File System with Level-Specific Overrides
     let fs = cloneFS(INITIAL_FS);
-    try {
-      // If jumping into a later level (debug or direct link), run onEnter hooks for all previous levels
-      // so that protections/unprotections are applied for levels up to the target level.
-      if (jumpedToLevel) {
-        for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
-          const lvl = LEVELS[i];
-          if (lvl.onEnter) {
-            // Respect seedMode: if a level is marked 'fresh' it should only seed on a truly fresh start
-            if (!lvl.seedMode || lvl.seedMode !== 'fresh' || isFreshStart) {
-              try {
-                fs = lvl.onEnter(fs);
-              } catch (err) {
-                reportError(err, { phase: 'initialLevelChain.onEnter', level: lvl.id });
-              }
-            }
-          }
-        }
-
-        // Auto-unprotect nodes whose releaseLevel is <= the target level id for jump initialization
-        try {
-          const targetLevelId = LEVELS[targetIndex]?.id;
-          if (typeof targetLevelId === 'number') {
-            const releasePass = (node: FileNode) => {
-              if (
-                node.protection &&
-                typeof node.protection.releaseLevel === 'number' &&
-                node.protection.releaseLevel !== -1 &&
-                node.protection.releaseLevel <= targetLevelId
-              ) {
-                // remove protection entirely when release level met
-                node.protection = undefined;
-              }
-              if (node.children) node.children.forEach(releasePass);
-            };
-            releasePass(fs);
-          }
-        } catch (err) {
-          reportError(err, { phase: 'initialLevel.releasePass' });
-        }
-      }
-
-      // Replace scattered seeding blocks with atomic per-level completion simulation
-      if (jumpedToLevel) {
-        for (let i = 0; i < targetIndex && i < LEVELS.length; i++) {
-          const lvl = LEVELS[i];
-          try {
-            fs = simulateCompletionOfLevel(fs, lvl.id);
-          } catch (err) {
-            reportError(err, { phase: 'simulateCompletion', level: lvl.id });
-          }
-        }
-      }
-
-      // Post-level seeding handled by simulateCompletionOfLevel; legacy inline seeding removed.
-    } catch (err) {
+    if (initialLevel.onEnter) {
       try {
-        reportError(err, {
-          phase: 'initialLevel.onEnter',
-          level: initialLevel?.id,
-        });
-      } catch (e) {
-        console.error('initialLevel.onEnter failed', err);
+        // Only run 'fresh' seed hooks when starting from an untouched INITIAL_FS
+        const isFreshStart = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
+        if (!initialLevel.seedMode || initialLevel.seedMode !== 'fresh' || isFreshStart) {
+          fs = initialLevel.onEnter(fs);
+        }
+      } catch (err) {
+        try { reportError(err, { phase: 'initialLevel.onEnter', level: initialLevel?.id }); } catch(e) { console.error('initialLevel.onEnter failed', err); }
       }
     }
 
     return {
-      currentPath: initialLevel.initialPath || ['root', 'home', 'guest'],
+      currentPath: initialPath,
       cursorIndex: 0,
       clipboard: null,
       mode: 'normal',
@@ -205,12 +149,13 @@ export default function App() {
       sortDirection: 'asc',
       linemode: 'size',
       history: [],
-      historyIndex: -1,
+      future: [],
+      previewScroll: 0,
       zoxideData: initialZoxide,
       levelIndex: targetIndex,
       fs: fs,
       levelStartFS: cloneFS(fs),
-      levelStartShowHidden: false,
+      levelStartPath: [...initialPath],
       notification: isDevOverride ? `DEV BYPASS ACTIVE` : null,
       selectedIds: [],
       pendingDeleteIds: [],
@@ -218,146 +163,45 @@ export default function App() {
       showHelp: false,
       showHint: false,
       hintStage: 0,
-      showHidden: false,
+      showHidden: true,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
       keystrokes: 0,
       isGameOver: false,
       gameOverReason: undefined,
-      stats: { fuzzyJumps: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
+      stats: { fuzzyJumps: 0, fzfFinds: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
       settings: { soundEnabled: true },
       fuzzySelectedIndex: 0,
       usedG: false,
       usedGG: false,
-      usedPreviewScroll: false,
-      usedPreviewScrollDirection: null,
-      usedPrevPreviewScrollDirection: null,
-      usedHistory: false,
     };
   });
 
-  const filterInputRef = useRef<HTMLInputElement>(null);
-  const createInputRef = useRef<HTMLInputElement>(null);
-  const renameInputRef = useRef<HTMLInputElement>(null);
-  const fuzzyInputRef = useRef<HTMLInputElement>(null);
-  const unusedVar = 'this should cause a lint error'; // Intentional lint error
-
-  // Effect to manage input focus based on game mode
-  useEffect(() => {
-    switch (gameState.mode) {
-      case 'filter':
-        filterInputRef.current?.focus();
-        filterInputRef.current?.select(); // Select existing text for easy replacement
-        break;
-      case 'input-file':
-        createInputRef.current?.focus();
-        break;
-      case 'rename':
-        // Focus is handled inside FileSystemPane
-        break;
-      case 'zoxide-jump':
-      case 'fzf-current':
-        fuzzyInputRef.current?.focus();
-        break;
-      default:
-        // When leaving an input mode, ensure no input is unintentionally focused
-        if (filterInputRef.current === document.activeElement) filterInputRef.current.blur();
-        if (createInputRef.current === document.activeElement) createInputRef.current.blur();
-        if (fuzzyInputRef.current === document.activeElement) fuzzyInputRef.current.blur();
-        break;
-    }
-  }, [gameState.mode]);
-
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showFalseThreatAlert, setShowFalseThreatAlert] = useState(false);
-  const [showAlertToast, setShowAlertToast] = useState(false);
-  const [showHiddenModal, setShowHiddenModal] = useState(false);
-  const lastAlertShownRef = useRef<number | null>(null);
+  const [showThreatAlert, setShowThreatAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
   const prevAllTasksCompleteRef = useRef(false);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
 
-  // Show quarantine alert toast once when entering Level with id 5
-  useEffect(() => {
-    if (isLastLevel || gameState.isGameOver) return;
-    const lvl = currentLevel;
-    if (lvl && lvl.id === 5 && lastAlertShownRef.current !== lvl.id) {
-      setTimeout(() => setShowAlertToast(true), 0);
-      lastAlertShownRef.current = lvl.id;
-    }
-  }, [gameState.levelIndex, isLastLevel, gameState.isGameOver, currentLevel]);
-
-  // --- New useEffect for Level Start (onEnter) Logic & levelStartFS snapshot ---
-  useEffect(() => {
-    if (isLastLevel || gameState.isGameOver) return; // Don't run if game is over or finished
-    if (gameState.showEpisodeIntro) return; // Wait for intro to finish
-
-    let currentFs = gameState.fs; // Start with the FS state from initializer
-    let error: any = null;
-
-    // Apply onEnter for the current level (strictly for protection management)
-    if (currentLevel.onEnter) {
-      try {
-        currentFs = currentLevel.onEnter(currentFs);
-      } catch (err) {
-        reportError(err, { phase: 'onEnter.currentLevel', level: currentLevel.id });
-        error = err;
-      }
-    }
-
-    // This effect is designed to run once at the start of a level to apply protections.
-    // The state update is conditional and necessary to correctly set the starting FS.
-    // Use microtask to avoid synchronous setState-in-effect
-    setTimeout(() => {
-      setGameState((prev) => ({
-        ...prev,
-        fs: currentFs, // Update FS with potential protection changes from onEnter
-        levelStartFS: cloneFS(currentFs), // Snapshot FS *after* onEnter has run for soft restart
-        levelStartShowHidden: prev.showHidden,
-        notification: error ? `Level ${currentLevel.id} init error` : null, // Report any onEnter errors
-      }));
-    }, 0);
-  }, [gameState.levelIndex, gameState.showEpisodeIntro]);
-
-  const visibleItems = React.useMemo(
-    () => measure('visibleItems', () => getVisibleItems(gameState)),
-    [gameState]
-  );
-
-  const handleCloseAlert = useCallback(() => {
-    setShowAlertToast(false);
-    // Clear modal UI flags and ensure normal mode resumes
-    setGameState((prev) => ({
-      ...prev,
-      showHelp: false,
-      showHint: false,
-      showInfoPanel: false,
-      mode: 'normal',
-    }));
-  }, []);
+  const visibleItems = React.useMemo(() => measure('visibleItems', () => getVisibleItems(gameState)), [gameState]);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
   // Helper to show notification with auto-clear
   const showNotification = useCallback((message: string, duration: number = 3000) => {
-    // Clear existing timer
     if (notificationTimerRef.current) {
       clearTimeout(notificationTimerRef.current);
     }
-
-    // Set notification
     setGameState((prev) => ({ ...prev, notification: message }));
-
-    // Auto-clear after duration
     notificationTimerRef.current = setTimeout(() => {
       setGameState((prev) => ({ ...prev, notification: null }));
       notificationTimerRef.current = null;
     }, duration);
   }, []);
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (notificationTimerRef.current) {
@@ -366,39 +210,13 @@ export default function App() {
     };
   }, []);
 
-  // Helper to evaluate a task's check (supports array of alternative checks)
-  const evaluateTaskCheck = (
-    check:
-      | ((gameState: GameState, level: Level) => boolean)
-      | Array<(gameState: GameState, level: Level) => boolean>,
-    state: GameState,
-    level: Level
-  ) => {
-    if (Array.isArray(check)) {
-      return check.some((fn) => {
-        try {
-          return fn(state, level);
-        } catch (e) {
-          reportError(e, { phase: 'evaluateTaskCheck.some', level: level.id });
-          return false;
-        }
-      });
-    }
-    try {
-      return (check as (s: GameState, l: Level) => boolean)(state, level);
-    } catch (e) {
-      reportError(e, { phase: 'evaluateTaskCheck', level: level.id });
-      return false;
-    }
-  };
-
   // --- Task Checking & Level Progression ---
   useEffect(() => {
     if (isLastLevel || gameState.isGameOver) return;
 
     let changed = false;
     currentLevel.tasks.forEach((task) => {
-      if (!task.completed && evaluateTaskCheck(task.check, gameState, currentLevel)) {
+      if (!task.completed && task.check(gameState, currentLevel)) {
         task.completed = true;
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
@@ -406,19 +224,13 @@ export default function App() {
     });
 
     if (changed) {
-      setTimeout(() => setGameState((prev) => ({ ...prev })), 0);
+      setGameState((prev) => ({ ...prev }));
     }
 
     const allComplete = currentLevel.tasks.every((t) => t.completed);
     if (allComplete && !prevAllTasksCompleteRef.current) {
       playSuccessSound(gameState.settings.soundEnabled);
-      // If dotfiles are currently visible, block completion and show an instructional modal
-      if (gameState.showHidden) {
-        // Show a modal that instructs the player to re-hide dotfiles before completion.
-        setTimeout(() => setShowHiddenModal(true), 0);
-      } else {
-        setTimeout(() => setShowSuccessToast(true), 0);
-      }
+      setShowSuccessToast(true);
     }
     prevAllTasksCompleteRef.current = allComplete;
   }, [gameState, currentLevel, isLastLevel]);
@@ -466,44 +278,24 @@ export default function App() {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
 
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-      setTimeout(
-        () => setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' })),
-        0
-      );
+      setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
 
-  // History tracking refs: last path and skip-flag used when navigating history itself
-  const lastPathRef = useRef<string[]>(gameState.currentPath);
-  const skipHistoryPushRef = useRef(false);
-
-  // Push navigation history when currentPath changes (unless skipHistoryPushRef is set)
+  // Trigger ThreatAlert on Level 5 start
   useEffect(() => {
-    if (skipHistoryPushRef.current) {
-      // clear the flag and update lastPath
-      skipHistoryPushRef.current = false;
-      lastPathRef.current = gameState.currentPath;
-      return;
+    if (gameState.isGameOver || gameState.showEpisodeIntro) return;
+    
+    const levelId = currentLevel.id;
+    if (levelId === 5) {
+      const timer = setTimeout(() => {
+        setAlertMessage("🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.");
+        setShowThreatAlert(true);
+        setTimeout(() => setShowThreatAlert(false), 10000);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-
-    const prevPath = lastPathRef.current;
-    if (!prevPath || JSON.stringify(prevPath) === JSON.stringify(gameState.currentPath)) {
-      lastPathRef.current = gameState.currentPath;
-      return;
-    }
-
-    setGameState((prev) => {
-      const idx = (prev.historyIndex ?? -1) + 1;
-      const truncated = prev.history.slice(0, idx);
-      return {
-        ...prev,
-        history: [...truncated, prevPath],
-        historyIndex: truncated.length,
-      };
-    });
-
-    lastPathRef.current = gameState.currentPath;
-  }, [gameState.currentPath]);
+  }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
 
   const advanceLevel = useCallback(() => {
     setGameState((prev) => {
@@ -516,8 +308,20 @@ export default function App() {
       const nextLevel = LEVELS[nextIdx];
       const isNewEp = nextLevel.episodeId !== LEVELS[prev.levelIndex].episodeId;
 
-      const fs = cloneFS(prev.fs);
-      const onEnterError: any = null;
+      let fs = cloneFS(prev.fs);
+      let onEnterError: any = null;
+      try {
+        const isFresh = JSON.stringify(prev.fs) === JSON.stringify(INITIAL_FS);
+        if (
+          nextLevel.onEnter &&
+          (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)
+        ) {
+          fs = nextLevel.onEnter(fs);
+        }
+      } catch (err) {
+        try { reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id }); } catch(e) { console.error('nextLevel.onEnter failed', err); }
+        onEnterError = err;
+      }
 
       const now = Date.now();
       const targetPath = isNewEp ? nextLevel.initialPath || prev.currentPath : prev.currentPath;
@@ -534,11 +338,13 @@ export default function App() {
         levelIndex: nextIdx,
         fs: fs,
         levelStartFS: cloneFS(fs),
-        levelStartShowHidden: false,
+        levelStartPath: [...targetPath],
         currentPath: targetPath,
         cursorIndex: 0,
         filters: {},
         clipboard: null,
+        sortBy: 'natural',
+        sortDirection: 'asc',
         linemode: 'size',
         notification: onEnterError ? 'Level initialization failed' : null,
         selectedIds: [],
@@ -549,18 +355,144 @@ export default function App() {
         keystrokes: 0,
         usedG: false,
         usedGG: false,
-        usedPreviewScroll: false,
-        usedHistory: false,
         zoxideData: newZoxideData,
+        future: [],
+        previewScroll: 0,
       };
     });
     setShowSuccessToast(false);
-    // After advancing level, ensure the main app root regains focus so keyboard navigation remains on the navigator pane
-    setTimeout(() => {
-      const root = document.getElementById('app-root');
-      if (root) (root as HTMLElement).focus();
-    }, 0);
+    setShowThreatAlert(false);
   }, []);
+
+  const handleRestartLevel = useCallback(() => {
+    setGameState((prev) => {
+      const restoredFS = cloneFS(prev.levelStartFS);
+      const restoredPath = [...prev.levelStartPath];
+      const currentLvl = LEVELS[prev.levelIndex];
+      currentLvl.tasks.forEach(t => t.completed = false);
+
+      return {
+        ...prev,
+        fs: restoredFS,
+        currentPath: restoredPath,
+        cursorIndex: 0,
+        clipboard: null,
+        mode: 'normal',
+        filters: {},
+        notification: 'System Reinitialized',
+        selectedIds: [],
+        pendingDeleteIds: [],
+        pendingOverwriteNode: null,
+        isGameOver: false,
+        gameOverReason: undefined,
+        timeLeft: currentLvl.timeLimit || null,
+        keystrokes: 0,
+        showHint: false,
+        hintStage: 0,
+        fuzzySelectedIndex: 0,
+        usedG: false,
+        usedGG: false,
+        future: [],
+        previewScroll: 0,
+      };
+    });
+  }, []);
+
+  // --- Handlers ---
+  
+  const handleSortModeKeyDown = useCallback(
+    (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
+      const key = e.key;
+      const shift = e.shiftKey;
+      
+      if (key === 'n' || key === 'N') {
+          setGameState(prev => ({ ...prev, mode: 'normal', sortBy: 'natural', sortDirection: shift ? 'desc' : 'asc', notification: `Sort: Natural ${shift ? '(rev)' : ''}` }));
+      } else if (key === 'a' || key === 'A') {
+          setGameState(prev => ({ ...prev, mode: 'normal', sortBy: 'alphabetical', sortDirection: shift ? 'desc' : 'asc', notification: `Sort: A-Z ${shift ? '(rev)' : ''}` }));
+      } else if (key === 'm' || key === 'M') {
+          setGameState(prev => ({ ...prev, mode: 'normal', sortBy: 'modified', sortDirection: shift ? 'asc' : 'desc', linemode: 'mtime', notification: `Sort: Modified ${shift ? '(old)' : '(new)'}` }));
+      } else if (key === 's' || key === 'S') {
+          setGameState(prev => ({ ...prev, mode: 'normal', sortBy: 'size', sortDirection: shift ? 'asc' : 'desc', linemode: 'size', notification: `Sort: Size ${shift ? '(small)' : '(large)'}` }));
+      } else if (key === 'e' || key === 'E') {
+          setGameState(prev => ({ ...prev, mode: 'normal', sortBy: 'extension', sortDirection: shift ? 'desc' : 'asc', notification: `Sort: Extension ${shift ? '(rev)' : ''}` }));
+      } else if (key === 'l') {
+          setGameState(prev => {
+              const modes: Linemode[] = ['none', 'size', 'mtime', 'permissions'];
+              const nextIndex = (modes.indexOf(prev.linemode) + 1) % modes.length;
+              return { ...prev, mode: 'normal', linemode: modes[nextIndex] };
+          });
+      } else if (key === '-') {
+          setGameState(prev => ({ ...prev, mode: 'normal', linemode: 'none' }));
+      } else if (key === 'Escape') {
+          setGameState(prev => ({ ...prev, mode: 'normal' }));
+      }
+    }, []
+  );
+
+  const handleConfirmDeleteModeKeyDown = useCallback(
+    (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>, visibleItems: FileNode[]) => {
+      if (e.key === 'y' || e.key === 'Enter') {
+         setGameState(prev => {
+            let newFs = prev.fs;
+            let errorMsg = null;
+            
+            // Check protection
+            for (const id of prev.pendingDeleteIds) {
+                const node = visibleItems.find(n => n.id === id);
+                if (node) {
+                    const protection = isProtected(prev.fs, prev.currentPath, node, prev.levelIndex, 'delete');
+                    if (protection) {
+                        errorMsg = protection;
+                        break;
+                    }
+                    const res = deleteNode(newFs, prev.currentPath, id, prev.levelIndex);
+                    if (res.ok) {
+                        newFs = res.value;
+                    } else {
+                        errorMsg = res.error;
+                        break;
+                    }
+                }
+            }
+            
+            if (errorMsg) {
+                return { ...prev, mode: 'normal', pendingDeleteIds: [], notification: `Error: ${errorMsg}` };
+            }
+            return { ...prev, fs: newFs, mode: 'normal', pendingDeleteIds: [], selectedIds: [], notification: 'Items deleted' };
+         });
+      } else if (e.key === 'n' || e.key === 'Escape') {
+         setGameState(prev => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
+      }
+    }, []
+  );
+  
+  const handleOverwriteConfirmKeyDown = useCallback(
+      (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
+          if (e.key === 'y' || e.key === 'Enter') {
+              setGameState(prev => {
+                 if (!prev.pendingOverwriteNode) return { ...prev, mode: 'normal' };
+                 
+                 let newFs = prev.fs;
+                 const deleteRes = deleteNode(newFs, prev.currentPath, prev.pendingOverwriteNode.id, prev.levelIndex);
+                 if (deleteRes.ok === false) return { ...prev, mode: 'normal', notification: `Overwrite failed: ${deleteRes.error}` };
+                 newFs = deleteRes.value;
+
+                 const createRes = createPath(newFs, prev.currentPath, prev.inputBuffer);
+                 
+                 return { 
+                     ...prev, 
+                     fs: createRes.fs, 
+                     mode: 'normal', 
+                     pendingOverwriteNode: null, 
+                     inputBuffer: '',
+                     notification: 'Overwritten'
+                 };
+              });
+          } else if (e.key === 'n' || e.key === 'Escape') {
+              setGameState(prev => ({ ...prev, mode: 'normal', pendingOverwriteNode: null }));
+          }
+      }, []
+  );
 
   const handleNormalModeKeyDown = useCallback(
     (
@@ -575,47 +507,27 @@ export default function App() {
     ) => {
       switch (e.key) {
         case 'j':
-        case 'ArrowDown': {
-          const previewEl = document.getElementById('preview-main') as HTMLElement | null;
-          if (previewEl && document.activeElement === previewEl) {
-            // Scroll preview when preview pane is focused
-            previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({
-              ...prev,
-              usedPreviewScroll: true,
-              lastAction: {
-                type: 'PREVIEW_SCROLL',
-                timestamp: Date.now(),
-                data: { direction: 'down' },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
-            }));
-          }
+        case 'ArrowDown':
+          setGameState((prev) => ({
+            ...prev,
+            cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
+            previewScroll: 0
+          }));
           break;
-        }
         case 'k':
-        case 'ArrowUp': {
-          const previewEl = document.getElementById('preview-main') as HTMLElement | null;
-          if (previewEl && document.activeElement === previewEl) {
-            previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({
-              ...prev,
-              usedPreviewScroll: true,
-              lastAction: {
-                type: 'PREVIEW_SCROLL',
-                timestamp: Date.now(),
-                data: { direction: 'up' },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1) }));
+        case 'ArrowUp':
+          setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1), previewScroll: 0 }));
+          break;
+        case 'J':
+          if (e.shiftKey) {
+            setGameState((prev) => ({ ...prev, previewScroll: prev.previewScroll + 1 }));
           }
           break;
-        }
+        case 'K':
+          if (e.shiftKey) {
+            setGameState((prev) => ({ ...prev, previewScroll: Math.max(0, prev.previewScroll - 1) }));
+          }
+          break;
         case 'g':
           e.preventDefault();
           setGameState((prev) => ({ ...prev, mode: 'g-command' }));
@@ -626,9 +538,52 @@ export default function App() {
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
+              previewScroll: 0
             }));
           }
           break;
+        case 'H':
+           if (e.shiftKey && gameState.history.length > 0) {
+              setGameState(prev => {
+                  const newHistory = [...prev.history];
+                  const previousPath = newHistory.pop();
+                  if (!previousPath) return prev;
+                  
+                  const newFuture = [...prev.future, prev.currentPath];
+
+                  return {
+                      ...prev,
+                      history: newHistory,
+                      future: newFuture,
+                      currentPath: previousPath,
+                      cursorIndex: 0,
+                      previewScroll: 0,
+                      notification: 'Navigated back'
+                  };
+              });
+           }
+           break;
+        case 'L':
+            if (e.shiftKey && gameState.future.length > 0) {
+               setGameState(prev => {
+                   const newFuture = [...prev.future];
+                   const nextPath = newFuture.pop();
+                   if (!nextPath) return prev;
+
+                   const newHistory = [...prev.history, prev.currentPath];
+                   
+                   return {
+                       ...prev,
+                       history: newHistory,
+                       future: newFuture,
+                       currentPath: nextPath,
+                       cursorIndex: 0,
+                       previewScroll: 0,
+                       notification: 'Navigated forward'
+                   };
+               });
+            }
+            break;
         case 'd':
           if (gameState.selectedIds.length > 0 || currentItem) {
             setGameState((prev) => ({
@@ -642,82 +597,14 @@ export default function App() {
           setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const inRequiredDir =
-              currentDir?.name === 'datastore' ||
-              currentDir?.name === 'incoming' ||
-              currentDir?.name === 'tmp';
+              currentDir?.name === 'datastore' || currentDir?.name === 'incoming';
             return {
               ...prev,
               cursorIndex: items.length - 1,
               usedG: inRequiredDir ? true : prev.usedG,
+              previewScroll: 0
             };
           });
-          break;
-        case 'J':
-          if (e.shiftKey) {
-            const previewEl = document.getElementById('preview-main') as HTMLElement | null;
-            if (previewEl) previewEl.scrollBy({ top: 100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({
-              ...prev,
-              usedPreviewScroll: true,
-              lastAction: {
-                type: 'PREVIEW_SCROLL',
-                timestamp: Date.now(),
-                data: { direction: 'down' },
-              },
-            }));
-          }
-          break;
-        case 'K':
-          if (e.shiftKey) {
-            const previewEl = document.getElementById('preview-main') as HTMLElement | null;
-            if (previewEl) previewEl.scrollBy({ top: -100, behavior: 'smooth' } as any);
-            setGameState((prev) => ({
-              ...prev,
-              usedPreviewScroll: true,
-              lastAction: {
-                type: 'PREVIEW_SCROLL',
-                timestamp: Date.now(),
-                data: { direction: 'up' },
-              },
-            }));
-          }
-          break;
-        case 'H':
-          if (e.shiftKey) {
-            // History Back
-            setGameState((prev) => {
-              if (prev.historyIndex >= 0 && prev.history && prev.history.length > 0) {
-                const target = prev.history[prev.historyIndex];
-                return {
-                  ...prev,
-                  currentPath: target,
-                  cursorIndex: 0,
-                  historyIndex: prev.historyIndex - 1,
-                  usedHistory: true,
-                };
-              }
-              return prev;
-            });
-          }
-          break;
-        case 'L':
-          if (e.shiftKey) {
-            // History Forward
-            setGameState((prev) => {
-              const nextIdx = (prev.historyIndex ?? -1) + 1;
-              if (prev.history && nextIdx < prev.history.length) {
-                const target = prev.history[nextIdx];
-                return {
-                  ...prev,
-                  currentPath: target,
-                  cursorIndex: 0,
-                  historyIndex: nextIdx,
-                  usedHistory: true,
-                };
-              }
-              return prev;
-            });
-          }
           break;
         case 'ArrowLeft':
           if (parent) {
@@ -725,21 +612,15 @@ export default function App() {
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
+              previewScroll: 0
             }));
           }
           break;
         case 'l':
         case 'Enter':
-        case 'ArrowRight': {
+        case 'ArrowRight':
           const allComplete = currentLevel.tasks.every((t) => t.completed);
-          if (allComplete && e.key === 'Enter') {
-            if (gameState.showHidden) {
-              showNotification(
-                "SYSTEM: Your traces are visible — re-hide dotfiles before mission completion (press '.')",
-                5000
-              );
-              return;
-            }
+          if (allComplete && e.key === 'Enter' && e.shiftKey) {
             advanceLevel();
             return;
           }
@@ -754,7 +635,9 @@ export default function App() {
                 cursorIndex: 0,
                 usedG: false, // Reset jump tracking on navigation
                 usedGG: false,
-                usedCtrlA: false,
+                history: [...prev.history, prev.currentPath], // Push to history
+                future: [], // Clear future on new navigation
+                previewScroll: 0,
                 zoxideData: {
                   ...prev.zoxideData,
                   [pathStr]: {
@@ -766,7 +649,6 @@ export default function App() {
             });
           }
           break;
-        }
         case ' ':
           if (currentItem) {
             setGameState((prev) => {
@@ -777,6 +659,7 @@ export default function App() {
                 ...prev,
                 selectedIds: newSelected,
                 cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
+                previewScroll: 0
               };
             });
           }
@@ -784,21 +667,9 @@ export default function App() {
         case 'a':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            // Allow Ctrl+A when teaching select-all (Level 10), otherwise disable
-            if (currentLevel && currentLevel.id === 10) {
-              const allIds = items.map((item) => item.id);
-              setGameState((prev) => ({
-                ...prev,
-                selectedIds: allIds,
-                lastAction: { type: 'SELECT_ALL', timestamp: Date.now() },
-                usedCtrlA: true,
-              }));
-            } else {
-              showNotification(
-                'Select items with Space; Ctrl+A is disabled in gameplay contexts.',
-                2000
-              );
-            }
+            const allIds = items.map((item) => item.id);
+            setGameState((prev) => ({ ...prev, selectedIds: allIds }));
+            showNotification(`Selected all (${allIds.length} items)`, 2000);
           } else {
             e.preventDefault();
             setGameState((prev) => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
@@ -809,11 +680,7 @@ export default function App() {
             e.preventDefault();
             const allIds = items.map((item) => item.id);
             const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
-            setGameState((prev) => ({
-              ...prev,
-              selectedIds: inverted,
-              lastAction: { type: 'INVERT_SELECTION', timestamp: Date.now() },
-            }));
+            setGameState((prev) => ({ ...prev, selectedIds: inverted }));
             showNotification(`Inverted selection (${inverted.length} items)`, 2000);
           } else if (gameState.selectedIds.length > 1) {
             setGameState((prev) => ({
@@ -834,7 +701,15 @@ export default function App() {
             // Add path-aware protection check for CUT
             if (e.key === 'x') {
               const protectedItem = nodes
-                .map((node) => isProtected(node, currentLevel.id, 'cut'))
+                .map((node) =>
+                  isProtected(
+                    gameState.fs,
+                    gameState.currentPath,
+                    node,
+                    gameState.levelIndex,
+                    'cut'
+                  )
+                )
                 .find((res) => res !== null);
               if (protectedItem) {
                 showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
@@ -847,7 +722,6 @@ export default function App() {
                 nodes,
                 action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
-                authorized: e.key === 'x',
               },
               selectedIds: [],
               notification: `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
@@ -855,17 +729,14 @@ export default function App() {
           } else if (currentItem) {
             // Add path-aware protection check for CUT
             if (e.key === 'x') {
-              const protection = isProtected(currentItem, currentLevel.id, 'cut');
-              if (protection === 'CUT_ABORT_SIGNAL') {
-                setShowFalseThreatAlert(true);
-                setGameState((prev) => ({
-                  ...prev,
-                  falseThreatActive: true,
-                  dynamicHint:
-                    'ALERT: System interception detected. Clear clipboard (Y) to abort the operation.',
-                }));
-                // DO NOT return here, allow clipboard to be populated
-              } else if (protection) {
+              const protection = isProtected(
+                gameState.fs,
+                gameState.currentPath,
+                currentItem,
+                gameState.levelIndex,
+                'cut'
+              );
+              if (protection) {
                 showNotification(`🔒 PROTECTED: ${protection}`, 4000);
                 return;
               }
@@ -876,7 +747,6 @@ export default function App() {
                 nodes: [currentItem],
                 action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
-                authorized: e.key === 'x',
               },
               notification: `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
             }));
@@ -888,70 +758,26 @@ export default function App() {
             if (currentDir) {
               try {
                 let newFs = gameState.fs;
-                let error: FsError | null = null;
+                let error: string | null = null;
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
-                  // For moves, delete original first (honoring authorization), then add to target
-                  if (gameState.clipboard?.action === 'cut') {
-                    const deleteResult = deleteNode(
-                      newFs,
-                      gameState.clipboard.originalPath,
-                      node.id,
-                      'cut',
-                      gameState.clipboard?.authorized === true
-                    );
-                    if (!deleteResult.ok) {
-                      // For a 'cut' operation, if the original is not found, it's not a failure.
-                      // It means it was already removed (e.g. parent dir deleted).
-                      if (
-                        (deleteResult as any).error !== 'NotFound' &&
-                        (deleteResult as any).error !== 'InvalidPath'
-                      ) {
-                        error = (deleteResult as any).error;
-                        errorNodeName = node.name;
-                        break;
-                      }
-                    } else {
-                      newFs = deleteResult.value;
-                    }
-                  }
-
-                  // Try to add; on Collision, emulate yazi behavior by appending _1/_2 ...
-                  let attempt = 0;
-                  let added = false;
-                  const maxAttempts = 10;
-                  let attemptName = node.name;
-
-                  while (!added && attempt < maxAttempts) {
-                    const nodeToAdd = { ...node, name: attemptName };
-                    const addResult = addNode(newFs, gameState.currentPath, nodeToAdd);
-                    if (addResult.ok) {
-                      newFs = addResult.value;
-                      added = true;
-                      break;
-                    } else {
-                      if ((addResult as any).error === 'Collision') {
-                        // generate next candidate name (respect extension)
-                        attempt += 1;
-                        const dotIndex = node.name.lastIndexOf('.');
-                        const base = dotIndex > 0 ? node.name.slice(0, dotIndex) : node.name;
-                        const ext = dotIndex > 0 ? node.name.slice(dotIndex) : '';
-                        attemptName = `${base}_${attempt}${ext}`;
-                        continue;
-                      } else {
-                        error = (addResult as any).error;
-                        errorNodeName = node.name;
-                        break;
-                      }
-                    }
-                  }
-
-                  if (!added && !error) {
-                    // exhausted attempts
-                    error = 'Collision';
+                  const addResult: Result<FileNode, FsError> = addNode(newFs, gameState.currentPath, node);
+                  if (addResult.ok === false) {
+                    error = addResult.error;
                     errorNodeName = node.name;
                     break;
+                  }
+                  newFs = addResult.value;
+                  
+                  if (gameState.clipboard?.action === 'cut') {
+                    const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
+                    if (deleteResult.ok === false) {
+                        error = deleteResult.error;
+                        errorNodeName = node.name;
+                        break;
+                    }
+                    newFs = deleteResult.value;
                   }
                 }
 
@@ -966,11 +792,7 @@ export default function App() {
                   }));
                 }
               } catch (err) {
-                try {
-                  reportError(err, { phase: 'paste', action: 'p' });
-                } catch (e) {
-                  console.error(err);
-                }
+                try { reportError(err, { phase: 'paste', action: 'p' }); } catch(e) { console.error(err); }
                 showNotification('Paste failed', 4000);
               }
             }
@@ -982,7 +804,7 @@ export default function App() {
             if (currentDir) {
               try {
                 let newFs = gameState.fs;
-                let error: FsError | null = null;
+                let error: string | null = null;
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
@@ -991,65 +813,47 @@ export default function App() {
                   );
 
                   if (existingNode) {
-                    const deleteResult = deleteNode(
-                      newFs,
-                      gameState.currentPath,
-                      existingNode.id,
-                      'delete',
-                      false
-                    );
-                    if (deleteResult.ok) {
-                      newFs = deleteResult.value;
-                    } else {
-                      error = (deleteResult as any).error;
+                    const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.currentPath, existingNode.id, gameState.levelIndex);
+                    if (deleteResult.ok === false) {
+                      error = deleteResult.error;
                       errorNodeName = existingNode.name;
                       break;
                     }
+                    newFs = deleteResult.value;
                   }
-
-                  const addResult = addNode(newFs, gameState.currentPath, node);
-                  if (addResult.ok) {
-                    newFs = addResult.value;
-                  } else {
-                    error = (addResult as any).error;
+                  
+                  const addResult: Result<FileNode, FsError> = addNode(newFs, gameState.currentPath, node);
+                  if (addResult.ok === false) {
+                    error = addResult.error;
                     errorNodeName = node.name;
                     break;
                   }
+                  newFs = addResult.value;
 
                   if (gameState.clipboard?.action === 'cut') {
-                    const deleteResult = deleteNode(
-                      newFs,
-                      gameState.clipboard.originalPath,
-                      node.id,
-                      'cut',
-                      gameState.clipboard?.authorized === true
-                    );
-                    if (deleteResult.ok) {
-                      newFs = deleteResult.value;
-                    } else {
-                      error = (deleteResult as any).error;
-                      errorNodeName = node.name;
-                      break;
+                    const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
+                    if (deleteResult.ok === false) {
+                        error = deleteResult.error;
+                        errorNodeName = node.name;
+                        break;
                     }
+                    newFs = deleteResult.value;
                   }
                 }
 
                 if (error) {
-                  showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
+                    showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
                 } else {
-                  setGameState((prev) => ({
-                    ...prev,
-                    fs: newFs,
-                    clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
-                    notification: `Force deployed ${prev.clipboard?.nodes.length} assets`,
-                  }));
+                    setGameState((prev) => ({
+                      ...prev,
+                      fs: newFs,
+                      clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
+                      notification: `Force deployed ${prev.clipboard?.nodes.length} assets`,
+                    }));
                 }
+
               } catch (err) {
-                try {
-                  reportError(err, { phase: 'paste', action: 'P' });
-                } catch (e) {
-                  console.error(err);
-                }
+                try { reportError(err, { phase: 'paste', action: 'P' }); } catch(e) { console.error(err); }
                 showNotification('Force paste failed', 4000);
               }
             }
@@ -1064,11 +868,7 @@ export default function App() {
           });
           break;
         case '.':
-          setGameState((prev) => ({
-            ...prev,
-            showHidden: !prev.showHidden,
-            lastAction: { type: 'TOGGLE_HIDDEN', timestamp: Date.now() },
-          }));
+          setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
           break;
         case ',':
           setGameState((prev) => ({ ...prev, mode: 'sort' }));
@@ -1107,19 +907,7 @@ export default function App() {
             if (hasFilter) {
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
-              return {
-                ...prev,
-                filters: newFilters,
-                notification: 'Scan filter deactivated',
-                lastAction: {
-                  type: 'FILTER_EXIT',
-                  timestamp: Date.now(),
-                  data: {
-                    method: 'esc',
-                    filter: (currentDir && prev.filters[currentDir.id]) || '',
-                  },
-                },
-              };
+              return { ...prev, filters: newFilters, notification: 'Scan filter deactivated' };
             }
             if (prev.selectedIds.length > 0) {
               return { ...prev, selectedIds: [], notification: 'Selection cleared' };
@@ -1130,818 +918,308 @@ export default function App() {
       }
       if (e.key === 'Y' || e.key === 'X') {
         e.preventDefault();
-        if (e.key === 'Y' && showFalseThreatAlert) {
-          setShowFalseThreatAlert(false);
-        }
-        setGameState((prev) => ({
-          ...prev,
-          clipboard: null,
-          falseThreatActive: false,
-          dynamicHint: undefined,
-        }));
+        setGameState((prev) => ({ ...prev, clipboard: null }));
         showNotification('CLIPBOARD CLEARED', 2000);
-      }
-    },
-    [showNotification, showFalseThreatAlert]
-  );
-
-  const handleSortModeKeyDown = useCallback(
-    (
-      e: KeyboardEvent,
-      gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
-    ) => {
-      if (e.key.toLowerCase() === 'n') {
-        const direction = e.shiftKey ? 'desc' : 'asc';
-        setGameState((prev) => ({
-          ...prev,
-          sortBy: 'natural',
-          sortDirection: direction,
-          mode: 'normal',
-          notification: `Sort: Natural ${e.shiftKey ? '(reversed)' : ''}`,
-        }));
-      } else if (e.key.toLowerCase() === 'a') {
-        const direction = e.shiftKey ? 'desc' : 'asc';
-        setGameState((prev) => ({
-          ...prev,
-          sortBy: 'alphabetical',
-          sortDirection: direction,
-          mode: 'normal',
-          notification: `Sort: ${e.shiftKey ? 'Z-A' : 'A-Z'}`,
-        }));
-      } else if (e.key.toLowerCase() === 'm') {
-        const direction = e.shiftKey ? 'asc' : 'desc';
-        setGameState((prev) => ({
-          ...prev,
-          sortBy: 'modified',
-          sortDirection: direction,
-          linemode: 'mtime',
-          mode: 'normal',
-          notification: `Sort: Modified ${e.shiftKey ? '(oldest first)' : '(newest first)'}`,
-        }));
-      } else if (e.key.toLowerCase() === 's') {
-        const direction = e.shiftKey ? 'asc' : 'desc';
-        setGameState((prev) => ({
-          ...prev,
-          sortBy: 'size',
-          sortDirection: direction,
-          linemode: 'size',
-          mode: 'normal',
-          notification: `Sort: Size ${e.shiftKey ? '(smallest first)' : '(largest first)'}`,
-        }));
-      } else if (e.key.toLowerCase() === 'e') {
-        const direction = e.shiftKey ? 'desc' : 'asc';
-        setGameState((prev) => ({
-          ...prev,
-          sortBy: 'extension',
-          sortDirection: direction,
-          mode: 'normal',
-          notification: `Sort: Extension ${e.shiftKey ? '(reversed)' : ''}`,
-        }));
-      } else if (e.key === 'l') {
-        setGameState((prev) => {
-          const modes: Linemode[] = ['none', 'size', 'mtime', 'permissions'];
-          const next = modes[(modes.indexOf(gameState.linemode) + 1) % modes.length];
-          return { ...prev, linemode: next, mode: 'normal', notification: `Linemode: ${next}` };
-        });
-      } else if (e.key === '-') {
-        setGameState((prev) => ({
-          ...prev,
-          linemode: 'none',
-          mode: 'normal',
-          notification: 'Linemode: None',
-        }));
-      } else if (e.key === 'Escape') {
-        setGameState((prev) => {
-          const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-          // If we're exiting filter prompt (mode === 'filter'), record a FILTER_EXIT action with method 'esc'
-          if (prev.mode === 'filter') {
-            const filterVal =
-              (currentDir && (prev.filters[currentDir.id] || prev.inputBuffer)) || '';
-            return {
-              ...prev,
-              mode: 'normal',
-              lastAction: {
-                type: 'FILTER_EXIT',
-                timestamp: Date.now(),
-                data: { method: 'esc', filter: filterVal },
-              },
-            };
-          }
-          return { ...prev, mode: 'normal' };
-        });
-      }
-    },
-    []
-  );
-
-  const handleConfirmDeleteModeKeyDown = useCallback(
-    (
-      e: KeyboardEvent,
-      gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
-      visibleItems: FileNode[]
-    ) => {
-      if (e.key === 'y' || e.key === 'Enter') {
-        try {
-          let newFs = gameState.fs;
-          let error: FsError | null = null;
-          gameState.pendingDeleteIds.forEach((id) => {
-            if (error) return;
-            const result = deleteNode(newFs, gameState.currentPath, id, 'delete', false);
-            if (result.ok) {
-              newFs = result.value;
-            } else {
-              error = (result as any).error;
-            }
-          });
-
-          if (error) {
-            showNotification(`🔒 Operation failed: ${error}`, 4000);
-            setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              fs: newFs,
-              mode: 'normal',
-              selectedIds: [],
-              pendingDeleteIds: [],
-              notification: 'TARGETS ELIMINATED',
-            }));
-          }
-        } catch (err) {
-          try {
-            reportError(err, { phase: 'delete-confirm' });
-          } catch (e) {
-            console.error(err);
-          }
-          showNotification('Delete failed', 4000);
-        }
-      } else if (e.key === 'n' || e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
       }
     },
     [showNotification]
   );
-
-  const handleOverwriteConfirmKeyDown = useCallback(
-    (
-      e: KeyboardEvent,
-      gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
-    ) => {
-      if (e.key === 'y' || e.key === 'Enter') {
-        if (gameState.pendingOverwriteNode) {
-          // 1. Delete the existing node (regardless of type)
-          const deleteResult = deleteNode(
-            gameState.fs,
-            gameState.currentPath,
-            gameState.pendingOverwriteNode.id,
-            'delete',
-            false
-          );
-
-          if (!deleteResult.ok) {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: `Overwrite failed: ${(deleteResult as any).error}`,
-              inputBuffer: '',
-              pendingOverwriteNode: null,
-            }));
-            return;
-          }
-
-          // 2. Add the new node with same name but new ID/content
-          const createResult = createPath(
-            deleteResult.value,
-            gameState.currentPath,
-            gameState.inputBuffer
-          );
-
-          if (createResult.error) {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: createResult.error,
-              inputBuffer: '',
-              pendingOverwriteNode: null,
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              fs: createResult.fs,
-              mode: 'normal',
-              inputBuffer: '',
-              notification: 'REPLACED',
-              pendingOverwriteNode: null,
-            }));
-          }
-        }
-      } else if (e.key === 'n' || e.key === 'Escape') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          inputBuffer: '',
-          pendingOverwriteNode: null,
-        }));
-      }
-    },
-    []
-  );
-
+  
   const handleFuzzyModeKeyDown = useCallback(
     (
       e: KeyboardEvent,
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>
     ) => {
-      // Typing is now handled natively by the input. This handler only deals with command keys.
+      // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
+      let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
+      if (isZoxide) {
+        candidates = Object.keys(gameState.zoxideData)
+          .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+          .sort((a, b) => {
+            const diff = b.score - a.score;
+            if (Math.abs(diff) > 0.0001) return diff;
+            return a.path.localeCompare(b.path);
+          })
+          .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+      } else {
+        candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
+          .filter((c) => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
+          .map((c) => ({ path: c.display, score: 0, pathIds: c.path, type: c.type, id: c.id }));
+      }
 
-      const getFuzzyCandidates = () => {
-        if (isZoxide) {
-          return Object.keys(gameState.zoxideData)
-            .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-            .sort((a, b) => {
-              const diff = b.score - a.score;
-              if (Math.abs(diff) > 0.0001) return diff;
-              return a.path.localeCompare(b.path);
-            })
-            .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+      if (e.key === 'Enter') {
+        const idx = gameState.fuzzySelectedIndex || 0;
+        const selected = candidates[idx];
+        if (selected) {
+          if (isZoxide) {
+            // Find path ids from string
+            const allDirs = getAllDirectories(gameState.fs);
+            const match = allDirs.find((d) => d.display === selected.path);
+            if (match) {
+              const now = Date.now();
+
+              // Add specific "Quantum" feedback for Level 7
+              const isQuantum = gameState.levelIndex === 6;
+              const notification = isQuantum
+                ? '>> QUANTUM TUNNEL ESTABLISHED <<'
+                : `Jumped to ${selected.path}`;
+
+              setGameState((prev) => ({
+                ...prev,
+                mode: 'normal',
+                currentPath: match.path,
+                cursorIndex: 0,
+                notification,
+                inputBuffer: '',
+                history: [...prev.history, prev.currentPath],
+                future: [], // Reset future on new jump
+                stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                zoxideData: {
+                  ...prev.zoxideData,
+                  [selected.path]: {
+                    count: (prev.zoxideData[selected.path]?.count || 0) + 1,
+                    lastAccess: now,
+                  },
+                },
+              }));
+            } else {
+              // Fallback: If for some reason match is not found, close dialog
+              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+            }
+          } else {
+            if (selected.pathIds && Array.isArray(selected.pathIds)) {
+              // FZF Logic: Combine current path with selected relative pathIds
+              const fullPath = [...gameState.currentPath, ...selected.pathIds];
+              const targetDir = fullPath.slice(0, -1);
+              const fileName = selected.pathIds[selected.pathIds.length - 1];
+
+              // Find the index of the selected file in the parent directory
+              const parentNode = getNodeByPath(gameState.fs, targetDir);
+              
+              // Calculate index based on SORTED/VISIBLE items to ensure correct highlighting
+              let sortedChildren = parentNode?.children || [];
+              if (!gameState.showHidden) {
+                  sortedChildren = sortedChildren.filter(c => !c.name.startsWith('.'));
+              }
+              // Note: We don't apply existing filters because we are clearing them below
+              sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
+              
+              const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
+
+              setGameState((prev) => {
+                 // CRITICAL FIX: Explicitly clear any filters for the target directory
+                 // so that siblings are visible when jumping to the file.
+                 const targetDirNode = getNodeByPath(prev.fs, targetDir);
+                 const newFilters = { ...prev.filters };
+                 if (targetDirNode) {
+                    delete newFilters[targetDirNode.id];
+                 }
+
+                 return {
+                    ...prev,
+                    mode: 'normal',
+                    currentPath: targetDir,
+                    cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+                    filters: newFilters,
+                    inputBuffer: '',
+                    history: [...prev.history, prev.currentPath],
+                    future: [], // Reset future
+                    notification: `Found: ${selected.path}`,
+                    stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+                 };
+              });
+            } else {
+              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+            }
+          }
         } else {
-          return getRecursiveContent(gameState.fs, gameState.currentPath)
-            .filter((c) => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
-            .map((c) => ({ path: c.display, score: 0, pathIds: c.path }));
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
         }
-      };
-
-      const candidates = getFuzzyCandidates();
-
-      if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
-        e.preventDefault();
+      } else if (e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+      } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
         setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
         }));
       } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
-        e.preventDefault();
         setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
+        }));
+      } else if (e.key === 'Backspace') {
+        setGameState((prev) => ({
+          ...prev,
+          inputBuffer: prev.inputBuffer.slice(0, -1),
+          fuzzySelectedIndex: 0,
+        }));
+      } else if (e.key.length === 1) {
+        setGameState((prev) => ({
+          ...prev,
+          inputBuffer: prev.inputBuffer + e.key,
+          fuzzySelectedIndex: 0,
         }));
       }
     },
     []
   );
 
-  function handleInputModeSubmit() {
-    const {
-      fs: newFs,
-      error,
-      collision,
-      collisionNode,
-    } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
-    if (collision && collisionNode) {
-      setGameState((prev) => ({
-        ...prev,
-        mode: 'overwrite-confirm',
-        pendingOverwriteNode: collisionNode,
-        notification: 'File signature collision—rename required',
-      }));
-    } else if (error) {
-      setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
-    } else {
-      setGameState((prev) => ({
-        ...prev,
-        fs: newFs,
-        mode: 'normal',
-        inputBuffer: '',
-        notification: 'FILE CREATED',
-      }));
-    }
-  }
-
-  function handleFilterModeSubmit() {
-    setGameState((prev) => ({
-      ...prev,
-      mode: 'normal',
-      inputBuffer: '',
-      stats: { ...prev.stats, filterUsage: prev.stats.filterUsage + 1 },
-    }));
-  }
-
-  function handleRenameSubmit() {
-    if (currentItem) {
-      const input = gameState.inputBuffer.trim();
-      const forceFlag = ' --force';
-      const force = input.endsWith(forceFlag);
-      const newName = force ? input.slice(0, -forceFlag.length).trim() : input;
-
-      const result = renameNode(
-        gameState.fs,
-        gameState.currentPath,
-        currentItem.id,
-        newName,
-        force
-      );
-
-      if (result.ok) {
-        setGameState((prev) => ({
-          ...prev,
-          fs: result.value,
-          mode: 'normal',
-          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
-        }));
-        showNotification('Identity forged', 2000);
-      } else {
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
-        showNotification(`Rename failed: ${(result as any).error}`, 4000);
-      }
-    }
-  }
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (showSuccessToast || showAlertToast || showFalseThreatAlert) return;
-      if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver) return;
-      if (showHiddenModal) {
-        // While the modal is active only allow the dotfiles toggle to proceed; all other keys are ignored.
-        if (e.key === '.') {
-          setGameState((prev) => ({ ...prev, showHidden: false }));
-          setShowHiddenModal(false);
-          // After the player re-hides dotfiles, allow the success flow to continue.
-          setTimeout(() => setShowSuccessToast(true), 0);
-        }
-        return;
-      }
-
-      const activeEl = document.activeElement;
-      const isInputFocused =
-        activeEl?.tagName === 'INPUT' && (activeEl as HTMLInputElement).type === 'text';
-
-      // If an input is focused, only process command keys and let the browser handle the rest.
-      if (isInputFocused) {
-        if (e.key === 'Enter') {
-          if (gameState.mode === 'filter') handleFilterModeSubmit();
-          if (gameState.mode === 'input-file') handleInputModeSubmit();
-          if (gameState.mode === 'rename') handleRenameSubmit();
-        }
-        if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            lastAction:
-              prev.mode === 'filter'
-                ? {
-                    type: 'FILTER_EXIT',
-                    timestamp: Date.now(),
-                    data: {
-                      method: 'esc',
-                      filter:
-                        (getNodeByPath(prev.fs, prev.currentPath) &&
-                          (prev.filters[getNodeByPath(prev.fs, prev.currentPath)!.id] ||
-                            prev.inputBuffer)) ||
-                        '',
-                    },
-                  }
-                : prev.lastAction,
-          }));
-        }
-        return; // Stop processing other keys
-      }
-
-      setGameState((prev) => {
-        const isCosmetic = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key);
-        const newKeystrokes = isCosmetic ? prev.keystrokes : prev.keystrokes + 1;
-        return { ...prev, keystrokes: newKeystrokes };
-      });
-
-      const items = getVisibleItems(gameState);
-      const parent = getParentNode(gameState.fs, gameState.currentPath);
-      const currentItem = items[gameState.cursorIndex] || null;
-
-      if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
-        if (e.key === 'Escape' || e.key === 'Tab' || e.key === '?') {
-          setGameState((prev) => ({
-            ...prev,
-            showHelp: false,
-            showHint: false,
-            showInfoPanel: false,
-          }));
-        }
-        return;
-      }
-
-      // Preview scrolling: J / K to scroll the preview pane
-      if ((e.key === 'J' || e.key === 'K') && gameState.mode === 'normal') {
-        const el = document.getElementById('preview-main');
-        if (el) {
-          const delta = e.key === 'J' ? 160 : -160;
-          try {
-            el.scrollBy({ top: delta, behavior: 'smooth' });
-          } catch (err) {
-            // fallback for older browsers
-            el.scrollTop += delta;
-          }
-          // mark that the preview was scrolled so level tasks can detect it and record direction
-          setGameState((prev) => ({
-            ...prev,
-            usedPreviewScroll: true,
-            usedPrevPreviewScrollDirection: prev.usedPreviewScrollDirection,
-            usedPreviewScrollDirection: e.key === 'J' ? 'down' : 'up',
-            lastAction: {
-              type: 'PREVIEW_SCROLL',
-              timestamp: Date.now(),
-              data: { direction: e.key === 'J' ? 'down' : 'up' },
-            },
-          }));
-          e.preventDefault();
-          return;
-        }
-      }
-
-      const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
-      if (allTasksComplete && e.key === 'Enter' && e.shiftKey) {
-        e.preventDefault();
-        advanceLevel();
-        return;
-      }
-
-      if (e.key === '?' && e.shiftKey && gameState.mode === 'normal') {
-        setGameState((prev) => ({ ...prev, showHelp: true }));
-        return;
-      }
-
-      // H: show hint / progress hint stage (keep user in suspense)
-      if (e.key.toLowerCase() === 'h' && e.shiftKey && gameState.mode === 'normal') {
-        e.preventDefault();
-        setGameState((prev) => ({
-          ...prev,
-          showHint: true,
-          hintStage: Math.min((prev.hintStage || 0) + 1, 2),
-        }));
-        return;
-      }
-
-      // History navigation: L = forward (keep original behavior for L)
-      if (e.key === 'L' && e.shiftKey && gameState.mode === 'normal') {
-        setGameState((prev) => {
-          const nextIdx = (prev.historyIndex ?? -1) + 1;
-          if (prev.history && nextIdx < prev.history.length) {
-            const target = prev.history[nextIdx];
-            if (!target) return prev;
-            skipHistoryPushRef.current = true;
-            return { ...prev, currentPath: target, cursorIndex: 0, historyIndex: nextIdx };
-          }
-          return prev;
-        });
-        return;
-      }
-      if (e.key === 'Tab' && gameState.mode === 'normal') {
-        setGameState((prev) => ({
-          ...prev,
-          showInfoPanel: true,
-          lastAction: { type: 'INSPECT', timestamp: Date.now() },
-        }));
-        return;
-      }
-
-      if (gameState.mode === 'normal') {
-        handleNormalModeKeyDown(
-          e,
-          gameState,
-          setGameState,
-          items,
-          parent,
-          currentItem,
-          currentLevel,
-          advanceLevel
-        );
-      } else if (gameState.mode === 'sort') {
-        handleSortModeKeyDown(e, gameState, setGameState);
-      } else if (gameState.mode === 'confirm-delete') {
-        handleConfirmDeleteModeKeyDown(e, gameState, setGameState, items);
-      } else if (gameState.mode === 'overwrite-confirm') {
-        handleOverwriteConfirmKeyDown(e, gameState, setGameState);
-      } else if (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') {
-        handleFuzzyModeKeyDown(e, gameState, setGameState);
-      } else if (gameState.mode === 'g-command') {
-        if (e.key === 'Escape') {
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
-        } else if (e.key === 'g') {
-          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          const inRequiredDir = currentDir?.name === 'datastore';
-          setGameState((prev) => ({
-            ...prev,
-            cursorIndex: 0,
-            mode: 'normal',
-            usedGG: inRequiredDir ? true : prev.usedGG,
-          }));
-        } else if (e.key === 'G') {
-          const visibleCount = getVisibleItems(gameState).length;
-          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          const inRequiredDir =
-            currentDir?.name === 'datastore' ||
-            currentDir?.name === 'incoming' ||
-            currentDir?.name === 'tmp';
-          setGameState((prev) => ({
-            ...prev,
-            cursorIndex: Math.max(0, visibleCount - 1),
-            mode: 'normal',
-            usedG: inRequiredDir ? true : prev.usedG,
-          }));
-        } else if (e.key === 'h') {
-          const homePath = ['root', 'home', 'guest'];
-          const pathStr = resolvePath(gameState.fs, homePath);
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: homePath,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to home',
-            zoxideData: {
-              ...prev.zoxideData,
-              [pathStr]: {
-                count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                lastAccess: Date.now(),
-              },
-            },
-          }));
-        } else if (e.key === 'D') {
-          const dotfilesPath = ['root', 'home', 'guest', '.config'];
-          const dotfilesNode = getNodeByPath(gameState.fs, dotfilesPath);
-          if (dotfilesNode) {
-            const pathStr = resolvePath(gameState.fs, dotfilesPath);
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: dotfilesPath,
-              cursorIndex: 0,
-              mode: 'normal',
-              notification: 'Jumped to dotfiles',
-              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: '.config' } },
-              zoxideData: {
-                ...prev.zoxideData,
-                [pathStr]: {
-                  count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                  lastAccess: Date.now(),
-                },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: 'Dotfiles not found',
-            }));
-          }
-        } else if (e.key === 'c') {
-          const configPath = ['root', 'home', 'guest', '.config'];
-          const configNode = getNodeByPath(gameState.fs, configPath);
-          if (configNode) {
-            const pathStr = resolvePath(gameState.fs, configPath);
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: configPath,
-              cursorIndex: 0,
-              mode: 'normal',
-              notification: 'Jumped to config',
-              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: '.config' } },
-              zoxideData: {
-                ...prev.zoxideData,
-                [pathStr]: {
-                  count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                  lastAccess: Date.now(),
-                },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({ ...prev, mode: 'normal', notification: 'Config not found' }));
-          }
-        } else if (e.key === 'w') {
-          const workspacePath = ['root', 'home', 'guest', 'workspace'];
-          const workspaceNode = getNodeByPath(gameState.fs, workspacePath);
-          if (workspaceNode) {
-            const pathStr = resolvePath(gameState.fs, workspacePath);
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: workspacePath,
-              cursorIndex: 0,
-              mode: 'normal',
-              notification: 'Jumped to workspace',
-              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'workspace' } },
-              zoxideData: {
-                ...prev.zoxideData,
-                [pathStr]: {
-                  count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                  lastAccess: Date.now(),
-                },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: 'Workspace not found',
-            }));
-          }
-        } else if (e.key === 't') {
-          const tmpPath = ['root', 'tmp'];
-          const pathStr = resolvePath(gameState.fs, tmpPath);
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: tmpPath,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to tmp',
-            zoxideData: {
-              ...prev.zoxideData,
-              [pathStr]: {
-                count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                lastAccess: Date.now(),
-              },
-            },
-          }));
-        } else if (e.key === 'd') {
-          const datastorePath = ['root', 'home', 'guest', 'datastore'];
-          const datastoreNode = getNodeByPath(gameState.fs, datastorePath);
-          if (datastoreNode) {
-            const pathStr = resolvePath(gameState.fs, datastorePath);
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: datastorePath,
-              cursorIndex: 0,
-              mode: 'normal',
-              notification: 'Jumped to datastore',
-              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'datastore' } },
-              zoxideData: {
-                ...prev.zoxideData,
-                [pathStr]: {
-                  count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                  lastAccess: Date.now(),
-                },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: 'Datastore not found',
-            }));
-          }
-        } else if (e.key === 'i') {
-          const incomingPath = ['root', 'home', 'guest', 'incoming'];
-          const incomingNode = getNodeByPath(gameState.fs, incomingPath);
-          if (incomingNode) {
-            const pathStr = resolvePath(gameState.fs, incomingPath);
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: incomingPath,
-              cursorIndex: 0,
-              mode: 'normal',
-              notification: 'Jumped to incoming',
-              lastAction: { type: 'GOTO', timestamp: Date.now(), data: { target: 'incoming' } },
-              zoxideData: {
-                ...prev.zoxideData,
-                [pathStr]: {
-                  count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                  lastAccess: Date.now(),
-                },
-              },
-            }));
-          } else {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              notification: 'Incoming not found',
-            }));
-          }
-        } else if (e.key === 'r') {
-          const rootPath = ['root'];
-          const pathStr = resolvePath(gameState.fs, rootPath);
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: rootPath,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to root',
-            zoxideData: {
-              ...prev.zoxideData,
-              [pathStr]: {
-                count: (prev.zoxideData[pathStr]?.count || 0) + 1,
-                lastAccess: Date.now(),
-              },
-            },
-          }));
-        } else {
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
-        }
-      }
-    },
-    [
-      gameState,
-      currentLevel,
-      isLastLevel,
-      handleNormalModeKeyDown,
-      handleSortModeKeyDown,
-      handleConfirmDeleteModeKeyDown,
-      handleOverwriteConfirmKeyDown,
-      handleFuzzyModeKeyDown,
-      handleInputModeSubmit,
-      handleFilterModeSubmit,
-      handleRenameSubmit,
-      advanceLevel,
-      showSuccessToast,
-      showAlertToast,
-      showFalseThreatAlert,
-      showHiddenModal,
-    ]
-  );
-
+  // Global Key Down Handler
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver || ['input-file', 'filter', 'rename'].includes(gameState.mode)) {
+            // Let specific components handle keys or ignore
+            return;
+        }
+
+        // Count keystrokes
+        // Only count specific keys if needed, but for simplicity count mostly everything relevant
+        if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
+            setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
+        }
+
+        const items = getVisibleItems(gameState);
+        const parent = getParentNode(gameState.fs, gameState.currentPath);
+        const current = items[gameState.cursorIndex] || null;
+
+        // Modal toggles
+        if (e.key === 'Escape') {
+             if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
+                 setGameState(prev => ({ ...prev, showHelp: false, showHint: false, showInfoPanel: false }));
+                 return;
+             }
+             // Handled in specific modes too
+        }
+
+        if (currentLevel.tasks.every(t => t.completed) && e.key === 'Enter' && e.shiftKey) {
+             e.preventDefault();
+             advanceLevel();
+             return;
+        }
+        
+        if (e.key === '?' && gameState.mode === 'normal') {
+            setGameState(prev => ({ ...prev, showHelp: true }));
+            return;
+        }
+
+        if (e.key === 'H' && e.shiftKey && gameState.mode === 'normal') {
+            setGameState(prev => {
+                if (prev.showHint) {
+                    const nextStage = (prev.hintStage + 1) % 3;
+                    return { ...prev, hintStage: nextStage };
+                }
+                return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+        }
+
+        if (e.key === 'Tab' && gameState.mode === 'normal') {
+            setGameState(prev => ({ ...prev, showInfoPanel: true }));
+            return;
+        }
+
+        // Mode dispatch
+        if (gameState.mode === 'normal') {
+            handleNormalModeKeyDown(e, gameState, setGameState, items, parent, current, currentLevel, advanceLevel);
+        } else if (gameState.mode === 'sort') {
+            handleSortModeKeyDown(e, setGameState);
+        } else if (gameState.mode === 'confirm-delete') {
+            handleConfirmDeleteModeKeyDown(e, setGameState, items);
+        } else if (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') {
+            handleFuzzyModeKeyDown(e, gameState, setGameState);
+        } else if (gameState.mode === 'g-command') {
+            // Inline handling for G-command map keys as they are simple
+             if (e.key === 'Escape') setGameState(prev => ({ ...prev, mode: 'normal' }));
+             else if (e.key === 'g') setGameState(prev => ({ ...prev, cursorIndex: 0, mode: 'normal', usedGG: true, previewScroll: 0 }));
+             else if (e.key === 'G') {
+                 // gg handled above, Shift+G handled in normal mode
+             }
+             else if (e.key === 'h') {
+                 const homePath = ['root', 'home', 'guest'];
+                 setGameState(prev => ({ ...prev, currentPath: homePath, cursorIndex: 0, mode: 'normal', notification: 'Jumped to home', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 'c') {
+                 // goto .config
+                 const path = ['root', 'home', 'guest', '.config'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to config', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 'w') {
+                 // goto workspace
+                 const path = ['root', 'home', 'guest', 'workspace'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to workspace', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 't') {
+                 const path = ['root', 'tmp'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to tmp', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 'r') {
+                 const path = ['root'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to root', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 'i') {
+                 const path = ['root', 'home', 'guest', 'incoming'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to incoming', future: [], previewScroll: 0 }));
+             }
+             else if (e.key === 'd') {
+                 const path = ['root', 'home', 'guest', 'datastore'];
+                 setGameState(prev => ({ ...prev, currentPath: path, cursorIndex: 0, mode: 'normal', notification: 'Jumped to datastore', future: [], previewScroll: 0 }));
+             }
+             else {
+                 setGameState(prev => ({ ...prev, mode: 'normal' }));
+             }
+        } else if (gameState.mode === 'overwrite-confirm') {
+            handleOverwriteConfirmKeyDown(e, setGameState);
+        }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-
-  const isFuzzyActive = gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current';
-
-  // Dynamic overlay right position to align with start of preview column
-  const [overlayRight, setOverlayRight] = React.useState<string>('calc(50% - 8rem)');
-  const [overlayLeft, setOverlayLeft] = React.useState<string>('calc(16rem + 0.5rem)');
-
-  const updateOverlayPos = useCallback(() => {
-    if (typeof import.meta.vitest === 'undefined') {
-      const previewEl = document.getElementById('preview-main');
-      if (previewEl) {
-        const previewLeft = previewEl.getBoundingClientRect().left;
-        const rightPx = Math.max(0, Math.round(window.innerWidth - previewLeft));
-        setOverlayRight(`${rightPx}px`);
+  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, handleOverwriteConfirmKeyDown, advanceLevel]);
+  
+  // Logic for create/rename input handled via input element events mainly
+  const handleInputConfirm = () => {
+      if (gameState.mode === 'input-file') {
+          const { fs: newFs, error, collision, collisionNode } = createPath(gameState.fs, gameState.currentPath, gameState.inputBuffer);
+          if (collision && collisionNode) {
+              setGameState(prev => ({ ...prev, mode: 'overwrite-confirm', pendingOverwriteNode: collisionNode, notification: 'Collision detected' }));
+          } else if (error) {
+              setGameState(prev => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
+          } else {
+              setGameState(prev => ({ ...prev, fs: newFs, mode: 'normal', inputBuffer: '', notification: 'FILE CREATED' }));
+          }
       }
-
-      const leftPane = document.querySelector('.w-64') as HTMLElement | null;
-      if (leftPane) {
-        // place overlay starting after left pane plus a small gap (8px)
-        const leftPx = Math.round(leftPane.getBoundingClientRect().right + 8);
-        setOverlayLeft(`${leftPx}px`);
-      } else {
-        // fallback to small left margin
-        setOverlayLeft('8px');
+  };
+  
+  const handleRenameConfirm = () => {
+      if (currentItem) {
+          const res = renameNode(gameState.fs, gameState.currentPath, currentItem.id, gameState.inputBuffer, gameState.levelIndex);
+          if (res.ok === false) {
+              setGameState(prev => ({ ...prev, mode: 'normal', notification: `Rename failed: ${res.error}` }));
+          } else {
+              setGameState(prev => ({ ...prev, fs: res.value, mode: 'normal', notification: 'Renamed', stats: { ...prev.stats, renames: prev.stats.renames + 1 } }));
+          }
       }
-    }
-  }, []);
+  };
 
-  useEffect(() => {
-    // This effect is for visual layout and causes issues in the JSDOM test environment.
-    // It is not necessary for testing game logic.
-    if (typeof import.meta.vitest === 'undefined') {
-      setTimeout(() => updateOverlayPos(), 0);
-      window.addEventListener('resize', updateOverlayPos);
-      const mo = new MutationObserver(() => updateOverlayPos());
-      mo.observe(document.body, { childList: true, subtree: true, attributes: true });
-      return () => {
-        window.removeEventListener('resize', updateOverlayPos);
-        mo.disconnect();
-      };
-    }
-  }, [updateOverlayPos]);
+  if (isLastLevel) {
+      return <OutroSequence />;
+  }
 
   return (
-    <div
-      id="app-root"
-      data-testid="app-root"
-      tabIndex={-1}
-      className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative"
-    >
+    <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
       {gameState.showEpisodeIntro && (
         <EpisodeIntro
-          episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
-          onComplete={() => setGameState((prev) => ({ ...prev, showEpisodeIntro: false }))}
+          episode={EPISODE_LORE.find(e => e.id === currentLevel.episodeId)!}
+          onComplete={() => setGameState(prev => ({ ...prev, showEpisodeIntro: false }))}
         />
       )}
 
       {gameState.isGameOver && (
         <GameOverModal
           reason={gameState.gameOverReason!}
-          onRestart={() => {
-            setGameState((prev) => {
-              const level = LEVELS[prev.levelIndex];
-              return {
-                ...prev,
-                isGameOver: false,
-                fs: cloneFS(prev.levelStartFS), // Restore from snapshot
-                showHidden: prev.levelStartShowHidden ?? false,
-                currentPath: level.initialPath || ['root', 'home', 'guest'],
-                cursorIndex: 0,
-                timeLeft: level.timeLimit || null,
-                keystrokes: 0,
-                showEpisodeIntro: false, // Don't show intro on restart
-                notification: 'Level Reset',
-                mode: 'normal',
-                inputBuffer: '',
-                selectedIds: [],
-              };
-            });
-          }}
+          onRestart={handleRestartLevel}
           efficiencyTip={currentLevel.efficiencyTip}
         />
       )}
@@ -1949,110 +1227,89 @@ export default function App() {
       {gameState.showHelp && (
         <HelpModal onClose={() => setGameState((prev) => ({ ...prev, showHelp: false }))} />
       )}
+
       {gameState.showHint && (
         <HintModal
-          hint={gameState.dynamicHint || currentLevel.hint}
+          hint={currentLevel.hint}
           stage={gameState.hintStage}
           onClose={() => setGameState((prev) => ({ ...prev, showHint: false, hintStage: 0 }))}
         />
       )}
+
       {gameState.showInfoPanel && (
         <InfoPanel
           file={currentItem}
           onClose={() => setGameState((prev) => ({ ...prev, showInfoPanel: false }))}
         />
       )}
-      {showFalseThreatAlert && (
-        <AlertToast
-          message="WARNING: This is a False Threat! This file must NOT be moved from /etc. Your operation has been intercepted. Press 'Y' to clear your clipboard and abort the operation."
-          levelTitle="System Security Alert"
-          onDismiss={() => setShowFalseThreatAlert(false)}
-          onClose={() => setShowFalseThreatAlert(false)}
-        />
-      )}
+
       {gameState.mode === 'confirm-delete' && (
         <ConfirmationModal
           title="Confirm Delete"
-          detail={`Permanently delete ${gameState.selectedIds.length > 0 ? gameState.selectedIds.length + ' items' : currentItem?.name}?`}
+          detail={`Permanently delete ${
+            gameState.selectedIds.length > 0
+              ? gameState.selectedIds.length + ' items'
+              : currentItem?.name
+          }?`}
         />
       )}
+      
       {showSuccessToast && (
-        <>
-          <SuccessToast
-            message={currentLevel.successMessage || 'Sector Cleared'}
-            levelTitle={currentLevel.title}
-            onDismiss={advanceLevel}
-            onClose={() => setShowSuccessToast(false)}
-          />
-          {/* Interaction blocker while success toast is visible (blocks clicks/scroll) */}
-          <div className="fixed inset-0 z-80 bg-black/30 pointer-events-auto" aria-hidden="true" />
-        </>
+         <SuccessToast
+           message={currentLevel.successMessage || "Sector Cleared"}
+           levelTitle={currentLevel.title}
+           onDismiss={advanceLevel}
+           onClose={() => setShowSuccessToast(false)}
+         />
       )}
-      {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
-        <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
+      
+      {showThreatAlert && (
+          <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
       )}
 
-      <div className="flex flex-col flex-1 h-full min-w-0 relative">
+      {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
+          <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
+      )}
+
+      <div className="flex flex-col flex-1 h-full min-w-0">
         <LevelProgress
           levels={LEVELS}
           currentLevelIndex={gameState.levelIndex}
-          onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
-          onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
+          onToggleHint={() => setGameState(prev => ({ ...prev, showHint: !prev.showHint }))}
+          onToggleHelp={() => setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }))}
           onJumpToLevel={(idx) => {
-            const target = LEVELS[idx];
-            // Preserve current filesystem state when jumping levels to avoid re-seeding demo files.
-            let fs = cloneFS(gameState.fs);
-            let onEnterError: any = null;
-            try {
-              const isFresh = JSON.stringify(gameState.fs) === JSON.stringify(INITIAL_FS);
-              if (target.onEnter && (!target.seedMode || target.seedMode !== 'fresh' || isFresh)) {
-                fs = target.onEnter(fs);
-              }
-            } catch (err) {
-              try {
-                reportError(err, {
-                  phase: 'target.onEnter',
-                  level: target?.id,
-                });
-              } catch (e) {
-                console.error('target.onEnter failed', err);
-              }
-              onEnterError = err;
-            }
-            setGameState((prev) => ({
-              ...prev,
-              levelIndex: idx,
-              fs,
-              showHidden: false,
-              levelStartShowHidden: false,
-              currentPath: target.initialPath || ['root', 'home', 'guest'],
-              showEpisodeIntro: false,
-              notification: onEnterError ? 'Level initialization failed' : null,
-            }));
+             const lvl = LEVELS[idx];
+             let fs = cloneFS(INITIAL_FS); 
+             if (lvl.onEnter) fs = lvl.onEnter(fs);
+             setGameState(prev => ({
+                ...prev,
+                levelIndex: idx,
+                fs,
+                currentPath: lvl.initialPath || ['root', 'home', 'guest'],
+                showEpisodeIntro: false,
+                future: [],
+                previewScroll: 0
+             }));
           }}
         />
 
-        <div
-          className={`bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 ${isFuzzyActive ? 'opacity-30' : 'opacity-100'}`}
-        >
-          <div className="font-mono text-sm text-zinc-400">
-            {(() => {
-              const fullPath = resolvePath(gameState.fs, gameState.currentPath);
-              return fullPath.replace('/home/guest', '~');
-            })()}
-            {(() => {
-              const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-              const activeFilter = currentDir && gameState.filters[currentDir.id];
-              return activeFilter ? (
-                <span className="text-cyan-400"> (filter: {activeFilter})</span>
-              ) : null;
-            })()}
-          </div>
+        <div className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200" style={{ opacity: (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') ? 0.3 : 1 }}>
+           <div className="font-mono text-sm text-zinc-400">
+             {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
+             {(() => {
+                 const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                 const filter = dir ? gameState.filters[dir.id] : null;
+                 return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
+             })()}
+           </div>
         </div>
 
         <div className="flex flex-1 min-h-0 relative">
-          <MemoizedFileSystemPane
-            items={getParentNode(gameState.fs, gameState.currentPath)?.children || []}
+          <FileSystemPane
+             items={(() => {
+                 const parent = getParentNode(gameState.fs, gameState.currentPath);
+                 return parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+             })()}
             isActive={false}
             isParent={true}
             selectedIds={[]}
@@ -2062,279 +1319,157 @@ export default function App() {
           />
 
           <div className="flex-1 flex flex-col relative min-w-0">
-            {gameState.mode !== 'normal' &&
-              gameState.mode !== 'confirm-delete' &&
-              gameState.mode !== 'sort' &&
-              gameState.mode !== 'filter' &&
-              gameState.mode !== 'g-command' &&
-              gameState.mode !== 'overwrite-confirm' &&
-              gameState.mode !== 'input-file' &&
-              gameState.mode !== 'rename' &&
-              gameState.mode !== 'zoxide-jump' &&
-              gameState.mode !== 'fzf-current' && (
-                <div className="bg-zinc-800 p-2 border-b border-zinc-700 flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase text-black bg-blue-500 px-2 rounded">
-                    {gameState.mode.replace('input-', 'create ').replace('fzf-', 'find ')}
-                  </span>
-                  <input
-                    type="text"
-                    className="bg-transparent border-none outline-none text-sm font-mono text-white w-full"
-                    value={gameState.inputBuffer}
-                    readOnly
-                  />
-                  <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
-                </div>
-              )}
+             {gameState.mode !== 'normal' && !['confirm-delete', 'sort', 'g-command', 'overwrite-confirm', 'zoxide-jump', 'fzf-current'].includes(gameState.mode) && (
+                 <div className="bg-zinc-800 p-2 border-b border-zinc-700 flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase text-black bg-blue-500 px-2 rounded">
+                        {gameState.mode.replace('input-', 'create ').replace('fzf-', 'find ')}
+                    </span>
+                    <input 
+                        type="text" 
+                        className="bg-transparent border-none outline-none text-sm font-mono text-white w-full"
+                        value={gameState.inputBuffer}
+                        autoFocus
+                        readOnly
+                    />
+                     <div className="w-2 h-4 bg-white animate-pulse -ml-1"></div>
+                 </div>
+             )}
 
-            {gameState.mode === 'filter' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">
-                    Filter:
-                  </span>
-                  <input
-                    ref={filterInputRef}
-                    data-testid="filter-input"
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setGameState((prev) => {
-                        const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-                        const newFilters = { ...prev.filters };
-                        if (currentDir) newFilters[currentDir.id] = val;
-                        return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
-                      });
+             {gameState.mode === 'sort' && (
+                 <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
+                    <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
+                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Sort Options</span>
+                        <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">n</span> <span className="text-zinc-400">Natural</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">N</span> <span className="text-zinc-400">Natural (rev)</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">a</span> <span className="text-zinc-400">A-Z</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">A</span> <span className="text-zinc-400">Z-A</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">m</span> <span className="text-zinc-400">Modified (new)</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">M</span> <span className="text-zinc-400">Modified (old)</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">s</span> <span className="text-zinc-400">Size (large)</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">S</span> <span className="text-zinc-400">Size (small)</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">e</span> <span className="text-zinc-400">Extension</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">E</span> <span className="text-zinc-400">Extension (rev)</span></div>
+                        <div className="col-span-2 border-t border-zinc-800 my-1"></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">l</span> <span className="text-zinc-400">Cycle Linemode</span></div>
+                        <div className="flex gap-2"><span className="text-orange-500 font-bold">-</span> <span className="text-zinc-400">Clear Linemode</span></div>
+                    </div>
+                 </div>
+             )}
+             
+             {gameState.mode === 'g-command' && <GCommandDialog onClose={() => setGameState(p => ({...p, mode: 'normal'}))} />}
+             
+             {gameState.mode === 'filter' && (
+                <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
+                   <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">Filter:</span>
+                        <input
+                            type="text"
+                            value={gameState.inputBuffer}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setGameState(prev => {
+                                    const dir = getNodeByPath(prev.fs, prev.currentPath);
+                                    const newFilters = { ...prev.filters };
+                                    if (dir) newFilters[dir.id] = val;
+                                    return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
+                                });
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === 'Escape') {
+                                    setGameState(p => ({ ...p, mode: 'normal', inputBuffer: '', stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 } }));
+                                    e.stopPropagation();
+                                }
+                            }}
+                            className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
+                            autoFocus
+                        />
+                   </div>
+                   <div className="text-[10px] text-zinc-500 mt-2 font-mono">Type to filter • Enter/Esc to close • Esc again to clear filter</div>
+                </div>
+             )}
+
+             {gameState.mode === 'input-file' && (
+                <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
+                   <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">Create:</span>
+                        <input
+                            type="text"
+                            value={gameState.inputBuffer}
+                            onChange={(e) => setGameState(prev => ({...prev, inputBuffer: e.target.value}))}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleInputConfirm();
+                                if (e.key === 'Escape') setGameState(prev => ({...prev, mode: 'normal'}));
+                                e.stopPropagation();
+                            }}
+                            className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
+                            autoFocus
+                        />
+                   </div>
+                   <div className="text-[10px] text-zinc-500 mt-2 font-mono">Enter filename (end with / for folder) • Enter to confirm • Esc to cancel</div>
+                </div>
+             )}
+
+             <FileSystemPane
+               items={visibleItems}
+               isActive={true}
+               cursorIndex={gameState.cursorIndex}
+               selectedIds={gameState.selectedIds}
+               clipboard={gameState.clipboard}
+               linemode={gameState.linemode}
+               renameState={{ isRenaming: gameState.mode === 'rename', inputBuffer: gameState.inputBuffer }}
+               onRenameChange={(val) => setGameState(prev => ({ ...prev, inputBuffer: val }))}
+               onRenameSubmit={handleRenameConfirm}
+               onRenameCancel={() => setGameState(prev => ({ ...prev, mode: 'normal' }))}
+             />
+             
+             {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+                 <FuzzyFinder 
+                    gameState={gameState}
+                    onSelect={(path, isZoxide) => { 
+                         if (isZoxide) {
+                             const allDirs = getAllDirectories(gameState.fs);
+                             const match = allDirs.find((d) => d.display === path);
+                             if (match) {
+                                  const now = Date.now();
+                                  const quantumMsg = gameState.levelIndex === 6 ? '>> QUANTUM TUNNEL ESTABLISHED <<' : `Jumped to ${path}`;
+                                  setGameState(prev => ({
+                                      ...prev,
+                                      mode: 'normal',
+                                      currentPath: match.path,
+                                      cursorIndex: 0,
+                                      notification: quantumMsg,
+                                      stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                                      zoxideData: { ...prev.zoxideData, [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now } },
+                                      future: [],
+                                      previewScroll: 0
+                                  }));
+                             } else {
+                                  setGameState(prev => ({ ...prev, mode: 'normal' }));
+                             }
+                         } else {
+                             // FZF handling logic (inline inside component or here if lifted)
+                             // For now the fuzzy finder component uses callback for FZF to navigate
+                         }
                     }}
-                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
-                  />
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Type to filter • Enter/Esc to close • Esc again to clear filter
-                </div>
-              </div>
-            )}
-
-            {gameState.mode === 'input-file' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">
-                    Create:
-                  </span>
-                  <input
-                    ref={createInputRef}
-                    data-testid="create-input"
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) =>
-                      setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
-                    }
-                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Enter filename (end with / for folder) • Enter to confirm • Esc to cancel
-                </div>
-              </div>
-            )}
-
-            <FileSystemPane
-              items={visibleItems}
-              isActive={true}
-              cursorIndex={gameState.cursorIndex}
-              selectedIds={gameState.selectedIds}
-              clipboard={gameState.clipboard}
-              linemode={gameState.linemode}
-              renameState={{
-                isRenaming: gameState.mode === 'rename',
-                inputBuffer: gameState.inputBuffer,
-              }}
-              onRenameChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
-              onRenameSubmit={handleRenameSubmit}
-              onRenameCancel={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-            />
+                    onClose={() => setGameState(p => ({...p, mode: 'normal'}))}
+                 />
+             )}
           </div>
 
-          <PreviewPane
-            node={visibleItems[gameState.cursorIndex]}
-            level={{ ...currentLevel, tasks: [...currentLevel.tasks] }}
-            gameState={gameState}
-          />
+          <PreviewPane node={currentItem} level={currentLevel} previewScroll={gameState.previewScroll} />
         </div>
-
-        {showAlertToast && (
-          <AlertToast
-            message={currentLevel.description || 'QUARANTINE: Immediate action required.'}
-            levelTitle={currentLevel.title}
-            onDismiss={() => handleCloseAlert()}
-            onClose={() => handleCloseAlert()}
-          />
-        )}
 
         <StatusBar
           state={gameState}
           level={currentLevel}
-          allTasksComplete={currentLevel.tasks.every((t) => t.completed)}
+          allTasksComplete={currentLevel.tasks.every(t => t.completed)}
           onNextLevel={advanceLevel}
           currentItem={currentItem}
         />
       </div>
-
-      {/* Which-Key overlays (span left + middle columns) */}
-      {gameState.mode === 'g-command' && (
-        <GCommandDialog
-          left={overlayLeft}
-          right={overlayRight}
-          onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-        />
-      )}
-
-      {gameState.mode === 'sort' && (
-        <div
-          className="absolute bottom-6 m-2 z-50 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150"
-          style={{ left: overlayLeft, right: overlayRight }}
-        >
-          <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-              Sort Options
-            </span>
-            <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">n</span>{' '}
-              <span className="text-zinc-400">Natural</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">N</span>{' '}
-              <span className="text-zinc-400">Natural (rev)</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">a</span>{' '}
-              <span className="text-zinc-400">A-Z</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">A</span>{' '}
-              <span className="text-zinc-400">Z-A</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">m</span>{' '}
-              <span className="text-zinc-400">Modified (new)</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">M</span>{' '}
-              <span className="text-zinc-400">Modified (old)</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">s</span>{' '}
-              <span className="text-zinc-400">Size (large)</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">S</span>{' '}
-              <span className="text-zinc-400">Size (small)</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">e</span>{' '}
-              <span className="text-zinc-400">Extension</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">E</span>{' '}
-              <span className="text-zinc-400">Extension (rev)</span>
-            </div>
-            <div className="col-span-2 border-t border-zinc-800 my-1"></div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">l</span>{' '}
-              <span className="text-zinc-400">Cycle Linemode</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-orange-500 font-bold">-</span>{' '}
-              <span className="text-zinc-400">Clear Linemode</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FuzzyFinder Overlay - render at root level to cover everything */}
-      {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-        <FuzzyFinder
-          ref={fuzzyInputRef}
-          gameState={gameState}
-          onClose={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-          onInputChange={(value) =>
-            setGameState((prev) => ({ ...prev, inputBuffer: value, fuzzySelectedIndex: 0 }))
-          }
-          onSelect={(path, isZoxide) => {
-            if (isZoxide) {
-              const allDirs = getAllDirectories(gameState.fs);
-              const match = allDirs.find((d) => d.display === path);
-              if (match) {
-                const now = Date.now();
-
-                // Add specific "Quantum" feedback for Level 7
-                const isQuantum = gameState.levelIndex === 6;
-                const notification = isQuantum
-                  ? '>> QUANTUM TUNNEL ESTABLISHED <<'
-                  : `Jumped to ${path}`;
-
-                setGameState((prev) => ({
-                  ...prev,
-                  mode: 'normal',
-                  currentPath: match.path,
-                  cursorIndex: 0,
-                  notification,
-                  stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                  zoxideData: {
-                    ...prev.zoxideData,
-                    [path]: { count: (prev.zoxideData[path]?.count || 0) + 1, lastAccess: now },
-                  },
-                }));
-              } else {
-                setGameState((prev) => ({ ...prev, mode: 'normal' }));
-              }
-            } else {
-              // FZF Recursive logic - navigate to file's directory and select the file
-              const candidates = getRecursiveContent(gameState.fs, gameState.currentPath);
-              const match = candidates.find((c) => c.display === path);
-              if (match) {
-                const fullPath = [...gameState.currentPath, ...match.path];
-                const targetDir = fullPath.slice(0, -1);
-                const fileName = match.path[match.path.length - 1];
-
-                // Get the parent directory's children to find the file's index
-                const parentNode = getNodeByPath(gameState.fs, targetDir);
-                const fileIndex =
-                  parentNode?.children?.findIndex((child) => child.id === fileName) ?? 0;
-
-                setGameState((prev) => ({
-                  ...prev,
-                  mode: 'normal',
-                  currentPath: targetDir,
-                  cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-                  notification: `Found: ${match.display}`,
-                }));
-              } else {
-                setGameState((prev) => ({ ...prev, mode: 'normal' }));
-              }
-            }
-          }}
-        />
-      )}
-
-      {showHiddenModal && (
-        <>
-          <div className="fixed inset-0 z-90 flex items-center justify-center">
-            <div className="bg-zinc-900 border border-zinc-700 p-6 rounded max-w-lg text-center shadow-2xl">
-              <h3 className="text-lg font-bold mb-2">Mission Incomplete</h3>
-              <p className="text-sm text-zinc-300 mb-4">
-                {(currentLevel as any).hintEndHidden ||
-                  'SYSTEM: Re-hide dotfiles (press .) to complete the mission.'}
-              </p>
-              <div className="text-xs text-zinc-500">Press . to re-hide dotfiles and continue.</div>
-            </div>
-          </div>
-          <div className="fixed inset-0 z-80 bg-black/30 pointer-events-auto" aria-hidden="true" />
-        </>
-      )}
     </div>
   );
 }

@@ -5,9 +5,7 @@ let audioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext => {
   if (!audioContext) {
-    type WindowWithWebkit = Window & { webkitAudioContext?: typeof AudioContext };
-    const win = window as unknown as WindowWithWebkit;
-    audioContext = new (window.AudioContext || win.webkitAudioContext)();
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   return audioContext;
 };

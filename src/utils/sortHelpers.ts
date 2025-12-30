@@ -1,4 +1,4 @@
-import { FileNode, SortBy, SortDirection } from '../types';
+import { FileNode, SortBy, SortDirection } from '../../types';
 
 /**
  * Sort files according to Yazi's sorting methods

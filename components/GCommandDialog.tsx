@@ -2,15 +2,12 @@ import React from 'react';
 
 interface GCommandDialogProps {
   onClose: () => void;
-  right?: string;
-  left?: string;
 }
 
-export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose, right, left }) => {
+export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
   return (
     <div
-      className="absolute bottom-16 z-50 bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-sm rounded-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
-      style={{ left: left || 'calc(16rem + 0.5rem)', right: right || 'calc(50% - 8rem)' }}
+      className="absolute bottom-16 left-0 right-0 mx-auto w-fit bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-sm z-50 rounded-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
       role="dialog"
       aria-modal="false"
     >
@@ -71,7 +68,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose, right, 
       </div>
 
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-3">
-        Press any key to continue or g command
+        Press any key to continue or 'g' command
       </div>
     </div>
   );

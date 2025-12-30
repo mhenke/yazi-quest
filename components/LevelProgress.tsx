@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Level } from '../types';
-import { EPISODE_LORE } from '../constants';
+import { EPISODE_LORE } from '../src/constants';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
 interface LevelProgressProps {
@@ -30,7 +30,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     onToggleMap?.(); // Notify parent if callback provided
   }, [onToggleMap]);
 
-  // Keyboard shortcut: M to toggle map
+  // Keyboard shortcut: Shift+M to toggle map
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'M' && e.shiftKey) {
@@ -72,16 +72,13 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   // Sync modal tab with current episode when opening
   useEffect(() => {
     if (showLegend) {
-      // Defer state updates to avoid synchronous setState within an effect
-      setTimeout(() => {
-        setActiveTab(currentEpisodeIdx);
-        // Find the current level within the episode and select it
-        const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
-        const currentLevelInEpisode = currentEpisodeLevels.findIndex(
-          (l) => levels.indexOf(l) === currentLevelIndex
-        );
-        setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
-      }, 0);
+      setActiveTab(currentEpisodeIdx);
+      // Find the current level within the episode and select it
+      const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
+      const currentLevelInEpisode = currentEpisodeLevels.findIndex(
+        (l) => levels.indexOf(l) === currentLevelIndex
+      );
+      setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
     }
   }, [showLegend, currentEpisodeIdx, episodes, levels, currentLevelIndex]);
 
@@ -159,7 +156,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           <button
             onClick={handleToggleMap}
             className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
-            title="Quest Map (M)"
+            title="Quest Map (Shift+M)"
           >
             <Map
               size={16}
@@ -263,14 +260,14 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             <button
               onClick={onToggleHint}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-yellow-400 transition-colors border border-transparent hover:border-zinc-700"
-              title="Show Hint (H)"
+              title="Show Hint (Shift+H)"
             >
               <Lightbulb size={20} />
             </button>
             <button
               onClick={onToggleHelp}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors border border-transparent hover:border-zinc-700"
-              title="Show Help (?)"
+              title="Show Help (Shift+?)"
             >
               <HelpCircle size={20} />
             </button>
@@ -331,16 +328,6 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   return (
                     <div
                       key={level.id}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          if (onJumpToLevel) {
-                            onJumpToLevel(globalIdx);
-                            setShowLegend(false);
-                          }
-                        }
-                      }}
                       ref={(el) => {
                         missionRefs.current[missionIdx] = el;
                       }}

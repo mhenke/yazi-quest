@@ -1,4 +1,5 @@
 import React from 'react';
+import { reportError } from '../utils/error';
 
 type Props = { children: React.ReactNode };
 
@@ -14,18 +15,12 @@ export default class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Report centrally and keep console fallback
-    // Lazy import to avoid cycles using dynamic import to satisfy linter
-    import('../utils/error')
-      .then(({ reportError }) => {
-        try {
-          reportError(error, { errorInfo });
-        } catch (e) {
-          console.error('App Error:', error, errorInfo);
-        }
-      })
-      .catch(() => {
-        console.error('App Error:', error, errorInfo);
-      });
+    try {
+      reportError(error, { errorInfo });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('App Error:', error, errorInfo);
+    }
   }
 
   render() {
@@ -47,7 +42,8 @@ export default class ErrorBoundary extends React.Component<
         </div>
       );
     }
-    // props are typed via the component's generic Props, return children directly
-    return (this as unknown as React.Component<Props>).props.children;
+    // Cast to any to avoid rare typing conflicts in different TS configs
+    // props should normally exist on React.Component, but some toolchains treat this differently.
+    return (this as any).props.children;
   }
 }

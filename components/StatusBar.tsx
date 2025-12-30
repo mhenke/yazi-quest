@@ -1,9 +1,8 @@
 import React from 'react';
 import { GameState, Level, FileNode } from '../types';
 import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
-import { getNodeByPath } from '../utils/fsHelpers';
-import { getSortLabel } from '../utils/sortHelpers';
-import { matchesFilter } from '../utils/viewHelpers';
+import { getNodeByPath } from '../src/utils/fsHelpers';
+import { getSortLabel } from '../src/utils/sortHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -52,7 +51,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const activeFilter = currentDir ? state.filters[currentDir.id] || '' : '';
 
   if (activeFilter) {
-    items = items.filter((c) => matchesFilter(c.name, activeFilter));
+    items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
   }
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;
@@ -117,7 +116,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {activeFilter && (
         <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
           <Filter size={10} />
-          <span>FILTER: {activeFilter}</span>
+          <span>FILTER: "{activeFilter}"</span>
         </div>
       )}
 
@@ -148,15 +147,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </div>
             )}
             <button
-              onClick={() => {
-                if (state.showHidden) return;
-                onNextLevel();
-              }}
-              disabled={state.showHidden}
-              title={
-                state.showHidden ? 'Re-hide dotfiles (.) before completing the level' : undefined
-              }
-              className={`px-4 ${state.showHidden ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-black'} font-bold border-l border-zinc-700 flex items-center gap-2 ${state.showHidden ? '' : 'animate-pulse'} transition-colors`}
+              onClick={onNextLevel}
+              className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
             >
               <span className="hidden sm:inline">NEXT</span>
               <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">

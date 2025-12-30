@@ -1,5 +1,6 @@
 
-import { FileNode, Level, Episode } from './types';
+
+import { FileNode, Level, Episode } from '../types';
 import { findNodeByName } from './utils/fsHelpers';
 
 // Helper for IDs

@@ -96,14 +96,14 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
 
 ## UI Layout Guidelines
 
-**DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (M).
+**DO NOT add a left sidebar for mission information.** All mission/level details are consolidated in the Quest Map modal (Shift+M).
 
 **Layout Structure:**
 
 - **Top Bar** (`LevelProgress.tsx`) - Episode progression, Map button, Hint/Help buttons
 - **Main Area** - Parent pane, Active file pane, Preview pane (3-column Yazi layout)
 - **Bottom Bar** (`StatusBar.tsx`) - Mode, filename, progress, clipboard status, timer/keystrokes, file stats
-- **Quest Map Modal** - Accessed via M or Map button, shows all level details:
+- **Quest Map Modal** - Accessed via Shift+M or Map button, shows all level details:
   - Level title, description, core skill
   - Intel (environmentalClue)
   - Skill tree (buildsOn/leadsTo)
