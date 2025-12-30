@@ -1,4 +1,3 @@
-
 import { FileNode, FsError, Result } from '../../types';
 
 export const getNodeByPath = (root: FileNode, pathIds: string[]): FileNode | null => {

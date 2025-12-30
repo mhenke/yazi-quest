@@ -1,6 +1,6 @@
 import { GameState, FileNode } from '../types';
-import { getNodeByPath } from './fsHelpers';
-import { sortNodes } from './sortHelpers';
+import { getNodeByPath } from '../src/utils/fsHelpers';
+import { sortNodes } from '../src/utils/sortHelpers';
 
 export const getVisibleItems = (state: GameState): FileNode[] => {
   const currentDir = getNodeByPath(state.fs, state.currentPath);

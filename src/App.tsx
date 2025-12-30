@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   GameState,
   FileNode,
@@ -52,8 +52,9 @@ const PreviewPane = MemoizedPreviewPane;
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    // 1. Clean Slate for Tasks
-    LEVELS.forEach((l) => l.tasks.forEach((t) => (t.completed = false)));
+    // 1. Initialize Completed Tasks State
+    const completedTaskIds: Record<number, string[]> = {};
+    LEVELS.forEach((l) => { completedTaskIds[l.id] = []; });
 
     // 2. Parse URL Parameters
     const params = new URLSearchParams(window.location.search);
@@ -79,15 +80,12 @@ export default function App() {
 
     // 4. Handle Task Completion (Bypass)
     if (tasksParam && targetIndex < LEVELS.length) {
+      const levelId = LEVELS[targetIndex].id;
       if (tasksParam === 'all') {
-        LEVELS[targetIndex].tasks.forEach((t) => (t.completed = true));
+        completedTaskIds[levelId] = LEVELS[targetIndex].tasks.map((t) => t.id);
       } else {
         const ids = tasksParam.split(',');
-        LEVELS.forEach((l) =>
-          l.tasks.forEach((t) => {
-            if (ids.includes(t.id)) t.completed = true;
-          })
-        );
+        completedTaskIds[levelId] = ids;
       }
     }
 
@@ -164,7 +162,7 @@ export default function App() {
       showHelp: false,
       showHint: false,
       hintStage: 0,
-      showHidden: true,
+      showHidden: false,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
@@ -176,6 +174,11 @@ export default function App() {
       fuzzySelectedIndex: 0,
       usedG: false,
       usedGG: false,
+      usedDown: false,
+      usedUp: false,
+      usedPreviewScrollDown: false,
+      usedPreviewScrollUp: false,
+      completedTaskIds,
     };
   });
 
@@ -186,7 +189,18 @@ export default function App() {
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
-  const currentLevel = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
+  const currentLevelRaw = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
+
+  // Derive currentLevel with completed tasks injected from state
+  const currentLevel = useMemo(() => {
+    return {
+      ...currentLevelRaw,
+      tasks: currentLevelRaw.tasks.map((t) => ({
+        ...t,
+        completed: (gameState.completedTaskIds[currentLevelRaw.id] || []).includes(t.id),
+      })),
+    };
+  }, [currentLevelRaw, gameState.completedTaskIds]);
 
   const visibleItems = React.useMemo(() => measure('visibleItems', () => getVisibleItems(gameState)), [gameState]);
   const currentItem = visibleItems[gameState.cursorIndex] || null;
@@ -216,30 +230,49 @@ export default function App() {
     if (isLastLevel || gameState.isGameOver) return;
 
     let changed = false;
+    const newlyCompleted: string[] = [];
+
     currentLevel.tasks.forEach((task) => {
       if (!task.completed && task.check(gameState, currentLevel)) {
-        task.completed = true;
+        newlyCompleted.push(task.id);
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
       }
     });
 
     if (changed) {
-      setGameState((prev) => ({ ...prev }));
+      setGameState((prev) => ({
+         ...prev,
+         completedTaskIds: {
+           ...prev.completedTaskIds,
+           [currentLevel.id]: [...(prev.completedTaskIds[currentLevel.id] || []), ...newlyCompleted]
+         }
+      }));
     }
 
-    const allComplete = currentLevel.tasks.every((t) => t.completed);
-    if (allComplete && !prevAllTasksCompleteRef.current) {
-      playSuccessSound(gameState.settings.soundEnabled);
-      setShowSuccessToast(true);
+    // Check if everything is complete (including just finished ones)
+    const tasksComplete = currentLevel.tasks.every((t) => t.completed || newlyCompleted.includes(t.id));
+
+    if (tasksComplete) {
+      if (gameState.showHidden) {
+        // Enforce hidden files must be toggled off to complete any level
+        if (gameState.notification !== 'Toggle hidden files off (.) to complete mission') {
+          showNotification('Toggle hidden files off (.) to complete mission', 3000);
+        }
+      } else if (!prevAllTasksCompleteRef.current) {
+        playSuccessSound(gameState.settings.soundEnabled);
+        setShowSuccessToast(true);
+      }
     }
-    prevAllTasksCompleteRef.current = allComplete;
-  }, [gameState, currentLevel, isLastLevel]);
+
+    // Only set ref to true if tasks are complete AND showHidden is false
+    prevAllTasksCompleteRef.current = tasksComplete && !gameState.showHidden;
+  }, [gameState, currentLevel, isLastLevel, showNotification]);
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
     const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
-    if (allTasksComplete) return;
+    if (allTasksComplete && !gameState.showHidden) return; // Pause timer only if completely finished
 
     if (
       !currentLevel.timeLimit ||
@@ -251,8 +284,13 @@ export default function App() {
 
     const timer = setInterval(() => {
       setGameState((prev) => {
-        const level = LEVELS[prev.levelIndex];
-        if (level.tasks.every((t) => t.completed)) {
+        // Check completion against state to avoid closure staleness issues with derived objects
+        const levelId = LEVELS[prev.levelIndex].id;
+        const tasks = LEVELS[prev.levelIndex].tasks;
+        const completedIds = prev.completedTaskIds[levelId] || [];
+        const isComplete = tasks.every(t => completedIds.includes(t.id));
+
+        if (isComplete && !prev.showHidden) {
           clearInterval(timer);
           return prev;
         }
@@ -272,6 +310,7 @@ export default function App() {
     gameState.showEpisodeIntro,
     gameState.isGameOver,
     currentLevel,
+    gameState.showHidden
   ]);
 
   // Check Keystroke Limit
@@ -356,9 +395,17 @@ export default function App() {
         keystrokes: 0,
         usedG: false,
         usedGG: false,
+        usedDown: false,
+        usedUp: false,
+        usedPreviewScrollDown: false,
+        usedPreviewScrollUp: false,
         zoxideData: newZoxideData,
         future: [],
         previewScroll: 0,
+        completedTaskIds: {
+            ...prev.completedTaskIds,
+            [nextLevel.id]: [] // Ensure array exists for next level
+        }
       };
     });
     setShowSuccessToast(false);
@@ -370,7 +417,8 @@ export default function App() {
       const restoredFS = cloneFS(prev.levelStartFS);
       const restoredPath = [...prev.levelStartPath];
       const currentLvl = LEVELS[prev.levelIndex];
-      currentLvl.tasks.forEach(t => t.completed = false);
+      // Reset completed tasks for this level in the state map
+      const newCompletedTaskIds = { ...prev.completedTaskIds, [currentLvl.id]: [] };
 
       return {
         ...prev,
@@ -393,8 +441,13 @@ export default function App() {
         fuzzySelectedIndex: 0,
         usedG: false,
         usedGG: false,
+        usedDown: false,
+        usedUp: false,
+        usedPreviewScrollDown: false,
+        usedPreviewScrollUp: false,
         future: [],
         previewScroll: 0,
+        completedTaskIds: newCompletedTaskIds,
       };
     });
   }, []);
@@ -435,7 +488,7 @@ export default function App() {
       if (e.key === 'y' || e.key === 'Enter') {
          setGameState(prev => {
             let newFs = prev.fs;
-            let errorMsg = null;
+            let errorMsg: string | null | undefined = null;
             
             // Check protection
             for (const id of prev.pendingDeleteIds) {
@@ -447,12 +500,11 @@ export default function App() {
                         break;
                     }
                     const res = deleteNode(newFs, prev.currentPath, id, prev.levelIndex);
-                    if (res.ok) {
-                        newFs = res.value;
-                    } else {
-                        errorMsg = res.error;
+                    if (!res.ok) {
+                        errorMsg = (res as { ok: false; error: FsError }).error;
                         break;
                     }
+                    newFs = res.value;
                 }
             }
             
@@ -475,7 +527,7 @@ export default function App() {
                  
                  let newFs = prev.fs;
                  const deleteRes = deleteNode(newFs, prev.currentPath, prev.pendingOverwriteNode.id, prev.levelIndex);
-                 if (deleteRes.ok === false) return { ...prev, mode: 'normal', notification: `Overwrite failed: ${deleteRes.error}` };
+                 if (!deleteRes.ok) return { ...prev, mode: 'normal', notification: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}` };
                  newFs = deleteRes.value;
 
                  const createRes = createPath(newFs, prev.currentPath, prev.inputBuffer);
@@ -512,21 +564,35 @@ export default function App() {
           setGameState((prev) => ({
             ...prev,
             cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
-            previewScroll: 0
+            previewScroll: 0,
+            usedDown: true
           }));
           break;
         case 'k':
         case 'ArrowUp':
-          setGameState((prev) => ({ ...prev, cursorIndex: Math.max(0, prev.cursorIndex - 1), previewScroll: 0 }));
+          setGameState((prev) => ({ 
+              ...prev, 
+              cursorIndex: Math.max(0, prev.cursorIndex - 1), 
+              previewScroll: 0,
+              usedUp: true 
+          }));
           break;
         case 'J':
           if (e.shiftKey) {
-            setGameState((prev) => ({ ...prev, previewScroll: prev.previewScroll + 1 }));
+            setGameState((prev) => ({ 
+                ...prev, 
+                previewScroll: prev.previewScroll + 1,
+                usedPreviewScrollDown: true
+            }));
           }
           break;
         case 'K':
           if (e.shiftKey) {
-            setGameState((prev) => ({ ...prev, previewScroll: Math.max(0, prev.previewScroll - 1) }));
+            setGameState((prev) => ({ 
+                ...prev, 
+                previewScroll: Math.max(0, prev.previewScroll - 1),
+                usedPreviewScrollUp: true
+            }));
           }
           break;
         case 'g':
@@ -621,7 +687,7 @@ export default function App() {
         case 'Enter':
         case 'ArrowRight':
           const allComplete = currentLevel.tasks.every((t) => t.completed);
-          if (allComplete && e.key === 'Enter' && e.shiftKey) {
+          if (allComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
             advanceLevel();
             return;
           }
@@ -759,13 +825,13 @@ export default function App() {
             if (currentDir) {
               try {
                 let newFs = gameState.fs;
-                let error: string | null = null;
+                let error: string | undefined | null = null;
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
                   const addResult: Result<FileNode, FsError> = addNode(newFs, gameState.currentPath, node);
-                  if (addResult.ok === false) {
-                    error = addResult.error;
+                  if (!addResult.ok) {
+                    error = (addResult as { ok: false; error: FsError }).error;
                     errorNodeName = node.name;
                     break;
                   }
@@ -774,7 +840,7 @@ export default function App() {
                   if (gameState.clipboard?.action === 'cut') {
                     const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
                     if (!deleteResult.ok) {
-                        error = deleteResult.error;
+                        error = (deleteResult as { ok: false; error: FsError }).error;
                         errorNodeName = node.name;
                         break;
                     }
@@ -805,7 +871,7 @@ export default function App() {
             if (currentDir) {
               try {
                 let newFs = gameState.fs;
-                let error: string | null = null;
+                let error: string | undefined | null = null;
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
@@ -816,7 +882,7 @@ export default function App() {
                   if (existingNode) {
                     const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.currentPath, existingNode.id, gameState.levelIndex);
                     if (!deleteResult.ok) {
-                      error = deleteResult.error;
+                      error = (deleteResult as { ok: false; error: FsError }).error;
                       errorNodeName = existingNode.name;
                       break;
                     }
@@ -824,8 +890,8 @@ export default function App() {
                   }
                   
                   const addResult: Result<FileNode, FsError> = addNode(newFs, gameState.currentPath, node);
-                  if (addResult.ok === false) {
-                    error = addResult.error;
+                  if (!addResult.ok) {
+                    error = (addResult as { ok: false; error: FsError }).error;
                     errorNodeName = node.name;
                     break;
                   }
@@ -834,7 +900,7 @@ export default function App() {
                   if (gameState.clipboard?.action === 'cut') {
                     const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
                     if (!deleteResult.ok) {
-                        error = deleteResult.error;
+                        error = (deleteResult as { ok: false; error: FsError }).error;
                         errorNodeName = node.name;
                         break;
                     }
@@ -1094,7 +1160,8 @@ export default function App() {
              // Handled in specific modes too
         }
 
-        if (currentLevel.tasks.every(t => t.completed) && e.key === 'Enter' && e.shiftKey) {
+        const tasksComplete = currentLevel.tasks.every(t => t.completed);
+        if (tasksComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
              e.preventDefault();
              advanceLevel();
              return;
@@ -1196,8 +1263,8 @@ export default function App() {
   const handleRenameConfirm = () => {
       if (currentItem) {
           const res = renameNode(gameState.fs, gameState.currentPath, currentItem.id, gameState.inputBuffer, gameState.levelIndex);
-          if (res.ok === false) {
-              setGameState(prev => ({ ...prev, mode: 'normal', notification: `Rename failed: ${res.error}` }));
+          if (!res.ok) {
+              setGameState(prev => ({ ...prev, mode: 'normal', notification: `Rename failed: ${(res as { ok: false; error: FsError }).error}` }));
           } else {
               setGameState(prev => ({ ...prev, fs: res.value, mode: 'normal', notification: 'Renamed', stats: { ...prev.stats, renames: prev.stats.renames + 1 } }));
           }
@@ -1289,7 +1356,9 @@ export default function App() {
                 currentPath: lvl.initialPath || ['root', 'home', 'guest'],
                 showEpisodeIntro: false,
                 future: [],
-                previewScroll: 0
+                previewScroll: 0,
+                // Also reset completedTaskIds for the jumped level if we treat it as a fresh start, 
+                // but usually jump preserves state. Let's keep it simple.
              }));
           }}
         />
