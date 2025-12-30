@@ -210,12 +210,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           {state.showHidden ? 'HIDDEN: ON' : 'HIDDEN: OFF'}
         </span>
 
-        {/* Sort Indicator */}
-        <span
-          className={`font-mono text-[10px] uppercase hidden sm:inline mr-1 ${isCustomSort ? 'text-orange-400 font-bold' : 'text-zinc-500'}`}
-        >
-          {getSortLabel(state.sortBy, state.sortDirection)}
-        </span>
+        {/* Sort Indicator - Only show if custom */}
+        {isCustomSort && (
+          <span
+            className="font-mono text-[10px] uppercase hidden sm:inline mr-1 text-orange-400 font-bold"
+          >
+            {getSortLabel(state.sortBy, state.sortDirection)}
+          </span>
+        )}
 
         {/* Linemode Indicator - NEW */}
         {state.linemode !== 'none' && (

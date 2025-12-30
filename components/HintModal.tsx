@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Lightbulb } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
         </div>
         {stage < 2 && (
           <div className="text-[9px] text-yellow-600 font-mono uppercase tracking-wider animate-pulse">
-            Press Shift+H for more detail
+            Press Alt+H for more detail
           </div>
         )}
       </div>
