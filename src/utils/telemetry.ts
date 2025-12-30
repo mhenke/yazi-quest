@@ -100,7 +100,9 @@ export function trackEvent(name: string, payload?: Payload) {
     if (typeof window !== "undefined" && (window as any).dataLayer) {
       (window as any).dataLayer.push({ event: name, ...(payload || {}) });
     }
-  } catch (e) {}
+  } catch (e) {
+    // Silently ignore errors
+  }
 
   QUEUE.push({ name, payload, ts: Date.now() });
   if (QUEUE.length >= MAX_QUEUE) {
@@ -122,7 +124,9 @@ export function trackError(name: string, payload?: Payload) {
     ) {
       (window as any).Sentry.captureMessage(name, { level: "error", extra: payload });
     }
-  } catch (e) {}
+  } catch (e) {
+    // Silently ignore errors
+  }
 
   QUEUE.push({ name: `[error] ${name}`, payload, ts: Date.now() });
   if (QUEUE.length >= MAX_QUEUE) {

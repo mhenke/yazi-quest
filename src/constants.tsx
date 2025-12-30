@@ -1,4 +1,4 @@
-import { FileNode, Level, Episode, GameState } from "../types";
+import { FileNode, Level, Episode } from "../types";
 import { getVisibleItems } from "./utils/viewHelpers";
 import { getNodeByPath, findNodeByName } from "./utils/fsHelpers";
 

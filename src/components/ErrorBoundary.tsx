@@ -17,8 +17,7 @@ export default class ErrorBoundary extends React.Component<
     // Report centrally and keep console fallback
     try {
       reportError(error, { errorInfo });
-    } catch (e) {
-      // eslint-disable-next-line no-console
+    } catch (_e) {
       console.error("App Error:", error, errorInfo);
     }
   }
@@ -44,6 +43,7 @@ export default class ErrorBoundary extends React.Component<
     }
     // Cast to any to avoid rare typing conflicts in different TS configs
     // props should normally exist on React.Component, but some toolchains treat this differently.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this as any).props.children;
   }
 }

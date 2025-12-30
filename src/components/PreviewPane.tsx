@@ -2,8 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { FileNode, Level } from "../types";
 import {
   FileText,
-  FolderOpen,
-  Image as ImageIcon,
   FileArchive,
   PackageOpen,
   CheckSquare,

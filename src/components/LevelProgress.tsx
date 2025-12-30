@@ -72,6 +72,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   // Sync modal tab with current episode when opening
   useEffect(() => {
     if (showLegend) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(currentEpisodeIdx);
       // Find the current level within the episode and select it
       const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];

@@ -23,7 +23,11 @@ const findNodeFromPath = (root: FileNode, pathStr: string): FileNode | null => {
   return current;
 };
 
-export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, onClose }) => {
+export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
+  gameState,
+  onSelect: _onSelect,
+  onClose: _onClose,
+}) => {
   const isZoxide = gameState.mode === "zoxide-jump";
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -71,9 +75,12 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
       const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
       return node?.children || [];
     } else {
-      const typedCandidate = selectedCandidate as any;
-      if (typedCandidate.pathIds && Array.isArray(typedCandidate.pathIds)) {
-        const fullNodePath = [...gameState.currentPath, ...typedCandidate.pathIds];
+      if (
+        "pathIds" in selectedCandidate &&
+        selectedCandidate.pathIds &&
+        Array.isArray(selectedCandidate.pathIds)
+      ) {
+        const fullNodePath = [...gameState.currentPath, ...selectedCandidate.pathIds];
         const parentPath = fullNodePath.slice(0, -1);
         const parentNode = getNodeByPath(gameState.fs, parentPath);
         return parentNode?.children || [];
@@ -166,7 +173,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, onSelect, o
                         <span
                           className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded tabular-nums min-w-[36px] text-center ${isSelected ? (isQuantumLevel ? "bg-purple-500/20 text-purple-400" : "bg-orange-500/20 text-orange-400") : "text-zinc-600"}`}
                         >
-                          {(item as any).score?.toFixed(1)}
+                          {item.score?.toFixed(1)}
                         </span>
                       )}
 

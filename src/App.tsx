@@ -136,7 +136,7 @@ export default function App() {
       } catch (err) {
         try {
           reportError(err, { phase: "initialLevel.onEnter", level: initialLevel?.id });
-        } catch (e) {
+        } catch (_e) {
           console.error("initialLevel.onEnter failed", err);
         }
       }
@@ -249,6 +249,7 @@ export default function App() {
     });
 
     if (changed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGameState(prev => ({
         ...prev,
         completedTaskIds: {
@@ -330,6 +331,7 @@ export default function App() {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
 
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: "keystrokes" }));
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
@@ -340,9 +342,11 @@ export default function App() {
 
     const levelId = currentLevel.id;
     if (levelId === 5) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAlertMessage(
         "🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately."
       );
+
       setShowThreatAlert(true);
       const dismissTimer = setTimeout(() => setShowThreatAlert(false), 10000);
       return () => clearTimeout(dismissTimer);
@@ -373,7 +377,7 @@ export default function App() {
       } catch (err) {
         try {
           reportError(err, { phase: "nextLevel.onEnter", level: nextLevel?.id });
-        } catch (e) {
+        } catch (_e) {
           console.error("nextLevel.onEnter failed", err);
         }
         onEnterError = err;
@@ -788,7 +792,7 @@ export default function App() {
           break;
         case "l":
         case "Enter":
-        case "ArrowRight":
+        case "ArrowRight": {
           const allComplete = currentLevel.tasks.every(t => t.completed);
           if (allComplete && !gameState.showHidden && e.key === "Enter" && e.shiftKey) {
             advanceLevel();
@@ -821,6 +825,7 @@ export default function App() {
             });
           }
           break;
+        }
         case " ":
           if (currentItem) {
             setGameState(prev => {
@@ -982,7 +987,7 @@ export default function App() {
               } catch (err) {
                 try {
                   reportError(err, { phase: "paste", action: "p" });
-                } catch (e) {
+                } catch (_e) {
                   console.error(err);
                 }
                 showNotification("Paste failed", 4000);
@@ -1060,7 +1065,7 @@ export default function App() {
               } catch (err) {
                 try {
                   reportError(err, { phase: "paste", action: "P" });
-                } catch (e) {
+                } catch (_e) {
                   console.error(err);
                 }
                 showNotification("Force paste failed", 4000);
