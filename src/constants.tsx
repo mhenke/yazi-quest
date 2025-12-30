@@ -1113,9 +1113,8 @@ export const LEVELS: Level[] = [
         description:
           "Duplicate 'uplink_v1.conf' (y, p) and rename the copy to 'uplink_v2.conf' (r)",
         check: c => {
-          var r;
           const f = findNodeByName(c.fs, "protocols");
-          return !!(r = f?.children)?.find(h => h.name === "uplink_v2.conf");
+          return !!f?.children?.find(h => h.name === "uplink_v2.conf");
         },
         completed: false,
       },
@@ -1178,9 +1177,8 @@ export const LEVELS: Level[] = [
         id: "batch-cut-files",
         description: "Navigate to protocols and select then cut all the files (space twice, x)",
         check: c => {
-          var s;
           return (
-            (s = c.clipboard)?.action === "cut" &&
+            c.clipboard?.action === "cut" &&
             c.clipboard.nodes.some(f => f.name === "uplink_v1.conf") &&
             c.clipboard.nodes.some(f => f.name === "uplink_v2.conf")
           );
@@ -1200,10 +1198,9 @@ export const LEVELS: Level[] = [
         id: "establish-stronghold",
         description: "Establish 'vault/active/' sector in ~/.config (a)",
         check: c => {
-          var r, h;
           const s = findNodeByName(c.fs, ".config");
-          const f = (r = s?.children)?.find(p => p.name === "vault");
-          return !!(h = f?.children)?.find(p => p.name === "active" && p.type === "dir");
+          const f = s?.children?.find(p => p.name === "vault");
+          return !!f?.children?.find(p => p.name === "active" && p.type === "dir");
         },
         completed: false,
       },
@@ -1211,10 +1208,9 @@ export const LEVELS: Level[] = [
         id: "deploy-assets",
         description: "Migrate configuration assets to ~/.config/vault/active (p)",
         check: c => {
-          var h, p;
           const s = findNodeByName(c.fs, "active");
-          const f = (h = s?.children)?.some(z => z.name === "uplink_v1.conf");
-          const r = (p = s?.children)?.some(z => z.name === "uplink_v2.conf");
+          const f = s?.children?.some(z => z.name === "uplink_v1.conf");
+          const r = s?.children?.some(z => z.name === "uplink_v2.conf");
           return !!f && !!r;
         },
         completed: false,
