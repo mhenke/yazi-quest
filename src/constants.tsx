@@ -992,9 +992,8 @@ export const LEVELS: Level[] = [
         id: "del-3",
         description: "Purge 'watcher_agent.sys' (d, y)",
         check: c => {
-          var r;
           const u = findNodeByName(c.fs, "incoming");
-          const d = (r = u?.children)?.find(p => p.name === "watcher_agent.sys");
+          const d = u?.children?.find(p => p.name === "watcher_agent.sys");
           return !!u && !d;
         },
         completed: false,
@@ -1043,10 +1042,9 @@ export const LEVELS: Level[] = [
         id: "move-1",
         description: "Cut the asset (x)",
         check: (c, u) => {
-          var r;
           const d = u.tasks.find(p => p.id === "move-0b");
           return d != null && d.completed
-            ? (r = c.clipboard)?.action === "cut" &&
+            ? c.clipboard?.action === "cut" &&
                 c.clipboard.nodes.some(p => p.name === "sector_map.png")
             : false;
         },
@@ -1067,9 +1065,8 @@ export const LEVELS: Level[] = [
         id: "move-2",
         description: "Deploy asset to 'media' in /home/guest (p)",
         check: c => {
-          var d;
           const u = findNodeByName(c.fs, "media");
-          return !!(d = u?.children)?.find(r => r.name === "sector_map.png");
+          return !!u?.children?.find(r => r.name === "sector_map.png");
         },
         completed: false,
       },
@@ -1094,9 +1091,8 @@ export const LEVELS: Level[] = [
         id: "nav-and-create-dir",
         description: "Navigate to datastore and construct 'protocols/' directory (a)",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "datastore");
-          return !!(f = s?.children)?.find(r => r.name === "protocols" && r.type === "dir");
+          return !!s?.children?.find(r => r.name === "protocols" && r.type === "dir");
         },
         completed: false,
       },
@@ -1104,11 +1100,10 @@ export const LEVELS: Level[] = [
         id: "enter-and-create-v1",
         description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
         check: c => {
-          var h;
           const r = findNodeByName(c.fs, "protocols");
           return (
             c.currentPath.includes(r?.id || "") &&
-            !!(h = r?.children)?.find(p => p.name === "uplink_v1.conf")
+            !!r?.children?.find(p => p.name === "uplink_v1.conf")
           );
         },
         completed: false,
@@ -1195,7 +1190,7 @@ export const LEVELS: Level[] = [
       {
         id: "reveal-hidden",
         description: "Navigate to ~/ then reveal hidden files (.) to access .config",
-        check: c => {
+        check: (c, _u) => {
           const s = findNodeByName(c.fs, "guest");
           return c.currentPath.includes(s?.id || "") && c.showHidden === true;
         },
