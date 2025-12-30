@@ -1692,7 +1692,6 @@ export const LEVELS: Level[] = [
     efficiencyTip:
       "Use Shift+Z to teleport to /etc and /tmp instantly. Create 'daemon/config' in one 'a' command with path chaining.",
     onEnter: c => {
-      var A, N;
       let s = JSON.parse(JSON.stringify(c));
       const r = findNodeByName(s, ".config");
       if (r && !r.children?.find(E => E.name === "vault")) {
@@ -1717,44 +1716,40 @@ export const LEVELS: Level[] = [
         id: "ep3-1a-dir",
         description: "Infiltrate /etc — create 'daemon/' directory",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "etc");
-          return !!(f = s?.children)?.find(r => r.name === "daemon" && r.type === "dir");
+          return !!s?.children?.find(r => r.name === "daemon" && r.type === "dir");
         },
         completed: false,
       },
       {
         id: "ep3-1b-service",
         description: "Install controller: create 'service' file in daemon/",
-        check: (c, s) => {
-          var r, h;
-          if (!(r = c.completedTaskIds[s.id])?.includes("ep3-1a-dir")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("ep3-1a-dir")) return false;
           const f = findNodeByName(c.fs, "daemon");
-          return !!(h = f?.children)?.find(p => p.name === "service");
+          return !!f?.children?.find(p => p.name === "service");
         },
         completed: false,
       },
       {
         id: "ep3-1c-config",
         description: "Configure controller: create 'config' file in daemon/",
-        check: (c, s) => {
-          var r, p;
-          if (!(r = c.completedTaskIds[s.id])?.includes("ep3-1b-service")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("ep3-1b-service")) return false;
           const f = findNodeByName(c.fs, "daemon");
-          return !!(p = f?.children)?.find(h => h.name === "config");
+          return !!f?.children?.find(h => h.name === "config");
         },
         completed: false,
       },
       {
         id: "ep3-1d-vault",
         description: "Relocate vault from hidden stronghold to /tmp",
-        check: (c, s) => {
-          var A, N, E;
-          if (!(A = c.completedTaskIds[s.id])?.includes("ep3-1c-config")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("ep3-1c-config")) return false;
           const f = findNodeByName(c.fs, "tmp");
           const r = findNodeByName(c.fs, ".config");
-          const p = !!(N = f?.children)?.find(v => v.name === "vault");
-          const h = !(E = r?.children)?.find(v => v.name === "vault");
+          const p = !!f?.children?.find(v => v.name === "vault");
+          const h = !r?.children?.find(v => v.name === "vault");
           return p && h;
         },
         completed: false,
@@ -1762,11 +1757,10 @@ export const LEVELS: Level[] = [
       {
         id: "ep3-1e-cleanup",
         description: "Clean up temporary installation traces: delete 'install.tmp' from /tmp",
-        check: (c, s) => {
-          var r, p;
-          if (!(r = c.completedTaskIds[s.id])?.includes("ep3-1d-vault")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("ep3-1d-vault")) return false;
           const f = findNodeByName(c.fs, "tmp");
-          return !(p = f?.children)?.some(h => h.name === "install.tmp");
+          return !f?.children?.some(h => h.name === "install.tmp");
         },
         completed: false,
       },
@@ -1791,7 +1785,7 @@ export const LEVELS: Level[] = [
     onEnter: c => {
       let s = JSON.parse(JSON.stringify(c));
       const r = findNodeByName(s, "tmp");
-      if (r && !r.children?.some((p: any) => p.name === "system_recovery.zip")) {
+      if (r && !r.children?.some((_p: any) => _p.name === "system_recovery.zip")) {
         r.children = r.children || [];
         r.children.push({
           id: id(),
@@ -1815,9 +1809,8 @@ export const LEVELS: Level[] = [
         id: "rec-1-delete",
         description: "Locate and delete the corrupted 'kernel_panic.log' from /var/log",
         check: c => {
-          var f;
           const s = findNodeByName(c.fs, "log");
-          return !(f = s?.children)?.some(r => r.name === "kernel_panic.log");
+          return !s?.children?.some(r => r.name === "kernel_panic.log");
         },
         completed: false,
       },
@@ -1825,28 +1818,26 @@ export const LEVELS: Level[] = [
         id: "rec-2-extract",
         description:
           "Locate 'system_recovery.zip' in /tmp and copy 'kernel_panic.log.bak' from it to clipboard",
-        check: (c, s) => {
-          var p, z, C;
-          if (!(p = c.completedTaskIds[s.id])?.includes("rec-1-delete")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("rec-1-delete")) return false;
           const f = findNodeByName(c.fs, "tmp");
-          const r =
-            (z = c.clipboard)?.action === "yank" &&
+          const clipboardHasFile =
+            c.clipboard?.action === "yank" &&
             c.clipboard.nodes.some(S => S.name === "kernel_panic.log.bak");
-          return (C = f?.children)?.some(S => S.name === "system_recovery.zip") && r;
+          return f?.children?.some(S => S.name === "system_recovery.zip") && clipboardHasFile;
         },
         completed: false,
       },
       {
         id: "rec-3-restore",
         description: "Use History Back (H) to return to /var/log, paste the backup, and rename it",
-        check: (c, s) => {
-          var r;
-          if (!(r = c.completedTaskIds[s.id])?.includes("rec-2-extract")) return false;
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("rec-2-extract")) return false;
           const f = findNodeByName(c.fs, "log");
           return (
             c.usedHistoryBack &&
             c.currentPath.includes(f?.id || "") &&
-            !!(r = f?.children)?.find(
+            !!f?.children?.find(
               p =>
                 p.name === "kernel_panic.log" && p.content === "INFO: KERNEL OK - HEALTHY LOG DATA"
             )
