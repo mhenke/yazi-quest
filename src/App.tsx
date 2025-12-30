@@ -39,6 +39,7 @@ import { ConfirmationModal } from '../components/ConfirmationModal';
 import { OverwriteModal } from '../components/OverwriteModal';
 import { SuccessToast } from '../components/SuccessToast';
 import { ThreatAlert } from '../components/ThreatAlert';
+import { HiddenFilesWarningModal } from '../components/HiddenFilesWarningModal';
 import { InfoPanel } from '../components/InfoPanel';
 import { GCommandDialog } from '../components/GCommandDialog';
 import { FuzzyFinder } from '../components/FuzzyFinder';
@@ -184,8 +185,8 @@ export default function App() {
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showThreatAlert, setShowThreatAlert] = useState(false);
+  const [showHiddenWarning, setShowHiddenWarning] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const prevAllTasksCompleteRef = useRef(false);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
@@ -256,18 +257,20 @@ export default function App() {
     if (tasksComplete) {
       if (gameState.showHidden) {
         // Enforce hidden files must be toggled off to complete any level
-        if (gameState.notification !== 'Toggle hidden files off (.) to complete mission') {
-          showNotification('Toggle hidden files off (.) to complete mission', 3000);
+        setShowHiddenWarning(true);
+        setShowSuccessToast(false);
+      } else {
+        setShowHiddenWarning(false);
+        if (!showSuccessToast && !gameState.showEpisodeIntro) {
+            playSuccessSound(gameState.settings.soundEnabled);
+            setShowSuccessToast(true);
         }
-      } else if (!prevAllTasksCompleteRef.current) {
-        playSuccessSound(gameState.settings.soundEnabled);
-        setShowSuccessToast(true);
       }
+    } else {
+        setShowHiddenWarning(false);
+        setShowSuccessToast(false);
     }
-
-    // Only set ref to true if tasks are complete AND showHidden is false
-    prevAllTasksCompleteRef.current = tasksComplete && !gameState.showHidden;
-  }, [gameState, currentLevel, isLastLevel, showNotification]);
+  }, [gameState, currentLevel, isLastLevel, showNotification, showSuccessToast]);
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
@@ -845,6 +848,23 @@ export default function App() {
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
+                  // If action is cut, delete first to prevent self-collision renaming
+                  if (gameState.clipboard.action === 'cut') {
+                    const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
+                    if (!deleteResult.ok) {
+                        // If NotFound, proceed (it's effectively deleted/moved already). 
+                        // If Protected, stop.
+                        if ((deleteResult as { ok: false; error: FsError }).error !== 'NotFound') {
+                           error = (deleteResult as { ok: false; error: FsError }).error;
+                           errorNodeName = node.name;
+                           break;
+                        }
+                    } else {
+                        newFs = deleteResult.value;
+                    }
+                  }
+
+                  // Add node to destination
                   const addResult: Result<FileNode, FsError> = addNode(newFs, gameState.currentPath, node);
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -852,16 +872,6 @@ export default function App() {
                     break;
                   }
                   newFs = addResult.value;
-                  
-                  if (gameState.clipboard?.action === 'cut') {
-                    const deleteResult: Result<FileNode, FsError> = deleteNode(newFs, gameState.clipboard.originalPath, node.id, gameState.levelIndex);
-                    if (!deleteResult.ok) {
-                        error = (deleteResult as { ok: false; error: FsError }).error;
-                        errorNodeName = node.name;
-                        break;
-                    }
-                    newFs = deleteResult.value;
-                  }
                 }
 
                 if (error) {
@@ -1192,6 +1202,14 @@ export default function App() {
             return;
         }
 
+        // Handle hidden files warning modal interception
+        if (showHiddenWarning) {
+            if (e.key === '.') {
+                 setGameState(prev => ({ ...prev, showHidden: !prev.showHidden }));
+            }
+            return; // Block other inputs
+        }
+
         // Count keystrokes (only if no blocking modal)
         if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
             setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
@@ -1276,7 +1294,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, handleOverwriteConfirmKeyDown, advanceLevel]);
+  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, handleOverwriteConfirmKeyDown, advanceLevel, showHiddenWarning]);
   
   // Logic for create/rename input handled via input element events mainly
   const handleInputConfirm = () => {
@@ -1365,6 +1383,10 @@ export default function App() {
       
       {showThreatAlert && (
           <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
+      )}
+
+      {showHiddenWarning && (
+          <HiddenFilesWarningModal />
       )}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
@@ -1571,7 +1593,7 @@ export default function App() {
         <StatusBar
           state={gameState}
           level={currentLevel}
-          allTasksComplete={currentLevel.tasks.every(t => t.completed)}
+          allTasksComplete={currentLevel.tasks.every(t => t.completed) && !gameState.showHidden}
           onNextLevel={advanceLevel}
           currentItem={currentItem}
         />
