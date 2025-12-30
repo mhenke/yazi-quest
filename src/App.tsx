@@ -176,8 +176,6 @@ export default function App() {
       usedGG: false,
       usedDown: false,
       usedUp: false,
-      usedPreviewScrollDown: false,
-      usedPreviewScrollUp: false,
       completedTaskIds,
     };
   });
@@ -397,8 +395,6 @@ export default function App() {
         usedGG: false,
         usedDown: false,
         usedUp: false,
-        usedPreviewScrollDown: false,
-        usedPreviewScrollUp: false,
         zoxideData: newZoxideData,
         future: [],
         previewScroll: 0,
@@ -443,8 +439,6 @@ export default function App() {
         usedGG: false,
         usedDown: false,
         usedUp: false,
-        usedPreviewScrollDown: false,
-        usedPreviewScrollUp: false,
         future: [],
         previewScroll: 0,
         completedTaskIds: newCompletedTaskIds,
@@ -579,20 +573,12 @@ export default function App() {
           break;
         case 'J':
           if (e.shiftKey) {
-            setGameState((prev) => ({ 
-                ...prev, 
-                previewScroll: prev.previewScroll + 1,
-                usedPreviewScrollDown: true
-            }));
+            setGameState((prev) => ({ ...prev, previewScroll: prev.previewScroll + 1 }));
           }
           break;
         case 'K':
           if (e.shiftKey) {
-            setGameState((prev) => ({ 
-                ...prev, 
-                previewScroll: Math.max(0, prev.previewScroll - 1),
-                usedPreviewScrollUp: true
-            }));
+            setGameState((prev) => ({ ...prev, previewScroll: Math.max(0, prev.previewScroll - 1) }));
           }
           break;
         case 'g':
