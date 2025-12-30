@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { FileNode } from '@/types';
+import { FileNode } from '../types';
 
 interface InfoPanelProps {
   file: FileNode | null;

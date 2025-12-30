@@ -1,5 +1,4 @@
-
-import { FileNode, SortBy, SortDirection } from '../../types';
+import { FileNode, SortBy, SortDirection } from '../types';
 
 /**
  * Sort files according to Yazi's sorting methods
@@ -92,20 +91,21 @@ export function sortNodes(
 /**
  * Get sort label for UI display
  */
-export function getSortLabel(sortBy: SortBy, _sortDirection: SortDirection): string {
-  // Direction symbol removed
+export function getSortLabel(sortBy: SortBy, sortDirection: SortDirection): string {
+  const dirSymbol = sortDirection === 'asc' ? '↑' : '↓';
+
   switch (sortBy) {
     case 'natural':
-      return `Natural`;
+      return `Natural ${dirSymbol}`;
     case 'alphabetical':
-      return `A-Z`;
+      return `A-Z ${dirSymbol}`;
     case 'modified':
-      return `Modified`;
+      return `Modified ${dirSymbol}`;
     case 'size':
-      return `Size`;
+      return `Size ${dirSymbol}`;
     case 'extension':
-      return `Extension`;
+      return `Extension ${dirSymbol}`;
     default:
-      return `Natural`;
+      return `Natural ${dirSymbol}`;
   }
 }

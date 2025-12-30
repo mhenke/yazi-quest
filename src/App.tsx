@@ -23,9 +23,9 @@ import {
   getAllDirectories,
   resolvePath,
   getRecursiveContent,
-} from './utils/fsHelpers';
-import { sortNodes } from './utils/sortHelpers';
-import { getVisibleItems } from './utils/viewHelpers';
+} from '../utils/fsHelpers';
+import { sortNodes } from '../utils/sortHelpers';
+import { getVisibleItems } from '../utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from '../utils/sounds';
 import { StatusBar } from '../components/StatusBar';
 import { HelpModal } from '../components/HelpModal';
@@ -330,12 +330,10 @@ export default function App() {
     
     const levelId = currentLevel.id;
     if (levelId === 5) {
-      const timer = setTimeout(() => {
-        setAlertMessage("🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.");
-        setShowThreatAlert(true);
-        setTimeout(() => setShowThreatAlert(false), 10000);
-      }, 3000);
-      return () => clearTimeout(timer);
+      setAlertMessage("🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.");
+      setShowThreatAlert(true);
+      const dismissTimer = setTimeout(() => setShowThreatAlert(false), 10000);
+      return () => clearTimeout(dismissTimer);
     }
   }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
 
@@ -401,6 +399,8 @@ export default function App() {
         usedUp: false,
         usedPreviewDown: false,
         usedPreviewUp: false,
+        usedHistoryBack: false,
+        usedHistoryForward: false,
         zoxideData: newZoxideData,
         future: [],
         previewScroll: 0,
@@ -447,6 +447,8 @@ export default function App() {
         usedUp: false,
         usedPreviewDown: false,
         usedPreviewUp: false,
+        usedHistoryBack: false,
+        usedHistoryForward: false,
         future: [],
         previewScroll: 0,
         completedTaskIds: newCompletedTaskIds,
@@ -511,7 +513,7 @@ export default function App() {
             }
             
             if (errorMsg) {
-                return { ...prev, mode: 'normal', pendingDeleteIds: [], notification: `Error: ${errorMsg}` };
+                return { ...prev, mode: 'normal', pendingDeleteIds: [], notification: `🔒 PROTECTED: ${errorMsg}` };
             }
             return { ...prev, fs: newFs, mode: 'normal', pendingDeleteIds: [], selectedIds: [], notification: 'Items deleted' };
          });
@@ -587,7 +589,7 @@ export default function App() {
           if (e.shiftKey) {
             setGameState((prev) => ({ 
               ...prev, 
-              previewScroll: prev.previewScroll + 1,
+              previewScroll: prev.previewScroll + 5,
               usedPreviewDown: true 
             }));
           }
@@ -596,7 +598,7 @@ export default function App() {
           if (e.shiftKey) {
             setGameState((prev) => ({ 
               ...prev, 
-              previewScroll: Math.max(0, prev.previewScroll - 1),
+              previewScroll: Math.max(0, prev.previewScroll - 5),
               usedPreviewUp: true
             }));
           }
@@ -635,7 +637,8 @@ export default function App() {
                       previewScroll: 0,
                       usedPreviewDown: false,
                       usedPreviewUp: false,
-                      notification: 'Navigated back'
+                      notification: 'Navigated back',
+                      usedHistoryBack: true
                   };
               });
            }
@@ -658,7 +661,8 @@ export default function App() {
                        previewScroll: 0,
                        usedPreviewDown: false,
                        usedPreviewUp: false,
-                       notification: 'Navigated forward'
+                       notification: 'Navigated forward',
+                       usedHistoryForward: true
                    };
                });
             }
@@ -1169,6 +1173,25 @@ export default function App() {
   // Global Key Down Handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+        const tasksComplete = currentLevel.tasks.every(t => t.completed);
+        if (tasksComplete && !gameState.showHidden) {
+            if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                advanceLevel();
+            }
+            if (e.key === 'Escape') {
+                setShowSuccessToast(false);
+            }
+            return; // Block all other keys
+        }
+
+        if (showThreatAlert) {
+            if (e.key === 'Escape') {
+                setShowThreatAlert(false);
+            }
+            return;
+        }
+
         if (gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver || ['input-file', 'filter', 'rename'].includes(gameState.mode)) {
             // Let specific components handle keys or ignore
             return;
@@ -1214,13 +1237,6 @@ export default function App() {
             setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
         }
 
-        const tasksComplete = currentLevel.tasks.every(t => t.completed);
-        if (tasksComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
-             e.preventDefault();
-             advanceLevel();
-             return;
-        }
-        
         if (e.key === '?' && e.altKey && gameState.mode === 'normal') {
             e.preventDefault();
             setGameState(prev => ({ ...prev, showHelp: true }));
@@ -1295,7 +1311,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, handleOverwriteConfirmKeyDown, advanceLevel, showHiddenWarning]);
+  }, [gameState, currentLevel, isLastLevel, handleNormalModeKeyDown, handleSortModeKeyDown, handleConfirmDeleteModeKeyDown, handleFuzzyModeKeyDown, handleOverwriteConfirmKeyDown, advanceLevel, showHiddenWarning, showThreatAlert]);
   
   // Logic for create/rename input handled via input element events mainly
   const handleInputConfirm = () => {

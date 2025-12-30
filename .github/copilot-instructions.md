@@ -32,20 +32,18 @@ npm run preview # Preview production build
 Use URL parameters for testing:
 
 - `?ep=2` or `?episode=2` - Start at Episode 2
-- `?lvl=5` or `?level=5` - Jump to specific level ID
+- `?lvl=5` or `?level=5` - Jump to specific level number
 - `?tasks=all` - Mark all current level tasks complete
 - `?intro=false` - Skip episode intro cinematic
 - `?debug=outro` - Skip directly to outro sequence
 
 ## Architecture
 
-**File Structure (flat layout, no src/):**
+**File Structure:**
 
-- `App.tsx` - Main game component with state machine, keyboard handlers, and game loop
-- `constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
-- `types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
-- `utils/fsHelpers.ts` - Immutable filesystem operations (clone, add, delete, rename, path resolution)
-- `components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar)
+The project utilizes a mixed file structure:
+- Root Directory: Contains `index.tsx` (application entry point), shared types (`types.ts`), common UI components (`components/`), and utility functions (`utils/`).
+- `src/` Directory: Contains the primary application logic (`src/App.tsx`) and level-specific constants (`src/constants.tsx`).
 
 **Core Patterns:**
 
@@ -76,9 +74,9 @@ Use URL parameters for testing:
 
 ## Narrative Design
 
-See `theatre.md` for the comprehensive lore generation guide. Key principles:
+Key principles:
 
-- **One skill per level** - Each level teaches exactly ONE Yazi command
+- **Focused skill introduction** - Primarily introduce new core concepts or workflows; challenge levels may integrate multiple skills.
 - **Metaphor mapping** - File operations map to narrative actions:
   - `delete` → "purge trackers"
   - `filter` → "scan signatures"
@@ -120,7 +118,7 @@ See `theatre.md` for the comprehensive lore generation guide. Key principles:
 ## Critical Rules
 
 1. **Immutability is non-negotiable** - Never mutate the `fs` object directly
-2. **One skill per level** - Don't introduce multiple new concepts in a single level
+2. **Focused skill introduction** - Primarily introduce new core concepts or workflows; challenge levels may integrate multiple skills.
 3. **No left sidebar** - Mission info belongs in the Quest Map modal only
 4. **Follow existing patterns** - The codebase has established conventions; maintain consistency
 5. **Test with debug parameters** - Use URL parameters to verify changes across different game states

@@ -2,14 +2,14 @@
 
 ## Adding New Levels
 
-1. Add level definition to `constants.tsx`
+1. Add level definition to `src/constants.tsx`
 2. Implement check functions
 3. Test all tasks complete properly
 4. Update episode lore if needed
 
 ## Level Design Guidelines
 
-- Each level should teach ONE core concept
+- Each level primarily introduces a new core concept or workflow; challenge levels may integrate multiple skills.
 - Tasks should build on previous knowledge
 - Hints should guide, not solve
 - Ensure hints reference specific keybindings

@@ -1,3 +1,2 @@
-// DEPRECATED: This file is unused and should be deleted.
-// The active fsHelpers are located at ../src/utils/fsHelpers.ts
-export {};
+// Re-export implementation from src so both utils/ and src/utils/ imports resolve
+export * from '../src/utils/fsHelpers';

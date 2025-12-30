@@ -1,6 +1,5 @@
-
 import React, { useEffect, useRef } from 'react';
-import { FileNode, ClipboardItem, Linemode } from '@/types';
+import { FileNode, ClipboardItem, Linemode } from '../types';
 import {
   Folder,
   FileText,

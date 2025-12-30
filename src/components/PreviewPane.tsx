@@ -1,6 +1,5 @@
-
 import React, { useEffect, useRef } from 'react';
-import { FileNode, Level } from '@/types';
+import { FileNode, Level } from '../types';
 import {
   FileText,
   FolderOpen,

@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { Episode } from '@/types';
+import { Episode } from '../types';
 import { Terminal, ArrowRight } from 'lucide-react';
 
 interface EpisodeIntroProps {
