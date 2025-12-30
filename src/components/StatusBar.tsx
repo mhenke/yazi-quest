@@ -2,8 +2,8 @@
 import React from 'react';
 import { GameState, Level, FileNode } from '../types';
 import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
-import { getNodeByPath } from '../src/utils/fsHelpers';
-import { getSortLabel } from '../src/utils/sortHelpers';
+import { getNodeByPath } from '../utils/fsHelpers';
+import { getSortLabel } from '../utils/sortHelpers';
 
 interface StatusBarProps {
   state: GameState;

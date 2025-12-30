@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { calculateFrecency, GameState, FileNode } from '../types';
-import { getRecursiveContent, getNodeByPath } from '../src/utils/fsHelpers';
+import { getRecursiveContent, getNodeByPath } from '../utils/fsHelpers';
 import { FileSystemPane } from './FileSystemPane';
 
 interface FuzzyFinderProps {

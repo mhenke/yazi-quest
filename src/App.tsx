@@ -9,7 +9,7 @@ import {
   Linemode,
   FsError,
   Result,
-} from '../types';
+} from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE } from './constants';
 import {
   getNodeByPath,
@@ -23,29 +23,29 @@ import {
   getAllDirectories,
   resolvePath,
   getRecursiveContent,
-} from '../utils/fsHelpers';
-import { sortNodes } from '../utils/sortHelpers';
-import { getVisibleItems } from '../utils/viewHelpers';
-import { playSuccessSound, playTaskCompleteSound } from '../utils/sounds';
-import { StatusBar } from '../components/StatusBar';
-import { HelpModal } from '../components/HelpModal';
-import { HintModal } from '../components/HintModal';
-import { LevelProgress } from '../components/LevelProgress';
-import { EpisodeIntro } from '../components/EpisodeIntro';
-import { OutroSequence } from '../components/OutroSequence';
-import { GameOverModal } from '../components/GameOverModal';
-import { ConfirmationModal } from '../components/ConfirmationModal';
-import { OverwriteModal } from '../components/OverwriteModal';
-import { SuccessToast } from '../components/SuccessToast';
-import { ThreatAlert } from '../components/ThreatAlert';
-import { HiddenFilesWarningModal } from '../components/HiddenFilesWarningModal';
-import { InfoPanel } from '../components/InfoPanel';
-import { GCommandDialog } from '../components/GCommandDialog';
-import { FuzzyFinder } from '../components/FuzzyFinder';
-import { MemoizedFileSystemPane } from '../components/FileSystemPane';
-import { MemoizedPreviewPane } from '../components/PreviewPane';
-import { reportError } from '../utils/error';
-import { measure } from '../utils/perf';
+} from './utils/fsHelpers';
+import { sortNodes } from './utils/sortHelpers';
+import { getVisibleItems } from './utils/viewHelpers';
+import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+import { StatusBar } from './components/StatusBar';
+import { HelpModal } from './components/HelpModal';
+import { HintModal } from './components/HintModal';
+import { LevelProgress } from './components/LevelProgress';
+import { EpisodeIntro } from './components/EpisodeIntro';
+import { OutroSequence } from './components/OutroSequence';
+import { GameOverModal } from './components/GameOverModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { OverwriteModal } from './components/OverwriteModal';
+import { SuccessToast } from './components/SuccessToast';
+import { ThreatAlert } from './components/ThreatAlert';
+import { HiddenFilesWarningModal } from './components/HiddenFilesWarningModal';
+import { InfoPanel } from './components/InfoPanel';
+import { GCommandDialog } from './components/GCommandDialog';
+import { FuzzyFinder } from './components/FuzzyFinder';
+import { MemoizedFileSystemPane } from './components/FileSystemPane';
+import { MemoizedPreviewPane } from './components/PreviewPane';
+import { reportError } from './utils/error';
+import { measure } from './utils/perf';
 
 const FileSystemPane = MemoizedFileSystemPane;
 const PreviewPane = MemoizedPreviewPane;

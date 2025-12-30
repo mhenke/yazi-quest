@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Level } from '../types';
-import { EPISODE_LORE } from '../src/constants';
+import { EPISODE_LORE } from '../constants';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
 interface LevelProgressProps {

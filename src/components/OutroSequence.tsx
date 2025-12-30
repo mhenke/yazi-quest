@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { CONCLUSION_DATA } from '../src/constants';
+import { CONCLUSION_DATA } from '../constants';
 import { Terminal, Signal, UploadCloud } from 'lucide-react';
 
 export const OutroSequence: React.FC = () => {

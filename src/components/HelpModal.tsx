@@ -1,5 +1,5 @@
 import React from 'react';
-import { KEYBINDINGS } from '../src/constants';
+import { KEYBINDINGS } from '../constants';
 
 interface HelpModalProps {
   onClose: () => void;
