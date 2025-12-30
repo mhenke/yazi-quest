@@ -9,17 +9,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --quiet",
-    "lint:fix": "eslint --ext .ts,.tsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md,css,js}\""
+    "lint": "eslint . --ext .ts,.tsx --quiet"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "npm run lint:fix",
-      "npm run format"
+      "eslint --fix",
+      "prettier --write"
     ],
     "*.{json,md,css}": [
-      "npm run format"
+      "prettier --write"
     ]
   },
   "dependencies": {
