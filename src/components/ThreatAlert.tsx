@@ -9,7 +9,7 @@ interface ThreatAlertProps {
 export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" || (e.key === "Enter" && e.shiftKey)) {
         onDismiss();
       }
     };

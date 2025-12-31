@@ -1,4 +1,4 @@
-import { FileNode, Result, FsError } from "../types";
+import { FileNode, Result, FsError, Level } from "../types";
 
 // Simple id generator used across the constants for seeding
 export function id(prefix = ""): string {
@@ -166,15 +166,161 @@ export function createPath(
   return { fs: newRoot, error: null, collision: false, collisionNode: null };
 }
 
-export function isProtected(
-  _root: FileNode,
-  _currentPath: string[] | undefined,
-  _node: FileNode,
-  _levelIndex?: number,
-  _action?: string
-): string | null {
-  // Minimal implementation: nothing is protected in this simplified helper
-  return null;
+export function resolveAndCreatePath(
+  root: FileNode,
+  currentPath: string[],
+  inputPath: string
+): { fs: FileNode; targetNode: FileNode | undefined; error?: string | null; collision?: boolean; collisionNode?: FileNode | null } {
+  let newRoot = cloneFS(root);
+  let effectiveParentPath: string[] = []; // This will hold the IDs of the path to the current parent
+  let pathSegmentsToCreate: string[] = [];
+
+  if (inputPath.startsWith("~/")) {
+    // Resolve "~" to /root/home/guest node IDs
+    const rootNode = findNodeByName(newRoot, "root");
+    const homeNode = rootNode?.children?.find(n => n.name === "home");
+    const guestNode = homeNode?.children?.find(n => n.name === "guest");
+
+    if (!rootNode || !homeNode || !guestNode) {
+      return { fs: newRoot, error: "Home directory nodes (root, home, guest) not found", targetNode: undefined };
+    }
+    effectiveParentPath = [rootNode.id, homeNode.id, guestNode.id];
+    pathSegmentsToCreate = inputPath.substring(2).split("/").filter(Boolean);
+  } else if (inputPath.startsWith("/")) {
+    // Start from the actual root of the game's filesystem
+    effectiveParentPath = [newRoot.id]; // The root FileNode itself
+    pathSegmentsToCreate = inputPath.substring(1).split("/").filter(Boolean);
+  } else {
+    // Relative path from currentPath
+    effectiveParentPath = [...currentPath];
+    pathSegmentsToCreate = inputPath.split("/").filter(Boolean);
+  }
+
+  let currentWorkingNode: FileNode | undefined = getNodeByPath(newRoot, effectiveParentPath);
+
+  if (!currentWorkingNode) {
+    return { fs: newRoot, error: "Starting path not found or invalid", targetNode: undefined };
+  }
+
+  let finalTargetNode: FileNode | undefined = undefined;
+
+  for (let i = 0; i < pathSegmentsToCreate.length; i++) {
+    const segment = pathSegmentsToCreate[i];
+    const isLastSegment = i === pathSegmentsToCreate.length - 1;
+    const isDir = !isLastSegment || inputPath.endsWith("/");
+
+    let childNode = currentWorkingNode?.children?.find(c => c.name === segment);
+
+    if (!childNode) {
+      // Node does not exist, create it
+      const newNode: FileNode = {
+        id: id(),
+        name: segment,
+        type: isDir ? "dir" : "file",
+        parentId: currentWorkingNode.id,
+      };
+      if (newNode.type === "dir") newNode.children = [];
+
+      const addResult = addNode(newRoot, effectiveParentPath, newNode);
+      if (!addResult.ok) {
+        return { fs: newRoot, error: addResult.error, targetNode: undefined };
+      }
+      newRoot = addResult.value;
+      currentWorkingNode = getNodeByPath(newRoot, [...effectiveParentPath, newNode.id]);
+      if (!currentWorkingNode) {
+        return { fs: newRoot, error: "Failed to find newly created node", targetNode: undefined };
+      }
+      effectiveParentPath.push(currentWorkingNode.id);
+
+      if (isLastSegment) {
+        finalTargetNode = currentWorkingNode;
+      }
+    } else {
+      // Node exists
+      if (isLastSegment) {
+        finalTargetNode = childNode;
+        // If it's the last segment and it already exists, check for collision
+        if ((!isDir && childNode.type === "file") || (isDir && childNode.type === "file")) {
+             // Trying to create a file, and a file exists OR trying to create a dir and a file exists
+             return { fs: newRoot, error: null, collision: true, collisionNode: childNode, targetNode: finalTargetNode };
+        } else if (!isDir && childNode.type === "dir") {
+            // Trying to create a file, but a directory with that name exists. This is an error.
+            return { fs: newRoot, error: "Cannot create file, directory with same name exists", targetNode: undefined };
+        } else if (isDir && childNode.type === "dir") {
+            // Trying to create a directory, and it already exists. Not a collision, just return it.
+        }
+      }
+      currentWorkingNode = childNode;
+      effectiveParentPath.push(currentWorkingNode.id);
+    }
+  }
+
+  return { fs: newRoot, targetNode: finalTargetNode, error: null, collision: false, collisionNode: null };
 }
 
+export function addNodeWithConflictResolution(
+  root: FileNode,
+  parentPath: string[] | undefined,
+  node: FileNode
+): Result<FileNode, FsError> {
+  let newRoot = cloneFS(root);
+  const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
+  if (!parent) return { ok: false, error: "NotFound" };
+  parent.children = parent.children || [];
+
+  let newName = node.name;
+  let counter = 0;
+  let exists = parent.children.find(c => c.name === newName);
+
+  while (exists) {
+    counter++;
+    const parts = node.name.split(".");
+    if (parts.length > 1 && node.type === "file") {
+      newName = `${parts.slice(0, -1).join(".")}_${counter}.${parts[parts.length - 1]}`;
+    } else {
+      newName = `${node.name}_${counter}`;
+    }
+    exists = parent.children.find(c => c.name === newName);
+  }
+
+  const newNode: FileNode = { ...node, name: newName };
+
+  return addNode(newRoot, parentPath, newNode);
+}
+
+export function isProtected(
+  root: FileNode,
+  currentPath: string[] | undefined,
+  node: FileNode,
+  level: Level,
+  action?: string
+): string | null {
+  // General node protection
+  if (node.protected) {
+    return `🔒 This is a protected system file: ${node.name}`;
+  }
+
+  // Level 2 specific protection for 'watcher_agent.sys'
+  if (level.id === 2 && node.name === "watcher_agent.sys" && action === "delete") {
+    const isDel1Complete = level.tasks.find(t => t.id === "del-1")?.completed;
+    const isDel2Complete = level.tasks.find(t => t.id === "del-2")?.completed;
+    const isVerifyMetaComplete = level.tasks.find(t => t.id === "verify-meta")?.completed;
+    const isVerifyContentComplete = level.tasks.find(t => t.id === "verify-content")?.completed;
+
+    if (!isDel1Complete) {
+      return "Navigate to ~/incoming first. (Task: del-1)";
+    }
+    if (!isDel2Complete) {
+      return "Jump to the bottom of the file list. (Task: del-2)";
+    }
+    if (!isVerifyMetaComplete) {
+      return "Verify the metadata of 'watcher_agent.sys' using TAB. (Task: verify-meta)";
+    }
+    if (!isVerifyContentComplete) {
+      return "Scan the content of 'watcher_agent.sys' by scrolling the preview. (Task: verify-content)";
+    }
+  }
+
+  return null;
+}
 export default {};

@@ -15,9 +15,11 @@ import {
   getParentNode,
   deleteNode,
   addNode,
+  addNodeWithConflictResolution,
   renameNode,
   cloneFS,
   createPath,
+  resolveAndCreatePath,
   isProtected,
   getAllDirectories,
   resolvePath,
@@ -216,6 +218,11 @@ export default function App() {
   );
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
+  const parent = React.useMemo(
+    () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
+    [gameState.fs, gameState.currentPath]
+  );
+
   // Helper to show notification with auto-clear
   const showNotification = useCallback((message: string, duration: number = 3000) => {
     if (notificationTimerRef.current) {
@@ -351,7 +358,7 @@ export default function App() {
       );
 
       setShowThreatAlert(true);
-      const dismissTimer = setTimeout(() => setShowThreatAlert(false), 10000);
+      // const dismissTimer = setTimeout(() => setShowThreatAlert(false), 10000); // Removed for manual dismissal
       return () => clearTimeout(dismissTimer);
     }
   }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
@@ -565,7 +572,7 @@ export default function App() {
                 prev.fs,
                 prev.currentPath,
                 node,
-                prev.levelIndex,
+                currentLevel, // Changed from prev.levelIndex to currentLevel
                 "delete"
               );
               if (protection) {
@@ -626,15 +633,36 @@ export default function App() {
             };
           newFs = deleteRes.value;
 
-          const createRes = createPath(newFs, prev.currentPath, prev.inputBuffer);
+          const createRes = resolveAndCreatePath(newFs, prev.currentPath, prev.inputBuffer);
+          if (createRes.error) {
+            return {
+              ...prev,
+              fs: newFs,
+              mode: "normal",
+              inputBuffer: "",
+              notification: createRes.error,
+              pendingOverwriteNode: null,
+            };
+          }
+
+          if (createRes.collision && createRes.collisionNode) {
+            return {
+              ...prev,
+              fs: newFs,
+              mode: "overwrite-confirm",
+              inputBuffer: prev.inputBuffer,
+              pendingOverwriteNode: createRes.collisionNode,
+              notification: "Collision still detected after overwrite attempt.",
+            };
+          }
 
           return {
             ...prev,
             fs: createRes.fs,
             mode: "normal",
-            pendingOverwriteNode: null,
             inputBuffer: "",
-            notification: "Overwritten",
+            pendingOverwriteNode: null,
+            notification: "Overwritten successfully.",
           };
         });
       } else if (e.key === "n" || e.key === "Escape") {
@@ -680,6 +708,7 @@ export default function App() {
           break;
         case "J":
           if (e.shiftKey) {
+            console.log("Shift+J pressed, updating previewScroll");
             setGameState(prev => ({
               ...prev,
               previewScroll: prev.previewScroll + 5,
@@ -689,6 +718,7 @@ export default function App() {
           break;
         case "K":
           if (e.shiftKey) {
+            console.log("Shift+K pressed, updating previewScroll");
             setGameState(prev => ({
               ...prev,
               previewScroll: Math.max(0, prev.previewScroll - 5),
@@ -889,7 +919,7 @@ export default function App() {
                     gameState.fs,
                     gameState.currentPath,
                     node,
-                    gameState.levelIndex,
+                    currentLevel, // Changed from gameState.levelIndex to currentLevel
                     "cut"
                   )
                 )
@@ -916,7 +946,7 @@ export default function App() {
                 gameState.fs,
                 gameState.currentPath,
                 currentItem,
-                gameState.levelIndex,
+                currentLevel, // Changed from gameState.levelIndex to currentLevel
                 "cut"
               );
               if (protection) {
@@ -966,8 +996,7 @@ export default function App() {
                     }
                   }
 
-                  // Add node to destination
-                  const addResult: Result<FileNode, FsError> = addNode(
+                  const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
                     newFs,
                     gameState.currentPath,
                     node
@@ -1310,6 +1339,25 @@ export default function App() {
         return;
       }
 
+      // GLOBAL MODAL BLOCKING: If any of these high-priority modals are open,
+      // prevent all other key processing except for keys that specifically close them.
+      if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
+        if (e.key === "Escape") {
+          setGameState(prev => ({
+            ...prev,
+            showHelp: false,
+            showHint: false,
+            showInfoPanel: false,
+          }));
+          e.preventDefault(); // Prevent further processing by other listeners
+        } else if (e.key === "Tab" && gameState.showInfoPanel) {
+          // Allow Tab to close InfoPanel from within the modal
+          e.preventDefault();
+          setGameState(prev => ({ ...prev, showInfoPanel: false }));
+        }
+        return; // Block all other keys from background Yazi
+      }
+
       if (
         gameState.showEpisodeIntro ||
         isLastLevel ||
@@ -1317,38 +1365,6 @@ export default function App() {
         ["input-file", "filter", "rename"].includes(gameState.mode)
       ) {
         // Let specific components handle keys or ignore
-        return;
-      }
-
-      const items = getVisibleItems(gameState);
-      const parent = getParentNode(gameState.fs, gameState.currentPath);
-      const current = items[gameState.cursorIndex] || null;
-
-      // Modal toggles (High Priority)
-      if (e.key === "Escape") {
-        if (gameState.showHelp || gameState.showHint || gameState.showInfoPanel) {
-          setGameState(prev => ({
-            ...prev,
-            showHelp: false,
-            showHint: false,
-            showInfoPanel: false,
-          }));
-          return;
-        }
-        // Handled in specific modes too
-      }
-
-      // Info Panel Toggle (Tab)
-      if (e.key === "Tab") {
-        e.preventDefault(); // Always prevent default tab behavior in the app
-        if (gameState.mode === "normal" || gameState.showInfoPanel) {
-          setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
-        }
-        return;
-      }
-
-      // Blocking Modals - Stop processing if open
-      if (gameState.showHelp || gameState.showInfoPanel) {
         return;
       }
 
@@ -1400,9 +1416,9 @@ export default function App() {
           e,
           gameState,
           setGameState,
-          items,
-          parent,
-          current,
+          visibleItems, // Use visibleItems
+          parent, // Use memoized parent
+          currentItem, // Use memoized currentItem
           currentLevel,
           advanceLevel
         );
@@ -1544,6 +1560,9 @@ export default function App() {
     advanceLevel,
     showHiddenWarning,
     showThreatAlert,
+    visibleItems, // Added
+    currentItem, // Added
+    parent, // Added
   ]);
 
   // Logic for create/rename input handled via input element events mainly

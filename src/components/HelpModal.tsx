@@ -1,13 +1,60 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { KEYBINDINGS, META_KEYBINDINGS } from "../constants";
 
 interface HelpModalProps {
   onClose: () => void;
 }
 
-export const HelpModal: React.FC<HelpModalProps> = ({ onClose: _onClose }) => {
+const LINE_HEIGHT = 20; // Approximate line height in pixels
+
+export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default to avoid side effects on the main app
+      e.preventDefault();
+
+      if (e.key === "Escape") {
+        onClose();
+      } else if (e.key === "j" || e.key === "ArrowDown") {
+        setScrollPosition(prev => prev + 1);
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        setScrollPosition(prev => Math.max(0, prev - 1));
+      } else if (e.key === "J" && e.shiftKey) {
+        setScrollPosition(prev => prev + 5);
+      } else if (e.key === "K" && e.shiftKey) {
+        setScrollPosition(prev => Math.max(0, prev - 5));
+      }
+      // Add 'h' and 'l' if lateral navigation is needed, but typically not for a modal
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Focus the scrollable div when the modal opens
+    if (scrollRef.current) {
+      scrollRef.current.focus();
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollPosition * LINE_HEIGHT;
+    }
+  }, [scrollPosition]);
+
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onKeyDown={e => e.stopPropagation()} // Prevent events from bubbling up
+      tabIndex={-1} // Make the div focusable
+      ref={scrollRef} // Assign ref to the outermost div for focus
+    >
       <div className="w-full max-w-2xl md:max-w-3xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto">
         <div className="mb-6 border-b border-zinc-800 pb-2">
           <h2 className="text-xl font-bold text-orange-500 tracking-wider">HELP / KEYBINDINGS</h2>
