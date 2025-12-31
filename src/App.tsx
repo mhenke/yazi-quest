@@ -49,7 +49,7 @@ import { reportError } from "./utils/error";
 import { measure } from "./utils/perf";
 
 const FileSystemPane = MemoizedFileSystemPane;
-const PreviewPane = MemoizedPreviewPane;
+const PreviewPane = MemoizedPreviewPane; // Test comment
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {

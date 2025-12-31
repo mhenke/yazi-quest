@@ -1,4 +1,4 @@
-import { FileNode, SortBy, SortDirection } from '../types';
+import { FileNode, SortBy, SortDirection } from "../types";
 
 /**
  * Sort files according to Yazi's sorting methods
@@ -13,13 +13,13 @@ export function sortNodes(
 
   // Type priority score for natural sorting
   const typeScore = (type: string) => {
-    if (type === 'dir') return 0;
-    if (type === 'archive') return 1;
+    if (type === "dir") return 0;
+    if (type === "archive") return 1;
     return 2; // file
   };
 
   switch (sortBy) {
-    case 'natural':
+    case "natural":
       // Natural: dirs -> archives -> files, alphabetical within each type
       sorted.sort((a, b) => {
         const scoreA = typeScore(a.type);
@@ -29,12 +29,12 @@ export function sortNodes(
       });
       break;
 
-    case 'alphabetical':
+    case "alphabetical":
       // Pure alphabetical, ignore type
       sorted.sort((a, b) => a.name.localeCompare(b.name));
       break;
 
-    case 'modified':
+    case "modified":
       // Sort by modification time
       sorted.sort((a, b) => {
         const timeA = a.modifiedAt || 0;
@@ -44,26 +44,26 @@ export function sortNodes(
       });
       break;
 
-    case 'size':
+    case "size":
       // Sort by file size
       sorted.sort((a, b) => {
         const sizeA =
-          a.type === 'dir' || a.type === 'archive'
+          a.type === "dir" || a.type === "archive"
             ? a.children?.length || 0
             : a.content?.length || 0;
         const sizeB =
-          b.type === 'dir' || b.type === 'archive'
+          b.type === "dir" || b.type === "archive"
             ? b.children?.length || 0
             : b.content?.length || 0;
         return sizeA - sizeB;
       });
       break;
 
-    case 'extension':
+    case "extension":
       // Sort by file extension
       sorted.sort((a, b) => {
-        const extA = a.name.split('.').pop()?.toLowerCase() || '';
-        const extB = b.name.split('.').pop()?.toLowerCase() || '';
+        const extA = a.name.split(".").pop()?.toLowerCase() || "";
+        const extB = b.name.split(".").pop()?.toLowerCase() || "";
         const extCompare = extA.localeCompare(extB);
         if (extCompare !== 0) return extCompare;
         return a.name.localeCompare(b.name); // Same extension, sort by name
@@ -81,7 +81,7 @@ export function sortNodes(
   }
 
   // Apply direction
-  if (sortDirection === 'desc') {
+  if (sortDirection === "desc") {
     sorted.reverse();
   }
 
@@ -92,18 +92,18 @@ export function sortNodes(
  * Get sort label for UI display
  */
 export function getSortLabel(sortBy: SortBy, sortDirection: SortDirection): string {
-  const dirSymbol = sortDirection === 'asc' ? '↑' : '↓';
+  const dirSymbol = sortDirection === "asc" ? "↑" : "↓";
 
   switch (sortBy) {
-    case 'natural':
+    case "natural":
       return `Natural ${dirSymbol}`;
-    case 'alphabetical':
+    case "alphabetical":
       return `A-Z ${dirSymbol}`;
-    case 'modified':
+    case "modified":
       return `Modified ${dirSymbol}`;
-    case 'size':
+    case "size":
       return `Size ${dirSymbol}`;
-    case 'extension':
+    case "extension":
       return `Extension ${dirSymbol}`;
     default:
       return `Natural ${dirSymbol}`;

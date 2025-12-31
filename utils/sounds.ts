@@ -25,7 +25,7 @@ export const playSuccessSound = (enabled: boolean = true): void => {
       oscillator.connect(gainNode);
       gainNode.connect(ctx.destination);
 
-      oscillator.type = 'sine';
+      oscillator.type = "sine";
       oscillator.frequency.setValueAtTime(frequency, startTime);
 
       // Envelope: quick attack, gentle decay
@@ -42,7 +42,7 @@ export const playSuccessSound = (enabled: boolean = true): void => {
     playTone(659.25, now + 0.1, 0.2); // E5
   } catch (e) {
     // Silently fail if audio not available
-    console.debug('Audio not available:', e);
+    console.debug("Audio not available:", e);
   }
 };
 
@@ -59,7 +59,7 @@ export const playTaskCompleteSound = (enabled: boolean = true): void => {
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
 
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(880, now); // A5 - quick blip
 
     gainNode.gain.setValueAtTime(0, now);
@@ -69,6 +69,6 @@ export const playTaskCompleteSound = (enabled: boolean = true): void => {
     oscillator.start(now);
     oscillator.stop(now + 0.08);
   } catch (e) {
-    console.debug('Audio not available:', e);
+    console.debug("Audio not available:", e);
   }
 };

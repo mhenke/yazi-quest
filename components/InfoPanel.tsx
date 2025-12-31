@@ -1,5 +1,5 @@
-import React from 'react';
-import { FileNode } from '../types';
+import React from "react";
+import { FileNode } from "../types";
 
 interface InfoPanelProps {
   file: FileNode | null;
@@ -11,13 +11,13 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
 
   // Format file size
   const formatSize = (node: FileNode): string => {
-    if (node.type === 'dir') {
+    if (node.type === "dir") {
       const childCount = node.children?.length || 0;
-      return `${childCount} item${childCount !== 1 ? 's' : ''}`;
+      return `${childCount} item${childCount !== 1 ? "s" : ""}`;
     }
-    if (node.type === 'archive') {
+    if (node.type === "archive") {
       const childCount = node.children?.length || 0;
-      return `${childCount} item${childCount !== 1 ? 's' : ''}`;
+      return `${childCount} item${childCount !== 1 ? "s" : ""}`;
     }
     // For files, estimate size based on content length
     const contentLength = node.content?.length || 0;
@@ -28,34 +28,34 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
 
   // Get mimetype
   const getMimetype = (node: FileNode): string => {
-    if (node.type === 'dir') return 'inode/directory';
-    if (node.type === 'archive') {
-      if (node.name.endsWith('.zip')) return 'application/zip';
-      if (node.name.endsWith('.tar.gz') || node.name.endsWith('.tgz')) return 'application/gzip';
-      return 'application/x-archive';
+    if (node.type === "dir") return "inode/directory";
+    if (node.type === "archive") {
+      if (node.name.endsWith(".zip")) return "application/zip";
+      if (node.name.endsWith(".tar.gz") || node.name.endsWith(".tgz")) return "application/gzip";
+      return "application/x-archive";
     }
     // Files
-    const ext = node.name.split('.').pop()?.toLowerCase();
+    const ext = node.name.split(".").pop()?.toLowerCase();
     const mimeMap: Record<string, string> = {
-      txt: 'text/plain',
-      md: 'text/markdown',
-      json: 'application/json',
-      js: 'text/javascript',
-      ts: 'text/typescript',
-      tsx: 'text/typescript',
-      rs: 'text/rust',
-      conf: 'text/plain',
-      log: 'text/plain',
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      gif: 'image/gif',
-      pdf: 'application/pdf',
-      pem: 'application/x-pem-file',
-      key: 'application/x-pem-file',
-      bin: 'application/octet-stream',
+      txt: "text/plain",
+      md: "text/markdown",
+      json: "application/json",
+      js: "text/javascript",
+      ts: "text/typescript",
+      tsx: "text/typescript",
+      rs: "text/rust",
+      conf: "text/plain",
+      log: "text/plain",
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      pdf: "application/pdf",
+      pem: "application/x-pem-file",
+      key: "application/x-pem-file",
+      bin: "application/octet-stream",
     };
-    return mimeMap[ext || ''] || 'application/octet-stream';
+    return mimeMap[ext || ""] || "application/octet-stream";
   };
 
   const size = formatSize(file);
@@ -63,15 +63,15 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
 
   // Format timestamp
   const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return '-';
+    if (!timestamp) return "-";
     const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
       hour12: false,
     });
   };
@@ -128,7 +128,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
               <div className="flex justify-between">
                 <span className="text-zinc-500">Previewer:</span>
                 <span className="text-zinc-300">
-                  {file.type === 'dir' ? 'folder' : file.type === 'archive' ? 'archive' : 'file'}
+                  {file.type === "dir" ? "folder" : file.type === "archive" ? "archive" : "file"}
                 </span>
               </div>
               <div className="flex justify-between">

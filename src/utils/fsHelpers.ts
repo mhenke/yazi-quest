@@ -170,7 +170,13 @@ export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],
   inputPath: string
-): { fs: FileNode; targetNode: FileNode | undefined; error?: string | null; collision?: boolean; collisionNode?: FileNode | null } {
+): {
+  fs: FileNode;
+  targetNode: FileNode | undefined;
+  error?: string | null;
+  collision?: boolean;
+  collisionNode?: FileNode | null;
+} {
   let newRoot = cloneFS(root);
   let effectiveParentPath: string[] = []; // This will hold the IDs of the path to the current parent
   let pathSegmentsToCreate: string[] = [];
@@ -182,7 +188,11 @@ export function resolveAndCreatePath(
     const guestNode = homeNode?.children?.find(n => n.name === "guest");
 
     if (!rootNode || !homeNode || !guestNode) {
-      return { fs: newRoot, error: "Home directory nodes (root, home, guest) not found", targetNode: undefined };
+      return {
+        fs: newRoot,
+        error: "Home directory nodes (root, home, guest) not found",
+        targetNode: undefined,
+      };
     }
     effectiveParentPath = [rootNode.id, homeNode.id, guestNode.id];
     pathSegmentsToCreate = inputPath.substring(2).split("/").filter(Boolean);
@@ -241,13 +251,23 @@ export function resolveAndCreatePath(
         finalTargetNode = childNode;
         // If it's the last segment and it already exists, check for collision
         if ((!isDir && childNode.type === "file") || (isDir && childNode.type === "file")) {
-             // Trying to create a file, and a file exists OR trying to create a dir and a file exists
-             return { fs: newRoot, error: null, collision: true, collisionNode: childNode, targetNode: finalTargetNode };
+          // Trying to create a file, and a file exists OR trying to create a dir and a file exists
+          return {
+            fs: newRoot,
+            error: null,
+            collision: true,
+            collisionNode: childNode,
+            targetNode: finalTargetNode,
+          };
         } else if (!isDir && childNode.type === "dir") {
-            // Trying to create a file, but a directory with that name exists. This is an error.
-            return { fs: newRoot, error: "Cannot create file, directory with same name exists", targetNode: undefined };
+          // Trying to create a file, but a directory with that name exists. This is an error.
+          return {
+            fs: newRoot,
+            error: "Cannot create file, directory with same name exists",
+            targetNode: undefined,
+          };
         } else if (isDir && childNode.type === "dir") {
-            // Trying to create a directory, and it already exists. Not a collision, just return it.
+          // Trying to create a directory, and it already exists. Not a collision, just return it.
         }
       }
       currentWorkingNode = childNode;
@@ -255,7 +275,13 @@ export function resolveAndCreatePath(
     }
   }
 
-  return { fs: newRoot, targetNode: finalTargetNode, error: null, collision: false, collisionNode: null };
+  return {
+    fs: newRoot,
+    targetNode: finalTargetNode,
+    error: null,
+    collision: false,
+    collisionNode: null,
+  };
 }
 
 export function addNodeWithConflictResolution(

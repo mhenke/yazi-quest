@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,20 +9,20 @@
     <title>Yazi Quest</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
       body {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: "JetBrains Mono", monospace;
         background-color: #000;
         overflow: hidden;
       }
       /* Hide scrollbar for Chrome, Safari and Opera */
       .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        display: none;
       }
       /* Hide scrollbar for IE, Edge and Firefox */
       .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
       }
 
       /* Glitch Effect */
@@ -48,30 +48,68 @@
       }
       .glitch-text::after {
         left: -2px;
-        text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+        text-shadow:
+          -2px 0 #00fff9,
+          2px 2px #ff00c1;
         animation: glitch-anim2 1s infinite linear alternate-reverse;
       }
 
       @keyframes glitch-anim {
-        0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); }
-        5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.18deg); }
-        10% { clip: rect(60px, 9999px, 83px, 0); transform: skew(0.97deg); }
-        15% { clip: rect(80px, 9999px, 41px, 0); transform: skew(0.55deg); }
-        20% { clip: rect(33px, 9999px, 94px, 0); transform: skew(0.4deg); }
-        100% { clip: rect(33px, 9999px, 94px, 0); transform: skew(0.4deg); }
+        0% {
+          clip: rect(31px, 9999px, 94px, 0);
+          transform: skew(0.85deg);
+        }
+        5% {
+          clip: rect(70px, 9999px, 71px, 0);
+          transform: skew(0.18deg);
+        }
+        10% {
+          clip: rect(60px, 9999px, 83px, 0);
+          transform: skew(0.97deg);
+        }
+        15% {
+          clip: rect(80px, 9999px, 41px, 0);
+          transform: skew(0.55deg);
+        }
+        20% {
+          clip: rect(33px, 9999px, 94px, 0);
+          transform: skew(0.4deg);
+        }
+        100% {
+          clip: rect(33px, 9999px, 94px, 0);
+          transform: skew(0.4deg);
+        }
       }
 
       @keyframes glitch-anim2 {
-        0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.13deg); }
-        20% { clip: rect(10px, 9999px, 20px, 0); transform: skew(0.5deg); }
-        40% { clip: rect(80px, 9999px, 90px, 0); transform: skew(0.2deg); }
-        60% { clip: rect(40px, 9999px, 50px, 0); transform: skew(0.8deg); }
-        100% { clip: rect(0, 0, 0, 0); }
+        0% {
+          clip: rect(65px, 9999px, 100px, 0);
+          transform: skew(0.13deg);
+        }
+        20% {
+          clip: rect(10px, 9999px, 20px, 0);
+          transform: skew(0.5deg);
+        }
+        40% {
+          clip: rect(80px, 9999px, 90px, 0);
+          transform: skew(0.2deg);
+        }
+        60% {
+          clip: rect(40px, 9999px, 50px, 0);
+          transform: skew(0.8deg);
+        }
+        100% {
+          clip: rect(0, 0, 0, 0);
+        }
       }
 
       @keyframes scanline {
-        0% { transform: translateY(-100%); }
-        100% { transform: translateY(100%); }
+        0% {
+          transform: translateY(-100%);
+        }
+        100% {
+          transform: translateY(100%);
+        }
       }
       .scanline {
         width: 100%;
@@ -85,29 +123,29 @@
         animation: scanline 8s linear infinite;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "url": "https://esm.sh/url@^0.11.4",
-    "eslint-plugin-react-hooks": "https://esm.sh/eslint-plugin-react-hooks@^7.0.1",
-    "@eslint/js": "https://esm.sh/@eslint/js@^9.39.2",
-    "@typescript-eslint/parser": "https://esm.sh/@typescript-eslint/parser@^8.50.0",
-    "eslint-plugin-react": "https://esm.sh/eslint-plugin-react@^7.37.5",
-    "@sentry/browser": "https://esm.sh/@sentry/browser@^10.32.1",
-    "@typescript-eslint/eslint-plugin": "https://esm.sh/@typescript-eslint/eslint-plugin@^8.50.0",
-    "eslint-config-prettier": "https://esm.sh/eslint-config-prettier@^10.1.8"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@^19.2.3",
+          "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+          "react/": "https://esm.sh/react@^19.2.3/",
+          "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+          "path": "https://esm.sh/path@^0.12.7",
+          "vite": "https://esm.sh/vite@^7.3.0",
+          "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+          "url": "https://esm.sh/url@^0.11.4",
+          "eslint-plugin-react-hooks": "https://esm.sh/eslint-plugin-react-hooks@^7.0.1",
+          "@eslint/js": "https://esm.sh/@eslint/js@^9.39.2",
+          "@typescript-eslint/parser": "https://esm.sh/@typescript-eslint/parser@^8.50.0",
+          "eslint-plugin-react": "https://esm.sh/eslint-plugin-react@^7.37.5",
+          "@sentry/browser": "https://esm.sh/@sentry/browser@^10.32.1",
+          "@typescript-eslint/eslint-plugin": "https://esm.sh/@typescript-eslint/eslint-plugin@^8.50.0",
+          "eslint-config-prettier": "https://esm.sh/eslint-config-prettier@^10.1.8"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
   <body>
     <div class="scanline"></div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
