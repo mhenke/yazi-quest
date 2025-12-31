@@ -1,0 +1,1 @@
+// This file is deprecated and safe to delete. The active app entry point is src/App.tsx
