@@ -1027,7 +1027,7 @@ export const LEVELS: Level[] = [
     description:
       "VALUABLE INTEL IDENTIFIED. A sector map hides within the noise of the incoming data stream. Visual scanning is too slow. Utilize the filter subsystem to isolate the target artifact, extract it from the stream, and relocate it to the secure media partition for analysis.",
     initialPath: null,
-    hint: "f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
+    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
     coreSkill: "Filter (f)",
     environmentalClue:
       "ASSET: sector_map.png | WORKFLOW: Navigate ~/incoming → Filter → Esc → Cut → Esc → Navigate ~/media → Paste",
@@ -1099,7 +1099,7 @@ export const LEVELS: Level[] = [
     description:
       "EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.",
     initialPath: ["root", "home", "guest"],
-    hint: "Navigate to datastore. Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
+    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Navigate to datastore. Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
     coreSkill: "Create (a), Copy (y/p) & Rename (r)",
     environmentalClue:
       "NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf",
