@@ -46,10 +46,14 @@ export const KEYBINDINGS = [
   { keys: ["gt"], description: "Goto Tmp (/tmp)" },
   { keys: ["gr"], description: "Goto Root (/)" },
   { keys: ["."], description: "Toggle Hidden Files" },
-  { keys: ["m"], description: "Toggle Sound" },
+];
+
+// Game meta-commands (UI controls, not core Yazi file operations)
+export const META_KEYBINDINGS = [
   { keys: ["Alt+M"], description: "Quest Map" },
   { keys: ["Alt+H"], description: "Show Hint" },
   { keys: ["Alt+?"], description: "Show Help" },
+  { keys: ["Alt+Shift+M"], description: "Toggle Sound" },
 ];
 
 export const EPISODE_LORE: Episode[] = [
@@ -606,6 +610,18 @@ export const INITIAL_FS: FileNode = {
                     },
                   ],
                 },
+                // Batch logs directory used for Level 6 Ctrl+A training
+                {
+                  id: id(),
+                  name: "batch_logs",
+                  type: "dir",
+                  children: [
+                    { id: id(), name: "exfil_01.log", type: "file", content: "ENTRY 1" },
+                    { id: id(), name: "exfil_02.log", type: "file", content: "ENTRY 2" },
+                    { id: id(), name: "exfil_03.log", type: "file", content: "ENTRY 3" },
+                    { id: id(), name: "exfil_04.log", type: "file", content: "ENTRY 4" },
+                  ],
+                },
                 {
                   id: id(),
                   name: "invoice_2024.pdf",
@@ -952,10 +968,10 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "del-1",
-        description: "Navigate to ~/incoming directory",
+        description: "Navigate to ~/incoming directory (use gi)",
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
-          return c.currentPath.includes(u?.id || "");
+          return c.currentPath.includes(u?.id || "") && c.usedGI === true;
         },
         completed: false,
       },
@@ -1244,6 +1260,55 @@ export const LEVELS: Level[] = [
     leadsTo: [9],
     timeLimit: 120,
     tasks: [
+      {
+        id: "batch-nav",
+        description: "Navigate to ~/incoming/batch_logs (gi → enter batch_logs)",
+        check: c => {
+          const u = findNodeByName(c.fs, "batch_logs");
+          return c.currentPath.includes(u?.id || "");
+        },
+        completed: false,
+      },
+      {
+        id: "select-all-batch",
+        description: "Select all files in batch_logs (Ctrl+A) and yank (y)",
+        check: c => {
+          const u = findNodeByName(c.fs, "batch_logs");
+          const expected = u?.children?.length || 0;
+          return (
+            c.currentPath.includes(u?.id || "") &&
+            c.usedCtrlA === true &&
+            c.clipboard?.action === "yank" &&
+            c.clipboard.nodes.length === expected
+          );
+        },
+        completed: false,
+      },
+      {
+        id: "goto-config-vault",
+        description: "Jump to config (gc), create 'vault/batch_archive' directory to receive logs",
+        check: c => {
+          const conf = findNodeByName(c.fs, ".config");
+          const vault = conf?.children?.find(p => p.name === "vault" && p.type === "dir");
+          const batch = vault?.children?.find(p => p.name === "batch_archive" && p.type === "dir");
+          return c.usedGC === true && !!vault && !!batch;
+        },
+        completed: false,
+      },
+      {
+        id: "deploy-to-vault",
+        description: "Paste logs into ~/.config/vault/batch_archive (p)",
+        check: c => {
+          const batch = findNodeByName(c.fs, "batch_archive");
+          return (
+            !!batch &&
+            !!batch.children &&
+            batch.children.length >= 4 &&
+            batch.children.some(n => n.name === "exfil_01.log")
+          );
+        },
+        completed: false,
+      },
       {
         id: "nav-and-filter",
         description:

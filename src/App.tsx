@@ -178,6 +178,9 @@ export default function App() {
       settings: { soundEnabled: true },
       fuzzySelectedIndex: 0,
       usedG: false,
+      usedGI: false,
+      usedGC: false,
+      usedCtrlA: false,
       usedGG: false,
       usedDown: false,
       usedUp: false,
@@ -462,6 +465,9 @@ export default function App() {
         hintStage: 0,
         fuzzySelectedIndex: 0,
         usedG: false,
+        usedGI: false,
+        usedGC: false,
+        usedCtrlA: false,
         usedGG: false,
         usedDown: false,
         usedUp: false,
@@ -845,7 +851,7 @@ export default function App() {
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             const allIds = items.map(item => item.id);
-            setGameState(prev => ({ ...prev, selectedIds: allIds }));
+            setGameState(prev => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
             showNotification(`Selected all (${allIds.length} items)`, 2000);
           } else {
             e.preventDefault();
@@ -1087,13 +1093,7 @@ export default function App() {
         case ",":
           setGameState(prev => ({ ...prev, mode: "sort" }));
           break;
-        case "m":
-          setGameState(prev => ({
-            ...prev,
-            settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
-            notification: `Sound ${!prev.settings.soundEnabled ? "Enabled" : "Disabled"}`,
-          }));
-          break;
+
         case "Z":
           if (e.shiftKey) {
             setGameState(prev => ({
@@ -1383,6 +1383,17 @@ export default function App() {
         return;
       }
 
+      // Alt+Shift+M - Toggle sound (meta command)
+      if (e.key.toLowerCase() === "m" && e.altKey && e.shiftKey && gameState.mode === "normal") {
+        e.preventDefault();
+        setGameState(prev => ({
+          ...prev,
+          settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
+          notification: `Sound ${!prev.settings.soundEnabled ? "Enabled" : "Disabled"}`,
+        }));
+        return;
+      }
+
       // Mode dispatch
       if (gameState.mode === "normal") {
         handleNormalModeKeyDown(
@@ -1442,6 +1453,7 @@ export default function App() {
             previewScroll: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,
+            usedGC: true,
           }));
         } else if (e.key === "w") {
           // goto workspace
@@ -1495,6 +1507,7 @@ export default function App() {
             previewScroll: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,
+            usedGI: true,
           }));
         } else if (e.key === "d") {
           const path = ["root", "home", "guest", "datastore"];

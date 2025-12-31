@@ -160,6 +160,9 @@ export interface GameState {
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
   usedG?: boolean; // Tracks if player used G (jump to bottom)
+  usedGI?: boolean; // Tracks if player used gi (g then i) to jump specifically to incoming
+  usedGC?: boolean; // Tracks if player used gc (g then c) to jump specifically to .config
+  usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all in a directory
   usedGG?: boolean; // Tracks if player used gg (jump to top)
   usedDown?: boolean; // Tracks if player used j/down
   usedUp?: boolean; // Tracks if player used k/up
