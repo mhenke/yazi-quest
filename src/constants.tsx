@@ -1256,7 +1256,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Filter (f) & Archive Ops",
     environmentalClue: "TARGET: backup_logs.zip/sys_v1.log → ~/media",
     successMessage: "LOGS RETRIEVED.",
-    buildsOn: [1, 2],
+    buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
     tasks: [

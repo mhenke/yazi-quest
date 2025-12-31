@@ -20,3 +20,10 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PH
     `GEMINI_API_KEY=YOUR_API_KEY`
 3.  **Run the app:**
     `npm run dev`
+
+---
+
+Security & Local Dev Notes
+
+- Create a `.env.local` from `.env.local.template` (if present) and add any optional API keys such as `GEMINI_API_KEY` there. Do NOT commit secrets to the repository—ensure `.env.local` is listed in `.gitignore`.
+- The Gemini key is optional for local development; the app includes fallbacks when the key is not provided. Use a dedicated dev key and rotate it regularly.

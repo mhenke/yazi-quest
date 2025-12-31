@@ -111,3 +111,10 @@ The outro sequence reveals that AI-7734 has left the local machine and entered t
 ### Narrative Payoff
 
 The player learns that using the terminal efficiently looks indistinguishable from magic—or a sentient AI—to the uninitiated.
+
+---
+
+Auditor Notes — Safety & Realism
+
+- The narrative includes root-level and destructive metaphors (e.g., "Scorched Earth") that could be misinterpreted; ensure the game enforces a strict sandbox and clearly documents that all destructive actions are simulated and cannot affect the host system.
+- Recommend adding a short in-game tooltip and README section stating the filesystem is virtual and isolated, and add telemetry/logging for post‑mortem analysis of unexpected behaviours.

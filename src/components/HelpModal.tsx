@@ -8,11 +8,11 @@ interface HelpModalProps {
 export const HelpModal: React.FC<HelpModalProps> = ({ onClose: _onClose }) => {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-700 shadow-2xl p-6 relative">
+      <div className="w-full max-w-2xl md:max-w-3xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto">
         <div className="mb-6 border-b border-zinc-800 pb-2">
           <h2 className="text-xl font-bold text-orange-500 tracking-wider">HELP / KEYBINDINGS</h2>
         </div>
-        <div className="grid grid-cols-2 gap-x-12 gap-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
           <div>
             <h3 className="text-sm font-bold text-orange-400 mb-2">Core Yazi Commands</h3>
             <div className="space-y-2">

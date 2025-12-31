@@ -190,8 +190,8 @@ Use filtering to find a compressed archive, enter it, and extract a specific fil
 **Task 2: Extract Log**
 
 - Metaphor: "Infiltrate archive and copy the primary system log"
-- Mechanic: "Press 'l' to enter the archive, 'y' to copy 'sys_v1.log', and 'h' to exit. Then press Esc to clear the filter."
-- Check: `c.clipboard?.action === 'yank' && c.clipboard.nodes.some(n => n.name === 'sys_v1.log')`
+- Mechanic: "Press 'l' to enter the archive, navigate to 'batch_logs', press Ctrl+A to select all files (do NOT use Space to multi-select), press 'y' to yank the selection, then press 'h' to exit. Then press Esc to clear the filter."
+- Check: `c.clipboard?.action === 'yank' && Array.isArray(c.clipboard?.nodes) && c.clipboard.nodes.length > 0 && c.clipboard.nodes.some(n => n.name === 'sys_v1.log')`
 
 **Task 3: Deploy Log**
 
@@ -204,7 +204,7 @@ Use filtering to find a compressed archive, enter it, and extract a specific fil
 #### HINT STRATEGY
 
 **Explicit Hint (Alt+H key):**
-"...f to filter... l to enter archive... y to copy... p to paste."
+"...f to filter... l to enter archive... Ctrl+A to select all in 'batch_logs' (do NOT use Space)... y to copy... p to paste."
 
 **Environmental Clue:**
 "TARGET: backup_logs.zip/sys_v1.log → ~/media"
@@ -357,3 +357,11 @@ The best levels make the player feel like they're:
 3. Getting more powerful with each new skill
 
 When these three elements align, Yazi Quest becomes an unforgettable learning experience.
+
+---
+
+Auditor Guidelines for Content Safety
+
+- Avoid instructive language that could be misused on real systems; ensure all destructive metaphors are clearly labeled as fictional and simulated.
+- Add accessibility and localization reminders: keep language concise, provide keyboard-only navigable content, and prepare text for translation/localization.
+- Include a short checklist for writers to confirm the level does not encourage actions outside the sandbox and that every task is mechanically verifiable in code.
