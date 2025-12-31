@@ -19,7 +19,11 @@ export const KEYBINDINGS = [
   { keys: ["r"], description: "Rename Selected" },
   { keys: ["Tab"], description: "Show File Info Panel" },
   { keys: ["x"], description: "Cut Selected" },
-  { keys: ["y"], description: "Copy/Yank Selected" },
+  {
+    keys: ["y"],
+    description:
+      "Copy/Yank Selected — copies items into the clipboard (does NOT remove them); use x (Cut) to mark items for moving",
+  },
   { keys: ["p"], description: "Paste" },
   { keys: ["Y", "X"], description: "Clear Clipboard" },
   { keys: ["Space"], description: "Toggle Selection" },
