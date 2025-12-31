@@ -27,3 +27,4 @@ Security & Local Dev Notes
 
 - Create a `.env.local` from `.env.local.template` (if present) and add any optional API keys such as `GEMINI_API_KEY` there. Do NOT commit secrets to the repository—ensure `.env.local` is listed in `.gitignore`.
 - The Gemini key is optional for local development; the app includes fallbacks when the key is not provided. Use a dedicated dev key and rotate it regularly.
+husky-test 2025-12-31T22:22:33Z
