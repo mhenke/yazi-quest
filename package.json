@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --quiet"
+    "lint": "eslint . --ext .ts,.tsx --quiet",
+    "format": "prettier --write ."
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
