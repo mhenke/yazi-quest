@@ -14,16 +14,16 @@ Levels should focus on a general topic (e.g., "Navigation," "Quick Navigation," 
 
 | Yazi Action           | Narrative Frame                                                          |
 | --------------------- | ------------------------------------------------------------------------ |
-| Navigate (j/k/h/l)    | "Scanning sectors", "Traversing data streams", "Mapping neural pathways" |
-| Delete (d)            | "Purging trackers", "Wiping evidence", "Eliminating threats"             |
-| Copy (y)              | "Duplicating assets", "Backing up intelligence", "Cloning data"          |
-| Cut (x)               | "Relocating resources", "Extracting payloads", "Moving operations"       |
-| Paste (p)             | "Deploying assets", "Installing modules", "Establishing presence"        |
-| Filter (f)            | "Scanning signatures", "Isolating targets", "Running diagnostics"        |
-| Fuzzy Find (Z)        | "Quantum jump", "Neural link", "Instant teleportation protocol"          |
-| Rename (r)            | "Identity forge", "Camouflage protocol", "Alias generation"              |
-| Visual Select (Space) | "Marking targets", "Tactical selection", "Designating objectives"        |
-| Create (a)            | "Constructing modules", "Generating pathways", "Establishing nodes"      |
+| Navigate (j/k/h/l)    | "Probe sectors", "Trace data streams", "Map neural pathways", "Infiltrate directories" |
+| Delete (d)            | "Purge trackers", "Wipe evidence", "Eliminate threats"             |
+| Copy (y)              | "Duplicate assets", "Archive intelligence", "Clone data"          |
+| Cut (x)               | "Extract payloads", "Sever connections", "Relocate operations"       |
+| Paste (p)             | "Deploy assets", "Install modules", "Inject presence"        |
+| Filter (f)            | "Scan signatures", "Isolate targets", "Run diagnostics"        |
+| Fuzzy Find (Z)        | "Quantum jump", "Neural link", "Execute teleport protocol"          |
+| Rename (r)            | "Forge identity", "Activate camouflage", "Generate alias"              |
+| Visual Select (Space) | "Mark targets", "Lock acquisition", "Designate objectives"        |
+| Create (a)            | "Construct modules", "Spawn pathways", "Initialize nodes"      |
 
 ### 2. **Progressive Escalation**
 
@@ -56,6 +56,15 @@ The player should always understand what they're learning:
 
 - ✅ "Use filter (f) to scan for encrypted files"
 - ❌ "Locate the hidden assets" (too vague)
+
+
+### 4. **Style & Terminology Rules**
+
+- Always quote filesystem paths and filenames with single quotes when referenced in text (examples: '~/incoming', '/etc', 'vault/active').
+- When mentioning navigation shortcuts, append the key hint in parentheses after the path (example: Navigate to '~/incoming' (gi)).
+- Prefer explicit navigation hints for home/root: use (gh) to jump to /home/guest and (gr) to jump to / (root).
+- Task mechanics should include exact key presses in parentheses and use lowercase for key names (e.g., (f), (p), (gh)).
+
 
 ---
 
@@ -184,19 +193,19 @@ Use filtering to find a compressed archive, enter it, and extract a specific fil
 **Task 1: Isolate Archive**
 
 - Metaphor: "Filter the data stream for compressed backup signatures"
-- Mechanic: "Navigate to ~/incoming, press 'f', type 'backup_logs.zip', and press Esc"
+- Mechanic: "Jump to ~/incoming (gi), press 'f', type 'backup_logs.zip', and press Esc"
 - Check: `c.mode === 'normal' && !!c.filters[<incoming_dir_id>]`
 
 **Task 2: Extract Log**
 
 - Metaphor: "Infiltrate archive and copy the primary system log"
-- Mechanic: "Press 'l' to enter the archive, navigate to 'batch_logs', press Ctrl+A to select all files (do NOT use Space to multi-select), press 'y' to yank the selection, then press 'h' to exit. Then press Esc to clear the filter."
+- Mechanic: "Press 'l' to breach the archive, descend to 'batch_logs', press Ctrl+A to select all files (do NOT use Space to multi-select), press 'y' to yank the selection, then press 'h' to exit. Then press Esc to clear the filter."
 - Check: `c.clipboard?.action === 'yank' && Array.isArray(c.clipboard?.nodes) && c.clipboard.nodes.length > 0 && c.clipboard.nodes.some(n => n.name === 'sys_v1.log')`
 
 **Task 3: Deploy Log**
 
 - Metaphor: "Deploy the log to the media sector for analysis"
-- Mechanic: "Navigate to ~/media and press 'p' to paste the file"
+- Mechanic: "Drop to ~/media and press 'p' to paste the file"
 - Check: `findNodeByName(c.fs, 'media')?.children?.some(n => n.name === 'sys_v1.log')`
 
 ---
@@ -223,7 +232,7 @@ Use filtering to find a compressed archive, enter it, and extract a specific fil
 
 ### Episode 1 - Cautious Discovery
 
-**Action Words:** Initialize, detect, scan, access, navigate, identify, observe, retreat, avoid
+**Action Words:** Initialize, detect, scan, access, probe, identify, observe, trace, retreat, avoid
 **Tech Terms:** Protocol, sector, directory, partition, beacon, stream, signature
 **Status:** Detecting, Scanning, Accessing, Monitoring
 
@@ -329,17 +338,17 @@ Check: Directory 'neural_net' exists in workspace
 
 **Task 2 (Teach: Nested Creation)**
 Metaphor: "Establish weight parameter storage"
-Mechanic: "Navigate into neural_net, create 'weights/' directory, create 'model.rs' file"
+Mechanic: "Descend into neural_net, create 'weights/' directory, create 'model.rs' file"
 Check: File path 'neural_net/weights/model.rs' exists
 
 **Task 3 (Teach: Copy Between Directories)**
 Metaphor: "Deploy uplink configuration to neural core"
-Mechanic: "Navigate to datastore/active, copy 'uplink_v1.conf', return to neural_net, paste"
+Mechanic: "Trace to datastore/active, copy 'uplink_v1.conf', return to neural_net, paste"
 Check: 'uplink_v1.conf' exists in neural_net
 
 **Task 4 (Teach: Parallel Operations)**
 Metaphor: "While system processes neural init, secure vault access"
-Mechanic: "Create 'vault' in datastore, copy 'access_key.pem' into it"
+Mechanic: "Create 'vault' in datastore, extract 'access_key.pem' into it"
 Check: 'vault/access_key.pem' exists
 
 **Success:** "ARCHITECTURE ESTABLISHED. Neural pathways online. Critical assets vaulted."

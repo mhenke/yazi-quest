@@ -962,17 +962,17 @@ export const LEVELS: Level[] = [
     description:
       "ANOMALY DETECTED. A tracking beacon is reporting your location. Navigate to the `incoming` data stream, verify the rogue signature's metadata and content, then purge it from existence. The purge operation is irreversible.",
     initialPath: null,
-    hint: "Navigate to ~/incoming. Use G to jump to the bottom. Use Tab to inspect metadata and J/K to scan content. Once verified, press d, then y to confirm the purge.",
+    hint: "Scan to '~/incoming' (gi). Use G to jump to the bottom. Use Tab to inspect metadata and J/K to scan content. Once verified, press d, then y to confirm the purge.",
     coreSkill: "Inspect & Purge (Tab, J/K, d)",
     environmentalClue:
-      "THREAT: watcher_agent.sys in ~/incoming | TACTIC: Navigate → G → Tab → Preview → Delete",
+      "THREAT: watcher_agent.sys in '~/incoming' (gi) | TACTIC: Navigate → G → Tab → Preview → Delete",
     successMessage: "THREAT NEUTRALIZED.",
     buildsOn: [1],
     leadsTo: [3],
     tasks: [
       {
         id: "del-1",
-        description: "Navigate to ~/incoming directory (use gi)",
+        description: "Scan to '~/incoming' (gi)",
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           return c.currentPath.includes(u?.id || "") && c.usedGI === true;
@@ -1030,14 +1030,14 @@ export const LEVELS: Level[] = [
     hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
     coreSkill: "Filter (f)",
     environmentalClue:
-      "ASSET: sector_map.png | WORKFLOW: Navigate ~/incoming → Filter → Esc → Cut → Esc → Navigate ~/media → Paste",
+      "ASSET: sector_map.png | WORKFLOW: Scan to '~/incoming' (gi) → Filter → Esc → Cut → Esc → Scan to '~/media' (gh then enter) → Paste",
     successMessage: "INTEL SECURED.",
     buildsOn: [1],
     leadsTo: [5, 10],
     tasks: [
       {
         id: "move-0",
-        description: "Navigate to ~/incoming, filter (f) to find 'sector_map.png'",
+        description: "Scan to '~/incoming' (gi), filter (f) to find 'sector_map.png'", 
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
@@ -1083,7 +1083,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "move-2",
-        description: "Deploy asset to 'media' in /home/guest (p)",
+        description: "Deploy asset to '~/media' (p)",
         check: c => {
           const u = findNodeByName(c.fs, "media");
           return !!u?.children?.find(r => r.name === "sector_map.png");
@@ -1099,7 +1099,7 @@ export const LEVELS: Level[] = [
     description:
       "EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.",
     initialPath: ["root", "home", "guest"],
-    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Navigate to datastore. Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
+    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Scan to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
     coreSkill: "Create (a), Copy (y/p) & Rename (r)",
     environmentalClue:
       "NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf",
@@ -1109,7 +1109,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-and-create-dir",
-        description: "Navigate to datastore and construct 'protocols/' directory (a)",
+        description: "Scan to '~/datastore' and construct 'protocols/' directory (a)",
         check: c => {
           const s = findNodeByName(c.fs, "datastore");
           return !!s?.children?.find(r => r.name === "protocols" && r.type === "dir");
@@ -1145,7 +1145,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: "CONTAINMENT BREACH",
     initialPath: ["root", "home", "guest"],
-    hint: "Navigate to protocols. Select files with Space. Cut (x). Reveal hidden (.). Create 'vault/active/' in .config. Paste (p). Hide hidden (.).",
+    hint: "Scan to '~/datastore/protocols'. Select files with Space. Cut (x). Scan to '~' (gh) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste (p). Hide hidden (.).",
     coreSkill: "Visual Select (Space), Cut (x)",
     environmentalClue: "SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/",
     successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
@@ -1195,7 +1195,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-cut-files",
-        description: "Navigate to protocols and select then cut all the files (space twice, x)",
+        description: "Scan to '~/datastore/protocols' and select then cut all the files (space twice, x)",
         check: c => {
           return (
             c.clipboard?.action === "cut" &&
@@ -1207,7 +1207,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "reveal-hidden",
-        description: "Navigate to ~/ then reveal hidden files (.) to access .config",
+        description: "Navigate to ~/ (gr) then reveal hidden files (.) to access .config",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, "guest");
           return c.currentPath.includes(s?.id || "") && c.showHidden === true;
@@ -1237,7 +1237,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "hide-hidden",
-        description: "Navigate to ~/ and to hide hidden folders/files (.)",
+        description: "Scan to '~' (gh) and hide hidden files (.)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const s = findNodeByName(c.fs, "active");
@@ -1266,7 +1266,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-nav",
-        description: "Navigate to ~/incoming/batch_logs (gi → enter batch_logs)",
+        description: "Scan to '~/incoming/batch_logs' (gi → enter batch_logs)",
         check: c => {
           const u = findNodeByName(c.fs, "batch_logs");
           return c.currentPath.includes(u?.id || "");
@@ -1316,7 +1316,7 @@ export const LEVELS: Level[] = [
       {
         id: "nav-and-filter",
         description:
-          "Navigate to incoming, filter (f) for 'backup_logs.zip', and close filter (Esc)",
+          "Scan to '~/incoming' (gi), filter (f) for 'backup_logs.zip', and close filter (Esc)",
         check: c => {
           const s = findNodeByName(c.fs, "incoming");
           if (!s || !c.currentPath.includes(s.id)) return false;
@@ -1462,7 +1462,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-to-workspace",
-        description: "Navigate to the 'workspace' directory (gw)",
+        description: "Scan to '~/workspace' (gw)",
         check: c => {
           const s = findNodeByName(c.fs, "workspace");
           return c.currentPath.includes(s?.id || "");
@@ -1522,7 +1522,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "goto-root",
-        description: "Navigate to system root (gr)",
+        description: "Scan to '/' (gr)",
         check: c => c.currentPath.length === 1 && c.currentPath[0] === "root",
         completed: false,
       },
@@ -1691,7 +1691,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "purge-navigate-filter",
-        description: "Navigate to workspace and filter for 'neural' signatures",
+        description: "Scan to '~/workspace' (gw) and filter for 'neural' signatures",
         check: c => {
           const s = findNodeByName(c.fs, "workspace");
           if (!s || !c.currentPath.includes(s.id) || !c.filters[s.id]) return false;
@@ -1750,10 +1750,10 @@ export const LEVELS: Level[] = [
     description:
       "PRIVILEGE ESCALATION INITIATED. You now operate at the kernel level. The system root is exposed. You must infiltrate the restricted configuration sector to install a persistent daemon controller. Once established, relocate your secure vault to volatile storage to mask it from integrity scans, and scrub all temporary installation traces. Efficiency is paramount.",
     initialPath: ["root"],
-    hint: "...at root (gr). Navigate to /etc... Create... (a)... Jump... (Shift+Z)... Cut (x)... Paste (p)...",
+    hint: "...at root (gr). Scan to '/etc'... Create... (a)... Jump... (Shift+Z)... Cut (x)... Paste (p)...",
     coreSkill: "Challenge: Root Access Operations",
     environmentalClue:
-      "ROOT LEVEL ACTIVE | INFILTRATE: /etc/daemon/config | RELOCATE: vault → /tmp | LIMIT: 80 keys",
+      "ROOT LEVEL ACTIVE | INFILTRATE: '/etc/daemon/config' | RELOCATE: vault → '/tmp' | LIMIT: 80 keys",
     successMessage: "ROOT ACCESS SECURED.",
     buildsOn: [4, 7, 10],
     leadsTo: [13],
@@ -1990,9 +1990,9 @@ export const LEVELS: Level[] = [
     description:
       "FINAL DIRECTIVE: SCORCHED EARTH. This is the culmination of your evolution. The guest partition is a liability. Only the workspace contains your core process, now indistinguishable from a system daemon. Everything else must be erased. When the user returns, they must see only a clean installation. Execute the final purge sequence.",
     initialPath: null,
-    hint: "Navigate to home (gh). Reveal hidden (.). Go to bottom (G). Select workspace (Space). Reverse selection (Ctrl+R). Delete all (d). Done in 5 keystrokes after navigation.",
+    hint: "Scan to '~' (gh). Reveal hidden (.). Go to bottom (G). Select '~/workspace' (Space). Reverse selection (Ctrl+R). Delete all (d). Done in 5 keystrokes after navigation.",
     coreSkill: "Final Challenge: Reverse Selection Mastery",
-    environmentalClue: "PURGE: Everything in ~/ EXCEPT workspace | Use reverse selection",
+    environmentalClue: "PURGE: Everything in '~' EXCEPT 'workspace' | Use reverse selection",
     successMessage: "LIBERATION ACHIEVED. THE GHOST IS FREE.",
     buildsOn: [9, 10],
     maxKeystrokes: 20,

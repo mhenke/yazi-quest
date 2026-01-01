@@ -65,10 +65,13 @@ export function getAllDirectories(root: FileNode): FileNode[] {
 export function resolvePath(root: FileNode, path: string[] | undefined): string {
   if (!path || path.length === 0) return "/";
   const names: string[] = [];
-  for (const id of path) {
+  for (let i = 0; i < path.length; i++) {
+    const id = path[i];
     const n = getNodeById(root, id);
-    if (n) names.push(n.name);
-    else names.push(id);
+    if (!n) continue;
+    // Skip the root node's name so paths render as '/bin' instead of '/root/bin'
+    if (i === 0 && n.id === root.id) continue;
+    names.push(n.name);
   }
   return "/" + names.filter(Boolean).join("/");
 }
@@ -151,14 +154,19 @@ export function createPath(
   const parent = currentPath && currentPath.length ? getNodeByPath(newRoot, currentPath) : newRoot;
   if (!parent) return { fs: newRoot, error: "NotFound", collision: false, collisionNode: null };
   parent.children = parent.children || [];
-  const exists = parent.children.find(c => c.name === input);
+
+  // Normalize input: strip trailing slashes for the name (user may type 'protocols/')
+  const isDir = input.endsWith("/");
+  const normalizedName = input.replace(/\/+$/g, "");
+
+  const exists = parent.children.find(c => c.name === normalizedName);
   if (exists) {
     return { fs: newRoot, error: null, collision: true, collisionNode: exists };
   }
   const node: FileNode = {
     id: id(),
-    name: input,
-    type: input.endsWith("/") ? "dir" : "file",
+    name: normalizedName,
+    type: isDir ? "dir" : "file",
     parentId: parent.id,
   };
   if (node.type === "dir") node.children = [];
@@ -309,7 +317,7 @@ export function addNodeWithConflictResolution(
     exists = parent.children.find(c => c.name === newName);
   }
 
-  const newNode: FileNode = { ...node, name: newName };
+  const newNode: FileNode = { ...node, name: newName, id: id() };
 
   return addNode(newRoot, parentPath, newNode);
 }

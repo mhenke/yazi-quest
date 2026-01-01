@@ -90,52 +90,76 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     if (!showLegend) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent background handlers (App) from acting when the map is open
+      e.stopPropagation();
+
       const activeLevels = episodes[activeTab]?.levels || [];
 
       // h - Previous episode
       if (e.key === "h") {
         e.preventDefault();
+        e.stopPropagation();
         setActiveTab(prev => Math.max(0, prev - 1));
         setSelectedMissionIdx(0);
       }
       // l - Next episode
       else if (e.key === "l") {
         e.preventDefault();
+        e.stopPropagation();
         setActiveTab(prev => Math.min(episodes.length - 1, prev + 1));
         setSelectedMissionIdx(0);
       }
       // j - Next mission
       else if (e.key === "j") {
         e.preventDefault();
+        e.stopPropagation();
         setSelectedMissionIdx(prev => Math.min(activeLevels.length - 1, prev + 1));
       }
       // k - Previous mission
       else if (e.key === "k") {
         e.preventDefault();
+        e.stopPropagation();
         setSelectedMissionIdx(prev => Math.max(0, prev - 1));
       }
-      // Enter - Jump to selected mission
+      // J - Page down missions
+      else if (e.key === "J" && e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedMissionIdx(prev => Math.min(activeLevels.length - 1, prev + 5));
+      }
+      // K - Page up missions
+      else if (e.key === "K" && e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedMissionIdx(prev => Math.max(0, prev - 5));
+      }
+      // Enter - Jump to selected mission (only if active or completed)
       else if (e.key === "Enter") {
         e.preventDefault();
+        e.stopPropagation();
         const selectedLevel = activeLevels[selectedMissionIdx];
         if (selectedLevel && onJumpToLevel) {
           const globalIdx = levels.findIndex(l => l.id === selectedLevel.id);
-          if (globalIdx !== -1) {
+          // Only allow jump if level is active or completed (not locked)
+          if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
             onJumpToLevel(globalIdx);
             setShowLegend(false);
+            onToggleMap?.();
           }
         }
       }
       // Esc - Close modal
       else if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         setShowLegend(false);
+        onToggleMap?.();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showLegend, activeTab, selectedMissionIdx, episodes, levels, onJumpToLevel]);
+  }, [showLegend, activeTab, selectedMissionIdx, episodes, levels, onJumpToLevel, onToggleMap]);
 
   // Auto-scroll to selected mission
   useEffect(() => {
@@ -340,9 +364,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                             ${isKeyboardSelected ? "bg-zinc-800/50 ring-2 ring-inset ring-white/20" : "hover:bg-zinc-900/30"}
                             `}
                       onClick={() => {
-                        if (onJumpToLevel) {
+                        if (globalIdx <= currentLevelIndex && onJumpToLevel) {
                           onJumpToLevel(globalIdx);
                           setShowLegend(false);
+                          onToggleMap?.();
                         }
                       }}
                     >
