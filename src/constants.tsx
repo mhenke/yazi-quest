@@ -1137,7 +1137,7 @@ export const LEVELS: Level[] = [
     hint: "Filter (f) searches CURRENT directory only. Fast, local, immediate feedback. Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
     coreSkill: "Filter (f)",
     environmentalClue:
-      "ASSET: sector_map.png | WORKFLOW: Scan to '~/incoming' (gi) → Filter → Esc → Cut → Esc → Scan to '~/media' (gh then enter) → Paste",
+      "ASSET: sector_map.png | WORKFLOW: Access '~/incoming' (gi) → Filter → Esc → Cut → Esc → Infiltrate '~/media' (gh then enter) → Paste",
     successMessage:
       "INTEL SECURED. Sector map reveals quarantined 'workspace' sector. Previous occupant: AI-7733. Status: TERMINATED.",
     buildsOn: [1],
@@ -1145,7 +1145,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "move-0",
-        description: "Scan to '~/incoming' (gi), filter (f) to find 'sector_map.png'",
+        description: "Access '~/incoming' (gi), filter (f) to find 'sector_map.png'",
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
@@ -1207,7 +1207,7 @@ export const LEVELS: Level[] = [
     description:
       "EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.",
     initialPath: ["root", "home", "guest"],
-    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Scan to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
+    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Jump to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it (y). Paste (p) to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
     coreSkill: "Create (a), Copy (y/p) & Rename (r)",
     environmentalClue:
       "NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf",
@@ -1217,7 +1217,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "nav-and-create-dir",
-        description: "Scan to '~/datastore' and construct 'protocols/' directory (a)",
+        description: "Infiltrate '~/datastore' and construct 'protocols/' directory (a)",
         check: c => {
           const s = findNodeByName(c.fs, "datastore");
           return !!s?.children?.find(r => r.name === "protocols" && r.type === "dir");
@@ -1253,7 +1253,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: "CONTAINMENT BREACH",
     initialPath: ["root", "home", "guest"],
-    hint: "Scan to '~/datastore/protocols'. Select files with Space. Cut (x). Scan to '~' (gh) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste (p). Hide hidden (.).",
+    hint: "Access '~/datastore/protocols'. Select files with Space. Cut (x). Jump to '~' (gh) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste (p). Hide hidden (.).",
     coreSkill: "Visual Select (Space), Cut (x)",
     environmentalClue: "SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/",
     successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
@@ -1304,7 +1304,7 @@ export const LEVELS: Level[] = [
       {
         id: "batch-cut-files",
         description:
-          "Scan to '~/datastore/protocols' and select then cut all the files (space twice, x)",
+          "Access '~/datastore/protocols' and select then cut all the files (space twice, x)",
         check: c => {
           return (
             c.clipboard?.action === "cut" &&
@@ -1346,7 +1346,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "hide-hidden",
-        description: "Scan to '~' (gh) and hide hidden files (.)",
+        description: "Jump to '~' (gh) and hide hidden files (.)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const s = findNodeByName(c.fs, "active");
@@ -1605,7 +1605,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "goto-root",
-        description: "Scan to '/' (gr)",
+        description: "Access '/' (gr)",
         check: c => c.currentPath.length === 1 && c.currentPath[0] === "root",
         completed: false,
       },
