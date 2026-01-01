@@ -44,6 +44,24 @@ import { MemoizedPreviewPane as PreviewPane } from "./components/PreviewPane";
 import { reportError } from "./utils/error";
 import { measure } from "./utils/perf";
 import { useKeyboardHandlers } from "./hooks/useKeyboardHandlers";
+import { KEYBINDINGS } from "./constants/keybindings";
+
+// Helper to get a random element from an array
+const getRandomElement = <T,>(arr: T[]): T => {
+  return arr[Math.floor(Math.random() * arr.length)];
+};
+
+// Find the narrative description for a given key
+const getNarrativeAction = (key: string): string | null => {
+  const binding = KEYBINDINGS.find(b => b.keys.includes(key));
+  if (binding && binding.narrativeDescription) {
+    if (Array.isArray(binding.narrativeDescription)) {
+      return getRandomElement(binding.narrativeDescription);
+    }
+    return binding.narrativeDescription as string;
+  }
+  return null;
+};
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -831,7 +849,7 @@ export default function App() {
           fs: newFs,
           mode: "normal",
           inputBuffer: "",
-          notification: targetNode ? "PATH CREATED" : "FILE CREATED",
+          notification: getNarrativeAction("a") || (targetNode ? "PATH CREATED" : "FILE CREATED"),
         }));
         return;
       }
@@ -857,7 +875,7 @@ export default function App() {
           fs: newFs,
           mode: "normal",
           inputBuffer: "",
-          notification: "FILE CREATED",
+          notification: getNarrativeAction("a") || "FILE CREATED",
         }));
       }
     }
@@ -883,7 +901,7 @@ export default function App() {
           ...prev,
           fs: res.value,
           mode: "normal",
-          notification: "Renamed",
+          notification: getNarrativeAction("r") || "Renamed",
           stats: { ...prev.stats, renames: prev.stats.renames + 1 },
         }));
       }

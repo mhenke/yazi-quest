@@ -41,7 +41,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) 
         </div>
 
         <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
-          Press ESC to dismiss
+          Press Esc or Shift+Enter to dismiss
         </div>
       </div>
     </div>

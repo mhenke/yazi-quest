@@ -53,6 +53,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
     }
   }, [scrollPosition]);
 
+  const getDisplayDescription = (binding: {
+    narrativeDescription?: string | string[];
+    description: string;
+  }) => {
+    if (Array.isArray(binding.narrativeDescription)) {
+      return binding.narrativeDescription[0];
+    }
+    return binding.narrativeDescription || binding.description;
+  };
+
   return (
     <div
       className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -70,9 +80,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <div className="space-y-2">
               {KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">
-                    {binding.narrativeDescription || binding.description}
-                  </span>
+                  <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
                   <div className="flex gap-1">
                     {binding.keys.map(k => (
                       <span
@@ -93,9 +101,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <div className="space-y-2">
               {META_KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">
-                    {binding.narrativeDescription || binding.description}
-                  </span>
+                  <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
                   <div className="flex gap-1">
                     {binding.keys.map(k => (
                       <span

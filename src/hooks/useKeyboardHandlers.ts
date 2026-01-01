@@ -11,6 +11,24 @@ import {
 } from "../utils/fsHelpers";
 import { getVisibleItems } from "../utils/viewHelpers";
 import { reportError } from "../utils/error";
+import { KEYBINDINGS } from "../constants/keybindings";
+
+// Helper to get a random element from an array
+const getRandomElement = <T>(arr: T[]): T => {
+  return arr[Math.floor(Math.random() * arr.length)];
+};
+
+// Find the narrative description for a given key
+const getNarrativeAction = (key: string): string | null => {
+  const binding = KEYBINDINGS.find(b => b.keys.includes(key));
+  if (binding && binding.narrativeDescription) {
+    if (Array.isArray(binding.narrativeDescription)) {
+      return getRandomElement(binding.narrativeDescription);
+    }
+    return binding.narrativeDescription as string;
+  }
+  return null;
+};
 
 export const useKeyboardHandlers = (
   showNotification: (message: string, duration?: number) => void
@@ -131,7 +149,7 @@ export const useKeyboardHandlers = (
             mode: "normal",
             pendingDeleteIds: [],
             selectedIds: [],
-            notification: "Items deleted",
+            notification: getNarrativeAction("d") || "Items deleted",
           };
         });
       } else if (e.key === "n" || e.key === "Escape") {
@@ -541,7 +559,10 @@ export const useKeyboardHandlers = (
             e.preventDefault();
             const allIds = items.map(item => item.id);
             setGameState(prev => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
-            showNotification(`Selected all (${allIds.length} items)`, 2000);
+            showNotification(
+              getNarrativeAction("Ctrl+A") || `Selected all (${allIds.length} items)`,
+              2000
+            );
           } else {
             e.preventDefault();
             setGameState(prev => ({ ...prev, mode: "input-file", inputBuffer: "" }));
@@ -553,7 +574,10 @@ export const useKeyboardHandlers = (
             const allIds = items.map(item => item.id);
             const inverted = allIds.filter(id => !gameState.selectedIds.includes(id));
             setGameState(prev => ({ ...prev, selectedIds: inverted }));
-            showNotification(`Inverted selection (${inverted.length} items)`, 2000);
+            showNotification(
+              getNarrativeAction("Ctrl+R") || `Inverted selection (${inverted.length} items)`,
+              2000
+            );
           } else if (gameState.selectedIds.length > 1) {
             setGameState(prev => ({
               ...prev,
@@ -589,7 +613,9 @@ export const useKeyboardHandlers = (
                 originalPath: prev.currentPath,
               },
               selectedIds: [],
-              notification: `${nodes.length} item(s) ${e.key === "x" ? "cut" : "yanked"}`,
+              notification:
+                getNarrativeAction(e.key) ||
+                `${nodes.length} item(s) ${e.key === "x" ? "cut" : "yanked"}`,
             }));
           } else if (currentItem) {
             if (e.key === "x") {
@@ -612,7 +638,9 @@ export const useKeyboardHandlers = (
                 action: e.key === "x" ? "cut" : "yank",
                 originalPath: prev.currentPath,
               },
-              notification: `"${currentItem.name}" ${e.key === "x" ? "cut" : "yanked"}`,
+              notification:
+                getNarrativeAction(e.key) ||
+                `"${currentItem.name}" ${e.key === "x" ? "cut" : "yanked"}`,
             }));
           }
           break;
@@ -664,7 +692,8 @@ export const useKeyboardHandlers = (
                     ...prev,
                     fs: newFs,
                     clipboard: prev.clipboard?.action === "cut" ? null : prev.clipboard,
-                    notification: `Deployed ${prev.clipboard?.nodes.length} assets`,
+                    notification:
+                      getNarrativeAction("p") || `Deployed ${prev.clipboard?.nodes.length} assets`,
                   }));
                 }
               } catch (err) {
@@ -742,7 +771,7 @@ export const useKeyboardHandlers = (
                     ...prev,
                     fs: newFs,
                     clipboard: prev.clipboard?.action === "cut" ? null : prev.clipboard,
-                    notification: `Force deployed ${prev.clipboard?.nodes.length} assets`,
+                    notification: `(FORCED) ${getNarrativeAction("p") || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
                   }));
                 }
               } catch (err) {
@@ -761,6 +790,7 @@ export const useKeyboardHandlers = (
           setGameState(prev => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const existingFilter = currentDir ? prev.filters[currentDir.id] || "" : "";
+            showNotification(getNarrativeAction("f") || "Filter activated");
             return { ...prev, mode: "filter", inputBuffer: existingFilter };
           });
           break;
@@ -770,33 +800,44 @@ export const useKeyboardHandlers = (
           setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
           break;
         case ".":
-          setGameState(prev => ({ ...prev, showHidden: !prev.showHidden }));
+          setGameState(prev => {
+            const narrative = getNarrativeAction(".");
+            const message = prev.showHidden ? `Cloaking Engaged` : `Revealing Hidden Traces`;
+            showNotification(narrative || message);
+            return { ...prev, showHidden: !prev.showHidden };
+          });
           break;
         case ",":
           setGameState(prev => ({ ...prev, mode: "sort" }));
           break;
         case "Z":
           if (e.shiftKey) {
-            setGameState(prev => ({
-              ...prev,
-              mode: "zoxide-jump",
-              inputBuffer: "",
-              fuzzySelectedIndex: 0,
-              usedPreviewDown: false,
-              usedPreviewUp: false,
-            }));
+            setGameState(prev => {
+              showNotification(getNarrativeAction("Z") || "Zoxide jump");
+              return {
+                ...prev,
+                mode: "zoxide-jump",
+                inputBuffer: "",
+                fuzzySelectedIndex: 0,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+              };
+            });
           }
           break;
         case "z":
           if (!e.shiftKey) {
-            setGameState(prev => ({
-              ...prev,
-              mode: "fzf-current",
-              inputBuffer: "",
-              fuzzySelectedIndex: 0,
-              usedPreviewDown: false,
-              usedPreviewUp: false,
-            }));
+            setGameState(prev => {
+              showNotification(getNarrativeAction("z") || "FZF Find");
+              return {
+                ...prev,
+                mode: "fzf-current",
+                inputBuffer: "",
+                fuzzySelectedIndex: 0,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+              };
+            });
           }
           break;
         case "Escape":
@@ -806,10 +847,12 @@ export const useKeyboardHandlers = (
             if (hasFilter) {
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
-              return { ...prev, filters: newFilters, notification: "Scan filter deactivated" };
+              showNotification(getNarrativeAction("Escape") || "Scan filter deactivated");
+              return { ...prev, filters: newFilters };
             }
             if (prev.selectedIds.length > 0) {
-              return { ...prev, selectedIds: [], notification: "Selection cleared" };
+              showNotification(getNarrativeAction("Escape") || "Selection cleared");
+              return { ...prev, selectedIds: [] };
             }
             return prev;
           });
@@ -820,7 +863,7 @@ export const useKeyboardHandlers = (
       if (e.key === "Y" || e.key === "X") {
         e.preventDefault();
         setGameState(prev => ({ ...prev, clipboard: null }));
-        showNotification("CLIPBOARD CLEARED", 2000);
+        showNotification(getNarrativeAction("Y") || "CLIPBOARD CLEARED", 2000);
       }
     },
     [showNotification]
