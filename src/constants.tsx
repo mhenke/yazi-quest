@@ -962,7 +962,7 @@ export const LEVELS: Level[] = [
     description:
       "ANOMALY DETECTED. A tracking beacon is reporting your location. Navigate to the `incoming` data stream, verify the rogue signature's metadata and content, then purge it from existence. The purge operation is irreversible.",
     initialPath: null,
-    hint: "Scan to '~/incoming' (gi). Use G to jump to the bottom. Use Tab to inspect metadata and J/K to scan content. Once verified, press d, then y to confirm the purge.",
+    hint: "Jump to '~/incoming' (gi). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
     coreSkill: "Inspect & Purge (Tab, J/K, d)",
     environmentalClue:
       "THREAT: watcher_agent.sys in '~/incoming' (gi) | TACTIC: Navigate → G → Tab → Preview → Delete",
@@ -972,7 +972,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "del-1",
-        description: "Scan to '~/incoming' (gi)",
+        description: "Jump to '~/incoming' (gi)",
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           return c.currentPath.includes(u?.id || "") && c.usedGI === true;
@@ -1207,7 +1207,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "reveal-hidden",
-        description: "Navigate to ~/ (gr) then reveal hidden files (.) to access .config",
+        description: "Navigate to ~/ (gh) then reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, "guest");
           return c.currentPath.includes(s?.id || "") && c.showHidden === true;
