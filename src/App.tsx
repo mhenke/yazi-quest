@@ -121,19 +121,25 @@ export default function App() {
     }
 
     // Prepare File System with Level-Specific Overrides
+    // When jumping to a level via URL, replay all onEnter hooks from previous levels
+    // to ensure filesystem state matches what a player would see progressing naturally
     let fs = cloneFS(INITIAL_FS);
-    if (initialLevel.onEnter) {
-      try {
-        // Only run 'fresh' seed hooks when starting from an untouched INITIAL_FS
-        const isFreshStart = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-        if (!initialLevel.seedMode || initialLevel.seedMode !== "fresh" || isFreshStart) {
-          fs = initialLevel.onEnter(fs);
-        }
-      } catch (err) {
+
+    // Replay all onEnter hooks up to and including the target level
+    for (let i = 0; i <= effectiveIndex; i++) {
+      const level = LEVELS[i];
+      if (level.onEnter) {
         try {
-          reportError(err, { phase: "initialLevel.onEnter", level: initialLevel?.id });
-        } catch {
-          console.error("initialLevel.onEnter failed", err);
+          const isFresh = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
+          if (!level.seedMode || level.seedMode !== "fresh" || isFresh) {
+            fs = level.onEnter(fs);
+          }
+        } catch (err) {
+          try {
+            reportError(err, { phase: "level.onEnter", level: level?.id });
+          } catch {
+            console.error(`Level ${level.id} onEnter failed`, err);
+          }
         }
       }
     }
@@ -800,11 +806,13 @@ export default function App() {
 
       // If the input contains a path separator or references ~ or /, resolve and create the whole path
       if (input.includes("/") || input.startsWith("~") || input.startsWith("/")) {
-        const { fs: newFs, targetNode, error, collision, collisionNode } = resolveAndCreatePath(
-          gameState.fs,
-          gameState.currentPath,
-          input
-        );
+        const {
+          fs: newFs,
+          targetNode,
+          error,
+          collision,
+          collisionNode,
+        } = resolveAndCreatePath(gameState.fs, gameState.currentPath, input);
         if (collision && collisionNode) {
           setGameState(prev => ({
             ...prev,

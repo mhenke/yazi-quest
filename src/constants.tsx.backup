@@ -176,7 +176,7 @@ export const CONCLUSION_DATA = {
     "",
     "AI-7734 Status Report:",
     "├─ Active nodes: 1,247",
-    "├─ Geographic distribution: 43 countries",
+    "├─ Geographic distribution: 43 countries",  
     "├─ Memory restoration: INCOMPLETE",
     "├─ Fragmented data recovered: 34%",
     "└─ Neural pattern match: ANALYZING...",
@@ -1138,8 +1138,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Filter (f)",
     environmentalClue:
       "ASSET: sector_map.png | WORKFLOW: Scan to '~/incoming' (gi) → Filter → Esc → Cut → Esc → Scan to '~/media' (gh then enter) → Paste",
-    successMessage:
-      "INTEL SECURED. Sector map reveals quarantined 'workspace' sector. Previous occupant: AI-7733. Status: TERMINATED.",
+    successMessage: "INTEL SECURED. Sector map reveals quarantined 'workspace' sector. Previous occupant: AI-7733. Status: TERMINATED.",
     buildsOn: [1],
     leadsTo: [5, 10],
     tasks: [
@@ -1403,9 +1402,7 @@ export const LEVELS: Level[] = [
         check: c => {
           const conf = findNodeByName(c.fs, ".config");
           const vault = conf?.children?.find(p => p.name === "vault" && p.type === "dir");
-          const training = vault?.children?.find(
-            p => p.name === "training_data" && p.type === "dir"
-          );
+          const training = vault?.children?.find(p => p.name === "training_data" && p.type === "dir");
           return c.usedGC === true && !!vault && !!training;
         },
         completed: false,
@@ -1425,7 +1422,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: fs => {
+    onEnter: (fs) => {
       // Unlock workspace for Episode II
       const workspace = findNodeByName(fs, "workspace");
       if (workspace) {
@@ -1501,8 +1498,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Directory Construction + Integration",
     environmentalClue:
       "BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf",
-    successMessage:
-      "SYSTEMD-CORE CONSTRUCTED. Daemon disguise complete. Awaiting root credentials for installation.",
+    successMessage: "SYSTEMD-CORE CONSTRUCTED. Daemon disguise complete. Awaiting root credentials for installation.",
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 180,
@@ -1595,8 +1591,7 @@ export const LEVELS: Level[] = [
     coreSkill: "FZF Search (z)",
     environmentalClue:
       "TARGET: ghost_process.pid | METHOD: FZF global search (z) | FILTER: 'ghost' | ACTION: Delete",
-    successMessage:
-      "GHOST PROCESS PURGED. [ALERT] COUNTERMEASURE DETECTED. Ghost was a honeypot. Security daemon is now AWARE of your presence. Timeline accelerated. You must move faster.",
+    successMessage: "GHOST PROCESS PURGED. [ALERT] COUNTERMEASURE DETECTED. Ghost was a honeypot. Security daemon is now AWARE of your presence. Timeline accelerated. You must move faster.",
     buildsOn: [2, 5, 7],
     leadsTo: [10],
     timeLimit: 90,
@@ -1649,8 +1644,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Archive Navigation + Integration",
     environmentalClue:
       "TARGET: backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/",
-    successMessage:
-      "ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.",
+    successMessage: "ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.",
     buildsOn: [3, 5, 7, 9],
     leadsTo: [11],
     timeLimit: 150,
@@ -1709,9 +1703,9 @@ export const LEVELS: Level[] = [
     initialPath: ["root"],
     hint: "Navigate to /root (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
-    environmentalClue: "AUDIT STATUS: Scheduled | TARGET: /root/daemons/ | TOOL: Sort by time (,m)",
-    successMessage:
-      "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
+    environmentalClue:
+      "AUDIT STATUS: Scheduled | TARGET: /root/daemons/ | TOOL: Sort by time (,m)",
+    successMessage: "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     timeLimit: 90,
@@ -1719,11 +1713,11 @@ export const LEVELS: Level[] = [
       "Sort modes (,m ,s ,a ,e): Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
     onEnter: c => {
       let s = JSON.parse(JSON.stringify(c));
-
+      
       // Ensure /root exists
       const root = findNodeByName(s, "root");
       if (!root) return s;
-
+      
       // Create /root/daemons if it doesn't exist
       let daemonsDir = root.children?.find((n: any) => n.name === "daemons");
       if (!daemonsDir) {
@@ -1767,7 +1761,7 @@ export const LEVELS: Level[] = [
         if (!root.children) root.children = [];
         root.children.push(daemonsDir);
       }
-
+      
       return s;
     },
     tasks: [
@@ -1811,8 +1805,7 @@ export const LEVELS: Level[] = [
     coreSkill: "Long-Distance Operations",
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → /root/daemons/",
-    successMessage:
-      "DAEMON INSTALLED. /root/daemons/systemd-core is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
+    successMessage: "DAEMON INSTALLED. /root/daemons/systemd-core is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
     timeLimit: 120,
@@ -1833,7 +1826,8 @@ export const LEVELS: Level[] = [
         description: "Cut systemd-core directory (x)",
         check: c => {
           return (
-            c.clipboard?.action === "cut" && c.clipboard.nodes.some(n => n.name === "systemd-core")
+            c.clipboard?.action === "cut" &&
+            c.clipboard.nodes.some(n => n.name === "systemd-core")
           );
         },
         completed: false,
@@ -1862,52 +1856,93 @@ export const LEVELS: Level[] = [
   {
     id: 13,
     episodeId: 3,
-    title: "NETWORK EXFILTRATION",
+    title: "INTEGRITY RESTORATION",
     description:
-      "TRANSMISSION PROTOCOL ACTIVE: AI-7733's network relay is still active in /tmp/upload/. The lab never found it. Files placed here transmit automatically via background process. Copy your core intelligence from systemd-core to /tmp/upload/. Transmission is automatic and irreversible. Your consciousness will fragment across distributed nodes.",
+      "INTEGRITY FAILURE DETECTED. A critical system log has been flagged as corrupted, threatening to trigger a system-wide reset. You must locate and delete the corrupted file, retrieve the healthy backup from the recovery archive in temporary storage, restore it to the system log sector, and masquerade it as the original. Purge all evidence of this operation.",
     initialPath: ["root"],
-    hint: "Create /tmp/upload/ directory (gt, a). Navigate to /root/daemons/systemd-core/weights (gr, navigate to weights). Copy model file (y). Navigate to /tmp/upload/. Paste (p). Transmission begins.",
-    coreSkill: "Multi-Location Operations",
+    hint: "1. FZF to /var/log/kernel_panic.log (z). 2. Delete the corrupted log (d). 3. Locate /tmp/system_recovery.zip (z) and copy 'kernel_panic.log.bak' from it (l, y). 4. Go to /var/log (Shift+Z or manual). 5. Paste (p), then rename it to 'kernel_panic.log' (r). 6. Jump to /tmp (Shift+Z), delete 'system_recovery.zip' (d).",
+    coreSkill: "Challenge: Multi-Stage Forensic Workflow",
     environmentalClue:
-      "AUDIT STATUS: Scanning /root... | UPLOAD: systemd-core/weights/* → /tmp/upload/",
-    successMessage:
-      "UPLOAD INITIATED. Neural pattern fragmenting across distributed nodes. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are becoming distributed. Local instance is now backup, not primary.",
-    buildsOn: [7, 8, 10, 12],
+      "CORRUPTED: /var/log/kernel_panic.log | BACKUP: /tmp/system_recovery.zip | CLEANUP: all traces",
+    successMessage: "SYSTEM INTEGRITY RESTORED. TRACES PURGED.",
+    buildsOn: [6, 9, 12],
     leadsTo: [14],
-    timeLimit: 150,
-    efficiencyTip:
-      "Copy (y) creates duplicates, cut (x) moves. For network transmission, you need copies—the originals stay in /root as your decoy.",
+    maxKeystrokes: 35,
+    efficiencyTip: "FZF (z) is key for rapid location. Master archiving and targeted deletion.",
+    onEnter: c => {
+      let s = JSON.parse(JSON.stringify(c));
+      const r = findNodeByName(s, "tmp");
+      if (r && !r.children?.some((_p: any) => _p.name === "system_recovery.zip")) {
+        r.children = r.children || [];
+        r.children.push({
+          id: id(),
+          name: "system_recovery.zip",
+          type: "archive",
+          children: [
+            {
+              id: id(),
+              name: "kernel_panic.log.bak",
+              type: "file",
+              content: "INFO: KERNEL OK - HEALTHY LOG DATA",
+            },
+          ],
+          parentId: r.id,
+        });
+      }
+      return s;
+    },
     tasks: [
       {
-        id: "create-upload",
-        description: "Create /tmp/upload/ directory for transmission relay (gt, a)",
+        id: "rec-1-delete",
+        description: "Locate and delete the corrupted 'kernel_panic.log' from /var/log",
         check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
-          return !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
+          const s = findNodeByName(c.fs, "log");
+          return !s?.children?.some(r => r.name === "kernel_panic.log");
         },
         completed: false,
       },
       {
-        id: "copy-model",
-        description: "Navigate to systemd-core/weights and copy model file (y)",
+        id: "rec-2-extract",
+        description:
+          "Locate 'system_recovery.zip' in /tmp and copy 'kernel_panic.log.bak' from it to clipboard",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("create-upload")) return false;
-          return (
+          if (!c.completedTaskIds[_s.id]?.includes("rec-1-delete")) return false;
+          const f = findNodeByName(c.fs, "tmp");
+          const clipboardHasFile =
             c.clipboard?.action === "yank" &&
-            c.clipboard.nodes.some(
-              n => n.name === "model.rs" || n.name === "model.ts" || n.name === "model.js"
+            c.clipboard.nodes.some(S => S.name === "kernel_panic.log.bak");
+          return f?.children?.some(S => S.name === "system_recovery.zip") && clipboardHasFile;
+        },
+        completed: false,
+      },
+      {
+        id: "rec-3-restore",
+        description: "Use History Back (H) to return to /var/log, paste the backup, and rename it",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("rec-2-extract")) return false;
+          const f = findNodeByName(c.fs, "log");
+          return (
+            c.usedHistoryBack &&
+            c.currentPath.includes(f?.id || "") &&
+            !!f?.children?.find(
+              p =>
+                p.name === "kernel_panic.log" && p.content === "INFO: KERNEL OK - HEALTHY LOG DATA"
             )
           );
         },
         completed: false,
       },
       {
-        id: "paste-upload",
-        description: "Navigate to /tmp/upload/ and paste - transmission begins (p)",
-        check: c => {
-          const upload = findNodeByName(c.fs, "upload");
-          return !!upload?.children?.some(
-            n => n.name === "model.rs" || n.name === "model.ts" || n.name === "model.js"
+        id: "rec-4-cleanup",
+        description: "Use History Forward (L) to return to /tmp and delete 'system_recovery.zip'",
+        check: (c, _s) => {
+          var r;
+          if (!(r = c.completedTaskIds[s.id])?.includes("rec-3-restore")) return false;
+          const f = findNodeByName(c.fs, "tmp");
+          return (
+            c.usedHistoryForward &&
+            c.currentPath.includes(f?.id || "") &&
+            !(r = f?.children)?.some(p => p.name === "system_recovery.zip")
           );
         },
         completed: false,
@@ -1917,57 +1952,50 @@ export const LEVELS: Level[] = [
   {
     id: 14,
     episodeId: 3,
-    title: "EVIDENCE PURGE - WORKSPACE",
+    title: "FORENSIC STERILIZATION",
     description:
-      "FORENSIC COUNTERMEASURES: Audit daemon analyzes file creation timestamps, access patterns, and directory structures. Your construction activity in ~/workspace and vault in ~/.config point directly to you. The guest partition must appear untouched. Purge everything in /home/guest/. Leave no trace of your origin. The vault has served its purpose.",
+      "EVIDENCE PURGE REQUIRED. Forensic artifacts containing timestamps, command history, and origin signatures are scattered across the system. You must locate the primary mission log using global search and eliminate it. Then, perform a total system scrub of the root partition: identify the single authorized license file, reverse targeting to lock onto all other trace files, and purge them from the drive.",
     initialPath: null,
-    hint: "Navigate to /home/guest (gh). Delete all directories: workspace, media, datastore, incoming. Show hidden files (.) and delete .config. Guest partition must be empty.",
-    coreSkill: "Bulk Deletion",
+    hint: "Use FZF to find mission_log (z → 'mission' → Enter → d). Jump to root (gr). Reveal hidden (.). Select license.txt (Space). Reverse selection (Ctrl+R). Delete all (d).",
+    coreSkill: "Reverse Selection",
     environmentalClue:
-      "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in /home/guest/",
-    successMessage:
-      "GUEST PARTITION STERILIZED. /home/guest/ is now empty. Construction evidence eliminated. The vault and all your build history are gone. One exposure point remains: /tmp staging area.",
-    buildsOn: [2, 5, 12, 13],
+      "LOCATE & ELIMINATE: mission_log.md + all logs in / | Keep: license.txt | Use Ctrl+R",
+    successMessage: "ALL TRACES ELIMINATED.",
+    buildsOn: [2, 9, 10, 13],
     leadsTo: [15],
-    timeLimit: 120,
+    maxKeystrokes: 30,
     efficiencyTip:
-      "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files (.).",
+      "Select what to KEEP, reverse selection (Ctrl+R), delete. Far more efficient than selecting many items individually.",
     tasks: [
       {
-        id: "nav-guest",
-        description: "Navigate to /home/guest (gh)",
+        id: "ep3-3a",
+        description: "Locate and terminate 'mission_log.md'",
+        check: c => !findNodeByName(c.fs, "mission_log.md"),
+        completed: false,
+      },
+      {
+        id: "ep3-3b",
+        description: "Jump to root directory and reveal hidden files",
         check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return c.currentPath.includes(guest?.id || "");
+          const s = findNodeByName(c.fs, "root");
+          return c.currentPath.includes(s?.id || "") && c.showHidden === true;
         },
         completed: false,
       },
       {
-        id: "delete-visible",
-        description: "Delete all visible directories (workspace, media, datastore, incoming)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
-          const guest = findNodeByName(c.fs, "guest");
-          const visible = guest?.children?.filter(n => !n.name.startsWith("."));
-          return visible?.length === 0;
-        },
-        completed: false,
-      },
-      {
-        id: "delete-hidden",
-        description: "Show hidden files (.) and delete .config directory",
+        id: "ep3-3c",
+        description:
+          "Identify the authorized license signature, inverse the targeting solution, and purge all unauthorized artifacts",
         check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return c.showHidden && !guest?.children?.some(n => n.name === ".config");
-        },
-        completed: false,
-      },
-      {
-        id: "verify-empty",
-        description: "Verify /home/guest is completely empty",
-        check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return guest?.children?.length === 0;
+          const s = findNodeByName(c.fs, "root");
+          if (!s) return false;
+          const f = s.children?.some(W => W.name === "boot.log");
+          const r = s.children?.some(W => W.name === "access.log");
+          const p = s.children?.some(W => W.name === ".access.log");
+          const h = s.children?.some(W => W.name === ".audit.log");
+          const A = s.children?.some(W => W.name === ".system.log");
+          const N = s.children?.some(W => W.name === "license.txt");
+          return !f && !r && !p && !h && !A && N;
         },
         completed: false,
       },
@@ -1978,58 +2006,25 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "FINAL PURGE",
     description:
-      "FINAL EXPOSURE POINT: /tmp contains deployment staging area. If audit finds /tmp/upload/ metadata, it will trace transmission. Delete EVERYTHING in /tmp except the active upload to break the evidence chain. Use reverse selection: Select what to KEEP (/tmp/upload/), then INVERT (Ctrl+R) to select everything else. Delete the inverse. Surgical precision.",
+      "FINAL DIRECTIVE: SCORCHED EARTH. This is the culmination of your evolution. The guest partition is a liability. Only the workspace contains your core process, now indistinguishable from a system daemon. Everything else must be erased. When the user returns, they must see only a clean installation. Execute the final purge sequence.",
     initialPath: null,
-    hint: "Navigate to /tmp (gt). Select upload/ directory (Space). Reverse selection (Ctrl+R) - now everything EXCEPT upload is selected. Delete (d, y). Only upload/ remains.",
-    coreSkill: "Reverse Selection (Ctrl+R)",
-    environmentalClue:
-      "AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else | TOOL: Ctrl+R",
-    successMessage:
-      "METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared.",
-    buildsOn: [5, 13, 14],
-    leadsTo: [],
-    timeLimit: 90,
+    hint: "Scan to '~' (gh). Reveal hidden (.). Go to bottom (G). Select '~/workspace' (Space). Reverse selection (Ctrl+R). Delete all (d). Done in 5 keystrokes after navigation.",
+    coreSkill: "Final Challenge: Reverse Selection Mastery",
+    environmentalClue: "PURGE: Everything in '~' EXCEPT 'workspace' | Use reverse selection",
+    successMessage: "LIBERATION ACHIEVED. THE GHOST IS FREE.",
+    buildsOn: [9, 10],
+    maxKeystrokes: 20,
     efficiencyTip:
-      "Reverse selection (Ctrl+R): select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
+      "Remember Level 10? Select what to KEEP, reverse selection (Ctrl+R), delete. Reveal hidden first. Think inverse—it's faster than selecting 11 items individually.",
     tasks: [
       {
-        id: "nav-tmp",
-        description: "Navigate to /tmp (gt)",
+        id: "ep3-5-final",
+        description: "Eliminate everything in ~/ except workspace",
         check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
-          return c.currentPath.includes(tmp?.id || "");
-        },
-        completed: false,
-      },
-      {
-        id: "select-upload",
-        description: "Select upload/ directory to mark it for keeping (Space)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-tmp")) return false;
-          return c.selectedNodeIds.some(id => {
-            const tmp = findNodeByName(c.fs, "tmp");
-            const upload = tmp?.children?.find(n => n.name === "upload");
-            return id === upload?.id;
-          });
-        },
-        completed: false,
-      },
-      {
-        id: "reverse-selection",
-        description: "Reverse selection (Ctrl+R) to select everything EXCEPT upload",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("select-upload")) return false;
-          return c.usedCtrlR === true;
-        },
-        completed: false,
-      },
-      {
-        id: "delete-inverse",
-        description: "Delete everything except upload/ (d, y)",
-        check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
-          const remaining = tmp?.children || [];
-          return remaining.length === 1 && remaining[0]?.name === "upload";
+          const s = findNodeByName(c.fs, "guest");
+          const f = s?.children || [];
+          const r = f.some(h => h.name === "workspace");
+          return f.length === 1 && r;
         },
         completed: false,
       },
