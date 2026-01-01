@@ -1037,7 +1037,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "move-0",
-        description: "Scan to '~/incoming' (gi), filter (f) to find 'sector_map.png'", 
+        description: "Scan to '~/incoming' (gi), filter (f) to find 'sector_map.png'",
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
@@ -1195,7 +1195,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "batch-cut-files",
-        description: "Scan to '~/datastore/protocols' and select then cut all the files (space twice, x)",
+        description:
+          "Scan to '~/datastore/protocols' and select then cut all the files (space twice, x)",
         check: c => {
           return (
             c.clipboard?.action === "cut" &&
@@ -1252,21 +1253,21 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: "DECOMPRESSION PROTOCOL",
+    title: "BATCH ARCHIVE OPERATION",
     description:
-      "ACCESS UPGRADED. Historical logs have been detected within the compressed archives of the incoming stream. These logs contain keys to higher privilege levels. Filter the stream to locate the backup archive, infiltrate it, and extract the primary system log to the media directory for decryption.",
+      "ACCESS UPGRADED. Intelligence logs have accumulated in the incoming stream. The vault infrastructure from Episode 1 is ready. You must perform a batch extraction: select all surveillance logs simultaneously and transfer them to the secure vault archive for long-term storage.",
     initialPath: null,
-    hint: "...f to filter... l to enter archive... y to copy... p to paste.",
-    coreSkill: "Filter (f) & Archive Ops",
-    environmentalClue: "TARGET: backup_logs.zip/sys_v1.log → ~/media",
-    successMessage: "LOGS RETRIEVED.",
+    hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all (Ctrl+A). Yank (y). Jump to config (gc). Create 'vault/logs' directory. Paste (p).",
+    coreSkill: "Select All (Ctrl+A)",
+    environmentalClue: "BATCH: ~/incoming/batch_logs/* → ~/.config/vault/logs/",
+    successMessage: "BATCH TRANSFER COMPLETE.",
     buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
     tasks: [
       {
         id: "batch-nav",
-        description: "Scan to '~/incoming/batch_logs' (gi → enter batch_logs)",
+        description: "Jump to '~/incoming/batch_logs' (gi → enter batch_logs)",
         check: c => {
           const u = findNodeByName(c.fs, "batch_logs");
           return c.currentPath.includes(u?.id || "");
@@ -1290,64 +1291,26 @@ export const LEVELS: Level[] = [
       },
       {
         id: "goto-config-vault",
-        description: "Jump to config (gc), create 'vault/batch_archive' directory to receive logs",
+        description: "Jump to config (gc), navigate to vault, create 'logs' directory",
         check: c => {
           const conf = findNodeByName(c.fs, ".config");
           const vault = conf?.children?.find(p => p.name === "vault" && p.type === "dir");
-          const batch = vault?.children?.find(p => p.name === "batch_archive" && p.type === "dir");
-          return c.usedGC === true && !!vault && !!batch;
+          const logs = vault?.children?.find(p => p.name === "logs" && p.type === "dir");
+          return c.usedGC === true && !!vault && !!logs;
         },
         completed: false,
       },
       {
         id: "deploy-to-vault",
-        description: "Paste logs into ~/.config/vault/batch_archive (p)",
+        description: "Paste logs into ~/.config/vault/logs (p)",
         check: c => {
-          const batch = findNodeByName(c.fs, "batch_archive");
+          const logs = findNodeByName(c.fs, "logs");
           return (
-            !!batch &&
-            !!batch.children &&
-            batch.children.length >= 4 &&
-            batch.children.some(n => n.name === "exfil_01.log")
+            !!logs &&
+            !!logs.children &&
+            logs.children.length >= 4 &&
+            logs.children.some(n => n.name.endsWith(".log"))
           );
-        },
-        completed: false,
-      },
-      {
-        id: "nav-and-filter",
-        description:
-          "Scan to '~/incoming' (gi), filter (f) for 'backup_logs.zip', and close filter (Esc)",
-        check: c => {
-          const s = findNodeByName(c.fs, "incoming");
-          if (!s || !c.currentPath.includes(s.id)) return false;
-          const h = !!c.filters[s.id];
-          return c.mode === "normal" && h;
-        },
-        completed: false,
-      },
-      {
-        id: "extract-from-archive",
-        description:
-          "Enter archive and copy 'sys_v1.log' (l, y), exit archive (h), and clear filter (Esc)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-and-filter")) return false;
-          const f = findNodeByName(c.fs, "incoming");
-          return (
-            c.currentPath.includes(f?.id || "") &&
-            !c.filters[f?.id || ""] &&
-            c.clipboard?.action === "yank" &&
-            c.clipboard.nodes.some(p => p.name === "sys_v1.log")
-          );
-        },
-        completed: false,
-      },
-      {
-        id: "deploy-log",
-        description: "Deploy asset into ~/media (p)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("extract-from-archive")) return false;
-          const f = findNodeByName(c.fs, "media");
-          return !!f?.children?.find(p => p.name === "sys_v1.log");
         },
         completed: false,
       },
