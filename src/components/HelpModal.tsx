@@ -70,7 +70,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <div className="space-y-2">
               {KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">{binding.description}</span>
+                  <span className="text-zinc-400">
+                    {binding.narrativeDescription || binding.description}
+                  </span>
                   <div className="flex gap-1">
                     {binding.keys.map(k => (
                       <span
@@ -91,7 +93,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <div className="space-y-2">
               {META_KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">{binding.description}</span>
+                  <span className="text-zinc-400">
+                    {binding.narrativeDescription || binding.description}
+                  </span>
                   <div className="flex gap-1">
                     {binding.keys.map(k => (
                       <span
