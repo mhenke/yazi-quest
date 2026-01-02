@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import { calculateFrecency, GameState, FileNode } from "../types";
 import { getRecursiveContent, getNodeByPath } from "../utils/fsHelpers";
-import { FileSystemPane } from "./FileSystemPane";
 
 interface FuzzyFinderProps {
   gameState: GameState;
@@ -23,6 +22,33 @@ const findNodeFromPath = (root: FileNode, pathStr: string): FileNode | null => {
   return current;
 };
 
+const highlightMatch = (text: string, rawQuery: string, accentClass: string) => {
+  if (!rawQuery) return text;
+  const query = rawQuery.toLowerCase();
+  let qi = 0;
+
+  return text.split("").map((ch, idx) => {
+    const isMatch = qi < query.length && ch.toLowerCase() === query[qi];
+    if (isMatch) qi += 1;
+    return (
+      <span key={`${text}-${idx}`} className={isMatch ? `${accentClass} font-semibold` : undefined}>
+        {ch}
+      </span>
+    );
+  });
+};
+
+const previewColor = (type?: FileNode["type"]) => {
+  switch (type) {
+    case "dir":
+      return "text-sky-400";
+    case "archive":
+      return "text-amber-400";
+    default:
+      return "text-zinc-200";
+  }
+};
+
 export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   gameState,
   onSelect: _onSelect,
@@ -30,9 +56,18 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 }) => {
   const isZoxide = gameState.mode === "zoxide-jump";
   const listRef = useRef<HTMLDivElement>(null);
+  const query = (gameState.inputBuffer || "").trim();
 
   // Specific theme for Level 7 "Quantum Tunnelling"
   const isQuantumLevel = gameState.levelIndex === 6; // Level 7 is index 6
+
+  const accentTextClass = isZoxide
+    ? isQuantumLevel
+      ? "text-purple-300"
+      : "text-orange-300"
+    : isQuantumLevel
+      ? "text-purple-300"
+      : "text-orange-300";
 
   // 1. Get Base History/Content with explicit scores, sorted DESCENDING
   const baseItems = useMemo(() => {
@@ -48,13 +83,20 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       // For FZF, search FILES only (not directories)
       return getRecursiveContent(gameState.fs, gameState.currentPath)
         .filter(c => c.type === "file" || c.type === "archive") // Only files and archives
-        .map(c => ({
-          path: c.display,
-          pathIds: c.path,
-          type: c.type,
-          id: c.id,
-          score: 0,
-        }));
+        .map(c => {
+          const display = (c as any).display;
+          const safePath =
+            typeof display === "string" && display
+              ? display
+              : String((c as any).path || []).replace(/,/g, "/");
+          return {
+            path: safePath,
+            pathIds: (c as any).path,
+            type: c.type,
+            id: c.id,
+            score: 0,
+          };
+        });
     }
   }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
 
@@ -62,7 +104,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   // 2. Apply Filter - preserve existing sort order from baseItems
   const filteredCandidates = useMemo(() => {
-    const q = (gameState.inputBuffer || "").toLowerCase();
+    const q = query.toLowerCase();
     return baseItems.filter(c => {
       // Support multiple candidate shapes: { path: string } or legacy nodes with .display
       const rawPath =
@@ -75,7 +117,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       const p = String(rawPath);
       return p.toLowerCase().includes(q);
     });
-  }, [baseItems, gameState.inputBuffer]);
+  }, [baseItems, query]);
 
   // 3. Determine Preview Items
   const selectedCandidate = filteredCandidates[gameState.fuzzySelectedIndex || 0];
@@ -108,57 +150,39 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
     }
   }, [gameState.fuzzySelectedIndex, filteredCandidates.length]);
 
+  const currentIndex = filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0;
+  const filteredCount = filteredCandidates.length || 0;
+  const countDisplay = `${currentIndex}/${filteredCount || totalCount}`;
+
   return (
     <div
-      className={`absolute inset-0 z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-150 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : ""}`}
+      className={`absolute inset-0 z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : "border border-zinc-900"}`}
     >
-      {/* Top: Header/Filter Bar */}
-      <div
-        className={`px-6 py-4 border-b border-zinc-800 flex items-center justify-between ${isQuantumLevel ? "bg-purple-950/20" : "bg-zinc-900/80"}`}
-      >
-        <div className="flex items-center gap-3 text-lg">
-          <span
-            className={`${isQuantumLevel ? "text-purple-400" : "text-orange-500"} font-black tracking-tighter`}
-          >
-            &gt;
-          </span>
-          <div className="relative">
-            <span
-              className={`text-white font-bold min-w-[20px] px-1 border-b-2 ${isQuantumLevel ? "border-purple-500" : "border-orange-500"}`}
-            >
-              {gameState.inputBuffer || " "}
-            </span>
-            {!gameState.inputBuffer && (
-              <span className="absolute left-1 text-zinc-700 animate-pulse">Search...</span>
+      <div className="px-4 py-2 text-[11px] text-zinc-500 flex items-center gap-3 border-b border-zinc-900">
+        <span className={`${accentTextClass} font-semibold tabular-nums`}>{countDisplay}</span>
+        <span className="uppercase tracking-[0.2em] text-zinc-600">
+          {isZoxide ? "zoxide jump" : "fzf find"}
+        </span>
+        {isZoxide && (
+          <div className="ml-auto flex items-center gap-2 text-sm">
+            <span className={`${accentTextClass} font-semibold`}>&gt;</span>
+            {query ? (
+              <span className="text-zinc-100 truncate max-w-[55vw]">{query}</span>
+            ) : (
+              <span className="text-zinc-600 italic">enter search here...</span>
             )}
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-xs text-zinc-500 font-bold flex gap-2">
-            <span className={isQuantumLevel ? "text-purple-400" : "text-orange-500"}>
-              {filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0}
-            </span>
-            <span className="opacity-30">/</span>
-            <span>{totalCount}</span>
-          </div>
-          <div
-            className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase ${isQuantumLevel && isZoxide ? "bg-purple-900 text-purple-200" : "bg-zinc-800 text-zinc-400"}`}
-          >
-            {isQuantumLevel && isZoxide ? "QUANTUM LINK" : isZoxide ? "Zoxide" : "FZF"}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Main Content Area: Split List and Preview (Zoxide) OR Just List (FZF) */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Candidates List */}
         <div
-          className={`${isZoxide ? "h-1/2 border-b border-zinc-800" : "flex-1"} overflow-y-auto scrollbar-hide`}
+          className={`${isZoxide ? "flex-1 border-b border-zinc-900" : "flex-1"} overflow-y-auto scrollbar-hide`}
           ref={listRef}
         >
           {filteredCandidates.length === 0 ? (
-            <div className="p-12 text-center text-zinc-700 italic text-sm">
-              No matching entries found in {isZoxide ? "history" : "this directory"}
+            <div className="p-8 text-center text-zinc-700 italic text-sm">
+              No matches in {isZoxide ? "zoxide history" : "recursive search"}
             </div>
           ) : (
             <div className="flex flex-col">
@@ -166,34 +190,28 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
                 const isSelected = idx === (gameState.fuzzySelectedIndex || 0);
                 return (
                   <div
-                    key={item.path + idx}
-                    className={`
-                                    px-6 py-2 flex items-center text-sm transition-colors duration-100
-                                    ${isSelected ? "bg-zinc-800/80 text-white" : "text-zinc-500 hover:text-zinc-400"}
-                                `}
+                    key={String(item.path) + idx}
+                    className={`px-4 py-2 flex items-center gap-3 text-sm transition-colors duration-75 ${
+                      isSelected ? "bg-zinc-900 text-white" : "text-zinc-500 hover:text-zinc-200"
+                    }`}
                   >
-                    <div className="flex items-center gap-4 truncate flex-1">
-                      {/* Active Indicator */}
-                      <div
-                        className={`w-1 h-4 rounded-full transition-colors ${isSelected ? (isQuantumLevel ? "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]" : "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]") : "bg-transparent"}`}
-                      />
-
-                      {/* Score Pill (Zoxide only) */}
-                      {isZoxide && (
-                        <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded tabular-nums min-w-[36px] text-center ${isSelected ? (isQuantumLevel ? "bg-purple-500/20 text-purple-400" : "bg-orange-500/20 text-orange-400") : "text-zinc-600"}`}
-                        >
-                          {item.score?.toFixed(1)}
-                        </span>
-                      )}
-
-                      {/* Path Text */}
+                    {isZoxide && (
                       <span
-                        className={`truncate ${isSelected ? "font-bold" : ""} ${isQuantumLevel && isSelected ? "text-purple-100" : ""}`}
+                        className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded tabular-nums min-w-[36px] text-center ${
+                          isSelected
+                            ? isQuantumLevel
+                              ? "bg-purple-900/40 text-purple-200"
+                              : "bg-orange-900/40 text-orange-200"
+                            : "text-zinc-600"
+                        }`}
                       >
-                        {item.path}
+                        {item.score?.toFixed(1)}
                       </span>
-                    </div>
+                    )}
+
+                    <span className="truncate">
+                      {highlightMatch(String(item.path), query, accentTextClass)}
+                    </span>
                   </div>
                 );
               })}
@@ -201,40 +219,32 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
           )}
         </div>
 
-        {/* Directory Preview Area - Zoxide only */}
         {isZoxide && (
-          <div className="flex-1 flex flex-col min-h-0 bg-black/40 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] uppercase font-bold text-zinc-600 tracking-[0.2em] flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-sm ${isQuantumLevel ? "bg-purple-900" : "bg-zinc-800"}`}
-                />
-                Preview Contents
-              </div>
+          <div className="h-[38%] min-h-[180px] flex flex-col bg-zinc-950/80">
+            <div className="px-4 py-2 text-[10px] uppercase font-bold text-zinc-600 tracking-[0.2em] flex items-center gap-2 border-b border-zinc-900">
+              <div
+                className={`w-2 h-2 rounded-sm ${isQuantumLevel ? "bg-purple-900" : "bg-zinc-800"}`}
+              />
+              Preview
               {selectedCandidate && (
-                <div className="text-[9px] text-zinc-500 font-mono italic truncate max-w-[50%]">
+                <span className="text-[9px] font-normal text-zinc-500 truncate max-w-[45%]">
                   {selectedCandidate.path}
-                </div>
+                </span>
               )}
             </div>
-
-            <div
-              className={`flex-1 border rounded overflow-hidden relative shadow-inner ${isQuantumLevel ? "border-purple-900/30" : "border-zinc-800/50"}`}
-            >
+            <div className="flex-1 overflow-y-auto px-4 pb-4 text-sm leading-relaxed space-y-1 bg-zinc-950/60">
               {previewItems.length > 0 ? (
-                <div className="h-full w-full overflow-hidden">
-                  <FileSystemPane
-                    items={previewItems}
-                    isActive={false}
-                    selectedIds={[]}
-                    clipboard={null}
-                    linemode="size"
-                    className="w-full bg-transparent grid grid-cols-2 lg:grid-cols-3 gap-x-4 h-full content-start"
-                  />
-                </div>
+                previewItems.map(child => (
+                  <div key={child.id} className="truncate">
+                    <span className={`${previewColor(child.type)} font-mono`}>
+                      {child.name}
+                      {child.type === "dir" ? "/" : ""}
+                    </span>
+                  </div>
+                ))
               ) : (
-                <div className="flex items-center justify-center h-full text-zinc-800 text-sm font-bold tracking-widest uppercase opacity-50">
-                  {selectedCandidate ? "Empty Directory" : "Waiting for selection..."}
+                <div className="text-zinc-700 italic">
+                  {selectedCandidate ? "(empty)" : "Waiting for selection"}
                 </div>
               )}
             </div>
@@ -242,32 +252,18 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
         )}
       </div>
 
-      {/* Pro Status Footer */}
-      <div
-        className={`px-6 py-2 border-t flex justify-between items-center ${isQuantumLevel ? "bg-purple-950/10 border-purple-900/50" : "bg-zinc-950 border-zinc-900"}`}
-      >
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-            <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">J/K</span>{" "}
-            Navigate
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-            <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">ENTER</span>{" "}
-            Select
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-            <span className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-300 font-bold">ESC</span>{" "}
-            Cancel
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1 w-8 bg-zinc-800 rounded-full overflow-hidden">
-            <div className={`h-full w-2/3 ${isQuantumLevel ? "bg-purple-500" : "bg-orange-500"}`} />
-          </div>
-          <span className="text-[10px] font-black text-zinc-600 tracking-tighter italic uppercase">
-            {isQuantumLevel ? "Quantum-Sync" : "Yazi-OS"}
-          </span>
-        </div>
+      <div className="px-4 py-2 border-t border-zinc-900 flex items-center gap-3 text-sm bg-zinc-950/90">
+        {!isZoxide && (
+          <>
+            <span className={`${accentTextClass} font-semibold`}>&gt;</span>
+            {query ? (
+              <span className="text-zinc-100 truncate">{query}</span>
+            ) : (
+              <span className="text-zinc-600 italic">enter search here...</span>
+            )}
+          </>
+        )}
+        <span className="ml-auto text-[11px] text-zinc-500 tabular-nums">{countDisplay}</span>
       </div>
     </div>
   );

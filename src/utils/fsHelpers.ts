@@ -62,6 +62,28 @@ export function getAllDirectories(root: FileNode): FileNode[] {
   return result;
 }
 
+export function getAllDirectoriesWithPaths(root: FileNode): { node: FileNode; path: string[] }[] {
+  const result: { node: FileNode; path: string[] }[] = [];
+  const stack: { node: FileNode; path: string[] }[] = [{ node: root, path: [root.id] }];
+
+  while (stack.length > 0) {
+    const { node: n, path: p } = stack.pop()!;
+
+    // We add the directory to the list
+    if (n.type === "dir" || n.type === "archive") {
+      result.push({ node: n, path: p });
+    }
+
+    // We check for children and add them to the stack
+    if (n.children) {
+      for (const child of n.children) {
+        stack.push({ node: child, path: [...p, child.id] });
+      }
+    }
+  }
+  return result;
+}
+
 export function resolvePath(root: FileNode, path: string[] | undefined): string {
   if (!path || path.length === 0) return "/";
   const names: string[] = [];

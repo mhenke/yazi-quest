@@ -17,7 +17,7 @@ import {
   cloneFS,
   createPath,
   resolveAndCreatePath,
-  getAllDirectories,
+  getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
 } from "./utils/fsHelpers";
@@ -628,8 +628,19 @@ export default function App() {
           .filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
       } else {
         candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
-          .filter(c => c.display.toLowerCase().includes(gameState.inputBuffer.toLowerCase()))
-          .map(c => ({ path: c.display, score: 0, pathIds: c.path, type: c.type, id: c.id }));
+          .filter(c => {
+            const d = (c as any).display;
+            return (
+              typeof d === "string" && d.toLowerCase().includes(gameState.inputBuffer.toLowerCase())
+            );
+          })
+          .map(c => ({
+            path: String((c as any).display || ""),
+            score: 0,
+            pathIds: (c as any).path,
+            type: c.type,
+            id: c.id,
+          }));
       }
 
       if (e.key === "Enter") {
@@ -638,7 +649,13 @@ export default function App() {
         if (selected) {
           if (isZoxide) {
             // Find path ids from string
-            const allDirs = getAllDirectories(gameState.fs);
+            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map(d => {
+              return {
+                ...d.node,
+                path: d.path,
+                display: resolvePath(gameState.fs, d.path),
+              };
+            });
             const match = allDirs.find(d => d.display === selected.path);
             if (match) {
               const now = Date.now();
