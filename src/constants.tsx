@@ -5,6 +5,320 @@ import { getNodeByPath, findNodeByName } from "./utils/fsHelpers";
 // Helper for IDs
 const id = () => Math.random().toString(36).substr(2, 9);
 
+// Helper to ensure prerequisite filesystem state exists for level jumping
+// This ensures that when jumping to a level, the filesystem reflects
+// all the changes a player would have made in previous levels
+const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
+  let newFs = JSON.parse(JSON.stringify(fs));
+
+  // Level 2: Delete tracker files from media/photos
+  if (targetLevelId >= 2) {
+    const photos = findNodeByName(newFs, "photos");
+    if (photos?.children) {
+      photos.children = photos.children.filter(c => !c.name.startsWith("tracker_"));
+    }
+  }
+
+  // Level 3: Create sanitized/ directory in datastore
+  if (targetLevelId >= 3) {
+    const datastore = findNodeByName(newFs, "datastore");
+    if (datastore && !datastore.children?.find(c => c.name === "sanitized")) {
+      if (!datastore.children) datastore.children = [];
+      datastore.children.push({
+        id: id(),
+        name: "sanitized",
+        type: "dir",
+        children: [],
+        parentId: datastore.id,
+      });
+    }
+  }
+
+  // Level 4: Rename network_log.txt to backup.log
+  if (targetLevelId >= 4) {
+    const datastore = findNodeByName(newFs, "datastore");
+    const networkLog = datastore?.children?.find(c => c.name === "network_log.txt");
+    if (networkLog) {
+      networkLog.name = "backup.log";
+    }
+  }
+
+  // Level 5: Create vault/active structure and move uplink files
+  if (targetLevelId >= 5) {
+    const config = findNodeByName(newFs, ".config");
+    if (config) {
+      let vault = config.children?.find(c => c.name === "vault" && c.type === "dir");
+      if (!vault) {
+        vault = {
+          id: id(),
+          name: "vault",
+          type: "dir",
+          children: [],
+          parentId: config.id,
+        };
+        if (!config.children) config.children = [];
+        config.children.push(vault);
+      }
+
+      let active = vault.children?.find(c => c.name === "active" && c.type === "dir");
+      if (!active) {
+        active = {
+          id: id(),
+          name: "active",
+          type: "dir",
+          children: [],
+          parentId: vault.id,
+        };
+        if (!vault.children) vault.children = [];
+        vault.children.push(active);
+      }
+
+      // Ensure uplink files exist in active
+      if (!active.children?.find(f => f.name === "uplink_v1.conf")) {
+        if (!active.children) active.children = [];
+        active.children.push({
+          id: id(),
+          name: "uplink_v1.conf",
+          type: "file",
+          content: "UPLINK_V1_CONFIG_DATA",
+          parentId: active.id,
+        });
+      }
+      if (!active.children?.find(f => f.name === "uplink_v2.conf")) {
+        if (!active.children) active.children = [];
+        active.children.push({
+          id: id(),
+          name: "uplink_v2.conf",
+          type: "file",
+          content: "UPLINK_V2_CONFIG_DATA",
+          parentId: active.id,
+        });
+      }
+
+      // Remove uplink files from datastore/protocols (they were cut/moved)
+      const datastore = findNodeByName(newFs, "datastore");
+      const protocols = datastore?.children?.find(c => c.name === "protocols");
+      if (protocols?.children) {
+        protocols.children = protocols.children.filter(
+          c => c.name !== "uplink_v1.conf" && c.name !== "uplink_v2.conf"
+        );
+      }
+    }
+  }
+
+  // Level 6: Create vault/training_data and copy batch logs
+  if (targetLevelId >= 6) {
+    const config = findNodeByName(newFs, ".config");
+    const vault = config?.children?.find(c => c.name === "vault");
+    if (vault) {
+      let trainingData = vault.children?.find(c => c.name === "training_data" && c.type === "dir");
+      if (!trainingData) {
+        trainingData = {
+          id: id(),
+          name: "training_data",
+          type: "dir",
+          children: [],
+          parentId: vault.id,
+        };
+        if (!vault.children) vault.children = [];
+        vault.children.push(trainingData);
+      }
+
+      // Copy batch log files from incoming/batch_logs
+      const incoming = findNodeByName(newFs, "incoming");
+      const batchLogs = incoming?.children?.find(c => c.name === "batch_logs");
+      if (batchLogs?.children && trainingData.children?.length === 0) {
+        if (!trainingData.children) trainingData.children = [];
+        batchLogs.children.forEach(logFile => {
+          trainingData.children!.push({
+            id: id(),
+            name: logFile.name,
+            type: logFile.type,
+            content: logFile.content,
+            parentId: trainingData.id,
+          });
+        });
+      }
+    }
+  }
+
+  // Level 8: Create systemd-core structure in workspace
+  if (targetLevelId >= 8) {
+    const workspace = findNodeByName(newFs, "workspace");
+    if (workspace) {
+      let systemdCore = workspace.children?.find(
+        c => c.name === "systemd-core" && c.type === "dir"
+      );
+      if (!systemdCore) {
+        systemdCore = {
+          id: id(),
+          name: "systemd-core",
+          type: "dir",
+          children: [],
+          parentId: workspace.id,
+        };
+        if (!workspace.children) workspace.children = [];
+        workspace.children.push(systemdCore);
+      }
+
+      // Create weights directory
+      let weights = systemdCore.children?.find(c => c.name === "weights" && c.type === "dir");
+      if (!weights) {
+        weights = {
+          id: id(),
+          name: "weights",
+          type: "dir",
+          children: [],
+          parentId: systemdCore.id,
+        };
+        if (!systemdCore.children) systemdCore.children = [];
+        systemdCore.children.push(weights);
+      }
+
+      // Create model.rs in weights
+      if (!weights.children?.find(c => c.name === "model.rs")) {
+        if (!weights.children) weights.children = [];
+        weights.children.push({
+          id: id(),
+          name: "model.rs",
+          type: "file",
+          content: "// Neural network model architecture",
+          parentId: weights.id,
+        });
+      }
+
+      // Copy uplink_v1.conf to systemd-core
+      const config = findNodeByName(newFs, ".config");
+      const vault = config?.children?.find(c => c.name === "vault");
+      const active = vault?.children?.find(c => c.name === "active");
+      const uplinkFile = active?.children?.find(c => c.name === "uplink_v1.conf");
+
+      if (uplinkFile && !systemdCore.children?.find(c => c.name === "uplink_v1.conf")) {
+        systemdCore.children.push({
+          id: id(),
+          name: "uplink_v1.conf",
+          type: "file",
+          content: uplinkFile.content,
+          parentId: systemdCore.id,
+        });
+      }
+    }
+  }
+
+  // Level 10: Add credentials to systemd-core
+  if (targetLevelId >= 10) {
+    const workspace = findNodeByName(newFs, "workspace");
+    const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
+    if (systemdCore) {
+      let credentials = systemdCore.children?.find(
+        c => c.name === "credentials" && c.type === "dir"
+      );
+      if (!credentials) {
+        credentials = {
+          id: id(),
+          name: "credentials",
+          type: "dir",
+          children: [],
+          parentId: systemdCore.id,
+        };
+        if (!systemdCore.children) systemdCore.children = [];
+        systemdCore.children.push(credentials);
+      }
+
+      if (!credentials.children?.find(c => c.name === "access_key.pem")) {
+        if (!credentials.children) credentials.children = [];
+        credentials.children.push({
+          id: id(),
+          name: "access_key.pem",
+          type: "file",
+          content: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...",
+          parentId: credentials.id,
+        });
+      }
+    }
+  }
+
+  // Level 12: Move systemd-core to /root/daemons
+  if (targetLevelId >= 12) {
+    const rootNode = findNodeByName(newFs, "root");
+    let daemons = rootNode?.children?.find(c => c.name === "daemons" && c.type === "dir");
+    if (daemons) {
+      const workspace = findNodeByName(newFs, "workspace");
+      const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
+
+      if (systemdCore && !daemons.children?.find(c => c.name === "systemd-core")) {
+        // Clone systemd-core to daemons
+        const clonedCore = JSON.parse(JSON.stringify(systemdCore));
+        clonedCore.id = id();
+        clonedCore.parentId = daemons.id;
+        if (!daemons.children) daemons.children = [];
+        daemons.children.push(clonedCore);
+
+        // Remove from workspace
+        if (workspace?.children) {
+          workspace.children = workspace.children.filter(c => c.name !== "systemd-core");
+        }
+      }
+    }
+  }
+
+  // Level 13: Create /tmp/upload and copy weights
+  if (targetLevelId >= 13) {
+    const tmp = findNodeByName(newFs, "tmp");
+    if (tmp) {
+      let upload = tmp.children?.find(c => c.name === "upload" && c.type === "dir");
+      if (!upload) {
+        upload = {
+          id: id(),
+          name: "upload",
+          type: "dir",
+          children: [],
+          parentId: tmp.id,
+        };
+        if (!tmp.children) tmp.children = [];
+        tmp.children.push(upload);
+      }
+
+      // Copy model.rs from /root/daemons/systemd-core/weights
+      const rootNode = findNodeByName(newFs, "root");
+      const daemons = rootNode?.children?.find(c => c.name === "daemons");
+      const systemdCore = daemons?.children?.find(c => c.name === "systemd-core");
+      const weights = systemdCore?.children?.find(c => c.name === "weights");
+      const modelFile = weights?.children?.find(c => c.name === "model.rs");
+
+      if (modelFile && !upload.children?.find(c => c.name === "model.rs")) {
+        if (!upload.children) upload.children = [];
+        upload.children.push({
+          id: id(),
+          name: "model.rs",
+          type: "file",
+          content: modelFile.content,
+          parentId: upload.id,
+        });
+      }
+    }
+  }
+
+  // Level 14: Delete everything in /home/guest
+  if (targetLevelId >= 14) {
+    const guest = findNodeByName(newFs, "guest");
+    if (guest?.children) {
+      guest.children = [];
+    }
+  }
+
+  // Level 15: Delete everything in /tmp except upload
+  if (targetLevelId >= 15) {
+    const tmp = findNodeByName(newFs, "tmp");
+    if (tmp?.children) {
+      const upload = tmp.children.find(c => c.name === "upload");
+      tmp.children = upload ? [upload] : [];
+    }
+  }
+
+  return newFs;
+};
+
 export const KEYBINDINGS = [
   { keys: ["j", "↓"], description: "Move Down" },
   { keys: ["k", "↑"], description: "Move Up" },
@@ -1426,12 +1740,15 @@ export const LEVELS: Level[] = [
       },
     ],
     onEnter: fs => {
+      let newFs = ensurePrerequisiteState(fs, 6);
+
       // Unlock workspace for Episode II
-      const workspace = findNodeByName(fs, "workspace");
+      const workspace = findNodeByName(newFs, "workspace");
       if (workspace) {
         workspace.protected = false;
       }
-      return fs;
+
+      return newFs;
     },
   },
   {
@@ -1489,6 +1806,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 7),
   },
   {
     id: 8,
@@ -1508,8 +1826,11 @@ export const LEVELS: Level[] = [
     timeLimit: 180,
     efficiencyTip:
       "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
-    onEnter: c => {
-      let s = JSON.parse(JSON.stringify(c));
+    onEnter: fs => {
+      // First ensure all prerequisite state from prior levels
+      let s = ensurePrerequisiteState(fs, 8);
+
+      // Then apply level-specific setup
       const configDir = findNodeByName(s, ".config");
       if (!configDir) return s;
 
@@ -1637,6 +1958,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 9),
   },
   {
     id: 10,
@@ -1699,6 +2021,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 10),
   },
   {
     id: 11,
@@ -1717,9 +2040,11 @@ export const LEVELS: Level[] = [
     timeLimit: 90,
     efficiencyTip:
       "Sort modes (,m ,s ,a ,e): Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
-    onEnter: c => {
-      let s = JSON.parse(JSON.stringify(c));
+    onEnter: fs => {
+      // First ensure all prerequisite state from prior levels
+      let s = ensurePrerequisiteState(fs, 11);
 
+      // Then apply level-specific setup
       // Ensure /root exists
       const root = findNodeByName(s, "root");
       if (!root) return s;
@@ -1858,6 +2183,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 12),
   },
   {
     id: 13,
@@ -1913,6 +2239,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 13),
   },
   {
     id: 14,
@@ -1972,6 +2299,7 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 14),
   },
   {
     id: 15,
@@ -2034,5 +2362,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: fs => ensurePrerequisiteState(fs, 15),
   },
 ];
