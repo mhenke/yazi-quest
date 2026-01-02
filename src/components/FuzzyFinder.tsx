@@ -16,8 +16,23 @@ interface FuzzyFinderProps {
 const highlightMatch = (text: string, rawQuery: string, accentClass: string) => {
   if (!rawQuery) return text;
   const query = rawQuery.toLowerCase();
-  let qi = 0;
+  const lower = text.toLowerCase();
 
+  // Prefer contiguous substring match first (e.g., "thum" in "thumbnails")
+  const idx = lower.indexOf(query);
+  if (idx >= 0) {
+    return text.split("").map((ch, i) => {
+      const isMatch = i >= idx && i < idx + query.length;
+      return (
+        <span key={`${text}-${i}`} className={isMatch ? `${accentClass} font-semibold` : undefined}>
+          {ch}
+        </span>
+      );
+    });
+  }
+
+  // Fallback to sequential fuzzy highlight (original behavior)
+  let qi = 0;
   return text.split("").map((ch, idx) => {
     const isMatch = qi < query.length && ch.toLowerCase() === query[qi];
     if (isMatch) qi += 1;
@@ -76,21 +91,23 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
           return a.path.localeCompare(b.path);
         });
     } else {
-      // FZF-style: include directories and files recursively from current path
-      return getRecursiveContent(gameState.fs, gameState.currentPath).map(c => {
-        const display = (c as any).display;
-        const safePath =
-          typeof display === "string" && display
-            ? display
-            : String((c as any).path || []).replace(/,/g, "/");
-        return {
-          path: safePath,
-          pathIds: (c as any).path,
-          type: c.type,
-          id: c.id,
-          score: 0,
-        };
-      });
+      // FZF-style: files only, recursively from current path (matches Yazi fzf behavior)
+      return getRecursiveContent(gameState.fs, gameState.currentPath)
+        .filter(c => c.type === "file" || c.type === "archive")
+        .map(c => {
+          const display = (c as any).display;
+          const safePath =
+            typeof display === "string" && display
+              ? display
+              : String((c as any).path || []).replace(/,/g, "/");
+          return {
+            path: safePath,
+            pathIds: (c as any).path,
+            type: c.type,
+            id: c.id,
+            score: 0,
+          };
+        });
     }
   }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
 
@@ -150,26 +167,28 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   const currentIndex = filteredCandidates.length > 0 ? (gameState.fuzzySelectedIndex || 0) + 1 : 0;
   const filteredCount = filteredCandidates.length || 0;
-  const countDisplay = `${currentIndex}/${filteredCount || totalCount}`;
+  const countDisplay = isZoxide
+    ? `${currentIndex}/${filteredCount || totalCount}`
+    : `< ${filteredCount}/${totalCount}`;
 
   return (
     <div
-      className={`absolute inset-y-0 left-0 ${isZoxide ? "right-[30%] lg:right-[34%]" : "right-0"} z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : "border border-zinc-900"}`}
+      className={`absolute inset-0 ${isZoxide ? "right-[30%] lg:right-[34%]" : ""} z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : "border border-zinc-900"}`}
     >
       <div className="px-4 py-2 text-[11px] text-zinc-500 flex items-center gap-3 border-b border-zinc-900">
         <span className={`${accentTextClass} font-semibold tabular-nums`}>{countDisplay}</span>
-        <span className="uppercase tracking-[0.2em] text-zinc-600">
-          {isZoxide ? "zoxide jump" : "fzf find"}
-        </span>
         {isZoxide && (
-          <div className="ml-auto flex items-center gap-2 text-sm">
-            <span className={`${accentTextClass} font-semibold`}>&gt;</span>
-            {query ? (
-              <span className="text-zinc-100 truncate max-w-[55vw]">{query}</span>
-            ) : (
-              <span className="text-zinc-600 italic">enter search here...</span>
-            )}
-          </div>
+          <>
+            <span className="uppercase tracking-[0.2em] text-zinc-600">zoxide jump</span>
+            <div className="ml-auto flex items-center gap-2 text-sm">
+              <span className={`${accentTextClass} font-semibold`}>&gt;</span>
+              {query ? (
+                <span className="text-zinc-100 truncate max-w-[55vw]">{query}</span>
+              ) : (
+                <span className="text-zinc-600 italic">enter search here...</span>
+              )}
+            </div>
+          </>
         )}
       </div>
 

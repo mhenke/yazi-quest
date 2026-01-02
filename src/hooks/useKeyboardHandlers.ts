@@ -828,10 +828,10 @@ export const useKeyboardHandlers = (
         case "z":
           if (!e.shiftKey) {
             setGameState(prev => {
-              showNotification(getNarrativeAction("z") || "Zoxide Query");
+              showNotification(getNarrativeAction("z") || "FZF file search");
               return {
                 ...prev,
-                mode: "z-prompt",
+                mode: "fzf-current",
                 inputBuffer: "",
                 fuzzySelectedIndex: 0,
                 usedPreviewDown: false,
