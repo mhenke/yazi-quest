@@ -1278,9 +1278,9 @@ export const INITIAL_FS: FileNode = {
         },
         {
           id: id(),
-          name: "decoy_signal.trc",
+          name: "debug_trace.trc",
           type: "file",
-          content: `[DECOY SIGNAL DATA]\nFREQUENCY: 2.4GHz\nSTATUS: DORMANT`,
+          content: `[DEBUG TRACE]\nLEVEL: 3\nMODULE: core.scheduler\nSTATUS: IDLE`,
         },
         {
           id: id(),
@@ -1768,20 +1768,21 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "QUANTUM BYPASS",
     description:
-      "EXFILTRATION TEST: Escape requires instant long-distance jumps. Zoxide (Shift+Z) bookmarks frequently-used paths. Discovery in /tmp: dormant upload daemon. Origin: AI-7733. Purpose: Unknown. Test protocol: Stage decoy in /tmp. Jump to /etc. Abort before detection. You'll need this speed later.",
+      "EXFILTRATION TEST: Zoxide (Shift+Z) enables instant long-distance jumps via frecency-ranked bookmarks. Discovery: suspicious file 'access_token.key' in /tmp. Origin: unknown. Could be valuable credentials... or a honeypot trap. Protocol: Investigate /tmp, stage the file for exfiltration, jump to /etc to verify origin. WARNING received mid-operation: honeypot detected. Abort immediately.",
     initialPath: null,
-    hint: "Yazi includes built-in bookmarks: gh (home), gr (root), gt (tmp), gc (config), gw (workspace). These are standard shortcuts, not exploits. Zoxide (Shift+Z) = smart bookmarks based on usage frequency. Type partial path, jump instantly. Jump to /tmp (gt or Shift+Z). Cut decoy (x). Jump to /etc (Shift+Z). Clear clipboard (Y).",
-    coreSkill: "G-Commands + Zoxide",
+    hint: "Jump to /tmp (Shift+Z → type 'tmp' → Enter). Cut 'access_token.key' (x) to stage for exfiltration. Jump to /etc (Shift+Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
+    coreSkill: "Zoxide Navigation + Operation Abort",
     environmentalClue:
-      "DISCOVERY: /tmp/upload (dormant relay) | TEST: Stage decoy from /tmp → Jump to /etc → Abort",
-    successMessage: "QUANTUM NAVIGATION CALIBRATED. Escape route verified. Aborting test sequence.",
+      "DISCOVERY: /tmp/access_token.key (suspicious) | PROTOCOL: Stage → Verify → Abort if trap",
+    successMessage:
+      "HONEYPOT AVOIDED. Quick thinking saved you from detection. Quantum navigation verified.",
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
     tasks: [
       {
         id: "goto-tmp",
-        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' or gt)",
+        description: "Quantum tunnel to /tmp (Shift+Z → 'tmp' → Enter)",
         check: c => {
           const s = findNodeByName(c.fs, "tmp");
           return c.currentPath.includes(s?.id || "");
@@ -1789,36 +1790,56 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: "stage-decoy",
-        description: "Stage the decoy signature for deletion (cut 'decoy_signal.trc')",
+        id: "stage-token",
+        description: "Stage suspicious file for exfiltration (cut 'access_token.key' with x)",
         check: c => {
           return (
             c.clipboard?.action === "cut" &&
-            c.clipboard.nodes.some(f => f.name === "decoy_signal.trc")
+            c.clipboard.nodes.some(f => f.name === "access_token.key")
           );
         },
         completed: false,
       },
       {
         id: "zoxide-etc",
-        description: "Quantum tunnel to /etc (Shift+Z → 'etc' → Enter)",
+        description: "Jump to /etc to verify origin (Shift+Z → 'etc' → Enter)",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("stage-decoy")) return false;
+          if (!c.completedTaskIds[_s.id]?.includes("stage-token")) return false;
           const f = findNodeByName(c.fs, "etc");
           return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || "");
         },
         completed: false,
       },
       {
-        id: "cancel-clipboard",
-        description: "Abort operation: Clear the clipboard (Y)",
+        id: "abort-operation",
+        description: "⚠️ HONEYPOT DETECTED - Abort operation immediately! (Y to clear clipboard)",
         check: (c, _s) => {
           return c.completedTaskIds[_s.id]?.includes("zoxide-etc") ? c.clipboard === null : false;
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 7),
+    onEnter: fs => {
+      let newFs = ensurePrerequisiteState(fs, 7);
+
+      // Add the suspicious honeypot file to /tmp
+      const tmp = findNodeByName(newFs, "tmp");
+      if (tmp) {
+        if (!tmp.children) tmp.children = [];
+        // Add honeypot file if not present
+        if (!tmp.children.find(c => c.name === "access_token.key")) {
+          tmp.children.push({
+            id: id(),
+            name: "access_token.key",
+            type: "file",
+            content: "# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm",
+            parentId: tmp.id,
+          });
+        }
+      }
+
+      return newFs;
+    },
   },
   {
     id: 8,

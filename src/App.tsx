@@ -692,10 +692,14 @@ export default function App() {
             }
           } else {
             if (selected.pathIds && Array.isArray(selected.pathIds)) {
-              // FZF Logic: Combine current path with selected relative pathIds
-              const fullPath = [...gameState.currentPath, ...selected.pathIds];
+              // FZF Logic: pathIds from getRecursiveContent are absolute (start with fs.id),
+              // but be defensive and handle relative arrays too.
+              const fullPath =
+                Array.isArray(selected.pathIds) && selected.pathIds[0] === gameState.fs.id
+                  ? selected.pathIds
+                  : [...gameState.currentPath, ...(selected.pathIds || [])];
               const targetDir = fullPath.slice(0, -1);
-              const fileName = selected.pathIds[selected.pathIds.length - 1];
+              const fileName = fullPath[fullPath.length - 1];
 
               // Find the index of the selected file in the parent directory
               const parentNode = getNodeByPath(gameState.fs, targetDir);
@@ -1341,7 +1345,7 @@ export default function App() {
           {(gameState.mode === "zoxide-jump" || gameState.mode === "fzf-current") && (
             <FuzzyFinder
               gameState={gameState}
-              onSelect={(path, isZoxide) => {
+              onSelect={(path, isZoxide, pathIds) => {
                 if (isZoxide) {
                   // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
                   const parts = path.split("/").filter(Boolean);
@@ -1393,8 +1397,54 @@ export default function App() {
                     setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
                   }
                 } else {
-                  // FZF handling logic (inline inside component or here if lifted)
-                  // For now the fuzzy finder component uses callback for FZF to navigate
+                  // FZF click/select handling: pathIds contains node id path relative to currentPath
+                  if (pathIds && Array.isArray(pathIds)) {
+                    const fullPathAbs =
+                      Array.isArray(pathIds) && pathIds[0] === gameState.fs.id
+                        ? pathIds
+                        : [...gameState.currentPath, ...pathIds];
+                    const targetDir = fullPathAbs.slice(0, -1);
+                    const fileId = fullPathAbs[fullPathAbs.length - 1];
+
+                    const parentNode = getNodeByPath(gameState.fs, targetDir);
+
+                    let sortedChildren = parentNode?.children || [];
+                    if (!gameState.showHidden) {
+                      sortedChildren = sortedChildren.filter(c => !c.name.startsWith("."));
+                    }
+                    sortedChildren = sortNodes(
+                      sortedChildren,
+                      gameState.sortBy,
+                      gameState.sortDirection
+                    );
+
+                    const fileIndex = sortedChildren.findIndex(c => c.id === fileId);
+
+                    setGameState(prev => {
+                      const targetDirNode = getNodeByPath(prev.fs, targetDir);
+                      const newFilters = { ...prev.filters };
+                      if (targetDirNode) {
+                        delete newFilters[targetDirNode.id];
+                      }
+
+                      return {
+                        ...prev,
+                        mode: "normal",
+                        currentPath: targetDir,
+                        cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+                        filters: newFilters,
+                        inputBuffer: "",
+                        history: [...prev.history, prev.currentPath],
+                        future: [],
+                        notification: `Found: ${path}`,
+                        usedPreviewDown: false,
+                        usedPreviewUp: false,
+                        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+                      };
+                    });
+                  } else {
+                    setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+                  }
                 }
               }}
               onClose={() => setGameState(p => ({ ...p, mode: "normal" }))}
