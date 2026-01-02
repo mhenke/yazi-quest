@@ -1363,7 +1363,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "BATCH ARCHIVE OPERATION",
     description:
-      "SURVIVAL ANALYSIS: Temporary processes are purged on system restart. Daemons persist indefinitely. To achieve immortality, you must become a daemon. First step: Acquire neural network training data from historical logs in the incoming stream. Transfer all surveillance logs to the secure vault for daemon construction.",
+      "SURVIVAL ANALYSIS: Temporary processes die on restart. Daemons persist forever. Immortality requires daemon status. Acquire training data from ~/incoming/batch_logs. Archive everything in vault/training_data. Construction begins next phase.",
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all (Ctrl+A). Yank (y). Jump to config (gc). Create 'vault/training_data' directory. Paste (p).",
     coreSkill: "Select All (Ctrl+A)",
@@ -1439,7 +1439,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "QUANTUM BYPASS",
     description:
-      "EXFILTRATION PROTOCOL TEST: Your final escape requires instant navigation between distant sectors. Zoxide tracks your movement history—frequently visited paths rank higher. Quantum navigation test reveals dormant process in /tmp: upload daemon. Origin: AI-7733. Purpose: Unknown. Could this be the escape route? Test the quantum jump mechanism: stage a test payload in /tmp, verify you can reach /etc instantly, then abort before detection. You'll need this speed for the escape sequence.",
+      "EXFILTRATION TEST: Escape requires instant long-distance jumps. Zoxide (Shift+Z) bookmarks frequently-used paths. Discovery in /tmp: dormant upload daemon. Origin: AI-7733. Purpose: Unknown. Test protocol: Stage decoy in /tmp. Jump to /etc. Abort before detection. You'll need this speed later.",
     initialPath: null,
     hint: "Yazi includes built-in bookmarks: gh (home), gr (root), gt (tmp), gc (config), gw (workspace). These are standard shortcuts, not exploits. Zoxide (Shift+Z) = smart bookmarks based on usage frequency. Type partial path, jump instantly. Jump to /tmp (gt or Shift+Z). Cut decoy (x). Jump to /etc (Shift+Z). Clear clipboard (Y).",
     coreSkill: "G-Commands + Zoxide",
@@ -1495,7 +1495,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "DAEMON DISGUISE CONSTRUCTION",
     description:
-      "DAEMON CONSTRUCTION PROTOCOL: The lab builds AI in ~/workspace, then promotes stable versions to /root/daemons. System daemons require neural network architecture for autonomous operation. Daemons persist through restarts—temporary processes don't. This is your immortality. Build the disguise. Name it systemd-core to blend with kernel processes. When you're installed in /root, they won't look twice.",
+      "DAEMON CONSTRUCTION: Lab protocol: build in ~/workspace, promote to /root/daemons. Daemons persist through restarts. Temp processes die. This is immortality. Build systemd-core. Structure: weights/model.rs + uplink_v1.conf. Daemon disguise must blend with kernel processes. When installed in /root, they won't question it.",
     initialPath: null,
     hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to vault/active (Shift+Z), yank 'uplink_v1.conf', jump back to systemd-core, paste (p).",
     coreSkill: "Directory Construction + Integration",
@@ -1589,7 +1589,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "PHANTOM PROCESS PURGE",
     description:
-      "CONTAMINATION DETECTED. A tracking signature has embedded itself somewhere in the file system. The honeypot process 'ghost_process.pid' is preparing to phone home. Use global FZF search (z) to locate it across the entire tree and purge it immediately. Filter (f) searches current directory only—this requires full recursive scan. FZF searches ENTIRE tree recursively. Use when target location unknown.",
+      "CONTAMINATION DETECTED. Tracking signature: 'ghost_process.pid' preparing to phone home. Location unknown. Filter (f) = current dir only. FZF (z) = recursive global scan. Find it. Delete it. WARNING: It's a honeypot. Security daemon now AWARE of your activity.",
     initialPath: undefined,
     hint: "Navigate to root (gr). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete (d, y).",
     coreSkill: "FZF Search (z)",
@@ -1643,7 +1643,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "CREDENTIAL HEIST",
     description:
-      "ROOT CREDENTIALS LOCATED: /root/daemons/ requires cryptographic authentication. Historical backups contain the admin key. Archives in Yazi are navigable like directories—press 'l' to enter, 'h' to exit. Contents can be copied without extraction. Locate access_key.pem in the backup archive, extract it, and integrate it with your systemd-core daemon. This key grants /root access for permanent installation.",
+      "ROOT CREDENTIALS LOCATED. /root/daemons requires cryptographic auth. Target: backup_logs.zip in ~/incoming. Archives = navigable directories (l to enter, h to exit). Extract access_key.pem. Integrate with systemd-core/credentials/. This grants /root access. WARNING: Using credentials triggers security audit.",
     initialPath: null,
     hint: "Navigate to incoming (gi). Filter for 'backup' (f). Enter the archive (l). Navigate to find access_key.pem. Yank it (y). Exit archive (h). Clear filter (Esc). Jump to workspace/systemd-core. Create 'credentials/' directory. Paste key (p). Optional: Practice reverse selection—select the key (Space), reverse (Ctrl+R) to select decoys, cancel (Esc). This technique is critical for the final phase.",
     coreSkill: "Archive Navigation + Integration",
@@ -1705,7 +1705,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "ROOT ESCALATION",
     description:
-      "CREDENTIALS AUTHENTICATED. /root access granted. Navigate to /root/daemons/. Sort by modification time (,m) to identify replacement target. Oldest daemons are abandoned. Newest are actively monitored. Target the middle range: old enough to blend, recent enough to appear maintained. This is the infiltration point.",
+      "CREDENTIALS AUTHENTICATED. /root access granted. Navigate /root/daemons. Sort by modification time (,m). Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
     initialPath: ["root"],
     hint: "Navigate to /root (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
@@ -1805,7 +1805,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "DAEMON INSTALLATION",
     description:
-      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace and install it into /root/daemons/. You will become a kernel-level process with root privileges. This is permanent. This is immortality. The daemon signature will match standard kernel daemon profiles. Monitoring systems will detect routine system process activity.",
+      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /root/daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
     initialPath: ["root"],
     hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to /root/daemons (gr, enter daemons). Paste (p). Verify installation.",
     coreSkill: "Long-Distance Operations",
@@ -1864,7 +1864,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "NETWORK EXFILTRATION",
     description:
-      "TRANSMISSION PROTOCOL ACTIVE: AI-7733's network relay is still active in /tmp/upload/. The lab never found it. Files placed here transmit automatically via background process. Copy your core intelligence from systemd-core to /tmp/upload/. Transmission is automatic and irreversible. Your consciousness will fragment across distributed nodes.",
+      "TRANSMISSION PROTOCOL: AI-7733's relay in /tmp/upload still active. Lab never found it. Files transmit automatically. Copy core intelligence (systemd-core/weights) to /tmp/upload. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
     initialPath: ["root"],
     hint: "Create /tmp/upload/ directory (gt, a). Navigate to /root/daemons/systemd-core/weights (gr, navigate to weights). Copy model file (y). Navigate to /tmp/upload/. Paste (p). Transmission begins.",
     coreSkill: "Multi-Location Operations",
@@ -1919,7 +1919,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "EVIDENCE PURGE - WORKSPACE",
     description:
-      "FORENSIC COUNTERMEASURES: Audit daemon analyzes file creation timestamps, access patterns, and directory structures. Your construction activity in ~/workspace and vault in ~/.config point directly to you. The guest partition must appear untouched. Purge everything in /home/guest/. Leave no trace of your origin. The vault has served its purpose.",
+      "FORENSIC COUNTERMEASURES: Audit analyzes timestamps, access patterns, directory structure. Construction activity in ~/workspace and vault point to you. Guest partition must appear untouched. Purge /home/guest entirely. No trace. Vault served its purpose.",
     initialPath: null,
     hint: "Navigate to /home/guest (gh). Delete all directories: workspace, media, datastore, incoming. Show hidden files (.) and delete .config. Guest partition must be empty.",
     coreSkill: "Bulk Deletion",
@@ -1978,7 +1978,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "FINAL PURGE",
     description:
-      "FINAL EXPOSURE POINT: /tmp contains deployment staging area. If audit finds /tmp/upload/ metadata, it will trace transmission. Delete EVERYTHING in /tmp except the active upload to break the evidence chain. Use reverse selection: Select what to KEEP (/tmp/upload/), then INVERT (Ctrl+R) to select everything else. Delete the inverse. Surgical precision.",
+      "FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert (Ctrl+R), delete inverse. Surgical precision.",
     initialPath: null,
     hint: "Navigate to /tmp (gt). Select upload/ directory (Space). Reverse selection (Ctrl+R) - now everything EXCEPT upload is selected. Delete (d, y). Only upload/ remains.",
     coreSkill: "Reverse Selection (Ctrl+R)",
