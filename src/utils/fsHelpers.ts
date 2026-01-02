@@ -77,13 +77,25 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
 }
 
 export function getRecursiveContent(root: FileNode, path: string[] | undefined): FileNode[] {
-  const node = getNodeByPath(root, path) || root;
+  const startNode = getNodeByPath(root, path) || root;
+  const startPath = path && path.length ? [...path] : [root.id];
   const out: FileNode[] = [];
-  const stack: FileNode[] = node.children ? [...node.children] : [];
+  // Stack items keep track of node and its id-path from root for display/path compatibility
+  const stack: { node: FileNode; pathIds: string[] }[] = (startNode.children || []).map(c => ({
+    node: c,
+    pathIds: [...startPath, c.id],
+  }));
   while (stack.length) {
-    const n = stack.pop()!;
-    out.push(n);
-    if (n.children) stack.push(...n.children);
+    const { node: n, pathIds } = stack.pop()!;
+    // Augment node with runtime-only helpers expected elsewhere
+    (n as any).path = [...pathIds];
+    (n as any).display = resolvePath(root, [...pathIds]);
+    out.push(n as FileNode);
+    if (n.children) {
+      for (const c of n.children) {
+        stack.push({ node: c, pathIds: [...pathIds, c.id] });
+      }
+    }
   }
   return out;
 }

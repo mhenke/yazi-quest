@@ -128,7 +128,8 @@ export interface GameState {
     | "fzf-current"
     | "overwrite-confirm"
     | "sort"
-    | "g-command";
+    | "g-command"
+    | "z-prompt";
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   sortBy: SortBy; // Global sticky sort setting
@@ -147,7 +148,7 @@ export interface GameState {
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
-    showMap: boolean; // Toggle for quest map modal
+  showMap: boolean; // Toggle for quest map modal
   showHint: boolean; // Toggle for hint modal
   hintStage: number; // Progressive hint disclosure (0=vague, 1=partial, 2=detailed)
   showHidden: boolean; // Toggle for showing hidden files (starting with .)

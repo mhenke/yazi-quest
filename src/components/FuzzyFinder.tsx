@@ -62,9 +62,19 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   // 2. Apply Filter - preserve existing sort order from baseItems
   const filteredCandidates = useMemo(() => {
-    return baseItems.filter(c =>
-      c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase())
-    );
+    const q = (gameState.inputBuffer || "").toLowerCase();
+    return baseItems.filter(c => {
+      // Support multiple candidate shapes: { path: string } or legacy nodes with .display
+      const rawPath =
+        c && typeof (c as any).path === "string"
+          ? (c as any).path
+          : c && typeof (c as any).display === "string"
+            ? (c as any).display
+            : "";
+      if (!rawPath) return false;
+      const p = String(rawPath);
+      return p.toLowerCase().includes(q);
+    });
   }, [baseItems, gameState.inputBuffer]);
 
   // 3. Determine Preview Items

@@ -7,12 +7,12 @@ const id = () => Math.random().toString(36).substr(2, 9);
 
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
-// all the changes a player would have made in previous levels
+// all the changes a player would have made in PRIOR levels (not the current one)
 const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
   let newFs = JSON.parse(JSON.stringify(fs));
 
   // Level 2: Delete tracker files from media/photos
-  if (targetLevelId >= 2) {
+  if (targetLevelId > 2) {
     const photos = findNodeByName(newFs, "photos");
     if (photos?.children) {
       photos.children = photos.children.filter(c => !c.name.startsWith("tracker_"));
@@ -20,7 +20,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 3: Create sanitized/ directory in datastore
-  if (targetLevelId >= 3) {
+  if (targetLevelId > 3) {
     const datastore = findNodeByName(newFs, "datastore");
     if (datastore && !datastore.children?.find(c => c.name === "sanitized")) {
       if (!datastore.children) datastore.children = [];
@@ -35,7 +35,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 4: Rename network_log.txt to backup.log
-  if (targetLevelId >= 4) {
+  if (targetLevelId > 4) {
     const datastore = findNodeByName(newFs, "datastore");
     const networkLog = datastore?.children?.find(c => c.name === "network_log.txt");
     if (networkLog) {
@@ -44,7 +44,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 5: Create vault/active structure and move uplink files
-  if (targetLevelId >= 5) {
+  if (targetLevelId > 5) {
     const config = findNodeByName(newFs, ".config");
     if (config) {
       let vault = config.children?.find(c => c.name === "vault" && c.type === "dir");
@@ -107,7 +107,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 6: Create vault/training_data and copy batch logs
-  if (targetLevelId >= 6) {
+  if (targetLevelId > 6) {
     const config = findNodeByName(newFs, ".config");
     const vault = config?.children?.find(c => c.name === "vault");
     if (vault) {
@@ -142,8 +142,10 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
     }
   }
 
+  // Level 7: No filesystem changes (just zoxide testing)
+
   // Level 8: Create systemd-core structure in workspace
-  if (targetLevelId >= 8) {
+  if (targetLevelId > 8) {
     const workspace = findNodeByName(newFs, "workspace");
     if (workspace) {
       let systemdCore = workspace.children?.find(
@@ -205,8 +207,16 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
     }
   }
 
+  // Level 9: Delete ghost_process.pid from /tmp
+  if (targetLevelId > 9) {
+    const tmp = findNodeByName(newFs, "tmp");
+    if (tmp?.children) {
+      tmp.children = tmp.children.filter(c => c.name !== "ghost_process.pid");
+    }
+  }
+
   // Level 10: Add credentials to systemd-core
-  if (targetLevelId >= 10) {
+  if (targetLevelId > 10) {
     const workspace = findNodeByName(newFs, "workspace");
     const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
     if (systemdCore) {
@@ -238,8 +248,10 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
     }
   }
 
+  // Level 11: No filesystem changes (just sorting practice)
+
   // Level 12: Move systemd-core to /root/daemons
-  if (targetLevelId >= 12) {
+  if (targetLevelId > 12) {
     const rootNode = findNodeByName(newFs, "root");
     let daemons = rootNode?.children?.find(c => c.name === "daemons" && c.type === "dir");
     if (daemons) {
@@ -263,7 +275,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 13: Create /tmp/upload and copy weights
-  if (targetLevelId >= 13) {
+  if (targetLevelId > 13) {
     const tmp = findNodeByName(newFs, "tmp");
     if (tmp) {
       let upload = tmp.children?.find(c => c.name === "upload" && c.type === "dir");
@@ -300,7 +312,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 14: Delete everything in /home/guest
-  if (targetLevelId >= 14) {
+  if (targetLevelId > 14) {
     const guest = findNodeByName(newFs, "guest");
     if (guest?.children) {
       guest.children = [];
@@ -308,7 +320,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
   }
 
   // Level 15: Delete everything in /tmp except upload
-  if (targetLevelId >= 15) {
+  if (targetLevelId > 15) {
     const tmp = findNodeByName(newFs, "tmp");
     if (tmp?.children) {
       const upload = tmp.children.find(c => c.name === "upload");
