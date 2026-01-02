@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { sortNodes } from "../utils/sortHelpers";
 import { FileNode, Level } from "../types";
 import {
   FileText,
@@ -90,22 +91,25 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
                 {!node.children || node.children.length === 0 ? (
                   <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>
                 ) : (
-                  node.children.map(child => {
-                    const { icon: Icon, color } = getPreviewIcon(child);
-                    return (
-                      <div
-                        key={child.id}
-                        className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-900/50 rounded cursor-default"
-                      >
-                        <Icon size={12} className={color} />
-                        <span
-                          className={`text-xs font-mono truncate ${child.type === "dir" ? "text-blue-300" : "text-zinc-400"}`}
+                  (() => {
+                    const sorted = sortNodes(node.children || [], "natural", "asc");
+                    return sorted.map(child => {
+                      const { icon: Icon, color } = getPreviewIcon(child);
+                      return (
+                        <div
+                          key={child.id}
+                          className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-900/50 rounded cursor-default"
                         >
-                          {child.name}
-                        </span>
-                      </div>
-                    );
-                  })
+                          <Icon size={12} className={color} />
+                          <span
+                            className={`text-xs font-mono truncate ${child.type === "dir" ? "text-blue-300" : "text-zinc-400"}`}
+                          >
+                            {child.name}
+                          </span>
+                        </div>
+                      );
+                    });
+                  })()
                 )}
               </div>
             )}

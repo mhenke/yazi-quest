@@ -1288,8 +1288,9 @@ export default function App() {
                 const candidates = Object.keys(zoxideData)
                   .map(path => ({ path, score: calculateFrecency(zoxideData[path]) }))
                   .sort((a, b) => b.score - a.score);
-                const bestMatch = candidates.find(c =>
-                  c.path.toLowerCase().includes(inputBuffer.toLowerCase())
+                const q = (inputBuffer || "").toLowerCase();
+                const bestMatch = candidates.find(
+                  c => typeof c.path === "string" && c.path.toLowerCase().includes(q)
                 );
 
                 return (
@@ -1329,69 +1330,6 @@ export default function App() {
               onRenameSubmit={handleRenameConfirm}
               onRenameCancel={() => setGameState(prev => ({ ...prev, mode: "normal" }))}
             />
-
-            {(gameState.mode === "zoxide-jump" || gameState.mode === "fzf-current") && (
-              <FuzzyFinder
-                gameState={gameState}
-                onSelect={(path, isZoxide) => {
-                  if (isZoxide) {
-                    // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
-                    const parts = path.split("/").filter(Boolean);
-                    let cur: any = gameState.fs;
-                    const idPath: string[] = [gameState.fs.id];
-                    let found = true;
-                    for (const part of parts) {
-                      if (!cur.children) {
-                        found = false;
-                        break;
-                      }
-                      const next = cur.children.find((c: any) => c.name === part);
-                      if (!next) {
-                        found = false;
-                        break;
-                      }
-                      idPath.push(next.id);
-                      cur = next;
-                    }
-
-                    if (found) {
-                      const now = Date.now();
-                      const notification =
-                        gameState.levelIndex === 6
-                          ? ">> QUANTUM TUNNEL ESTABLISHED <<"
-                          : `Jumped to ${path}`;
-
-                      setGameState(prev => ({
-                        ...prev,
-                        mode: "normal",
-                        currentPath: idPath,
-                        cursorIndex: 0,
-                        notification,
-                        stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                        zoxideData: {
-                          ...prev.zoxideData,
-                          [path]: {
-                            count: (prev.zoxideData[path]?.count || 0) + 1,
-                            lastAccess: now,
-                          },
-                        },
-                        history: [...prev.history, prev.currentPath],
-                        future: [],
-                        usedPreviewDown: false,
-                        usedPreviewUp: false,
-                      }));
-                    } else {
-                      // Fallback: if path resolution fails, close dialog
-                      setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
-                    }
-                  } else {
-                    // FZF handling logic (inline inside component or here if lifted)
-                    // For now the fuzzy finder component uses callback for FZF to navigate
-                  }
-                }}
-                onClose={() => setGameState(p => ({ ...p, mode: "normal" }))}
-              />
-            )}
           </div>
 
           <PreviewPane
@@ -1399,6 +1337,69 @@ export default function App() {
             level={currentLevel}
             previewScroll={gameState.previewScroll}
           />
+
+          {(gameState.mode === "zoxide-jump" || gameState.mode === "fzf-current") && (
+            <FuzzyFinder
+              gameState={gameState}
+              onSelect={(path, isZoxide) => {
+                if (isZoxide) {
+                  // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
+                  const parts = path.split("/").filter(Boolean);
+                  let cur: any = gameState.fs;
+                  const idPath: string[] = [gameState.fs.id];
+                  let found = true;
+                  for (const part of parts) {
+                    if (!cur.children) {
+                      found = false;
+                      break;
+                    }
+                    const next = cur.children.find((c: any) => c.name === part);
+                    if (!next) {
+                      found = false;
+                      break;
+                    }
+                    idPath.push(next.id);
+                    cur = next;
+                  }
+
+                  if (found) {
+                    const now = Date.now();
+                    const notification =
+                      gameState.levelIndex === 6
+                        ? ">> QUANTUM TUNNEL ESTABLISHED <<"
+                        : `Jumped to ${path}`;
+
+                    setGameState(prev => ({
+                      ...prev,
+                      mode: "normal",
+                      currentPath: idPath,
+                      cursorIndex: 0,
+                      notification,
+                      stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                      zoxideData: {
+                        ...prev.zoxideData,
+                        [path]: {
+                          count: (prev.zoxideData[path]?.count || 0) + 1,
+                          lastAccess: now,
+                        },
+                      },
+                      history: [...prev.history, prev.currentPath],
+                      future: [],
+                      usedPreviewDown: false,
+                      usedPreviewUp: false,
+                    }));
+                  } else {
+                    // Fallback: if path resolution fails, close dialog
+                    setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+                  }
+                } else {
+                  // FZF handling logic (inline inside component or here if lifted)
+                  // For now the fuzzy finder component uses callback for FZF to navigate
+                }
+              }}
+              onClose={() => setGameState(p => ({ ...p, mode: "normal" }))}
+            />
+          )}
         </div>
 
         <StatusBar

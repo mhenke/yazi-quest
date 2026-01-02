@@ -1,26 +1,17 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import { calculateFrecency, GameState, FileNode } from "../types";
-import { getRecursiveContent, getNodeByPath } from "../utils/fsHelpers";
+import {
+  getRecursiveContent,
+  getNodeByPath,
+  getAllDirectoriesWithPaths,
+  resolvePath,
+} from "../utils/fsHelpers";
 
 interface FuzzyFinderProps {
   gameState: GameState;
   onSelect: (path: string, isZoxide: boolean) => void;
   onClose: () => void;
 }
-
-const findNodeFromPath = (root: FileNode, pathStr: string): FileNode | null => {
-  if (pathStr === "/") return root;
-  const parts = pathStr.split("/").filter(p => p);
-
-  let current = root;
-  for (const part of parts) {
-    if (!current.children) return null;
-    const next = current.children.find(c => c.name === part);
-    if (!next) return null;
-    current = next;
-  }
-  return current;
-};
 
 const highlightMatch = (text: string, rawQuery: string, accentClass: string) => {
   if (!rawQuery) return text;
@@ -72,7 +63,12 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   // 1. Get Base History/Content with explicit scores, sorted DESCENDING
   const baseItems = useMemo(() => {
     if (isZoxide) {
-      return Object.keys(gameState.zoxideData)
+      const zKeys = Object.keys(gameState.zoxideData);
+      const dirs = getAllDirectoriesWithPaths(gameState.fs).map(d =>
+        resolvePath(gameState.fs, d.path)
+      );
+      return dirs
+        .filter(path => zKeys.includes(path))
         .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
         .sort((a, b) => {
           const diff = b.score - a.score;
@@ -80,23 +76,21 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
           return a.path.localeCompare(b.path);
         });
     } else {
-      // For FZF, search FILES only (not directories)
-      return getRecursiveContent(gameState.fs, gameState.currentPath)
-        .filter(c => c.type === "file" || c.type === "archive") // Only files and archives
-        .map(c => {
-          const display = (c as any).display;
-          const safePath =
-            typeof display === "string" && display
-              ? display
-              : String((c as any).path || []).replace(/,/g, "/");
-          return {
-            path: safePath,
-            pathIds: (c as any).path,
-            type: c.type,
-            id: c.id,
-            score: 0,
-          };
-        });
+      // FZF-style: include directories and files recursively from current path
+      return getRecursiveContent(gameState.fs, gameState.currentPath).map(c => {
+        const display = (c as any).display;
+        const safePath =
+          typeof display === "string" && display
+            ? display
+            : String((c as any).path || []).replace(/,/g, "/");
+        return {
+          path: safePath,
+          pathIds: (c as any).path,
+          type: c.type,
+          id: c.id,
+          score: 0,
+        };
+      });
     }
   }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
 
@@ -124,8 +118,12 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   const previewItems = useMemo(() => {
     if (!selectedCandidate) return [];
     if (isZoxide) {
-      const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
-      return node?.children || [];
+      const dirs = getAllDirectoriesWithPaths(gameState.fs).map(d => ({
+        node: d.node,
+        display: resolvePath(gameState.fs, d.path),
+      }));
+      const match = dirs.find(d => d.display === selectedCandidate.path);
+      return match?.node.children || [];
     } else {
       if (
         "pathIds" in selectedCandidate &&
@@ -156,7 +154,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : "border border-zinc-900"}`}
+      className={`absolute inset-y-0 left-0 ${isZoxide ? "right-[30%] lg:right-[34%]" : "right-0"} z-[100] flex flex-col bg-zinc-950/95 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? "border-2 border-purple-500/30" : "border border-zinc-900"}`}
     >
       <div className="px-4 py-2 text-[11px] text-zinc-500 flex items-center gap-3 border-b border-zinc-900">
         <span className={`${accentTextClass} font-semibold tabular-nums`}>{countDisplay}</span>
@@ -232,16 +230,30 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
                 </span>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-4 text-sm leading-relaxed space-y-1 bg-zinc-950/60">
+            <div className="flex-1 overflow-y-auto px-4 pb-4 text-sm leading-relaxed bg-zinc-950/60">
               {previewItems.length > 0 ? (
-                previewItems.map(child => (
-                  <div key={child.id} className="truncate">
-                    <span className={`${previewColor(child.type)} font-mono`}>
-                      {child.name}
-                      {child.type === "dir" ? "/" : ""}
-                    </span>
-                  </div>
-                ))
+                <div
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}
+                >
+                  {previewItems
+                    .slice()
+                    .sort((a, b) => {
+                      // directories first, then alphabetical
+                      if (a.type === b.type) return a.name.localeCompare(b.name);
+                      if (a.type === "dir") return -1;
+                      if (b.type === "dir") return 1;
+                      return a.name.localeCompare(b.name);
+                    })
+                    .map(child => (
+                      <div key={child.id} className="truncate">
+                        <span className={`${previewColor(child.type)} font-mono`}>
+                          {child.name}
+                          {child.type === "dir" ? "/" : ""}
+                        </span>
+                      </div>
+                    ))}
+                </div>
               ) : (
                 <div className="text-zinc-700 italic">
                   {selectedCandidate ? "(empty)" : "Waiting for selection"}
