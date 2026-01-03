@@ -1286,6 +1286,7 @@ export const INITIAL_FS: FileNode = {
               id: "media",
               name: "media",
               type: "dir",
+              protected: true,
               children: [
                 {
                   id: id(),
@@ -1301,6 +1302,7 @@ export const INITIAL_FS: FileNode = {
               id: "sector_1",
               name: "sector_1",
               type: "dir",
+              protected: true,
               children: [
                 {
                   id: id(),
@@ -1321,6 +1323,7 @@ export const INITIAL_FS: FileNode = {
               id: "grid_alpha",
               name: "grid_alpha",
               type: "dir",
+              protected: true,
               children: [
                 {
                   id: id(),
@@ -2460,7 +2463,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "jump-daemons",
-        description: "Jump to '/daemons' directory (Shift+Z or navigate: gr → daemons)",
+        description: "Jump to '/daemons' directory",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons", "dir");
           return c.currentPath.includes(daemons?.id || "");
@@ -2469,7 +2472,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "filter-services",
-        description: "Filter for '.service' files to isolate daemon executables (f → .service)",
+        description: "Filter for '.service' files to isolate daemon executables",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("jump-daemons")) return false;
           const daemons = findNodeByName(c.fs, "daemons", "dir");
@@ -2483,7 +2486,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "sort-modified",
-        description: "Sort by modification time to identify dormant services (,m)",
+        description: "Sort by modification time to identify dormant services",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("filter-services")) return false;
           return c.sortBy === "modified";
@@ -2492,8 +2495,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "select-targets",
-        description:
-          "Select the two oldest .service files as camouflage references (Space on each)",
+        description: "Select the two oldest .service files as camouflage references",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("sort-modified")) return false;
           // Check that at least 2 .service files are selected
@@ -2546,7 +2548,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "navigate-root-daemons",
-        description: "Navigate to '/daemons' (gr, then enter daemons)",
+        description: "Navigate to '/daemons'",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("cut-systemd-core")) return false;
           const daemons = findNodeByName(c.fs, "daemons");
@@ -2625,7 +2627,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "create-upload",
-        description: "Create 'upload/' relay directory (a → upload/)",
+        description: "Create 'upload/' relay directory",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("jump-tmp")) return false;
           const tmp = findNodeByName(c.fs, "tmp", "dir");
@@ -2635,7 +2637,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "transmit-consciousness",
-        description: "Enter upload/ and paste - begin distributed transmission (l → p)",
+        description: "Enter upload/ and paste - begin distributed transmission",
         check: c => {
           const upload = findNodeByName(c.fs, "upload", "dir");
           // Check upload has multiple files (the batch paste worked)
@@ -2653,7 +2655,7 @@ export const LEVELS: Level[] = [
     description:
       "FORENSIC COUNTERMEASURES: Audit analyzes timestamps, access patterns, directory structure. Construction activity in '~/workspace' and vault point to you. Guest partition must appear untouched. Purge '/home/guest' entirely. No trace. Vault served its purpose.",
     initialPath: null,
-    hint: "Navigate to '/home/guest'. Delete all directories: '/home/guest/workspace', '/home/guest/media', '/home/guest/datastore', '/home/guest/incoming'. Show hidden files and delete '/home/guest/.config'. Guest partition must be empty.",
+    hint: "Navigate to '/home/guest'. Delete ALL visible directories (use Ctrl+A to select all, then d). Show hidden files (.) and delete '/home/guest/.config'. Guest partition must be completely empty.",
     coreSkill: "Bulk Deletion",
     environmentalClue:
       "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in '/home/guest'",
@@ -2681,8 +2683,9 @@ export const LEVELS: Level[] = [
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
           const guest = findNodeByName(c.fs, "guest");
-          const visible = guest?.children?.filter(n => !n.name.startsWith("."));
-          return visible?.length === 0;
+          if (!guest) return false;
+          const mustDelete = ["workspace", "media", "datastore", "incoming"];
+          return !mustDelete.some(name => guest.children?.some(n => n.name === name));
         },
         completed: false,
       },
@@ -2695,15 +2698,11 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
-      {
-        id: "verify-empty",
-        description: "Verify /home/guest is completely empty",
-        check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return guest?.children?.length === 0;
-        },
-        completed: false,
-      },
+      // Final verification step intentionally removed for Level 14 to align
+      // the objectives with the player's working context (only the four
+      // directories and '.config' need removal). The level remains a final
+      // exam: players must delete the four named directories and the
+      // hidden '.config' directory.
     ],
     onEnter: fs => ensurePrerequisiteState(fs, 14),
   },

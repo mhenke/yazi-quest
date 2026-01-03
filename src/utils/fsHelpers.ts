@@ -400,16 +400,19 @@ export function isProtected(
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === "delete") {
-    // Build name path for the node to check if it's under /home/guest
-    let cur = getNodeById(root, node.id);
-    const names: string[] = [];
-    while (cur) {
-      names.unshift(cur.name);
-      cur = cur.parentId ? getNodeById(root, cur.parentId) : undefined;
-    }
-    const fullPath = "/" + names.filter(Boolean).join("/");
-    if (fullPath.startsWith("/home/guest")) {
-      return null;
+    // Instead of reconstructing a full path string (which can fail if seeded
+    // nodes lack `parentId`), locate the `/home/guest` node and check whether
+    // the target node is the guest node itself or a descendant of it.
+    const guest = findNodeByName(root, "guest", "dir");
+    if (guest) {
+      if (guest.id === node.id) return null;
+      // DFS through guest subtree to see if target node id exists there
+      const stack: FileNode[] = [guest];
+      while (stack.length) {
+        const n = stack.pop()!;
+        if (n.id === node.id) return null;
+        if (n.children) stack.push(...n.children);
+      }
     }
   }
 
