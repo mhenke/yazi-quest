@@ -137,6 +137,8 @@ export default function App() {
         "/home/guest/.config/vault/active": { count: 10, lastAccess: now - 600000 },
         "/tmp": { count: 15, lastAccess: now - 1800000 },
         "/etc": { count: 8, lastAccess: now - 86400000 },
+        "/daemons": { count: 12, lastAccess: now - 43200000 },
+        "/daemons/systemd-core": { count: 5, lastAccess: now - 21600000 },
       };
     }
 

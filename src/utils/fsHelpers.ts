@@ -41,11 +41,24 @@ export function getParentNode(root: FileNode, path: string[] | undefined): FileN
   return getNodeByPath(root, path.slice(0, -1)) || null;
 }
 
-export function findNodeByName(root: FileNode, name: string): FileNode | undefined {
+export function findNodeByName(
+  root: FileNode,
+  name: string,
+  type?: "file" | "dir" | "archive"
+): FileNode | undefined {
   const stack: FileNode[] = [root];
   while (stack.length) {
     const n = stack.pop()!;
-    if (n.name === name) return n;
+    if (n.name === name) {
+      if (!type) return n;
+      if (type === "dir") {
+        if (n.type === "dir" || n.type === "archive") return n;
+      } else if (type === "file") {
+        if (n.type === "file") return n;
+      } else if (type === "archive") {
+        if (n.type === "archive") return n;
+      }
+    }
     if (n.children) stack.push(...n.children);
   }
   return undefined;
@@ -233,7 +246,7 @@ export function resolveAndCreatePath(
 
   if (inputPath.startsWith("~/")) {
     // Resolve "~" to //home/guest node IDs
-    const rootNode = findNodeByName(newRoot, "root");
+    const rootNode = findNodeByName(newRoot, "root", "dir");
     const homeNode = rootNode?.children?.find(n => n.name === "home");
     const guestNode = homeNode?.children?.find(n => n.name === "guest");
 
@@ -385,6 +398,21 @@ export function isProtected(
   level: Level,
   action?: string
 ): string | null {
+  // Allow Level 14 to delete content under /home/guest (game objective)
+  if (level.id === 14 && action === "delete") {
+    // Build name path for the node to check if it's under /home/guest
+    let cur = getNodeById(root, node.id);
+    const names: string[] = [];
+    while (cur) {
+      names.unshift(cur.name);
+      cur = cur.parentId ? getNodeById(root, cur.parentId) : undefined;
+    }
+    const fullPath = "/" + names.filter(Boolean).join("/");
+    if (fullPath.startsWith("/home/guest")) {
+      return null;
+    }
+  }
+
   // General node protection
   if (node.protected) {
     return `🔒 This is a protected system file: ${node.name}`;

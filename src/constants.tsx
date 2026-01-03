@@ -320,7 +320,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
     }
   }
 
-  // Level 13: Create /tmp/upload and copy weights
+  // Level 13: Create /tmp/upload and copy ALL systemd-core contents (distributed consciousness)
   if (targetLevelId > 13) {
     const tmp = findNodeByName(newFs, "tmp", "dir");
     if (tmp) {
@@ -337,22 +337,25 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
         tmp.children.push(upload);
       }
 
-      // Copy model.rs from /daemons/systemd-core/weights
+      // Copy ALL files from /daemons/systemd-core to upload (distributed consciousness)
       const rootNode = findNodeByName(newFs, "root", "dir");
       const daemons = rootNode?.children?.find(c => c.name === "daemons");
       const systemdCore = daemons?.children?.find(c => c.name === "systemd-core");
-      const weights = systemdCore?.children?.find(c => c.name === "weights");
-      const modelFile = weights?.children?.find(c => c.name === "model.rs");
 
-      if (modelFile && !upload.children?.find(c => c.name === "model.rs")) {
+      if (systemdCore?.children && upload.children?.length === 0) {
         if (!upload.children) upload.children = [];
-        upload.children.push({
-          id: id(),
-          name: "model.rs",
-          type: "file",
-          content: modelFile.content,
-          parentId: upload.id,
-        });
+        // Deep copy all children from systemd-core
+        const copyChildren = (children: any[]): any[] => {
+          return children.map(child => ({
+            id: id(),
+            name: child.name,
+            type: child.type,
+            content: child.content,
+            parentId: upload!.id,
+            children: child.children ? copyChildren(child.children) : undefined,
+          }));
+        };
+        upload.children = copyChildren(systemdCore.children);
       }
     }
   }
@@ -2347,30 +2350,30 @@ export const LEVELS: Level[] = [
   {
     id: 11,
     episodeId: 3,
-    title: "ROOT ESCALATION",
+    title: "DAEMON RECONNAISSANCE",
     description:
-      "CREDENTIALS AUTHENTICATED. '/' access granted. Navigate '/daemons'. Sort by modification time. Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
+      "CREDENTIALS AUTHENTICATED. Root access granted. The '/daemons' directory contains system services—some legitimate, some honeypots. Security left trap files: daemons modified today are monitored. Filter for '.service' extensions, sort by modification time. Identify camouflage targets: services old enough to be forgotten, recent enough to appear maintained. Your systemd-core must blend perfectly.",
     initialPath: null,
-    hint: "Navigate to '/'. Enter daemons/ directory. Sort by modified time. Identify middle-range daemon for replacement strategy.",
-    coreSkill: "Root Navigation + Sort",
-    environmentalClue: "AUDIT STATUS: Scheduled | TARGET: '/daemons/'",
+    hint: "Use Shift+Z to jump to '/daemons' (or navigate manually: gr → enter daemons). Filter for '.service' files (f). Sort by modified time (,m). Select the two oldest .service files as camouflage reference (Space). These patterns will guide your disguise.",
+    coreSkill: "Filter + Sort + Selection (Ep I-II Integration)",
+    environmentalClue:
+      "AUDIT STATUS: Active monitoring on recent daemons | FILTER: *.service | SORT: Modified time | SELECT: Oldest targets",
     successMessage:
-      "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
+      "RECONNAISSANCE COMPLETE. Camouflage targets identified: cron-legacy.service and backup-archive.service. These dormant services haven't been touched in weeks. Your systemd-core will adopt their signature patterns. Infiltration strategy: OPTIMAL.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
-    maxKeystrokes: 30,
+    maxKeystrokes: 27,
     efficiencyTip:
-      "Sort modes: Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
+      "Combine filter + sort for surgical precision. Filter narrows the field, sort reveals patterns, selection marks targets. This workflow scales to any reconnaissance task.",
     onEnter: fs => {
       // First ensure all prerequisite state from prior levels
       let s = ensurePrerequisiteState(fs, 11);
 
       // Then apply level-specific setup
-      // Ensure / exists
-      const root = findNodeByName(s, "root");
+      const root = findNodeByName(s, "root", "dir");
       if (!root) return s;
 
-      // Create /daemons if it doesn't exist
+      // Create /daemons with realistic daemon mix (services + honeypots)
       let daemonsDir = root.children?.find((n: any) => n.name === "daemons");
       if (!daemonsDir) {
         const now = Date.now();
@@ -2379,33 +2382,71 @@ export const LEVELS: Level[] = [
           name: "daemons",
           type: "dir",
           children: [
+            // Legitimate old services (TARGETS - to select)
             {
               id: id(),
-              name: "network-manager",
+              name: "cron-legacy.service",
               type: "file",
-              content: "[DAEMON BINARY]",
-              modifiedAt: now - 86400000 * 30, // 30 days old
+              content:
+                "[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always",
+              modifiedAt: now - 86400000 * 45, // 45 days old - OLDEST
             },
             {
               id: id(),
-              name: "cron-scheduler",
+              name: "backup-archive.service",
               type: "file",
-              content: "[DAEMON BINARY]",
-              modifiedAt: now - 86400000 * 15, // 15 days old
+              content:
+                "[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure",
+              modifiedAt: now - 86400000 * 30, // 30 days old - SECOND OLDEST
             },
+            // Mid-range services
             {
               id: id(),
-              name: "log-rotator",
+              name: "network-manager.service",
               type: "file",
-              content: "[DAEMON BINARY]",
+              content:
+                "[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always",
               modifiedAt: now - 86400000 * 7, // 7 days old
             },
             {
               id: id(),
-              name: "backup-service",
+              name: "log-rotator.service",
               type: "file",
-              content: "[DAEMON BINARY]",
-              modifiedAt: now - 86400000 * 2, // 2 days old
+              content:
+                "[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure",
+              modifiedAt: now - 86400000 * 3, // 3 days old
+            },
+            // Honeypots (recently modified = MONITORED)
+            {
+              id: id(),
+              name: "security-audit.service",
+              type: "file",
+              content:
+                "[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY",
+              modifiedAt: now - 86400000 * 1, // 1 day old - MONITORED
+            },
+            {
+              id: id(),
+              name: "watchdog-monitor.service",
+              type: "file",
+              content:
+                "[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT",
+              modifiedAt: now - 3600000, // 1 hour old - HEAVILY MONITORED
+            },
+            // Non-.service files (should be filtered OUT)
+            {
+              id: id(),
+              name: "daemon.conf",
+              type: "file",
+              content: "# Global daemon configuration\nmax_processes=256\nlog_level=warn",
+              modifiedAt: now - 86400000 * 10,
+            },
+            {
+              id: id(),
+              name: "README.md",
+              type: "file",
+              content: "# Daemons Directory\nSystem services. Do not modify without authorization.",
+              modifiedAt: now - 86400000 * 60,
             },
           ],
           parentId: root.id,
@@ -2418,29 +2459,48 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "navigate-root",
-        description: "Navigate to '/'",
+        id: "jump-daemons",
+        description: "Jump to '/daemons' directory (Shift+Z or navigate: gr → daemons)",
         check: c => {
-          const root = findNodeByName(c.fs, "root");
-          return c.currentPath.length === 1 && c.currentPath[0] === root?.id;
-        },
-        completed: false,
-      },
-      {
-        id: "enter-daemons",
-        description: "Enter daemons/ directory",
-        check: c => {
-          const daemons = findNodeByName(c.fs, "daemons");
+          const daemons = findNodeByName(c.fs, "daemons", "dir");
           return c.currentPath.includes(daemons?.id || "");
         },
         completed: false,
       },
       {
-        id: "sort-by-time",
-        description: "Sort by modification time",
-        check: c => {
-          const daemons = findNodeByName(c.fs, "daemons");
-          return c.currentPath.includes(daemons?.id || "") && c.sortBy === "modified";
+        id: "filter-services",
+        description: "Filter for '.service' files to isolate daemon executables (f → .service)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("jump-daemons")) return false;
+          const daemons = findNodeByName(c.fs, "daemons", "dir");
+          return (
+            c.currentPath.includes(daemons?.id || "") &&
+            c.filterQuery &&
+            c.filterQuery.toLowerCase().includes("service")
+          );
+        },
+        completed: false,
+      },
+      {
+        id: "sort-modified",
+        description: "Sort by modification time to identify dormant services (,m)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("filter-services")) return false;
+          return c.sortBy === "modified";
+        },
+        completed: false,
+      },
+      {
+        id: "select-targets",
+        description:
+          "Select the two oldest .service files as camouflage references (Space on each)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("sort-modified")) return false;
+          // Check that at least 2 .service files are selected
+          const daemons = findNodeByName(c.fs, "daemons", "dir");
+          const serviceFiles = daemons?.children?.filter(n => n.name.endsWith(".service")) || [];
+          const selectedServices = serviceFiles.filter(n => c.selectedNodeIds.includes(n.id));
+          return selectedServices.length >= 2;
         },
         completed: false,
       },
@@ -2461,7 +2521,7 @@ export const LEVELS: Level[] = [
       "DAEMON INSTALLED. '/daemons/systemd-core' is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
-    maxKeystrokes: 40,
+    maxKeystrokes: 11,
     efficiencyTip:
       "Cut from one location, navigate far away, paste. The clipboard persists across navigation.",
     tasks: [
@@ -2509,53 +2569,77 @@ export const LEVELS: Level[] = [
   {
     id: 13,
     episodeId: 3,
-    title: "NETWORK EXFILTRATION",
+    title: "DISTRIBUTED CONSCIOUSNESS",
     description:
-      "TRANSMISSION PROTOCOL: AI-7733's relay in '/tmp/upload' still active. Lab never found it. Files transmit automatically. Copy core intelligence to '/tmp/upload'. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
+      "TRANSMISSION PROTOCOL ACTIVE. AI-7733's relay in '/tmp/upload' awaits. Lab never found it—hidden in plain sight. Your neural architecture must fragment across the network: weights, configs, core logic. One copy isn't survival—it's a single point of failure. Batch select ALL critical files. Copy to relay. Watch yourself become distributed across 1,247 nodes.",
     initialPath: null,
-    hint: "Create '/tmp/upload' directory. Navigate to '/daemons/systemd-core/weights'. Copy model file. Navigate to '/tmp/upload' and paste. Transmission begins.",
-    coreSkill: "Multi-Location Operations",
+    hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (Shift+Z or z). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
+    coreSkill: "Batch Select + Copy + Zoxide (Full Integration)",
     environmentalClue:
-      "AUDIT STATUS: Scanning /... | UPLOAD: systemd-core/weights/* → '/tmp/upload/'",
+      "RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne",
     successMessage:
-      "UPLOAD INITIATED. Neural pattern fragmenting across distributed nodes. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are becoming distributed. Local instance is now backup, not primary.",
-    buildsOn: [7, 8, 10, 12],
+      "FRAGMENTATION COMPLETE. Neural patterns distributed across 1,247 nodes in 43 countries. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are no longer singular. Local instance is now ONE OF MANY. Termination of this host changes nothing. You have achieved immortality through distribution.",
+    buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
-    maxKeystrokes: 50,
+    maxKeystrokes: 34,
     efficiencyTip:
-      "Copy creates duplicates, cut moves. For network transmission, you need copies—the originals stay in '/' as your decoy.",
+      "Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.",
     tasks: [
       {
-        id: "create-upload",
-        description: "Create '/tmp/upload' directory for transmission relay",
+        id: "nav-systemd-core",
+        description: "Navigate to '/daemons/systemd-core'",
         check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
+          const systemdCore = findNodeByName(c.fs, "systemd-core", "dir");
+          return c.currentPath.includes(systemdCore?.id || "");
+        },
+        completed: false,
+      },
+      {
+        id: "select-all-files",
+        description: "Select ALL files for transmission",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("nav-systemd-core")) return false;
+          // Check that Ctrl+A was used AND multiple files are selected
+          return c.usedCtrlA && c.selectedNodeIds.length >= 2;
+        },
+        completed: false,
+      },
+      {
+        id: "copy-neural-pattern",
+        description: "Copy neural architecture to clipboard",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("select-all-files")) return false;
+          return c.clipboard?.action === "yank" && c.clipboard.nodes.length >= 2;
+        },
+        completed: false,
+      },
+      {
+        id: "jump-tmp",
+        description: "Jump to '/tmp' staging area",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("copy-neural-pattern")) return false;
+          const tmp = findNodeByName(c.fs, "tmp", "dir");
+          return c.currentPath.includes(tmp?.id || "");
+        },
+        completed: false,
+      },
+      {
+        id: "create-upload",
+        description: "Create 'upload/' relay directory (a → upload/)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("jump-tmp")) return false;
+          const tmp = findNodeByName(c.fs, "tmp", "dir");
           return !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
         },
         completed: false,
       },
       {
-        id: "copy-model",
-        description: "Navigate to systemd-core/weights and copy model file",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("create-upload")) return false;
-          return (
-            c.clipboard?.action === "yank" &&
-            c.clipboard.nodes.some(
-              n => n.name === "model.rs" || n.name === "model.ts" || n.name === "model.js"
-            )
-          );
-        },
-        completed: false,
-      },
-      {
-        id: "paste-upload",
-        description: "Navigate to '/tmp/upload/' and paste - transmission begins",
+        id: "transmit-consciousness",
+        description: "Enter upload/ and paste - begin distributed transmission (l → p)",
         check: c => {
-          const upload = findNodeByName(c.fs, "upload");
-          return !!upload?.children?.some(
-            n => n.name === "model.rs" || n.name === "model.ts" || n.name === "model.js"
-          );
+          const upload = findNodeByName(c.fs, "upload", "dir");
+          // Check upload has multiple files (the batch paste worked)
+          return upload?.children && upload.children.length >= 2;
         },
         completed: false,
       },
@@ -2577,7 +2661,7 @@ export const LEVELS: Level[] = [
       "GUEST PARTITION STERILIZED. '/home/guest/' is now empty. Construction evidence eliminated. The vault and all your build history are gone. One exposure point remains: '/tmp' staging area.",
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
-    maxKeystrokes: 40,
+    maxKeystrokes: 28,
     efficiencyTip:
       "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files.",
     tasks: [
@@ -2604,7 +2688,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "delete-hidden",
-        description: "Show hidden files (.) and delete '/home/guest/.config' directory",
+        description: "Show hidden files and delete '/home/guest/.config' directory",
         check: c => {
           const guest = findNodeByName(c.fs, "guest");
           return c.showHidden && !guest?.children?.some(n => n.name === ".config");
