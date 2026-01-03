@@ -2150,7 +2150,7 @@ export const LEVELS: Level[] = [
       "Sort modes: Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
     onEnter: fs => {
       // First ensure all prerequisite state from prior levels
-      let s = ensurePrerequisiteState;
+      let s = ensurePrerequisiteState(fs, 11);
 
       // Then apply level-specific setup
       // Ensure / exists
