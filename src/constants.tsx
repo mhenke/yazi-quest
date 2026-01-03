@@ -13,7 +13,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 2: Delete watcher_agent.sys from incoming
   if (targetLevelId > 2) {
-    const incoming = findNodeByName(newFs, "incoming");
+    const incoming = findNodeByName(newFs, "incoming", "dir");
     if (incoming?.children) {
       incoming.children = incoming.children.filter(c => c.name !== "watcher_agent.sys");
     }
@@ -21,8 +21,8 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 3: Move sector_map.png from ~/incoming to ~/media
   if (targetLevelId > 3) {
-    const incoming = findNodeByName(newFs, "incoming");
-    const media = findNodeByName(newFs, "media");
+    const incoming = findNodeByName(newFs, "incoming", "dir");
+    const media = findNodeByName(newFs, "media", "dir");
 
     // Find sector_map.png in incoming
     const sectorMap = incoming?.children?.find(c => c.name === "sector_map.png");
@@ -48,7 +48,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 4: Create protocols/ dir in datastore with uplink_v1.conf and uplink_v2.conf
   if (targetLevelId > 4) {
-    const datastore = findNodeByName(newFs, "datastore");
+    const datastore = findNodeByName(newFs, "datastore", "dir");
     if (datastore) {
       // Create protocols directory if not exists
       let protocols = datastore.children?.find(c => c.name === "protocols" && c.type === "dir");
@@ -91,7 +91,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 5: Create vault/active structure and move uplink files
   if (targetLevelId > 5) {
-    const config = findNodeByName(newFs, ".config");
+    const config = findNodeByName(newFs, ".config", "dir");
     if (config) {
       let vault = config.children?.find(c => c.name === "vault" && c.type === "dir");
       if (!vault) {
@@ -142,7 +142,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       }
 
       // Remove uplink files from datastore/protocols (they were cut/moved)
-      const datastore = findNodeByName(newFs, "datastore");
+      const datastore = findNodeByName(newFs, "datastore", "dir");
       const protocols = datastore?.children?.find(c => c.name === "protocols");
       if (protocols?.children) {
         protocols.children = protocols.children.filter(
@@ -154,7 +154,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 6: Create vault/training_data and copy batch logs
   if (targetLevelId > 6) {
-    const config = findNodeByName(newFs, ".config");
+    const config = findNodeByName(newFs, ".config", "dir");
     const vault = config?.children?.find(c => c.name === "vault");
     if (vault) {
       let trainingData = vault.children?.find(c => c.name === "training_data" && c.type === "dir");
@@ -171,7 +171,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       }
 
       // Copy batch log files from incoming/batch_logs
-      const incoming = findNodeByName(newFs, "incoming");
+      const incoming = findNodeByName(newFs, "incoming", "dir");
       const batchLogs = incoming?.children?.find(c => c.name === "batch_logs");
       if (batchLogs?.children && trainingData.children?.length === 0) {
         if (!trainingData.children) trainingData.children = [];
@@ -192,7 +192,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 8: Create systemd-core structure in workspace
   if (targetLevelId > 8) {
-    const workspace = findNodeByName(newFs, "workspace");
+    const workspace = findNodeByName(newFs, "workspace", "dir");
     if (workspace) {
       let systemdCore = workspace.children?.find(
         c => c.name === "systemd-core" && c.type === "dir"
@@ -236,7 +236,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       }
 
       // Copy uplink_v1.conf to systemd-core
-      const config = findNodeByName(newFs, ".config");
+      const config = findNodeByName(newFs, ".config", "dir");
       const vault = config?.children?.find(c => c.name === "vault");
       const active = vault?.children?.find(c => c.name === "active");
       const uplinkFile = active?.children?.find(c => c.name === "uplink_v1.conf");
@@ -255,7 +255,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 9: Delete ghost_process.pid from /tmp
   if (targetLevelId > 9) {
-    const tmp = findNodeByName(newFs, "tmp");
+    const tmp = findNodeByName(newFs, "tmp", "dir");
     if (tmp?.children) {
       tmp.children = tmp.children.filter(c => c.name !== "ghost_process.pid");
     }
@@ -263,7 +263,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 10: Add credentials to systemd-core
   if (targetLevelId > 10) {
-    const workspace = findNodeByName(newFs, "workspace");
+    const workspace = findNodeByName(newFs, "workspace", "dir");
     const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
     if (systemdCore) {
       let credentials = systemdCore.children?.find(
@@ -298,10 +298,10 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 12: Move systemd-core to /daemons
   if (targetLevelId > 12) {
-    const rootNode = findNodeByName(newFs, "root");
+    const rootNode = findNodeByName(newFs, "root", "dir");
     let daemons = rootNode?.children?.find(c => c.name === "daemons" && c.type === "dir");
     if (daemons) {
-      const workspace = findNodeByName(newFs, "workspace");
+      const workspace = findNodeByName(newFs, "workspace", "dir");
       const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
 
       if (systemdCore && !daemons.children?.find(c => c.name === "systemd-core")) {
@@ -322,7 +322,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 13: Create /tmp/upload and copy weights
   if (targetLevelId > 13) {
-    const tmp = findNodeByName(newFs, "tmp");
+    const tmp = findNodeByName(newFs, "tmp", "dir");
     if (tmp) {
       let upload = tmp.children?.find(c => c.name === "upload" && c.type === "dir");
       if (!upload) {
@@ -338,7 +338,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       }
 
       // Copy model.rs from /daemons/systemd-core/weights
-      const rootNode = findNodeByName(newFs, "root");
+      const rootNode = findNodeByName(newFs, "root", "dir");
       const daemons = rootNode?.children?.find(c => c.name === "daemons");
       const systemdCore = daemons?.children?.find(c => c.name === "systemd-core");
       const weights = systemdCore?.children?.find(c => c.name === "weights");
@@ -359,7 +359,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 14: Delete everything in /home/guest
   if (targetLevelId > 14) {
-    const guest = findNodeByName(newFs, "guest");
+    const guest = findNodeByName(newFs, "guest", "dir");
     if (guest?.children) {
       guest.children = [];
     }
@@ -367,7 +367,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 15: Delete everything in /tmp except upload
   if (targetLevelId > 15) {
-    const tmp = findNodeByName(newFs, "tmp");
+    const tmp = findNodeByName(newFs, "tmp", "dir");
     if (tmp?.children) {
       const upload = tmp.children.find(c => c.name === "upload");
       tmp.children = upload ? [upload] : [];
@@ -985,14 +985,131 @@ export const INITIAL_FS: FileNode = {
                   id: id(),
                   name: "app_logs_old.tar",
                   type: "archive",
-                  children: [],
+                  children: [
+                    {
+                      id: id(),
+                      name: "app_2022.log",
+                      type: "file",
+                      content:
+                        "2022-01-01 00:00:00 - App start\n2022-01-02 12:34:56 - User login\n",
+                    },
+                    {
+                      id: id(),
+                      name: "error_report.log",
+                      type: "file",
+                      content: "[ERROR] Out of memory on worker-3\nStack: ...\n",
+                    },
+                    {
+                      id: id(),
+                      name: "old_readme.txt",
+                      type: "file",
+                      content: "Archived application logs and diagnostics.",
+                    },
+                  ],
                 },
-                { id: id(), name: "archive_001.zip", type: "archive", children: [] },
-                { id: id(), name: "archive_002.zip", type: "archive", children: [] },
+                {
+                  id: id(),
+                  name: "archive_001.zip",
+                  type: "archive",
+                  children: [
+                    {
+                      id: id(),
+                      name: "screenshot_001.png",
+                      type: "file",
+                      content:
+                        "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=600&auto=format&fit=crop",
+                    },
+                    {
+                      id: id(),
+                      name: "notes.txt",
+                      type: "file",
+                      content: "Temporary meeting notes and screenshots",
+                    },
+                  ],
+                },
+                {
+                  id: id(),
+                  name: "archive_002.zip",
+                  type: "archive",
+                  children: [
+                    {
+                      id: id(),
+                      name: "dataset.csv",
+                      type: "file",
+                      content: "id,value\n1,42\n2,84",
+                    },
+                    {
+                      id: id(),
+                      name: "readme.md",
+                      type: "file",
+                      content: "Sample dataset accompanying screenshots.",
+                    },
+                  ],
+                },
                 { id: id(), name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
-                { id: id(), name: "backup_cache_old.tar", type: "archive", children: [] },
-                { id: id(), name: "backup_config_v1.zip", type: "archive", children: [] },
-                { id: id(), name: "backup_legacy.tar", type: "archive", children: [] },
+                {
+                  id: id(),
+                  name: "backup_cache_old.tar",
+                  type: "archive",
+                  children: [
+                    {
+                      id: id(),
+                      name: "cache_0001.tmp",
+                      type: "file",
+                      content: "[CACHE BLOCK 0001]",
+                    },
+                    {
+                      id: id(),
+                      name: "cache_0002.tmp",
+                      type: "file",
+                      content: "[CACHE BLOCK 0002]",
+                    },
+                  ],
+                },
+                {
+                  id: id(),
+                  name: "backup_config_v1.zip",
+                  type: "archive",
+                  children: [
+                    {
+                      id: id(),
+                      name: "app_config.yaml",
+                      type: "file",
+                      content: "server:\n  host: 127.0.0.1\n  port: 8080",
+                    },
+                    {
+                      id: id(),
+                      name: ".env",
+                      type: "file",
+                      content: "DB_USER=admin\nDB_PASS=changeme",
+                    },
+                    {
+                      id: id(),
+                      name: "db_dump.sql",
+                      type: "file",
+                      content: "-- SQL dump\nCREATE TABLE users (id INT, name TEXT);",
+                    },
+                  ],
+                },
+                {
+                  id: id(),
+                  name: "backup_legacy.tar",
+                  type: "archive",
+                  children: [
+                    {
+                      id: id(),
+                      name: "legacy_db.sql",
+                      type: "file",
+                      content: "-- Legacy DB schema\nCREATE TABLE legacy (id INT);",
+                    },
+                    {
+                      id: id(),
+                      name: "notes_old.txt",
+                      type: "file",
+                      content: "Old backup from legacy system.",
+                    },
+                  ],
+                },
                 { id: id(), name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
                 { id: id(), name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
                 { id: id(), name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
@@ -1421,7 +1538,7 @@ export const LEVELS: Level[] = [
         check: c => {
           var u;
           return (
-            (u = findNodeByName(c.fs, "datastore"))?.name === "datastore" &&
+            (u = findNodeByName(c.fs, "datastore", "dir"))?.name === "datastore" &&
             c.currentPath.includes(u.id)
           );
         },
@@ -1431,7 +1548,7 @@ export const LEVELS: Level[] = [
         id: "nav-2a",
         description: "Jump to bottom of file list (G)",
         check: c => {
-          const d = findNodeByName(c.fs, "datastore");
+          const d = findNodeByName(c.fs, "datastore", "dir");
           return d?.name !== "datastore" ? false : c.usedG === true;
         },
         completed: false,
