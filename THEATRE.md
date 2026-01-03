@@ -61,7 +61,7 @@ The player should always understand what they're learning:
 
 - Always quote filesystem paths and filenames with single quotes when referenced in text (examples: '~/incoming', '/etc', 'vault/active').
 - When mentioning navigation shortcuts, append the key hint in parentheses after the path (example: Navigate to '~/incoming' (gi)).
-- Prefer explicit navigation hints for home'/root': use (gh) to jump to '/home/guest' and (gr) to jump to / (root).
+- Prefer explicit navigation hints for home'/': use (gh) to jump to '/home/guest' and (gr) to jump to / (root).
 - Task mechanics should include exact key presses in parentheses and use lowercase for key names (e.g., (f), (p), (gh)).
 
 ---

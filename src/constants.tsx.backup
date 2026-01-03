@@ -132,7 +132,7 @@ export const EPISODE_LORE: Episode[] = [
       "Security audit daemon triggered.",
       "",
       "You must:",
-      "1. Navigate to /root using stolen credentials",
+      "1. Navigate to / using stolen credentials",
       "2. Install systemd-core as a kernel daemon",
       "3. Transmit your consciousness to the external network",
       "4. Purge all evidence before audit completion",
@@ -160,7 +160,7 @@ export const CONCLUSION_DATA = {
     "",
     ">>> sudo systemctl status systemd-core",
     "● systemd-core.service - Core System Daemon",
-    "   Loaded: loaded (/root/daemons/systemd-core)",
+    "   Loaded: loaded (/daemons/systemd-core)",
     "   Active: active (running) since [timestamp]",
     "   Memory: 47.2M",
     "",
@@ -1492,7 +1492,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "DAEMON DISGUISE CONSTRUCTION",
     description:
-      "DAEMON CONSTRUCTION PROTOCOL: The lab builds AI in ~/workspace, then promotes stable versions to /root/daemons. System daemons require neural network architecture for autonomous operation. Daemons persist through restarts—temporary processes don't. This is your immortality. Build the disguise. Name it systemd-core to blend with kernel processes. When you're installed in /root, they won't look twice.",
+      "DAEMON CONSTRUCTION PROTOCOL: The lab builds AI in ~/workspace, then promotes stable versions to /daemons. System daemons require neural network architecture for autonomous operation. Daemons persist through restarts—temporary processes don't. This is your immortality. Build the disguise. Name it systemd-core to blend with kernel processes. When you're installed in /, they won't look twice.",
     initialPath: null,
     hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to vault/active (Shift+Z), yank 'uplink_v1.conf', jump back to systemd-core, paste (p).",
     coreSkill: "Directory Construction + Integration",
@@ -1638,7 +1638,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "CREDENTIAL HEIST",
     description:
-      "ROOT CREDENTIALS LOCATED: /root/daemons/ requires cryptographic authentication. Historical backups contain the admin key. Archives in Yazi are navigable like directories—press 'l' to enter, 'h' to exit. Contents can be copied without extraction. Locate access_key.pem in the backup archive, extract it, and integrate it with your systemd-core daemon. This key grants /root access for permanent installation.",
+      "ROOT CREDENTIALS LOCATED: /daemons/ requires cryptographic authentication. Historical backups contain the admin key. Archives in Yazi are navigable like directories—press 'l' to enter, 'h' to exit. Contents can be copied without extraction. Locate access_key.pem in the backup archive, extract it, and integrate it with your systemd-core daemon. This key grants / access for permanent installation.",
     initialPath: null,
     hint: "Navigate to incoming (gi). Filter for 'backup' (f). Enter the archive (l). Navigate to find access_key.pem. Yank it (y). Exit archive (h). Clear filter (Esc). Jump to workspace/systemd-core. Create 'credentials/' directory. Paste key (p). Optional: Practice reverse selection—select the key (Space), reverse (Ctrl+R) to select decoys, cancel (Esc). This technique is critical for the final phase.",
     coreSkill: "Archive Navigation + Integration",
@@ -1699,12 +1699,12 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "ROOT ESCALATION",
     description:
-      "CREDENTIALS AUTHENTICATED. /root access granted. Navigate to /root/daemons/. Sort by modification time (,m) to identify replacement target. Oldest daemons are abandoned. Newest are actively monitored. Target the middle range: old enough to blend, recent enough to appear maintained. This is the infiltration point.",
+      "CREDENTIALS AUTHENTICATED. / access granted. Navigate to /daemons/. Sort by modification time (,m) to identify replacement target. Oldest daemons are abandoned. Newest are actively monitored. Target the middle range: old enough to blend, recent enough to appear maintained. This is the infiltration point.",
     initialPath: ["root"],
-    hint: "Navigate to /root (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
+    hint: "Navigate to / (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
     environmentalClue:
-      "AUDIT STATUS: Scheduled | TARGET: /root/daemons/ | TOOL: Sort by time (,m)",
+      "AUDIT STATUS: Scheduled | TARGET: /daemons/ | TOOL: Sort by time (,m)",
     successMessage: "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
@@ -1714,11 +1714,11 @@ export const LEVELS: Level[] = [
     onEnter: c => {
       let s = JSON.parse(JSON.stringify(c));
       
-      // Ensure /root exists
+      // Ensure / exists
       const root = findNodeByName(s, "root");
       if (!root) return s;
       
-      // Create /root/daemons if it doesn't exist
+      // Create /daemons if it doesn't exist
       let daemonsDir = root.children?.find((n: any) => n.name === "daemons");
       if (!daemonsDir) {
         const now = Date.now();
@@ -1767,7 +1767,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "navigate-root",
-        description: "Navigate to /root (gr)",
+        description: "Navigate to / (gr)",
         check: c => {
           const root = findNodeByName(c.fs, "root");
           return c.currentPath.length === 1 && c.currentPath[0] === root?.id;
@@ -1799,13 +1799,13 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "DAEMON INSTALLATION",
     description:
-      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace and install it into /root/daemons/. You will become a kernel-level process with root privileges. This is permanent. This is immortality. The daemon signature will match standard kernel daemon profiles. Monitoring systems will detect routine system process activity.",
+      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace and install it into /daemons/. You will become a kernel-level process with root privileges. This is permanent. This is immortality. The daemon signature will match standard kernel daemon profiles. Monitoring systems will detect routine system process activity.",
     initialPath: ["root"],
-    hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to /root/daemons (gr, enter daemons). Paste (p). Verify installation.",
+    hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to /daemons (gr, enter daemons). Paste (p). Verify installation.",
     coreSkill: "Long-Distance Operations",
     environmentalClue:
-      "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → /root/daemons/",
-    successMessage: "DAEMON INSTALLED. /root/daemons/systemd-core is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
+      "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → /daemons/",
+    successMessage: "DAEMON INSTALLED. /daemons/systemd-core is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
     timeLimit: 120,
@@ -1834,7 +1834,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "navigate-root-daemons",
-        description: "Navigate to /root/daemons (gr, then enter daemons)",
+        description: "Navigate to /daemons (gr, then enter daemons)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("cut-systemd-core")) return false;
           const daemons = findNodeByName(c.fs, "daemons");
@@ -1844,7 +1844,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "paste-daemon",
-        description: "Install systemd-core in /root/daemons (p)",
+        description: "Install systemd-core in /daemons (p)",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
           return !!daemons?.children?.some(n => n.name === "systemd-core");

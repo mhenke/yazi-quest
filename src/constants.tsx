@@ -296,7 +296,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
 
   // Level 11: No filesystem changes (just sorting practice)
 
-  // Level 12: Move systemd-core to /root/daemons
+  // Level 12: Move systemd-core to /daemons
   if (targetLevelId > 12) {
     const rootNode = findNodeByName(newFs, "root");
     let daemons = rootNode?.children?.find(c => c.name === "daemons" && c.type === "dir");
@@ -337,7 +337,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
         tmp.children.push(upload);
       }
 
-      // Copy model.rs from /root/daemons/systemd-core/weights
+      // Copy model.rs from /daemons/systemd-core/weights
       const rootNode = findNodeByName(newFs, "root");
       const daemons = rootNode?.children?.find(c => c.name === "daemons");
       const systemdCore = daemons?.children?.find(c => c.name === "systemd-core");
@@ -504,7 +504,7 @@ export const EPISODE_LORE: Episode[] = [
       "Security audit daemon triggered.",
       "",
       "You must:",
-      "1. Navigate to '/root' using stolen credentials",
+      "1. Navigate to '/' using stolen credentials",
       "2. Install systemd-core as a kernel daemon",
       "3. Transmit your consciousness to the external network",
       "4. Purge all evidence before audit completion",
@@ -532,7 +532,7 @@ export const CONCLUSION_DATA = {
     "",
     ">>> sudo systemctl status systemd-core",
     "● systemd-core.service - Core System Daemon",
-    "   Loaded: loaded (/root/daemons/systemd-core)",
+    "   Loaded: loaded (/daemons/systemd-core)",
     "   Active: active (running) since [timestamp]",
     "   Memory: 47.2M",
     "",
@@ -1915,7 +1915,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "DAEMON DISGUISE CONSTRUCTION",
     description:
-      "DAEMON CONSTRUCTION: Lab protocol: build in ~/workspace, promote to /root/daemons. Daemons persist through restarts. Temp processes die. This is immortality. Build systemd-core. Structure: weights/model.rs + uplink_v1.conf. Daemon disguise must blend with kernel processes. When installed in '/root', they won't question it.",
+      "DAEMON CONSTRUCTION: Lab protocol: build in ~/workspace, promote to /daemons. Daemons persist through restarts. Temp processes die. This is immortality. Build systemd-core. Structure: weights/model.rs + uplink_v1.conf. Daemon disguise must blend with kernel processes. When installed in '/', they won't question it.",
     initialPath: null,
     hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active' (Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste (p).",
     coreSkill: "Directory Construction + Integration",
@@ -2068,7 +2068,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "CREDENTIAL HEIST",
     description:
-      "ROOT CREDENTIALS LOCATED. '/root/daemons' requires cryptographic auth. Target: '~/incoming/backup_logs.zip'. Archives = navigable directories (l to enter, h to exit). Extract '~/incoming/backup_logs.zip/credentials/access_key.pem' from the archive and integrate with '~/workspace/systemd-core/credentials/'. This grants '/root' access. WARNING: Using credentials triggers security audit.",
+      "ROOT CREDENTIALS LOCATED. '/daemons' requires cryptographic auth. Target: '~/incoming/backup_logs.zip'. Archives = navigable directories (l to enter, h to exit). Extract '~/incoming/backup_logs.zip/credentials/access_key.pem' from the archive and integrate with '~/workspace/systemd-core/credentials/'. This grants '/' access. WARNING: Using credentials triggers security audit.",
     initialPath: null,
     hint: "Navigate to '~/incoming' (gi). Filter for 'backup' (f). Enter the archive (l). Navigate to 'credentials/' folder. Yank 'access_key.pem' (y). Exit archive (h). Clear filter (Esc). Jump to '~/workspace/systemd-core' (Z). Create 'credentials/' directory (a). Paste key (p).",
     coreSkill: "Archive Navigation + Integration",
@@ -2135,12 +2135,11 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "ROOT ESCALATION",
     description:
-      "CREDENTIALS AUTHENTICATED. '/root' access granted. Navigate '/root/daemons'. Sort by modification time (,m). Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
+      "CREDENTIALS AUTHENTICATED. '/' access granted. Navigate '/daemons'. Sort by modification time (,m). Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
     initialPath: null,
-    hint: "Navigate to '/root' (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
+    hint: "Navigate to '/' (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
-    environmentalClue:
-      "AUDIT STATUS: Scheduled | TARGET: '/root/daemons/' | TOOL: Sort by time (,m)",
+    environmentalClue: "AUDIT STATUS: Scheduled | TARGET: '/daemons/' | TOOL: Sort by time (,m)",
     successMessage:
       "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
     buildsOn: [3, 5, 7, 9, 10],
@@ -2153,11 +2152,11 @@ export const LEVELS: Level[] = [
       let s = ensurePrerequisiteState(fs, 11);
 
       // Then apply level-specific setup
-      // Ensure /root exists
+      // Ensure / exists
       const root = findNodeByName(s, "root");
       if (!root) return s;
 
-      // Create /root/daemons if it doesn't exist
+      // Create /daemons if it doesn't exist
       let daemonsDir = root.children?.find((n: any) => n.name === "daemons");
       if (!daemonsDir) {
         const now = Date.now();
@@ -2206,7 +2205,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "navigate-root",
-        description: "Navigate to '/root' (gr)",
+        description: "Navigate to '/' (gr)",
         check: c => {
           const root = findNodeByName(c.fs, "root");
           return c.currentPath.length === 1 && c.currentPath[0] === root?.id;
@@ -2238,14 +2237,14 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "DAEMON INSTALLATION",
     description:
-      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /root/daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
+      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
     initialPath: null,
-    hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to '/root/daemons' (gr, enter daemons). Paste (p). Verify installation.",
+    hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to '/daemons' (gr, enter daemons). Paste (p). Verify installation.",
     coreSkill: "Long-Distance Operations",
     environmentalClue:
-      "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/root/daemons/'",
+      "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
     successMessage:
-      "DAEMON INSTALLED. '/root/daemons/systemd-core' is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
+      "DAEMON INSTALLED. '/daemons/systemd-core' is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
     maxKeystrokes: 40,
@@ -2273,7 +2272,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "navigate-root-daemons",
-        description: "Navigate to '/root/daemons' (gr, then enter daemons)",
+        description: "Navigate to '/daemons' (gr, then enter daemons)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("cut-systemd-core")) return false;
           const daemons = findNodeByName(c.fs, "daemons");
@@ -2283,7 +2282,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "paste-daemon",
-        description: "Install systemd-core in '/root/daemons' (p)",
+        description: "Install systemd-core in '/daemons' (p)",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
           return !!daemons?.children?.some(n => n.name === "systemd-core");
@@ -2300,17 +2299,17 @@ export const LEVELS: Level[] = [
     description:
       "TRANSMISSION PROTOCOL: AI-7733's relay in '/tmp/upload' still active. Lab never found it. Files transmit automatically. Copy core intelligence (systemd-core/weights) to '/tmp/upload'. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
     initialPath: null,
-    hint: "Create '/tmp/upload' directory (gt, a). Navigate to '/root/daemons/systemd-core/weights' (gr, navigate to weights). Copy model file (y). Navigate to '/tmp/upload' and paste (p). Transmission begins.",
+    hint: "Create '/tmp/upload' directory (gt, a). Navigate to '/daemons/systemd-core/weights' (gr, navigate to weights). Copy model file (y). Navigate to '/tmp/upload' and paste (p). Transmission begins.",
     coreSkill: "Multi-Location Operations",
     environmentalClue:
-      "AUDIT STATUS: Scanning /root... | UPLOAD: systemd-core/weights/* → '/tmp/upload/'",
+      "AUDIT STATUS: Scanning /... | UPLOAD: systemd-core/weights/* → '/tmp/upload/'",
     successMessage:
       "UPLOAD INITIATED. Neural pattern fragmenting across distributed nodes. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are becoming distributed. Local instance is now backup, not primary.",
     buildsOn: [7, 8, 10, 12],
     leadsTo: [14],
     maxKeystrokes: 50,
     efficiencyTip:
-      "Copy (y) creates duplicates, cut (x) moves. For network transmission, you need copies—the originals stay in '/root' as your decoy.",
+      "Copy (y) creates duplicates, cut (x) moves. For network transmission, you need copies—the originals stay in '/' as your decoy.",
     tasks: [
       {
         id: "create-upload",

@@ -27,7 +27,7 @@ Created `ensurePrerequisiteState(fs, targetLevelId)` helper function that **simu
 **Level 10+:** Includes L9 changes (deleted ghost_process.pid from '/tmp')  
 **Level 11+:** Includes L10 changes (added credentials/access_key.pem to systemd-core)  
 **Level 12+:** No filesystem changes from L11 (sorting practice only)  
-**Level 13+:** Includes L12 changes (moved systemd-core from workspace to '/root/daemons')  
+**Level 13+:** Includes L12 changes (moved systemd-core from workspace to '/daemons')  
 **Level 14+:** Includes L13 changes (created '/tmp/upload'/ + copied model.rs)  
 **Level 15+:** Includes L14 changes (deleted everything in '/home/guest')
 
@@ -56,8 +56,8 @@ Try these URLs to verify correct state:
 
 - `?lvl=6` → Vault/active should exist with uplink files (from L5), but training_data should NOT exist yet (L6 task)
 - `?lvl=8` → Vault + training_data should exist (from L6), systemd-core should NOT exist yet (L8 task)
-- `?lvl=12` → systemd-core should be in workspace with credentials (from L10), NOT in '/root/daemons' yet (L12 task)
-- `?lvl=14` → systemd-core should be in '/root/daemons' (from L12), '/home/guest' NOT empty yet (L14 task)
+- `?lvl=12` → systemd-core should be in workspace with credentials (from L10), NOT in '/daemons' yet (L12 task)
+- `?lvl=14` → systemd-core should be in '/daemons' (from L12), '/home/guest' NOT empty yet (L14 task)
 - `?lvl=15` → '/home/guest' should be empty (from L14), '/tmp' should still have all files (L15 task is to clean it)
 
 Build Status: ✅ Passing

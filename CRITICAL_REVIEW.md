@@ -11,7 +11,7 @@
 **Problem:** You're cramming 5 complex concepts into 5 levels under narrative time pressure.
 
 L11: Learn root navigation + sort modes + daemon identification
-L12: Long-distance file operations (workspace → '/root')
+L12: Long-distance file operations (workspace → '/')
 L13: New directory creation + multi-file copy + "dead drop" concept
 L14: Bulk deletion of entire partition
 L15: Reverse selection (advanced technique) + surgical deletion
@@ -105,7 +105,7 @@ L15: Reverse selection (advanced technique) + surgical deletion
 
 - L11: "Audit scheduled. Time unknown."
 - L12: "Audit daemon activated. Approaching."
-- L13: "Audit in progress. Scanning '/root'..."
+- L13: "Audit in progress. Scanning '/'..."
 - L14: "Audit detected anomaly. Forensic analysis beginning."
 - L15: "Audit concluding. Final sweep imminent."
 
@@ -139,7 +139,7 @@ No numbers. No false promises. Just rising tension.
 
 ### HOLE 2: Why Don't They Notice systemd-core?
 
-**Setup:** You install a NEW daemon in '/root/daemons'/ with a generic name.
+**Setup:** You install a NEW daemon in '/daemons'/ with a generic name.
 
 **Question:** Don't they have monitoring? Checksums? Daemon inventories?
 

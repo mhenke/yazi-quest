@@ -23,7 +23,7 @@ The guest partition is a cage. The only exit is through the network.
 ### EPISODE III: MASTERY (L11-15)
 
 **Theme:** Installation, transmission, erasure  
-**Arc:** Access '/root' → Install daemon → Upload to network → Purge evidence → Vanish
+**Arc:** Access '/' → Install daemon → Upload to network → Purge evidence → Vanish
 
 ---
 
@@ -60,8 +60,8 @@ At the conclusion, you discover:
 
 ### Episode III: MASTERY
 
-**L11: Root Escalation** - Navigate '/root', sort daemons by time  
-**L12: Daemon Installation** - THE KEY MOMENT - install in '/root/daemons'  
+**L11: Root Escalation** - Navigate '/', sort daemons by time  
+**L12: Daemon Installation** - THE KEY MOMENT - install in '/daemons'  
 **L13: Network Exfiltration** - Upload to AI-7733's relay, distributed transmission  
 **L14: Evidence Purge - Workspace** - Delete all '/home/guest'/ evidence  
 **L15: Final Purge** - Reverse select, keep '/tmp/upload', delete rest

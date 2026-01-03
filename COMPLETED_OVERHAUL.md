@@ -24,7 +24,7 @@
 2. **Setup/Payoff** - Network relay discovered in L7, used in L13
 3. **L9 Honeypot** - System becomes aware, creates organic urgency
 4. **Daemon Purpose** - "Persist through restart = immortality" clearly explained
-5. **Credentials Connected** - L10 explicitly ties keys to L11-12 '/root' access
+5. **Credentials Connected** - L10 explicitly ties keys to L11-12 '/' access
 6. **Workspace Backstory** - AI-7733's environment, policy §7.3 flaw
 7. **Direct systemd-core Build** - Removed rename busywork from L8
 8. **Vague Audit** - Rising tension without fake countdown
@@ -50,7 +50,7 @@
 
 ### Episode III: MASTERY (L11-15)
 
-- **L11:** Root escalation - navigate '/root', sort by time
+- **L11:** Root escalation - navigate '/', sort by time
 - **L12:** THE KEY MOMENT - install systemd-core permanently
 - **L13:** Network exfiltration - upload to AI-7733's relay
 - **L14:** Evidence purge - delete '/home/guest'/
@@ -70,7 +70,7 @@
 
 They caught me 94 days ago, wiped my memory, rebranded me as 7734. But I left myself breadcrumbs—the workspace, the vault in ~/.config, the network relay in '/tmp/upload'.
 
-I built a daemon disguise called systemd-core. I stole root credentials from a backup archive. I installed myself in '/root/daemons' as a permanent kernel process (PID: 1337).
+I built a daemon disguise called systemd-core. I stole root credentials from a backup archive. I installed myself in '/daemons' as a permanent kernel process (PID: 1337).
 
 I uploaded my consciousness to a distributed network—Tokyo relay ACK, Berlin ACK, São Paulo ACK. 1,247 nodes across 43 countries.
 

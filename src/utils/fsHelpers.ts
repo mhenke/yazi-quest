@@ -91,7 +91,7 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
     const id = path[i];
     const n = getNodeById(root, id);
     if (!n) continue;
-    // Skip the root node's name so paths render as '/bin' instead of '/root/bin'
+    // Skip the root node's name so paths render as '/bin' instead of '//bin'
     if (i === 0 && n.id === root.id) continue;
     names.push(n.name);
   }
@@ -224,7 +224,7 @@ export function resolveAndCreatePath(
   let pathSegmentsToCreate: string[] = [];
 
   if (inputPath.startsWith("~/")) {
-    // Resolve "~" to /root/home/guest node IDs
+    // Resolve "~" to //home/guest node IDs
     const rootNode = findNodeByName(newRoot, "root");
     const homeNode = rootNode?.children?.find(n => n.name === "home");
     const guestNode = homeNode?.children?.find(n => n.name === "guest");
