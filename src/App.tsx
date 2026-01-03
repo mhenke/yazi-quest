@@ -134,6 +134,7 @@ export default function App() {
         "/home/guest/workspace": { count: 28, lastAccess: now - 7200000 },
         "/home/guest/.config": { count: 30, lastAccess: now - 900000 },
         "/home/guest/.config/vault": { count: 25, lastAccess: now - 800000 },
+        "/home/guest/.config/vault/active": { count: 10, lastAccess: now - 600000 },
         "/tmp": { count: 15, lastAccess: now - 1800000 },
         "/etc": { count: 8, lastAccess: now - 86400000 },
       };
@@ -301,6 +302,14 @@ export default function App() {
         newlyCompleted.push(task.id);
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
+
+        // Level 7: Trigger honeypot alert when player reaches /etc
+        if (currentLevel.id === 7 && task.id === "zoxide-etc") {
+          setAlertMessage(
+            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
+          );
+          setShowThreatAlert(true);
+        }
       }
     });
 
@@ -1339,6 +1348,7 @@ export default function App() {
           <PreviewPane
             node={currentItem}
             level={currentLevel}
+            gameState={gameState}
             previewScroll={gameState.previewScroll}
           />
 

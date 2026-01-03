@@ -30,9 +30,19 @@ export const KEYBINDINGS = [
     narrativeDescription: ["Scan Forward", "Increase Scan Depth"],
   },
   {
+    keys: ["H"],
+    description: "History Back (Shift+H)",
+    narrativeDescription: ["Navigate Back in History", "Undo Jump"],
+  },
+  {
     keys: ["K"],
     description: "Scroll Preview Up",
     narrativeDescription: ["Scan Backward", "Decrease Scan Depth"],
+  },
+  {
+    keys: ["L"],
+    description: "History Forward (Shift+L)",
+    narrativeDescription: ["Navigate Forward in History", "Redo Jump"],
   },
   {
     keys: ["a"],

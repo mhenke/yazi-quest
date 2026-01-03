@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { sortNodes } from "../utils/sortHelpers";
-import { FileNode, Level } from "../types";
+import { FileNode, Level, GameState } from "../types";
 import {
   FileText,
   FileArchive,
@@ -18,6 +18,7 @@ import {
 interface PreviewPaneProps {
   node: FileNode | null;
   level: Level;
+  gameState: GameState;
   previewScroll?: number;
 }
 
@@ -40,7 +41,12 @@ const getPreviewIcon = (node: FileNode) => {
   return { color: "text-zinc-400", icon: FileText };
 };
 
-export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewScroll = 0 }) => {
+export const PreviewPane: React.FC<PreviewPaneProps> = ({
+  node,
+  level,
+  gameState,
+  previewScroll = 0,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isImage = node?.type === "file" && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   const isArchiveFile = node?.type === "file" && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
@@ -140,23 +146,25 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({ node, level, previewSc
               Objectives
             </h3>
             <div className="space-y-2">
-              {level.tasks.map(task => (
-                <div
-                  key={task.id}
-                  className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? "opacity-50" : "opacity-100"}`}
-                >
+              {level.tasks
+                .filter(task => !task.hidden || !task.hidden(gameState, level))
+                .map(task => (
                   <div
-                    className={`mt-0.5 shrink-0 ${task.completed ? "text-green-500" : "text-zinc-600"}`}
+                    key={task.id}
+                    className={`flex gap-3 items-start transition-all duration-500 ${task.completed ? "opacity-50" : "opacity-100"}`}
                   >
-                    {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+                    <div
+                      className={`mt-0.5 shrink-0 ${task.completed ? "text-green-500" : "text-zinc-600"}`}
+                    >
+                      {task.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+                    </div>
+                    <div
+                      className={`text-xs font-mono leading-tight ${task.completed ? "line-through text-zinc-500 decoration-zinc-600" : "text-zinc-300"}`}
+                    >
+                      {task.description}
+                    </div>
                   </div>
-                  <div
-                    className={`text-xs font-mono leading-tight ${task.completed ? "line-through text-zinc-500 decoration-zinc-600" : "text-zinc-300"}`}
-                  >
-                    {task.description}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@ export interface LevelTask {
   description: string;
   check: (gameState: GameState, level: Level) => boolean;
   completed: boolean;
+  hidden?: (gameState: GameState, level: Level) => boolean; // Hide task until condition met
 }
 
 export interface Level {

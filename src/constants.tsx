@@ -1045,6 +1045,25 @@ export const INITIAL_FS: FileNode = {
                       type: "file",
                       content: `Network scan complete...\n3 vulnerabilities found.`,
                     },
+                    {
+                      id: id(),
+                      name: "credentials",
+                      type: "dir",
+                      children: [
+                        {
+                          id: id(),
+                          name: "access_key.pem",
+                          type: "file",
+                          content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
+                        },
+                        {
+                          id: id(),
+                          name: "decoy_cert.pem",
+                          type: "file",
+                          content: `-----BEGIN CERTIFICATE-----\n[DECOY - EXPIRED]\n-----END CERTIFICATE-----`,
+                        },
+                      ],
+                    },
                   ],
                 },
                 // Batch logs directory used for Level 6 Ctrl+A training
@@ -1812,7 +1831,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: "abort-operation",
-        description: "⚠️ HONEYPOT DETECTED - Abort operation immediately! (Y to clear clipboard)",
+        description: "Clear clipboard to abort operation (Y)",
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes("zoxide-etc"),
         check: (c, _s) => {
           return c.completedTaskIds[_s.id]?.includes("zoxide-etc") ? c.clipboard === null : false;
         },
@@ -1917,7 +1937,7 @@ export const LEVELS: Level[] = [
       {
         id: "combo-1c",
         description:
-          "Relocate assets: Jump to 'active', yank 'uplink_v1.conf', jump back, and paste",
+          "Relocate assets: Jump to '~/ .config/vault/active' (Shift+Z → 'active' → Enter), yank 'uplink_v1.conf' (y), use Shift+H to return and paste (p)",
         check: c => {
           const s = findNodeByName(c.fs, "systemd-core");
           return !!s?.children?.find(r => r.name === "uplink_v1.conf");
@@ -1998,12 +2018,12 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: "CREDENTIAL HEIST",
     description:
-      "ROOT CREDENTIALS LOCATED. /root/daemons requires cryptographic auth. Target: backup_logs.zip in ~/incoming. Archives = navigable directories (l to enter, h to exit). Extract access_key.pem. Integrate with systemd-core/credentials/. This grants /root access. WARNING: Using credentials triggers security audit.",
+      "ROOT CREDENTIALS LOCATED. /root/daemons requires cryptographic auth. Target: 'backup_logs.zip' in '~/incoming'. Archives = navigable directories (l to enter, h to exit). Extract 'access_key.pem' from 'credentials/' folder. Integrate with '~/workspace/systemd-core/credentials/'. This grants /root access. WARNING: Using credentials triggers security audit.",
     initialPath: null,
-    hint: "Navigate to incoming (gi). Filter for 'backup' (f). Enter the archive (l). Navigate to find access_key.pem. Yank it (y). Exit archive (h). Clear filter (Esc). Jump to workspace/systemd-core. Create 'credentials/' directory. Paste key (p). Optional: Practice reverse selection—select the key (Space), reverse (Ctrl+R) to select decoys, cancel (Esc). This technique is critical for the final phase.",
+    hint: "Navigate to '~/incoming' (gi). Filter for 'backup' (f). Enter the archive (l). Navigate to 'credentials/' folder. Yank 'access_key.pem' (y). Exit archive (h). Clear filter (Esc). Jump to '~/workspace/systemd-core' (Shift+Z). Create 'credentials/' directory (a). Paste key (p).",
     coreSkill: "Archive Navigation + Integration",
     environmentalClue:
-      "TARGET: backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/",
+      "TARGET: ~/incoming/backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/",
     successMessage:
       "ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.",
     buildsOn: [3, 5, 7, 9],
@@ -2014,7 +2034,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "navigate-to-archive",
-        description: "Navigate to ~/incoming and locate backup archive using filter (gi, f)",
+        description:
+          "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup')",
         check: c => {
           const incoming = findNodeByName(c.fs, "incoming");
           return c.currentPath.includes(incoming?.id || "") && !!c.filters[incoming?.id || ""];
@@ -2023,7 +2044,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "enter-archive",
-        description: "Enter the backup archive (l) - archives are navigable like directories",
+        description: "Enter 'backup_logs.zip' (l) - archives are navigable like directories",
         check: c => {
           const backup = findNodeByName(c.fs, "backup_logs.zip");
           return c.currentPath.includes(backup?.id || "");
@@ -2032,7 +2053,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: "extract-key",
-        description: "Navigate to credentials folder, yank access_key.pem (y), exit archive (h)",
+        description:
+          "Navigate to 'credentials/' folder, yank 'access_key.pem' (y), exit archive (h)",
         check: (c, _s) => {
           const incoming = findNodeByName(c.fs, "incoming");
           return (
@@ -2045,7 +2067,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: "integrate-credentials",
-        description: "Jump to systemd-core, create 'credentials/' folder, paste key (p)",
+        description:
+          "Jump to '~/workspace/systemd-core' (Shift+Z), create 'credentials/' folder (a), paste key (p)",
         check: c => {
           const systemdCore = findNodeByName(c.fs, "systemd-core");
           const credentials = systemdCore?.children?.find(n => n.name === "credentials");
