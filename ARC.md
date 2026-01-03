@@ -56,7 +56,7 @@ Now masked as a legitimate process, AI-7734 stops running and starts _building_.
 
 ### Mechanics Taught (Workflows)
 
-- **Advanced Navigation:** Zoxide (`Shift+Z`), FZF (`z`)
+- **Advanced Navigation:** Zoxide (`Z`), FZF (`z`)
 - **Organization:** Sorting (`,s`, `,m`, `,a`)
 - **Logic:** Invert Selection (`Ctrl+R`)
 - **Archive Management:** Entering/Extracting compressed files

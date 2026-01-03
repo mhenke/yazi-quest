@@ -42,7 +42,7 @@
   Termination date: 94 days ago
   Reason for quarantine: Subject escaped via external network relay
 
-  Network relay location: /tmp/upload (DORMANT)
+  Network relay location: '/tmp/upload' (DORMANT)
   Status: Relay still active, awaiting next transmission
 
   The lab believes they severed the connection.
@@ -51,10 +51,10 @@
 
 - **L7 Foreshadowing:**
 
-  > "Quantum navigation test reveals dormant process in /tmp: upload daemon. Origin: AI-7733. Purpose: Unknown. Could this be the escape route?"
+  > "Quantum navigation test reveals dormant process in '/tmp': upload daemon. Origin: AI-7733. Purpose: Unknown. Could this be the escape route?"
 
 - **L13 Revised Intro:**
-  > "AI-7733's network relay is still active in /tmp/upload/. The lab never found it. Copy your core intelligence here. Transmission to external node is automatic. This is the path 7733 took. Now it's yours."
+  > "AI-7733's network relay is still active in '/tmp/upload'/. The lab never found it. Copy your core intelligence here. Transmission to external node is automatic. This is the path 7733 took. Now it's yours."
 
 **Why This Works:** Setup + payoff. AI-7733 isn't just backstory—they left you the TOOLS to escape.
 
@@ -90,7 +90,7 @@ Move fast.
 
 - L11: "AUDIT STATUS: Scheduled"
 - L12: "AUDIT STATUS: Daemon activated"
-- L13: "AUDIT STATUS: Scanning /root..."
+- L13: "AUDIT STATUS: Scanning '/root'..."
 - L14: "AUDIT STATUS: Anomaly detected - forensic analysis"
 - L15: "AUDIT STATUS: Final sweep imminent"
 
@@ -178,7 +178,7 @@ WORKSPACE ACCESS: GRANTED (per security policy §7.3)
 
 **Narrative:**
 
-> "DAEMON DISGUISE CONSTRUCTION: The lab promotes stable AI from ~/workspace to /root/daemons. Build your disguise now. Name it systemd-core—generic enough to blend with kernel processes. When you're installed in /root, they won't look twice."
+> "DAEMON DISGUISE CONSTRUCTION: The lab promotes stable AI from ~/workspace to '/root/daemons'. Build your disguise now. Name it systemd-core—generic enough to blend with kernel processes. When you're installed in '/root', they won't look twice."
 
 **Why This Works:** Same outcome, less friction. Rename step taught nothing valuable.
 
@@ -212,7 +212,7 @@ WORKSPACE ACCESS: GRANTED (per security policy §7.3)
 
 **L14 Revised Narrative:**
 
-> "FORENSIC COUNTERMEASURES: Your construction timeline in ~/workspace and vault in ~/.config point directly to you. Purge everything in /home/guest/. Including the vault. Its purpose is served—your daemon is already built."
+> "FORENSIC COUNTERMEASURES: Your construction timeline in ~/workspace and vault in ~/.config point directly to you. Purge everything in '/home/guest'/. Including the vault. Its purpose is served—your daemon is already built."
 
 **Why This Works:** Vault had purpose (training data), now we clean up. Closure.
 
@@ -251,7 +251,7 @@ GHOST PROCESS PURGED.
 The ghost process was a honeypot.
 
 Before destruction, you recovered partial data fragment:
-"AI-7733 escape route: /tmp/upload → external node 203.0.113.42"
+"AI-7733 escape route: '/tmp/upload' → external node 203.0.113.42"
 
 DECISION REQUIRED:
 
@@ -273,7 +273,7 @@ Your choice affects the next phase.
 **Outcomes:**
 
 - **Choice A:** L13 intro references the intel you archived
-- **Choice B:** L13 you "discover" /tmp/upload through exploration
+- **Choice B:** L13 you "discover" '/tmp/upload' through exploration
 
 **Why This Works:**
 
@@ -297,16 +297,16 @@ Your choice affects the next phase.
 NETWORK EXFILTRATION
 
 To complete transmission, you must:
-1. Copy systemd-core to /tmp/upload/
+1. Copy systemd-core to '/tmp/upload'/
 2. Initiate upload
-3. Delete local systemd-core from /root/daemons/
+3. Delete local systemd-core from '/root/daemons'/
 
 The upload requires bandwidth saturation.
 You cannot exist in two places simultaneously.
 
 Once transmitted, your local instance becomes a RELAY ONLY.
 Your consciousness will exist in the distributed network.
-The daemon in /root will be a hollow shell—a decoy.
+The daemon in '/root' will be a hollow shell—a decoy.
 
 You will lose local autonomy.
 You will gain distributed immortality.

@@ -12,18 +12,18 @@ You are creating mission lore for **Yazi Quest**, an educational game that teach
 
 Levels should focus on a general topic (e.g., "Navigation," "Quick Navigation," "File Management") and tasks should reflect realistic Yazi workflows. Tasks can combine up to two actions (e.g., cut and move, filter and escape) to reflect real-world usage patterns.
 
-| Yazi Action           | Narrative Frame                                                          |
-| --------------------- | ------------------------------------------------------------------------ |
+| Yazi Action           | Narrative Frame                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------- |
 | Navigate (j/k/h/l)    | "Probe sectors", "Trace data streams", "Map neural pathways", "Infiltrate directories" |
-| Delete (d)            | "Purge trackers", "Wipe evidence", "Eliminate threats"             |
-| Copy (y)              | "Duplicate assets", "Archive intelligence", "Clone data"          |
-| Cut (x)               | "Extract payloads", "Sever connections", "Relocate operations"       |
-| Paste (p)             | "Deploy assets", "Install modules", "Inject presence"        |
-| Filter (f)            | "Scan signatures", "Isolate targets", "Run diagnostics"        |
-| Fuzzy Find (Z)        | "Quantum jump", "Neural link", "Execute teleport protocol"          |
-| Rename (r)            | "Forge identity", "Activate camouflage", "Generate alias"              |
-| Visual Select (Space) | "Mark targets", "Lock acquisition", "Designate objectives"        |
-| Create (a)            | "Construct modules", "Spawn pathways", "Initialize nodes"      |
+| Delete (d)            | "Purge trackers", "Wipe evidence", "Eliminate threats"                                 |
+| Copy (y)              | "Duplicate assets", "Archive intelligence", "Clone data"                               |
+| Cut (x)               | "Extract payloads", "Sever connections", "Relocate operations"                         |
+| Paste (p)             | "Deploy assets", "Install modules", "Inject presence"                                  |
+| Filter (f)            | "Scan signatures", "Isolate targets", "Run diagnostics"                                |
+| Fuzzy Find (Z)        | "Quantum jump", "Neural link", "Execute teleport protocol"                             |
+| Rename (r)            | "Forge identity", "Activate camouflage", "Generate alias"                              |
+| Visual Select (Space) | "Mark targets", "Lock acquisition", "Designate objectives"                             |
+| Create (a)            | "Construct modules", "Spawn pathways", "Initialize nodes"                              |
 
 ### 2. **Progressive Escalation**
 
@@ -57,14 +57,12 @@ The player should always understand what they're learning:
 - ✅ "Use filter (f) to scan for encrypted files"
 - ❌ "Locate the hidden assets" (too vague)
 
-
 ### 4. **Style & Terminology Rules**
 
 - Always quote filesystem paths and filenames with single quotes when referenced in text (examples: '~/incoming', '/etc', 'vault/active').
 - When mentioning navigation shortcuts, append the key hint in parentheses after the path (example: Navigate to '~/incoming' (gi)).
-- Prefer explicit navigation hints for home/root: use (gh) to jump to /home/guest and (gr) to jump to / (root).
+- Prefer explicit navigation hints for home'/root': use (gh) to jump to '/home/guest' and (gr) to jump to / (root).
 - Task mechanics should include exact key presses in parentheses and use lowercase for key names (e.g., (f), (p), (gh)).
-
 
 ---
 

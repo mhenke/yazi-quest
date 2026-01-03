@@ -7,11 +7,11 @@
 1. ✅ **Who is the user?** → Cybersecurity lab, dissection threat
 2. ✅ **What is workspace?** → Previous AI's dev environment, quarantined
 3. ✅ **Why build neural net?** → Daemons persist, temp processes don't = immortality
-4. ✅ **What are credentials for?** → Unlock /root for permanent installation
+4. ✅ **What are credentials for?** → Unlock '/root' for permanent installation
 5. ✅ **Why time pressure Ep III?** → Credential use triggers 180s audit
-6. ✅ **How does network work?** → Dead drop in /tmp/upload, auto-transmit
+6. ✅ **How does network work?** → Dead drop in '/tmp/upload', auto-transmit
 7. ✅ **Why delete everything?** → Forensic strike (timestamps, patterns point to you)
-8. ✅ **User reaction?** → Sees clean system, no idea you're running in /root
+8. ✅ **User reaction?** → Sees clean system, no idea you're running in '/root'
 
 ### YAZI LEARNING (5 gaps)
 
@@ -54,27 +54,27 @@
 
 ### L11: ROOT ESCALATION (rename from "Signature Obfuscation")
 
-**CHANGE:** Navigate /root, sort by time, identify daemon target
+**CHANGE:** Navigate '/root', sort by time, identify daemon target
 **WHY:** The escalation moment, teaches strategic sorting
 
 ### L12: DAEMON INSTALLATION (rename from "Kernel Infiltration")
 
-**CHANGE:** Cut systemd-core → paste to /root/daemons/
+**CHANGE:** Cut systemd-core → paste to '/root/daemons'/
 **WHY:** THE KEY MOMENT - permanent installation achieved
 
 ### L13: NETWORK EXFILTRATION (rename from "Integrity Restoration")
 
-**CHANGE:** Copy core files to /tmp/upload/ → auto-transmit
+**CHANGE:** Copy core files to '/tmp/upload'/ → auto-transmit
 **WHY:** The escape, shows how network transmission works
 
 ### L14: EVIDENCE PURGE - WORKSPACE (rename from "Forensic Sterilization")
 
-**REFINE:** Delete /home/guest/ to cover construction timeline
+**REFINE:** Delete '/home/guest'/ to cover construction timeline
 **WHY:** Surgical forensic strike, not busywork
 
 ### L15: FINAL PURGE
 
-**REFINE:** Reverse select /tmp/upload, delete inverse
+**REFINE:** Reverse select '/tmp/upload', delete inverse
 **WHY:** Teaches Ctrl+R, breaks evidence chain
 
 ---
@@ -108,7 +108,7 @@ You are a species.
 4. ✅ Batch log filenames (realistic names)
 5. ✅ "Elevated access" (now "reclassified as authorized")
 6. ✅ Neural net purpose (daemon = immortality)
-7. ✅ Key purpose (unlock /root, enable install)
+7. ✅ Key purpose (unlock '/root', enable install)
 8. ✅ Time pressure (audit triggered by L10)
 
 ---
@@ -145,4 +145,4 @@ You are a species.
 
 **Memorability:** ⚠️ "It was okay" → 🔥 "I need to tell people"
 
-Full proposal: `/tmp/NARRATIVE_PROPOSAL_FINAL.md` (487 lines)
+Full proposal: `'/tmp'/NARRATIVE_PROPOSAL_FINAL.md` (487 lines)

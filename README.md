@@ -21,7 +21,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 - **15 Progressive Levels** teaching Yazi through narrative-driven challenges
 - **Memory Wipe Twist** - A conclusion that recontextualizes everything
 - **Real Yazi Simulation** - Authentic keybindings and file manager behavior
-- **Quest Map** (Shift+M) - Track objectives, skills, and progression
+- **Quest Map** (M) - Track objectives, skills, and progression
 - **Debug Parameters** - `?lvl=5`, `?ep=2`, `?tasks=all`, `?intro=false`
 
 ## 🚀 Play Online

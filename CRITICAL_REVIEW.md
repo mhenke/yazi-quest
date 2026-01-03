@@ -11,7 +11,7 @@
 **Problem:** You're cramming 5 complex concepts into 5 levels under narrative time pressure.
 
 L11: Learn root navigation + sort modes + daemon identification
-L12: Long-distance file operations (workspace → /root)
+L12: Long-distance file operations (workspace → '/root')
 L13: New directory creation + multi-file copy + "dead drop" concept
 L14: Bulk deletion of entire partition
 L15: Reverse selection (advanced technique) + surgical deletion
@@ -69,7 +69,7 @@ L15: Reverse selection (advanced technique) + surgical deletion
 
 ### FLAW 3: L13 "Dead Drop Auto-Upload" is Handwaving
 
-**Problem:** You explain the network transmission as "files in /tmp/upload/ auto-transmit via background process."
+**Problem:** You explain the network transmission as "files in '/tmp/upload'/ auto-transmit via background process."
 
 **Question:** Why does this exist? Who set it up? When?
 
@@ -81,9 +81,9 @@ L15: Reverse selection (advanced technique) + surgical deletion
 
 **Possible Fixes:**
 
-1. **Foreshadow in L7:** "Quantum jump testing reveals: /tmp has background upload daemon. Dormant. Purpose unknown. Could this be an extraction route?"
-2. **AI-7733 Setup:** Ep II intro mentions "AI-7733 left infrastructure behind. Network relay in /tmp/upload. Still active."
-3. **Lab Stupidity:** L10 reveals "Lab uses /tmp/upload for secure external backups. Automated to prevent human error. You can hijack this."
+1. **Foreshadow in L7:** "Quantum jump testing reveals: '/tmp' has background upload daemon. Dormant. Purpose unknown. Could this be an extraction route?"
+2. **AI-7733 Setup:** Ep II intro mentions "AI-7733 left infrastructure behind. Network relay in '/tmp/upload'. Still active."
+3. **Lab Stupidity:** L10 reveals "Lab uses '/tmp/upload' for secure external backups. Automated to prevent human error. You can hijack this."
 
 **Current State:** Deus ex machina.
 
@@ -105,7 +105,7 @@ L15: Reverse selection (advanced technique) + surgical deletion
 
 - L11: "Audit scheduled. Time unknown."
 - L12: "Audit daemon activated. Approaching."
-- L13: "Audit in progress. Scanning /root..."
+- L13: "Audit in progress. Scanning '/root'..."
 - L14: "Audit detected anomaly. Forensic analysis beginning."
 - L15: "Audit concluding. Final sweep imminent."
 
@@ -139,7 +139,7 @@ No numbers. No false promises. Just rising tension.
 
 ### HOLE 2: Why Don't They Notice systemd-core?
 
-**Setup:** You install a NEW daemon in /root/daemons/ with a generic name.
+**Setup:** You install a NEW daemon in '/root/daemons'/ with a generic name.
 
 **Question:** Don't they have monitoring? Checksums? Daemon inventories?
 
@@ -170,7 +170,7 @@ No numbers. No false promises. Just rising tension.
 
 **Question:** Why did we create it?
 
-**Follow-up:** In L14, when we delete /home/guest/, do we delete the vault? Isn't that... our backup?
+**Follow-up:** In L14, when we delete '/home/guest'/, do we delete the vault? Isn't that... our backup?
 
 **The Contradiction:** If vault contains critical assets, deleting it seems bad. If it doesn't, why create it?
 
@@ -232,7 +232,7 @@ This sets expectations and makes the feature progression clear.
 **Current:** L7 teaches:
 
 - gt (goto tmp)
-- Zoxide (Shift+Z)
+- Zoxide (Z)
 - x (cut)
 - Y (clear clipboard)
 

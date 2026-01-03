@@ -21,7 +21,7 @@
 - [x] AI-7733 network relay setup/payoff
 - [x] L9 honeypot creates organic urgency
 - [x] Daemon immortality explanation
-- [x] Credentials connected to /root access
+- [x] Credentials connected to '/root' access
 - [x] All Yazi features explained in context
 - [x] Removed busywork (direct systemd-core build)
 - [x] Vague audit escalation (no fake timer)

@@ -23,7 +23,7 @@ The guest partition is a cage. The only exit is through the network.
 ### EPISODE III: MASTERY (L11-15)
 
 **Theme:** Installation, transmission, erasure  
-**Arc:** Access /root → Install daemon → Upload to network → Purge evidence → Vanish
+**Arc:** Access '/root' → Install daemon → Upload to network → Purge evidence → Vanish
 
 ---
 
@@ -53,18 +53,18 @@ At the conclusion, you discover:
 ### Episode II: FORTIFICATION
 
 **L6: Batch Archive Operation** - Collect training data, learn daemon concept  
-**L7: Quantum Bypass** - Zoxide/g-commands, discover /tmp/upload relay  
+**L7: Quantum Bypass** - Zoxide/g-commands, discover '/tmp/upload' relay  
 **L8: Daemon Disguise Construction** - Build systemd-core directly  
 **L9: Phantom Process Purge** - FZF search, honeypot twist (system now aware)  
 **L10: Credential Heist** - Archive navigation, extract keys, audit warning
 
 ### Episode III: MASTERY
 
-**L11: Root Escalation** - Navigate /root, sort daemons by time  
-**L12: Daemon Installation** - THE KEY MOMENT - install in /root/daemons  
+**L11: Root Escalation** - Navigate '/root', sort daemons by time  
+**L12: Daemon Installation** - THE KEY MOMENT - install in '/root/daemons'  
 **L13: Network Exfiltration** - Upload to AI-7733's relay, distributed transmission  
-**L14: Evidence Purge - Workspace** - Delete all /home/guest/ evidence  
-**L15: Final Purge** - Reverse select, keep /tmp/upload, delete rest
+**L14: Evidence Purge - Workspace** - Delete all '/home/guest'/ evidence  
+**L15: Final Purge** - Reverse select, keep '/tmp/upload', delete rest
 
 ---
 
