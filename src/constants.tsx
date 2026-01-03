@@ -1264,8 +1264,60 @@ export const INITIAL_FS: FileNode = {
               ],
             },
             { id: "workspace", name: "workspace", type: "dir", children: [], protected: true },
-            { id: "sector_1", name: "sector_1", type: "dir", children: [] },
-            { id: "grid_alpha", name: "grid_alpha", type: "dir", children: [] },
+            {
+              id: "sector_1",
+              name: "sector_1",
+              type: "dir",
+              children: [
+                {
+                  id: id(),
+                  name: "sector_map.png",
+                  type: "file",
+                  content:
+                    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
+                },
+                {
+                  id: id(),
+                  name: "access_log.txt",
+                  type: "file",
+                  content: "2026-01-02 12:00:00 - ACCESS GRANTED - admin",
+                },
+              ],
+            },
+            {
+              id: "grid_alpha",
+              name: "grid_alpha",
+              type: "dir",
+              children: [
+                {
+                  id: id(),
+                  name: "tiles",
+                  type: "dir",
+                  children: [
+                    {
+                      id: id(),
+                      name: "tile_0_0.png",
+                      type: "file",
+                      content:
+                        "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=400&auto=format&fit=crop",
+                    },
+                    {
+                      id: id(),
+                      name: "tile_0_1.png",
+                      type: "file",
+                      content:
+                        "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?q=80&w=400&auto=format&fit=crop",
+                    },
+                  ],
+                },
+                {
+                  id: id(),
+                  name: "readme.md",
+                  type: "file",
+                  content: "Grid alpha tile set for map rendering.",
+                },
+              ],
+            },
             {
               id: ".config",
               name: ".config",
@@ -1470,7 +1522,21 @@ export const INITIAL_FS: FileNode = {
           type: "file",
           content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd`,
         },
-        { id: id(), name: "cache", type: "dir", children: [] },
+        {
+          id: id(),
+          name: "cache",
+          type: "dir",
+          children: [
+            { id: id(), name: "thumbnails.db", type: "file", content: "[THUMBNAIL CACHE DB]" },
+            {
+              id: id(),
+              name: "temp_session_1.json",
+              type: "file",
+              content: '{"session":"abc123","expires":"2026-01-04T00:00:00Z"}',
+            },
+            { id: id(), name: "cache_index.json", type: "file", content: '{"entries":128}' },
+          ],
+        },
       ],
     },
     {
