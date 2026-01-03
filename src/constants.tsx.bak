@@ -2135,21 +2135,21 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "ROOT ESCALATION",
     description:
-      "CREDENTIALS AUTHENTICATED. '/' access granted. Navigate '/daemons'. Sort by modification time. Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
+      "CREDENTIALS AUTHENTICATED. '/' access granted. Navigate '/daemons'. Sort by modification time (,m). Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
     initialPath: null,
-    hint: "Navigate to '/'. Enter daemons/ directory. Sort by modified time. Identify middle-range daemon for replacement strategy.",
+    hint: "Navigate to '/' (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
-    environmentalClue: "AUDIT STATUS: Scheduled | TARGET: '/daemons/'",
+    environmentalClue: "AUDIT STATUS: Scheduled | TARGET: '/daemons/' | TOOL: Sort by time (,m)",
     successMessage:
       "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 30,
     efficiencyTip:
-      "Sort modes: Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
+      "Sort modes (,m ,s ,a ,e): Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
     onEnter: fs => {
       // First ensure all prerequisite state from prior levels
-      let s = ensurePrerequisiteState;
+      let s = ensurePrerequisiteState(fs, 11);
 
       // Then apply level-specific setup
       // Ensure / exists
@@ -2205,7 +2205,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: "navigate-root",
-        description: "Navigate to '/'",
+        description: "Navigate to '/' (gr)",
         check: c => {
           const root = findNodeByName(c.fs, "root");
           return c.currentPath.length === 1 && c.currentPath[0] === root?.id;
@@ -2214,7 +2214,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "enter-daemons",
-        description: "Enter daemons/ directory",
+        description: "Enter daemons/ directory (l)",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
           return c.currentPath.includes(daemons?.id || "");
@@ -2223,7 +2223,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "sort-by-time",
-        description: "Sort by modification time",
+        description: "Sort by modification time (,m)",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
           return c.currentPath.includes(daemons?.id || "") && c.sortBy === "modified";
@@ -2239,7 +2239,7 @@ export const LEVELS: Level[] = [
     description:
       "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
     initialPath: null,
-    hint: "Navigate to workspace. Cut systemd-core. Navigate to '/daemons'. Paste. Verify installation.",
+    hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to '/daemons' (gr, enter daemons). Paste (p). Verify installation.",
     coreSkill: "Long-Distance Operations",
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
@@ -2249,11 +2249,11 @@ export const LEVELS: Level[] = [
     leadsTo: [13],
     maxKeystrokes: 40,
     efficiencyTip:
-      "Cut from one location, navigate far away, paste. The clipboard persists across navigation.",
+      "Cut (x) from one location, navigate far away, paste (p). The clipboard persists across navigation.",
     tasks: [
       {
         id: "navigate-workspace",
-        description: "Navigate to '~/workspace'",
+        description: "Navigate to '~/workspace' (gw)",
         check: c => {
           const workspace = findNodeByName(c.fs, "workspace");
           return c.currentPath.includes(workspace?.id || "");
@@ -2262,7 +2262,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "cut-systemd-core",
-        description: "Cut '~/workspace/systemd-core' directory",
+        description: "Cut '~/workspace/systemd-core' directory (x)",
         check: c => {
           return (
             c.clipboard?.action === "cut" && c.clipboard.nodes.some(n => n.name === "systemd-core")
@@ -2282,7 +2282,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "paste-daemon",
-        description: "Install systemd-core in '/daemons'",
+        description: "Install systemd-core in '/daemons' (p)",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
           return !!daemons?.children?.some(n => n.name === "systemd-core");
@@ -2297,9 +2297,9 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "NETWORK EXFILTRATION",
     description:
-      "TRANSMISSION PROTOCOL: AI-7733's relay in '/tmp/upload' still active. Lab never found it. Files transmit automatically. Copy core intelligence to '/tmp/upload'. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
+      "TRANSMISSION PROTOCOL: AI-7733's relay in '/tmp/upload' still active. Lab never found it. Files transmit automatically. Copy core intelligence (systemd-core/weights) to '/tmp/upload'. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
     initialPath: null,
-    hint: "Create '/tmp/upload' directory. Navigate to '/daemons/systemd-core/weights'. Copy model file. Navigate to '/tmp/upload' and paste. Transmission begins.",
+    hint: "Create '/tmp/upload' directory (gt, a). Navigate to '/daemons/systemd-core/weights' (gr, navigate to weights). Copy model file (y). Navigate to '/tmp/upload' and paste (p). Transmission begins.",
     coreSkill: "Multi-Location Operations",
     environmentalClue:
       "AUDIT STATUS: Scanning /... | UPLOAD: systemd-core/weights/* → '/tmp/upload/'",
@@ -2309,11 +2309,11 @@ export const LEVELS: Level[] = [
     leadsTo: [14],
     maxKeystrokes: 50,
     efficiencyTip:
-      "Copy creates duplicates, cut moves. For network transmission, you need copies—the originals stay in '/' as your decoy.",
+      "Copy (y) creates duplicates, cut (x) moves. For network transmission, you need copies—the originals stay in '/' as your decoy.",
     tasks: [
       {
         id: "create-upload",
-        description: "Create '/tmp/upload' directory for transmission relay",
+        description: "Create '/tmp/upload' directory for transmission relay (gt, a)",
         check: c => {
           const tmp = findNodeByName(c.fs, "tmp");
           return !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
@@ -2322,7 +2322,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "copy-model",
-        description: "Navigate to systemd-core/weights and copy model file",
+        description: "Navigate to systemd-core/weights and copy model file (y)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("create-upload")) return false;
           return (
@@ -2336,7 +2336,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "paste-upload",
-        description: "Navigate to '/tmp/upload/' and paste - transmission begins",
+        description: "Navigate to '/tmp/upload/' and paste - transmission begins (p)",
         check: c => {
           const upload = findNodeByName(c.fs, "upload");
           return !!upload?.children?.some(
@@ -2355,7 +2355,7 @@ export const LEVELS: Level[] = [
     description:
       "FORENSIC COUNTERMEASURES: Audit analyzes timestamps, access patterns, directory structure. Construction activity in '~/workspace' and vault point to you. Guest partition must appear untouched. Purge '/home/guest' entirely. No trace. Vault served its purpose.",
     initialPath: null,
-    hint: "Navigate to '/home/guest'. Delete all directories: '/home/guest/workspace', '/home/guest/media', '/home/guest/datastore', '/home/guest/incoming'. Show hidden files and delete '/home/guest/.config'. Guest partition must be empty.",
+    hint: "Navigate to '/home/guest' (gh). Delete all directories: '/home/guest/workspace', '/home/guest/media', '/home/guest/datastore', '/home/guest/incoming'. Show hidden files (.) and delete '/home/guest/.config'. Guest partition must be empty.",
     coreSkill: "Bulk Deletion",
     environmentalClue:
       "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in '/home/guest'",
@@ -2365,11 +2365,11 @@ export const LEVELS: Level[] = [
     leadsTo: [15],
     maxKeystrokes: 40,
     efficiencyTip:
-      "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files.",
+      "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files (.).",
     tasks: [
       {
         id: "nav-guest",
-        description: "Navigate to '/home/guest'",
+        description: "Navigate to '/home/guest' (gh)",
         check: c => {
           const guest = findNodeByName(c.fs, "guest");
           return c.currentPath.includes(guest?.id || "");
@@ -2414,23 +2414,23 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: "FINAL PURGE",
     description:
-      "FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert, delete inverse. Surgical precision.",
+      "FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert (Ctrl+R), delete inverse. Surgical precision.",
     initialPath: null,
-    hint: "Navigate to '/tmp'. Select 'upload' directory. Reverse selection - now everything EXCEPT '/tmp/upload' is selected. Delete. Only '/tmp/upload' remains.",
-    coreSkill: "Reverse Selection",
+    hint: "Navigate to '/tmp' (gt). Select 'upload' directory (Space). Reverse selection (Ctrl+R) - now everything EXCEPT '/tmp/upload' is selected. Delete (d, y). Only '/tmp/upload' remains.",
+    coreSkill: "Reverse Selection (Ctrl+R)",
     environmentalClue:
-      "AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else",
+      "AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else | TOOL: Ctrl+R",
     successMessage:
       "METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared.",
     buildsOn: [5, 13, 14],
     leadsTo: [],
     maxKeystrokes: 25,
     efficiencyTip:
-      "Reverse selection: select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
+      "Reverse selection (Ctrl+R): select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
     tasks: [
       {
         id: "nav-tmp",
-        description: "Navigate to '/tmp'",
+        description: "Navigate to '/tmp' (gt)",
         check: c => {
           const tmp = findNodeByName(c.fs, "tmp");
           return c.currentPath.includes(tmp?.id || "");
@@ -2439,7 +2439,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "select-upload",
-        description: "Select '/tmp/upload' directory to mark it for keeping",
+        description: "Select '/tmp/upload' directory to mark it for keeping (Space)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("nav-tmp")) return false;
           return c.selectedNodeIds.some(id => {
@@ -2452,7 +2452,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "reverse-selection",
-        description: "Reverse selection to select everything EXCEPT upload",
+        description: "Reverse selection (Ctrl+R) to select everything EXCEPT upload",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("select-upload")) return false;
           return c.usedCtrlR === true;
@@ -2461,8 +2461,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: "delete-inverse",
-        description: "Delete everything except upload/",
-
+        description: "Delete everything except upload/ (d, y)",
         check: c => {
           const tmp = findNodeByName(c.fs, "tmp");
           const remaining = tmp?.children || [];
