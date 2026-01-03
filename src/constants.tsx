@@ -719,6 +719,18 @@ export const INITIAL_FS: FileNode = {
                       type: "file",
                       content: "Legacy project from 1999. Do not delete.",
                     },
+                    {
+                      id: id(),
+                      name: "core_v2.bin.gz",
+                      type: "file",
+                      content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
+                    },
+                    {
+                      id: id(),
+                      name: "firmware_update.bin",
+                      type: "file",
+                      content: "[BINARY FIRMWARE IMAGE - placeholder]",
+                    },
                   ],
                 },
                 {
@@ -1089,6 +1101,12 @@ export const INITIAL_FS: FileNode = {
                       type: "file",
                       content: "-- SQL dump\nCREATE TABLE users (id INT, name TEXT);",
                     },
+                    {
+                      id: id(),
+                      name: "service_private.key.obf",
+                      type: "file",
+                      content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
+                    },
                   ],
                 },
                 {
@@ -1226,6 +1244,18 @@ export const INITIAL_FS: FileNode = {
                           content: `-----BEGIN CERTIFICATE-----\n[DECOY - EXPIRED]\n-----END CERTIFICATE-----`,
                         },
                       ],
+                    },
+                    {
+                      id: id(),
+                      name: "core_v2.bin.gz",
+                      type: "file",
+                      content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
+                    },
+                    {
+                      id: id(),
+                      name: "payload.enc",
+                      type: "file",
+                      content: "[ENCRYPTED PAYLOAD BLOB - placeholder]",
                     },
                   ],
                 },
