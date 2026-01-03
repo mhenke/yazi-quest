@@ -197,6 +197,14 @@ export function createPath(
   if (exists) {
     return { fs: newRoot, error: null, collision: true, collisionNode: exists };
   }
+  // Allow a file and a directory to share the same name in the same parent.
+  // Collision should only occur if an item with the same name AND same type exists.
+  const sameTypeExists = parent.children.find(
+    c => c.name === normalizedName && c.type === (isDir ? "dir" : "file")
+  );
+  if (sameTypeExists) {
+    return { fs: newRoot, error: null, collision: true, collisionNode: sameTypeExists };
+  }
   const node: FileNode = {
     id: id(),
     name: normalizedName,
@@ -259,61 +267,75 @@ export function resolveAndCreatePath(
   for (let i = 0; i < pathSegmentsToCreate.length; i++) {
     const segment = pathSegmentsToCreate[i];
     const isLastSegment = i === pathSegmentsToCreate.length - 1;
-    const isDir = !isLastSegment || inputPath.endsWith("/");
+    const wantDir = !isLastSegment || inputPath.endsWith("/");
 
-    let childNode = currentWorkingNode?.children?.find(c => c.name === segment);
+    // Find an existing child that matches both name and expected type
+    let sameTypeChild: FileNode | undefined = undefined;
+    let anySameName: FileNode | undefined = undefined;
 
-    if (!childNode) {
-      // Node does not exist, create it
-      const newNode: FileNode = {
-        id: id(),
-        name: segment,
-        type: isDir ? "dir" : "file",
-        parentId: currentWorkingNode.id,
-      };
-      if (newNode.type === "dir") newNode.children = [];
-
-      const addResult = addNode(newRoot, effectiveParentPath, newNode);
-      if (!addResult.ok) {
-        return { fs: newRoot, error: addResult.error, targetNode: undefined };
+    if (currentWorkingNode.children) {
+      if (wantDir) {
+        sameTypeChild = currentWorkingNode.children.find(
+          c => c.name === segment && (c.type === "dir" || c.type === "archive")
+        );
+      } else {
+        sameTypeChild = currentWorkingNode.children.find(
+          c => c.name === segment && c.type === "file"
+        );
       }
-      newRoot = addResult.value;
-      currentWorkingNode = getNodeByPath(newRoot, [...effectiveParentPath, newNode.id]);
-      if (!currentWorkingNode) {
-        return { fs: newRoot, error: "Failed to find newly created node", targetNode: undefined };
-      }
-      effectiveParentPath.push(currentWorkingNode.id);
+      anySameName = currentWorkingNode.children.find(c => c.name === segment);
+    }
 
+    // If a same-type child exists, use it (and treat as collision on last segment)
+    if (sameTypeChild) {
       if (isLastSegment) {
-        finalTargetNode = currentWorkingNode;
+        return {
+          fs: newRoot,
+          targetNode: sameTypeChild,
+          error: null,
+          collision: true,
+          collisionNode: sameTypeChild,
+        };
       }
-    } else {
-      // Node exists
-      if (isLastSegment) {
-        finalTargetNode = childNode;
-        // If it's the last segment and it already exists, check for collision
-        if ((!isDir && childNode.type === "file") || (isDir && childNode.type === "file")) {
-          // Trying to create a file, and a file exists OR trying to create a dir and a file exists
-          return {
-            fs: newRoot,
-            error: null,
-            collision: true,
-            collisionNode: childNode,
-            targetNode: finalTargetNode,
-          };
-        } else if (!isDir && childNode.type === "dir") {
-          // Trying to create a file, but a directory with that name exists. This is an error.
-          return {
-            fs: newRoot,
-            error: "Cannot create file, directory with same name exists",
-            targetNode: undefined,
-          };
-        } else if (isDir && childNode.type === "dir") {
-          // Trying to create a directory, and it already exists. Not a collision, just return it.
-        }
-      }
-      currentWorkingNode = childNode;
+      currentWorkingNode = sameTypeChild;
       effectiveParentPath.push(currentWorkingNode.id);
+      continue;
+    }
+
+    // No same-type child. If any node with same name exists but different type, we allow coexistence.
+    // For non-last segments we need a directory to traverse into; create one if necessary.
+    if (!sameTypeChild) {
+      if (!anySameName) {
+        // Nothing with that name exists — create the desired node
+        const newNode: FileNode = {
+          id: id(),
+          name: segment,
+          type: wantDir ? "dir" : "file",
+          parentId: currentWorkingNode.id,
+        } as FileNode;
+        if (wantDir) newNode.children = [];
+        currentWorkingNode.children = currentWorkingNode.children || [];
+        currentWorkingNode.children.push(newNode);
+        if (isLastSegment) finalTargetNode = newNode;
+        currentWorkingNode = newNode;
+        effectiveParentPath.push(currentWorkingNode.id);
+        continue;
+      } else {
+        // A node with the same name but different type exists. We allow coexistence by creating the desired node.
+        const newNode: FileNode = {
+          id: id(),
+          name: segment,
+          type: wantDir ? "dir" : "file",
+          parentId: currentWorkingNode.id,
+        } as FileNode;
+        if (wantDir) newNode.children = [];
+        currentWorkingNode.children = currentWorkingNode.children || [];
+        currentWorkingNode.children.push(newNode);
+        if (isLastSegment) finalTargetNode = newNode;
+        currentWorkingNode = newNode;
+        effectiveParentPath.push(currentWorkingNode.id);
+        continue;
+      }
     }
   }
 
@@ -338,7 +360,7 @@ export function addNodeWithConflictResolution(
 
   let newName = node.name;
   let counter = 0;
-  let exists = parent.children.find(c => c.name === newName);
+  let exists = parent.children.find(c => c.name === newName && c.type === node.type);
 
   while (exists) {
     counter++;
@@ -348,7 +370,7 @@ export function addNodeWithConflictResolution(
     } else {
       newName = `${node.name}_${counter}`;
     }
-    exists = parent.children.find(c => c.name === newName);
+    exists = parent.children.find(c => c.name === newName && c.type === node.type);
   }
 
   const newNode: FileNode = { ...node, name: newName, id: id() };
