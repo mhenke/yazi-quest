@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AlertTriangle, RotateCcw, Zap } from "lucide-react";
 
 interface GameOverModalProps {
@@ -12,6 +12,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onRestart,
   efficiencyTip,
 }) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && e.shiftKey) {
+        e.preventDefault();
+        onRestart();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onRestart]);
+
   return (
     <div className="absolute inset-0 z-[100] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="w-full max-w-md bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-8 text-center relative overflow-hidden">
