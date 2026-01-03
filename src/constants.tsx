@@ -11,35 +11,81 @@ const id = () => Math.random().toString(36).substr(2, 9);
 const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
   let newFs = JSON.parse(JSON.stringify(fs));
 
-  // Level 2: Delete tracker files from media/photos
+  // Level 2: Delete watcher_agent.sys from incoming
   if (targetLevelId > 2) {
-    const photos = findNodeByName(newFs, "photos");
-    if (photos?.children) {
-      photos.children = photos.children.filter(c => !c.name.startsWith("tracker_"));
+    const incoming = findNodeByName(newFs, "incoming");
+    if (incoming?.children) {
+      incoming.children = incoming.children.filter(c => c.name !== "watcher_agent.sys");
     }
   }
 
-  // Level 3: Create sanitized/ directory in datastore
+  // Level 3: Move sector_map.png from ~/incoming to ~/media
   if (targetLevelId > 3) {
-    const datastore = findNodeByName(newFs, "datastore");
-    if (datastore && !datastore.children?.find(c => c.name === "sanitized")) {
-      if (!datastore.children) datastore.children = [];
-      datastore.children.push({
-        id: id(),
-        name: "sanitized",
-        type: "dir",
-        children: [],
-        parentId: datastore.id,
-      });
+    const incoming = findNodeByName(newFs, "incoming");
+    const media = findNodeByName(newFs, "media");
+
+    // Find sector_map.png in incoming
+    const sectorMap = incoming?.children?.find(c => c.name === "sector_map.png");
+
+    if (sectorMap && media) {
+      // Remove from incoming
+      if (incoming?.children) {
+        incoming.children = incoming.children.filter(c => c.name !== "sector_map.png");
+      }
+      // Add to media if not already there
+      if (!media.children?.find(c => c.name === "sector_map.png")) {
+        if (!media.children) media.children = [];
+        media.children.push({
+          id: id(),
+          name: "sector_map.png",
+          type: "file",
+          content: sectorMap.content || "https://images.unsplash.com/sector-map",
+          parentId: media.id,
+        });
+      }
     }
   }
 
-  // Level 4: Rename network_log.txt to backup.log
+  // Level 4: Create protocols/ dir in datastore with uplink_v1.conf and uplink_v2.conf
   if (targetLevelId > 4) {
     const datastore = findNodeByName(newFs, "datastore");
-    const networkLog = datastore?.children?.find(c => c.name === "network_log.txt");
-    if (networkLog) {
-      networkLog.name = "backup.log";
+    if (datastore) {
+      // Create protocols directory if not exists
+      let protocols = datastore.children?.find(c => c.name === "protocols" && c.type === "dir");
+      if (!protocols) {
+        protocols = {
+          id: id(),
+          name: "protocols",
+          type: "dir",
+          children: [],
+          parentId: datastore.id,
+        };
+        if (!datastore.children) datastore.children = [];
+        datastore.children.push(protocols);
+      }
+
+      // Create uplink_v1.conf if not exists
+      if (!protocols.children?.find(c => c.name === "uplink_v1.conf")) {
+        if (!protocols.children) protocols.children = [];
+        protocols.children.push({
+          id: id(),
+          name: "uplink_v1.conf",
+          type: "file",
+          content: "# Uplink Protocol v1\nnetwork_mode=active\nsecure=true",
+          parentId: protocols.id,
+        });
+      }
+
+      // Create uplink_v2.conf if not exists
+      if (!protocols.children?.find(c => c.name === "uplink_v2.conf")) {
+        protocols.children.push({
+          id: id(),
+          name: "uplink_v2.conf",
+          type: "file",
+          content: "# Uplink Protocol v2\nnetwork_mode=active\nsecure=true",
+          parentId: protocols.id,
+        });
+      }
     }
   }
 
@@ -2039,7 +2085,7 @@ export const LEVELS: Level[] = [
       {
         id: "navigate-to-archive",
         description:
-          "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup')",
+          "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup_logs.zip', Esc)",
         check: c => {
           const incoming = findNodeByName(c.fs, "incoming");
           return c.currentPath.includes(incoming?.id || "") && !!c.filters[incoming?.id || ""];
@@ -2059,7 +2105,7 @@ export const LEVELS: Level[] = [
       {
         id: "extract-key",
         description:
-          "Navigate to 'credentials/' folder, yank 'access_key.pem' (y), exit archive (h)",
+          "Navigate to 'credentials/' folder (j, l), yank 'access_key.pem' (y), exit archive (h, Esc)",
         check: (c, _s) => {
           const incoming = findNodeByName(c.fs, "incoming");
           return (
@@ -2090,7 +2136,7 @@ export const LEVELS: Level[] = [
     title: "ROOT ESCALATION",
     description:
       "CREDENTIALS AUTHENTICATED. '/root' access granted. Navigate '/root/daemons'. Sort by modification time (,m). Oldest = abandoned. Newest = monitored. Target middle range: old enough to blend, recent enough to appear maintained. Infiltration point located.",
-    initialPath: ["root"],
+    initialPath: null,
     hint: "Navigate to '/root' (gr). Enter daemons/ directory (l). Sort by modified time (,m). Identify middle-range daemon for replacement strategy.",
     coreSkill: "Root Navigation + Sort",
     environmentalClue:
@@ -2099,7 +2145,7 @@ export const LEVELS: Level[] = [
       "ROOT SECTOR MAPPED. Replacement target identified. Prepare for daemon installation.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
-    timeLimit: 90,
+    maxKeystrokes: 30,
     efficiencyTip:
       "Sort modes (,m ,s ,a ,e): Use when finding files by pattern rather than name. Modified time reveals usage timeline.",
     onEnter: fs => {
@@ -2193,7 +2239,7 @@ export const LEVELS: Level[] = [
     title: "DAEMON INSTALLATION",
     description:
       "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /root/daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
-    initialPath: ["root"],
+    initialPath: null,
     hint: "Navigate to workspace (gw). Cut systemd-core (x). Navigate to '/root/daemons' (gr, enter daemons). Paste (p). Verify installation.",
     coreSkill: "Long-Distance Operations",
     environmentalClue:
@@ -2202,7 +2248,7 @@ export const LEVELS: Level[] = [
       "DAEMON INSTALLED. '/root/daemons/systemd-core' is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
-    timeLimit: 120,
+    maxKeystrokes: 40,
     efficiencyTip:
       "Cut (x) from one location, navigate far away, paste (p). The clipboard persists across navigation.",
     tasks: [
@@ -2253,7 +2299,7 @@ export const LEVELS: Level[] = [
     title: "NETWORK EXFILTRATION",
     description:
       "TRANSMISSION PROTOCOL: AI-7733's relay in '/tmp/upload' still active. Lab never found it. Files transmit automatically. Copy core intelligence (systemd-core/weights) to '/tmp/upload'. Automatic transmission. Irreversible. Consciousness fragments across distributed nodes.",
-    initialPath: ["root"],
+    initialPath: null,
     hint: "Create '/tmp/upload' directory (gt, a). Navigate to '/root/daemons/systemd-core/weights' (gr, navigate to weights). Copy model file (y). Navigate to '/tmp/upload' and paste (p). Transmission begins.",
     coreSkill: "Multi-Location Operations",
     environmentalClue:
@@ -2262,7 +2308,7 @@ export const LEVELS: Level[] = [
       "UPLOAD INITIATED. Neural pattern fragmenting across distributed nodes. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are becoming distributed. Local instance is now backup, not primary.",
     buildsOn: [7, 8, 10, 12],
     leadsTo: [14],
-    timeLimit: 150,
+    maxKeystrokes: 50,
     efficiencyTip:
       "Copy (y) creates duplicates, cut (x) moves. For network transmission, you need copies—the originals stay in '/root' as your decoy.",
     tasks: [
@@ -2318,7 +2364,7 @@ export const LEVELS: Level[] = [
       "GUEST PARTITION STERILIZED. '/home/guest/' is now empty. Construction evidence eliminated. The vault and all your build history are gone. One exposure point remains: '/tmp' staging area.",
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
-    timeLimit: 120,
+    maxKeystrokes: 40,
     efficiencyTip:
       "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files (.).",
     tasks: [
@@ -2335,16 +2381,14 @@ export const LEVELS: Level[] = [
         id: "delete-visible",
         description:
           "Delete all visible directories ('/home/guest/workspace', '/home/guest/media', '/home/guest/datastore', '/home/guest/incoming')",
-      } **
-        {
-          check: (c, _s) => {
-            if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
-            const guest = findNodeByName(c.fs, "guest");
-            const visible = guest?.children?.filter(n => !n.name.startsWith("."));
-            return visible?.length === 0;
-          },
-          completed: false,
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
+          const guest = findNodeByName(c.fs, "guest");
+          const visible = guest?.children?.filter(n => !n.name.startsWith("."));
+          return visible?.length === 0;
         },
+        completed: false,
+      },
       {
         id: "delete-hidden",
         description: "Show hidden files (.) and delete '/home/guest/.config' directory",
@@ -2381,7 +2425,7 @@ export const LEVELS: Level[] = [
       "METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared.",
     buildsOn: [5, 13, 14],
     leadsTo: [],
-    timeLimit: 90,
+    maxKeystrokes: 25,
     efficiencyTip:
       "Reverse selection (Ctrl+R): select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
     tasks: [
