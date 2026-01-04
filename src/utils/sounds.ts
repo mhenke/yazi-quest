@@ -46,7 +46,7 @@ const ensureContextRunning = (cb: (ctx: AudioContext) => void) => {
             .then(() => {
               try {
                 cb(ctx);
-              } catch (e) {
+              } catch {
                 /* ignore */
               }
             })
@@ -63,7 +63,7 @@ const ensureContextRunning = (cb: (ctx: AudioContext) => void) => {
         window.addEventListener('keydown', handler, { once: true });
       });
   } catch (e) {
-    console.debug('Audio not available:', e);
+    console.warn('Audio not available:', e);
   }
 };
 
@@ -99,7 +99,7 @@ export const playSuccessSound = (enabled: boolean = true): void => {
       playTone(659.25, now + 0.1, 0.2); // E5
     });
   } catch (e: unknown) {
-    console.debug('Audio not available:', e);
+    console.warn('Audio not available:', e);
   }
 };
 
@@ -127,6 +127,6 @@ export const playTaskCompleteSound = (enabled: boolean = true): void => {
       oscillator.stop(now + 0.08);
     });
   } catch (e: unknown) {
-    console.debug('Audio not available:', e);
+    console.warn('Audio not available:', e);
   }
 };

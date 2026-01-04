@@ -42,7 +42,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   const completedTasks = level.tasks.filter((t) => t.completed).length;
   const totalTasks = level.tasks.length;
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const _progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Calculate items for stats (these are visible items in middle pane)
   const currentDir = getNodeByPath(state.fs, state.currentPath);

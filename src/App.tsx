@@ -3,12 +3,12 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   GameState,
   FileNode,
-  Level,
+  Level as _Level,
   ZoxideEntry,
   calculateFrecency,
-  Linemode,
+  Linemode as _Linemode,
   FsError,
-  Result,
+  Result as _Result,
 } from './types';
 import { LEVELS, INITIAL_FS, EPISODE_LORE } from './constants';
 import {
@@ -18,7 +18,7 @@ import {
   cloneFS,
   createPath,
   resolveAndCreatePath,
-  getAllDirectories,
+  getAllDirectories as _getAllDirectories,
   getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
@@ -129,7 +129,7 @@ export default function App() {
       } else {
         throw new Error('No stored zoxide history');
       }
-    } catch (e) {
+    } catch {
       initialZoxide = {
         '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
         '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },

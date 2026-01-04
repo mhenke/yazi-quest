@@ -23,7 +23,7 @@ async function tryInitSentry() {
     if (Sentry && typeof Sentry.init === 'function') {
       Sentry.init({ dsn });
       sentinelInitialized = true;
-      console.info('[telemetry] Sentry initialized');
+      console.warn('[telemetry] Sentry initialized');
     }
   } catch (e) {
     // package not installed or init failed; ignore
@@ -49,7 +49,7 @@ async function flushQueue() {
   const payload = QUEUE.splice(0, MAX_QUEUE);
   if (!endpoint) {
     // No endpoint configured; log and drop
-    console.info('[telemetry] flush (no endpoint):', payload);
+    console.warn('[telemetry] flush (no endpoint):', payload);
     return;
   }
 
@@ -115,7 +115,7 @@ export function trackEvent(name: string, payload?: Payload) {
     if (Array.isArray(w['dataLayer'])) {
       (w['dataLayer'] as unknown[]).push({ event: name, ...(payload || {}) });
     }
-  } catch (e) {
+  } catch {
     // Silently ignore errors
   }
 
@@ -124,7 +124,7 @@ export function trackEvent(name: string, payload?: Payload) {
     flushQueue().catch(() => {});
   }
   // local dev visibility
-  console.info('[telemetry] event', name, payload || {});
+  console.warn('[telemetry] event', name, payload || {});
 }
 
 export function trackError(name: string, payload?: Payload) {
@@ -147,7 +147,7 @@ export function trackError(name: string, payload?: Payload) {
         extra: payload,
       });
     }
-  } catch (e) {
+  } catch {
     // Silently ignore errors
   }
 

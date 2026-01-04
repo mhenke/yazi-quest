@@ -151,7 +151,7 @@ export function deleteNode(
     if (idx === -1) return { ok: false, error: 'NotFound' };
     parent.children.splice(idx, 1);
     return { ok: true, value: newRoot };
-  } catch (_e) {
+  } catch {
     return { ok: false, error: 'NotFound' };
   }
 }
@@ -168,7 +168,7 @@ export function addNode(
     parent.children = parent.children || [];
     parent.children.push(node);
     return { ok: true, value: newRoot };
-  } catch (_e) {
+  } catch {
     return { ok: false, error: 'NotFound' };
   }
 }
@@ -186,7 +186,7 @@ export function renameNode(
     if (!node) return { ok: false, error: 'NotFound' };
     node.name = newName;
     return { ok: true, value: newRoot };
-  } catch (_e) {
+  } catch {
     return { ok: false, error: 'NotFound' };
   }
 }

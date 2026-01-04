@@ -18,7 +18,7 @@ export default class ErrorBoundary extends React.Component<
     // Report centrally and keep console fallback
     try {
       reportError(error, { errorInfo });
-    } catch (_e) {
+    } catch {
       console.error('App Error:', error, errorInfo);
     }
   }

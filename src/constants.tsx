@@ -3,9 +3,6 @@ import { FileNode, Level, Episode } from '../types';
 import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
 import { getNodeByPath, findNodeByName } from './utils/fsHelpers';
 
-// Helper for IDs
-const id = () => Math.random().toString(36).substr(2, 9);
-
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
 // all the changes a player would have made in PRIOR levels (not the current one)
