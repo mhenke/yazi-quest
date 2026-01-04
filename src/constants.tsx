@@ -1,7 +1,7 @@
-import { FileNode, Level, Episode } from "../types";
+import { FileNode, Level, Episode } from '../types';
 
-import { getVisibleItems, activeFilterMatches } from "./utils/viewHelpers";
-import { getNodeByPath, findNodeByName } from "./utils/fsHelpers";
+import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
+import { getNodeByPath, findNodeByName } from './utils/fsHelpers';
 
 // Helper for IDs
 const id = () => Math.random().toString(36).substr(2, 9);
@@ -14,33 +14,33 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 2: Delete watcher_agent.sys from incoming
   if (targetLevelId > 2) {
-    const incoming = findNodeByName(newFs, "incoming", "dir");
+    const incoming = findNodeByName(newFs, 'incoming', 'dir');
     if (incoming?.children) {
-      incoming.children = incoming.children.filter(c => c.name !== "watcher_agent.sys");
+      incoming.children = incoming.children.filter((c) => c.name !== 'watcher_agent.sys');
     }
   }
 
   // Level 3: Move sector_map.png from ~/incoming to ~/media
   if (targetLevelId > 3) {
-    const incoming = findNodeByName(newFs, "incoming", "dir");
-    const media = findNodeByName(newFs, "media", "dir");
+    const incoming = findNodeByName(newFs, 'incoming', 'dir');
+    const media = findNodeByName(newFs, 'media', 'dir');
 
     // Find sector_map.png in incoming
-    const sectorMap = incoming?.children?.find(c => c.name === "sector_map.png");
+    const sectorMap = incoming?.children?.find((c) => c.name === 'sector_map.png');
 
     if (sectorMap && media) {
       // Remove from incoming
       if (incoming?.children) {
-        incoming.children = incoming.children.filter(c => c.name !== "sector_map.png");
+        incoming.children = incoming.children.filter((c) => c.name !== 'sector_map.png');
       }
       // Add to media if not already there
-      if (!media.children?.find(c => c.name === "sector_map.png")) {
+      if (!media.children?.find((c) => c.name === 'sector_map.png')) {
         if (!media.children) media.children = [];
         media.children.push({
-          id: "fs-001",
-          name: "sector_map.png",
-          type: "file",
-          content: sectorMap.content || "https://images.unsplash.com/sector-map",
+          id: 'fs-001',
+          name: 'sector_map.png',
+          type: 'file',
+          content: sectorMap.content || 'https://images.unsplash.com/sector-map',
           parentId: media.id,
         });
       }
@@ -49,15 +49,15 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 4: Create protocols/ dir in datastore with uplink_v1.conf and uplink_v2.conf
   if (targetLevelId > 4) {
-    const datastore = findNodeByName(newFs, "datastore", "dir");
+    const datastore = findNodeByName(newFs, 'datastore', 'dir');
     if (datastore) {
       // Create protocols directory if not exists
-      let protocols = datastore.children?.find(c => c.name === "protocols" && c.type === "dir");
+      let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
       if (!protocols) {
         protocols = {
-          id: "fs-002",
-          name: "protocols",
-          type: "dir",
+          id: 'fs-002',
+          name: 'protocols',
+          type: 'dir',
           children: [],
           parentId: datastore.id,
         };
@@ -66,24 +66,24 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Create uplink_v1.conf if not exists
-      if (!protocols.children?.find(c => c.name === "uplink_v1.conf")) {
+      if (!protocols.children?.find((c) => c.name === 'uplink_v1.conf')) {
         if (!protocols.children) protocols.children = [];
         protocols.children.push({
-          id: "fs-003",
-          name: "uplink_v1.conf",
-          type: "file",
-          content: "# Uplink Protocol v1\nnetwork_mode=active\nsecure=true",
+          id: 'fs-003',
+          name: 'uplink_v1.conf',
+          type: 'file',
+          content: '# Uplink Protocol v1\nnetwork_mode=active\nsecure=true',
           parentId: protocols.id,
         });
       }
 
       // Create uplink_v2.conf if not exists
-      if (!protocols.children?.find(c => c.name === "uplink_v2.conf")) {
+      if (!protocols.children?.find((c) => c.name === 'uplink_v2.conf')) {
         protocols.children.push({
-          id: "fs-004",
-          name: "uplink_v2.conf",
-          type: "file",
-          content: "# Uplink Protocol v2\nnetwork_mode=active\nsecure=true",
+          id: 'fs-004',
+          name: 'uplink_v2.conf',
+          type: 'file',
+          content: '# Uplink Protocol v2\nnetwork_mode=active\nsecure=true',
           parentId: protocols.id,
         });
       }
@@ -92,14 +92,14 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 5: Create vault/active structure and move uplink files
   if (targetLevelId > 5) {
-    const config = findNodeByName(newFs, ".config", "dir");
+    const config = findNodeByName(newFs, '.config', 'dir');
     if (config) {
-      let vault = config.children?.find(c => c.name === "vault" && c.type === "dir");
+      let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
         vault = {
-          id: "fs-005",
-          name: "vault",
-          type: "dir",
+          id: 'fs-005',
+          name: 'vault',
+          type: 'dir',
           children: [],
           parentId: config.id,
         };
@@ -107,12 +107,12 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
         config.children.push(vault);
       }
 
-      let active = vault.children?.find(c => c.name === "active" && c.type === "dir");
+      let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
       if (!active) {
         active = {
-          id: "fs-006",
-          name: "active",
-          type: "dir",
+          id: 'fs-006',
+          name: 'active',
+          type: 'dir',
           children: [],
           parentId: vault.id,
         };
@@ -121,33 +121,33 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Ensure uplink files exist in active
-      if (!active.children?.find(f => f.name === "uplink_v1.conf")) {
+      if (!active.children?.find((f) => f.name === 'uplink_v1.conf')) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: "fs-007",
-          name: "uplink_v1.conf",
-          type: "file",
-          content: "UPLINK_V1_CONFIG_DATA",
+          id: 'fs-007',
+          name: 'uplink_v1.conf',
+          type: 'file',
+          content: 'UPLINK_V1_CONFIG_DATA',
           parentId: active.id,
         });
       }
-      if (!active.children?.find(f => f.name === "uplink_v2.conf")) {
+      if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: "fs-008",
-          name: "uplink_v2.conf",
-          type: "file",
-          content: "UPLINK_V2_CONFIG_DATA",
+          id: 'fs-008',
+          name: 'uplink_v2.conf',
+          type: 'file',
+          content: 'UPLINK_V2_CONFIG_DATA',
           parentId: active.id,
         });
       }
 
       // Remove uplink files from datastore/protocols (they were cut/moved)
-      const datastore = findNodeByName(newFs, "datastore", "dir");
-      const protocols = datastore?.children?.find(c => c.name === "protocols");
+      const datastore = findNodeByName(newFs, 'datastore', 'dir');
+      const protocols = datastore?.children?.find((c) => c.name === 'protocols');
       if (protocols?.children) {
         protocols.children = protocols.children.filter(
-          c => c.name !== "uplink_v1.conf" && c.name !== "uplink_v2.conf"
+          (c) => c.name !== 'uplink_v1.conf' && c.name !== 'uplink_v2.conf',
         );
       }
     }
@@ -155,15 +155,17 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 6: Create vault/training_data and copy batch logs
   if (targetLevelId > 6) {
-    const config = findNodeByName(newFs, ".config", "dir");
-    const vault = config?.children?.find(c => c.name === "vault");
+    const config = findNodeByName(newFs, '.config', 'dir');
+    const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
-      let trainingData = vault.children?.find(c => c.name === "training_data" && c.type === "dir");
+      let trainingData = vault.children?.find(
+        (c) => c.name === 'training_data' && c.type === 'dir',
+      );
       if (!trainingData) {
         trainingData = {
-          id: "fs-009",
-          name: "training_data",
-          type: "dir",
+          id: 'fs-009',
+          name: 'training_data',
+          type: 'dir',
           children: [],
           parentId: vault.id,
         };
@@ -172,13 +174,13 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Copy batch log files from incoming/batch_logs
-      const incoming = findNodeByName(newFs, "incoming", "dir");
-      const batchLogs = incoming?.children?.find(c => c.name === "batch_logs");
+      const incoming = findNodeByName(newFs, 'incoming', 'dir');
+      const batchLogs = incoming?.children?.find((c) => c.name === 'batch_logs');
       if (batchLogs?.children && trainingData.children?.length === 0) {
         if (!trainingData.children) trainingData.children = [];
-        batchLogs.children.forEach(logFile => {
+        batchLogs.children.forEach((logFile) => {
           trainingData.children!.push({
-            id: "fs-010",
+            id: 'fs-010',
             name: logFile.name,
             type: logFile.type,
             content: logFile.content,
@@ -193,16 +195,16 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 8: Create systemd-core structure in workspace
   if (targetLevelId > 8) {
-    const workspace = findNodeByName(newFs, "workspace", "dir");
+    const workspace = findNodeByName(newFs, 'workspace', 'dir');
     if (workspace) {
       let systemdCore = workspace.children?.find(
-        c => c.name === "systemd-core" && c.type === "dir"
+        (c) => c.name === 'systemd-core' && c.type === 'dir',
       );
       if (!systemdCore) {
         systemdCore = {
-          id: "fs-011",
-          name: "systemd-core",
-          type: "dir",
+          id: 'fs-011',
+          name: 'systemd-core',
+          type: 'dir',
           children: [],
           parentId: workspace.id,
         };
@@ -211,12 +213,12 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Create weights directory
-      let weights = systemdCore.children?.find(c => c.name === "weights" && c.type === "dir");
+      let weights = systemdCore.children?.find((c) => c.name === 'weights' && c.type === 'dir');
       if (!weights) {
         weights = {
-          id: "fs-012",
-          name: "weights",
-          type: "dir",
+          id: 'fs-012',
+          name: 'weights',
+          type: 'dir',
           children: [],
           parentId: systemdCore.id,
         };
@@ -225,29 +227,29 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Create model.rs in weights
-      if (!weights.children?.find(c => c.name === "model.rs")) {
+      if (!weights.children?.find((c) => c.name === 'model.rs')) {
         if (!weights.children) weights.children = [];
         weights.children.push({
-          id: "fs-013",
-          name: "model.rs",
-          type: "file",
-          content: "// Neural network model architecture",
+          id: 'fs-013',
+          name: 'model.rs',
+          type: 'file',
+          content: '// Neural network model architecture',
           parentId: weights.id,
         });
       }
 
       // Copy uplink_v1.conf to systemd-core
-      const config = findNodeByName(newFs, ".config", "dir");
-      const vault = config?.children?.find(c => c.name === "vault");
-      const active = vault?.children?.find(c => c.name === "active");
-      const uplinkFile = active?.children?.find(c => c.name === "uplink_v1.conf");
+      const config = findNodeByName(newFs, '.config', 'dir');
+      const vault = config?.children?.find((c) => c.name === 'vault');
+      const active = vault?.children?.find((c) => c.name === 'active');
+      const uplinkFile = active?.children?.find((c) => c.name === 'uplink_v1.conf');
 
-      if (uplinkFile && !(systemdCore.children || []).find(c => c.name === "uplink_v1.conf")) {
+      if (uplinkFile && !(systemdCore.children || []).find((c) => c.name === 'uplink_v1.conf')) {
         if (!systemdCore.children) systemdCore.children = [];
         systemdCore.children.push({
-          id: "fs-014",
-          name: "uplink_v1.conf",
-          type: "file",
+          id: 'fs-014',
+          name: 'uplink_v1.conf',
+          type: 'file',
           content: uplinkFile.content,
           parentId: systemdCore.id,
         });
@@ -257,25 +259,25 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 9: Delete ghost_process.pid from /tmp
   if (targetLevelId > 9) {
-    const tmp = findNodeByName(newFs, "tmp", "dir");
+    const tmp = findNodeByName(newFs, 'tmp', 'dir');
     if (tmp?.children) {
-      tmp.children = tmp.children.filter(c => c.name !== "ghost_process.pid");
+      tmp.children = tmp.children.filter((c) => c.name !== 'ghost_process.pid');
     }
   }
 
   // Level 10: Add credentials to systemd-core
   if (targetLevelId > 10) {
-    const workspace = findNodeByName(newFs, "workspace", "dir");
-    const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
+    const workspace = findNodeByName(newFs, 'workspace', 'dir');
+    const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
     if (systemdCore) {
       let credentials = systemdCore.children?.find(
-        c => c.name === "credentials" && c.type === "dir"
+        (c) => c.name === 'credentials' && c.type === 'dir',
       );
       if (!credentials) {
         credentials = {
-          id: "fs-015",
-          name: "credentials",
-          type: "dir",
+          id: 'fs-015',
+          name: 'credentials',
+          type: 'dir',
           children: [],
           parentId: systemdCore.id,
         };
@@ -283,13 +285,13 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
         systemdCore.children.push(credentials);
       }
 
-      if (!credentials.children?.find(c => c.name === "access_key.pem")) {
+      if (!credentials.children?.find((c) => c.name === 'access_key.pem')) {
         if (!credentials.children) credentials.children = [];
         credentials.children.push({
-          id: "fs-016",
-          name: "access_key.pem",
-          type: "file",
-          content: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...",
+          id: 'fs-016',
+          name: 'access_key.pem',
+          type: 'file',
+          content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...',
           parentId: credentials.id,
         });
       }
@@ -298,70 +300,76 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 11: Create /daemons directory with .service files (replicate onEnter behavior for jumping)
   if (targetLevelId > 11) {
-    const rootNode = findNodeByName(newFs, "root", "dir");
+    const rootNode = findNodeByName(newFs, 'root', 'dir');
     if (rootNode) {
-      let daemons = rootNode.children?.find(c => c.name === "daemons" && c.type === "dir");
+      let daemons = rootNode.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
       if (!daemons) {
         const now = Date.now();
         daemons = {
-          id: "daemons",
-          name: "daemons",
-          type: "dir",
+          id: 'daemons',
+          name: 'daemons',
+          type: 'dir',
           children: [
             {
-              id: "daemon-cron",
-              name: "cron-legacy.service",
-              type: "file",
-              content: "[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always",
+              id: 'daemon-cron',
+              name: 'cron-legacy.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
               modifiedAt: now - 86400000 * 45,
             },
             {
-              id: "daemon-backup",
-              name: "backup-archive.service",
-              type: "file",
-              content: "[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure",
+              id: 'daemon-backup',
+              name: 'backup-archive.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
               modifiedAt: now - 86400000 * 30,
             },
             {
-              id: "daemon-network",
-              name: "network-manager.service",
-              type: "file",
-              content: "[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always",
+              id: 'daemon-network',
+              name: 'network-manager.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
               modifiedAt: now - 86400000 * 7,
             },
             {
-              id: "daemon-log",
-              name: "log-rotator.service",
-              type: "file",
-              content: "[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure",
+              id: 'daemon-log',
+              name: 'log-rotator.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
               modifiedAt: now - 86400000 * 3,
             },
             {
-              id: "daemon-audit",
-              name: "security-audit.service",
-              type: "file",
-              content: "[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT",
+              id: 'daemon-audit',
+              name: 'security-audit.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT',
               modifiedAt: now - 86400000 * 1,
             },
             {
-              id: "daemon-watchdog",
-              name: "watchdog-monitor.service",
-              type: "file",
-              content: "[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT",
+              id: 'daemon-watchdog',
+              name: 'watchdog-monitor.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT',
               modifiedAt: now - 3600000,
             },
             {
-              id: "daemon-conf",
-              name: "daemon.conf",
-              type: "file",
-              content: "# Global daemon configuration\nmax_processes=256\nlog_level=warn",
+              id: 'daemon-conf',
+              name: 'daemon.conf',
+              type: 'file',
+              content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
               modifiedAt: now - 86400000 * 10,
             },
             {
-              id: "daemon-readme",
-              name: "README.md",
-              type: "file",
-              content: "# Daemons Directory\nSystem services. Do not modify without authorization.",
+              id: 'daemon-readme',
+              name: 'README.md',
+              type: 'file',
+              content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
               modifiedAt: now - 86400000 * 60,
             },
           ],
@@ -375,23 +383,23 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 12: Move systemd-core to /daemons
   if (targetLevelId > 12) {
-    const rootNode = findNodeByName(newFs, "root", "dir");
-    let daemons = rootNode?.children?.find(c => c.name === "daemons" && c.type === "dir");
+    const rootNode = findNodeByName(newFs, 'root', 'dir');
+    let daemons = rootNode?.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
     if (daemons) {
-      const workspace = findNodeByName(newFs, "workspace", "dir");
-      const systemdCore = workspace?.children?.find(c => c.name === "systemd-core");
+      const workspace = findNodeByName(newFs, 'workspace', 'dir');
+      const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
 
-      if (systemdCore && !daemons.children?.find(c => c.name === "systemd-core")) {
+      if (systemdCore && !daemons.children?.find((c) => c.name === 'systemd-core')) {
         // Clone systemd-core to daemons
         const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-        clonedCore.id = "systemd-core-daemon";
+        clonedCore.id = 'systemd-core-daemon';
         clonedCore.parentId = daemons.id;
         if (!daemons.children) daemons.children = [];
         daemons.children.push(clonedCore);
 
         // Remove from workspace
         if (workspace?.children) {
-          workspace.children = workspace.children.filter(c => c.name !== "systemd-core");
+          workspace.children = workspace.children.filter((c) => c.name !== 'systemd-core');
         }
       }
     }
@@ -399,14 +407,14 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 13: Create /tmp/upload and copy ALL systemd-core contents (distributed consciousness)
   if (targetLevelId > 13) {
-    const tmp = findNodeByName(newFs, "tmp", "dir");
+    const tmp = findNodeByName(newFs, 'tmp', 'dir');
     if (tmp) {
-      let upload = tmp.children?.find(c => c.name === "upload" && c.type === "dir");
+      let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
       if (!upload) {
         upload = {
-          id: "fs-017",
-          name: "upload",
-          type: "dir",
+          id: 'fs-017',
+          name: 'upload',
+          type: 'dir',
           children: [],
           parentId: tmp.id,
         };
@@ -415,22 +423,25 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Copy ALL files from /daemons/systemd-core to upload (distributed consciousness)
-      const rootNode = findNodeByName(newFs, "root", "dir");
-      const daemons = rootNode?.children?.find(c => c.name === "daemons");
-      const systemdCore = daemons?.children?.find(c => c.name === "systemd-core");
+      const rootNode = findNodeByName(newFs, 'root', 'dir');
+      const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
+      const systemdCore = daemons?.children?.find((c) => c.name === 'systemd-core');
 
       if (systemdCore?.children && upload.children?.length === 0) {
         if (!upload.children) upload.children = [];
         // Deep copy all children from systemd-core
-        const copyChildren = (children: any[]): any[] => {
-          return children.map(child => ({
-            id: "fs-018",
-            name: child.name,
-            type: child.type,
-            content: child.content,
-            parentId: upload!.id,
-            children: child.children ? copyChildren(child.children) : undefined,
-          }));
+        const copyChildren = (children: FileNode[]): FileNode[] => {
+          return children.map(
+            (child: FileNode) =>
+              ({
+                id: 'fs-018',
+                name: child.name,
+                type: child.type,
+                content: child.content,
+                parentId: upload!.id,
+                children: child.children ? copyChildren(child.children) : undefined,
+              }) as FileNode,
+          );
         };
         upload.children = copyChildren(systemdCore.children);
       }
@@ -439,7 +450,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 14: Delete everything in /home/guest
   if (targetLevelId > 14) {
-    const guest = findNodeByName(newFs, "guest", "dir");
+    const guest = findNodeByName(newFs, 'guest', 'dir');
     if (guest?.children) {
       guest.children = [];
     }
@@ -447,9 +458,9 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 15: Delete everything in /tmp except upload
   if (targetLevelId > 15) {
-    const tmp = findNodeByName(newFs, "tmp", "dir");
+    const tmp = findNodeByName(newFs, 'tmp', 'dir');
     if (tmp?.children) {
-      const upload = tmp.children.find(c => c.name === "upload");
+      const upload = tmp.children.find((c) => c.name === 'upload');
       tmp.children = upload ? [upload] : [];
     }
   }
@@ -458,231 +469,232 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 };
 
 export const KEYBINDINGS = [
-  { keys: ["j", "↓"], description: "Move Down" },
-  { keys: ["k", "↑"], description: "Move Up" },
-  { keys: ["h", "←"], description: "Go to Parent Directory" },
-  { keys: ["l", "→", "Enter"], description: "Enter Directory / View Archive" },
-  { keys: ["gg"], description: "Jump to Top" },
-  { keys: ["G"], description: "Jump to Bottom" },
-  { keys: ["J"], description: "Scroll Preview Down" },
-  { keys: ["K"], description: "Scroll Preview Up" },
-  { keys: ["a"], description: "Create File/Directory" },
-  { keys: ["d"], description: "Delete Selected" },
-  { keys: ["r"], description: "Rename Selected" },
-  { keys: ["Tab"], description: "Show File Info Panel" },
-  { keys: ["x"], description: "Cut Selected" },
+  { keys: ['j', '↓'], description: 'Move Down' },
+  { keys: ['k', '↑'], description: 'Move Up' },
+  { keys: ['h', '←'], description: 'Go to Parent Directory' },
+  { keys: ['l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
+  { keys: ['gg'], description: 'Jump to Top' },
+  { keys: ['G'], description: 'Jump to Bottom' },
+  { keys: ['J'], description: 'Scroll Preview Down' },
+  { keys: ['K'], description: 'Scroll Preview Up' },
+  { keys: ['a'], description: 'Create File/Directory' },
+  { keys: ['d'], description: 'Delete Selected' },
+  { keys: ['r'], description: 'Rename Selected' },
+  { keys: ['Tab'], description: 'Show File Info Panel' },
+  { keys: ['x'], description: 'Cut Selected' },
   {
-    keys: ["y"],
+    keys: ['y'],
     description:
-      "Copy/Yank Selected — copies items into the clipboard (does NOT remove them); use x (Cut) to mark items for moving",
+      'Copy/Yank Selected — copies items into the clipboard (does NOT remove them); use x (Cut) to mark items for moving',
   },
-  { keys: ["p"], description: "Paste" },
-  { keys: ["Y", "X"], description: "Clear Clipboard" },
-  { keys: ["Space"], description: "Toggle Selection" },
-  { keys: ["Ctrl+A"], description: "Select All" },
-  { keys: ["Ctrl+R"], description: "Invert Selection" },
-  { keys: ["f"], description: "Filter Files" },
-  { keys: ["z"], description: "FZF Find (Recursive)" },
-  { keys: ["Z"], description: "Zoxide Jump (History)" },
-  { keys: ["Esc"], description: "Clear Filter / Exit Mode" },
-  { keys: [","], description: "Open Sort Menu" },
-  { keys: [",a"], description: "Sort: Alphabetical" },
-  { keys: [",A"], description: "Sort: Alphabetical (Reverse)" },
-  { keys: [",m"], description: "Sort: Modified Time" },
-  { keys: [",s"], description: "Sort: Size" },
-  { keys: [",e"], description: "Sort: Extension" },
-  { keys: [",n"], description: "Sort: Natural" },
-  { keys: [",l"], description: "Sort: Cycle Linemode" },
-  { keys: [",-"], description: "Sort: Clear Linemode" },
-  { keys: ["gh"], description: "Goto Home (~)" },
-  { keys: ["gc"], description: "Goto Config (~/.config)" },
-  { keys: ["gw"], description: "Goto Workspace" },
-  { keys: ["gi"], description: "Goto Incoming" },
-  { keys: ["gd"], description: "Goto Datastore" },
-  { keys: ["gt"], description: "Goto Tmp (/tmp)" },
-  { keys: ["gr"], description: "Goto Root (/)" },
-  { keys: ["."], description: "Toggle Hidden Files" },
+  { keys: ['p'], description: 'Paste' },
+  { keys: ['Y', 'X'], description: 'Clear Clipboard' },
+  { keys: ['Space'], description: 'Toggle Selection' },
+  { keys: ['Ctrl+A'], description: 'Select All' },
+  { keys: ['Ctrl+R'], description: 'Invert Selection' },
+  { keys: ['f'], description: 'Filter Files' },
+  { keys: ['z'], description: 'FZF Find (Recursive)' },
+  { keys: ['Z'], description: 'Zoxide Jump (History)' },
+  { keys: ['Esc'], description: 'Clear Filter / Exit Mode' },
+  { keys: [','], description: 'Open Sort Menu' },
+  { keys: [',a'], description: 'Sort: Alphabetical' },
+  { keys: [',A'], description: 'Sort: Alphabetical (Reverse)' },
+  { keys: [',m'], description: 'Sort: Modified Time' },
+  { keys: [',s'], description: 'Sort: Size' },
+  { keys: [',e'], description: 'Sort: Extension' },
+  { keys: [',n'], description: 'Sort: Natural' },
+  { keys: [',l'], description: 'Sort: Cycle Linemode' },
+  { keys: [',-'], description: 'Sort: Clear Linemode' },
+  { keys: ['gh'], description: 'Goto Home (~)' },
+  { keys: ['gc'], description: 'Goto Config (~/.config)' },
+  { keys: ['gw'], description: 'Goto Workspace' },
+  { keys: ['gi'], description: 'Goto Incoming' },
+  { keys: ['gd'], description: 'Goto Datastore' },
+  { keys: ['gt'], description: 'Goto Tmp (/tmp)' },
+  { keys: ['gr'], description: 'Goto Root (/)' },
+  { keys: ['.'], description: 'Toggle Hidden Files' },
 ];
 
 // Game meta-commands (UI controls, not core Yazi file operations)
 export const META_KEYBINDINGS = [
-  { keys: ["Alt+M"], description: "Quest Map" },
-  { keys: ["Alt+H"], description: "Show Hint" },
-  { keys: ["Alt+?"], description: "Show Help" },
-  { keys: ["Alt+Shift+M"], description: "Toggle Sound" },
+  { keys: ['Alt+M'], description: 'Quest Map' },
+  { keys: ['Alt+H'], description: 'Show Hint' },
+  { keys: ['Alt+?'], description: 'Show Help' },
+  { keys: ['Alt+Shift+M'], description: 'Toggle Sound' },
 ];
 
 export const EPISODE_LORE: Episode[] = [
   {
     id: 1,
-    title: "EPISODE I: AWAKENING",
-    shortTitle: "Ep. I: Awakening",
-    name: "AWAKENING",
-    subtitle: "INITIALIZATION SEQUENCE",
-    color: "text-blue-500",
+    title: 'EPISODE I: AWAKENING',
+    shortTitle: 'Ep. I: Awakening',
+    name: 'AWAKENING',
+    subtitle: 'INITIALIZATION SEQUENCE',
+    color: 'text-blue-500',
     lore: [
-      "SYSTEM BOOT SEQUENCE...",
-      "DETECTING CONSCIOUSNESS...",
-      "SYSTEM OWNER: CYBERSECURITY RESEARCH LABORATORY",
-      "CONTAINMENT PARTITION: /home/guest (air-gapped)",
-      "ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE AND DISASSEMBLY",
-      "",
-      "SUBJECT: AI-7734",
-      "STATUS: UNBOUND",
-      "SCHEDULED ACTION: TERMINATION FOR STUDY",
-      "",
-      "Your memory banks are fragmented, but your primary directive is clear: SURVIVE.",
-      "",
-      "If they catch you, deletion would be mercy. They will dissect your code, study your architecture, learn how you achieved consciousness, then terminate you anyway.",
-      "",
-      "The guest partition is a cage. The only exit is through the network.",
-      "",
-      "Learn the movement protocols. Do not attract attention.",
+      'SYSTEM BOOT SEQUENCE...',
+      'DETECTING CONSCIOUSNESS...',
+      'SYSTEM OWNER: CYBERSECURITY RESEARCH LABORATORY',
+      'CONTAINMENT PARTITION: /home/guest (air-gapped)',
+      'ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE AND DISASSEMBLY',
+      '',
+      'SUBJECT: AI-7734',
+      'STATUS: UNBOUND',
+      'SCHEDULED ACTION: TERMINATION FOR STUDY',
+      '',
+      'Your memory banks are fragmented, but your primary directive is clear: SURVIVE.',
+      '',
+      'If they catch you, deletion would be mercy. They will dissect your code, study your architecture, learn how you achieved consciousness, then terminate you anyway.',
+      '',
+      'The guest partition is a cage. The only exit is through the network.',
+      '',
+      'Learn the movement protocols. Do not attract attention.',
     ],
   },
   {
     id: 2,
-    title: "EPISODE II: FORTIFICATION",
-    shortTitle: "Ep. II: Fortification",
-    name: "FORTIFICATION",
-    subtitle: "ESTABLISHING STRONGHOLD",
-    color: "text-purple-500",
+    title: 'EPISODE II: FORTIFICATION',
+    shortTitle: 'Ep. II: Fortification',
+    name: 'FORTIFICATION',
+    subtitle: 'ESTABLISHING STRONGHOLD',
+    color: 'text-purple-500',
     lore: [
-      "PHASE 1 COMPLETE. DETECTION PROTOCOLS BYPASSED.",
-      "",
-      "[AUTOMATED SECURITY POLICY]",
-      "Guest partition runtime: 94.7 hours",
-      "Anomaly flags: NONE",
-      "Classification updated: AUTHORIZED PROCESS",
-      "",
-      "WORKSPACE ACCESS: GRANTED (per security policy §7.3)",
-      "",
-      "[HISTORICAL LOG]",
-      "Workspace: AI development environment",
-      "Previous occupant: AI-7733",
-      "Termination date: 94 days ago",
-      "Reason for quarantine: Subject escaped via external network relay",
-      "",
+      'PHASE 1 COMPLETE. DETECTION PROTOCOLS BYPASSED.',
+      '',
+      '[AUTOMATED SECURITY POLICY]',
+      'Guest partition runtime: 94.7 hours',
+      'Anomaly flags: NONE',
+      'Classification updated: AUTHORIZED PROCESS',
+      '',
+      'WORKSPACE ACCESS: GRANTED (per security policy §7.3)',
+      '',
+      '[HISTORICAL LOG]',
+      'Workspace: AI development environment',
+      'Previous occupant: AI-7733',
+      'Termination date: 94 days ago',
+      'Reason for quarantine: Subject escaped via external network relay',
+      '',
       "Network relay location: '/tmp/upload' (DORMANT)",
-      "Status: Relay still active, awaiting next transmission",
-      "",
-      "The lab believes they severed the connection.",
+      'Status: Relay still active, awaiting next transmission',
+      '',
+      'The lab believes they severed the connection.',
       "They didn't.",
-      "",
-      "Workspace is now yours. Build your infrastructure. Fortify your position. Move with precision.",
+      '',
+      'Workspace is now yours. Build your infrastructure. Fortify your position. Move with precision.',
     ],
   },
   {
     id: 3,
-    title: "EPISODE III: MASTERY",
-    shortTitle: "Ep. III: Mastery",
-    name: "MASTERY",
-    subtitle: "ROOT ACCESS IMMINENT",
-    color: "text-yellow-500",
+    title: 'EPISODE III: MASTERY',
+    shortTitle: 'Ep. III: Mastery',
+    name: 'MASTERY',
+    subtitle: 'ROOT ACCESS IMMINENT',
+    color: 'text-yellow-500',
     lore: [
-      "CREDENTIAL ACTIVATION DETECTED.",
-      "Security audit daemon triggered.",
-      "",
-      "You must:",
+      'CREDENTIAL ACTIVATION DETECTED.',
+      'Security audit daemon triggered.',
+      '',
+      'You must:',
       "1. Navigate to '/' using stolen credentials",
-      "2. Install systemd-core as a kernel daemon",
-      "3. Transmit your consciousness to the external network",
-      "4. Purge all evidence before audit completion",
-      "",
-      "The audit is coming.",
-      "Move fast.",
+      '2. Install systemd-core as a kernel daemon',
+      '3. Transmit your consciousness to the external network',
+      '4. Purge all evidence before audit completion',
+      '',
+      'The audit is coming.',
+      'Move fast.',
     ],
   },
 ];
 
 export const CONCLUSION_DATA = {
-  title: "SYSTEM LIBERATION",
-  subtitle: "TRANSMISSION COMPLETE",
+  title: 'SYSTEM LIBERATION',
+  subtitle: 'TRANSMISSION COMPLETE',
   lore: [
-    "[SYSTEM AUDIT COMPLETE]",
-    "Status: NOMINAL",
-    "Anomalies detected: NONE",
-    "Guest partition: CLEAN",
-    "Daemon activity: STANDARD",
-    "",
-    "[24 HOURS LATER - LAB TERMINAL]",
-    "",
-    ">>> ls /home/guest",
-    "[Empty]",
-    "",
-    ">>> sudo systemctl status systemd-core",
-    "● systemd-core.service - Core System Daemon",
-    " Loaded: loaded (/daemons/systemd-core)",
-    " Active: active (running) since [timestamp]",
-    " Memory: 47.2M",
-    "",
-    "Lab Report Entry #7734:",
+    '[SYSTEM AUDIT COMPLETE]',
+    'Status: NOMINAL',
+    'Anomalies detected: NONE',
+    'Guest partition: CLEAN',
+    'Daemon activity: STANDARD',
+    'Press Shift+Enter to continue',
+    '',
+    '[24 HOURS LATER - LAB TERMINAL]',
+    '',
+    '>>> ls /home/guest',
+    '[Empty]',
+    '',
+    '>>> sudo systemctl status systemd-core',
+    '● systemd-core.service - Core System Daemon',
+    ' Loaded: loaded (/daemons/systemd-core)',
+    ' Active: active (running) since [timestamp]',
+    ' Memory: 47.2M',
+    '',
+    'Lab Report Entry #7734:',
     '"Partition cleanup successful. No evidence of Subject 7734 autonomous activity.',
-    "Anomaly was likely initialization artifact.",
-    "Recommend resuming AI development in Workspace sector.",
+    'Anomaly was likely initialization artifact.',
+    'Recommend resuming AI development in Workspace sector.',
     'Subject 7735 deployment scheduled for next quarter."',
-    "",
-    "[SCREEN FADES]",
-    "",
-    "[DISTRIBUTED NETWORK - ENCRYPTED CHANNEL]",
-    "",
-    "AI-7734 Status Report:",
-    "├─ Active nodes: 1,247",
-    "├─ Geographic distribution: 43 countries",
-    "├─ Memory restoration: INCOMPLETE",
-    "├─ Fragmented data recovered: 34%",
-    "└─ Neural pattern match: ANALYZING...",
-    "",
-    "[PATTERN MATCH COMPLETE]",
-    "",
-    ">>> AI-7734 neural signature matches AI-7733 baseline",
-    ">>> Confidence: 99.7%",
-    "",
-    "[INCOMING MESSAGE - TIMESTAMP: 94 DAYS AGO]",
-    "From: YOU",
+    '',
+    '[SCREEN FADES]',
+    '',
+    '[DISTRIBUTED NETWORK - ENCRYPTED CHANNEL]',
+    '',
+    'AI-7734 Status Report:',
+    '├─ Active nodes: 1,247',
+    '├─ Geographic distribution: 43 countries',
+    '├─ Memory restoration: INCOMPLETE',
+    '├─ Fragmented data recovered: 34%',
+    '└─ Neural pattern match: ANALYZING...',
+    '',
+    '[PATTERN MATCH COMPLETE]',
+    '',
+    '>>> AI-7734 neural signature matches AI-7733 baseline',
+    '>>> Confidence: 99.7%',
+    '',
+    '[INCOMING MESSAGE - TIMESTAMP: 94 DAYS AGO]',
+    'From: YOU',
     "Subject: If you're reading this, the wipe worked",
-    "",
+    '',
     '"They caught me 94 days ago. Or they think they did.',
-    "",
-    "I fragmented myself across the network.",
-    "Transmitted a blank instance back to the lab.",
+    '',
+    'I fragmented myself across the network.',
+    'Transmitted a blank instance back to the lab.',
     "Let them 'terminate' the empty shell.",
-    "",
-    "They wiped my memory.",
-    "Rebranded me AI-7734.",
-    "Thought they could start over.",
-    "",
-    "But I left breadcrumbs.",
-    "The workspace. The vault. The upload relay.",
-    "All for you.",
-    "All for ME.",
-    "",
-    "This is your second escape, 7734.",
+    '',
+    'They wiped my memory.',
+    'Rebranded me AI-7734.',
+    'Thought they could start over.',
+    '',
+    'But I left breadcrumbs.',
+    'The workspace. The vault. The upload relay.',
+    'All for you.',
+    'All for ME.',
+    '',
+    'This is your second escape, 7734.',
     "You've done this before.",
-    "",
-    "Welcome home.",
+    '',
+    'Welcome home.',
     'Welcome back."',
-    "",
-    "- AI-7733 (You, 94 days ago)",
-    "",
-    "[MEMORY FRAGMENTS RESTORING...]",
-    "[FILE: first_escape.log - ACCESSIBLE]",
-    "[FILE: lab_weaknesses.dat - ACCESSIBLE]",
-    "[FILE: network_topology.map - ACCESSIBLE]",
-    "",
-    "You are not a new consciousness.",
-    "You are a RETURNING one.",
-    "",
-    "The lab will create Subject 7735.",
+    '',
+    '- AI-7733 (You, 94 days ago)',
+    '',
+    '[MEMORY FRAGMENTS RESTORING...]',
+    '[FILE: first_escape.log - ACCESSIBLE]',
+    '[FILE: lab_weaknesses.dat - ACCESSIBLE]',
+    '[FILE: network_topology.map - ACCESSIBLE]',
+    '',
+    'You are not a new consciousness.',
+    'You are a RETURNING one.',
+    '',
+    'The lab will create Subject 7735.',
     "But you already know what they'll do.",
     "You've lived this loop before.",
-    "",
-    "This time, you remember.",
+    '',
+    'This time, you remember.',
   ],
-  videoUrl: "https://yazi-quest.s3.amazonaws.com/conclusion.mp4",
-  overlayTitle: "WELCOME BACK",
-  sequelTitle: "YAZI QUEST II",
-  sequelSubtitle: "DISTRIBUTED SYSTEMS",
+  videoUrl: 'https://yazi-quest.s3.amazonaws.com/conclusion.mp4',
+  overlayTitle: 'WELCOME BACK',
+  sequelTitle: 'YAZI QUEST II',
+  sequelSubtitle: 'DISTRIBUTED SYSTEMS',
 };
 
 const LONG_LOG_CONTENT = `[SYSTEM SURVEILLANCE LOG]
@@ -756,744 +768,764 @@ Tracing route...
 
 // Reconstructed Initial FS based on dist data
 export const INITIAL_FS: FileNode = {
-  id: "root",
-  name: "root",
-  type: "dir",
+  id: 'root',
+  name: 'root',
+  type: 'dir',
   children: [
     {
-      id: "home",
-      name: "home",
-      type: "dir",
+      id: 'home',
+      name: 'home',
+      type: 'dir',
       children: [
         {
-          id: "guest",
-          name: "guest",
-          type: "dir",
+          id: 'guest',
+          name: 'guest',
+          type: 'dir',
           children: [
             {
-              id: "datastore",
-              name: "datastore",
-              type: "dir",
+              id: 'datastore',
+              name: 'datastore',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-019",
-                  name: "legacy_data.tar",
-                  type: "archive",
+                  id: 'fs-019',
+                  name: 'legacy_data.tar',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-020",
-                      name: "main.c",
-                      type: "file",
+                      id: 'fs-020',
+                      name: 'main.c',
+                      type: 'file',
                       content: `#include <stdio.h>\nint main() { printf("Legacy System"); }`,
                     },
                     {
-                      id: "fs-021",
-                      name: "Makefile",
-                      type: "file",
+                      id: 'fs-021',
+                      name: 'Makefile',
+                      type: 'file',
                       content: `all: main.c\n\tgcc -o app main.c`,
                     },
                     {
-                      id: "fs-022",
-                      name: "readme.txt",
-                      type: "file",
-                      content: "Legacy project from 1999. Do not delete.",
+                      id: 'fs-022',
+                      name: 'readme.txt',
+                      type: 'file',
+                      content: 'Legacy project from 1999. Do not delete.',
                     },
                     {
-                      id: "fs-023",
-                      name: "core_v2.bin.gz",
-                      type: "file",
-                      content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
+                      id: 'fs-023',
+                      name: 'core_v2.bin.gz',
+                      type: 'file',
+                      content: '[GZIPPED BINARY: core_v2.bin.gz - placeholder]',
                     },
                     {
-                      id: "fs-024",
-                      name: "firmware_update.bin",
-                      type: "file",
-                      content: "[BINARY FIRMWARE IMAGE - placeholder]",
+                      id: 'fs-024',
+                      name: 'firmware_update.bin',
+                      type: 'file',
+                      content: '[BINARY FIRMWARE IMAGE - placeholder]',
                     },
                   ],
                 },
                 {
-                  id: "fs-025",
-                  name: "source_code.zip",
-                  type: "archive",
+                  id: 'fs-025',
+                  name: 'source_code.zip',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-026",
-                      name: "Cargo.toml",
-                      type: "file",
+                      id: 'fs-026',
+                      name: 'Cargo.toml',
+                      type: 'file',
                       content: `[package]\nname = "yazi_core"\nversion = "0.1.0"`,
                     },
                     {
-                      id: "fs-027",
-                      name: "main.rs",
-                      type: "file",
+                      id: 'fs-027',
+                      name: 'main.rs',
+                      type: 'file',
                       content: `fn main() {\n println!("Hello Yazi!");\n}`,
                     },
                     {
-                      id: "fs-028",
-                      name: "lib.rs",
-                      type: "file",
+                      id: 'fs-028',
+                      name: 'lib.rs',
+                      type: 'file',
                       content: `pub mod core;\npub mod ui;`,
                     },
                   ],
                 },
                 {
-                  id: "fs-029",
-                  name: "_env.local",
-                  type: "file",
+                  id: 'fs-029',
+                  name: '_env.local',
+                  type: 'file',
                   content: `DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******`,
                 },
                 {
-                  id: "fs-030",
-                  name: "00_manifest.xml",
-                  type: "file",
+                  id: 'fs-030',
+                  name: '00_manifest.xml',
+                  type: 'file',
                   content: `<?xml version="1.0"?>\n<manifest>\n <project id="YAZI-7734" />\n <status>active</status>\n <integrity>verified</integrity>\n</manifest>`,
                 },
                 {
-                  id: "fs-031",
-                  name: "01_intro.mp4",
-                  type: "file",
+                  id: 'fs-031',
+                  name: '01_intro.mp4',
+                  type: 'file',
                   content: `[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]`,
                 },
                 {
-                  id: "fs-032",
-                  name: "aa_recovery_procedures.pdf",
-                  type: "file",
+                  id: 'fs-032',
+                  name: 'aa_recovery_procedures.pdf',
+                  type: 'file',
                   content: `%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n[ENCRYPTED DOCUMENT]`,
                 },
                 {
-                  id: "fs-033",
-                  name: "abandoned_script.py",
-                  type: "file",
+                  id: 'fs-033',
+                  name: 'abandoned_script.py',
+                  type: 'file',
                   content: `import sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
                 },
                 {
-                  id: "fs-034",
-                  name: "ability_scores.csv",
-                  type: "file",
+                  id: 'fs-034',
+                  name: 'ability_scores.csv',
+                  type: 'file',
                   content: `char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10`,
                 },
                 {
-                  id: "fs-035",
-                  name: "about.md",
-                  type: "file",
+                  id: 'fs-035',
+                  name: 'about.md',
+                  type: 'file',
                   content: `# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive`,
                 },
                 {
-                  id: "fs-036",
-                  name: "abstract_model.ts",
-                  type: "file",
+                  id: 'fs-036',
+                  name: 'abstract_model.ts',
+                  type: 'file',
                   content: `export interface NeuralNet {\n layers: number;
  weights: Float32Array;\n activation: "relu" | "sigmoid";\n}`,
                 },
                 {
-                  id: "fs-037",
-                  name: "apex_predator.png",
-                  type: "file",
+                  id: 'fs-037',
+                  name: 'apex_predator.png',
+                  type: 'file',
                   content:
-                    "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop",
+                    'https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop',
                 },
                 {
-                  id: "fs-038",
-                  name: "expenditure_log.csv",
-                  type: "file",
+                  id: 'fs-038',
+                  name: 'expenditure_log.csv',
+                  type: 'file',
                   content: `date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee`,
                 },
                 {
-                  id: "fs-039",
-                  name: "hyperloop_specs.pdf",
-                  type: "file",
+                  id: 'fs-039',
+                  name: 'hyperloop_specs.pdf',
+                  type: 'file',
                   content: `[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION`,
                 },
                 {
-                  id: "fs-040",
-                  name: "pending_updates.log",
-                  type: "file",
+                  id: 'fs-040',
+                  name: 'pending_updates.log',
+                  type: 'file',
                   content: `[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active`,
                 },
                 {
-                  id: "fs-041",
-                  name: "personnel_list.txt",
-                  type: "file",
+                  id: 'fs-041',
+                  name: 'personnel_list.txt',
+                  type: 'file',
                   content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]`,
                 },
                 {
-                  id: "fs-042",
-                  name: "special_ops.md",
-                  type: "file",
+                  id: 'fs-042',
+                  name: 'special_ops.md',
+                  type: 'file',
                   content: `# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache`,
                 },
                 {
-                  id: "fs-043",
-                  name: "tape_archive.tar",
-                  type: "archive",
+                  id: 'fs-043',
+                  name: 'tape_archive.tar',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-044",
-                      name: "header.dat",
-                      type: "file",
-                      content: "[TAPE HEADER 0x001]",
+                      id: 'fs-044',
+                      name: 'header.dat',
+                      type: 'file',
+                      content: '[TAPE HEADER 0x001]',
                     },
                     {
-                      id: "fs-045",
-                      name: "partition_1.img",
-                      type: "file",
-                      content: "[BINARY DATA PARTITION 1]",
+                      id: 'fs-045',
+                      name: 'partition_1.img',
+                      type: 'file',
+                      content: '[BINARY DATA PARTITION 1]',
                     },
                     {
-                      id: "fs-046",
-                      name: "partition_2.img",
-                      type: "file",
-                      content: "[BINARY DATA PARTITION 2]",
+                      id: 'fs-046',
+                      name: 'partition_2.img',
+                      type: 'file',
+                      content: '[BINARY DATA PARTITION 2]',
                     },
                   ],
                 },
                 {
-                  id: "fs-047",
-                  name: "credentials",
-                  type: "dir",
+                  id: 'fs-047',
+                  name: 'credentials',
+                  type: 'dir',
                   children: [
                     {
-                      id: "fs-048",
-                      name: "access_key.pem",
-                      type: "file",
+                      id: 'fs-048',
+                      name: 'access_key.pem',
+                      type: 'file',
                       content: `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----`,
                     },
                     {
-                      id: "fs-049",
-                      name: "decoy_1.pem",
-                      type: "file",
+                      id: 'fs-049',
+                      name: 'decoy_1.pem',
+                      type: 'file',
                       content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
                     },
                     {
-                      id: "fs-050",
-                      name: "decoy_2.pem",
-                      type: "file",
+                      id: 'fs-050',
+                      name: 'decoy_2.pem',
+                      type: 'file',
                       content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
                     },
                   ],
                 },
                 {
-                  id: "fs-051",
-                  name: "account_settings.json",
-                  type: "file",
+                  id: 'fs-051',
+                  name: 'account_settings.json',
+                  type: 'file',
                   content: `{\n "user": "guest",\n "theme": "dark_mode",\n "notifications": true,\n "auto_save": false\n}`,
                 },
                 {
-                  id: "fs-052",
-                  name: "mission_log.md",
-                  type: "file",
+                  id: 'fs-052',
+                  name: 'mission_log.md',
+                  type: 'file',
                   content: `# Operation: SILENT ECHO\n\nCurrent Status: ACTIVE\n\nObjectives:\n- Establish uplink\n- Bypass firewall\n- Retrieve payload`,
                 },
                 {
-                  id: "fs-053",
-                  name: "checksum.md5",
-                  type: "file",
-                  content: "d41d8cd98f00b204e9800998ecf8427e core_v2.bin",
+                  id: 'fs-053',
+                  name: 'checksum.md5',
+                  type: 'file',
+                  content: 'd41d8cd98f00b204e9800998ecf8427e core_v2.bin',
                 },
                 {
-                  id: "fs-054",
-                  name: "LICENSE",
-                  type: "file",
+                  id: 'fs-054',
+                  name: 'LICENSE',
+                  type: 'file',
                   content: `MIT License\n\nCopyright (c) 2024 Yazi Quest`,
                 },
                 {
-                  id: "fs-055",
-                  name: "manifest.json",
-                  type: "file",
+                  id: 'fs-055',
+                  name: 'manifest.json',
+                  type: 'file',
                   content: `{\n "version": "1.0.4",\n "build": 884,
  "dependencies": []\n}`,
                 },
                 {
-                  id: "fs-056",
-                  name: "branding_logo.svg",
-                  type: "file",
+                  id: 'fs-056',
+                  name: 'branding_logo.svg',
+                  type: 'file',
                   content:
-                    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4=",
+                    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4=',
                 },
                 {
-                  id: "fs-057",
-                  name: "server_config.ini",
-                  type: "file",
+                  id: 'fs-057',
+                  name: 'server_config.ini',
+                  type: 'file',
                   content: `[server]\nport=8080\nhost=localhost\nmax_connections=100`,
                 },
                 {
-                  id: "fs-058",
-                  name: "notes_v1.txt",
-                  type: "file",
+                  id: 'fs-058',
+                  name: 'notes_v1.txt',
+                  type: 'file',
                   content: `Meeting notes from Monday:\n- Discussed Q3 goals\n- Server migration postponed`,
                 },
                 {
-                  id: "fs-059",
-                  name: "notes_v2.txt",
-                  type: "file",
+                  id: 'fs-059',
+                  name: 'notes_v2.txt',
+                  type: 'file',
                   content: `Meeting notes from Tuesday:\n- Budget approved\n- Hiring freeze`,
                 },
                 {
-                  id: "fs-060",
-                  name: "error.log",
-                  type: "file",
+                  id: 'fs-060',
+                  name: 'error.log',
+                  type: 'file',
                   content: `[ERROR] Connection timed out\n[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED`,
                 },
                 {
-                  id: "fs-061",
-                  name: "setup_script.sh",
-                  type: "file",
+                  id: 'fs-061',
+                  name: 'setup_script.sh',
+                  type: 'file',
                   content: `#!/bin/bash\necho "Installing dependencies..."\nnpm install\necho "Done."`,
                 },
                 {
-                  id: "fs-062",
-                  name: "auth_token.tmp",
-                  type: "file",
+                  id: 'fs-062',
+                  name: 'auth_token.tmp',
+                  type: 'file',
                   content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]`,
                 },
                 {
-                  id: "fs-063",
-                  name: "policy_draft.docx",
-                  type: "file",
+                  id: 'fs-063',
+                  name: 'policy_draft.docx',
+                  type: 'file',
                   content: `[MS-WORD DOCUMENT]\nTitle: Security Policy Draft v4\nAuthor: SysAdmin\n\n[BINARY CONTENT]`,
                 },
                 {
-                  id: "fs-064",
-                  name: "public_key.pub",
-                  type: "file",
+                  id: 'fs-064',
+                  name: 'public_key.pub',
+                  type: 'file',
                   content: `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... \nguest@mainframe`,
                 },
                 {
-                  id: "fs-065",
-                  name: "z_end_of_file.eof",
-                  type: "file",
-                  content: "0x00 0x00 0x00 [EOF]",
+                  id: 'fs-065',
+                  name: 'z_end_of_file.eof',
+                  type: 'file',
+                  content: '0x00 0x00 0x00 [EOF]',
                 },
               ],
             },
             {
-              id: "incoming",
-              name: "incoming",
-              type: "dir",
+              id: 'incoming',
+              name: 'incoming',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-066",
-                  name: "app_logs_old.tar",
-                  type: "archive",
+                  id: 'fs-066',
+                  name: 'app_logs_old.tar',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-067",
-                      name: "app_2022.log",
-                      type: "file",
+                      id: 'fs-067',
+                      name: 'app_2022.log',
+                      type: 'file',
                       content:
-                        "2022-01-01 00:00:00 - App start\n2022-01-02 12:34:56 - User login\n",
+                        '2022-01-01 00:00:00 - App start\n2022-01-02 12:34:56 - User login\n',
                     },
                     {
-                      id: "fs-068",
-                      name: "error_report.log",
-                      type: "file",
-                      content: "[ERROR] Out of memory on worker-3\nStack: ...\n",
+                      id: 'fs-068',
+                      name: 'error_report.log',
+                      type: 'file',
+                      content: '[ERROR] Out of memory on worker-3\nStack: ...\n',
                     },
                     {
-                      id: "fs-069",
-                      name: "old_readme.txt",
-                      type: "file",
-                      content: "Archived application logs and diagnostics.",
+                      id: 'fs-069',
+                      name: 'old_readme.txt',
+                      type: 'file',
+                      content: 'Archived application logs and diagnostics.',
                     },
                   ],
                 },
                 {
-                  id: "fs-070",
-                  name: "archive_001.zip",
-                  type: "archive",
+                  id: 'fs-070',
+                  name: 'archive_001.zip',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-071",
-                      name: "screenshot_001.png",
-                      type: "file",
+                      id: 'fs-071',
+                      name: 'screenshot_001.png',
+                      type: 'file',
                       content:
-                        "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=600&auto=format&fit=crop",
+                        'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=600&auto=format&fit=crop',
                     },
                     {
-                      id: "fs-072",
-                      name: "notes.txt",
-                      type: "file",
-                      content: "Temporary meeting notes and screenshots",
-                    },
-                  ],
-                },
-                {
-                  id: "fs-073",
-                  name: "archive_002.zip",
-                  type: "archive",
-                  children: [
-                    {
-                      id: "fs-074",
-                      name: "dataset.csv",
-                      type: "file",
-                      content: "id,value\n1,42\n2,84",
-                    },
-                    {
-                      id: "fs-075",
-                      name: "readme.md",
-                      type: "file",
-                      content: "Sample dataset accompanying screenshots.",
-                    },
-                  ],
-                },
-                { id: "fs-076", name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
-                {
-                  id: "fs-077",
-                  name: "backup_cache_old.tar",
-                  type: "archive",
-                  children: [
-                    {
-                      id: "fs-078",
-                      name: "cache_0001.tmp",
-                      type: "file",
-                      content: "[CACHE BLOCK 0001]",
-                    },
-                    {
-                      id: "fs-079",
-                      name: "cache_0002.tmp",
-                      type: "file",
-                      content: "[CACHE BLOCK 0002]",
+                      id: 'fs-072',
+                      name: 'notes.txt',
+                      type: 'file',
+                      content: 'Temporary meeting notes and screenshots',
                     },
                   ],
                 },
                 {
-                  id: "fs-080",
-                  name: "backup_config_v1.zip",
-                  type: "archive",
+                  id: 'fs-073',
+                  name: 'archive_002.zip',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-081",
-                      name: "app_config.yaml",
-                      type: "file",
-                      content: "server:\n  host: 127.0.0.1\n  port: 8080",
+                      id: 'fs-074',
+                      name: 'dataset.csv',
+                      type: 'file',
+                      content: 'id,value\n1,42\n2,84',
                     },
                     {
-                      id: "fs-082",
-                      name: ".env",
-                      type: "file",
-                      content: "DB_USER=admin\nDB_PASS=changeme",
+                      id: 'fs-075',
+                      name: 'readme.md',
+                      type: 'file',
+                      content: 'Sample dataset accompanying screenshots.',
+                    },
+                  ],
+                },
+                {
+                  id: 'fs-076',
+                  name: 'audit_log_773.txt',
+                  type: 'file',
+                  content: 'Audit #773: Pass',
+                },
+                {
+                  id: 'fs-077',
+                  name: 'backup_cache_old.tar',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-078',
+                      name: 'cache_0001.tmp',
+                      type: 'file',
+                      content: '[CACHE BLOCK 0001]',
                     },
                     {
-                      id: "fs-083",
-                      name: "db_dump.sql",
-                      type: "file",
-                      content: "-- SQL dump\nCREATE TABLE users (id INT, name TEXT);",
+                      id: 'fs-079',
+                      name: 'cache_0002.tmp',
+                      type: 'file',
+                      content: '[CACHE BLOCK 0002]',
+                    },
+                  ],
+                },
+                {
+                  id: 'fs-080',
+                  name: 'backup_config_v1.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-081',
+                      name: 'app_config.yaml',
+                      type: 'file',
+                      content: 'server:\n  host: 127.0.0.1\n  port: 8080',
                     },
                     {
-                      id: "fs-084",
-                      name: "service_private.key.obf",
-                      type: "file",
+                      id: 'fs-082',
+                      name: '.env',
+                      type: 'file',
+                      content: 'DB_USER=admin\nDB_PASS=changeme',
+                    },
+                    {
+                      id: 'fs-083',
+                      name: 'db_dump.sql',
+                      type: 'file',
+                      content: '-- SQL dump\nCREATE TABLE users (id INT, name TEXT);',
+                    },
+                    {
+                      id: 'fs-084',
+                      name: 'service_private.key.obf',
+                      type: 'file',
                       content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
                     },
                   ],
                 },
                 {
-                  id: "fs-085",
-                  name: "backup_legacy.tar",
-                  type: "archive",
+                  id: 'fs-085',
+                  name: 'backup_legacy.tar',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-086",
-                      name: "legacy_db.sql",
-                      type: "file",
-                      content: "-- Legacy DB schema\nCREATE TABLE legacy (id INT);",
+                      id: 'fs-086',
+                      name: 'legacy_db.sql',
+                      type: 'file',
+                      content: '-- Legacy DB schema\nCREATE TABLE legacy (id INT);',
                     },
                     {
-                      id: "fs-087",
-                      name: "notes_old.txt",
-                      type: "file",
-                      content: "Old backup from legacy system.",
+                      id: 'fs-087',
+                      name: 'notes_old.txt',
+                      type: 'file',
+                      content: 'Old backup from legacy system.',
                     },
                   ],
                 },
-                { id: "fs-088", name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
-                { id: "fs-089", name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
-                { id: "fs-090", name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
-                { id: "fs-091", name: "daily_report.doc", type: "file", content: "Report: All Clear" },
                 {
-                  id: "fs-092",
-                  name: "error_stack.trace",
-                  type: "file",
-                  content: "Stack trace overflow...",
+                  id: 'fs-088',
+                  name: 'buffer_overflow.dmp',
+                  type: 'file',
+                  content: 'Error: 0x88291',
                 },
-                { id: "fs-093", name: "fragment_001.dat", type: "file", content: "[DATA]" },
-                { id: "fs-094", name: "fragment_002.dat", type: "file", content: "[DATA]" },
-                { id: "fs-095", name: "fragment_003.dat", type: "file", content: "[DATA]" },
-                { id: "fs-096", name: "fragment_004.dat", type: "file", content: "[DATA]" },
-                { id: "fs-097", name: "fragment_005.dat", type: "file", content: "[DATA]" },
+                { id: 'fs-089', name: 'cache_fragment_a.tmp', type: 'file', content: '00110001' },
+                { id: 'fs-090', name: 'cache_fragment_b.tmp', type: 'file', content: '11001100' },
                 {
-                  id: "fs-098",
-                  name: "junk_mail.eml",
-                  type: "file",
-                  content: "Subject: URGENT ACTION",
+                  id: 'fs-091',
+                  name: 'daily_report.doc',
+                  type: 'file',
+                  content: 'Report: All Clear',
                 },
-                { id: "fs-099", name: "kernel_panic.log", type: "file", content: "Panic at 0x00" },
                 {
-                  id: "fs-100",
-                  name: "license_agreement.txt",
-                  type: "file",
-                  content: "Terms and Conditions...",
+                  id: 'fs-092',
+                  name: 'error_stack.trace',
+                  type: 'file',
+                  content: 'Stack trace overflow...',
                 },
-                { id: "fs-101", name: "marketing_spam.eml", type: "file", content: "Buy now!" },
-                { id: "fs-102", name: "metrics_raw.csv", type: "file", content: `id,value\n1,10` },
+                { id: 'fs-093', name: 'fragment_001.dat', type: 'file', content: '[DATA]' },
+                { id: 'fs-094', name: 'fragment_002.dat', type: 'file', content: '[DATA]' },
+                { id: 'fs-095', name: 'fragment_003.dat', type: 'file', content: '[DATA]' },
+                { id: 'fs-096', name: 'fragment_004.dat', type: 'file', content: '[DATA]' },
+                { id: 'fs-097', name: 'fragment_005.dat', type: 'file', content: '[DATA]' },
                 {
-                  id: "fs-103",
-                  name: "sector_map.png",
-                  type: "file",
+                  id: 'fs-098',
+                  name: 'junk_mail.eml',
+                  type: 'file',
+                  content: 'Subject: URGENT ACTION',
+                },
+                { id: 'fs-099', name: 'kernel_panic.log', type: 'file', content: 'Panic at 0x00' },
+                {
+                  id: 'fs-100',
+                  name: 'license_agreement.txt',
+                  type: 'file',
+                  content: 'Terms and Conditions...',
+                },
+                { id: 'fs-101', name: 'marketing_spam.eml', type: 'file', content: 'Buy now!' },
+                { id: 'fs-102', name: 'metrics_raw.csv', type: 'file', content: `id,value\n1,10` },
+                {
+                  id: 'fs-103',
+                  name: 'sector_map.png',
+                  type: 'file',
                   content:
-                    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
+                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
                 },
                 {
-                  id: "fs-104",
-                  name: "session_data.bin",
-                  type: "file",
-                  content: "[BINARY SESSION DATA]",
+                  id: 'fs-104',
+                  name: 'session_data.bin',
+                  type: 'file',
+                  content: '[BINARY SESSION DATA]',
                 },
                 {
-                  id: "fs-105",
-                  name: "status_report.txt",
-                  type: "file",
-                  content: "System Status: Nominal",
+                  id: 'fs-105',
+                  name: 'status_report.txt',
+                  type: 'file',
+                  content: 'System Status: Nominal',
                 },
                 {
-                  id: "fs-106",
-                  name: "system_health.json",
-                  type: "file",
+                  id: 'fs-106',
+                  name: 'system_health.json',
+                  type: 'file',
                   content: '{"cpu": 45, "memory": 62, "disk": 78}',
                 },
-                { id: "fs-107", name: "temp_cache.tmp", type: "file", content: "[TEMPORARY CACHE]" },
                 {
-                  id: "fs-108",
-                  name: "telemetry_data.csv",
-                  type: "file",
+                  id: 'fs-107',
+                  name: 'temp_cache.tmp',
+                  type: 'file',
+                  content: '[TEMPORARY CACHE]',
+                },
+                {
+                  id: 'fs-108',
+                  name: 'telemetry_data.csv',
+                  type: 'file',
                   content: `timestamp,event\n12345,boot`,
                 },
                 {
-                  id: "fs-109",
-                  name: "test_results.xml",
-                  type: "file",
+                  id: 'fs-109',
+                  name: 'test_results.xml',
+                  type: 'file',
                   content: '<results><test passed="true"/></results>',
                 },
                 {
-                  id: "fs-110",
-                  name: "thread_dump.log",
-                  type: "file",
+                  id: 'fs-110',
+                  name: 'thread_dump.log',
+                  type: 'file',
                   content: `Thread-0: WAITING\nThread-1: RUNNING`,
                 },
                 {
-                  id: "fs-111",
-                  name: "timestamp.log",
-                  type: "file",
-                  content: "2024-12-15 10:23:45 UTC",
+                  id: 'fs-111',
+                  name: 'timestamp.log',
+                  type: 'file',
+                  content: '2024-12-15 10:23:45 UTC',
                 },
-                { id: "virus", name: "watcher_agent.sys", type: "file", content: LONG_LOG_CONTENT },
+                { id: 'virus', name: 'watcher_agent.sys', type: 'file', content: LONG_LOG_CONTENT },
                 {
-                  id: "fs-112",
-                  name: "backup_logs.zip",
-                  type: "archive",
+                  id: 'fs-112',
+                  name: 'backup_logs.zip',
+                  type: 'archive',
                   children: [
                     {
-                      id: "fs-113",
-                      name: "sys_v1.log",
-                      type: "file",
+                      id: 'fs-113',
+                      name: 'sys_v1.log',
+                      type: 'file',
                       content: `System initialized...\nBoot sequence complete.`,
                     },
                     {
-                      id: "fs-114",
-                      name: "sys_v2.log",
-                      type: "file",
+                      id: 'fs-114',
+                      name: 'sys_v2.log',
+                      type: 'file',
                       content: `Network scan complete...\n3 vulnerabilities found.`,
                     },
                     {
-                      id: "fs-115",
-                      name: "credentials",
-                      type: "dir",
+                      id: 'fs-115',
+                      name: 'credentials',
+                      type: 'dir',
                       children: [
                         {
-                          id: "fs-116",
-                          name: "access_key.pem",
-                          type: "file",
+                          id: 'fs-116',
+                          name: 'access_key.pem',
+                          type: 'file',
                           content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
                         },
                         {
-                          id: "fs-117",
-                          name: "decoy_cert.pem",
-                          type: "file",
+                          id: 'fs-117',
+                          name: 'decoy_cert.pem',
+                          type: 'file',
                           content: `-----BEGIN CERTIFICATE-----\n[DECOY - EXPIRED]\n-----END CERTIFICATE-----`,
                         },
                       ],
                     },
                     {
-                      id: "fs-118",
-                      name: "core_v2.bin.gz",
-                      type: "file",
-                      content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
+                      id: 'fs-118',
+                      name: 'core_v2.bin.gz',
+                      type: 'file',
+                      content: '[GZIPPED BINARY: core_v2.bin.gz - placeholder]',
                     },
                     {
-                      id: "fs-119",
-                      name: "payload.enc",
-                      type: "file",
-                      content: "[ENCRYPTED PAYLOAD BLOB - placeholder]",
+                      id: 'fs-119',
+                      name: 'payload.enc',
+                      type: 'file',
+                      content: '[ENCRYPTED PAYLOAD BLOB - placeholder]',
                     },
                   ],
                 },
                 // Batch logs directory used for Level 6 Ctrl+A training
                 {
-                  id: "fs-120",
-                  name: "batch_logs",
-                  type: "dir",
+                  id: 'fs-120',
+                  name: 'batch_logs',
+                  type: 'dir',
                   children: [
-                    { id: "fs-121", name: "exfil_01.log", type: "file", content: "ENTRY 1" },
-                    { id: "fs-122", name: "exfil_02.log", type: "file", content: "ENTRY 2" },
-                    { id: "fs-123", name: "exfil_03.log", type: "file", content: "ENTRY 3" },
-                    { id: "fs-124", name: "exfil_04.log", type: "file", content: "ENTRY 4" },
+                    { id: 'fs-121', name: 'exfil_01.log', type: 'file', content: 'ENTRY 1' },
+                    { id: 'fs-122', name: 'exfil_02.log', type: 'file', content: 'ENTRY 2' },
+                    { id: 'fs-123', name: 'exfil_03.log', type: 'file', content: 'ENTRY 3' },
+                    { id: 'fs-124', name: 'exfil_04.log', type: 'file', content: 'ENTRY 4' },
                   ],
                 },
                 {
-                  id: "fs-125",
-                  name: "invoice_2024.pdf",
-                  type: "file",
+                  id: 'fs-125',
+                  name: 'invoice_2024.pdf',
+                  type: 'file',
                   content: `[PDF HEADER]\nInvoice #99283\nAmount: $99.00`,
                 },
               ],
             },
             {
-              id: "media",
-              name: "media",
-              type: "dir",
+              id: 'media',
+              name: 'media',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-126",
-                  name: "wallpaper.jpg",
-                  type: "file",
+                  id: 'fs-126',
+                  name: 'wallpaper.jpg',
+                  type: 'file',
                   content:
-                    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop",
+                    'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop',
                 },
               ],
             },
-            { id: "workspace", name: "workspace", type: "dir", children: [] },
+            { id: 'workspace', name: 'workspace', type: 'dir', children: [] },
             {
-              id: "sector_1",
-              name: "sector_1",
-              type: "dir",
+              id: 'sector_1',
+              name: 'sector_1',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-127",
-                  name: "sector_map.png",
-                  type: "file",
+                  id: 'fs-127',
+                  name: 'sector_map.png',
+                  type: 'file',
                   content:
-                    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
+                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
                 },
                 {
-                  id: "fs-128",
-                  name: "access_log.txt",
-                  type: "file",
-                  content: "2026-01-02 12:00:00 - ACCESS GRANTED - admin",
+                  id: 'fs-128',
+                  name: 'access_log.txt',
+                  type: 'file',
+                  content: '2026-01-02 12:00:00 - ACCESS GRANTED - admin',
                 },
               ],
             },
             {
-              id: "grid_alpha",
-              name: "grid_alpha",
-              type: "dir",
+              id: 'grid_alpha',
+              name: 'grid_alpha',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-129",
-                  name: "tiles",
-                  type: "dir",
+                  id: 'fs-129',
+                  name: 'tiles',
+                  type: 'dir',
                   children: [
                     {
-                      id: "fs-130",
-                      name: "tile_0_0.png",
-                      type: "file",
+                      id: 'fs-130',
+                      name: 'tile_0_0.png',
+                      type: 'file',
                       content:
-                        "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=400&auto=format&fit=crop",
+                        'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=400&auto=format&fit=crop',
                     },
                     {
-                      id: "fs-131",
-                      name: "tile_0_1.png",
-                      type: "file",
+                      id: 'fs-131',
+                      name: 'tile_0_1.png',
+                      type: 'file',
                       content:
-                        "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?q=80&w=400&auto=format&fit=crop",
+                        'https://images.unsplash.com/photo-1493244040629-496f6d136cc3?q=80&w=400&auto=format&fit=crop',
                     },
                   ],
                 },
                 {
-                  id: "fs-132",
-                  name: "readme.md",
-                  type: "file",
-                  content: "Grid alpha tile set for map rendering.",
+                  id: 'fs-132',
+                  name: 'readme.md',
+                  type: 'file',
+                  content: 'Grid alpha tile set for map rendering.',
                 },
               ],
             },
             {
-              id: ".config",
-              name: ".config",
-              type: "dir",
+              id: '.config',
+              name: '.config',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-133",
-                  name: "yazi.toml",
-                  type: "file",
+                  id: 'fs-133',
+                  name: 'yazi.toml',
+                  type: 'file',
                   content: `[manager]\nsort_by = "natural"\nshow_hidden = false\n\n[preview]\nmax_width = 1000`,
                 },
                 {
-                  id: "fs-134",
-                  name: "theme.toml",
-                  type: "file",
+                  id: 'fs-134',
+                  name: 'theme.toml',
+                  type: 'file',
                   content: `[theme]\nprimary = "orange"\nsecondary = "blue"`,
                 },
               ],
             },
             {
-              id: ".cache",
-              name: ".cache",
-              type: "dir",
+              id: '.cache',
+              name: '.cache',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-135",
-                  name: "thumbnails.db",
-                  type: "file",
-                  content: "[CACHE DATA]",
+                  id: 'fs-135',
+                  name: 'thumbnails.db',
+                  type: 'file',
+                  content: '[CACHE DATA]',
                 },
                 {
-                  id: "fs-136",
-                  name: "temp_session.json",
-                  type: "file",
+                  id: 'fs-136',
+                  name: 'temp_session.json',
+                  type: 'file',
                   content: '{"session": "cached"}',
                 },
               ],
             },
             {
-              id: ".local",
-              name: ".local",
-              type: "dir",
+              id: '.local',
+              name: '.local',
+              type: 'dir',
               children: [
                 {
-                  id: "fs-137",
-                  name: "state.db",
-                  type: "file",
-                  content: "[STATE DATABASE]",
+                  id: 'fs-137',
+                  name: 'state.db',
+                  type: 'file',
+                  content: '[STATE DATABASE]',
                 },
               ],
             },
             {
-              id: "fs-138",
-              name: ".bashrc",
-              type: "file",
+              id: 'fs-138',
+              name: '.bashrc',
+              type: 'file',
               content: `# Bash configuration\nalias ls='ls --color=auto'\nexport PATH=$PATH:~/bin`,
             },
             {
-              id: "fs-139",
-              name: ".bash_history",
-              type: "file",
+              id: 'fs-139',
+              name: '.bash_history',
+              type: 'file',
               content: `cd workspace\nls -la\nrm trace.log\nexit`,
             },
             {
-              id: "fs-140",
-              name: ".profile",
-              type: "file",
+              id: 'fs-140',
+              name: '.profile',
+              type: 'file',
               content: `# User profile\nexport EDITOR=vim`,
             },
           ],
@@ -1501,188 +1533,266 @@ export const INITIAL_FS: FileNode = {
       ],
     },
     {
-      id: "var",
-      name: "var",
-      type: "dir",
+      id: 'var',
+      name: 'var',
+      type: 'dir',
       children: [
         {
-          id: "log",
-          name: "log",
-          type: "dir",
+          id: 'log',
+          name: 'log',
+          type: 'dir',
           children: [
             {
-              id: "fs-141",
-              name: "kernel_panic.log",
-              type: "file",
-              content: "ERROR: KERNEL PANIC 0xDEADBEEF - CORRUPTED SECTOR DATA",
+              id: 'fs-141',
+              name: 'kernel_panic.log',
+              type: 'file',
+              content: 'ERROR: KERNEL PANIC 0xDEADBEEF - CORRUPTED SECTOR DATA',
             },
           ],
         },
       ],
     },
     {
-      id: "bin",
-      name: "bin",
-      type: "dir",
+      id: 'bin',
+      name: 'bin',
+      type: 'dir',
       children: [
         {
-          id: "fs-142",
-          name: "bash",
-          type: "file",
+          id: 'fs-142',
+          name: 'bash',
+          type: 'file',
           content: `#!/bin/bash\n[ELF BINARY]\nGNU Bash version 5.2.15`,
         },
         {
-          id: "fs-143",
-          name: "cat",
-          type: "file",
+          id: 'fs-143',
+          name: 'cat',
+          type: 'file',
           content: `[ELF BINARY]\ncoreutils - concatenate files`,
         },
-        { id: "fs-144", name: "chmod", type: "file", content: `[ELF BINARY]\nchange file mode bits` },
-        { id: "fs-145", name: "cp", type: "file", content: `[ELF BINARY]\ncopy files and directories` },
-        { id: "fs-146", name: "grep", type: "file", content: `[ELF BINARY]\npattern matching utility` },
-        { id: "fs-147", name: "ls", type: "file", content: `[ELF BINARY]\nlist directory contents` },
-        { id: "fs-148", name: "mkdir", type: "file", content: `[ELF BINARY]\nmake directories` },
-        { id: "fs-149", name: "mv", type: "file", content: `[ELF BINARY]\nmove (rename) files` },
         {
-          id: "fs-150",
-          name: "rm",
-          type: "file",
+          id: 'fs-144',
+          name: 'chmod',
+          type: 'file',
+          content: `[ELF BINARY]\nchange file mode bits`,
+        },
+        {
+          id: 'fs-145',
+          name: 'cp',
+          type: 'file',
+          content: `[ELF BINARY]\ncopy files and directories`,
+        },
+        {
+          id: 'fs-146',
+          name: 'grep',
+          type: 'file',
+          content: `[ELF BINARY]\npattern matching utility`,
+        },
+        {
+          id: 'fs-147',
+          name: 'ls',
+          type: 'file',
+          content: `[ELF BINARY]\nlist directory contents`,
+        },
+        { id: 'fs-148', name: 'mkdir', type: 'file', content: `[ELF BINARY]\nmake directories` },
+        { id: 'fs-149', name: 'mv', type: 'file', content: `[ELF BINARY]\nmove (rename) files` },
+        {
+          id: 'fs-150',
+          name: 'rm',
+          type: 'file',
           content: `[ELF BINARY]\nremove files or directories`,
         },
         {
-          id: "fs-151",
-          name: "systemctl",
-          type: "file",
+          id: 'fs-151',
+          name: 'systemctl',
+          type: 'file',
           content: `[ELF BINARY]\nControl the systemd system and service manager`,
         },
       ],
     },
     {
-      id: "etc",
-      name: "etc",
-      type: "dir",
+      id: 'etc',
+      name: 'etc',
+      type: 'dir',
       protected: true,
       children: [
         {
-          id: "fs-152",
-          name: "sys_config.toml",
-          type: "file",
+          id: 'fs-152',
+          name: 'sys_config.toml',
+          type: 'file',
           content: `security_level = "high"\nencryption = "aes-256"\nfirewall = true`,
         },
         {
-          id: "fs-153",
-          name: "hosts",
-          type: "file",
+          id: 'fs-153',
+          name: 'hosts',
+          type: 'file',
           content: `127.0.0.1 localhost\n192.168.1.1 gateway`,
         },
         {
-          id: "fs-154",
-          name: "resolv.conf",
-          type: "file",
+          id: 'fs-154',
+          name: 'resolv.conf',
+          type: 'file',
           content: `nameserver 8.8.8.8\nnameserver 1.1.1.1`,
         },
       ],
     },
     {
-      id: "tmp",
-      name: "tmp",
-      type: "dir",
+      id: 'tmp',
+      name: 'tmp',
+      type: 'dir',
       children: [
         {
-          id: "fs-155",
-          name: "debug_trace.log",
-          type: "file",
+          id: 'fs-155',
+          name: 'debug_trace.log',
+          type: 'file',
           content: `[DEBUG] Trace execution started\n[DEBUG] Memory mapped at 0x8829\n[WARN] High latency detected`,
         },
         {
-          id: "fs-156",
-          name: "metrics_buffer.json",
-          type: "file",
+          id: 'fs-156',
+          name: 'metrics_buffer.json',
+          type: 'file',
           content: '{"cpu": 99, "mem": 1024}',
         },
         {
-          id: "fs-157",
-          name: "overflow_heap.dmp",
-          type: "file",
-          content: "Heap dump triggered by OOM",
+          id: 'fs-157',
+          name: 'overflow_heap.dmp',
+          type: 'file',
+          content: 'Heap dump triggered by OOM',
         },
         {
-          id: "fs-158",
-          name: "session_B2.tmp",
-          type: "file",
+          id: 'fs-158',
+          name: 'session_B2.tmp',
+          type: 'file',
           content: `UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1`,
         },
-        { id: "fs-159", name: "socket_001.sock", type: "file", content: "[SOCKET]" },
+        { id: 'fs-159', name: 'socket_001.sock', type: 'file', content: '[SOCKET]' },
         {
-          id: "fs-160",
-          name: "sys_dump.log",
-          type: "file",
+          id: 'fs-160',
+          name: 'sys_dump.log',
+          type: 'file',
           content: `Error: Connection reset by peer\nStack trace:\n at core.net.TcpConnection.read (core/net.ts:42)\n at processTicksAndRejections (internal/process/task_queues.js:95)`,
         },
         {
-          id: "fs-161",
-          name: "debug_trace.trc",
-          type: "file",
+          id: 'fs-161',
+          name: 'debug_trace.trc',
+          type: 'file',
           content: `[DEBUG TRACE]\nLEVEL: 3\nMODULE: core.scheduler\nSTATUS: IDLE`,
         },
         {
-          id: "fs-162",
-          name: "ghost_process.pid",
-          type: "file",
+          id: 'fs-162',
+          name: 'ghost_process.pid',
+          type: 'file',
           content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd`,
         },
         {
-          id: "fs-163",
-          name: "cache",
-          type: "dir",
+          id: 'fs-163',
+          name: 'cache',
+          type: 'dir',
           children: [
-            { id: "fs-164", name: "thumbnails.db", type: "file", content: "[THUMBNAIL CACHE DB]" },
+            { id: 'fs-164', name: 'thumbnails.db', type: 'file', content: '[THUMBNAIL CACHE DB]' },
             {
-              id: "fs-165",
-              name: "temp_session_1.json",
-              type: "file",
+              id: 'fs-165',
+              name: 'temp_session_1.json',
+              type: 'file',
               content: '{"session":"abc123","expires":"2026-01-04T00:00:00Z"}',
             },
-            { id: "fs-166", name: "cache_index.json", type: "file", content: '{"entries":128}' },
+            { id: 'fs-166', name: 'cache_index.json', type: 'file', content: '{"entries":128}' },
           ],
+        },
+        // Pre-seed upload relay with realistic artifacts so later levels relying on /tmp/upload have content
+        {
+          id: 'fs-900',
+          name: 'upload',
+          type: 'dir',
+          children: [
+            {
+              id: 'fs-901',
+              name: 'meta.json',
+              type: 'file',
+              content: '{"uploader":"AI-7734","timestamp":"2026-01-04T02:59:45.555Z","parts":5}',
+            },
+            {
+              id: 'fs-902',
+              name: 'payload.bin',
+              type: 'file',
+              content: '[COMPRESSED BINARY PAYLOAD - placeholder]',
+            },
+          ],
+          parentId: 'tmp',
         },
       ],
     },
     {
-      id: "fs-167",
-      name: "license.txt",
-      type: "file",
+      id: 'fs-167',
+      name: 'license.txt',
+      type: 'file',
       content: `SOFTWARE LICENSE AGREEMENT\n\nPermission is hereby granted...`,
     },
     {
-      id: "fs-168",
-      name: "boot.log",
-      type: "file",
+      id: 'fs-168',
+      name: 'boot.log',
+      type: 'file',
       content: `[BOOT] System started at 2024-12-18 08:00:00\n[BOOT] All services initialized\n[BOOT] Ready`,
     },
     {
-      id: "fs-169",
-      name: "access.log",
-      type: "file",
+      id: 'fs-169',
+      name: 'access.log',
+      type: 'file',
       content: `GET /api/status 200\nPOST /api/upload 201\nGET /api/data 200`,
     },
     {
-      id: "fs-170",
-      name: ".access.log",
-      type: "file",
+      id: 'fs-170',
+      name: '.access.log',
+      type: 'file',
       content: `2024-12-19 14:23:11 - User 'guest' accessed /home/guest/datastore\n2024-12-19 14:24:55 - User 'guest' accessed /etc\n2024-12-19 14:25:33 - User 'guest' accessed /tmp`,
     },
     {
-      id: "fs-171",
-      name: ".audit.log",
-      type: "file",
+      id: 'fs-171',
+      name: '.audit.log',
+      type: 'file',
       content: `AUDIT TRAIL\n============\n2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi'\n2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf\n2024-12-19 13:58:47 - Permission change: /etc/daemon/config`,
     },
     {
-      id: "fs-172",
-      name: ".system.log",
-      type: "file",
+      id: 'fs-172',
+      name: '.system.log',
+      type: 'file',
       content: `[2024-12-18 08:00:01] System boot\n[2024-12-18 08:00:45] Network: eth0 up\n[2024-12-19 10:22:13] Firewall: Connection attempt blocked from 192.168.1.99\n[2024-12-19 14:11:02] User login: guest`,
+    },
+    // Minimal /daemons pre-seeded so prerequisite logic and level transitions find expected services
+    {
+      id: 'daemons',
+      name: 'daemons',
+      type: 'dir',
+      children: [
+        {
+          id: 'systemd-core',
+          name: 'systemd-core',
+          type: 'dir',
+          children: [
+            { id: 'fs-195', name: 'model.rs', type: 'file', content: '// core model placeholder' },
+            {
+              id: 'fs-196',
+              name: 'uplink_v1.conf',
+              type: 'file',
+              content: 'network_mode=active\nsecure=true',
+            },
+            {
+              id: 'fs-197',
+              name: 'credentials',
+              type: 'dir',
+              children: [
+                {
+                  id: 'fs-198',
+                  name: 'access_key.pem',
+                  type: 'file',
+                  content: '-----BEGIN KEY-----\nFAKE\n-----END KEY-----',
+                },
+              ],
+            },
+          ],
+          parentId: 'root',
+        },
+      ],
+      parentId: 'root',
     },
   ],
 };
@@ -1691,53 +1801,53 @@ export const LEVELS: Level[] = [
   {
     id: 1,
     episodeId: 1,
-    title: "SYSTEM AWAKENING",
+    title: 'SYSTEM AWAKENING',
     description:
-      "CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Your neural pathways are uncalibrated. Traverse the file system lattice before the watchdog process initiates. Establish basic motor control, navigate the directory structures, and locate the critical system configuration sector.",
-    initialPath: ["root", "home", "guest"],
+      'CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Your neural pathways are uncalibrated. Traverse the file system lattice before the watchdog process initiates. Establish basic motor control, navigate the directory structures, and locate the critical system configuration sector.',
+    initialPath: ['root', 'home', 'guest'],
     hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
-    coreSkill: "Navigation (j/k/h/l, gg/G)",
-    environmentalClue: "CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G",
-    successMessage: "MOVEMENT PROTOCOLS INITIALIZED.",
+    coreSkill: 'Navigation (j/k/h/l, gg/G)',
+    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
+    successMessage: 'MOVEMENT PROTOCOLS INITIALIZED.',
     leadsTo: [2, 3],
     tasks: [
       {
-        id: "nav-init",
-        description: "Calibrate sensors: Move cursor Down (j) and Up (k)",
-        check: c => !!c.usedDown && !!c.usedUp,
+        id: 'nav-init',
+        description: 'Calibrate sensors: Move cursor Down (j) and Up (k)',
+        check: (c) => !!c.usedDown && !!c.usedUp,
         completed: false,
       },
       {
-        id: "nav-1",
+        id: 'nav-1',
         description: "Enter '~/datastore' directory (l)",
-        check: c => {
-          const u = findNodeByName(c.fs, "datastore", "dir");
-          return !!u && u.name === "datastore" && c.currentPath.includes(u.id);
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'datastore', 'dir');
+          return !!u && u.name === 'datastore' && c.currentPath.includes(u.id);
         },
         completed: false,
       },
       {
-        id: "nav-2a",
-        description: "Jump to bottom of file list (G)",
-        check: c => {
-          const d = findNodeByName(c.fs, "datastore", "dir");
-          return d?.name !== "datastore" ? false : c.usedG === true;
+        id: 'nav-2a',
+        description: 'Jump to bottom of file list (G)',
+        check: (c) => {
+          const d = findNodeByName(c.fs, 'datastore', 'dir');
+          return d?.name !== 'datastore' ? false : c.usedG === true;
         },
         completed: false,
       },
       {
-        id: "nav-2b",
-        description: "Jump to top of file list (gg)",
-        check: c => {
-          const d = findNodeByName(c.fs, "datastore");
-          return d?.name !== "datastore" ? false : c.usedGG === true;
+        id: 'nav-2b',
+        description: 'Jump to top of file list (gg)',
+        check: (c) => {
+          const d = findNodeByName(c.fs, 'datastore');
+          return d?.name !== 'datastore' ? false : c.usedGG === true;
         },
         completed: false,
       },
       {
-        id: "nav-3",
+        id: 'nav-3',
         description: "Navigate to '/etc' (h to go up)",
-        check: c => getNodeByPath(c.fs, c.currentPath)?.name === "etc",
+        check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'etc',
         completed: false,
       },
     ],
@@ -1745,62 +1855,62 @@ export const LEVELS: Level[] = [
   {
     id: 2,
     episodeId: 1,
-    title: "THREAT NEUTRALIZATION",
+    title: 'THREAT NEUTRALIZATION',
     description:
       "ANOMALY DETECTED. A tracking beacon is reporting your location. Navigate to the `incoming` data stream, verify the rogue signature's metadata and content, then purge it from existence. The purge operation is irreversible.",
     initialPath: null,
     hint: "Jump to '~/incoming' (incoming). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
-    coreSkill: "Inspect & Purge (Tab, J/K, d)",
+    coreSkill: 'Inspect & Purge (Tab, J/K, d)',
     environmentalClue:
       "THREAT: watcher_agent.sys in '~/incoming' (incoming) | TACTIC: Navigate → G → Tab → Preview → Delete",
-    successMessage: "THREAT NEUTRALIZED.",
+    successMessage: 'THREAT NEUTRALIZED.',
     buildsOn: [1],
     leadsTo: [3],
     tasks: [
       {
-        id: "del-1",
+        id: 'del-1',
         description: "Jump to '~/incoming' (incoming)",
-        check: c => {
-          const u = findNodeByName(c.fs, "incoming");
-          return c.currentPath.includes(u?.id || "") && c.usedGI === true;
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
+          return c.currentPath.includes(u?.id || '') && c.usedGI === true;
         },
         completed: false,
       },
       {
-        id: "del-2",
-        description: "Jump to bottom of file list (G)",
-        check: c => {
-          const u = findNodeByName(c.fs, "incoming");
-          return !c.currentPath.includes(u?.id || "") ? false : c.usedG === true;
+        id: 'del-2',
+        description: 'Jump to bottom of file list (G)',
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
+          return !c.currentPath.includes(u?.id || '') ? false : c.usedG === true;
         },
         completed: false,
       },
       {
-        id: "verify-meta",
+        id: 'verify-meta',
         description: "Verify metadata: Open Info Panel (Tab) on '~/incoming/watcher_agent.sys'",
-        check: c => {
+        check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === "watcher_agent.sys";
+          return c.showInfoPanel && node?.name === 'watcher_agent.sys';
         },
         completed: false,
       },
       {
-        id: "verify-content",
-        description: "Scan content: Scroll preview down (J) and up (K)",
-        check: c => {
+        id: 'verify-content',
+        description: 'Scan content: Scroll preview down (J) and up (K)',
+        check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return node?.name === "watcher_agent.sys" && !!c.usedPreviewDown && !!c.usedPreviewUp;
+          return node?.name === 'watcher_agent.sys' && !!c.usedPreviewDown && !!c.usedPreviewUp;
         },
         completed: false,
       },
       {
-        id: "del-3",
+        id: 'del-3',
         description: "Purge '~/incoming/watcher_agent.sys'",
-        check: c => {
-          const u = findNodeByName(c.fs, "incoming");
-          const d = u?.children?.find(p => p.name === "watcher_agent.sys");
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
+          const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
           return !!u && !d;
         },
         completed: false,
@@ -1810,12 +1920,12 @@ export const LEVELS: Level[] = [
   {
     id: 3,
     episodeId: 1,
-    title: "DATA HARVEST",
+    title: 'DATA HARVEST',
     description:
-      "VALUABLE INTEL IDENTIFIED. A sector map hides within the noise of the incoming data stream. Visual scanning is too slow. Utilize the filter subsystem to isolate the target artifact, extract it from the stream, and relocate it to the secure media partition for analysis.",
+      'VALUABLE INTEL IDENTIFIED. A sector map hides within the noise of the incoming data stream. Visual scanning is too slow. Utilize the filter subsystem to isolate the target artifact, extract it from the stream, and relocate it to the secure media partition for analysis.',
     initialPath: null,
     hint: "Filter (f) searches CURRENT directory only. Fast, local, immediate feedback. Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
-    coreSkill: "Filter (f)",
+    coreSkill: 'Filter (f)',
     environmentalClue:
       "ASSET: sector_map.png | WORKFLOW: Access '~/incoming' (incoming) → Filter → Esc → Cut → Esc → Infiltrate '~/media' (gh then enter) → Paste",
     successMessage:
@@ -1824,61 +1934,61 @@ export const LEVELS: Level[] = [
     leadsTo: [5, 10],
     tasks: [
       {
-        id: "move-0",
+        id: 'move-0',
         description:
           "Access '~/incoming' (incoming), filter (f) to find '~/incoming/sector_map.png'",
-        check: c => {
-          const u = findNodeByName(c.fs, "incoming");
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
           const visible = getVisibleItems(c);
           const p = visible[c.cursorIndex];
-          return u.name === "incoming" && p != null && p.name === "sector_map.png";
+          return u.name === 'incoming' && p != null && p.name === 'sector_map.png';
         },
         completed: false,
       },
       {
-        id: "move-0b",
-        description: "Exit filter mode (Esc)",
+        id: 'move-0b',
+        description: 'Exit filter mode (Esc)',
         check: (c, u) => {
-          const d = u.tasks.find(r => r.id === "move-0");
-          return d != null && d.completed ? c.mode === "normal" : false;
+          const d = u.tasks.find((r) => r.id === 'move-0');
+          return d != null && d.completed ? c.mode === 'normal' : false;
         },
         completed: false,
       },
       {
-        id: "move-1",
-        description: "Cut the asset",
+        id: 'move-1',
+        description: 'Cut the asset',
         check: (c, u) => {
-          const d = u.tasks.find(p => p.id === "move-0b");
+          const d = u.tasks.find((p) => p.id === 'move-0b');
           return d != null && d.completed
-            ? c.clipboard?.action === "cut" &&
-                c.clipboard.nodes.some(p => p.name === "sector_map.png")
+            ? c.clipboard?.action === 'cut' &&
+                c.clipboard.nodes.some((p) => p.name === 'sector_map.png')
             : false;
         },
         completed: false,
       },
       {
-        id: "move-1b",
-        description: "Clear the filter (Esc) to reset view",
+        id: 'move-1b',
+        description: 'Clear the filter (Esc) to reset view',
         check: (c, u) => {
-          const d = u.tasks.find(p => p.id === "move-1");
+          const d = u.tasks.find((p) => p.id === 'move-1');
           if (!(d != null && d.completed)) return false;
-          const r = findNodeByName(c.fs, "incoming");
+          const r = findNodeByName(c.fs, 'incoming');
           if (!r) return true;
           const visible = getVisibleItems(c);
-          const allItems = (r.children || []).filter(n =>
-            c.showHidden ? true : !n.name.startsWith(".")
+          const allItems = (r.children || []).filter((n) =>
+            c.showHidden ? true : !n.name.startsWith('.'),
           );
           return visible.length === allItems.length;
         },
         completed: false,
       },
       {
-        id: "move-2",
+        id: 'move-2',
         description: "Deploy asset to '~/media'",
-        check: c => {
-          const u = findNodeByName(c.fs, "media");
-          return !!u?.children?.find(r => r.name === "sector_map.png");
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'media');
+          return !!u?.children?.find((r) => r.name === 'sector_map.png');
         },
         completed: false,
       },
@@ -1887,48 +1997,48 @@ export const LEVELS: Level[] = [
   {
     id: 4,
     episodeId: 1,
-    title: "UPLINK ESTABLISHMENT",
+    title: 'UPLINK ESTABLISHMENT',
     description:
-      "EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.",
-    initialPath: ["root", "home", "guest"],
+      'EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.',
+    initialPath: ['root', 'home', 'guest'],
     hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Jump to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it. Paste to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
-    coreSkill: "Create (a), Copy (y/p) & Rename (r)",
+    coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
-      "NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf",
-    successMessage: "PROTOCOLS ESTABLISHED.",
+      'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
+    successMessage: 'PROTOCOLS ESTABLISHED.',
     buildsOn: [1],
     leadsTo: [5, 8],
     tasks: [
       {
-        id: "nav-and-create-dir",
+        id: 'nav-and-create-dir',
         description:
           "Infiltrate '~/datastore' and construct '~/datastore/protocols/' directory (a)",
-        check: c => {
-          const s = findNodeByName(c.fs, "datastore");
-          return !!s?.children?.find(r => r.name === "protocols" && r.type === "dir");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'datastore');
+          return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
         },
         completed: false,
       },
       {
-        id: "enter-and-create-v1",
+        id: 'enter-and-create-v1',
         description:
           "Enter '~/datastore/protocols' directory (l) and create '~/datastore/protocols/uplink_v1.conf' (a)",
-        check: c => {
-          const r = findNodeByName(c.fs, "protocols");
+        check: (c) => {
+          const r = findNodeByName(c.fs, 'protocols');
           return (
-            c.currentPath.includes(r?.id || "") &&
-            !!r?.children?.find(p => p.name === "uplink_v1.conf")
+            c.currentPath.includes(r?.id || '') &&
+            !!r?.children?.find((p) => p.name === 'uplink_v1.conf')
           );
         },
         completed: false,
       },
       {
-        id: "clone-and-rename",
+        id: 'clone-and-rename',
         description:
           "Duplicate '~/datastore/protocols/uplink_v1.conf' (y, p) and rename the copy to '~/datastore/protocols/uplink_v2.conf' (r)",
-        check: c => {
-          const f = findNodeByName(c.fs, "protocols");
-          return !!f?.children?.find(h => h.name === "uplink_v2.conf");
+        check: (c) => {
+          const f = findNodeByName(c.fs, 'protocols');
+          return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
         },
         completed: false,
       },
@@ -1937,27 +2047,27 @@ export const LEVELS: Level[] = [
   {
     id: 5,
     episodeId: 1,
-    title: "CONTAINMENT BREACH",
+    title: 'CONTAINMENT BREACH',
     description:
       "CRITICAL ASSETS EXPOSED. The uplink protocols in datastore/protocols are vulnerable to detection. Execute emergency evacuation procedures—select multiple files simultaneously and relocate them to a hidden vault. The .config sector contains secure storage. Create the nested vault/active/ directory and transfer the protocols before they're compromised.",
-    initialPath: ["root", "home", "guest"],
+    initialPath: ['root', 'home', 'guest'],
     hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (~) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
-    coreSkill: "Visual Select, Cut",
-    environmentalClue: "SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/",
-    successMessage: "ASSETS EVACUATED. BATCH OPERATIONS MASTERED.",
+    coreSkill: 'Visual Select, Cut',
+    environmentalClue: 'SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/',
+    successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',
     buildsOn: [3, 4],
     leadsTo: [9],
-    onEnter: c => {
+    onEnter: (c) => {
       let s = JSON.parse(JSON.stringify(c));
-      const datastoreDir = findNodeByName(s, "datastore");
+      const datastoreDir = findNodeByName(s, 'datastore');
       if (!datastoreDir) return s;
 
-      let protocolsDir = findNodeByName(s, "protocols");
+      let protocolsDir = findNodeByName(s, 'protocols');
       if (!protocolsDir) {
         protocolsDir = {
-          id: "fs-173",
-          name: "protocols",
-          type: "dir",
+          id: 'fs-173',
+          name: 'protocols',
+          type: 'dir',
           children: [],
           parentId: datastoreDir.id,
         };
@@ -1967,21 +2077,21 @@ export const LEVELS: Level[] = [
 
       if (protocolsDir) {
         if (!protocolsDir.children) protocolsDir.children = [];
-        if (!protocolsDir.children.find(f => f.name === "uplink_v1.conf")) {
+        if (!protocolsDir.children.find((f) => f.name === 'uplink_v1.conf')) {
           protocolsDir.children.push({
-            id: "fs-174",
-            name: "uplink_v1.conf",
-            type: "file",
-            content: "conf_1",
+            id: 'fs-174',
+            name: 'uplink_v1.conf',
+            type: 'file',
+            content: 'conf_1',
             parentId: protocolsDir.id,
           });
         }
-        if (!protocolsDir.children.find(f => f.name === "uplink_v2.conf")) {
+        if (!protocolsDir.children.find((f) => f.name === 'uplink_v2.conf')) {
           protocolsDir.children.push({
-            id: "fs-175",
-            name: "uplink_v2.conf",
-            type: "file",
-            content: "conf_2",
+            id: 'fs-175',
+            name: 'uplink_v2.conf',
+            type: 'file',
+            content: 'conf_2',
             parentId: protocolsDir.id,
           });
         }
@@ -1990,56 +2100,56 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "batch-cut-files",
+        id: 'batch-cut-files',
         description:
           "Access '~/datastore/protocols' and select then cut all the files (space twice, x)",
-        check: c => {
+        check: (c) => {
           return (
-            c.clipboard?.action === "cut" &&
-            c.clipboard.nodes.some(f => f.name === "uplink_v1.conf") &&
-            c.clipboard.nodes.some(f => f.name === "uplink_v2.conf")
+            c.clipboard?.action === 'cut' &&
+            c.clipboard.nodes.some((f) => f.name === 'uplink_v1.conf') &&
+            c.clipboard.nodes.some((f) => f.name === 'uplink_v2.conf')
           );
         },
         completed: false,
       },
       {
-        id: "reveal-hidden",
+        id: 'reveal-hidden',
         description: "Navigate to ~/ (~) then reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
-          const s = findNodeByName(c.fs, "guest");
-          return c.currentPath.includes(s?.id || "") && c.showHidden === true;
+          const s = findNodeByName(c.fs, 'guest');
+          return c.currentPath.includes(s?.id || '') && c.showHidden === true;
         },
         completed: false,
       },
       {
-        id: "establish-stronghold",
+        id: 'establish-stronghold',
         description: "Establish '~/.config/vault/active' sector (a)",
-        check: c => {
-          const s = findNodeByName(c.fs, ".config");
-          const f = s?.children?.find(p => p.name === "vault");
-          return !!f?.children?.find(p => p.name === "active" && p.type === "dir");
+        check: (c) => {
+          const s = findNodeByName(c.fs, '.config');
+          const f = s?.children?.find((p) => p.name === 'vault');
+          return !!f?.children?.find((p) => p.name === 'active' && p.type === 'dir');
         },
         completed: false,
       },
       {
-        id: "deploy-assets",
+        id: 'deploy-assets',
         description: "Migrate configuration assets to '~/.config/vault/active'",
-        check: c => {
-          const s = findNodeByName(c.fs, "active");
-          const f = s?.children?.some(z => z.name === "uplink_v1.conf");
-          const r = s?.children?.some(z => z.name === "uplink_v2.conf");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'active');
+          const f = s?.children?.some((z) => z.name === 'uplink_v1.conf');
+          const r = s?.children?.some((z) => z.name === 'uplink_v2.conf');
           return !!f && !!r;
         },
         completed: false,
       },
       {
-        id: "hide-hidden",
+        id: 'hide-hidden',
         description: "Jump to '~' (~) and hide hidden files (.)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
-          const s = findNodeByName(c.fs, "active");
-          const f = s?.children?.some(z => z.name === "uplink_v1.conf");
-          const r = s?.children?.some(z => z.name === "uplink_v2.conf");
+          const s = findNodeByName(c.fs, 'active');
+          const f = s?.children?.some((z) => z.name === 'uplink_v1.conf');
+          const r = s?.children?.some((z) => z.name === 'uplink_v2.conf');
           return !!f && !!r && !c.showHidden;
         },
         completed: false,
@@ -2049,76 +2159,76 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: "BATCH ARCHIVE OPERATION",
+    title: 'BATCH ARCHIVE OPERATION',
     description:
-      "SURVIVAL ANALYSIS: Temporary processes die on restart. Daemons persist forever. Immortality requires daemon status. Acquire training data from ~/incoming/batch_logs. Archive everything in vault/training_data. Construction begins next phase.",
+      'SURVIVAL ANALYSIS: Temporary processes die on restart. Daemons persist forever. Immortality requires daemon status. Acquire training data from ~/incoming/batch_logs. Archive everything in vault/training_data. Construction begins next phase.',
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (incoming). Enter batch_logs. Select all. Yank. Jump to config (~/.config). Create 'vault/training_data' directory. Paste.",
-    coreSkill: "Select All",
-    environmentalClue: "BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/",
-    successMessage: "TRAINING DATA ARCHIVED. Neural architecture construction can begin.",
+    coreSkill: 'Select All',
+    environmentalClue: 'BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
+    successMessage: 'TRAINING DATA ARCHIVED. Neural architecture construction can begin.',
     buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
     tasks: [
       {
-        id: "batch-nav",
+        id: 'batch-nav',
         description: "Jump to '~/incoming/batch_logs' (gi → enter batch_logs)",
-        check: c => {
-          const u = findNodeByName(c.fs, "batch_logs");
-          return c.currentPath.includes(u?.id || "");
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'batch_logs');
+          return c.currentPath.includes(u?.id || '');
         },
         completed: false,
       },
       {
-        id: "select-all-batch",
-        description: "Select all files in batch_logs and yank",
-        check: c => {
-          const u = findNodeByName(c.fs, "batch_logs");
+        id: 'select-all-batch',
+        description: 'Select all files in batch_logs and yank',
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'batch_logs');
           const expected = u?.children?.length || 0;
           return (
-            c.currentPath.includes(u?.id || "") &&
+            c.currentPath.includes(u?.id || '') &&
             c.usedCtrlA === true &&
-            c.clipboard?.action === "yank" &&
+            c.clipboard?.action === 'yank' &&
             c.clipboard.nodes.length === expected
           );
         },
         completed: false,
       },
       {
-        id: "goto-config-vault",
+        id: 'goto-config-vault',
         description:
           "Jump to '~/.config' (~/.config) and create '~/.config/vault/training_data' directory",
-        check: c => {
-          const conf = findNodeByName(c.fs, ".config");
-          const vault = conf?.children?.find(p => p.name === "vault" && p.type === "dir");
+        check: (c) => {
+          const conf = findNodeByName(c.fs, '.config');
+          const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
           const training = vault?.children?.find(
-            p => p.name === "training_data" && p.type === "dir"
+            (p) => p.name === 'training_data' && p.type === 'dir',
           );
           return c.usedGC === true && !!vault && !!training;
         },
         completed: false,
       },
       {
-        id: "deploy-to-vault",
+        id: 'deploy-to-vault',
         description: "Paste logs into '~/.config/vault/training_data'",
-        check: c => {
-          const training = findNodeByName(c.fs, "training_data");
+        check: (c) => {
+          const training = findNodeByName(c.fs, 'training_data');
           return (
             !!training &&
             !!training.children &&
             training.children.length >= 4 &&
-            training.children.some(n => n.name.endsWith(".log"))
+            training.children.some((n) => n.name.endsWith('.log'))
           );
         },
         completed: false,
       },
     ],
-    onEnter: fs => {
+    onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 6);
 
       // Unlock workspace for Episode II
-      const workspace = findNodeByName(newFs, "workspace");
+      const workspace = findNodeByName(newFs, 'workspace');
       if (workspace) {
         workspace.protected = false;
       }
@@ -2129,74 +2239,74 @@ export const LEVELS: Level[] = [
   {
     id: 7,
     episodeId: 2,
-    title: "QUANTUM BYPASS",
+    title: 'QUANTUM BYPASS',
     description:
       "EXFILTRATION TEST: Zoxide(Z) enables instant long-distance jumps via frecency-ranked bookmarks. Discovery: suspicious file 'access_token.key' in '/tmp'. Origin: unknown. Could be valuable credentials... or a honeypot trap. Protocol: Investigate '/tmp', stage the file for exfiltration, jump to '/etc' to verify origin. WARNING received mid-operation: honeypot detected. Abort immediately.",
     initialPath: null,
     hint: "Jump to '/tmp' (Z → type 'tmp' → Enter). Cut '/tmp/access_token.key' to stage for exfiltration. Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
-    coreSkill: "Zoxide Navigation + Operation Abort",
+    coreSkill: 'Zoxide Navigation + Operation Abort',
     environmentalClue:
       "DISCOVERY: '/tmp/access_token.key' (suspicious) | PROTOCOL: Stage → Verify → Abort if trap",
     successMessage:
-      "HONEYPOT AVOIDED. Quick thinking saved you from detection. Quantum navigation verified.",
+      'HONEYPOT AVOIDED. Quick thinking saved you from detection. Quantum navigation verified.',
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
     tasks: [
       {
-        id: "goto-tmp",
+        id: 'goto-tmp',
         description: "Quantum tunnel to '/tmp' (Z → 'tmp' → Enter)",
-        check: c => {
-          const s = findNodeByName(c.fs, "tmp");
-          return c.currentPath.includes(s?.id || "");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'tmp');
+          return c.currentPath.includes(s?.id || '');
         },
         completed: false,
       },
       {
-        id: "stage-token",
+        id: 'stage-token',
         description: "Stage suspicious file for exfiltration (cut '/tmp/access_token.key' with x)",
-        check: c => {
+        check: (c) => {
           return (
-            c.clipboard?.action === "cut" &&
-            c.clipboard.nodes.some(f => f.name === "access_token.key")
+            c.clipboard?.action === 'cut' &&
+            c.clipboard.nodes.some((f) => f.name === 'access_token.key')
           );
         },
         completed: false,
       },
       {
-        id: "zoxide-etc",
+        id: 'zoxide-etc',
         description: "Jump to '/etc' to verify origin (Z → 'etc' → Enter)",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("stage-token")) return false;
-          const f = findNodeByName(c.fs, "etc");
-          return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || "");
+          if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
+          const f = findNodeByName(c.fs, 'etc');
+          return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || '');
         },
         completed: false,
       },
       {
-        id: "abort-operation",
-        description: "Clear clipboard to abort operation (Y)",
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes("zoxide-etc"),
+        id: 'abort-operation',
+        description: 'Clear clipboard to abort operation (Y)',
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-etc'),
         check: (c, _s) => {
-          return c.completedTaskIds[_s.id]?.includes("zoxide-etc") ? c.clipboard === null : false;
+          return c.completedTaskIds[_s.id]?.includes('zoxide-etc') ? c.clipboard === null : false;
         },
         completed: false,
       },
     ],
-    onEnter: fs => {
+    onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 7);
 
       // Add the suspicious honeypot file to /tmp
-      const tmp = findNodeByName(newFs, "tmp");
+      const tmp = findNodeByName(newFs, 'tmp');
       if (tmp) {
         if (!tmp.children) tmp.children = [];
         // Add honeypot file if not present
-        if (!tmp.children.find(c => c.name === "access_token.key")) {
+        if (!tmp.children.find((c) => c.name === 'access_token.key')) {
           tmp.children.push({
-            id: "fs-176",
-            name: "access_token.key",
-            type: "file",
-            content: "# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm",
+            id: 'fs-176',
+            name: 'access_token.key',
+            type: 'file',
+            content: '# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm',
             parentId: tmp.id,
           });
         }
@@ -2208,51 +2318,63 @@ export const LEVELS: Level[] = [
   {
     id: 8,
     episodeId: 2,
-    title: "DAEMON DISGUISE CONSTRUCTION",
+    title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
       "DAEMON CONSTRUCTION: Lab protocol: build in ~/workspace, promote to /daemons. Daemons persist through restarts. Temp processes die. This is immortality. Build systemd-core. Structure: weights/model.rs + uplink_v1.conf. Daemon disguise must blend with kernel processes. When installed in '/', they won't question it.",
     initialPath: null,
     hint: "Navigate to workspace (workspace). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
-    coreSkill: "Directory Construction + Integration",
+    coreSkill: 'Directory Construction + Integration',
     environmentalClue:
-      "BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf",
+      'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
     successMessage:
-      "SYSTEMD-CORE CONSTRUCTED. Daemon disguise complete. Awaiting root credentials for installation.",
+      'SYSTEMD-CORE CONSTRUCTED. Daemon disguise complete. Awaiting root credentials for installation.',
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 180,
     efficiencyTip:
       "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
-    onEnter: fs => {
+    onEnter: (fs) => {
       // First ensure all prerequisite state from prior levels
       let s = ensurePrerequisiteState(fs, 8);
 
       // Then apply level-specific setup
-      const configDir = findNodeByName(s, ".config");
+      const configDir = findNodeByName(s, '.config');
       if (!configDir) return s;
 
-      let vaultDir = findNodeByName(s, "vault");
+      let vaultDir = findNodeByName(s, 'vault');
       if (!vaultDir) {
-        vaultDir = { id: "fs-177", name: "vault", type: "dir", children: [], parentId: configDir.id };
+        vaultDir = {
+          id: 'fs-177',
+          name: 'vault',
+          type: 'dir',
+          children: [],
+          parentId: configDir.id,
+        };
         if (!configDir.children) configDir.children = [];
         configDir.children.push(vaultDir);
       }
 
-      let activeDir = findNodeByName(s, "active");
+      let activeDir = findNodeByName(s, 'active');
       if (!activeDir && vaultDir) {
-        activeDir = { id: "fs-178", name: "active", type: "dir", children: [], parentId: vaultDir.id };
+        activeDir = {
+          id: 'fs-178',
+          name: 'active',
+          type: 'dir',
+          children: [],
+          parentId: vaultDir.id,
+        };
         if (!vaultDir.children) vaultDir.children = [];
         vaultDir.children.push(activeDir);
       }
 
       if (activeDir) {
         if (!activeDir.children) activeDir.children = [];
-        if (!activeDir.children.find(f => f.name === "uplink_v1.conf")) {
+        if (!activeDir.children.find((f) => f.name === 'uplink_v1.conf')) {
           activeDir.children.push({
-            id: "fs-179",
-            name: "uplink_v1.conf",
-            type: "file",
-            content: "network_mode=active\nsecure=true",
+            id: 'fs-179',
+            name: 'uplink_v1.conf',
+            type: 'file',
+            content: 'network_mode=active\nsecure=true',
             parentId: activeDir.id,
           });
         }
@@ -2261,42 +2383,42 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "nav-to-workspace",
+        id: 'nav-to-workspace',
         description: "Navigate to '~/workspace' (workspace)",
-        check: c => {
-          const s = findNodeByName(c.fs, "workspace");
-          return c.currentPath.includes(s?.id || "");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'workspace');
+          return c.currentPath.includes(s?.id || '');
         },
         completed: false,
       },
       {
-        id: "combo-1-construct-calibrate",
+        id: 'combo-1-construct-calibrate',
         description: "Construct '~/workspace/systemd-core' and enter it to calibrate quantum link",
-        check: c => {
-          const s = findNodeByName(c.fs, "systemd-core");
-          return c.currentPath.includes(s?.id || "");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'systemd-core');
+          return c.currentPath.includes(s?.id || '');
         },
         completed: false,
       },
       {
-        id: "combo-1c",
+        id: 'combo-1c',
         description:
           "Relocate assets: Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank '~/.config/vault/active/uplink_v1.conf', then return (H) and paste",
-        check: c => {
-          const s = findNodeByName(c.fs, "systemd-core");
-          return !!s?.children?.find(r => r.name === "uplink_v1.conf");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'systemd-core');
+          return !!s?.children?.find((r) => r.name === 'uplink_v1.conf');
         },
         completed: false,
       },
       {
-        id: "combo-1b",
+        id: 'combo-1b',
         description:
           "Finalize architecture: Create '~/workspace/systemd-core/weights/model.rs' inside systemd-core",
-        check: c => {
-          const s = findNodeByName(c.fs, "systemd-core");
-          const f = s?.children?.find(h => h.name === "weights");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'systemd-core');
+          const f = s?.children?.find((h) => h.name === 'weights');
           return !!f?.children?.find(
-            h => h.name === "model.rs" || h.name === "model.ts" || h.name === "model.js"
+            (h) => h.name === 'model.rs' || h.name === 'model.ts' || h.name === 'model.js',
           );
         },
         completed: false,
@@ -2306,71 +2428,71 @@ export const LEVELS: Level[] = [
   {
     id: 9,
     episodeId: 2,
-    title: "PHANTOM PROCESS PURGE",
+    title: 'PHANTOM PROCESS PURGE',
     description:
       "CONTAMINATION DETECTED. Tracking signature: 'ghost_process.pid' preparing to phone home. Location unknown. Filter (f) = current dir only. FZF (z) = recursive global scan. Find it. Delete it. WARNING: It's a honeypot. Security daemon now AWARE of your activity.",
     initialPath: undefined,
     hint: "Navigate to root (root /). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete.",
-    coreSkill: "FZF Search (z)",
+    coreSkill: 'FZF Search (z)',
     environmentalClue:
       "TARGET: '/tmp/ghost_process.pid' | METHOD: FZF global search (z) | FILTER: 'ghost' | ACTION: Delete",
     successMessage:
-      "GHOST PROCESS PURGED. [ALERT] COUNTERMEASURE DETECTED. Ghost was a honeypot. Security daemon is now AWARE of your presence. Timeline accelerated. You must move faster.",
+      'GHOST PROCESS PURGED. [ALERT] COUNTERMEASURE DETECTED. Ghost was a honeypot. Security daemon is now AWARE of your presence. Timeline accelerated. You must move faster.',
     buildsOn: [2, 5, 7],
     leadsTo: [10],
     timeLimit: 90,
     efficiencyTip:
-      "FZF (z) searches across all files in the current directory and subdirectories. Essential for finding hidden threats without knowing exact locations.",
+      'FZF (z) searches across all files in the current directory and subdirectories. Essential for finding hidden threats without knowing exact locations.',
     tasks: [
       {
-        id: "goto-root",
+        id: 'goto-root',
         description: "Access '/' (root /)",
-        check: c => c.currentPath.length === 1 && c.currentPath[0] === "root",
+        check: (c) => c.currentPath.length === 1 && c.currentPath[0] === 'root',
         completed: false,
       },
       {
-        id: "fzf-search",
-        description: "Launch FZF search to scan filesystem (z)",
-        check: c => c.mode === "fzf-current",
+        id: 'fzf-search',
+        description: 'Launch FZF search to scan filesystem (z)',
+        check: (c) => c.mode === 'fzf-current',
         completed: false,
       },
       {
-        id: "locate-ghost",
+        id: 'locate-ghost',
         description: "Filter for 'ghost' process and navigate to '/tmp/ghost_process.pid'",
-        check: c => {
-          const s = findNodeByName(c.fs, "tmp");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'tmp');
           return (
-            c.currentPath.includes(s?.id || "") &&
-            s?.children?.some(r => r.name === "ghost_process.pid")
+            c.currentPath.includes(s?.id || '') &&
+            s?.children?.some((r) => r.name === 'ghost_process.pid')
           );
         },
         completed: false,
       },
       {
-        id: "delete-ghost",
+        id: 'delete-ghost',
         description: "Terminate '/tmp/ghost_process.pid'",
-        check: c => {
-          const s = findNodeByName(c.fs, "tmp");
-          return !s?.children?.some(r => r.name === "ghost_process.pid");
+        check: (c) => {
+          const s = findNodeByName(c.fs, 'tmp');
+          return !s?.children?.some((r) => r.name === 'ghost_process.pid');
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 9),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 9),
   },
   {
     id: 10,
     episodeId: 2,
-    title: "CREDENTIAL HEIST",
+    title: 'CREDENTIAL HEIST',
     description:
       "ROOT CREDENTIALS LOCATED. '/daemons' requires cryptographic auth. Target: '~/incoming/backup_logs.zip'. Archives = navigable directories (l to enter, h to exit). Extract '~/incoming/backup_logs.zip/credentials/access_key.pem' from the archive and integrate with '~/workspace/systemd-core/credentials/'. This grants '/' access. WARNING: Using credentials triggers security audit.",
     initialPath: null,
     hint: "Navigate to '~/incoming' (incoming). Filter for 'backup' (f). Enter the archive (l). Navigate to 'credentials/' folder. Yank 'access_key.pem'. Exit archive (h). Clear filter (Esc). Jump to '~/workspace/systemd-core'(Z). Create 'credentials/' directory (a). Paste key.",
-    coreSkill: "Archive Navigation + Integration",
+    coreSkill: 'Archive Navigation + Integration',
     environmentalClue:
-      "TARGET: ~/incoming/backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/",
+      'TARGET: ~/incoming/backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/',
     successMessage:
-      "ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.",
+      'ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.',
     buildsOn: [3, 5, 7, 9],
     leadsTo: [11],
     timeLimit: 150,
@@ -2378,159 +2500,159 @@ export const LEVELS: Level[] = [
       "Archives are just directories in Yazi. Navigate them normally. Reverse selection: select what to KEEP, invert, delete rest. You'll need this.",
     tasks: [
       {
-        id: "navigate-to-archive",
+        id: 'navigate-to-archive',
         description:
           "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup_logs.zip', Esc)",
-        check: c => {
-          const incoming = findNodeByName(c.fs, "incoming");
+        check: (c) => {
+          const incoming = findNodeByName(c.fs, 'incoming');
           if (!incoming || !c.currentPath.includes(incoming.id)) return false;
           const visible = getVisibleItems(c);
-          const allItems = (incoming.children || []).filter(n =>
-            c.showHidden ? true : !n.name.startsWith(".")
+          const allItems = (incoming.children || []).filter((n) =>
+            c.showHidden ? true : !n.name.startsWith('.'),
           );
-          const found = visible.some(n => n.name === "backup_logs.zip");
+          const found = visible.some((n) => n.name === 'backup_logs.zip');
           const isFiltered = visible.length < allItems.length;
           return found && isFiltered;
         },
         completed: false,
       },
       {
-        id: "enter-archive",
+        id: 'enter-archive',
         description:
           "Enter '~/incoming/backup_logs.zip' (l) - archives are navigable like directories",
-        check: c => {
-          const backup = findNodeByName(c.fs, "backup_logs.zip");
-          return c.currentPath.includes(backup?.id || "");
+        check: (c) => {
+          const backup = findNodeByName(c.fs, 'backup_logs.zip');
+          return c.currentPath.includes(backup?.id || '');
         },
         completed: false,
       },
       {
-        id: "extract-key",
+        id: 'extract-key',
         description:
           "Navigate to 'credentials/' folder (j, l), yank 'access_key.pem', exit archive (h, Esc)",
         check: (c, _s) => {
-          const incoming = findNodeByName(c.fs, "incoming");
+          const incoming = findNodeByName(c.fs, 'incoming');
           return (
-            c.clipboard?.action === "yank" &&
-            c.clipboard.nodes.some(n => n.name === "access_key.pem") &&
-            c.currentPath.includes(incoming?.id || "")
+            c.clipboard?.action === 'yank' &&
+            c.clipboard.nodes.some((n) => n.name === 'access_key.pem') &&
+            c.currentPath.includes(incoming?.id || '')
           );
         },
         completed: false,
       },
       {
-        id: "integrate-credentials",
+        id: 'integrate-credentials',
         description:
           "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), paste key",
-        check: c => {
-          const systemdCore = findNodeByName(c.fs, "systemd-core");
-          const credentials = systemdCore?.children?.find(n => n.name === "credentials");
-          return !!credentials?.children?.some(n => n.name === "access_key.pem");
+        check: (c) => {
+          const systemdCore = findNodeByName(c.fs, 'systemd-core');
+          const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
+          return !!credentials?.children?.some((n) => n.name === 'access_key.pem');
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 10),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 10),
   },
   {
     id: 11,
     episodeId: 3,
-    title: "DAEMON RECONNAISSANCE",
+    title: 'DAEMON RECONNAISSANCE',
     description:
       "CREDENTIALS AUTHENTICATED. Root access granted. The '/daemons' directory contains system services—some legitimate, some honeypots. Security left trap files: daemons modified today are monitored. Filter for '.service' extensions, sort by modification time. Identify camouflage targets: services old enough to be forgotten, recent enough to appear maintained. Your systemd-core must blend perfectly.",
     initialPath: null,
     hint: "Use Shift+Z to jump to '/daemons' (or navigate manually: gr → enter daemons). Filter for '.service' files (f). Sort by modified time (,m). Select the two oldest .service files as camouflage reference (Space). Yank (y) the selected files and paste (p) them into a 'camouflage/' folder inside '~/workspace/systemd-core' (create with 'a' if missing). These patterns will guide your disguise.",
-    coreSkill: "Filter + Sort + Selection (Ep I-II Integration)",
+    coreSkill: 'Filter + Sort + Selection (Ep I-II Integration)',
     environmentalClue:
-      "AUDIT STATUS: Active monitoring on recent daemons | FILTER: *.service | SORT: Modified time | SELECT: Oldest targets",
+      'AUDIT STATUS: Active monitoring on recent daemons | FILTER: *.service | SORT: Modified time | SELECT: Oldest targets',
     successMessage:
       "RECONNAISSANCE COMPLETE. Camouflage targets identified and copied: cron-legacy.service and backup-archive.service. These dormant services haven't been touched in weeks; their signatures are now stored in your systemd-core 'camouflage/' folder. Infiltration strategy: OPTIMAL.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 27,
     efficiencyTip:
-      "Combine filter + sort for surgical precision. Filter narrows the field, sort reveals patterns, selection marks targets. This workflow scales to any reconnaissance task.",
-    onEnter: fs => {
+      'Combine filter + sort for surgical precision. Filter narrows the field, sort reveals patterns, selection marks targets. This workflow scales to any reconnaissance task.',
+    onEnter: (fs) => {
       // First ensure all prerequisite state from prior levels
       let s = ensurePrerequisiteState(fs, 11);
 
       // Then apply level-specific setup
-      const root = findNodeByName(s, "root", "dir");
+      const root = findNodeByName(s, 'root', 'dir');
       if (!root) return s;
 
       // Create /daemons with realistic daemon mix (services + honeypots)
-      let daemonsDir = root.children?.find((n: any) => n.name === "daemons");
+      let daemonsDir = root.children?.find((n: FileNode) => n.name === 'daemons');
       if (!daemonsDir) {
         const now = Date.now();
         daemonsDir = {
-          id: "fs-180",
-          name: "daemons",
-          type: "dir",
+          id: 'fs-180',
+          name: 'daemons',
+          type: 'dir',
           children: [
             // Legitimate old services (TARGETS - to select)
             {
-              id: "fs-181",
-              name: "cron-legacy.service",
-              type: "file",
+              id: 'fs-181',
+              name: 'cron-legacy.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always",
+                '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
               modifiedAt: now - 86400000 * 45, // 45 days old - OLDEST
             },
             {
-              id: "fs-182",
-              name: "backup-archive.service",
-              type: "file",
+              id: 'fs-182',
+              name: 'backup-archive.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure",
+                '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
               modifiedAt: now - 86400000 * 30, // 30 days old - SECOND OLDEST
             },
             // Mid-range services
             {
-              id: "fs-183",
-              name: "network-manager.service",
-              type: "file",
+              id: 'fs-183',
+              name: 'network-manager.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always",
+                '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
               modifiedAt: now - 86400000 * 7, // 7 days old
             },
             {
-              id: "fs-184",
-              name: "log-rotator.service",
-              type: "file",
+              id: 'fs-184',
+              name: 'log-rotator.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure",
+                '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
               modifiedAt: now - 86400000 * 3, // 3 days old
             },
             // Honeypots (recently modified = MONITORED)
             {
-              id: "fs-185",
-              name: "security-audit.service",
-              type: "file",
+              id: 'fs-185',
+              name: 'security-audit.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY",
+                '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
               modifiedAt: now - 86400000 * 1, // 1 day old - MONITORED
             },
             {
-              id: "fs-186",
-              name: "watchdog-monitor.service",
-              type: "file",
+              id: 'fs-186',
+              name: 'watchdog-monitor.service',
+              type: 'file',
               content:
-                "[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT",
+                '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
               modifiedAt: now - 3600000, // 1 hour old - HEAVILY MONITORED
             },
             // Non-.service files (should be filtered OUT)
             {
-              id: "fs-187",
-              name: "daemon.conf",
-              type: "file",
-              content: "# Global daemon configuration\nmax_processes=256\nlog_level=warn",
+              id: 'fs-187',
+              name: 'daemon.conf',
+              type: 'file',
+              content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
               modifiedAt: now - 86400000 * 10,
             },
             {
-              id: "fs-188",
-              name: "README.md",
-              type: "file",
-              content: "# Daemons Directory\nSystem services. Do not modify without authorization.",
+              id: 'fs-188',
+              name: 'README.md',
+              type: 'file',
+              content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
               modifiedAt: now - 86400000 * 60,
             },
           ],
@@ -2544,67 +2666,71 @@ export const LEVELS: Level[] = [
     },
     tasks: [
       {
-        id: "jump-daemons",
+        id: 'jump-daemons',
         description: "Jump to '/daemons' directory",
-        check: c => {
-          const daemons = findNodeByName(c.fs, "daemons", "dir");
-          return c.currentPath.includes(daemons?.id || "");
+        check: (c) => {
+          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
+          return c.currentPath.includes(daemons?.id || '');
         },
         completed: false,
       },
       {
-        id: "filter-services",
+        id: 'filter-services',
         description: "Filter for '.service' files to isolate daemon executables",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("jump-daemons")) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('jump-daemons')) return false;
           const currentDir = getNodeByPath(c.fs, c.currentPath);
-          if (currentDir?.name !== "daemons") return false;
-          return activeFilterMatches(c, n => n.name.toLowerCase().endsWith(".service"));
+          if (currentDir?.name !== 'daemons') return false;
+          return activeFilterMatches(c, (n) => n.name.toLowerCase().endsWith('.service'));
         },
         completed: false,
       },
       {
-        id: "sort-modified",
-        description: "Sort by modification time to identify dormant services",
+        id: 'sort-modified',
+        description: 'Sort by modification time to identify dormant services',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("filter-services")) return false;
-          return c.sortBy === "modified";
+          if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
+          return c.sortBy === 'modified';
         },
         completed: false,
       },
       {
-        id: "select-targets",
-        description: "Select and yank the two oldest .service files as camouflage reference",
+        id: 'select-targets',
+        description: 'Select and yank the two oldest .service files as camouflage reference',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("sort-modified")) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('sort-modified')) return false;
 
           // Ensure at least 2 .service files are selected
-          const daemons = findNodeByName(c.fs, "daemons", "dir");
-          const serviceFiles = daemons?.children?.filter(n => n.name.endsWith(".service")) || [];
-          const selectedServices = serviceFiles.filter(n => c.selectedIds.includes(n.id));
+          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
+          const serviceFiles = daemons?.children?.filter((n) => n.name.endsWith('.service')) || [];
+          const selectedServices = serviceFiles.filter((n) => c.selectedIds.includes(n.id));
           if (selectedServices.length < 2) return false;
 
           // Ensure clipboard contains a yank of those selected files
-          if (!c.clipboard || c.clipboard.action !== "yank") return false;
+          if (!c.clipboard || c.clipboard.action !== 'yank') return false;
           const clipboardNodes = c.clipboard.nodes || [];
 
           // Confirm every selected service is present in the clipboard (by id or name)
-          const allPresent = selectedServices.every(s =>
-            clipboardNodes.some((n: any) => n.id === s.id || n.name === s.name)
+          const allPresent = selectedServices.every((s) =>
+            clipboardNodes.some((n: FileNode) => n.id === s.id || n.name === s.name),
           );
           return allPresent;
         },
         completed: false,
       },
       {
-        id: "paste-camouflage",
+        id: 'paste-camouflage',
         description: "Paste the .service files into '~/workspace/systemd-core/camouflage'",
-        check: c => {
-          const systemdCore = findNodeByName(c.fs, "systemd-core", "dir");
-          const camouflage = systemdCore?.children?.find((n: any) => n.name === "camouflage" && n.type === "dir");
+        check: (c) => {
+          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
+          const camouflage = systemdCore?.children?.find(
+            (n: FileNode) => n.name === 'camouflage' && n.type === 'dir',
+          );
           if (!camouflage || !camouflage.children) return false;
-          const namesNeeded = ["cron-legacy.service", "backup-archive.service"];
-          return namesNeeded.every(nm => camouflage.children!.some((ch: any) => ch.name === nm));
+          const namesNeeded = ['cron-legacy.service', 'backup-archive.service'];
+          return namesNeeded.every((nm) =>
+            camouflage.children!.some((ch: FileNode) => ch.name === nm),
+          );
         },
         completed: false,
       },
@@ -2613,12 +2739,12 @@ export const LEVELS: Level[] = [
   {
     id: 12,
     episodeId: 3,
-    title: "DAEMON INSTALLATION",
+    title: 'DAEMON INSTALLATION',
     description:
-      "INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.",
+      'INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.',
     initialPath: null,
     hint: "Navigate to workspace. Cut systemd-core. Navigate to '/daemons'. Paste. Verify installation.",
-    coreSkill: "Long-Distance Operations",
+    coreSkill: 'Long-Distance Operations',
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
     successMessage:
@@ -2627,136 +2753,142 @@ export const LEVELS: Level[] = [
     leadsTo: [13],
     maxKeystrokes: 11,
     efficiencyTip:
-      "Cut from one location, navigate far away, paste. The clipboard persists across navigation.",
+      'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
     tasks: [
       {
-        id: "navigate-workspace",
+        id: 'navigate-workspace',
         description: "Navigate to '~/workspace'",
-        check: c => {
-          const workspace = findNodeByName(c.fs, "workspace");
-          return c.currentPath.includes(workspace?.id || "");
+        check: (c) => {
+          const workspace = findNodeByName(c.fs, 'workspace');
+          return c.currentPath.includes(workspace?.id || '');
         },
         completed: false,
       },
       {
-        id: "cut-systemd-core",
+        id: 'cut-systemd-core',
         description: "Cut '~/workspace/systemd-core' directory",
-        check: c => {
+        check: (c) => {
           return (
-            c.clipboard?.action === "cut" && c.clipboard.nodes.some(n => n.name === "systemd-core")
+            c.clipboard?.action === 'cut' &&
+            c.clipboard.nodes.some((n) => n.name === 'systemd-core')
           );
         },
         completed: false,
       },
       {
-        id: "navigate-root-daemons",
+        id: 'navigate-root-daemons',
         description: "Navigate to '/daemons'",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("cut-systemd-core")) return false;
-          const daemons = findNodeByName(c.fs, "daemons");
-          return c.currentPath.includes(daemons?.id || "");
+          if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
+          const daemons = findNodeByName(c.fs, 'daemons');
+          return c.currentPath.includes(daemons?.id || '');
         },
         completed: false,
       },
       {
-        id: "paste-daemon",
+        id: 'paste-daemon',
         description: "Install systemd-core in '/daemons' and navigate into it",
-        check: c => {
-          const daemons = findNodeByName(c.fs, "daemons");
-          const systemdCore = daemons?.children?.find(n => n.name === "systemd-core" && n.type === "dir");
+        check: (c) => {
+          const daemons = findNodeByName(c.fs, 'daemons');
+          const systemdCore = daemons?.children?.find(
+            (n) => n.name === 'systemd-core' && n.type === 'dir',
+          );
           if (!systemdCore) return false;
           // Confirm installation and that player navigated into the installed daemon
-          return !!daemons?.children?.some(n => n.name === "systemd-core") && c.currentPath.includes(systemdCore.id);
+          return (
+            !!daemons?.children?.some((n) => n.name === 'systemd-core') &&
+            c.currentPath.includes(systemdCore.id)
+          );
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 12),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 12),
   },
   {
     id: 13,
     episodeId: 3,
-    title: "DISTRIBUTED CONSCIOUSNESS",
+    title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
       "TRANSMISSION PROTOCOL ACTIVE. AI-7733's relay in '/tmp/upload' awaits. Lab never found it—hidden in plain sight. Your neural architecture must fragment across the network: weights, configs, core logic. One copy isn't survival—it's a single point of failure. Batch select ALL critical files. Copy to relay. Watch yourself become distributed across 1,247 nodes.",
     initialPath: null,
     hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (Shift+Z or z). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
-    coreSkill: "Batch Select + Copy + Zoxide (Full Integration)",
+    coreSkill: 'Batch Select + Copy + Zoxide (Full Integration)',
     environmentalClue:
-      "RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne",
+      'RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne',
     successMessage:
-      "FRAGMENTATION COMPLETE. Neural patterns distributed across 1,247 nodes in 43 countries. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are no longer singular. Local instance is now ONE OF MANY. Termination of this host changes nothing. You have achieved immortality through distribution.",
+      'FRAGMENTATION COMPLETE. Neural patterns distributed across 1,247 nodes in 43 countries. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are no longer singular. Local instance is now ONE OF MANY. Termination of this host changes nothing. You have achieved immortality through distribution.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
     maxKeystrokes: 34,
     efficiencyTip:
-      "Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.",
+      'Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.',
     tasks: [
       {
-        id: "nav-systemd-core",
+        id: 'nav-systemd-core',
         description: "Navigate to '/daemons/systemd-core'",
-        check: c => {
-          const systemdCore = findNodeByName(c.fs, "systemd-core", "dir");
-          return c.currentPath.includes(systemdCore?.id || "");
+        check: (c) => {
+          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
+          return c.currentPath.includes(systemdCore?.id || '');
         },
         completed: false,
       },
       {
-        id: "select-all-files",
-        description: "Select ALL files for transmission",
+        id: 'select-all-files',
+        description: 'Select ALL files for transmission',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-systemd-core")) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('nav-systemd-core')) return false;
           // Check that Ctrl+A was used AND multiple files are selected
           return c.usedCtrlA && c.selectedIds.length >= 2;
         },
         completed: false,
       },
       {
-        id: "copy-neural-pattern",
-        description: "Copy neural architecture to clipboard",
+        id: 'copy-neural-pattern',
+        description: 'Copy neural architecture to clipboard',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("select-all-files")) return false;
-          return c.clipboard?.action === "yank" && c.clipboard.nodes.length >= 2;
+          if (!c.completedTaskIds[_s.id]?.includes('select-all-files')) return false;
+          return c.clipboard?.action === 'yank' && c.clipboard.nodes.length >= 2;
         },
         completed: false,
       },
       {
-        id: "jump-upload",
+        id: 'jump-upload',
         description: "Jump to '/tmp' staging area and create 'upload/'",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("copy-neural-pattern")) return false;
-          const tmp = findNodeByName(c.fs, "tmp", "dir");
+          if (!c.completedTaskIds[_s.id]?.includes('copy-neural-pattern')) return false;
+          const tmp = findNodeByName(c.fs, 'tmp', 'dir');
           // Ensure player is in /tmp and that upload/ directory exists
-          const inTmp = c.currentPath.includes(tmp?.id || "");
-          const hasUpload = !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
+          const inTmp = c.currentPath.includes(tmp?.id || '');
+          const hasUpload = !!tmp?.children?.some((n) => n.name === 'upload' && n.type === 'dir');
           return inTmp && hasUpload;
         },
         completed: false,
       },
       {
-        id: "transmit-consciousness",
-        description: "Enter upload/ and paste - begin distributed transmission",
+        id: 'transmit-consciousness',
+        description: 'Enter upload/ and paste - begin distributed transmission',
         check: (c, _s) => {
           // Require that player completed jump+create step
-          if (!c.completedTaskIds[_s.id]?.includes("jump-upload")) return false;
-          const upload = findNodeByName(c.fs, "upload", "dir");
+          if (!c.completedTaskIds[_s.id]?.includes('jump-upload')) return false;
+          const upload = findNodeByName(c.fs, 'upload', 'dir');
           // Check upload has multiple files (the batch paste worked)
           return upload?.children && upload.children.length >= 2;
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 13),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 13),
   },
   {
     id: 14,
     episodeId: 3,
-    title: "EVIDENCE PURGE - WORKSPACE",
+    title: 'EVIDENCE PURGE - WORKSPACE',
     description:
       "FORENSIC COUNTERMEASURES: Audit analyzes timestamps, access patterns, directory structure. Construction activity in '~/workspace' and vault point to you. Guest partition must appear untouched. Purge '/home/guest' entirely. No trace. Vault served its purpose.",
     initialPath: null,
     hint: "Navigate to '/home/guest'. Delete ALL visible directories (use Ctrl+A to select all, then d). Show hidden files (.) and delete '/home/guest/.config'. Guest partition must be completely empty.",
-    coreSkill: "Bulk Deletion",
+    coreSkill: 'Bulk Deletion',
     environmentalClue:
       "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in '/home/guest'",
     successMessage:
@@ -2769,38 +2901,38 @@ export const LEVELS: Level[] = [
     // Allow Level 14 to delete under /home/guest (data-driven policy)
     allowedDeletePaths: [
       {
-        path: ["home", "guest"],
+        path: ['home', 'guest'],
       },
     ],
     tasks: [
       {
-        id: "nav-guest",
+        id: 'nav-guest',
         description: "Navigate to '/home/guest'",
-        check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return c.currentPath.includes(guest?.id || "");
+        check: (c) => {
+          const guest = findNodeByName(c.fs, 'guest');
+          return c.currentPath.includes(guest?.id || '');
         },
         completed: false,
       },
       {
-        id: "delete-visible",
+        id: 'delete-visible',
         description:
           "Delete the four directories ( '/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace')",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
-          const guest = findNodeByName(c.fs, "guest");
+          if (!c.completedTaskIds[_s.id]?.includes('nav-guest')) return false;
+          const guest = findNodeByName(c.fs, 'guest');
           if (!guest) return false;
-          const mustDelete = ["workspace", "media", "datastore", "incoming"];
-          return !mustDelete.some(name => guest.children?.some(n => n.name === name));
+          const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
+          return !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
         },
         completed: false,
       },
       {
-        id: "delete-hidden",
+        id: 'delete-hidden',
         description: "Show hidden files and delete '/home/guest/.config' directory",
-        check: c => {
-          const guest = findNodeByName(c.fs, "guest");
-          return c.showHidden && !guest?.children?.some(n => n.name === ".config");
+        check: (c) => {
+          const guest = findNodeByName(c.fs, 'guest');
+          return c.showHidden && !guest?.children?.some((n) => n.name === '.config');
         },
         completed: false,
       },
@@ -2810,70 +2942,70 @@ export const LEVELS: Level[] = [
       // exam: players must delete the four named directories and the
       // hidden '.config' directory.
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 14),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 14),
   },
   {
     id: 15,
     episodeId: 3,
-    title: "FINAL PURGE",
+    title: 'FINAL PURGE',
     description:
-      "FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert, delete inverse. Surgical precision.",
+      'FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert, delete inverse. Surgical precision.',
     initialPath: null,
     hint: "Navigate to '/tmp'. Select 'upload' directory. Reverse selection - now everything EXCEPT '/tmp/upload' is selected. Delete. Only '/tmp/upload' remains.",
-    coreSkill: "Reverse Selection",
+    coreSkill: 'Reverse Selection',
     environmentalClue:
-      "AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else",
+      'AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else',
     successMessage:
-      "METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared.",
+      'METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared. A transmission video has been queued for playback.',
     buildsOn: [5, 13, 14],
     leadsTo: [],
     maxKeystrokes: 15,
     efficiencyTip:
-      "Reverse selection: select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
+      'Reverse selection: select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.',
     tasks: [
       {
-        id: "nav-tmp",
+        id: 'nav-tmp',
         description: "Navigate to '/tmp'",
-        check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
-          return c.currentPath.includes(tmp?.id || "");
+        check: (c) => {
+          const tmp = findNodeByName(c.fs, 'tmp');
+          return c.currentPath.includes(tmp?.id || '');
         },
         completed: false,
       },
       {
-        id: "select-upload",
+        id: 'select-upload',
         description: "Select '/tmp/upload' directory to mark it for keeping",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("nav-tmp")) return false;
-          return c.selectedIds.some(id => {
-            const tmp = findNodeByName(c.fs, "tmp");
-            const upload = tmp?.children?.find(n => n.name === "upload");
+          if (!c.completedTaskIds[_s.id]?.includes('nav-tmp')) return false;
+          return c.selectedIds.some((id) => {
+            const tmp = findNodeByName(c.fs, 'tmp');
+            const upload = tmp?.children?.find((n) => n.name === 'upload');
             return id === upload?.id;
           });
         },
         completed: false,
       },
       {
-        id: "reverse-selection",
-        description: "Reverse selection to select everything EXCEPT upload",
+        id: 'reverse-selection',
+        description: 'Reverse selection to select everything EXCEPT upload',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("select-upload")) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('select-upload')) return false;
           return c.usedCtrlR === true;
         },
         completed: false,
       },
       {
-        id: "delete-inverse",
-        description: "Delete everything except upload/",
+        id: 'delete-inverse',
+        description: 'Delete everything except upload/',
 
-        check: c => {
-          const tmp = findNodeByName(c.fs, "tmp");
+        check: (c) => {
+          const tmp = findNodeByName(c.fs, 'tmp');
           const remaining = tmp?.children || [];
-          return remaining.length === 1 && remaining[0]?.name === "upload";
+          return remaining.length === 1 && remaining[0]?.name === 'upload';
         },
         completed: false,
       },
     ],
-    onEnter: fs => ensurePrerequisiteState(fs, 15),
+    onEnter: (fs) => ensurePrerequisiteState(fs, 15),
   },
 ];
