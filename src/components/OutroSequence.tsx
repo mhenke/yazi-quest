@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Terminal, Signal, UploadCloud } from 'lucide-react';
+import { Terminal, Signal, UploadCloud, ArrowRight } from 'lucide-react';
 
 import { CONCLUSION_DATA } from '../constants';
+import { playSuccessSound } from '../utils/sounds';
 
 export const OutroSequence: React.FC = () => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
@@ -20,6 +21,7 @@ export const OutroSequence: React.FC = () => {
     if (currentLineIdx > promptTriggerIndex && !showTeaser) {
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && e.shiftKey) {
+          playSuccessSound(true);
           setShowTeaser(true);
           // play teaser in-app; opening new window removed
           window.removeEventListener('keydown', handler);
@@ -67,6 +69,19 @@ export const OutroSequence: React.FC = () => {
 
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
+      {/* Skip Outro Button */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => {
+            playSuccessSound(true);
+            setShowTeaser(true);
+          }}
+          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
+        >
+          <span>Skip Outro</span>
+          <ArrowRight size={14} />
+        </button>
+      </div>
       {/* Narrative Section (Fades out when Teaser starts) */}
       <div
         className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -99,6 +114,7 @@ export const OutroSequence: React.FC = () => {
           <div className="mt-8 flex justify-center">
             <button
               onClick={() => {
+                playSuccessSound(true);
                 setShowTeaser(true);
                 // play teaser in-app; opening new window removed
               }}
