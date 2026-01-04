@@ -3,6 +3,9 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
+import importPlugin from "eslint-plugin-import";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import security from "eslint-plugin-security";
 import prettier from "eslint-config-prettier";
 
 export default [
@@ -36,6 +39,9 @@ export default [
       "@typescript-eslint": tseslint,
       react: react,
       "react-hooks": reactHooks,
+      import: importPlugin,
+      "jsx-a11y": jsxA11y,
+      security: security,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
@@ -50,9 +56,14 @@ export default [
           varsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "react/prop-types": "off",
       "no-undef": "off", // TypeScript handles this
+      "no-console": ["warn", { "allow": ["warn","error"] }],
+      "no-debugger": "error",
+      "import/order": ["error", { "newlines-between": "always" }],
+      "jsx-a11y/alt-text": "warn",
+      "security/detect-object-injection": "off",
     },
     settings: {
       react: {
