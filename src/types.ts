@@ -1,15 +1,18 @@
-export type NodeType = "file" | "dir" | "archive";
+export type NodeType = 'file' | 'dir' | 'archive';
 
 export interface FileNode {
   id: string;
   name: string;
-  type: "file" | "dir" | "archive";
+  type: 'file' | 'dir' | 'archive';
   parentId?: string | null; // Null for root
   children?: FileNode[]; // Only for type 'dir' or 'archive'
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
   protected?: boolean;
+  // Runtime helpers (added dynamically by utilities)
+  path?: string[];
+  display?: string;
 }
 
 export interface FileSystemState {
@@ -33,7 +36,7 @@ export interface Level {
   initialPath?: string[] | null; // Path of IDs (null = stay in current)
   hint: string;
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
-  seedMode?: "always" | "fresh"; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
+  seedMode?: 'always' | 'fresh'; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
   efficiencyTip?: string; // Level-specific tip shown on game over (for timed/keystroke levels)
@@ -63,7 +66,7 @@ export interface Episode {
 
 export interface ClipboardItem {
   nodes: FileNode[]; // Changed to array for batch operations
-  action: "yank" | "cut";
+  action: 'yank' | 'cut';
   originalPath: string[]; // Path IDs where they came from
 }
 
@@ -85,7 +88,7 @@ export interface ZoxideEntry {
 // Recent visits weight higher: last hour ×4, last day ×2, last week ÷2, older ÷4
 export function calculateFrecency(
   entry: ZoxideEntry | undefined,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): number {
   if (!entry) return 0;
 
@@ -113,30 +116,30 @@ export interface GameSettings {
   soundEnabled: boolean;
 }
 
-export type SortBy = "natural" | "alphabetical" | "modified" | "size" | "extension";
-export type SortDirection = "asc" | "desc";
-export type Linemode = "none" | "size" | "mtime" | "permissions";
+export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extension';
+export type SortDirection = 'asc' | 'desc';
+export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
 
 export interface GameState {
   currentPath: string[]; // Array of Node IDs representing path from root
   cursorIndex: number; // Index in the current directory list
   clipboard: ClipboardItem | null;
   mode:
-    | "normal"
-    | "input-file"
-    | "input-dir"
-    | "confirm-delete"
-    | "filter"
-    | "zoxide-jump"
-    | "rename"
-    | "bulk-rename"
-    | "go"
-    | "cd-interactive"
-    | "fzf-current"
-    | "overwrite-confirm"
-    | "sort"
-    | "g-command"
-    | "z-prompt";
+    | 'normal'
+    | 'input-file'
+    | 'input-dir'
+    | 'confirm-delete'
+    | 'filter'
+    | 'zoxide-jump'
+    | 'rename'
+    | 'bulk-rename'
+    | 'go'
+    | 'cd-interactive'
+    | 'fzf-current'
+    | 'overwrite-confirm'
+    | 'sort'
+    | 'g-command'
+    | 'z-prompt';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   sortBy: SortBy; // Global sticky sort setting
@@ -164,7 +167,7 @@ export interface GameState {
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Track user inputs for mastery levels
   isGameOver: boolean; // Flag for game over state
-  gameOverReason?: "time" | "keystrokes"; // Reason for failure
+  gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
   stats: GameStats;
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
@@ -182,4 +185,4 @@ export interface GameState {
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
-export type FsError = "Collision" | "Protected" | "NotFound" | "InvalidPath";
+export type FsError = 'Collision' | 'Protected' | 'NotFound' | 'InvalidPath';

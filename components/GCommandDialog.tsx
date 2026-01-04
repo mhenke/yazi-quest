@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface GCommandDialogProps {
   onClose: () => void;
@@ -68,7 +68,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose }) => {
       </div>
 
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-3">
-        Press any key to continue or 'g' command
+        Press any key to continue or &apos;g&apos; command
       </div>
     </div>
   );

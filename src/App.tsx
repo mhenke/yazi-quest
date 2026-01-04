@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 import {
   GameState,
@@ -9,8 +9,8 @@ import {
   Linemode,
   FsError,
   Result,
-} from "./types";
-import { LEVELS, INITIAL_FS, EPISODE_LORE } from "./constants";
+} from './types';
+import { LEVELS, INITIAL_FS, EPISODE_LORE } from './constants';
 import {
   getNodeByPath,
   getParentNode,
@@ -22,31 +22,31 @@ import {
   getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
-} from "./utils/fsHelpers";
-import { sortNodes } from "./utils/sortHelpers";
-import { getVisibleItems } from "./utils/viewHelpers";
-import { playSuccessSound, playTaskCompleteSound } from "./utils/sounds";
-import { StatusBar } from "./components/StatusBar";
-import { HelpModal } from "./components/HelpModal";
-import { HintModal } from "./components/HintModal";
-import { LevelProgress } from "./components/LevelProgress";
-import { EpisodeIntro } from "./components/EpisodeIntro";
-import { OutroSequence } from "./components/OutroSequence";
-import { GameOverModal } from "./components/GameOverModal";
-import { ConfirmationModal } from "./components/ConfirmationModal";
-import { OverwriteModal } from "./components/OverwriteModal";
-import { SuccessToast } from "./components/SuccessToast";
-import { ThreatAlert } from "./components/ThreatAlert";
-import { HiddenFilesWarningModal } from "./components/HiddenFilesWarningModal";
-import { InfoPanel } from "./components/InfoPanel";
-import { GCommandDialog } from "./components/GCommandDialog";
-import { FuzzyFinder } from "./components/FuzzyFinder";
-import { MemoizedFileSystemPane as FileSystemPane } from "./components/FileSystemPane";
-import { MemoizedPreviewPane as PreviewPane } from "./components/PreviewPane";
-import { reportError } from "./utils/error";
-import { measure } from "./utils/perf";
-import { useKeyboardHandlers } from "./hooks/useKeyboardHandlers";
-import { KEYBINDINGS } from "./constants/keybindings";
+} from './utils/fsHelpers';
+import { sortNodes } from './utils/sortHelpers';
+import { getVisibleItems } from './utils/viewHelpers';
+import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+import { StatusBar } from './components/StatusBar';
+import { HelpModal } from './components/HelpModal';
+import { HintModal } from './components/HintModal';
+import { LevelProgress } from './components/LevelProgress';
+import { EpisodeIntro } from './components/EpisodeIntro';
+import { OutroSequence } from './components/OutroSequence';
+import { GameOverModal } from './components/GameOverModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { OverwriteModal } from './components/OverwriteModal';
+import { SuccessToast } from './components/SuccessToast';
+import { ThreatAlert } from './components/ThreatAlert';
+import { HiddenFilesWarningModal } from './components/HiddenFilesWarningModal';
+import { InfoPanel } from './components/InfoPanel';
+import { GCommandDialog } from './components/GCommandDialog';
+import { FuzzyFinder } from './components/FuzzyFinder';
+import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSystemPane';
+import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
+import { reportError } from './utils/error';
+import { measure } from './utils/perf';
+import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
+import { KEYBINDINGS } from './constants/keybindings';
 
 // Helper to get a random element from an array
 const getRandomElement = <T,>(arr: T[]): T => {
@@ -55,7 +55,7 @@ const getRandomElement = <T,>(arr: T[]): T => {
 
 // Find the narrative description for a given key
 const getNarrativeAction = (key: string): string | null => {
-  const binding = KEYBINDINGS.find(b => b.keys.includes(key));
+  const binding = KEYBINDINGS.find((b) => b.keys.includes(key));
   if (binding && binding.narrativeDescription) {
     if (Array.isArray(binding.narrativeDescription)) {
       return getRandomElement(binding.narrativeDescription);
@@ -69,39 +69,39 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     // 1. Initialize Completed Tasks State
     const completedTaskIds: Record<number, string[]> = {};
-    LEVELS.forEach(l => {
+    LEVELS.forEach((l) => {
       completedTaskIds[l.id] = [];
     });
 
     // 2. Parse URL Parameters
     const params = new URLSearchParams(window.location.search);
-    const debugParam = params.get("debug");
-    const epParam = params.get("ep") || params.get("episode");
-    const lvlParam = params.get("lvl") || params.get("level") || params.get("mission");
-    const tasksParam = params.get("tasks") || params.get("task") || params.get("complete");
-    const skipIntro = params.get("intro") === "false";
+    const debugParam = params.get('debug');
+    const epParam = params.get('ep') || params.get('episode');
+    const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
+    const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
+    const skipIntro = params.get('intro') === 'false';
 
     // 3. Determine Target Level
     let targetIndex = 0;
-    if (debugParam === "outro") {
+    if (debugParam === 'outro') {
       targetIndex = LEVELS.length;
     } else if (lvlParam) {
       const id = parseInt(lvlParam, 10);
-      const idx = LEVELS.findIndex(l => l.id === id);
+      const idx = LEVELS.findIndex((l) => l.id === id);
       if (idx !== -1) targetIndex = idx;
     } else if (epParam) {
       const id = parseInt(epParam, 10);
-      const idx = LEVELS.findIndex(l => l.episodeId === id);
+      const idx = LEVELS.findIndex((l) => l.episodeId === id);
       if (idx !== -1) targetIndex = idx;
     }
 
     // 4. Handle Task Completion (Bypass)
     if (tasksParam && targetIndex < LEVELS.length) {
       const levelId = LEVELS[targetIndex].id;
-      if (tasksParam === "all") {
-        completedTaskIds[levelId] = LEVELS[targetIndex].tasks.map(t => t.id);
+      if (tasksParam === 'all') {
+        completedTaskIds[levelId] = LEVELS[targetIndex].tasks.map((t) => t.id);
       } else {
-        const ids = tasksParam.split(",");
+        const ids = tasksParam.split(',');
         completedTaskIds[levelId] = ids;
       }
     }
@@ -123,36 +123,36 @@ export default function App() {
     const now = Date.now();
     let initialZoxide: Record<string, ZoxideEntry>;
     try {
-      const storedZoxide = localStorage.getItem("yazi-quest-zoxide-history");
+      const storedZoxide = localStorage.getItem('yazi-quest-zoxide-history');
       if (storedZoxide) {
         initialZoxide = JSON.parse(storedZoxide);
       } else {
-        throw new Error("No stored zoxide history");
+        throw new Error('No stored zoxide history');
       }
     } catch (e) {
       initialZoxide = {
-        "/home/guest/datastore": { count: 42, lastAccess: now - 3600000 },
-        "/home/guest/incoming": { count: 35, lastAccess: now - 1800000 },
-        "/home/guest/workspace": { count: 28, lastAccess: now - 7200000 },
-        "/home/guest/.config": { count: 30, lastAccess: now - 900000 },
-        "/home/guest/.config/vault": { count: 25, lastAccess: now - 800000 },
-        "/home/guest/.config/vault/active": { count: 10, lastAccess: now - 600000 },
-        "/tmp": { count: 15, lastAccess: now - 1800000 },
-        "/etc": { count: 8, lastAccess: now - 86400000 },
-        "/daemons": { count: 12, lastAccess: now - 43200000 },
-        "/daemons/systemd-core": { count: 5, lastAccess: now - 21600000 },
+        '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
+        '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
+        '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
+        '/home/guest/.config': { count: 30, lastAccess: now - 900000 },
+        '/home/guest/.config/vault': { count: 25, lastAccess: now - 800000 },
+        '/home/guest/.config/vault/active': { count: 10, lastAccess: now - 600000 },
+        '/tmp': { count: 15, lastAccess: now - 1800000 },
+        '/etc': { count: 8, lastAccess: now - 86400000 },
+        '/daemons': { count: 12, lastAccess: now - 43200000 },
+        '/daemons/systemd-core': { count: 5, lastAccess: now - 21600000 },
       };
     }
 
     // Ensure critical zoxide entries exist even if localStorage had different data
-    if (!initialZoxide["/daemons"]) {
-      initialZoxide["/daemons"] = { count: 1, lastAccess: now - 43200000 };
+    if (!initialZoxide['/daemons']) {
+      initialZoxide['/daemons'] = { count: 1, lastAccess: now - 43200000 };
     }
-    if (!initialZoxide["/daemons/systemd-core"]) {
-      initialZoxide["/daemons/systemd-core"] = { count: 1, lastAccess: now - 21600000 };
+    if (!initialZoxide['/daemons/systemd-core']) {
+      initialZoxide['/daemons/systemd-core'] = { count: 1, lastAccess: now - 21600000 };
     }
 
-    const initialPath = initialLevel.initialPath || ["root", "home", "guest"];
+    const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
 
     if (initialLevel.initialPath) {
       const initialPathStr = resolvePath(INITIAL_FS, initialLevel.initialPath);
@@ -172,12 +172,12 @@ export default function App() {
       if (level.onEnter) {
         try {
           const isFresh = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-          if (!level.seedMode || level.seedMode !== "fresh" || isFresh) {
+          if (!level.seedMode || level.seedMode !== 'fresh' || isFresh) {
             fs = level.onEnter(fs);
           }
         } catch (err) {
           try {
-            reportError(err, { phase: "level.onEnter", level: level?.id });
+            reportError(err, { phase: 'level.onEnter', level: level?.id });
           } catch {
             console.error(`Level ${level.id} onEnter failed`, err);
           }
@@ -189,12 +189,12 @@ export default function App() {
       currentPath: initialPath,
       cursorIndex: 0,
       clipboard: null,
-      mode: "normal",
-      inputBuffer: "",
+      mode: 'normal',
+      inputBuffer: '',
       filters: {},
-      sortBy: "natural",
-      sortDirection: "asc",
-      linemode: "size",
+      sortBy: 'natural',
+      sortDirection: 'asc',
+      linemode: 'size',
       history: [],
       future: [],
       previewScroll: 0,
@@ -236,16 +236,16 @@ export default function App() {
   // --- LOCALSTORAGE PERSISTENCE ---
   useEffect(() => {
     try {
-      localStorage.setItem("yazi-quest-zoxide-history", JSON.stringify(gameState.zoxideData));
+      localStorage.setItem('yazi-quest-zoxide-history', JSON.stringify(gameState.zoxideData));
     } catch (e) {
-      console.error("Failed to save zoxide history to localStorage", e);
+      console.error('Failed to save zoxide history to localStorage', e);
     }
   }, [gameState.zoxideData]);
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showThreatAlert, setShowThreatAlert] = useState(false);
   const [showHiddenWarning, setShowHiddenWarning] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
+  const [alertMessage, setAlertMessage] = useState('');
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
@@ -255,7 +255,7 @@ export default function App() {
   const currentLevel = useMemo(() => {
     return {
       ...currentLevelRaw,
-      tasks: currentLevelRaw.tasks.map(t => ({
+      tasks: currentLevelRaw.tasks.map((t) => ({
         ...t,
         completed: (gameState.completedTaskIds[currentLevelRaw.id] || []).includes(t.id),
       })),
@@ -263,14 +263,14 @@ export default function App() {
   }, [currentLevelRaw, gameState.completedTaskIds]);
 
   const visibleItems = React.useMemo(
-    () => measure("visibleItems", () => getVisibleItems(gameState)),
-    [gameState]
+    () => measure('visibleItems', () => getVisibleItems(gameState)),
+    [gameState],
   );
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
   const parent = React.useMemo(
     () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
-    [gameState.fs, gameState.currentPath]
+    [gameState.fs, gameState.currentPath],
   );
 
   // Helper to show notification with auto-clear
@@ -278,9 +278,9 @@ export default function App() {
     if (notificationTimerRef.current) {
       clearTimeout(notificationTimerRef.current);
     }
-    setGameState(prev => ({ ...prev, notification: message }));
+    setGameState((prev) => ({ ...prev, notification: message }));
     notificationTimerRef.current = setTimeout(() => {
-      setGameState(prev => ({ ...prev, notification: null }));
+      setGameState((prev) => ({ ...prev, notification: null }));
       notificationTimerRef.current = null;
     }, duration);
   }, []);
@@ -309,16 +309,16 @@ export default function App() {
     let changed = false;
     const newlyCompleted: string[] = [];
 
-    currentLevel.tasks.forEach(task => {
+    currentLevel.tasks.forEach((task) => {
       if (!task.completed && task.check(gameState, currentLevel)) {
         newlyCompleted.push(task.id);
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
 
         // Level 7: Trigger honeypot alert when player reaches /etc
-        if (currentLevel.id === 7 && task.id === "zoxide-etc") {
+        if (currentLevel.id === 7 && task.id === 'zoxide-etc') {
           setAlertMessage(
-            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
+            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
           );
           setShowThreatAlert(true);
         }
@@ -326,7 +326,7 @@ export default function App() {
     });
 
     if (changed) {
-      setGameState(prev => ({
+      setGameState((prev) => ({
         ...prev,
         completedTaskIds: {
           ...prev.completedTaskIds,
@@ -337,7 +337,7 @@ export default function App() {
 
     // Check if everything is complete (including just finished ones)
     const tasksComplete = currentLevel.tasks.every(
-      t => t.completed || newlyCompleted.includes(t.id)
+      (t) => t.completed || newlyCompleted.includes(t.id),
     );
 
     if (tasksComplete) {
@@ -360,7 +360,7 @@ export default function App() {
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
-    const allTasksComplete = currentLevel.tasks.every(t => t.completed);
+    const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
     if (allTasksComplete && !gameState.showHidden) return; // Pause timer only if completely finished
 
     if (
@@ -372,12 +372,12 @@ export default function App() {
       return;
 
     const timer = setInterval(() => {
-      setGameState(prev => {
+      setGameState((prev) => {
         // Check completion against state to avoid closure staleness issues with derived objects
         const levelId = LEVELS[prev.levelIndex].id;
         const tasks = LEVELS[prev.levelIndex].tasks;
         const completedIds = prev.completedTaskIds[levelId] || [];
-        const isComplete = tasks.every(t => completedIds.includes(t.id));
+        const isComplete = tasks.every((t) => completedIds.includes(t.id));
 
         if (isComplete && !prev.showHidden) {
           clearInterval(timer);
@@ -386,7 +386,7 @@ export default function App() {
 
         if (prev.timeLeft === null || prev.timeLeft <= 0) {
           clearInterval(timer);
-          return { ...prev, isGameOver: true, gameOverReason: "time" };
+          return { ...prev, isGameOver: true, gameOverReason: 'time' };
         }
         return { ...prev, timeLeft: prev.timeLeft - 1 };
       });
@@ -407,7 +407,7 @@ export default function App() {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
 
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-      setGameState(prev => ({ ...prev, isGameOver: true, gameOverReason: "keystrokes" }));
+      setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
 
@@ -418,7 +418,7 @@ export default function App() {
     const levelId = currentLevel.id;
     if (levelId === 5) {
       setAlertMessage(
-        "🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately."
+        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.',
       );
 
       setShowThreatAlert(true);
@@ -428,7 +428,7 @@ export default function App() {
   }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
 
   const advanceLevel = useCallback(() => {
-    setGameState(prev => {
+    setGameState((prev) => {
       const nextIdx = prev.levelIndex + 1;
 
       if (nextIdx >= LEVELS.length) {
@@ -444,15 +444,15 @@ export default function App() {
         const isFresh = JSON.stringify(prev.fs) === JSON.stringify(INITIAL_FS);
         if (
           nextLevel.onEnter &&
-          (!nextLevel.seedMode || nextLevel.seedMode !== "fresh" || isFresh)
+          (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)
         ) {
           fs = nextLevel.onEnter(fs);
         }
       } catch (err) {
         try {
-          reportError(err, { phase: "nextLevel.onEnter", level: nextLevel?.id });
+          reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id });
         } catch {
-          console.error("nextLevel.onEnter failed", err);
+          console.error('nextLevel.onEnter failed', err);
         }
         onEnterError = err as Error;
       }
@@ -477,10 +477,10 @@ export default function App() {
         cursorIndex: 0,
         filters: {},
         clipboard: null,
-        sortBy: "natural",
-        sortDirection: "asc",
-        linemode: "size",
-        notification: onEnterError ? "Level initialization failed" : null,
+        sortBy: 'natural',
+        sortDirection: 'asc',
+        linemode: 'size',
+        notification: onEnterError ? 'Level initialization failed' : null,
         selectedIds: [],
         showHint: false,
         hintStage: 0,
@@ -509,7 +509,7 @@ export default function App() {
   }, []);
 
   const handleRestartLevel = useCallback(() => {
-    setGameState(prev => {
+    setGameState((prev) => {
       const restoredFS = cloneFS(prev.levelStartFS);
       const restoredPath = [...prev.levelStartPath];
       const currentLvl = LEVELS[prev.levelIndex];
@@ -522,9 +522,9 @@ export default function App() {
         currentPath: restoredPath,
         cursorIndex: 0,
         clipboard: null,
-        mode: "normal",
+        mode: 'normal',
         filters: {},
-        notification: "System Reinitialized",
+        notification: 'System Reinitialized',
         selectedIds: [],
         pendingDeleteIds: [],
         pendingOverwriteNode: null,
@@ -559,44 +559,48 @@ export default function App() {
     (
       e: KeyboardEvent,
       gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
     ) => {
-      if (e.key === "Escape") {
-        setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+      if (e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
         return;
       }
 
-      if (e.key === "Backspace") {
-        setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+      if (e.key === 'Backspace') {
+        setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
         return;
       }
 
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        setGameState(prev => ({ ...prev, inputBuffer: prev.inputBuffer + e.key }));
+        setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer + e.key }));
         return;
       }
 
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         const { zoxideData, inputBuffer } = gameState;
         const candidates = Object.keys(zoxideData)
-          .map(path => ({ path, score: calculateFrecency(zoxideData[path]) }))
+          .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
           .sort((a, b) => b.score - a.score);
-        const bestMatch = candidates.find(c =>
-          c.path.toLowerCase().includes(inputBuffer.toLowerCase())
+        const bestMatch = candidates.find((c) =>
+          c.path.toLowerCase().includes(inputBuffer.toLowerCase()),
         );
 
         if (bestMatch) {
-          const allDirs = getAllDirectoriesWithPaths(gameState.fs).map(d => ({ node: d.node, path: d.path, display: resolvePath(gameState.fs, d.path) }));
-          const match = allDirs.find(d => d.display === bestMatch.path);
+          const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => ({
+            node: d.node,
+            path: d.path,
+            display: resolvePath(gameState.fs, d.path),
+          }));
+          const match = allDirs.find((d) => d.display === bestMatch.path);
           if (match) {
             const now = Date.now();
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
-              mode: "normal",
+              mode: 'normal',
               currentPath: match.path,
               cursorIndex: 0,
               notification: `Jumped to ${bestMatch.path}`,
-              inputBuffer: "",
+              inputBuffer: '',
               history: [...prev.history, prev.currentPath],
               future: [],
               stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
@@ -609,91 +613,91 @@ export default function App() {
               },
             }));
           } else {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
-              mode: "normal",
-              inputBuffer: "",
+              mode: 'normal',
+              inputBuffer: '',
               notification: `Path not found: ${bestMatch.path}`,
             }));
           }
         } else {
-          setGameState(prev => ({
+          setGameState((prev) => ({
             ...prev,
-            mode: "normal",
-            inputBuffer: "",
-            notification: "No match found",
+            mode: 'normal',
+            inputBuffer: '',
+            notification: 'No match found',
           }));
         }
       }
     },
-    []
+    [],
   );
 
   const handleFuzzyModeKeyDown = useCallback(
     (
       e: KeyboardEvent,
       gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
     ) => {
       // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
-      const isZoxide = gameState.mode === "zoxide-jump";
+      const isZoxide = gameState.mode === 'zoxide-jump';
       let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
       if (isZoxide) {
         candidates = Object.keys(gameState.zoxideData)
-          .map(path => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+          .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
           .sort((a, b) => {
             const diff = b.score - a.score;
             if (Math.abs(diff) > 0.0001) return diff;
             return a.path.localeCompare(b.path);
           })
-          .filter(c => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+          .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
       } else {
         candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
-          .filter(c => {
-            const d = (c as any).display;
+          .filter((c: FileNode) => {
+            const d = c.display;
             return (
-              typeof d === "string" && d.toLowerCase().includes(gameState.inputBuffer.toLowerCase())
+              typeof d === 'string' && d.toLowerCase().includes(gameState.inputBuffer.toLowerCase())
             );
           })
-          .map(c => ({
-            path: String((c as any).display || ""),
+          .map((c: FileNode) => ({
+            path: String(c.display || ''),
             score: 0,
-            pathIds: (c as any).path,
+            pathIds: c.path,
             type: c.type,
             id: c.id,
           }));
       }
 
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         const idx = gameState.fuzzySelectedIndex || 0;
         const selected = candidates[idx];
         if (selected) {
           if (isZoxide) {
             // Find path ids from string
-            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map(d => {
+            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => {
               return {
                 ...d.node,
                 path: d.path,
                 display: resolvePath(gameState.fs, d.path),
               };
             });
-            const match = allDirs.find(d => d.display === selected.path);
+            const match = allDirs.find((d) => d.display === selected.path);
             if (match) {
               const now = Date.now();
 
               // Add specific "Quantum" feedback for Level 7
               const isQuantum = gameState.levelIndex === 6;
               const notification = isQuantum
-                ? ">> QUANTUM TUNNEL ESTABLISHED <<"
+                ? '>> QUANTUM TUNNEL ESTABLISHED <<'
                 : `Jumped to ${selected.path}`;
 
-              setGameState(prev => ({
+              setGameState((prev) => ({
                 ...prev,
-                mode: "normal",
+                mode: 'normal',
                 currentPath: match.path,
                 cursorIndex: 0,
                 notification,
-                inputBuffer: "",
+                inputBuffer: '',
                 history: [...prev.history, prev.currentPath],
                 future: [], // Reset future on new jump
                 usedPreviewDown: false,
@@ -709,7 +713,7 @@ export default function App() {
               }));
             } else {
               // Fallback: If for some reason match is not found, close dialog
-              setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
             }
           } else {
             if (selected.pathIds && Array.isArray(selected.pathIds)) {
@@ -728,14 +732,14 @@ export default function App() {
               // Calculate index based on SORTED/VISIBLE items to ensure correct highlighting
               let sortedChildren = parentNode?.children || [];
               if (!gameState.showHidden) {
-                sortedChildren = sortedChildren.filter(c => !c.name.startsWith("."));
+                sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
               }
               // Note: We don't apply existing filters because we are clearing them below
               sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
 
-              const fileIndex = sortedChildren.findIndex(c => c.id === fileName);
+              const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
 
-              setGameState(prev => {
+              setGameState((prev) => {
                 // CRITICAL FIX: Explicitly clear any filters for the target directory
                 // so that siblings are visible when jumping to the file.
                 const targetDirNode = getNodeByPath(prev.fs, targetDir);
@@ -746,11 +750,11 @@ export default function App() {
 
                 return {
                   ...prev,
-                  mode: "normal",
+                  mode: 'normal',
                   currentPath: targetDir,
                   cursorIndex: fileIndex >= 0 ? fileIndex : 0,
                   filters: newFilters,
-                  inputBuffer: "",
+                  inputBuffer: '',
                   history: [...prev.history, prev.currentPath],
                   future: [], // Reset future
                   notification: `Found: ${selected.path}`,
@@ -760,58 +764,58 @@ export default function App() {
                 };
               });
             } else {
-              setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
             }
           }
         } else {
-          setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
         }
-      } else if (e.key === "Escape") {
-        setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
-      } else if (e.key === "j" || e.key === "ArrowDown" || (e.key === "n" && e.ctrlKey)) {
-        setGameState(prev => ({
+      } else if (e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+      } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
+        setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
         }));
-      } else if (e.key === "k" || e.key === "ArrowUp" || (e.key === "p" && e.ctrlKey)) {
-        setGameState(prev => ({
+      } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
+        setGameState((prev) => ({
           ...prev,
           fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
         }));
-      } else if (e.key === "Backspace") {
-        setGameState(prev => ({
+      } else if (e.key === 'Backspace') {
+        setGameState((prev) => ({
           ...prev,
           inputBuffer: prev.inputBuffer.slice(0, -1),
           fuzzySelectedIndex: 0,
         }));
       } else if (e.key.length === 1) {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
           inputBuffer: prev.inputBuffer + e.key,
           fuzzySelectedIndex: 0,
         }));
       }
     },
-    []
+    [],
   );
 
   // Global Key Down Handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tasksComplete = currentLevel.tasks.every(t => t.completed);
+      const tasksComplete = currentLevel.tasks.every((t) => t.completed);
       if (tasksComplete && !gameState.showHidden) {
-        if (e.key === "Enter" && e.shiftKey) {
+        if (e.key === 'Enter' && e.shiftKey) {
           e.preventDefault();
           advanceLevel();
         }
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
           setShowSuccessToast(false);
         }
         return; // Block all other keys
       }
 
       if (showThreatAlert) {
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
           setShowThreatAlert(false);
         }
         return;
@@ -819,8 +823,8 @@ export default function App() {
 
       // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Esc/Tab handlers.
       if (gameState.showHelp || gameState.showHint || gameState.showMap) {
-        if (e.key === "Escape") {
-          setGameState(prev => ({
+        if (e.key === 'Escape') {
+          setGameState((prev) => ({
             ...prev,
             showHelp: false,
             showHint: false,
@@ -834,9 +838,9 @@ export default function App() {
 
       // If only the InfoPanel is open, block all emulator keys except Esc/Tab to close it
       if (gameState.showInfoPanel) {
-        if (e.key === "Escape" || e.key === "Tab") {
+        if (e.key === 'Escape' || e.key === 'Tab') {
           e.preventDefault();
-          setGameState(prev => ({ ...prev, showInfoPanel: false }));
+          setGameState((prev) => ({ ...prev, showInfoPanel: false }));
           return;
         }
         return; // Block all other keys while InfoPanel is open
@@ -846,7 +850,7 @@ export default function App() {
         gameState.showEpisodeIntro ||
         isLastLevel ||
         gameState.isGameOver ||
-        ["input-file", "filter", "rename"].includes(gameState.mode)
+        ['input-file', 'filter', 'rename'].includes(gameState.mode)
       ) {
         // Let specific components handle keys or ignore
         return;
@@ -854,26 +858,26 @@ export default function App() {
 
       // Handle hidden files warning modal interception
       if (showHiddenWarning) {
-        if (e.key === ".") {
-          setGameState(prev => ({ ...prev, showHidden: !prev.showHidden }));
+        if (e.key === '.') {
+          setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
         }
         return; // Block other inputs
       }
 
       // Count keystrokes (only if no blocking modal)
-      if (!["Shift", "Control", "Alt", "Tab", "Escape", "?", "m"].includes(e.key)) {
-        setGameState(prev => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
+      if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
+        setGameState((prev) => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
       }
 
-      if (e.key === "?" && e.altKey && gameState.mode === "normal") {
+      if (e.key === '?' && e.altKey && gameState.mode === 'normal') {
         e.preventDefault();
-        setGameState(prev => ({ ...prev, showHelp: true }));
+        setGameState((prev) => ({ ...prev, showHelp: true }));
         return;
       }
 
-      if (e.key === "h" && e.altKey && gameState.mode === "normal") {
+      if (e.key === 'h' && e.altKey && gameState.mode === 'normal') {
         e.preventDefault();
-        setGameState(prev => {
+        setGameState((prev) => {
           if (prev.showHint) {
             const nextStage = (prev.hintStage + 1) % 3;
             return { ...prev, hintStage: nextStage };
@@ -884,19 +888,19 @@ export default function App() {
       }
 
       // Alt+Shift+M - Toggle sound (meta command)
-      if (e.key.toLowerCase() === "m" && e.altKey && e.shiftKey && gameState.mode === "normal") {
+      if (e.key.toLowerCase() === 'm' && e.altKey && e.shiftKey && gameState.mode === 'normal') {
         e.preventDefault();
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
           settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
-          notification: `Sound ${!prev.settings.soundEnabled ? "Enabled" : "Disabled"}`,
+          notification: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
         }));
         return;
       }
 
       // Mode dispatch
       switch (gameState.mode) {
-        case "normal":
+        case 'normal':
           handleNormalModeKeyDown(
             e,
             gameState,
@@ -905,26 +909,26 @@ export default function App() {
             parent || null,
             currentItem,
             currentLevel,
-            advanceLevel
+            advanceLevel,
           );
           break;
-        case "sort":
+        case 'sort':
           handleSortModeKeyDown(e, setGameState);
           break;
-        case "confirm-delete":
+        case 'confirm-delete':
           handleConfirmDeleteModeKeyDown(e, setGameState, visibleItems, currentLevel);
           break;
-        case "zoxide-jump":
-        case "fzf-current":
+        case 'zoxide-jump':
+        case 'fzf-current':
           handleFuzzyModeKeyDown(e, gameState, setGameState);
           break;
-        case "g-command":
+        case 'g-command':
           handleGCommandKeyDown(e, setGameState);
           break;
-        case "z-prompt":
+        case 'z-prompt':
           handleZoxidePromptKeyDown(e, gameState, setGameState);
           break;
-        case "overwrite-confirm":
+        case 'overwrite-confirm':
           handleOverwriteConfirmKeyDown(e, setGameState);
           break;
         default:
@@ -932,8 +936,8 @@ export default function App() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     gameState,
     currentLevel,
@@ -955,11 +959,11 @@ export default function App() {
 
   // Logic for create/rename input handled via input element events mainly
   const handleInputConfirm = () => {
-    if (gameState.mode === "input-file") {
-      const input = gameState.inputBuffer || "";
+    if (gameState.mode === 'input-file') {
+      const input = gameState.inputBuffer || '';
 
       // If the input contains a path separator or references ~ or /, resolve and create the whole path
-      if (input.includes("/") || input.startsWith("~") || input.startsWith("/")) {
+      if (input.includes('/') || input.startsWith('~') || input.startsWith('/')) {
         const {
           fs: newFs,
           targetNode,
@@ -968,24 +972,29 @@ export default function App() {
           collisionNode,
         } = resolveAndCreatePath(gameState.fs, gameState.currentPath, input);
         if (collision && collisionNode) {
-          setGameState(prev => ({
+          setGameState((prev) => ({
             ...prev,
-            mode: "overwrite-confirm",
+            mode: 'overwrite-confirm',
             pendingOverwriteNode: collisionNode,
-            notification: "Collision detected",
+            notification: 'Collision detected',
           }));
           return;
         }
         if (error) {
-          setGameState(prev => ({ ...prev, mode: "normal", notification: error, inputBuffer: "" }));
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            notification: error,
+            inputBuffer: '',
+          }));
           return;
         }
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
           fs: newFs,
-          mode: "normal",
-          inputBuffer: "",
-          notification: getNarrativeAction("a") || (targetNode ? "PATH CREATED" : "FILE CREATED"),
+          mode: 'normal',
+          inputBuffer: '',
+          notification: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
         }));
         return;
       }
@@ -997,21 +1006,21 @@ export default function App() {
         collisionNode,
       } = createPath(gameState.fs, gameState.currentPath, input);
       if (collision && collisionNode) {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
-          mode: "overwrite-confirm",
+          mode: 'overwrite-confirm',
           pendingOverwriteNode: collisionNode,
-          notification: "Collision detected",
+          notification: 'Collision detected',
         }));
       } else if (error) {
-        setGameState(prev => ({ ...prev, mode: "normal", notification: error, inputBuffer: "" }));
+        setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
       } else {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
           fs: newFs,
-          mode: "normal",
-          inputBuffer: "",
-          notification: getNarrativeAction("a") || "FILE CREATED",
+          mode: 'normal',
+          inputBuffer: '',
+          notification: getNarrativeAction('a') || 'FILE CREATED',
         }));
       }
     }
@@ -1024,20 +1033,20 @@ export default function App() {
         gameState.currentPath,
         currentItem.id,
         gameState.inputBuffer,
-        gameState.levelIndex
+        gameState.levelIndex,
       );
       if (!res.ok) {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
+          mode: 'normal',
           notification: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
         }));
       } else {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
           fs: res.value,
-          mode: "normal",
-          notification: getNarrativeAction("r") || "Renamed",
+          mode: 'normal',
+          notification: getNarrativeAction('r') || 'Renamed',
           stats: { ...prev.stats, renames: prev.stats.renames + 1 },
         }));
       }
@@ -1052,8 +1061,8 @@ export default function App() {
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
       {gameState.showEpisodeIntro && (
         <EpisodeIntro
-          episode={EPISODE_LORE.find(e => e.id === currentLevel.episodeId)!}
-          onComplete={() => setGameState(prev => ({ ...prev, showEpisodeIntro: false }))}
+          episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
+          onComplete={() => setGameState((prev) => ({ ...prev, showEpisodeIntro: false }))}
         />
       )}
 
@@ -1066,30 +1075,30 @@ export default function App() {
       )}
 
       {gameState.showHelp && (
-        <HelpModal onClose={() => setGameState(prev => ({ ...prev, showHelp: false }))} />
+        <HelpModal onClose={() => setGameState((prev) => ({ ...prev, showHelp: false }))} />
       )}
 
       {gameState.showHint && (
         <HintModal
           hint={currentLevel.hint}
           stage={gameState.hintStage}
-          onClose={() => setGameState(prev => ({ ...prev, showHint: false, hintStage: 0 }))}
+          onClose={() => setGameState((prev) => ({ ...prev, showHint: false, hintStage: 0 }))}
         />
       )}
 
       {gameState.showInfoPanel && (
         <InfoPanel
           file={currentItem}
-          onClose={() => setGameState(prev => ({ ...prev, showInfoPanel: false }))}
+          onClose={() => setGameState((prev) => ({ ...prev, showInfoPanel: false }))}
         />
       )}
 
-      {gameState.mode === "confirm-delete" && (
+      {gameState.mode === 'confirm-delete' && (
         <ConfirmationModal
           title="Confirm Delete"
           detail={`Permanently delete ${
             gameState.selectedIds.length > 0
-              ? gameState.selectedIds.length + " items"
+              ? gameState.selectedIds.length + ' items'
               : currentItem?.name
           }?`}
         />
@@ -1097,7 +1106,7 @@ export default function App() {
 
       {showSuccessToast && (
         <SuccessToast
-          message={currentLevel.successMessage || "Sector Cleared"}
+          message={currentLevel.successMessage || 'Sector Cleared'}
           levelTitle={currentLevel.title}
           onDismiss={advanceLevel}
           onClose={() => setShowSuccessToast(false)}
@@ -1110,7 +1119,7 @@ export default function App() {
 
       {showHiddenWarning && <HiddenFilesWarningModal />}
 
-      {gameState.mode === "overwrite-confirm" && gameState.pendingOverwriteNode && (
+      {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
       )}
 
@@ -1118,18 +1127,18 @@ export default function App() {
         <LevelProgress
           levels={LEVELS}
           currentLevelIndex={gameState.levelIndex}
-          onToggleHint={() => setGameState(prev => ({ ...prev, showHint: !prev.showHint }))}
-          onToggleHelp={() => setGameState(prev => ({ ...prev, showHelp: !prev.showHelp }))}
-          onToggleMap={() => setGameState(prev => ({ ...prev, showMap: !prev.showMap }))}
-          onJumpToLevel={idx => {
+          onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
+          onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
+          onToggleMap={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
+          onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);
             if (lvl.onEnter) fs = lvl.onEnter(fs);
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               levelIndex: idx,
               fs,
-              currentPath: lvl.initialPath || ["root", "home", "guest"],
+              currentPath: lvl.initialPath || ['root', 'home', 'guest'],
               showEpisodeIntro: false,
               future: [],
               previewScroll: 0,
@@ -1145,15 +1154,15 @@ export default function App() {
           className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200"
           style={{
             opacity:
-              gameState.mode === "zoxide-jump" ||
-              gameState.mode === "fzf-current" ||
-              gameState.mode === "z-prompt"
+              gameState.mode === 'zoxide-jump' ||
+              gameState.mode === 'fzf-current' ||
+              gameState.mode === 'z-prompt'
                 ? 0.3
                 : 1,
           }}
         >
           <div className="font-mono text-sm text-zinc-400">
-            {resolvePath(gameState.fs, gameState.currentPath).replace("/home/guest", "~")}
+            {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
             {(() => {
               const dir = getNodeByPath(gameState.fs, gameState.currentPath);
               const filter = dir ? gameState.filters[dir.id] : null;
@@ -1166,7 +1175,7 @@ export default function App() {
           <FileSystemPane
             items={(() => {
               const parent = getParentNode(gameState.fs, gameState.currentPath);
-              return parent && parent.children ? sortNodes(parent.children, "natural", "asc") : [];
+              return parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
             })()}
             isActive={false}
             isParent={true}
@@ -1177,7 +1186,7 @@ export default function App() {
           />
 
           <div className="flex-1 flex flex-col relative min-w-0">
-            {gameState.mode === "sort" && (
+            {gameState.mode === 'sort' && (
               <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
                 <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
@@ -1187,63 +1196,63 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">n</span>{" "}
+                    <span className="text-orange-500 font-bold">n</span>{' '}
                     <span className="text-zinc-400">Natural</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">N</span>{" "}
+                    <span className="text-orange-500 font-bold">N</span>{' '}
                     <span className="text-zinc-400">Natural (rev)</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">a</span>{" "}
+                    <span className="text-orange-500 font-bold">a</span>{' '}
                     <span className="text-zinc-400">A-Z</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">A</span>{" "}
+                    <span className="text-orange-500 font-bold">A</span>{' '}
                     <span className="text-zinc-400">Z-A</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">m</span>{" "}
+                    <span className="text-orange-500 font-bold">m</span>{' '}
                     <span className="text-zinc-400">Modified (new)</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">M</span>{" "}
+                    <span className="text-orange-500 font-bold">M</span>{' '}
                     <span className="text-zinc-400">Modified (old)</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">s</span>{" "}
+                    <span className="text-orange-500 font-bold">s</span>{' '}
                     <span className="text-zinc-400">Size (large)</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">S</span>{" "}
+                    <span className="text-orange-500 font-bold">S</span>{' '}
                     <span className="text-zinc-400">Size (small)</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">e</span>{" "}
+                    <span className="text-orange-500 font-bold">e</span>{' '}
                     <span className="text-zinc-400">Extension</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">E</span>{" "}
+                    <span className="text-orange-500 font-bold">E</span>{' '}
                     <span className="text-zinc-400">Extension (rev)</span>
                   </div>
                   <div className="col-span-2 border-t border-zinc-800 my-1"></div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">l</span>{" "}
+                    <span className="text-orange-500 font-bold">l</span>{' '}
                     <span className="text-zinc-400">Cycle Linemode</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-orange-500 font-bold">-</span>{" "}
+                    <span className="text-orange-500 font-bold">-</span>{' '}
                     <span className="text-zinc-400">Clear Linemode</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {gameState.mode === "g-command" && (
-              <GCommandDialog onClose={() => setGameState(p => ({ ...p, mode: "normal" }))} />
+            {gameState.mode === 'g-command' && (
+              <GCommandDialog onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))} />
             )}
 
-            {gameState.mode === "filter" && (
+            {gameState.mode === 'filter' && (
               <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">
@@ -1252,21 +1261,21 @@ export default function App() {
                   <input
                     type="text"
                     value={gameState.inputBuffer}
-                    onChange={e => {
+                    onChange={(e) => {
                       const val = e.target.value;
-                      setGameState(prev => {
+                      setGameState((prev) => {
                         const dir = getNodeByPath(prev.fs, prev.currentPath);
                         const newFilters = { ...prev.filters };
                         if (dir) newFilters[dir.id] = val;
                         return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
                       });
                     }}
-                    onKeyDown={e => {
-                      if (e.key === "Enter" || e.key === "Escape") {
-                        setGameState(p => ({
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === 'Escape') {
+                        setGameState((p) => ({
                           ...p,
-                          mode: "normal",
-                          inputBuffer: "",
+                          mode: 'normal',
+                          inputBuffer: '',
                           stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
                         }));
                         e.stopPropagation();
@@ -1282,7 +1291,7 @@ export default function App() {
               </div>
             )}
 
-            {gameState.mode === "input-file" && (
+            {gameState.mode === 'input-file' && (
               <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">
@@ -1291,10 +1300,12 @@ export default function App() {
                   <input
                     type="text"
                     value={gameState.inputBuffer}
-                    onChange={e => setGameState(prev => ({ ...prev, inputBuffer: e.target.value }))}
-                    onKeyDown={e => {
-                      if (e.key === "Enter") handleInputConfirm();
-                      if (e.key === "Escape") setGameState(prev => ({ ...prev, mode: "normal" }));
+                    onChange={(e) =>
+                      setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleInputConfirm();
+                      if (e.key === 'Escape') setGameState((prev) => ({ ...prev, mode: 'normal' }));
                       e.stopPropagation();
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
@@ -1307,15 +1318,15 @@ export default function App() {
               </div>
             )}
 
-            {gameState.mode === "z-prompt" &&
+            {gameState.mode === 'z-prompt' &&
               (() => {
                 const { zoxideData, inputBuffer } = gameState;
                 const candidates = Object.keys(zoxideData)
-                  .map(path => ({ path, score: calculateFrecency(zoxideData[path]) }))
+                  .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
                   .sort((a, b) => b.score - a.score);
-                const q = (inputBuffer || "").toLowerCase();
+                const q = (inputBuffer || '').toLowerCase();
                 const bestMatch = candidates.find(
-                  c => typeof c.path === "string" && c.path.toLowerCase().includes(q)
+                  (c) => typeof c.path === 'string' && c.path.toLowerCase().includes(q),
                 );
 
                 return (
@@ -1348,12 +1359,12 @@ export default function App() {
               clipboard={gameState.clipboard}
               linemode={gameState.linemode}
               renameState={{
-                isRenaming: gameState.mode === "rename",
+                isRenaming: gameState.mode === 'rename',
                 inputBuffer: gameState.inputBuffer,
               }}
-              onRenameChange={val => setGameState(prev => ({ ...prev, inputBuffer: val }))}
+              onRenameChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
               onRenameSubmit={handleRenameConfirm}
-              onRenameCancel={() => setGameState(prev => ({ ...prev, mode: "normal" }))}
+              onRenameCancel={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
             />
           </div>
 
@@ -1364,22 +1375,22 @@ export default function App() {
             previewScroll={gameState.previewScroll}
           />
 
-          {(gameState.mode === "zoxide-jump" || gameState.mode === "fzf-current") && (
+          {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
             <FuzzyFinder
               gameState={gameState}
               onSelect={(path, isZoxide, pathIds) => {
                 if (isZoxide) {
                   // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
-                  const parts = path.split("/").filter(Boolean);
-                  let cur: any = gameState.fs;
+                  const parts = path.split('/').filter(Boolean);
+                  let cur: FileNode | undefined = gameState.fs;
                   const idPath: string[] = [gameState.fs.id];
                   let found = true;
                   for (const part of parts) {
-                    if (!cur.children) {
+                    if (!cur?.children) {
                       found = false;
                       break;
                     }
-                    const next = cur.children.find((c: any) => c.name === part);
+                    const next = cur.children.find((c: FileNode) => c.name === part);
                     if (!next) {
                       found = false;
                       break;
@@ -1392,12 +1403,12 @@ export default function App() {
                     const now = Date.now();
                     const notification =
                       gameState.levelIndex === 6
-                        ? ">> QUANTUM TUNNEL ESTABLISHED <<"
+                        ? '>> QUANTUM TUNNEL ESTABLISHED <<'
                         : `Jumped to ${path}`;
 
-                    setGameState(prev => ({
+                    setGameState((prev) => ({
                       ...prev,
-                      mode: "normal",
+                      mode: 'normal',
                       currentPath: idPath,
                       cursorIndex: 0,
                       notification,
@@ -1416,7 +1427,7 @@ export default function App() {
                     }));
                   } else {
                     // Fallback: if path resolution fails, close dialog
-                    setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+                    setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
                   }
                 } else {
                   // FZF click/select handling: pathIds contains node id path relative to currentPath
@@ -1432,17 +1443,17 @@ export default function App() {
 
                     let sortedChildren = parentNode?.children || [];
                     if (!gameState.showHidden) {
-                      sortedChildren = sortedChildren.filter(c => !c.name.startsWith("."));
+                      sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
                     }
                     sortedChildren = sortNodes(
                       sortedChildren,
                       gameState.sortBy,
-                      gameState.sortDirection
+                      gameState.sortDirection,
                     );
 
-                    const fileIndex = sortedChildren.findIndex(c => c.id === fileId);
+                    const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
 
-                    setGameState(prev => {
+                    setGameState((prev) => {
                       const targetDirNode = getNodeByPath(prev.fs, targetDir);
                       const newFilters = { ...prev.filters };
                       if (targetDirNode) {
@@ -1451,11 +1462,11 @@ export default function App() {
 
                       return {
                         ...prev,
-                        mode: "normal",
+                        mode: 'normal',
                         currentPath: targetDir,
                         cursorIndex: fileIndex >= 0 ? fileIndex : 0,
                         filters: newFilters,
-                        inputBuffer: "",
+                        inputBuffer: '',
                         history: [...prev.history, prev.currentPath],
                         future: [],
                         notification: `Found: ${path}`,
@@ -1465,11 +1476,11 @@ export default function App() {
                       };
                     });
                   } else {
-                    setGameState(prev => ({ ...prev, mode: "normal", inputBuffer: "" }));
+                    setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
                   }
                 }
               }}
-              onClose={() => setGameState(p => ({ ...p, mode: "normal" }))}
+              onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))}
             />
           )}
         </div>
@@ -1477,7 +1488,7 @@ export default function App() {
         <StatusBar
           state={gameState}
           level={currentLevel}
-          allTasksComplete={currentLevel.tasks.every(t => t.completed) && !gameState.showHidden}
+          allTasksComplete={currentLevel.tasks.every((t) => t.completed) && !gameState.showHidden}
           onNextLevel={advanceLevel}
           currentItem={currentItem}
         />

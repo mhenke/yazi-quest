@@ -1,9 +1,9 @@
-import React from "react";
-import { Scissors, Copy, Filter, ArrowRight } from "lucide-react";
+import React from 'react';
+import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
 
-import { GameState, Level, FileNode } from "../types";
-import { getNodeByPath } from "../src/utils/fsHelpers";
-import { getSortLabel } from "../src/utils/sortHelpers";
+import { GameState, Level, FileNode } from '../types';
+import { getNodeByPath } from '../src/utils/fsHelpers';
+import { getSortLabel } from '../src/utils/sortHelpers';
 
 interface StatusBarProps {
   state: GameState;
@@ -26,21 +26,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   // Visual: Orange/Yellow
   // Filter: Purple
 
-  let modeBg = "bg-blue-600";
-  let modeText = "NOR";
+  let modeBg = 'bg-blue-600';
+  let modeText = 'NOR';
 
-  if (state.mode.startsWith("input")) {
-    modeBg = "bg-green-600";
-    modeText = "INS";
-  } else if (state.mode === "filter") {
-    modeBg = "bg-purple-600";
-    modeText = "FLT";
+  if (state.mode.startsWith('input')) {
+    modeBg = 'bg-green-600';
+    modeText = 'INS';
+  } else if (state.mode === 'filter') {
+    modeBg = 'bg-purple-600';
+    modeText = 'FLT';
   } else if (state.selectedIds.length > 0) {
-    modeBg = "bg-orange-600";
-    modeText = "VIS";
+    modeBg = 'bg-orange-600';
+    modeText = 'VIS';
   }
 
-  const completedTasks = level.tasks.filter(t => t.completed).length;
+  const completedTasks = level.tasks.filter((t) => t.completed).length;
   const totalTasks = level.tasks.length;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -49,24 +49,24 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   let items = currentDir?.children || [];
 
   // Get active filter for current dir
-  const activeFilter = currentDir ? state.filters[currentDir.id] || "" : "";
+  const activeFilter = currentDir ? state.filters[currentDir.id] || '' : '';
 
   if (activeFilter) {
-    items = items.filter(c => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
   }
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;
-  const itemName = currentItem ? currentItem.name : "";
+  const itemName = currentItem ? currentItem.name : '';
 
   // Permissions logic
-  const isDir = currentItem?.type === "dir" || currentItem?.type === "archive";
-  const perms = isDir ? "drwxr-xr-x" : "-rw-r--r--";
+  const isDir = currentItem?.type === 'dir' || currentItem?.type === 'archive';
+  const perms = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
 
   // Position logic (Top/Bot/%)
-  let percentStr = "Top";
+  let percentStr = 'Top';
   if (total > 0) {
-    if (state.cursorIndex === 0) percentStr = "Top";
-    else if (state.cursorIndex >= total - 1) percentStr = "Bot";
+    if (state.cursorIndex === 0) percentStr = 'Top';
+    else if (state.cursorIndex >= total - 1) percentStr = 'Bot';
     else percentStr = `${Math.round((current / total) * 100)}%`;
   }
 
@@ -74,7 +74,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   const isLowTime = state.timeLeft !== null && state.timeLeft <= 10;
@@ -84,7 +84,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const isHighKeystrokes = showKeystrokes && state.keystrokes >= level.maxKeystrokes! * 0.9;
 
   // Helper to determine sort active state
-  const isCustomSort = state.sortBy !== "natural";
+  const isCustomSort = state.sortBy !== 'natural';
 
   return (
     <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
@@ -104,7 +104,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         {/* Quest Info with Task Progress */}
         <span className="text-zinc-500 hidden sm:inline-block whitespace-nowrap ml-auto flex items-center gap-2">
           <span
-            className={`font-bold ${completedTasks === totalTasks ? "text-green-400" : "text-yellow-400"}`}
+            className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
           >
             Tasks: {completedTasks}/{totalTasks}
           </span>
@@ -117,7 +117,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {activeFilter && (
         <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
           <Filter size={10} />
-          <span>FILTER: "{activeFilter}"</span>
+          <span>
+            {'FILTER: "'}
+            {activeFilter}
+            {'"'}
+          </span>
         </div>
       )}
 
@@ -125,14 +129,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {state.clipboard && (
         <div
           className={`px-3 flex items-center gap-2 font-bold ${
-            state.clipboard.action === "cut"
-              ? "bg-red-900/50 text-red-200 border-l border-red-700"
-              : "bg-blue-900/50 text-blue-200 border-l border-blue-700"
+            state.clipboard.action === 'cut'
+              ? 'bg-red-900/50 text-red-200 border-l border-red-700'
+              : 'bg-blue-900/50 text-blue-200 border-l border-blue-700'
           }`}
         >
-          {state.clipboard.action === "cut" ? <Scissors size={10} /> : <Copy size={10} />}
+          {state.clipboard.action === 'cut' ? <Scissors size={10} /> : <Copy size={10} />}
           <span>
-            {state.clipboard.action === "cut" ? "MOVE" : "COPY"}: {state.clipboard.nodes.length}
+            {state.clipboard.action === 'cut' ? 'MOVE' : 'COPY'}: {state.clipboard.nodes.length}
           </span>
         </div>
       )}
@@ -161,9 +165,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           state.notification && (
             <div
               className={`px-3 font-bold border-l border-zinc-700 flex items-center italic max-w-[400px] truncate ${
-                state.notification.startsWith("🔒")
-                  ? "bg-red-900/80 text-red-200 border-red-700 animate-pulse"
-                  : "bg-zinc-800 text-yellow-400"
+                state.notification.startsWith('🔒')
+                  ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
+                  : 'bg-zinc-800 text-yellow-400'
               }`}
             >
               {state.notification}
@@ -176,8 +180,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <div
             className={`px-4 py-0.5 font-bold border-l border-zinc-700 flex items-center gap-2 transition-colors ${
               isLowTime
-                ? "bg-red-600 text-white animate-pulse"
-                : "bg-red-900/80 text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
+                ? 'bg-red-600 text-white animate-pulse'
+                : 'bg-red-900/80 text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
             }`}
           >
             <span className="hidden sm:inline text-[10px] opacity-90 uppercase tracking-widest">
@@ -190,7 +194,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         {/* Show Keystrokes if Mastery Level */}
         {showKeystrokes && (
           <div
-            className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isHighKeystrokes ? "text-red-500 bg-red-950/30" : "text-yellow-500"}`}
+            className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isHighKeystrokes ? 'text-red-500 bg-red-950/30' : 'text-yellow-500'}`}
           >
             <span className="hidden sm:inline text-[10px] opacity-70">KEYS:</span>
             <span className="font-mono text-sm">
@@ -204,9 +208,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
         {/* Hidden Files Indicator */}
         <span
-          className={`font-mono text-[10px] uppercase hidden sm:inline mr-2 ${state.showHidden ? "text-yellow-400 font-bold" : "text-zinc-600"}`}
+          className={`font-mono text-[10px] uppercase hidden sm:inline mr-2 ${state.showHidden ? 'text-yellow-400 font-bold' : 'text-zinc-600'}`}
         >
-          {state.showHidden ? "HIDDEN: ON" : "HIDDEN: OFF"}
+          {state.showHidden ? 'HIDDEN: ON' : 'HIDDEN: OFF'}
         </span>
 
         {/* Sort Indicator - Only show if custom */}
@@ -217,7 +221,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         )}
 
         {/* Linemode Indicator - NEW */}
-        {state.linemode !== "none" && (
+        {state.linemode !== 'none' && (
           <span className="font-mono text-[10px] uppercase text-blue-400 hidden sm:inline mr-1">
             {state.linemode}
           </span>

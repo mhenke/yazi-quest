@@ -1,7 +1,7 @@
-import { FileNode, Result, FsError, Level } from "../types";
+import { FileNode, Result, FsError, Level } from '../types';
 
 // Simple id generator used across the constants for seeding
-export function id(prefix = ""): string {
+export function id(prefix = ''): string {
   return prefix + Math.random().toString(36).slice(2, 9);
 }
 
@@ -31,7 +31,7 @@ export function getNodeByPath(root: FileNode, path: string[] | undefined): FileN
   for (const id of path) {
     if (!node) return undefined;
     if (node.id === id) continue; // root match
-    node = (node.children || []).find(c => c.id === id);
+    node = (node.children || []).find((c) => c.id === id);
   }
   return node;
 }
@@ -44,19 +44,19 @@ export function getParentNode(root: FileNode, path: string[] | undefined): FileN
 export function findNodeByName(
   root: FileNode,
   name: string,
-  type?: "file" | "dir" | "archive"
+  type?: 'file' | 'dir' | 'archive',
 ): FileNode | undefined {
   const stack: FileNode[] = [root];
   while (stack.length) {
     const n = stack.pop()!;
     if (n.name === name) {
       if (!type) return n;
-      if (type === "dir") {
-        if (n.type === "dir" || n.type === "archive") return n;
-      } else if (type === "file") {
-        if (n.type === "file") return n;
-      } else if (type === "archive") {
-        if (n.type === "archive") return n;
+      if (type === 'dir') {
+        if (n.type === 'dir' || n.type === 'archive') return n;
+      } else if (type === 'file') {
+        if (n.type === 'file') return n;
+      } else if (type === 'archive') {
+        if (n.type === 'archive') return n;
       }
     }
     if (n.children) stack.push(...n.children);
@@ -69,7 +69,7 @@ export function getAllDirectories(root: FileNode): FileNode[] {
   const stack: FileNode[] = [root];
   while (stack.length) {
     const n = stack.pop()!;
-    if (n.type === "dir" || n.type === "archive") result.push(n);
+    if (n.type === 'dir' || n.type === 'archive') result.push(n);
     if (n.children) stack.push(...n.children);
   }
   return result;
@@ -83,7 +83,7 @@ export function getAllDirectoriesWithPaths(root: FileNode): { node: FileNode; pa
     const { node: n, path: p } = stack.pop()!;
 
     // We add the directory to the list
-    if (n.type === "dir" || n.type === "archive") {
+    if (n.type === 'dir' || n.type === 'archive') {
       result.push({ node: n, path: p });
     }
 
@@ -98,7 +98,7 @@ export function getAllDirectoriesWithPaths(root: FileNode): { node: FileNode; pa
 }
 
 export function resolvePath(root: FileNode, path: string[] | undefined): string {
-  if (!path || path.length === 0) return "/";
+  if (!path || path.length === 0) return '/';
   const names: string[] = [];
   for (let i = 0; i < path.length; i++) {
     const id = path[i];
@@ -108,7 +108,7 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
     if (i === 0 && n.id === root.id) continue;
     names.push(n.name);
   }
-  return "/" + names.filter(Boolean).join("/");
+  return '/' + names.filter(Boolean).join('/');
 }
 
 export function getRecursiveContent(root: FileNode, path: string[] | undefined): FileNode[] {
@@ -116,15 +116,15 @@ export function getRecursiveContent(root: FileNode, path: string[] | undefined):
   const startPath = path && path.length ? [...path] : [root.id];
   const out: FileNode[] = [];
   // Stack items keep track of node and its id-path from root for display/path compatibility
-  const stack: { node: FileNode; pathIds: string[] }[] = (startNode.children || []).map(c => ({
+  const stack: { node: FileNode; pathIds: string[] }[] = (startNode.children || []).map((c) => ({
     node: c,
     pathIds: [...startPath, c.id],
   }));
   while (stack.length) {
     const { node: n, pathIds } = stack.pop()!;
     // Augment node with runtime-only helpers expected elsewhere
-    (n as any).path = [...pathIds];
-    (n as any).display = resolvePath(root, [...pathIds]);
+    n.path = [...pathIds];
+    n.display = resolvePath(root, [...pathIds]);
     out.push(n as FileNode);
     if (n.children) {
       for (const c of n.children) {
@@ -140,36 +140,36 @@ export function deleteNode(
   root: FileNode,
   parentPath: string[] | undefined,
   nodeId: string,
-  _levelIndex?: number
+  _levelIndex?: number,
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
     const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
-    if (!parent) return { ok: false, error: "NotFound" };
-    if (!parent.children) return { ok: false, error: "NotFound" };
-    const idx = parent.children.findIndex(c => c.id === nodeId);
-    if (idx === -1) return { ok: false, error: "NotFound" };
+    if (!parent) return { ok: false, error: 'NotFound' };
+    if (!parent.children) return { ok: false, error: 'NotFound' };
+    const idx = parent.children.findIndex((c) => c.id === nodeId);
+    if (idx === -1) return { ok: false, error: 'NotFound' };
     parent.children.splice(idx, 1);
     return { ok: true, value: newRoot };
   } catch (_e) {
-    return { ok: false, error: "NotFound" };
+    return { ok: false, error: 'NotFound' };
   }
 }
 
 export function addNode(
   root: FileNode,
   parentPath: string[] | undefined,
-  node: FileNode
+  node: FileNode,
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
     const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
-    if (!parent) return { ok: false, error: "NotFound" };
+    if (!parent) return { ok: false, error: 'NotFound' };
     parent.children = parent.children || [];
     parent.children.push(node);
     return { ok: true, value: newRoot };
   } catch (_e) {
-    return { ok: false, error: "NotFound" };
+    return { ok: false, error: 'NotFound' };
   }
 }
 
@@ -178,16 +178,16 @@ export function renameNode(
   parentPath: string[] | undefined,
   nodeId: string,
   newName: string,
-  _levelIndex?: number
+  _levelIndex?: number,
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
     const node = getNodeById(newRoot, nodeId);
-    if (!node) return { ok: false, error: "NotFound" };
+    if (!node) return { ok: false, error: 'NotFound' };
     node.name = newName;
     return { ok: true, value: newRoot };
   } catch (_e) {
-    return { ok: false, error: "NotFound" };
+    return { ok: false, error: 'NotFound' };
   }
 }
 
@@ -195,25 +195,25 @@ export function renameNode(
 export function createPath(
   root: FileNode,
   currentPath: string[] | undefined,
-  input: string
+  input: string,
 ): { fs: FileNode; error?: string | null; collision?: boolean; collisionNode?: FileNode | null } {
   const newRoot = cloneFS(root);
   const parent = currentPath && currentPath.length ? getNodeByPath(newRoot, currentPath) : newRoot;
-  if (!parent) return { fs: newRoot, error: "NotFound", collision: false, collisionNode: null };
+  if (!parent) return { fs: newRoot, error: 'NotFound', collision: false, collisionNode: null };
   parent.children = parent.children || [];
 
   // Normalize input: strip trailing slashes for the name (user may type 'protocols/')
-  const isDir = input.endsWith("/");
-  const normalizedName = input.replace(/\/+$/g, "");
+  const isDir = input.endsWith('/');
+  const normalizedName = input.replace(/\/+$/g, '');
 
-  const exists = parent.children.find(c => c.name === normalizedName);
+  const exists = parent.children.find((c) => c.name === normalizedName);
   if (exists) {
     return { fs: newRoot, error: null, collision: true, collisionNode: exists };
   }
   // Allow a file and a directory to share the same name in the same parent.
   // Collision should only occur if an item with the same name AND same type exists.
   const sameTypeExists = parent.children.find(
-    c => c.name === normalizedName && c.type === (isDir ? "dir" : "file")
+    (c) => c.name === normalizedName && c.type === (isDir ? 'dir' : 'file'),
   );
   if (sameTypeExists) {
     return { fs: newRoot, error: null, collision: true, collisionNode: sameTypeExists };
@@ -221,10 +221,10 @@ export function createPath(
   const node: FileNode = {
     id: id(),
     name: normalizedName,
-    type: isDir ? "dir" : "file",
+    type: isDir ? 'dir' : 'file',
     parentId: parent.id,
   };
-  if (node.type === "dir") node.children = [];
+  if (node.type === 'dir') node.children = [];
   parent.children.push(node);
   return { fs: newRoot, error: null, collision: false, collisionNode: null };
 }
@@ -232,7 +232,7 @@ export function createPath(
 export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],
-  inputPath: string
+  inputPath: string,
 ): {
   fs: FileNode;
   targetNode: FileNode | undefined;
@@ -244,35 +244,35 @@ export function resolveAndCreatePath(
   let effectiveParentPath: string[] = []; // This will hold the IDs of the path to the current parent
   let pathSegmentsToCreate: string[] = [];
 
-  if (inputPath.startsWith("~/")) {
+  if (inputPath.startsWith('~/')) {
     // Resolve "~" to //home/guest node IDs
-    const rootNode = findNodeByName(newRoot, "root", "dir");
-    const homeNode = rootNode?.children?.find(n => n.name === "home");
-    const guestNode = homeNode?.children?.find(n => n.name === "guest");
+    const rootNode = findNodeByName(newRoot, 'root', 'dir');
+    const homeNode = rootNode?.children?.find((n) => n.name === 'home');
+    const guestNode = homeNode?.children?.find((n) => n.name === 'guest');
 
     if (!rootNode || !homeNode || !guestNode) {
       return {
         fs: newRoot,
-        error: "Home directory nodes (root, home, guest) not found",
+        error: 'Home directory nodes (root, home, guest) not found',
         targetNode: undefined,
       };
     }
     effectiveParentPath = [rootNode.id, homeNode.id, guestNode.id];
-    pathSegmentsToCreate = inputPath.substring(2).split("/").filter(Boolean);
-  } else if (inputPath.startsWith("/")) {
+    pathSegmentsToCreate = inputPath.substring(2).split('/').filter(Boolean);
+  } else if (inputPath.startsWith('/')) {
     // Start from the actual root of the game's filesystem
     effectiveParentPath = [newRoot.id]; // The root FileNode itself
-    pathSegmentsToCreate = inputPath.substring(1).split("/").filter(Boolean);
+    pathSegmentsToCreate = inputPath.substring(1).split('/').filter(Boolean);
   } else {
     // Relative path from currentPath
     effectiveParentPath = [...currentPath];
-    pathSegmentsToCreate = inputPath.split("/").filter(Boolean);
+    pathSegmentsToCreate = inputPath.split('/').filter(Boolean);
   }
 
   let currentWorkingNode: FileNode | undefined = getNodeByPath(newRoot, effectiveParentPath);
 
   if (!currentWorkingNode) {
-    return { fs: newRoot, error: "Starting path not found or invalid", targetNode: undefined };
+    return { fs: newRoot, error: 'Starting path not found or invalid', targetNode: undefined };
   }
 
   let finalTargetNode: FileNode | undefined = undefined;
@@ -280,7 +280,7 @@ export function resolveAndCreatePath(
   for (let i = 0; i < pathSegmentsToCreate.length; i++) {
     const segment = pathSegmentsToCreate[i];
     const isLastSegment = i === pathSegmentsToCreate.length - 1;
-    const wantDir = !isLastSegment || inputPath.endsWith("/");
+    const wantDir = !isLastSegment || inputPath.endsWith('/');
 
     // Find an existing child that matches both name and expected type
     let sameTypeChild: FileNode | undefined = undefined;
@@ -289,14 +289,14 @@ export function resolveAndCreatePath(
     if (currentWorkingNode.children) {
       if (wantDir) {
         sameTypeChild = currentWorkingNode.children.find(
-          c => c.name === segment && (c.type === "dir" || c.type === "archive")
+          (c) => c.name === segment && (c.type === 'dir' || c.type === 'archive'),
         );
       } else {
         sameTypeChild = currentWorkingNode.children.find(
-          c => c.name === segment && c.type === "file"
+          (c) => c.name === segment && c.type === 'file',
         );
       }
-      anySameName = currentWorkingNode.children.find(c => c.name === segment);
+      anySameName = currentWorkingNode.children.find((c) => c.name === segment);
     }
 
     // If a same-type child exists, use it (and treat as collision on last segment)
@@ -323,7 +323,7 @@ export function resolveAndCreatePath(
         const newNode: FileNode = {
           id: id(),
           name: segment,
-          type: wantDir ? "dir" : "file",
+          type: wantDir ? 'dir' : 'file',
           parentId: currentWorkingNode.id,
         } as FileNode;
         if (wantDir) newNode.children = [];
@@ -338,7 +338,7 @@ export function resolveAndCreatePath(
         const newNode: FileNode = {
           id: id(),
           name: segment,
-          type: wantDir ? "dir" : "file",
+          type: wantDir ? 'dir' : 'file',
           parentId: currentWorkingNode.id,
         } as FileNode;
         if (wantDir) newNode.children = [];
@@ -364,26 +364,26 @@ export function resolveAndCreatePath(
 export function addNodeWithConflictResolution(
   root: FileNode,
   parentPath: string[] | undefined,
-  node: FileNode
+  node: FileNode,
 ): Result<FileNode, FsError> {
   let newRoot = cloneFS(root);
   const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
-  if (!parent) return { ok: false, error: "NotFound" };
+  if (!parent) return { ok: false, error: 'NotFound' };
   parent.children = parent.children || [];
 
   let newName = node.name;
   let counter = 0;
-  let exists = parent.children.find(c => c.name === newName && c.type === node.type);
+  let exists = parent.children.find((c) => c.name === newName && c.type === node.type);
 
   while (exists) {
     counter++;
-    const parts = node.name.split(".");
-    if (parts.length > 1 && node.type === "file") {
-      newName = `${parts.slice(0, -1).join(".")}_${counter}.${parts[parts.length - 1]}`;
+    const parts = node.name.split('.');
+    if (parts.length > 1 && node.type === 'file') {
+      newName = `${parts.slice(0, -1).join('.')}_${counter}.${parts[parts.length - 1]}`;
     } else {
       newName = `${node.name}_${counter}`;
     }
-    exists = parent.children.find(c => c.name === newName && c.type === node.type);
+    exists = parent.children.find((c) => c.name === newName && c.type === node.type);
   }
 
   const newNode: FileNode = { ...node, name: newName, id: id() };
@@ -396,10 +396,10 @@ export function isProtected(
   currentPath: string[] | undefined,
   node: FileNode,
   level: Level,
-  action?: string
+  action?: string,
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
-  if (level.id === 14 && action === "delete") {
+  if (level.id === 14 && action === 'delete') {
     // Use the policy attached to the Level definition, if provided.
     const allowed = level.allowedDeletePaths;
 
@@ -408,14 +408,14 @@ export function isProtected(
       for (const n of names) {
         if (!current || !current.children) return undefined;
         current = current.children.find(
-          c => c.name === n && (c.type === "dir" || c.type === "archive")
+          (c) => c.name === n && (c.type === 'dir' || c.type === 'archive'),
         );
         if (!current) return undefined;
       }
       return current;
     };
 
-    if (allowed && action === "delete") {
+    if (allowed && action === 'delete') {
       for (const entry of allowed) {
         const namePath = entry.path;
         const requiredTask = entry.requiresTaskId;
@@ -424,7 +424,7 @@ export function isProtected(
         // check that the task's static `completed` flag is true. This mirrors
         // existing level-based checks in this file which inspect `level.tasks`.
         if (requiredTask) {
-          const task = level.tasks?.find(t => t.id === requiredTask);
+          const task = level.tasks?.find((t) => t.id === requiredTask);
           if (!task?.completed) continue;
         }
 
@@ -447,17 +447,17 @@ export function isProtected(
   }
 
   // Level 2 specific protection for 'watcher_agent.sys'
-  if (level.id === 2 && node.name === "watcher_agent.sys" && action === "delete") {
-    const isDel1Complete = level.tasks.find(t => t.id === "del-1")?.completed;
-    const isDel2Complete = level.tasks.find(t => t.id === "del-2")?.completed;
-    const isVerifyMetaComplete = level.tasks.find(t => t.id === "verify-meta")?.completed;
-    const isVerifyContentComplete = level.tasks.find(t => t.id === "verify-content")?.completed;
+  if (level.id === 2 && node.name === 'watcher_agent.sys' && action === 'delete') {
+    const isDel1Complete = level.tasks.find((t) => t.id === 'del-1')?.completed;
+    const isDel2Complete = level.tasks.find((t) => t.id === 'del-2')?.completed;
+    const isVerifyMetaComplete = level.tasks.find((t) => t.id === 'verify-meta')?.completed;
+    const isVerifyContentComplete = level.tasks.find((t) => t.id === 'verify-content')?.completed;
 
     if (!isDel1Complete) {
-      return "Navigate to ~/incoming first. (Task: del-1)";
+      return 'Navigate to ~/incoming first. (Task: del-1)';
     }
     if (!isDel2Complete) {
-      return "Jump to the bottom of the file list. (Task: del-2)";
+      return 'Jump to the bottom of the file list. (Task: del-2)';
     }
     if (!isVerifyMetaComplete) {
       return "Verify the metadata of 'watcher_agent.sys' using TAB. (Task: verify-meta)";
