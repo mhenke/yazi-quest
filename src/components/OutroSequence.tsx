@@ -22,6 +22,8 @@ export const OutroSequence: React.FC = () => {
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && e.shiftKey) {
           playSuccessSound(true);
+          setCurrentLineIdx(CONCLUSION_DATA.lore.length);
+          setDisplayedLines(CONCLUSION_DATA.lore.slice());
           setShowTeaser(true);
           // play teaser in-app; opening new window removed
           window.removeEventListener('keydown', handler);
@@ -115,12 +117,14 @@ export const OutroSequence: React.FC = () => {
             <button
               onClick={() => {
                 playSuccessSound(true);
+                setCurrentLineIdx(CONCLUSION_DATA.lore.length);
+                setDisplayedLines(CONCLUSION_DATA.lore.slice());
                 setShowTeaser(true);
                 // play teaser in-app; opening new window removed
               }}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono"
             >
-              Press Shift+Enter or Click to view transmission
+              Press Shift+Enter to view transmission
             </button>
           </div>
         )}
