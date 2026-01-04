@@ -51,6 +51,14 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 - **[THEATRE.md](./THEATRE.md)** - Detailed level breakdowns
 - **[Contributing Guide](./CONTRIBUTING.md)** - Development guidelines
 
+### Per-level Filesystem Policies
+
+Level-specific filesystem permissions (for example: allowing deletes inside a
+particular subtree during an exam level) are now defined on the Level object
+itself via the `allowedDeletePaths` property in `src/constants.tsx`. This keeps
+policy next to level content and avoids hardcoding protection flags in the
+seeded filesystem. See `THEATRE.md` and `src/constants.tsx` for examples.
+
 ## 🙏 Credits
 
 Built with React, TypeScript, Vite, and Tailwind CSS.  

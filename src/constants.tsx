@@ -697,7 +697,6 @@ export const INITIAL_FS: FileNode = {
               id: "datastore",
               name: "datastore",
               type: "dir",
-              protected: true,
               children: [
                 {
                   id: id(),
@@ -1286,7 +1285,6 @@ export const INITIAL_FS: FileNode = {
               id: "media",
               name: "media",
               type: "dir",
-              protected: true,
               children: [
                 {
                   id: id(),
@@ -1297,12 +1295,11 @@ export const INITIAL_FS: FileNode = {
                 },
               ],
             },
-            { id: "workspace", name: "workspace", type: "dir", children: [], protected: true },
+            { id: "workspace", name: "workspace", type: "dir", children: [] },
             {
               id: "sector_1",
               name: "sector_1",
               type: "dir",
-              protected: true,
               children: [
                 {
                   id: id(),
@@ -1323,7 +1320,6 @@ export const INITIAL_FS: FileNode = {
               id: "grid_alpha",
               name: "grid_alpha",
               type: "dir",
-              protected: true,
               children: [
                 {
                   id: id(),
@@ -2666,6 +2662,12 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 28,
     efficiencyTip:
       "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files.",
+    // Allow Level 14 to delete under /home/guest (data-driven policy)
+    allowedDeletePaths: [
+      {
+        path: ["home", "guest"],
+      },
+    ],
     tasks: [
       {
         id: "nav-guest",

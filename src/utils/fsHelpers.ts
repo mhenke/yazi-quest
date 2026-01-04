@@ -400,18 +400,43 @@ export function isProtected(
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === "delete") {
-    // Instead of reconstructing a full path string (which can fail if seeded
-    // nodes lack `parentId`), locate the `/home/guest` node and check whether
-    // the target node is the guest node itself or a descendant of it.
-    const guest = findNodeByName(root, "guest", "dir");
-    if (guest) {
-      if (guest.id === node.id) return null;
-      // DFS through guest subtree to see if target node id exists there
-      const stack: FileNode[] = [guest];
-      while (stack.length) {
-        const n = stack.pop()!;
-        if (n.id === node.id) return null;
-        if (n.children) stack.push(...n.children);
+    // Use the policy attached to the Level definition, if provided.
+    const allowed = level.allowedDeletePaths;
+
+    const getNodeByNamePath = (rootNode: FileNode, names: string[]): FileNode | undefined => {
+      let current: FileNode | undefined = rootNode;
+      for (const n of names) {
+        if (!current || !current.children) return undefined;
+        current = current.children.find(
+          c => c.name === n && (c.type === "dir" || c.type === "archive")
+        );
+        if (!current) return undefined;
+      }
+      return current;
+    };
+
+    if (allowed && action === "delete") {
+      for (const entry of allowed) {
+        const namePath = entry.path;
+        const requiredTask = entry.requiresTaskId;
+
+        // If the rule requires a task to be completed on the Level definition,
+        // check that the task's static `completed` flag is true. This mirrors
+        // existing level-based checks in this file which inspect `level.tasks`.
+        if (requiredTask) {
+          const task = level.tasks?.find(t => t.id === requiredTask);
+          if (!task?.completed) continue;
+        }
+
+        const targetRoot = getNodeByNamePath(root, namePath);
+        if (!targetRoot) continue;
+        if (targetRoot.id === node.id) return null;
+        const stack: FileNode[] = [targetRoot];
+        while (stack.length) {
+          const n = stack.pop()!;
+          if (n.id === node.id) return null;
+          if (n.children) stack.push(...n.children);
+        }
       }
     }
   }

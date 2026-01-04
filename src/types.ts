@@ -43,6 +43,11 @@ export interface Level {
   successMessage?: string; // Displayed on level completion (e.g., "ASSET LOCATED.")
   buildsOn?: number[]; // Level IDs this level assumes knowledge from
   leadsTo?: number[]; // Level IDs that build on this level's skill
+  // Optional per-level filesystem policies. `allowedDeletePaths` lists
+  // name-paths (array of names) under which deletes are permitted for
+  // this level. Each entry may optionally require a task id to be
+  // completed (requiresTaskId) before the rule applies.
+  allowedDeletePaths?: { path: string[]; requiresTaskId?: string }[];
 }
 
 export interface Episode {

@@ -14,6 +14,16 @@
 - Hints should guide, not solve
 - Ensure hints reference specific keybindings
 
+### Per-level filesystem policy
+
+- Level-scoped filesystem exceptions (for example: allowing deletes inside a
+  specific subtree for an exam level) are authored on the Level object via
+  `allowedDeletePaths` in `src/constants.tsx`. Keep policy next to the level
+  content so authors and designers can review runtime behavior without
+  searching for external policy files.
+
+See `DOCS_INDEX.md` for the canonical docs map.
+
 ## Styling
 
 - Use Tailwind CSS
