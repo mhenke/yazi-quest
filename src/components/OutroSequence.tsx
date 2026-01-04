@@ -22,8 +22,6 @@ export const OutroSequence: React.FC = () => {
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && e.shiftKey) {
           playSuccessSound(true);
-          setCurrentLineIdx(CONCLUSION_DATA.lore.length);
-          setDisplayedLines(CONCLUSION_DATA.lore.slice());
           setShowTeaser(true);
           // play teaser in-app; opening new window removed
           window.removeEventListener('keydown', handler);
@@ -76,8 +74,6 @@ export const OutroSequence: React.FC = () => {
         <button
           onClick={() => {
             playSuccessSound(true);
-            setCurrentLineIdx(CONCLUSION_DATA.lore.length);
-            setDisplayedLines(CONCLUSION_DATA.lore.slice());
             setShowTeaser(true);
           }}
           className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
@@ -119,8 +115,6 @@ export const OutroSequence: React.FC = () => {
             <button
               onClick={() => {
                 playSuccessSound(true);
-                setCurrentLineIdx(CONCLUSION_DATA.lore.length);
-                setDisplayedLines(CONCLUSION_DATA.lore.slice());
                 setShowTeaser(true);
                 // play teaser in-app; opening new window removed
               }}
