@@ -72,10 +72,12 @@ export const OutroSequence: React.FC = () => {
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
       {/* Skip Outro Button */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-50">
         <button
           onClick={() => {
             playSuccessSound(true);
+            setCurrentLineIdx(CONCLUSION_DATA.lore.length);
+            setDisplayedLines(CONCLUSION_DATA.lore.slice());
             setShowTeaser(true);
           }}
           className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
@@ -171,7 +173,14 @@ export const OutroSequence: React.FC = () => {
             <div className="pt-8 md:pt-12">
               <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
                 <UploadCloud size={16} className="animate-bounce" />
-                <span>Establishing Remote Uplink...</span>
+                <a
+                  href="https://github.com/mhenke/yazi-quest"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-white"
+                >
+                  Establishing Remote Uplink...
+                </a>
               </div>
             </div>
           </div>
