@@ -2504,7 +2504,7 @@ export const LEVELS: Level[] = [
           // Check that at least 2 .service files are selected
           const daemons = findNodeByName(c.fs, "daemons", "dir");
           const serviceFiles = daemons?.children?.filter(n => n.name.endsWith(".service")) || [];
-          const selectedServices = serviceFiles.filter(n => c.selectedNodeIds.includes(n.id));
+          const selectedServices = serviceFiles.filter(n => c.selectedIds.includes(n.id));
           return selectedServices.length >= 2;
         },
         completed: false,
@@ -2605,7 +2605,7 @@ export const LEVELS: Level[] = [
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("nav-systemd-core")) return false;
           // Check that Ctrl+A was used AND multiple files are selected
-          return c.usedCtrlA && c.selectedNodeIds.length >= 2;
+          return c.usedCtrlA && c.selectedIds.length >= 2;
         },
         completed: false,
       },
@@ -2748,7 +2748,7 @@ export const LEVELS: Level[] = [
         description: "Select '/tmp/upload' directory to mark it for keeping",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("nav-tmp")) return false;
-          return c.selectedNodeIds.some(id => {
+          return c.selectedIds.some(id => {
             const tmp = findNodeByName(c.fs, "tmp");
             const upload = tmp?.children?.find(n => n.name === "upload");
             return id === upload?.id;
