@@ -1,5 +1,5 @@
 import { FileNode, Level, Episode } from "../types";
-import { getVisibleItems } from "./utils/viewHelpers";
+import { getVisibleItems, activeFilterMatches } from "./utils/viewHelpers";
 import { getNodeByPath, findNodeByName } from "./utils/fsHelpers";
 
 // Helper for IDs
@@ -1756,11 +1756,9 @@ export const LEVELS: Level[] = [
         check: c => {
           const u = findNodeByName(c.fs, "incoming");
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
-          const d = c.filters[u.id] || "";
-          const p = (
-            d ? u.children.filter(v => v.name.toLowerCase().includes(d.toLowerCase())) : u.children
-          )[c.cursorIndex];
-          return u.name === "incoming" && !!d && p && p.name === "sector_map.png";
+          const visible = getVisibleItems(c);
+          const p = visible[c.cursorIndex];
+          return u.name === "incoming" && p != null && p.name === "sector_map.png";
         },
         completed: false,
       },
@@ -1792,7 +1790,12 @@ export const LEVELS: Level[] = [
           const d = u.tasks.find(p => p.id === "move-1");
           if (!(d != null && d.completed)) return false;
           const r = findNodeByName(c.fs, "incoming");
-          return r ? !c.filters[r.id] : true;
+          if (!r) return true;
+          const visible = getVisibleItems(c);
+          const allItems = (r.children || []).filter(n =>
+            c.showHidden ? true : !n.name.startsWith(".")
+          );
+          return visible.length === allItems.length;
         },
         completed: false,
       },
@@ -2304,7 +2307,14 @@ export const LEVELS: Level[] = [
           "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup_logs.zip', Esc)",
         check: c => {
           const incoming = findNodeByName(c.fs, "incoming");
-          return c.currentPath.includes(incoming?.id || "") && !!c.filters[incoming?.id || ""];
+          if (!incoming || !c.currentPath.includes(incoming.id)) return false;
+          const visible = getVisibleItems(c);
+          const allItems = (incoming.children || []).filter(n =>
+            c.showHidden ? true : !n.name.startsWith(".")
+          );
+          const found = visible.some(n => n.name === "backup_logs.zip");
+          const isFiltered = visible.length < allItems.length;
+          return found && isFiltered;
         },
         completed: false,
       },
@@ -2471,12 +2481,9 @@ export const LEVELS: Level[] = [
         description: "Filter for '.service' files to isolate daemon executables",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("jump-daemons")) return false;
-          const daemons = findNodeByName(c.fs, "daemons", "dir");
-          return (
-            c.currentPath.includes(daemons?.id || "") &&
-            c.filterQuery &&
-            c.filterQuery.toLowerCase().includes("service")
-          );
+          const currentDir = getNodeByPath(c.fs, c.currentPath);
+          if (currentDir?.name !== "daemons") return false;
+          return activeFilterMatches(c, n => n.name.toLowerCase().endsWith(".service"));
         },
         completed: false,
       },

@@ -19,3 +19,19 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
 
   return sortNodes(items, state.sortBy, state.sortDirection);
 };
+
+export const activeFilterMatches = (
+  state: GameState,
+  predicate: (n: FileNode) => boolean
+): boolean => {
+  const currentDir = getNodeByPath(state.fs, state.currentPath);
+  if (!currentDir || !currentDir.children) return false;
+
+  const filter = state.filters[currentDir.id] || "";
+  if (!filter) return false;
+
+  const visible = getVisibleItems(state);
+  if (visible.length === 0) return false;
+
+  return visible.every(predicate);
+};
