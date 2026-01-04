@@ -1,6 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { sortNodes } from "../utils/sortHelpers";
-import { FileNode, Level, GameState } from "../types";
 import {
   FileText,
   FileArchive,
@@ -14,6 +12,9 @@ import {
   FileLock,
   Terminal as TerminalIcon,
 } from "lucide-react";
+
+import { sortNodes } from "../utils/sortHelpers";
+import { FileNode, Level, GameState } from "../types";
 
 interface PreviewPaneProps {
   node: FileNode | null;

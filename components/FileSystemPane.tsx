@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { FileNode, ClipboardItem, Linemode } from "../types";
 import {
   Folder,
   FileText,
@@ -14,6 +13,8 @@ import {
   Copy,
   PackageOpen,
 } from "lucide-react";
+
+import { FileNode, ClipboardItem, Linemode } from "../types";
 
 interface FileSystemPaneProps {
   items: FileNode[];

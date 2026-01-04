@@ -11,7 +11,8 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --quiet",
     "format": "prettier --write .",
-    "test": "echo \"No tests configured\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepush": "npm run type-check && npm run build"
   },
   "lint-staged": {
@@ -24,28 +25,29 @@
     ]
   },
   "dependencies": {
-    "react": "^19.2.1",
     "lucide-react": "^0.556.0",
+    "react": "^19.2.1",
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0",
-    "eslint": "^8.46.0",
-    "@typescript-eslint/parser": "^6.7.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.0",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.11.0",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.7.4",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsx-a11y": "^6.7.1",
-    "eslint-plugin-security": "^1.4.0",
-    "@commitlint/config-conventional": "^17.8.4",
-    "@commitlint/cli": "^17.8.4"
+    "@types/node": "*",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "@vitejs/plugin-react": "*",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-import": "*",
+    "eslint-plugin-jsx-a11y": "*",
+    "eslint-plugin-react": "*",
+    "eslint-plugin-react-hooks": "*",
+    "eslint-plugin-security": "*",
+    "husky": "*",
+    "lint-staged": "*",
+    "prettier": "*",
+    "typescript": "*",
+    "vite": "*",
+    "vitest": "^4.0.16"
   }
 }

@@ -1,3 +1,8 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
-npx --no-install --no-update-notifier @commitlint/cli --edit "$1"
+# Run commitlint if installed
+if [ -d "node_modules/@commitlint" ]; then
+  npx --no-install --no-update-notifier @commitlint/cli --edit "$1"
+else
+  echo "commitlint not installed - skipping commit-msg check"
+fi

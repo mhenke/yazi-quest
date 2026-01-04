@@ -5,10 +5,10 @@ export const reportError = (err: unknown, context?: Record<string, unknown>) => 
     const message = err instanceof Error ? err.message : String(err);
     const stack = err instanceof Error ? err.stack : undefined;
     // Minimalist logging to avoid noise; can replace with Sentry/Telemetry integration
-    // eslint-disable-next-line no-console
+     
     console.error("REPORT_ERROR", { message, stack, context });
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.error("REPORT_ERROR_FAILED", e);
   }
 };

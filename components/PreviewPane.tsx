@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { FileNode, Level } from "../types";
 import {
   FileText,
   FolderOpen,
@@ -15,6 +14,8 @@ import {
   FileLock,
   Terminal as TerminalIcon,
 } from "lucide-react";
+
+import { FileNode, Level } from "../types";
 
 interface PreviewPaneProps {
   node: FileNode | null;

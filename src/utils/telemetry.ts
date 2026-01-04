@@ -11,7 +11,7 @@ let telemetryEndpoint: string | undefined =
     ?.VITE_TELEMETRY_ENDPOINT || undefined;
 let telemetryDisabled = !!(
   import.meta as any
-) /* eslint-disable-line @typescript-eslint/no-explicit-any */.env?.VITE_TELEMETRY_DISABLED;
+)  .env?.VITE_TELEMETRY_DISABLED;
 let sentinelInitialized = false;
 let flushTimer: number | undefined;
 
@@ -142,7 +142,7 @@ export function trackError(name: string, payload?: Payload) {
     ) {
       (
         window as any
-      ) /* eslint-disable-line @typescript-eslint/no-explicit-any */.Sentry.captureMessage(name, {
+      )  .Sentry.captureMessage(name, {
         level: "error",
         extra: payload,
       });

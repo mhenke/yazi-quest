@@ -1,6 +1,7 @@
 import React from "react";
-import { GameState, Level, FileNode } from "../types";
 import { Scissors, Copy, Filter, ArrowRight } from "lucide-react";
+
+import { GameState, Level, FileNode } from "../types";
 import { getNodeByPath } from "../utils/fsHelpers";
 import { getSortLabel } from "../utils/sortHelpers";
 

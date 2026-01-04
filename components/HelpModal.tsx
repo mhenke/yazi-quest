@@ -1,4 +1,5 @@
 import React from "react";
+
 import { KEYBINDINGS } from "../src/constants";
 
 interface HelpModalProps {

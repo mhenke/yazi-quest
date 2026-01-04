@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import { CONCLUSION_DATA } from "../constants";
 import { Terminal, Signal, UploadCloud } from "lucide-react";
+
+import { CONCLUSION_DATA } from "../constants";
 
 export const OutroSequence: React.FC = () => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);

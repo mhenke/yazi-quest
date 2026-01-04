@@ -1,4 +1,5 @@
 import { FileNode, Level, Episode } from "../types";
+
 import { getVisibleItems, activeFilterMatches } from "./utils/viewHelpers";
 import { getNodeByPath, findNodeByName } from "./utils/fsHelpers";
 
@@ -8,7 +9,7 @@ const id = () => Math.random().toString(36).substr(2, 9);
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
 // all the changes a player would have made in PRIOR levels (not the current one)
-const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
+export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
   let newFs = JSON.parse(JSON.stringify(fs));
 
   // Level 2: Delete watcher_agent.sys from incoming
@@ -36,7 +37,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!media.children?.find(c => c.name === "sector_map.png")) {
         if (!media.children) media.children = [];
         media.children.push({
-          id: id(),
+          id: "fs-001",
           name: "sector_map.png",
           type: "file",
           content: sectorMap.content || "https://images.unsplash.com/sector-map",
@@ -54,7 +55,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let protocols = datastore.children?.find(c => c.name === "protocols" && c.type === "dir");
       if (!protocols) {
         protocols = {
-          id: id(),
+          id: "fs-002",
           name: "protocols",
           type: "dir",
           children: [],
@@ -68,7 +69,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!protocols.children?.find(c => c.name === "uplink_v1.conf")) {
         if (!protocols.children) protocols.children = [];
         protocols.children.push({
-          id: id(),
+          id: "fs-003",
           name: "uplink_v1.conf",
           type: "file",
           content: "# Uplink Protocol v1\nnetwork_mode=active\nsecure=true",
@@ -79,7 +80,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       // Create uplink_v2.conf if not exists
       if (!protocols.children?.find(c => c.name === "uplink_v2.conf")) {
         protocols.children.push({
-          id: id(),
+          id: "fs-004",
           name: "uplink_v2.conf",
           type: "file",
           content: "# Uplink Protocol v2\nnetwork_mode=active\nsecure=true",
@@ -96,7 +97,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let vault = config.children?.find(c => c.name === "vault" && c.type === "dir");
       if (!vault) {
         vault = {
-          id: id(),
+          id: "fs-005",
           name: "vault",
           type: "dir",
           children: [],
@@ -109,7 +110,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let active = vault.children?.find(c => c.name === "active" && c.type === "dir");
       if (!active) {
         active = {
-          id: id(),
+          id: "fs-006",
           name: "active",
           type: "dir",
           children: [],
@@ -123,7 +124,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!active.children?.find(f => f.name === "uplink_v1.conf")) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: id(),
+          id: "fs-007",
           name: "uplink_v1.conf",
           type: "file",
           content: "UPLINK_V1_CONFIG_DATA",
@@ -133,7 +134,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!active.children?.find(f => f.name === "uplink_v2.conf")) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: id(),
+          id: "fs-008",
           name: "uplink_v2.conf",
           type: "file",
           content: "UPLINK_V2_CONFIG_DATA",
@@ -160,7 +161,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let trainingData = vault.children?.find(c => c.name === "training_data" && c.type === "dir");
       if (!trainingData) {
         trainingData = {
-          id: id(),
+          id: "fs-009",
           name: "training_data",
           type: "dir",
           children: [],
@@ -177,7 +178,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
         if (!trainingData.children) trainingData.children = [];
         batchLogs.children.forEach(logFile => {
           trainingData.children!.push({
-            id: id(),
+            id: "fs-010",
             name: logFile.name,
             type: logFile.type,
             content: logFile.content,
@@ -199,7 +200,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       );
       if (!systemdCore) {
         systemdCore = {
-          id: id(),
+          id: "fs-011",
           name: "systemd-core",
           type: "dir",
           children: [],
@@ -213,7 +214,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let weights = systemdCore.children?.find(c => c.name === "weights" && c.type === "dir");
       if (!weights) {
         weights = {
-          id: id(),
+          id: "fs-012",
           name: "weights",
           type: "dir",
           children: [],
@@ -227,7 +228,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!weights.children?.find(c => c.name === "model.rs")) {
         if (!weights.children) weights.children = [];
         weights.children.push({
-          id: id(),
+          id: "fs-013",
           name: "model.rs",
           type: "file",
           content: "// Neural network model architecture",
@@ -241,9 +242,10 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       const active = vault?.children?.find(c => c.name === "active");
       const uplinkFile = active?.children?.find(c => c.name === "uplink_v1.conf");
 
-      if (uplinkFile && !systemdCore.children?.find(c => c.name === "uplink_v1.conf")) {
+      if (uplinkFile && !(systemdCore.children || []).find(c => c.name === "uplink_v1.conf")) {
+        if (!systemdCore.children) systemdCore.children = [];
         systemdCore.children.push({
-          id: id(),
+          id: "fs-014",
           name: "uplink_v1.conf",
           type: "file",
           content: uplinkFile.content,
@@ -271,7 +273,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       );
       if (!credentials) {
         credentials = {
-          id: id(),
+          id: "fs-015",
           name: "credentials",
           type: "dir",
           children: [],
@@ -284,7 +286,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (!credentials.children?.find(c => c.name === "access_key.pem")) {
         if (!credentials.children) credentials.children = [];
         credentials.children.push({
-          id: id(),
+          id: "fs-016",
           name: "access_key.pem",
           type: "file",
           content: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...",
@@ -294,7 +296,82 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
     }
   }
 
-  // Level 11: No filesystem changes (just sorting practice)
+  // Level 11: Create /daemons directory with .service files (replicate onEnter behavior for jumping)
+  if (targetLevelId > 11) {
+    const rootNode = findNodeByName(newFs, "root", "dir");
+    if (rootNode) {
+      let daemons = rootNode.children?.find(c => c.name === "daemons" && c.type === "dir");
+      if (!daemons) {
+        const now = Date.now();
+        daemons = {
+          id: "daemons",
+          name: "daemons",
+          type: "dir",
+          children: [
+            {
+              id: "daemon-cron",
+              name: "cron-legacy.service",
+              type: "file",
+              content: "[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always",
+              modifiedAt: now - 86400000 * 45,
+            },
+            {
+              id: "daemon-backup",
+              name: "backup-archive.service",
+              type: "file",
+              content: "[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure",
+              modifiedAt: now - 86400000 * 30,
+            },
+            {
+              id: "daemon-network",
+              name: "network-manager.service",
+              type: "file",
+              content: "[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always",
+              modifiedAt: now - 86400000 * 7,
+            },
+            {
+              id: "daemon-log",
+              name: "log-rotator.service",
+              type: "file",
+              content: "[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure",
+              modifiedAt: now - 86400000 * 3,
+            },
+            {
+              id: "daemon-audit",
+              name: "security-audit.service",
+              type: "file",
+              content: "[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT",
+              modifiedAt: now - 86400000 * 1,
+            },
+            {
+              id: "daemon-watchdog",
+              name: "watchdog-monitor.service",
+              type: "file",
+              content: "[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT",
+              modifiedAt: now - 3600000,
+            },
+            {
+              id: "daemon-conf",
+              name: "daemon.conf",
+              type: "file",
+              content: "# Global daemon configuration\nmax_processes=256\nlog_level=warn",
+              modifiedAt: now - 86400000 * 10,
+            },
+            {
+              id: "daemon-readme",
+              name: "README.md",
+              type: "file",
+              content: "# Daemons Directory\nSystem services. Do not modify without authorization.",
+              modifiedAt: now - 86400000 * 60,
+            },
+          ],
+          parentId: rootNode.id,
+        };
+        if (!rootNode.children) rootNode.children = [];
+        rootNode.children.push(daemons);
+      }
+    }
+  }
 
   // Level 12: Move systemd-core to /daemons
   if (targetLevelId > 12) {
@@ -307,7 +384,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       if (systemdCore && !daemons.children?.find(c => c.name === "systemd-core")) {
         // Clone systemd-core to daemons
         const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-        clonedCore.id = id();
+        clonedCore.id = "systemd-core-daemon";
         clonedCore.parentId = daemons.id;
         if (!daemons.children) daemons.children = [];
         daemons.children.push(clonedCore);
@@ -327,7 +404,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
       let upload = tmp.children?.find(c => c.name === "upload" && c.type === "dir");
       if (!upload) {
         upload = {
-          id: id(),
+          id: "fs-017",
           name: "upload",
           type: "dir",
           children: [],
@@ -347,7 +424,7 @@ const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode 
         // Deep copy all children from systemd-core
         const copyChildren = (children: any[]): any[] => {
           return children.map(child => ({
-            id: id(),
+            id: "fs-018",
             name: child.name,
             type: child.type,
             content: child.content,
@@ -699,36 +776,36 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-019",
                   name: "legacy_data.tar",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-020",
                       name: "main.c",
                       type: "file",
                       content: `#include <stdio.h>\nint main() { printf("Legacy System"); }`,
                     },
                     {
-                      id: id(),
+                      id: "fs-021",
                       name: "Makefile",
                       type: "file",
                       content: `all: main.c\n\tgcc -o app main.c`,
                     },
                     {
-                      id: id(),
+                      id: "fs-022",
                       name: "readme.txt",
                       type: "file",
                       content: "Legacy project from 1999. Do not delete.",
                     },
                     {
-                      id: id(),
+                      id: "fs-023",
                       name: "core_v2.bin.gz",
                       type: "file",
                       content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
                     },
                     {
-                      id: id(),
+                      id: "fs-024",
                       name: "firmware_update.bin",
                       type: "file",
                       content: "[BINARY FIRMWARE IMAGE - placeholder]",
@@ -736,24 +813,24 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-025",
                   name: "source_code.zip",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-026",
                       name: "Cargo.toml",
                       type: "file",
                       content: `[package]\nname = "yazi_core"\nversion = "0.1.0"`,
                     },
                     {
-                      id: id(),
+                      id: "fs-027",
                       name: "main.rs",
                       type: "file",
                       content: `fn main() {\n println!("Hello Yazi!");\n}`,
                     },
                     {
-                      id: id(),
+                      id: "fs-028",
                       name: "lib.rs",
                       type: "file",
                       content: `pub mod core;\npub mod ui;`,
@@ -761,110 +838,110 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-029",
                   name: "_env.local",
                   type: "file",
                   content: `DB_HOST=127.0.0.1\nDB_USER=admin\nDB_PASS=*******`,
                 },
                 {
-                  id: id(),
+                  id: "fs-030",
                   name: "00_manifest.xml",
                   type: "file",
                   content: `<?xml version="1.0"?>\n<manifest>\n <project id="YAZI-7734" />\n <status>active</status>\n <integrity>verified</integrity>\n</manifest>`,
                 },
                 {
-                  id: id(),
+                  id: "fs-031",
                   name: "01_intro.mp4",
                   type: "file",
                   content: `[METADATA]\nFormat: MPEG-4\nDuration: 00:01:45\nResolution: 1080p\nCodec: H.264\n\n[BINARY STREAM DATA]`,
                 },
                 {
-                  id: id(),
+                  id: "fs-032",
                   name: "aa_recovery_procedures.pdf",
                   type: "file",
                   content: `%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n[ENCRYPTED DOCUMENT]`,
                 },
                 {
-                  id: id(),
+                  id: "fs-033",
                   name: "abandoned_script.py",
                   type: "file",
                   content: `import sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
                 },
                 {
-                  id: id(),
+                  id: "fs-034",
                   name: "ability_scores.csv",
                   type: "file",
                   content: `char,str,dex,int,wis,cha\nAI-7734,10,18,20,16,12\nUSER,10,10,10,10,10`,
                 },
                 {
-                  id: id(),
+                  id: "fs-035",
                   name: "about.md",
                   type: "file",
                   content: `# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive`,
                 },
                 {
-                  id: id(),
+                  id: "fs-036",
                   name: "abstract_model.ts",
                   type: "file",
                   content: `export interface NeuralNet {\n layers: number;
  weights: Float32Array;\n activation: "relu" | "sigmoid";\n}`,
                 },
                 {
-                  id: id(),
+                  id: "fs-037",
                   name: "apex_predator.png",
                   type: "file",
                   content:
                     "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop",
                 },
                 {
-                  id: id(),
+                  id: "fs-038",
                   name: "expenditure_log.csv",
                   type: "file",
                   content: `date,amount,category\n2024-01-01,500,servers\n2024-01-02,1200,gpus\n2024-01-03,50,coffee`,
                 },
                 {
-                  id: id(),
+                  id: "fs-039",
                   name: "hyperloop_specs.pdf",
                   type: "file",
                   content: `[PDF DATA]\nCLASSIFIED\nPROJECT HYPERION`,
                 },
                 {
-                  id: id(),
+                  id: "fs-040",
                   name: "pending_updates.log",
                   type: "file",
                   content: `[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active`,
                 },
                 {
-                  id: id(),
+                  id: "fs-041",
                   name: "personnel_list.txt",
                   type: "file",
                   content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]`,
                 },
                 {
-                  id: id(),
+                  id: "fs-042",
                   name: "special_ops.md",
                   type: "file",
                   content: `# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache`,
                 },
                 {
-                  id: id(),
+                  id: "fs-043",
                   name: "tape_archive.tar",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-044",
                       name: "header.dat",
                       type: "file",
                       content: "[TAPE HEADER 0x001]",
                     },
                     {
-                      id: id(),
+                      id: "fs-045",
                       name: "partition_1.img",
                       type: "file",
                       content: "[BINARY DATA PARTITION 1]",
                     },
                     {
-                      id: id(),
+                      id: "fs-046",
                       name: "partition_2.img",
                       type: "file",
                       content: "[BINARY DATA PARTITION 2]",
@@ -872,24 +949,24 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-047",
                   name: "credentials",
                   type: "dir",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-048",
                       name: "access_key.pem",
                       type: "file",
                       content: `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----`,
                     },
                     {
-                      id: id(),
+                      id: "fs-049",
                       name: "decoy_1.pem",
                       type: "file",
                       content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
                     },
                     {
-                      id: id(),
+                      id: "fs-050",
                       name: "decoy_2.pem",
                       type: "file",
                       content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
@@ -897,93 +974,93 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-051",
                   name: "account_settings.json",
                   type: "file",
                   content: `{\n "user": "guest",\n "theme": "dark_mode",\n "notifications": true,\n "auto_save": false\n}`,
                 },
                 {
-                  id: id(),
+                  id: "fs-052",
                   name: "mission_log.md",
                   type: "file",
                   content: `# Operation: SILENT ECHO\n\nCurrent Status: ACTIVE\n\nObjectives:\n- Establish uplink\n- Bypass firewall\n- Retrieve payload`,
                 },
                 {
-                  id: id(),
+                  id: "fs-053",
                   name: "checksum.md5",
                   type: "file",
                   content: "d41d8cd98f00b204e9800998ecf8427e core_v2.bin",
                 },
                 {
-                  id: id(),
+                  id: "fs-054",
                   name: "LICENSE",
                   type: "file",
                   content: `MIT License\n\nCopyright (c) 2024 Yazi Quest`,
                 },
                 {
-                  id: id(),
+                  id: "fs-055",
                   name: "manifest.json",
                   type: "file",
                   content: `{\n "version": "1.0.4",\n "build": 884,
  "dependencies": []\n}`,
                 },
                 {
-                  id: id(),
+                  id: "fs-056",
                   name: "branding_logo.svg",
                   type: "file",
                   content:
                     "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4=",
                 },
                 {
-                  id: id(),
+                  id: "fs-057",
                   name: "server_config.ini",
                   type: "file",
                   content: `[server]\nport=8080\nhost=localhost\nmax_connections=100`,
                 },
                 {
-                  id: id(),
+                  id: "fs-058",
                   name: "notes_v1.txt",
                   type: "file",
                   content: `Meeting notes from Monday:\n- Discussed Q3 goals\n- Server migration postponed`,
                 },
                 {
-                  id: id(),
+                  id: "fs-059",
                   name: "notes_v2.txt",
                   type: "file",
                   content: `Meeting notes from Tuesday:\n- Budget approved\n- Hiring freeze`,
                 },
                 {
-                  id: id(),
+                  id: "fs-060",
                   name: "error.log",
                   type: "file",
                   content: `[ERROR] Connection timed out\n[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED`,
                 },
                 {
-                  id: id(),
+                  id: "fs-061",
                   name: "setup_script.sh",
                   type: "file",
                   content: `#!/bin/bash\necho "Installing dependencies..."\nnpm install\necho "Done."`,
                 },
                 {
-                  id: id(),
+                  id: "fs-062",
                   name: "auth_token.tmp",
                   type: "file",
                   content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]`,
                 },
                 {
-                  id: id(),
+                  id: "fs-063",
                   name: "policy_draft.docx",
                   type: "file",
                   content: `[MS-WORD DOCUMENT]\nTitle: Security Policy Draft v4\nAuthor: SysAdmin\n\n[BINARY CONTENT]`,
                 },
                 {
-                  id: id(),
+                  id: "fs-064",
                   name: "public_key.pub",
                   type: "file",
                   content: `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... \nguest@mainframe`,
                 },
                 {
-                  id: id(),
+                  id: "fs-065",
                   name: "z_end_of_file.eof",
                   type: "file",
                   content: "0x00 0x00 0x00 [EOF]",
@@ -996,25 +1073,25 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-066",
                   name: "app_logs_old.tar",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-067",
                       name: "app_2022.log",
                       type: "file",
                       content:
                         "2022-01-01 00:00:00 - App start\n2022-01-02 12:34:56 - User login\n",
                     },
                     {
-                      id: id(),
+                      id: "fs-068",
                       name: "error_report.log",
                       type: "file",
                       content: "[ERROR] Out of memory on worker-3\nStack: ...\n",
                     },
                     {
-                      id: id(),
+                      id: "fs-069",
                       name: "old_readme.txt",
                       type: "file",
                       content: "Archived application logs and diagnostics.",
@@ -1022,19 +1099,19 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-070",
                   name: "archive_001.zip",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-071",
                       name: "screenshot_001.png",
                       type: "file",
                       content:
                         "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=600&auto=format&fit=crop",
                     },
                     {
-                      id: id(),
+                      id: "fs-072",
                       name: "notes.txt",
                       type: "file",
                       content: "Temporary meeting notes and screenshots",
@@ -1042,38 +1119,38 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-073",
                   name: "archive_002.zip",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-074",
                       name: "dataset.csv",
                       type: "file",
                       content: "id,value\n1,42\n2,84",
                     },
                     {
-                      id: id(),
+                      id: "fs-075",
                       name: "readme.md",
                       type: "file",
                       content: "Sample dataset accompanying screenshots.",
                     },
                   ],
                 },
-                { id: id(), name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
+                { id: "fs-076", name: "audit_log_773.txt", type: "file", content: "Audit #773: Pass" },
                 {
-                  id: id(),
+                  id: "fs-077",
                   name: "backup_cache_old.tar",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-078",
                       name: "cache_0001.tmp",
                       type: "file",
                       content: "[CACHE BLOCK 0001]",
                     },
                     {
-                      id: id(),
+                      id: "fs-079",
                       name: "cache_0002.tmp",
                       type: "file",
                       content: "[CACHE BLOCK 0002]",
@@ -1081,30 +1158,30 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-080",
                   name: "backup_config_v1.zip",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-081",
                       name: "app_config.yaml",
                       type: "file",
                       content: "server:\n  host: 127.0.0.1\n  port: 8080",
                     },
                     {
-                      id: id(),
+                      id: "fs-082",
                       name: ".env",
                       type: "file",
                       content: "DB_USER=admin\nDB_PASS=changeme",
                     },
                     {
-                      id: id(),
+                      id: "fs-083",
                       name: "db_dump.sql",
                       type: "file",
                       content: "-- SQL dump\nCREATE TABLE users (id INT, name TEXT);",
                     },
                     {
-                      id: id(),
+                      id: "fs-084",
                       name: "service_private.key.obf",
                       type: "file",
                       content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
@@ -1112,135 +1189,135 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-085",
                   name: "backup_legacy.tar",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-086",
                       name: "legacy_db.sql",
                       type: "file",
                       content: "-- Legacy DB schema\nCREATE TABLE legacy (id INT);",
                     },
                     {
-                      id: id(),
+                      id: "fs-087",
                       name: "notes_old.txt",
                       type: "file",
                       content: "Old backup from legacy system.",
                     },
                   ],
                 },
-                { id: id(), name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
-                { id: id(), name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
-                { id: id(), name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
-                { id: id(), name: "daily_report.doc", type: "file", content: "Report: All Clear" },
+                { id: "fs-088", name: "buffer_overflow.dmp", type: "file", content: "Error: 0x88291" },
+                { id: "fs-089", name: "cache_fragment_a.tmp", type: "file", content: "00110001" },
+                { id: "fs-090", name: "cache_fragment_b.tmp", type: "file", content: "11001100" },
+                { id: "fs-091", name: "daily_report.doc", type: "file", content: "Report: All Clear" },
                 {
-                  id: id(),
+                  id: "fs-092",
                   name: "error_stack.trace",
                   type: "file",
                   content: "Stack trace overflow...",
                 },
-                { id: id(), name: "fragment_001.dat", type: "file", content: "[DATA]" },
-                { id: id(), name: "fragment_002.dat", type: "file", content: "[DATA]" },
-                { id: id(), name: "fragment_003.dat", type: "file", content: "[DATA]" },
-                { id: id(), name: "fragment_004.dat", type: "file", content: "[DATA]" },
-                { id: id(), name: "fragment_005.dat", type: "file", content: "[DATA]" },
+                { id: "fs-093", name: "fragment_001.dat", type: "file", content: "[DATA]" },
+                { id: "fs-094", name: "fragment_002.dat", type: "file", content: "[DATA]" },
+                { id: "fs-095", name: "fragment_003.dat", type: "file", content: "[DATA]" },
+                { id: "fs-096", name: "fragment_004.dat", type: "file", content: "[DATA]" },
+                { id: "fs-097", name: "fragment_005.dat", type: "file", content: "[DATA]" },
                 {
-                  id: id(),
+                  id: "fs-098",
                   name: "junk_mail.eml",
                   type: "file",
                   content: "Subject: URGENT ACTION",
                 },
-                { id: id(), name: "kernel_panic.log", type: "file", content: "Panic at 0x00" },
+                { id: "fs-099", name: "kernel_panic.log", type: "file", content: "Panic at 0x00" },
                 {
-                  id: id(),
+                  id: "fs-100",
                   name: "license_agreement.txt",
                   type: "file",
                   content: "Terms and Conditions...",
                 },
-                { id: id(), name: "marketing_spam.eml", type: "file", content: "Buy now!" },
-                { id: id(), name: "metrics_raw.csv", type: "file", content: `id,value\n1,10` },
+                { id: "fs-101", name: "marketing_spam.eml", type: "file", content: "Buy now!" },
+                { id: "fs-102", name: "metrics_raw.csv", type: "file", content: `id,value\n1,10` },
                 {
-                  id: id(),
+                  id: "fs-103",
                   name: "sector_map.png",
                   type: "file",
                   content:
                     "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
                 },
                 {
-                  id: id(),
+                  id: "fs-104",
                   name: "session_data.bin",
                   type: "file",
                   content: "[BINARY SESSION DATA]",
                 },
                 {
-                  id: id(),
+                  id: "fs-105",
                   name: "status_report.txt",
                   type: "file",
                   content: "System Status: Nominal",
                 },
                 {
-                  id: id(),
+                  id: "fs-106",
                   name: "system_health.json",
                   type: "file",
                   content: '{"cpu": 45, "memory": 62, "disk": 78}',
                 },
-                { id: id(), name: "temp_cache.tmp", type: "file", content: "[TEMPORARY CACHE]" },
+                { id: "fs-107", name: "temp_cache.tmp", type: "file", content: "[TEMPORARY CACHE]" },
                 {
-                  id: id(),
+                  id: "fs-108",
                   name: "telemetry_data.csv",
                   type: "file",
                   content: `timestamp,event\n12345,boot`,
                 },
                 {
-                  id: id(),
+                  id: "fs-109",
                   name: "test_results.xml",
                   type: "file",
                   content: '<results><test passed="true"/></results>',
                 },
                 {
-                  id: id(),
+                  id: "fs-110",
                   name: "thread_dump.log",
                   type: "file",
                   content: `Thread-0: WAITING\nThread-1: RUNNING`,
                 },
                 {
-                  id: id(),
+                  id: "fs-111",
                   name: "timestamp.log",
                   type: "file",
                   content: "2024-12-15 10:23:45 UTC",
                 },
                 { id: "virus", name: "watcher_agent.sys", type: "file", content: LONG_LOG_CONTENT },
                 {
-                  id: id(),
+                  id: "fs-112",
                   name: "backup_logs.zip",
                   type: "archive",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-113",
                       name: "sys_v1.log",
                       type: "file",
                       content: `System initialized...\nBoot sequence complete.`,
                     },
                     {
-                      id: id(),
+                      id: "fs-114",
                       name: "sys_v2.log",
                       type: "file",
                       content: `Network scan complete...\n3 vulnerabilities found.`,
                     },
                     {
-                      id: id(),
+                      id: "fs-115",
                       name: "credentials",
                       type: "dir",
                       children: [
                         {
-                          id: id(),
+                          id: "fs-116",
                           name: "access_key.pem",
                           type: "file",
                           content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
                         },
                         {
-                          id: id(),
+                          id: "fs-117",
                           name: "decoy_cert.pem",
                           type: "file",
                           content: `-----BEGIN CERTIFICATE-----\n[DECOY - EXPIRED]\n-----END CERTIFICATE-----`,
@@ -1248,13 +1325,13 @@ export const INITIAL_FS: FileNode = {
                       ],
                     },
                     {
-                      id: id(),
+                      id: "fs-118",
                       name: "core_v2.bin.gz",
                       type: "file",
                       content: "[GZIPPED BINARY: core_v2.bin.gz - placeholder]",
                     },
                     {
-                      id: id(),
+                      id: "fs-119",
                       name: "payload.enc",
                       type: "file",
                       content: "[ENCRYPTED PAYLOAD BLOB - placeholder]",
@@ -1263,18 +1340,18 @@ export const INITIAL_FS: FileNode = {
                 },
                 // Batch logs directory used for Level 6 Ctrl+A training
                 {
-                  id: id(),
+                  id: "fs-120",
                   name: "batch_logs",
                   type: "dir",
                   children: [
-                    { id: id(), name: "exfil_01.log", type: "file", content: "ENTRY 1" },
-                    { id: id(), name: "exfil_02.log", type: "file", content: "ENTRY 2" },
-                    { id: id(), name: "exfil_03.log", type: "file", content: "ENTRY 3" },
-                    { id: id(), name: "exfil_04.log", type: "file", content: "ENTRY 4" },
+                    { id: "fs-121", name: "exfil_01.log", type: "file", content: "ENTRY 1" },
+                    { id: "fs-122", name: "exfil_02.log", type: "file", content: "ENTRY 2" },
+                    { id: "fs-123", name: "exfil_03.log", type: "file", content: "ENTRY 3" },
+                    { id: "fs-124", name: "exfil_04.log", type: "file", content: "ENTRY 4" },
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-125",
                   name: "invoice_2024.pdf",
                   type: "file",
                   content: `[PDF HEADER]\nInvoice #99283\nAmount: $99.00`,
@@ -1287,7 +1364,7 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-126",
                   name: "wallpaper.jpg",
                   type: "file",
                   content:
@@ -1302,14 +1379,14 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-127",
                   name: "sector_map.png",
                   type: "file",
                   content:
                     "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
                 },
                 {
-                  id: id(),
+                  id: "fs-128",
                   name: "access_log.txt",
                   type: "file",
                   content: "2026-01-02 12:00:00 - ACCESS GRANTED - admin",
@@ -1322,19 +1399,19 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-129",
                   name: "tiles",
                   type: "dir",
                   children: [
                     {
-                      id: id(),
+                      id: "fs-130",
                       name: "tile_0_0.png",
                       type: "file",
                       content:
                         "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=400&auto=format&fit=crop",
                     },
                     {
-                      id: id(),
+                      id: "fs-131",
                       name: "tile_0_1.png",
                       type: "file",
                       content:
@@ -1343,7 +1420,7 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: id(),
+                  id: "fs-132",
                   name: "readme.md",
                   type: "file",
                   content: "Grid alpha tile set for map rendering.",
@@ -1356,13 +1433,13 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-133",
                   name: "yazi.toml",
                   type: "file",
                   content: `[manager]\nsort_by = "natural"\nshow_hidden = false\n\n[preview]\nmax_width = 1000`,
                 },
                 {
-                  id: id(),
+                  id: "fs-134",
                   name: "theme.toml",
                   type: "file",
                   content: `[theme]\nprimary = "orange"\nsecondary = "blue"`,
@@ -1375,13 +1452,13 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-135",
                   name: "thumbnails.db",
                   type: "file",
                   content: "[CACHE DATA]",
                 },
                 {
-                  id: id(),
+                  id: "fs-136",
                   name: "temp_session.json",
                   type: "file",
                   content: '{"session": "cached"}',
@@ -1394,7 +1471,7 @@ export const INITIAL_FS: FileNode = {
               type: "dir",
               children: [
                 {
-                  id: id(),
+                  id: "fs-137",
                   name: "state.db",
                   type: "file",
                   content: "[STATE DATABASE]",
@@ -1402,19 +1479,19 @@ export const INITIAL_FS: FileNode = {
               ],
             },
             {
-              id: id(),
+              id: "fs-138",
               name: ".bashrc",
               type: "file",
               content: `# Bash configuration\nalias ls='ls --color=auto'\nexport PATH=$PATH:~/bin`,
             },
             {
-              id: id(),
+              id: "fs-139",
               name: ".bash_history",
               type: "file",
               content: `cd workspace\nls -la\nrm trace.log\nexit`,
             },
             {
-              id: id(),
+              id: "fs-140",
               name: ".profile",
               type: "file",
               content: `# User profile\nexport EDITOR=vim`,
@@ -1434,7 +1511,7 @@ export const INITIAL_FS: FileNode = {
           type: "dir",
           children: [
             {
-              id: id(),
+              id: "fs-141",
               name: "kernel_panic.log",
               type: "file",
               content: "ERROR: KERNEL PANIC 0xDEADBEEF - CORRUPTED SECTOR DATA",
@@ -1449,31 +1526,31 @@ export const INITIAL_FS: FileNode = {
       type: "dir",
       children: [
         {
-          id: id(),
+          id: "fs-142",
           name: "bash",
           type: "file",
           content: `#!/bin/bash\n[ELF BINARY]\nGNU Bash version 5.2.15`,
         },
         {
-          id: id(),
+          id: "fs-143",
           name: "cat",
           type: "file",
           content: `[ELF BINARY]\ncoreutils - concatenate files`,
         },
-        { id: id(), name: "chmod", type: "file", content: `[ELF BINARY]\nchange file mode bits` },
-        { id: id(), name: "cp", type: "file", content: `[ELF BINARY]\ncopy files and directories` },
-        { id: id(), name: "grep", type: "file", content: `[ELF BINARY]\npattern matching utility` },
-        { id: id(), name: "ls", type: "file", content: `[ELF BINARY]\nlist directory contents` },
-        { id: id(), name: "mkdir", type: "file", content: `[ELF BINARY]\nmake directories` },
-        { id: id(), name: "mv", type: "file", content: `[ELF BINARY]\nmove (rename) files` },
+        { id: "fs-144", name: "chmod", type: "file", content: `[ELF BINARY]\nchange file mode bits` },
+        { id: "fs-145", name: "cp", type: "file", content: `[ELF BINARY]\ncopy files and directories` },
+        { id: "fs-146", name: "grep", type: "file", content: `[ELF BINARY]\npattern matching utility` },
+        { id: "fs-147", name: "ls", type: "file", content: `[ELF BINARY]\nlist directory contents` },
+        { id: "fs-148", name: "mkdir", type: "file", content: `[ELF BINARY]\nmake directories` },
+        { id: "fs-149", name: "mv", type: "file", content: `[ELF BINARY]\nmove (rename) files` },
         {
-          id: id(),
+          id: "fs-150",
           name: "rm",
           type: "file",
           content: `[ELF BINARY]\nremove files or directories`,
         },
         {
-          id: id(),
+          id: "fs-151",
           name: "systemctl",
           type: "file",
           content: `[ELF BINARY]\nControl the systemd system and service manager`,
@@ -1487,19 +1564,19 @@ export const INITIAL_FS: FileNode = {
       protected: true,
       children: [
         {
-          id: id(),
+          id: "fs-152",
           name: "sys_config.toml",
           type: "file",
           content: `security_level = "high"\nencryption = "aes-256"\nfirewall = true`,
         },
         {
-          id: id(),
+          id: "fs-153",
           name: "hosts",
           type: "file",
           content: `127.0.0.1 localhost\n192.168.1.1 gateway`,
         },
         {
-          id: id(),
+          id: "fs-154",
           name: "resolv.conf",
           type: "file",
           content: `nameserver 8.8.8.8\nnameserver 1.1.1.1`,
@@ -1512,97 +1589,97 @@ export const INITIAL_FS: FileNode = {
       type: "dir",
       children: [
         {
-          id: id(),
+          id: "fs-155",
           name: "debug_trace.log",
           type: "file",
           content: `[DEBUG] Trace execution started\n[DEBUG] Memory mapped at 0x8829\n[WARN] High latency detected`,
         },
         {
-          id: id(),
+          id: "fs-156",
           name: "metrics_buffer.json",
           type: "file",
           content: '{"cpu": 99, "mem": 1024}',
         },
         {
-          id: id(),
+          id: "fs-157",
           name: "overflow_heap.dmp",
           type: "file",
           content: "Heap dump triggered by OOM",
         },
         {
-          id: id(),
+          id: "fs-158",
           name: "session_B2.tmp",
           type: "file",
           content: `UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1`,
         },
-        { id: id(), name: "socket_001.sock", type: "file", content: "[SOCKET]" },
+        { id: "fs-159", name: "socket_001.sock", type: "file", content: "[SOCKET]" },
         {
-          id: id(),
+          id: "fs-160",
           name: "sys_dump.log",
           type: "file",
           content: `Error: Connection reset by peer\nStack trace:\n at core.net.TcpConnection.read (core/net.ts:42)\n at processTicksAndRejections (internal/process/task_queues.js:95)`,
         },
         {
-          id: id(),
+          id: "fs-161",
           name: "debug_trace.trc",
           type: "file",
           content: `[DEBUG TRACE]\nLEVEL: 3\nMODULE: core.scheduler\nSTATUS: IDLE`,
         },
         {
-          id: id(),
+          id: "fs-162",
           name: "ghost_process.pid",
           type: "file",
           content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd`,
         },
         {
-          id: id(),
+          id: "fs-163",
           name: "cache",
           type: "dir",
           children: [
-            { id: id(), name: "thumbnails.db", type: "file", content: "[THUMBNAIL CACHE DB]" },
+            { id: "fs-164", name: "thumbnails.db", type: "file", content: "[THUMBNAIL CACHE DB]" },
             {
-              id: id(),
+              id: "fs-165",
               name: "temp_session_1.json",
               type: "file",
               content: '{"session":"abc123","expires":"2026-01-04T00:00:00Z"}',
             },
-            { id: id(), name: "cache_index.json", type: "file", content: '{"entries":128}' },
+            { id: "fs-166", name: "cache_index.json", type: "file", content: '{"entries":128}' },
           ],
         },
       ],
     },
     {
-      id: id(),
+      id: "fs-167",
       name: "license.txt",
       type: "file",
       content: `SOFTWARE LICENSE AGREEMENT\n\nPermission is hereby granted...`,
     },
     {
-      id: id(),
+      id: "fs-168",
       name: "boot.log",
       type: "file",
       content: `[BOOT] System started at 2024-12-18 08:00:00\n[BOOT] All services initialized\n[BOOT] Ready`,
     },
     {
-      id: id(),
+      id: "fs-169",
       name: "access.log",
       type: "file",
       content: `GET /api/status 200\nPOST /api/upload 201\nGET /api/data 200`,
     },
     {
-      id: id(),
+      id: "fs-170",
       name: ".access.log",
       type: "file",
       content: `2024-12-19 14:23:11 - User 'guest' accessed /home/guest/datastore\n2024-12-19 14:24:55 - User 'guest' accessed /etc\n2024-12-19 14:25:33 - User 'guest' accessed /tmp`,
     },
     {
-      id: id(),
+      id: "fs-171",
       name: ".audit.log",
       type: "file",
       content: `AUDIT TRAIL\n============\n2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi'\n2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf\n2024-12-19 13:58:47 - Permission change: /etc/daemon/config`,
     },
     {
-      id: id(),
+      id: "fs-172",
       name: ".system.log",
       type: "file",
       content: `[2024-12-18 08:00:01] System boot\n[2024-12-18 08:00:45] Network: eth0 up\n[2024-12-19 10:22:13] Firewall: Connection attempt blocked from 192.168.1.99\n[2024-12-19 14:11:02] User login: guest`,
@@ -1634,11 +1711,8 @@ export const LEVELS: Level[] = [
         id: "nav-1",
         description: "Enter '~/datastore' directory (l)",
         check: c => {
-          var u;
-          return (
-            (u = findNodeByName(c.fs, "datastore", "dir"))?.name === "datastore" &&
-            c.currentPath.includes(u.id)
-          );
+          const u = findNodeByName(c.fs, "datastore", "dir");
+          return !!u && u.name === "datastore" && c.currentPath.includes(u.id);
         },
         completed: false,
       },
@@ -1864,6 +1938,8 @@ export const LEVELS: Level[] = [
     id: 5,
     episodeId: 1,
     title: "CONTAINMENT BREACH",
+    description:
+      "CRITICAL ASSETS EXPOSED. The uplink protocols in datastore/protocols are vulnerable to detection. Execute emergency evacuation procedures—select multiple files simultaneously and relocate them to a hidden vault. The .config sector contains secure storage. Create the nested vault/active/ directory and transfer the protocols before they're compromised.",
     initialPath: ["root", "home", "guest"],
     hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (~) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
     coreSkill: "Visual Select, Cut",
@@ -1879,7 +1955,7 @@ export const LEVELS: Level[] = [
       let protocolsDir = findNodeByName(s, "protocols");
       if (!protocolsDir) {
         protocolsDir = {
-          id: id(),
+          id: "fs-173",
           name: "protocols",
           type: "dir",
           children: [],
@@ -1893,7 +1969,7 @@ export const LEVELS: Level[] = [
         if (!protocolsDir.children) protocolsDir.children = [];
         if (!protocolsDir.children.find(f => f.name === "uplink_v1.conf")) {
           protocolsDir.children.push({
-            id: id(),
+            id: "fs-174",
             name: "uplink_v1.conf",
             type: "file",
             content: "conf_1",
@@ -1902,7 +1978,7 @@ export const LEVELS: Level[] = [
         }
         if (!protocolsDir.children.find(f => f.name === "uplink_v2.conf")) {
           protocolsDir.children.push({
-            id: id(),
+            id: "fs-175",
             name: "uplink_v2.conf",
             type: "file",
             content: "conf_2",
@@ -2117,7 +2193,7 @@ export const LEVELS: Level[] = [
         // Add honeypot file if not present
         if (!tmp.children.find(c => c.name === "access_token.key")) {
           tmp.children.push({
-            id: id(),
+            id: "fs-176",
             name: "access_token.key",
             type: "file",
             content: "# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm",
@@ -2157,14 +2233,14 @@ export const LEVELS: Level[] = [
 
       let vaultDir = findNodeByName(s, "vault");
       if (!vaultDir) {
-        vaultDir = { id: id(), name: "vault", type: "dir", children: [], parentId: configDir.id };
+        vaultDir = { id: "fs-177", name: "vault", type: "dir", children: [], parentId: configDir.id };
         if (!configDir.children) configDir.children = [];
         configDir.children.push(vaultDir);
       }
 
       let activeDir = findNodeByName(s, "active");
       if (!activeDir && vaultDir) {
-        activeDir = { id: id(), name: "active", type: "dir", children: [], parentId: vaultDir.id };
+        activeDir = { id: "fs-178", name: "active", type: "dir", children: [], parentId: vaultDir.id };
         if (!vaultDir.children) vaultDir.children = [];
         vaultDir.children.push(activeDir);
       }
@@ -2173,7 +2249,7 @@ export const LEVELS: Level[] = [
         if (!activeDir.children) activeDir.children = [];
         if (!activeDir.children.find(f => f.name === "uplink_v1.conf")) {
           activeDir.children.push({
-            id: id(),
+            id: "fs-179",
             name: "uplink_v1.conf",
             type: "file",
             content: "network_mode=active\nsecure=true",
@@ -2363,12 +2439,12 @@ export const LEVELS: Level[] = [
     description:
       "CREDENTIALS AUTHENTICATED. Root access granted. The '/daemons' directory contains system services—some legitimate, some honeypots. Security left trap files: daemons modified today are monitored. Filter for '.service' extensions, sort by modification time. Identify camouflage targets: services old enough to be forgotten, recent enough to appear maintained. Your systemd-core must blend perfectly.",
     initialPath: null,
-    hint: "Use Shift+Z to jump to '/daemons' (or navigate manually: gr → enter daemons). Filter for '.service' files (f). Sort by modified time (,m). Select the two oldest .service files as camouflage reference (Space). These patterns will guide your disguise.",
+    hint: "Use Shift+Z to jump to '/daemons' (or navigate manually: gr → enter daemons). Filter for '.service' files (f). Sort by modified time (,m). Select the two oldest .service files as camouflage reference (Space). Yank (y) the selected files and paste (p) them into a 'camouflage/' folder inside '~/workspace/systemd-core' (create with 'a' if missing). These patterns will guide your disguise.",
     coreSkill: "Filter + Sort + Selection (Ep I-II Integration)",
     environmentalClue:
       "AUDIT STATUS: Active monitoring on recent daemons | FILTER: *.service | SORT: Modified time | SELECT: Oldest targets",
     successMessage:
-      "RECONNAISSANCE COMPLETE. Camouflage targets identified: cron-legacy.service and backup-archive.service. These dormant services haven't been touched in weeks. Your systemd-core will adopt their signature patterns. Infiltration strategy: OPTIMAL.",
+      "RECONNAISSANCE COMPLETE. Camouflage targets identified and copied: cron-legacy.service and backup-archive.service. These dormant services haven't been touched in weeks; their signatures are now stored in your systemd-core 'camouflage/' folder. Infiltration strategy: OPTIMAL.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 27,
@@ -2387,13 +2463,13 @@ export const LEVELS: Level[] = [
       if (!daemonsDir) {
         const now = Date.now();
         daemonsDir = {
-          id: id(),
+          id: "fs-180",
           name: "daemons",
           type: "dir",
           children: [
             // Legitimate old services (TARGETS - to select)
             {
-              id: id(),
+              id: "fs-181",
               name: "cron-legacy.service",
               type: "file",
               content:
@@ -2401,7 +2477,7 @@ export const LEVELS: Level[] = [
               modifiedAt: now - 86400000 * 45, // 45 days old - OLDEST
             },
             {
-              id: id(),
+              id: "fs-182",
               name: "backup-archive.service",
               type: "file",
               content:
@@ -2410,7 +2486,7 @@ export const LEVELS: Level[] = [
             },
             // Mid-range services
             {
-              id: id(),
+              id: "fs-183",
               name: "network-manager.service",
               type: "file",
               content:
@@ -2418,7 +2494,7 @@ export const LEVELS: Level[] = [
               modifiedAt: now - 86400000 * 7, // 7 days old
             },
             {
-              id: id(),
+              id: "fs-184",
               name: "log-rotator.service",
               type: "file",
               content:
@@ -2427,7 +2503,7 @@ export const LEVELS: Level[] = [
             },
             // Honeypots (recently modified = MONITORED)
             {
-              id: id(),
+              id: "fs-185",
               name: "security-audit.service",
               type: "file",
               content:
@@ -2435,7 +2511,7 @@ export const LEVELS: Level[] = [
               modifiedAt: now - 86400000 * 1, // 1 day old - MONITORED
             },
             {
-              id: id(),
+              id: "fs-186",
               name: "watchdog-monitor.service",
               type: "file",
               content:
@@ -2444,14 +2520,14 @@ export const LEVELS: Level[] = [
             },
             // Non-.service files (should be filtered OUT)
             {
-              id: id(),
+              id: "fs-187",
               name: "daemon.conf",
               type: "file",
               content: "# Global daemon configuration\nmax_processes=256\nlog_level=warn",
               modifiedAt: now - 86400000 * 10,
             },
             {
-              id: id(),
+              id: "fs-188",
               name: "README.md",
               type: "file",
               content: "# Daemons Directory\nSystem services. Do not modify without authorization.",
@@ -2498,14 +2574,37 @@ export const LEVELS: Level[] = [
       },
       {
         id: "select-targets",
-        description: "Select the two oldest .service files as camouflage references",
+        description: "Select and yank the two oldest .service files as camouflage reference",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("sort-modified")) return false;
-          // Check that at least 2 .service files are selected
+
+          // Ensure at least 2 .service files are selected
           const daemons = findNodeByName(c.fs, "daemons", "dir");
           const serviceFiles = daemons?.children?.filter(n => n.name.endsWith(".service")) || [];
           const selectedServices = serviceFiles.filter(n => c.selectedIds.includes(n.id));
-          return selectedServices.length >= 2;
+          if (selectedServices.length < 2) return false;
+
+          // Ensure clipboard contains a yank of those selected files
+          if (!c.clipboard || c.clipboard.action !== "yank") return false;
+          const clipboardNodes = c.clipboard.nodes || [];
+
+          // Confirm every selected service is present in the clipboard (by id or name)
+          const allPresent = selectedServices.every(s =>
+            clipboardNodes.some((n: any) => n.id === s.id || n.name === s.name)
+          );
+          return allPresent;
+        },
+        completed: false,
+      },
+      {
+        id: "paste-camouflage",
+        description: "Paste the .service files into '~/workspace/systemd-core/camouflage'",
+        check: c => {
+          const systemdCore = findNodeByName(c.fs, "systemd-core", "dir");
+          const camouflage = systemdCore?.children?.find((n: any) => n.name === "camouflage" && n.type === "dir");
+          if (!camouflage || !camouflage.children) return false;
+          const namesNeeded = ["cron-legacy.service", "backup-archive.service"];
+          return namesNeeded.every(nm => camouflage.children!.some((ch: any) => ch.name === nm));
         },
         completed: false,
       },
@@ -2561,10 +2660,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: "paste-daemon",
-        description: "Install systemd-core in '/daemons'",
+        description: "Install systemd-core in '/daemons' and navigate into it",
         check: c => {
           const daemons = findNodeByName(c.fs, "daemons");
-          return !!daemons?.children?.some(n => n.name === "systemd-core");
+          const systemdCore = daemons?.children?.find(n => n.name === "systemd-core" && n.type === "dir");
+          if (!systemdCore) return false;
+          // Confirm installation and that player navigated into the installed daemon
+          return !!daemons?.children?.some(n => n.name === "systemd-core") && c.currentPath.includes(systemdCore.id);
         },
         completed: false,
       },
@@ -2619,29 +2721,24 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: "jump-tmp",
-        description: "Jump to '/tmp' staging area",
+        id: "jump-upload",
+        description: "Jump to '/tmp' staging area and create 'upload/'",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("copy-neural-pattern")) return false;
           const tmp = findNodeByName(c.fs, "tmp", "dir");
-          return c.currentPath.includes(tmp?.id || "");
-        },
-        completed: false,
-      },
-      {
-        id: "create-upload",
-        description: "Create 'upload/' relay directory",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes("jump-tmp")) return false;
-          const tmp = findNodeByName(c.fs, "tmp", "dir");
-          return !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
+          // Ensure player is in /tmp and that upload/ directory exists
+          const inTmp = c.currentPath.includes(tmp?.id || "");
+          const hasUpload = !!tmp?.children?.some(n => n.name === "upload" && n.type === "dir");
+          return inTmp && hasUpload;
         },
         completed: false,
       },
       {
         id: "transmit-consciousness",
         description: "Enter upload/ and paste - begin distributed transmission",
-        check: c => {
+        check: (c, _s) => {
+          // Require that player completed jump+create step
+          if (!c.completedTaskIds[_s.id]?.includes("jump-upload")) return false;
           const upload = findNodeByName(c.fs, "upload", "dir");
           // Check upload has multiple files (the batch paste worked)
           return upload?.children && upload.children.length >= 2;
@@ -2688,7 +2785,7 @@ export const LEVELS: Level[] = [
       {
         id: "delete-visible",
         description:
-          "Delete all visible directories ('/home/guest/workspace', '/home/guest/media', '/home/guest/datastore', '/home/guest/incoming')",
+          "Delete the four directories ( '/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace')",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes("nav-guest")) return false;
           const guest = findNodeByName(c.fs, "guest");
@@ -2730,7 +2827,7 @@ export const LEVELS: Level[] = [
       "METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared.",
     buildsOn: [5, 13, 14],
     leadsTo: [],
-    maxKeystrokes: 25,
+    maxKeystrokes: 15,
     efficiencyTip:
       "Reverse selection: select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.",
     tasks: [

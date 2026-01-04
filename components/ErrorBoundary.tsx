@@ -1,4 +1,5 @@
 import React from "react";
+
 import { reportError } from "../utils/error";
 
 type Props = { children: React.ReactNode };
@@ -18,7 +19,7 @@ export default class ErrorBoundary extends React.Component<
     try {
       reportError(error, { errorInfo });
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.error("App Error:", error, errorInfo);
     }
   }

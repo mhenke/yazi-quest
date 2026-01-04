@@ -1,4 +1,5 @@
 import React from "react";
+
 import { FileNode } from "../types";
 
 interface InfoPanelProps {

@@ -1,4 +1,5 @@
 import React from "react";
+
 import { reportError } from "../utils/error";
 
 type Props = { children: React.ReactNode };

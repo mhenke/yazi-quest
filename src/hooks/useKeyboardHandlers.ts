@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+
 import { GameState, FileNode, Level, FsError, Result } from "../types";
 import {
   getNodeByPath,
@@ -573,7 +574,7 @@ export const useKeyboardHandlers = (
             e.preventDefault();
             const allIds = items.map(item => item.id);
             const inverted = allIds.filter(id => !gameState.selectedIds.includes(id));
-            setGameState(prev => ({ ...prev, selectedIds: inverted }));
+            setGameState(prev => ({ ...prev, selectedIds: inverted, usedCtrlR: true }));
             showNotification(
               getNarrativeAction("Ctrl+R") || `Inverted selection (${inverted.length} items)`,
               2000

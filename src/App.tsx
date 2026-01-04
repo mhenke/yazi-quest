@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+
 import {
   GameState,
   FileNode,
@@ -17,6 +18,7 @@ import {
   cloneFS,
   createPath,
   resolveAndCreatePath,
+  getAllDirectories,
   getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
@@ -140,6 +142,14 @@ export default function App() {
         "/daemons": { count: 12, lastAccess: now - 43200000 },
         "/daemons/systemd-core": { count: 5, lastAccess: now - 21600000 },
       };
+    }
+
+    // Ensure critical zoxide entries exist even if localStorage had different data
+    if (!initialZoxide["/daemons"]) {
+      initialZoxide["/daemons"] = { count: 1, lastAccess: now - 43200000 };
+    }
+    if (!initialZoxide["/daemons/systemd-core"]) {
+      initialZoxide["/daemons/systemd-core"] = { count: 1, lastAccess: now - 21600000 };
     }
 
     const initialPath = initialLevel.initialPath || ["root", "home", "guest"];
@@ -576,7 +586,7 @@ export default function App() {
         );
 
         if (bestMatch) {
-          const allDirs = getAllDirectories(gameState.fs);
+          const allDirs = getAllDirectoriesWithPaths(gameState.fs).map(d => ({ node: d.node, path: d.path, display: resolvePath(gameState.fs, d.path) }));
           const match = allDirs.find(d => d.display === bestMatch.path);
           if (match) {
             const now = Date.now();
@@ -892,7 +902,7 @@ export default function App() {
             gameState,
             setGameState,
             visibleItems,
-            parent,
+            parent || null,
             currentItem,
             currentLevel,
             advanceLevel

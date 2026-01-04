@@ -12,7 +12,7 @@ export const measure = <T>(label: string, fn: () => T, thresholdMs: number = 5):
     return res;
   } catch (err) {
     // Don't break app for perf measurement failures
-    // eslint-disable-next-line no-console
+     
     console.warn("Perf measure failed", err);
     return fn();
   }

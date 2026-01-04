@@ -9,6 +9,7 @@ export interface FileNode {
   content?: string; // Only for type 'file'
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
+  protected?: boolean;
 }
 
 export interface FileSystemState {
@@ -18,18 +19,18 @@ export interface FileSystemState {
 export interface LevelTask {
   id: string;
   description: string;
-  check: (gameState: GameState, level: Level) => boolean;
+  check: (gameState: GameState, level: Level) => boolean | undefined;
   completed: boolean;
-  hidden?: (gameState: GameState, level: Level) => boolean; // Hide task until condition met
+  hidden?: (gameState: GameState, level: Level) => boolean | undefined; // Hide task until condition met
 }
 
 export interface Level {
   id: number;
   episodeId: number; // 1, 2, or 3
   title: string;
-  description: string;
+  description?: string;
   tasks: LevelTask[];
-  initialPath: string[] | null; // Path of IDs (null = stay in current)
+  initialPath?: string[] | null; // Path of IDs (null = stay in current)
   hint: string;
   onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
   seedMode?: "always" | "fresh"; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
@@ -154,7 +155,7 @@ export interface GameState {
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
-  showMap: boolean; // Toggle for quest map modal
+  showMap?: boolean; // Toggle for quest map modal
   showHint: boolean; // Toggle for hint modal
   hintStage: number; // Progressive hint disclosure (0=vague, 1=partial, 2=detailed)
   showHidden: boolean; // Toggle for showing hidden files (starting with .)
@@ -171,6 +172,7 @@ export interface GameState {
   usedGI?: boolean; // Tracks if player used gi (g then i) to jump specifically to incoming
   usedGC?: boolean; // Tracks if player used gc (g then c) to jump specifically to .config
   usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all in a directory
+  usedCtrlR?: boolean; // Tracks if player used Ctrl+R for redo/refresh actions
   usedGG?: boolean; // Tracks if player used gg (jump to top)
   usedDown?: boolean; // Tracks if player used j/down
   usedUp?: boolean; // Tracks if player used k/up
