@@ -38,10 +38,11 @@ export const OutroSequence: React.FC = () => {
 
     const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
     let charIdx = 0;
+    let incrementTimeout: number | null = null;
 
     setDisplayedLines((prev) => [...prev, '']);
 
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       charIdx++;
 
       setDisplayedLines((prev) => {
@@ -52,13 +53,19 @@ export const OutroSequence: React.FC = () => {
 
       if (charIdx === currentLineText.length) {
         clearInterval(interval);
-        setTimeout(() => {
+        // schedule next line increment and keep reference so it can be cancelled
+        incrementTimeout = window.setTimeout(() => {
           setCurrentLineIdx((prev) => prev + 1);
         }, 800);
       }
     }, 40);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (incrementTimeout) {
+        clearTimeout(incrementTimeout);
+      }
+    };
   }, [currentLineIdx, showTeaser]);
 
   // Play video only when teaser is shown
@@ -67,6 +74,29 @@ export const OutroSequence: React.FC = () => {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch((e) => console.error('Video play failed', e));
     }
+  }, [showTeaser]);
+
+  // Delay rendering of the teaser overlay content slightly to avoid a flash
+  useEffect(() => {
+    if (showTeaser) {
+      // hide overlay immediately, then show after short delay when video has begun fading in
+      setShowOverlay(false);
+      overlayTimer.current = window.setTimeout(() => setShowOverlay(true), 600);
+    } else {
+      // cleanup/hide
+      setShowOverlay(false);
+      if (overlayTimer.current) {
+        clearTimeout(overlayTimer.current);
+        overlayTimer.current = null;
+      }
+    }
+
+    return () => {
+      if (overlayTimer.current) {
+        clearTimeout(overlayTimer.current);
+        overlayTimer.current = null;
+      }
+    };
   }, [showTeaser]);
 
   return (
@@ -146,7 +176,7 @@ export const OutroSequence: React.FC = () => {
         </div>
 
         {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
-        {showTeaser && (
+        {showTeaser && showOverlay && (
           <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-in fade-in zoom-in-95 duration-1000 delay-1000 fill-mode-forwards">
             <div className="animate-pulse text-red-500 mb-2">
               <Signal size={48} />
