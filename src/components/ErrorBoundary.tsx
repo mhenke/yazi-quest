@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import { reportError } from "../utils/error";
+import { reportError } from '../utils/error';
 
 type Props = { children: React.ReactNode };
 
@@ -19,7 +19,7 @@ export default class ErrorBoundary extends React.Component<
     try {
       reportError(error, { errorInfo });
     } catch (_e) {
-      console.error("App Error:", error, errorInfo);
+      console.error('App Error:', error, errorInfo);
     }
   }
 
@@ -42,9 +42,7 @@ export default class ErrorBoundary extends React.Component<
         </div>
       );
     }
-    // Cast to any to avoid rare typing conflicts in different TS configs
-    // props should normally exist on React.Component, but some toolchains treat this differently.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this as any).props.children;
+    // Return children with proper typing
+    return this.props.children as React.ReactNode;
   }
 }

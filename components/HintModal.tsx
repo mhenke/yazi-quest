@@ -1,5 +1,5 @@
-import React from "react";
-import { Lightbulb } from "lucide-react";
+import React from 'react';
+import { Lightbulb } from 'lucide-react';
 
 interface HintModalProps {
   hint: string;
@@ -7,25 +7,25 @@ interface HintModalProps {
   onClose: () => void;
 }
 
-export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) => {
+export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onClose }) => {
   // Parse hint into progressive stages
   // Split by sentence or period, show increasing amounts
-  const sentences = hint.split(/\.\s+/).filter(s => s.trim());
+  const sentences = hint.split(/\.\s+/).filter((s) => s.trim());
 
-  let displayText = "";
+  let displayText = '';
   if (stage === 0 && sentences.length > 0) {
     // Vague: First sentence only or just the goal
-    displayText = sentences[0] + ".";
+    displayText = sentences[0] + '.';
   } else if (stage === 1 && sentences.length > 1) {
     // Partial: First half of instructions
     const midpoint = Math.ceil(sentences.length / 2);
-    displayText = sentences.slice(0, midpoint).join(". ") + ".";
+    displayText = sentences.slice(0, midpoint).join('. ') + '.';
   } else {
     // Detailed: Full walkthrough
     displayText = hint;
   }
 
-  const stageLabels = ["Hint (Vague)", "Hint (Partial)", "Hint (Detailed)"];
+  const stageLabels = ['Hint (Vague)', 'Hint (Partial)', 'Hint (Detailed)'];
   const stageLabel = stageLabels[stage] || stageLabels[2];
   return (
     <div

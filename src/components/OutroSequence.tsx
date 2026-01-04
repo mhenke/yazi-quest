@@ -9,6 +9,8 @@ export const OutroSequence: React.FC = () => {
   const [currentLineIdx, setCurrentLineIdx] = useState(0);
   const [showTeaser, setShowTeaser] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const overlayTimer = useRef<number | null>(null);
 
   // Typewriter effect logic for lore
   const promptTriggerIndex = Math.max(

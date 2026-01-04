@@ -5,10 +5,13 @@ let audioContext: AudioContext | null = null;
 let awaitingGesture = false;
 
 const createAudioContext = (): AudioContext => {
-  return new (
-    window.AudioContext ||
-    (window as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */.webkitAudioContext
-  )();
+  const w = window as unknown as {
+    AudioContext?: { new (): AudioContext };
+    webkitAudioContext?: { new (): AudioContext };
+  };
+  const Ctor = w.AudioContext || w.webkitAudioContext;
+  if (!Ctor) throw new Error('No AudioContext available');
+  return new Ctor();
 };
 
 const getAudioContext = (): AudioContext => {

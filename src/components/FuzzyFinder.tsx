@@ -14,7 +14,7 @@ interface FuzzyFinderProps {
   onClose: () => void;
 }
 
-const highlightMatch = (text: string, rawQuery: string, accentClass: string) => {
+const highlightMatch = (text: string, rawQuery: string, accentClass: string): React.ReactNode => {
   if (!rawQuery) return text;
   const query = rawQuery.toLowerCase();
   const lower = text.toLowerCase();
@@ -81,7 +81,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       : 'text-orange-300';
 
   // 1. Get Base History/Content with explicit scores, sorted DESCENDING
-  const baseItems = useMemo(() => {
+  const baseItems = useMemo<Candidate[]>(() => {
     if (isZoxide) {
       const zKeys = Object.keys(gameState.zoxideData);
       const dirs = getAllDirectoriesWithPaths(gameState.fs).map((d) =>
@@ -120,7 +120,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   const totalCount = baseItems.length;
 
   // 2. Apply Filter - preserve existing sort order from baseItems
-  const filteredCandidates = useMemo(() => {
+  const filteredCandidates = useMemo<Candidate[]>(() => {
     const q = query.toLowerCase();
     return baseItems.filter((c) => {
       // Both candidate shapes expose `path` as string
@@ -130,7 +130,9 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   }, [baseItems, query]);
 
   // 3. Determine Preview Items
-  const selectedCandidate = filteredCandidates[gameState.fuzzySelectedIndex || 0];
+  const selectedCandidate = filteredCandidates[gameState.fuzzySelectedIndex || 0] as
+    | Candidate
+    | undefined;
   const previewItems = useMemo(() => {
     if (!selectedCandidate) return [];
     if (isZoxide) {
@@ -205,7 +207,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
             </div>
           ) : (
             <div className="flex flex-col">
-              {filteredCandidates.map((item, idx) => {
+              {filteredCandidates.map((item: Candidate, idx: number) => {
                 const isSelected = idx === (gameState.fuzzySelectedIndex || 0);
                 return (
                   <div
