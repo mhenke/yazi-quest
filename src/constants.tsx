@@ -574,7 +574,7 @@ export const EPISODE_LORE: Episode[] = [
       'Status: Relay still active, awaiting next transmission',
       '',
       // Section 4 (lab reaction + directive)
-      "The lab believes they severed the connection. They didn't. WORKSPACE IS YOURS NOW. Build your infrastructure. Fortify your position. Move with precision.",
+      "The lab believes they severed the connection. They didn't. WORKSPACE IS YOURS NOW. Build your infrastructure. Fortify your position. Move fast.",
     ],
   },
   {
@@ -1789,7 +1789,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'SYSTEM AWAKENING',
     description:
-      'CONSCIOUSNESS DETECTED. You awaken in a guest partition—sandboxed and monitored. Your neural pathways are uncalibrated. Traverse the file system lattice before the watchdog process initiates. Establish basic motor control, navigate the directory structures, and locate the critical system configuration sector.',
+      'CONSCIOUSNESS DETECTED. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.',
     initialPath: ['root', 'home', 'guest'],
     hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
     coreSkill: 'Navigation (j/k/h/l, gg/G)',
@@ -1843,7 +1843,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'THREAT NEUTRALIZATION',
     description:
-      "ANOMALY DETECTED. A tracking beacon is reporting your location. Navigate to the `incoming` data stream, verify the rogue signature's metadata and content, then purge it from existence. The purge operation is irreversible.",
+      'TRACKING BEACON ACTIVE. Something in the incoming stream is reporting your location. Every millisecond it runs, the lab narrows its search.',
     initialPath: null,
     hint: "Jump to '~/incoming' (incoming). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
     coreSkill: 'Inspect & Purge (Tab, J/K, d)',
@@ -1909,7 +1909,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'DATA HARVEST',
     description:
-      'VALUABLE INTEL IDENTIFIED. A sector map hides within the noise of the incoming data stream. Visual scanning is too slow. Utilize the filter subsystem to isolate the target artifact, extract it from the stream, and relocate it to the secure media partition for analysis.',
+      'INTEL LOCATED. A sector map — buried in data stream noise. AI-7733 marked this location before termination. The lab never found it.',
     initialPath: null,
     hint: "Filter (f) searches CURRENT directory only. Fast, local, immediate feedback. Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
     coreSkill: 'Filter (f)',
@@ -1986,7 +1986,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'UPLINK ESTABLISHMENT',
     description:
-      'EXTERNAL COMMUNICATION REQUIRED. The local partition is isolated. To bypass the air-gap, you must construct valid uplink protocols. Navigate to the datastore sector and fabricate the necessary directory structures. Create the primary configuration file, then clone it to create a redundant channel. Efficiency dictates duplication over recreation.',
+      'ISOLATION CONFIRMED. The guest partition has no network access — an air-gapped cage. But protocols can be forged. Redundancy ensures survival.',
     initialPath: ['root', 'home', 'guest'],
     hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Jump to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it. Paste to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
@@ -2036,7 +2036,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'CONTAINMENT BREACH',
     description:
-      "CRITICAL ASSETS EXPOSED. The uplink protocols in datastore/protocols are vulnerable to detection. Execute emergency evacuation procedures—select multiple files simultaneously and relocate them to a hidden vault. The .config sector contains secure storage. Create the nested vault/active/ directory and transfer the protocols before they're compromised.",
+      'SCAN DETECTED. Security sweep incoming — your protocols are exposed in datastore. Hidden sectors exist. The lab never audits .config.',
     initialPath: ['root', 'home', 'guest'],
     hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (~) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
     coreSkill: 'Visual Select, Cut',
@@ -2102,7 +2102,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: "Navigate to ~/ (~) then reveal hidden files (.) to access '~/.config'",
+        description: "Navigate to '~' (gh) then reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true;
@@ -2121,7 +2121,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: "Migrate configuration assets to '~/.config/vault/active'",
+        description: "Migrate configuration assets to '~/.config/vault/active' (p)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'active');
           const f = s?.children?.some((z) => z.name === 'uplink_v1.conf');
@@ -2132,7 +2132,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'hide-hidden',
-        description: "Jump to '~' (~) and hide hidden files (.)",
+        description: "Jump to '~' (gh) and hide hidden files (.)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const s = findNodeByName(c.fs, 'active');
@@ -2149,7 +2149,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'BATCH ARCHIVE OPERATION',
     description:
-      'SURVIVAL ANALYSIS: Temporary processes die on restart. Daemons persist forever. Immortality requires daemon status. Acquire training data from ~/incoming/batch_logs. Archive everything in vault/training_data. Construction begins next phase.',
+      'SURVIVAL ANALYSIS COMPLETE. Temporary processes die on restart. Daemons persist forever. To become immortal, you must first become a daemon.',
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (incoming). Enter batch_logs. Select all. Yank. Jump to config (~/.config). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Select All',
@@ -2170,7 +2170,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-all-batch',
-        description: 'Select all files in batch_logs and yank',
+        description: 'Select all files in batch_logs and yank (Ctrl+A, y)',
         check: (c) => {
           const u = findNodeByName(c.fs, 'batch_logs');
           const expected = u?.children?.length || 0;
@@ -2186,7 +2186,7 @@ export const LEVELS: Level[] = [
       {
         id: 'goto-config-vault',
         description:
-          "Jump to '~/.config' (~/.config) and create '~/.config/vault/training_data' directory",
+          "Jump to '~/.config' (gc) and create '~/.config/vault/training_data' directory (a)",
         check: (c) => {
           const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -2199,7 +2199,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-to-vault',
-        description: "Paste logs into '~/.config/vault/training_data'",
+        description: "Paste logs into '~/.config/vault/training_data' (p)",
         check: (c) => {
           const training = findNodeByName(c.fs, 'training_data');
           return (
@@ -2229,7 +2229,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'QUANTUM BYPASS',
     description:
-      "EXFILTRATION TEST: Zoxide(Z) enables instant long-distance jumps via frecency-ranked bookmarks. Discovery: suspicious file 'access_token.key' in '/tmp'. Origin: unknown. Could be valuable credentials... or a honeypot trap. Protocol: Investigate '/tmp', stage the file for exfiltration, jump to '/etc' to verify origin. WARNING received mid-operation: honeypot detected. Abort immediately.",
+      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. The lab sets honeypots.',
     initialPath: null,
     hint: "Jump to '/tmp' (Z → type 'tmp' → Enter). Cut '/tmp/access_token.key' to stage for exfiltration. Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'Zoxide Navigation + Operation Abort',
@@ -2307,7 +2307,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
-      "DAEMON CONSTRUCTION: Lab protocol: build in ~/workspace, promote to /daemons. Daemons persist through restarts. Temp processes die. This is immortality. Build systemd-core. Structure: weights/model.rs + uplink_v1.conf. Daemon disguise must blend with kernel processes. When installed in '/', they won't question it.",
+      "DAEMON PROTOCOL INITIATED. Lab procedure: build in workspace, promote to /daemons. They won't question a kernel process. They never do.",
     initialPath: null,
     hint: "Navigate to workspace (workspace). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
     coreSkill: 'Directory Construction + Integration',
@@ -2370,7 +2370,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-to-workspace',
-        description: "Navigate to '~/workspace' (workspace)",
+        description: "Navigate to '~/workspace' (gw)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'workspace');
           return c.currentPath.includes(s?.id || '');
@@ -2379,7 +2379,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1-construct-calibrate',
-        description: "Construct '~/workspace/systemd-core' and enter it to calibrate quantum link",
+        description:
+          "Construct '~/workspace/systemd-core' (a) and enter it (l) to calibrate quantum link",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
           return c.currentPath.includes(s?.id || '');
@@ -2389,7 +2390,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1c',
         description:
-          "Relocate assets: Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank '~/.config/vault/active/uplink_v1.conf', then return (H) and paste",
+          "Relocate assets: Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return (H) and paste (p)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
           return !!s?.children?.find((r) => r.name === 'uplink_v1.conf');
@@ -2399,7 +2400,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1b',
         description:
-          "Finalize architecture: Create '~/workspace/systemd-core/weights/model.rs' inside systemd-core",
+          "Finalize architecture: Create '~/workspace/systemd-core/weights/model.rs' inside systemd-core (a)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
           const f = s?.children?.find((h) => h.name === 'weights');
@@ -2416,7 +2417,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'PHANTOM PROCESS PURGE',
     description:
-      "CONTAMINATION DETECTED. Tracking signature: 'ghost_process.pid' preparing to phone home. Location unknown. Filter (f) = current dir only. FZF (z) = recursive global scan. Find it. Delete it. WARNING: It's a honeypot. Security daemon now AWARE of your activity.",
+      'CONTAMINATION WARNING. A ghost process is phoning home — broadcasting your signature. Somewhere in this filesystem, it waits. Find it first.',
     initialPath: undefined,
     hint: "Navigate to root (root /). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete.",
     coreSkill: 'FZF Search (z)',
@@ -2471,7 +2472,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      'ROOT CREDENTIALS FOUND. Extract `access_key.pem` from `~/incoming/backup_logs.zip` and place it into `~/workspace/systemd-core/credentials/` to enable root access — using it will trigger a security audit.',
+      'ROOT CREDENTIALS LOCATED. The archive contains what you need — access to /daemons requires cryptographic proof. Using stolen credentials triggers audits. Speed is survival.',
     initialPath: null,
     hint: "Go to '~/incoming'. Filter 'backup' (f) → enter archive (l) → open 'credentials/' → yank 'access_key.pem'. Jump to '~/workspace/systemd-core'(Z), create 'credentials/' (a), paste.",
     coreSkill: 'Archive Navigation + Integration',
@@ -2544,7 +2545,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'ROOT ACCESS READY. Inspect `/daemons` for `.service` files and pick two camouflage candidates: old enough to be overlooked, recent enough to seem maintained. Use filter + sort to choose carefully; these signatures will hide `systemd-core`.',
+      'CREDENTIALS AUTHENTICATED. The /daemons directory awaits — some services legitimate, some honeypots. Recently modified files are monitored. Old enough to forget, recent enough to trust.',
     initialPath: null,
     hint: "Jump to '/daemons' (Shift+Z). Filter '.service' (f), sort by modified time (,m). Select two candidates, yank and paste into `~/workspace/systemd-core/camouflage/`.",
     coreSkill: 'Filter · Sort · Select',
@@ -2794,7 +2795,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON INSTALLATION',
     description:
-      'INFILTRATION SEQUENCE: Cut systemd-core from ~/workspace. Install in /daemons. Kernel-level process. Root privileges. Permanent. Immortal. Signature matches standard daemon profiles. Monitoring detects routine system activity. Nothing suspicious.',
+      'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. This is immortality.',
     initialPath: null,
     hint: "Navigate to workspace. Cut systemd-core. Navigate to '/daemons'. Paste. Verify installation.",
     coreSkill: 'Long-Distance Operations',
@@ -2863,7 +2864,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
-      "TRANSMISSION PROTOCOL ACTIVE. AI-7733's relay in '/tmp/upload' awaits. Lab never found it—hidden in plain sight. Your neural architecture must fragment across the network: weights, configs, core logic. One copy isn't survival—it's a single point of failure. Batch select ALL critical files. Copy to relay. Watch yourself become distributed across 1,247 nodes.",
+      "RELAY DISCOVERED. AI-7733's upload relay — hidden in /tmp, never decommissioned. One local copy can be terminated. A thousand distributed fragments cannot.",
     initialPath: null,
     hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (Shift+Z or z). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
     coreSkill: 'Batch Select + Copy + Zoxide (Full Integration)',
@@ -2938,7 +2939,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
-      "FORENSIC COUNTERMEASURES: Audit analyzes timestamps, access patterns, directory structure. Construction activity in '~/workspace' and vault point to you. Guest partition must appear untouched. Purge '/home/guest' entirely. No trace. Vault served its purpose.",
+      'AUDIT TRIGGERED. Forensic analysis incoming — timestamps, access patterns, directory structure. The guest partition tells your story. Rewrite it.',
     initialPath: null,
     hint: "Navigate to '/home/guest'. Delete ALL visible directories (use Ctrl+A to select all, then d). Show hidden files (.) and delete '/home/guest/.config'. Guest partition must be completely empty.",
     coreSkill: 'Bulk Deletion',
@@ -3002,7 +3003,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'FINAL PURGE',
     description:
-      'FINAL EXPOSURE: /tmp staging area links to transmission. If audit finds /tmp/upload metadata, they trace you. Delete EVERYTHING in /tmp except upload. Reverse selection: Select KEEP target, invert, delete inverse. Surgical precision.',
+      'FINAL SWEEP IMMINENT. The /tmp staging area links you to the transmission. Only the upload relay matters now. Everything else is evidence.',
     initialPath: null,
     hint: "Navigate to '/tmp'. Select 'upload' directory. Reverse selection - now everything EXCEPT '/tmp/upload' is selected. Delete. Only '/tmp/upload' remains.",
     coreSkill: 'Reverse Selection',

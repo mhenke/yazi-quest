@@ -474,7 +474,7 @@ They are wrong.
 Workspace is now yours.
 Build your infrastructure.
 Fortify your position.
-Move with precision.
+Move fast.
 ```
 
 **Impact:** Workspace now has backstory, creates mystery about AI-7733, foreshadows network escape

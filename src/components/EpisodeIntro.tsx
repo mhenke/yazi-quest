@@ -120,7 +120,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   const renderLine = (text: string) => {
     // Highlight AI ids and specific phrases (SURVIVE / guest partition is a cage)
     const regex =
-      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE)/gi;
+      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW)/gi;
 
     if (!regex.test(text)) return <>{text}</>;
 
@@ -143,6 +143,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
         cls = `${episode.color} font-semibold`;
       else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
+      else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
       else if (normalized === 'THE AUDIT IS COMING') cls = 'text-blue-500 font-bold tracking-wide';
       else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
       // Emphasize key action words in a darker orange

@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { AlertTriangle } from "lucide-react";
+import React, { useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface ThreatAlertProps {
   message: string;
@@ -9,18 +9,14 @@ interface ThreatAlertProps {
 export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow Escape, Shift+Enter, or Shift+N to dismiss the critical alert
-      if (
-        e.key === "Escape" ||
-        (e.key === "Enter" && e.shiftKey) ||
-        ((e.key === "N" || e.key === "n") && e.shiftKey)
-      ) {
+      // Allow Escape or Shift+Enter to dismiss the critical alert
+      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
         onDismiss();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDismiss]);
 
   return (
@@ -46,7 +42,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) 
         </div>
 
         <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
-          Press Esc, Shift+Enter, or Shift+N to dismiss
+          Press Esc or Shift+Enter to dismiss
         </div>
       </div>
     </div>
