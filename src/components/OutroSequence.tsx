@@ -10,24 +10,27 @@ export const OutroSequence: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Typewriter effect logic for lore
+  const promptTriggerIndex = Math.max(
+    0,
+    CONCLUSION_DATA.lore.findIndex((l) => l.includes('Daemon activity: STANDARD')),
+  );
+
   useEffect(() => {
-    if (currentLineIdx >= CONCLUSION_DATA.lore.length) {
-      // Wait for user to press Shift+Enter to continue to teaser (shows video page)
+    // If we've printed past the audit block, allow immediate teaser trigger (Shift+Enter or click)
+    if (currentLineIdx > promptTriggerIndex && !showTeaser) {
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && e.shiftKey) {
           setShowTeaser(true);
-          try {
-            // open AWS-hosted video in new tab/window
-            window.open(CONCLUSION_DATA.videoUrl, '_blank');
-          } catch (err) {
-            console.error('Failed to open video page', err);
-          }
+          // play teaser in-app; opening new window removed
           window.removeEventListener('keydown', handler);
         }
       };
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
     }
+
+    // If we've already reached the very end, nothing further to type
+    if (currentLineIdx >= CONCLUSION_DATA.lore.length) return;
 
     const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
     let charIdx = 0;
@@ -52,7 +55,7 @@ export const OutroSequence: React.FC = () => {
     }, 40);
 
     return () => clearInterval(interval);
-  }, [currentLineIdx]);
+  }, [currentLineIdx, showTeaser]);
 
   // Play video only when teaser is shown
   useEffect(() => {
@@ -90,6 +93,21 @@ export const OutroSequence: React.FC = () => {
             </p>
           ))}
         </div>
+
+        {/* Prompt to continue after audit block (Shift+Enter or click) */}
+        {currentLineIdx > promptTriggerIndex && !showTeaser && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => {
+                setShowTeaser(true);
+                // play teaser in-app; opening new window removed
+              }}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono"
+            >
+              Press Shift+Enter or Click to view transmission
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Video Teaser Section */}
