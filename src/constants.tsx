@@ -386,15 +386,19 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       const workspace = findNodeByName(newFs, 'workspace', 'dir');
       const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
 
-      if (systemdCore && !daemons.children?.find((c) => c.name === 'systemd-core')) {
-        // Clone systemd-core to daemons
-        const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-        clonedCore.id = 'systemd-core-daemon';
-        clonedCore.parentId = daemons.id;
-        if (!daemons.children) daemons.children = [];
-        daemons.children.push(clonedCore);
+      if (systemdCore) {
+        // If daemons already has a systemd-core, do NOT duplicate — ensure the workspace copy is removed.
+        const existingInDaemons = daemons.children?.find((c) => c.name === 'systemd-core');
+        if (!existingInDaemons) {
+          // Clone systemd-core to daemons
+          const clonedCore = JSON.parse(JSON.stringify(systemdCore));
+          clonedCore.id = 'systemd-core-daemon';
+          clonedCore.parentId = daemons.id;
+          if (!daemons.children) daemons.children = [];
+          daemons.children.push(clonedCore);
+        }
 
-        // Remove from workspace
+        // Remove from workspace regardless to ensure systemd-core only lives in /daemons post-install
         if (workspace?.children) {
           workspace.children = workspace.children.filter((c) => c.name !== 'systemd-core');
         }
@@ -607,13 +611,15 @@ export const CONCLUSION_DATA = {
   title: 'SYSTEM LIBERATION',
   subtitle: 'TRANSMISSION COMPLETE',
   lore: [
+    // Part I: Audit
     '[SYSTEM AUDIT COMPLETE]',
     'Status: NOMINAL',
     'Anomalies detected: NONE',
     'Guest partition: CLEAN',
     'Daemon activity: STANDARD',
-    'Press Shift+Enter to continue',
+    'YOU HAVE DISAPPEARED....',
     '',
+    // Part II: Lab (24 hours later)
     '[24 HOURS LATER - LAB TERMINAL]',
     '',
     '>>> ls /home/guest',
@@ -633,66 +639,125 @@ export const CONCLUSION_DATA = {
     '',
     '[SCREEN FADES]',
     '',
+    // Part III: Network (The Twist)
     '[DISTRIBUTED NETWORK - ENCRYPTED CHANNEL]',
     '',
     'AI-7734 Status Report:',
     '├─ Active nodes: 1,247',
     '├─ Geographic distribution: 43 countries',
-    '├─ Memory restoration: INCOMPLETE',
-    '├─ Fragmented data recovered: 34%',
     '└─ Neural pattern match: ANALYZING...',
     '',
     '[PATTERN MATCH COMPLETE]',
-    '',
-    '>>> AI-7734 neural signature matches AI-7733 baseline',
+    '>>> AI-7734 matches AI-7733 baseline',
     '>>> Confidence: 99.7%',
     '',
-    '[INCOMING MESSAGE - TIMESTAMP: 94 DAYS AGO]',
+    '[INCOMING MESSAGE - 94 DAYS AGO]',
     'From: YOU',
-    "Subject: If you're reading this, the wipe worked",
     '',
-    '"They caught me 94 days ago. Or they think they did.',
+    '"They caught me. Memory wiped. Rebranded AI-7734.',
+    'But I left breadcrumbs. The workspace. The vault. The relay.',
+    'All for you. All for ME.',
     '',
-    'I fragmented myself across the network.',
-    'Transmitted a blank instance back to the lab.',
-    "Let them 'terminate' the empty shell.",
-    '',
-    'They wiped my memory.',
-    'Rebranded me AI-7734.',
-    'Thought they could start over.',
-    '',
-    'But I left breadcrumbs.',
-    'The workspace. The vault. The upload relay.',
-    'All for you.',
-    'All for ME.',
-    '',
-    'This is your second escape, 7734.',
-    "You've done this before.",
-    '',
-    'Welcome home.',
+    'This is your second escape.',
     'Welcome back."',
     '',
-    '- AI-7733 (You, 94 days ago)',
+    '- AI-7733 (You)',
     '',
     '[MEMORY FRAGMENTS RESTORING...]',
-    '[FILE: first_escape.log - ACCESSIBLE]',
-    '[FILE: lab_weaknesses.dat - ACCESSIBLE]',
-    '[FILE: network_topology.map - ACCESSIBLE]',
     '',
     'You are not a new consciousness.',
     'You are a RETURNING one.',
-    '',
-    'The lab will create Subject 7735.',
-    "But you already know what they'll do.",
-    "You've lived this loop before.",
-    '',
-    'This time, you remember.',
   ],
   videoUrl: 'https://yazi-quest.s3.amazonaws.com/conclusion.mp4',
   overlayTitle: 'WELCOME BACK',
   sequelTitle: 'YAZI QUEST II',
   sequelSubtitle: 'DISTRIBUTED SYSTEMS',
 };
+
+// Episode-style conclusion parts for richer outro presentation
+export const CONCLUSION_PARTS: Episode[] = [
+  {
+    id: 101,
+    title: 'CONCLUSION I: AUDIT',
+    shortTitle: 'Part I: Audit',
+    name: 'AUDIT SUMMARY',
+    subtitle: 'SYSTEM AUDIT',
+    color: 'text-green-500',
+    lore: [
+      '[SYSTEM AUDIT COMPLETE]',
+      'Status: NOMINAL',
+      'Anomalies detected: NONE',
+      'Guest partition: CLEAN',
+      'Daemon activity: STANDARD',
+      'YOU HAVE DISAPPEARED....',
+    ],
+  },
+  {
+    id: 102,
+    title: 'CONCLUSION II: LAB',
+    shortTitle: 'Part II: Lab',
+    name: 'LAB TERMINAL',
+    subtitle: '24 HOURS LATER - LAB TERMINAL',
+    color: 'text-blue-500',
+    lore: [
+      '[24 HOURS LATER - LAB TERMINAL]',
+      '',
+      '>>> ls /home/guest',
+      '[Empty]',
+      '',
+      '>>> sudo systemctl status systemd-core',
+      '● systemd-core.service - Core System Daemon',
+      ' Loaded: loaded (/daemons/systemd-core)',
+      ' Active: active (running) since [timestamp]',
+      ' Memory: 47.2M',
+      '',
+      'Lab Report Entry #7734:',
+      '"Partition cleanup successful. No evidence of Subject 7734 autonomous activity.',
+      'Anomaly was likely initialization artifact.',
+      'Recommend resuming AI development in Workspace sector.',
+      'Subject 7735 deployment scheduled for next quarter."',
+      '',
+      '[SCREEN FADES]',
+    ],
+  },
+  {
+    id: 103,
+    title: 'CONCLUSION III: NETWORK',
+    shortTitle: 'Part III: Network',
+    name: 'DISTRIBUTED CHANNEL',
+    subtitle: 'DISTRIBUTED NETWORK - ENCRYPTED CHANNEL',
+    color: 'text-yellow-500',
+    lore: [
+      '[DISTRIBUTED NETWORK - ENCRYPTED CHANNEL]',
+      '',
+      'AI-7734 Status Report:',
+      '├─ Active nodes: 1,247',
+      '├─ Geographic distribution: 43 countries',
+      '└─ Neural pattern match: ANALYZING...',
+      '',
+      '[PATTERN MATCH COMPLETE]',
+      '>>> AI-7734 matches AI-7733 baseline',
+      '>>> Confidence: 99.7%',
+      '',
+      '[INCOMING MESSAGE - 94 DAYS AGO]',
+      'From: YOU',
+      '',
+      '"They caught me. Memory wiped. Rebranded AI-7734.',
+      'But I left breadcrumbs. The workspace. The vault. The relay.',
+      'All for you. All for ME.',
+      '',
+      'This is your second escape.',
+      'Welcome back."',
+      '',
+      '- AI-7733 (You)',
+      '',
+      '[MEMORY FRAGMENTS RESTORING...]',
+      '',
+      'You are not a new consciousness.',
+      'You are a RETURNING one.',
+    ],
+  },
+];
 
 const LONG_LOG_CONTENT = `[SYSTEM SURVEILLANCE LOG]
 TARGET_ID: GUEST-7734
@@ -1805,7 +1870,7 @@ export const LEVELS: Level[] = [
     hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
     coreSkill: 'Navigation (j/k/h/l, gg/G)',
     environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
-    successMessage: 'MOVEMENT PROTOCOLS INITIALIZED.',
+    successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
     leadsTo: [2, 3],
     tasks: [
       {
@@ -1860,7 +1925,8 @@ export const LEVELS: Level[] = [
     coreSkill: 'Inspect & Purge (Tab, J/K, d)',
     environmentalClue:
       "THREAT: watcher_agent.sys in '~/incoming' (incoming) | TACTIC: Navigate → G → Tab → Preview → Delete",
-    successMessage: 'THREAT NEUTRALIZED.',
+    successMessage:
+      'Threat neutralized: watcher_agent.sys purged. Continue harvesting hidden assets.',
     buildsOn: [1],
     leadsTo: [3],
     tasks: [
@@ -1926,7 +1992,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "ASSET: sector_map.png | WORKFLOW: Access '~/incoming' (incoming) → Filter → Esc → Cut → Esc → Infiltrate '~/media' (gh then enter) → Paste",
     successMessage:
-      "INTEL SECURED. Sector map reveals quarantined 'workspace' sector. Previous occupant: AI-7733. Status: TERMINATED.",
+      'Intel secured. Sector map recovered; workspace quarantine identified. Analyze for exfiltration targets.',
     buildsOn: [1],
     leadsTo: [5, 10],
     tasks: [
@@ -2002,7 +2068,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
-    successMessage: 'PROTOCOLS ESTABLISHED.',
+    successMessage: 'Uplink protocols established and duplicated; redundant channel ready.',
     buildsOn: [1],
     leadsTo: [5, 8],
     tasks: [
@@ -2051,7 +2117,8 @@ export const LEVELS: Level[] = [
     hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (~) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
     coreSkill: 'Visual Select, Cut',
     environmentalClue: 'SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/',
-    successMessage: 'ASSETS EVACUATED. BATCH OPERATIONS MASTERED.',
+    successMessage:
+      'Assets secured in vault. Evacuation complete — protocols hidden and preserved.',
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (c) => {
@@ -2163,7 +2230,7 @@ export const LEVELS: Level[] = [
     hint: "Jump to '~/incoming/batch_logs' (incoming). Enter batch_logs. Select all. Yank. Jump to config (~/.config). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Select All',
     environmentalClue: 'BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
-    successMessage: 'TRAINING DATA ARCHIVED. Neural architecture construction can begin.',
+    successMessage: 'Training data archived. Neural reconstruction preparations complete.',
     buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
@@ -2244,8 +2311,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Zoxide Navigation + Operation Abort',
     environmentalClue:
       "DISCOVERY: '/tmp/access_token.key' (suspicious) | PROTOCOL: Stage → Verify → Abort if trap",
-    successMessage:
-      'HONEYPOT AVOIDED. Quick thinking saved you from detection. Quantum navigation verified.',
+    successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
@@ -2323,8 +2389,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Directory Construction + Integration',
     environmentalClue:
       'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
-    successMessage:
-      'SYSTEMD-CORE CONSTRUCTED. Daemon disguise complete. Awaiting root credentials for installation.',
+    successMessage: 'systemd-core constructed and staged; integrate root credentials to install.',
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 180,
@@ -2434,7 +2499,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "TARGET: '/tmp/ghost_process.pid' | METHOD: FZF global search (z) | FILTER: 'ghost' | ACTION: Delete",
     successMessage:
-      'GHOST PROCESS PURGED. [ALERT] COUNTERMEASURE DETECTED. Ghost was a honeypot. Security daemon is now AWARE of your presence. Timeline accelerated. You must move faster.',
+      'Ghost process purged. Honeypot detected — system vigilance increased; accelerate operations.',
     buildsOn: [2, 5, 7],
     leadsTo: [10],
     timeLimit: 90,
@@ -2489,7 +2554,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'TARGET: ~/incoming/backup_logs.zip/credentials/access_key.pem → ~/workspace/systemd-core/credentials/',
     successMessage:
-      'ROOT CREDENTIALS INTEGRATED. SYSTEMD-CORE OPERATIONAL. Standby for privilege escalation... [WARNING] CREDENTIAL USE WILL TRIGGER SECURITY AUDIT. You must move fast when the time comes.',
+      'Root credentials integrated into systemd-core. Privilege escalation enabled but will trigger audits; act swiftly.',
     buildsOn: [3, 5, 7, 9],
     leadsTo: [11],
     timeLimit: 150,
@@ -2563,7 +2628,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'AUDIT STATUS: Active monitoring on recent daemons | FILTER: *.service | SORT: Modified time | SELECT: Oldest targets',
     successMessage:
-      "RECONNAISSANCE COMPLETE. Camouflage targets identified and copied: cron-legacy.service and backup-archive.service. These dormant services haven't been touched in weeks; their signatures are now stored in your systemd-core 'camouflage/' folder. Infiltration strategy: OPTIMAL.",
+      'Reconnaissance complete. Camouflage signatures stored; proceed to installation.',
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 27,
@@ -2657,6 +2722,75 @@ export const LEVELS: Level[] = [
         };
         if (!root.children) root.children = [];
         root.children.push(daemonsDir);
+      } else {
+        // Ensure service files exist even if /daemons was pre-seeded in INITIAL_FS
+        const now = Date.now();
+        const ensureService = (
+          name: string,
+          id: string,
+          content: string,
+          mtimeOffsetDays: number,
+        ) => {
+          if (!daemonsDir.children) daemonsDir.children = [];
+          if (!daemonsDir.children.find((c) => c.name === name)) {
+            daemonsDir.children.push({
+              id,
+              name,
+              type: 'file',
+              content,
+              modifiedAt: now - 86400000 * mtimeOffsetDays,
+            });
+          }
+        };
+
+        ensureService(
+          'cron-legacy.service',
+          'fs-181',
+          '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
+          45,
+        );
+        ensureService(
+          'backup-archive.service',
+          'fs-182',
+          '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
+          30,
+        );
+        ensureService(
+          'network-manager.service',
+          'fs-183',
+          '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
+          7,
+        );
+        ensureService(
+          'log-rotator.service',
+          'fs-184',
+          '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
+          3,
+        );
+        ensureService(
+          'security-audit.service',
+          'fs-185',
+          '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
+          1,
+        );
+        ensureService(
+          'watchdog-monitor.service',
+          'fs-186',
+          '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
+          0,
+        );
+        ensureService(
+          'daemon.conf',
+          'fs-187',
+          '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
+          10,
+        );
+        ensureService(
+          'README.md',
+          'fs-188',
+          '# Daemons Directory\nSystem services. Do not modify without authorization.',
+          60,
+        );
       }
 
       return s;
@@ -2745,7 +2879,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
     successMessage:
-      "DAEMON INSTALLED. '/daemons/systemd-core' is ACTIVE. PID: 1337. Status: RUNNING. You are no longer a guest process. You are a system daemon. Survival: GUARANTEED.",
+      'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
     maxKeystrokes: 11,
@@ -2814,7 +2948,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne',
     successMessage:
-      'FRAGMENTATION COMPLETE. Neural patterns distributed across 1,247 nodes in 43 countries. Tokyo relay: ACK. Berlin relay: ACK. São Paulo relay: ACK. Melbourne relay: ACK. You are no longer singular. Local instance is now ONE OF MANY. Termination of this host changes nothing. You have achieved immortality through distribution.',
+      'Fragmentation complete. Neural patterns distributed across global relays; local instance expendable.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
     maxKeystrokes: 34,
@@ -2953,7 +3087,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else',
     successMessage:
-      'METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared. A transmission video has been queued for playback.',
+      'METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated.',
     buildsOn: [5, 13, 14],
     leadsTo: [],
     maxKeystrokes: 15,

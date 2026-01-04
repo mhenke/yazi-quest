@@ -1,79 +1,161 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Terminal, Signal, UploadCloud, ArrowRight } from 'lucide-react';
 
-import { CONCLUSION_DATA } from '../constants';
+import { CONCLUSION_DATA, CONCLUSION_PARTS } from '../constants';
 import { playSuccessSound } from '../utils/sounds';
+import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 
 export const OutroSequence: React.FC = () => {
-  const [displayedLines, setDisplayedLines] = useState<string[]>([]);
-  const [currentLineIdx, setCurrentLineIdx] = useState(0);
+  // Part navigation (like EpisodeIntro but across multiple parts)
+  const [partIndex, setPartIndex] = useState(0);
+  const [sectionIndex, setSectionIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState('');
+  const [showContinue, setShowContinue] = useState(false);
   const [showTeaser, setShowTeaser] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimer = useRef<number | null>(null);
+  const typewriterRef = useRef<number | null>(null);
+  const isAnimatingRef = useRef(false);
 
-  // Typewriter effect logic for lore
-  const promptTriggerIndex = Math.max(
-    0,
-    CONCLUSION_DATA.lore.findIndex((l) => l.includes('Daemon activity: STANDARD')),
-  );
+  // Current part data
+  const currentPart = CONCLUSION_PARTS[partIndex] || CONCLUSION_PARTS[0];
 
-  useEffect(() => {
-    // If we've printed past the audit block, allow immediate teaser trigger (Shift+Enter or click)
-    if (currentLineIdx > promptTriggerIndex && !showTeaser) {
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Enter' && e.shiftKey) {
-          playSuccessSound(true);
-          setShowTeaser(true);
-          // play teaser in-app; opening new window removed
-          window.removeEventListener('keydown', handler);
+  // Split current part's lore into sections (separated by empty strings)
+  const sections = useMemo(() => {
+    const lore = currentPart?.lore || [];
+    const result: string[][] = [];
+    let current: string[] = [];
+
+    for (const line of lore) {
+      if (line === '') {
+        if (current.length > 0) {
+          result.push(current);
+          current = [];
         }
-      };
-      window.addEventListener('keydown', handler);
-      return () => window.removeEventListener('keydown', handler);
+      } else {
+        current.push(line);
+      }
+    }
+    if (current.length > 0) {
+      result.push(current);
     }
 
-    // If we've already reached the very end, nothing further to type
-    if (currentLineIdx >= CONCLUSION_DATA.lore.length) return;
+    return result;
+  }, [currentPart]);
 
-    const currentLineText = CONCLUSION_DATA.lore[currentLineIdx];
-    let charIdx = 0;
-    let incrementTimeout: number | null = null;
+  // Current section lines
+  const currentSection = sections[sectionIndex] || [];
+  const currentText = currentSection.join('\n');
 
-    setDisplayedLines((prev) => [...prev, '']);
+  // Check if we're at the final section of the final part
+  const isFinalPart = partIndex === CONCLUSION_PARTS.length - 1;
+  const isFinalSection = sectionIndex === sections.length - 1;
+  const isComplete = isFinalPart && isFinalSection && showContinue;
 
-    const interval = window.setInterval(() => {
-      charIdx++;
+  // Typewriter effect for current section
+  useEffect(() => {
+    if (showTeaser) return;
 
-      setDisplayedLines((prev) => {
-        const newLines = [...prev];
-        newLines[currentLineIdx] = currentLineText.slice(0, charIdx);
-        return newLines;
-      });
+    setDisplayedText('');
+    setShowContinue(false);
+    isAnimatingRef.current = true;
 
-      if (charIdx === currentLineText.length) {
-        clearInterval(interval);
-        // schedule next line increment and keep reference so it can be cancelled
-        incrementTimeout = window.setTimeout(() => {
-          setCurrentLineIdx((prev) => prev + 1);
-        }, 800);
-      }
-    }, 40);
+    let charIndex = 0;
+    const text = currentText;
 
-    return () => {
-      clearInterval(interval);
-      if (incrementTimeout) {
-        clearTimeout(incrementTimeout);
+    const animate = () => {
+      if (charIndex < text.length) {
+        charIndex++;
+        setDisplayedText(text.slice(0, charIndex));
+        typewriterRef.current = window.setTimeout(animate, 25);
+      } else {
+        isAnimatingRef.current = false;
+        setShowContinue(true);
       }
     };
-  }, [currentLineIdx, showTeaser]);
 
-  // Play video only when teaser is shown
+    typewriterRef.current = window.setTimeout(animate, 100);
+
+    return () => {
+      if (typewriterRef.current) {
+        clearTimeout(typewriterRef.current);
+      }
+    };
+  }, [partIndex, sectionIndex, currentText, showTeaser]);
+
+  // Skip animation or advance to next section/part
+  const handleAdvance = useCallback(() => {
+    if (showTeaser) return;
+
+    // If animating, skip to end
+    if (isAnimatingRef.current) {
+      if (typewriterRef.current) {
+        clearTimeout(typewriterRef.current);
+      }
+      setDisplayedText(currentText);
+      isAnimatingRef.current = false;
+      setShowContinue(true);
+      return;
+    }
+
+    // If at final section of current part, go to next part
+    if (sectionIndex >= sections.length - 1) {
+      if (partIndex < CONCLUSION_PARTS.length - 1) {
+        setPartIndex((prev) => prev + 1);
+        setSectionIndex(0);
+      }
+      // If at final part, do nothing (button handles teaser)
+    } else {
+      // Advance to next section
+      setSectionIndex((prev) => prev + 1);
+    }
+  }, [showTeaser, currentText, sectionIndex, sections.length, partIndex]);
+
+  // Keyboard handler for Enter/Space to advance
+  useEffect(() => {
+    if (showTeaser) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleAdvance();
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleAdvance, showTeaser]);
+
+  // Play video only when teaser is shown and manage teaser music
   useEffect(() => {
     if (showTeaser && videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch((e) => console.error('Video play failed', e));
+      videoRef.current.play().catch(() => {
+        /* ignore video play failures in UX */
+      });
+      // start teaser music
+      try {
+        playTeaserMusic(true);
+      } catch {
+        /* ignore */
+      }
+    } else {
+      // stop teaser music when teaser hidden
+      try {
+        stopTeaserMusic();
+      } catch {
+        /* ignore */
+      }
     }
+
+    return () => {
+      try {
+        stopTeaserMusic();
+      } catch {
+        /* ignore */
+      }
+    };
   }, [showTeaser]);
 
   // Delay rendering of the teaser overlay content slightly to avoid a flash
@@ -105,12 +187,22 @@ export const OutroSequence: React.FC = () => {
       <div className="absolute top-4 right-4 z-50">
         <button
           onClick={() => {
+            if (showTeaser && videoRef.current) {
+              // Replay the teaser if it's already showing
+              try {
+                videoRef.current.currentTime = 0;
+                videoRef.current.play().catch(() => {});
+              } catch {
+                // ignore
+              }
+              return;
+            }
             playSuccessSound(true);
             setShowTeaser(true);
           }}
           className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
         >
-          <span>Skip Outro</span>
+          <span>{showTeaser ? 'Replay Teaser' : 'Skip Outro'}</span>
           <ArrowRight size={14} />
         </button>
       </div>
@@ -118,42 +210,103 @@ export const OutroSequence: React.FC = () => {
       <div
         className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        {/* Header */}
-        <div className="mb-12 border-l-4 border-red-600 pl-6 animate-in slide-in-from-left duration-1000">
-          <div className="flex items-center gap-3 text-red-500 mb-2">
+        {/* Part Header */}
+        <div
+          className="mb-8 border-l-4 pl-6 animate-in slide-in-from-left duration-1000"
+          style={{
+            borderColor:
+              currentPart.color?.replace('text-', '').replace('-500', '') || 'rgb(239 68 68)',
+          }}
+        >
+          <div className={`flex items-center gap-3 ${currentPart.color || 'text-red-500'} mb-2`}>
             <Terminal size={28} />
-            <h1 className="text-3xl font-bold tracking-wider glitch-text">
-              {CONCLUSION_DATA.title}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-wider uppercase">{currentPart.title}</h1>
           </div>
-          <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
-            {'//'} {CONCLUSION_DATA.subtitle}
-          </p>
-        </div>
-
-        {/* Typewriter Text */}
-        <div className="space-y-4 font-mono">
-          {displayedLines.map((line, idx) => (
-            <p key={idx} className="text-zinc-300 text-lg md:text-xl leading-relaxed">
-              <span className="text-red-500/50 mr-2">{'>'}</span>
-              {line}
+          {currentPart.subtitle && (
+            <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
+              {'//'} {currentPart.subtitle}
             </p>
-          ))}
+          )}
         </div>
 
-        {/* Prompt to continue after audit block (Shift+Enter or click) */}
-        {currentLineIdx > promptTriggerIndex && !showTeaser && (
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => {
-                playSuccessSound(true);
-                setShowTeaser(true);
-                // play teaser in-app; opening new window removed
-              }}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono"
-            >
-              Press Shift+Enter to view transmission
-            </button>
+        {/* Typewriter Text for Current Section */}
+        <div className="space-y-4 font-mono min-h-[200px]">
+          {displayedText.split('\n').map((line, idx) => {
+            const isBootLike = line.toUpperCase().includes('YOU HAVE DISAPPEARED');
+            return (
+              <p
+                key={idx}
+                className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
+              >
+                <span
+                  className={`${isBootLike ? 'text-orange-400/70' : `${currentPart.color || 'text-red-500'}/50`} mr-2`}
+                >
+                  {'>'}
+                </span>
+                {line}
+              </p>
+            );
+          })}
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="mt-8 flex items-center justify-center gap-4">
+          {/* Part dots */}
+          <div className="flex gap-2">
+            {CONCLUSION_PARTS.map((_, i) => (
+              <div
+                key={i}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  i < partIndex
+                    ? 'bg-green-500'
+                    : i === partIndex
+                      ? `${currentPart.color?.replace('text-', 'bg-') || 'bg-red-500'} animate-pulse`
+                      : 'bg-zinc-700'
+                }`}
+              />
+            ))}
+          </div>
+          {/* Section dots within current part */}
+          {sections.length > 1 && (
+            <>
+              <div className="w-px h-4 bg-zinc-600" />
+              <div className="flex gap-1">
+                {sections.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      i < sectionIndex
+                        ? 'bg-zinc-400'
+                        : i === sectionIndex
+                          ? 'bg-white'
+                          : 'bg-zinc-700'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Continue prompt or Final button */}
+        {showContinue && !showTeaser && (
+          <div className="mt-6 flex justify-center animate-in fade-in duration-500">
+            {isComplete ? (
+              <button
+                onClick={() => {
+                  playSuccessSound(true);
+                  setShowTeaser(true);
+                }}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono uppercase tracking-wider flex items-center gap-2"
+              >
+                <Signal size={18} />
+                View Transmission
+              </button>
+            ) : (
+              <p className="text-zinc-500 font-mono text-sm animate-pulse">
+                Press Enter to continue...
+              </p>
+            )}
           </div>
         )}
       </div>

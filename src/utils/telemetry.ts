@@ -7,28 +7,12 @@ let MAX_QUEUE = 500;
 const _env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
 let telemetryEndpoint: string | undefined = _env.VITE_TELEMETRY_ENDPOINT || undefined;
 let telemetryDisabled = !!_env.VITE_TELEMETRY_DISABLED;
-let sentinelInitialized = false;
+
 let flushTimer: number | undefined;
 
 async function tryInitSentry() {
-  const dsn = _env.VITE_SENTRY_DSN;
-  if (!dsn) return;
-  if (sentinelInitialized) return;
-  try {
-    // Attempt dynamic import; suppress TS error if package not installed
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const mod = await import('@sentry/browser');
-    const Sentry = mod as unknown as { init?: (opts?: Record<string, unknown>) => void };
-    if (Sentry && typeof Sentry.init === 'function') {
-      Sentry.init({ dsn });
-      sentinelInitialized = true;
-      console.warn('[telemetry] Sentry initialized');
-    }
-  } catch (e) {
-    // package not installed or init failed; ignore
-    console.warn('[telemetry] Sentry init failed or not installed', e);
-  }
+  // Sentry disabled: no-op to avoid optional dependency
+  return;
 }
 
 function scheduleFlush() {
@@ -48,8 +32,7 @@ async function flushQueue() {
   const endpoint = telemetryEndpoint;
   const payload = QUEUE.splice(0, MAX_QUEUE);
   if (!endpoint) {
-    // No endpoint configured; log and drop
-    console.warn('[telemetry] flush (no endpoint):', payload);
+    // No endpoint configured; drop silently
     return;
   }
 
@@ -70,17 +53,15 @@ async function flushQueue() {
         headers: { 'Content-Type': 'application/json' },
       });
       if (resp && resp.type === 'opaque') {
-        console.warn(
-          '[telemetry] flush received opaque response (possibly blocked by policy). Dropping payload.',
-        );
+        // opaque response — drop silently
         return;
       }
       if (!resp.ok) {
         throw new Error(`Telemetry post failed: ${resp.status} ${resp.statusText}`);
       }
     }
-  } catch (e) {
-    console.warn('[telemetry] flush failed, re-queueing', e);
+  } catch {
+    // flush failed — requeue silently
     // On failure, reinsert payload at front (respect max size)
     const requeue = payload.concat(QUEUE).slice(0, MAX_QUEUE);
     QUEUE.length = 0;
@@ -123,8 +104,7 @@ export function trackEvent(name: string, payload?: Payload) {
   if (QUEUE.length >= MAX_QUEUE) {
     flushQueue().catch(() => {});
   }
-  // local dev visibility
-  console.warn('[telemetry] event', name, payload || {});
+  // local dev visibility (silenced in UX)
 }
 
 export function trackError(name: string, payload?: Payload) {
@@ -155,7 +135,7 @@ export function trackError(name: string, payload?: Payload) {
   if (QUEUE.length >= MAX_QUEUE) {
     flushQueue().catch(() => {});
   }
-  console.warn('[telemetry][error]', name, payload || {});
+  // telemetry errors are recorded in the queue; do not log to console in UX
 }
 
 // Auto-init from env if present

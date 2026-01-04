@@ -393,7 +393,7 @@ The clock is running.
   4. Delete all except upload (d)
 
 - **Success message:**
-  > "METADATA CHAIN BROKEN. '/tmp' sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs... ANALYSIS COMPLETE. Status: NOMINAL. No anomalies detected. Guest partition: CLEAN. Daemon activity: STANDARD. You have disappeared."
+  > "METADATA CHAIN BROKEN. '/tmp' sterilized. Upload directory active, evidence eliminated. [COUNTDOWN: 12 seconds] Audit daemon reviewing system logs..."
 
 **Why:**
 

@@ -62,8 +62,8 @@ const ensureContextRunning = (cb: (ctx: AudioContext) => void) => {
         window.addEventListener('pointerdown', handler, { once: true });
         window.addEventListener('keydown', handler, { once: true });
       });
-  } catch (e) {
-    console.warn('Audio not available:', e);
+  } catch {
+    // Audio unavailable — silence in UX
   }
 };
 
@@ -98,8 +98,8 @@ export const playSuccessSound = (enabled: boolean = true): void => {
       playTone(523.25, now, 0.15); // C5
       playTone(659.25, now + 0.1, 0.2); // E5
     });
-  } catch (e: unknown) {
-    console.warn('Audio not available:', e);
+  } catch {
+    // Audio unavailable — silence in UX
   }
 };
 
@@ -126,7 +126,7 @@ export const playTaskCompleteSound = (enabled: boolean = true): void => {
       oscillator.start(now);
       oscillator.stop(now + 0.08);
     });
-  } catch (e: unknown) {
-    console.warn('Audio not available:', e);
+  } catch {
+    // Audio unavailable — silence in UX
   }
 };
