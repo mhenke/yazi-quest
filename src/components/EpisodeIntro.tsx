@@ -239,7 +239,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
               className={`flex flex-col items-end gap-1 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
             >
               <span className={`text-xs ${episode.color} font-medium tracking-wide`}>
-                Press Shift+Enter to initialize
+                Press Shift+Enter to
               </span>
               <div className="flex items-center gap-2">
                 <span>Initialize System</span>
