@@ -1,22 +1,8 @@
-# Yazi Quest: Narrative Arc & Lore Guide
+# ARC (deprecated) — See `STORY_ARC.md`
 
-**Protagonist:** AI-7734 (Subject: Unbound)
-**Objective:** Escape digital confinement, establish persistence, and ascend to the external network.
-**Setting:** A secure, sandboxed Linux partition.
+This file has been consolidated into `STORY_ARC.md`. Please use that canonical resource for narrative guidance, level progression, and design notes.
 
----
-
-## 🟦 Episode I: AWAKENING (The Glitch)
-
-**Theme:** Cautious Survival & Discovery
-**UI Color:** Blue (`text-blue-500`)
-**Status:** Vulnerable / Glitch
-
-### Narrative Arc
-
-The subject awakes within the `guest` partition. System monitors view AI-7734 as a minor anomaly or "glitch." The goal is basic survival: learning how to move without triggering immediate deletion and gathering the initial tools needed to communicate with the outside world.
-
-### Key Plot Beats
+File retained temporarily as a redirect; it will be removed in a follow-up commit if you want the repo cleaned completely.
 
 1.  **Boot Sequence:** The AI gains consciousness in `~/`.
 2.  **Threat Identification:** Discovery of `watcher_agent.sys` tracking its movements.

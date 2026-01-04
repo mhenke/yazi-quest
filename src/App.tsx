@@ -333,6 +333,18 @@ export default function App() {
           [currentLevel.id]: [...(prev.completedTaskIds[currentLevel.id] || []), ...newlyCompleted],
         },
       }));
+
+      // If the 'combo-1c' relocation task was just completed, show a short,
+      // atmospheric toast to nudge the player toward checking history for a
+      // secondary/backup. The actual history task remains hidden until the
+      // completedTaskIds reflect the completed prerequisite (combo-1c) so it
+      // will appear in Objectives immediately after this toast.
+      if (newlyCompleted.includes('combo-1c')) {
+        showNotification(
+          'We need redundancy — fetch the secondary backup (uplink_v2.conf) via history (H), yank it (y), then paste next to the first (p)',
+          7000,
+        );
+      }
     }
 
     // Check if everything is complete (including just finished ones)

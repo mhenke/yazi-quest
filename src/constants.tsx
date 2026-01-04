@@ -1,7 +1,7 @@
 import { FileNode, Level, Episode } from '../types';
 
 import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, getNodeById } from './utils/fsHelpers';
 
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
@@ -2383,17 +2383,57 @@ export const LEVELS: Level[] = [
           "Construct '~/workspace/systemd-core' (a) and enter it (l) to calibrate quantum link",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
-          return c.currentPath.includes(s?.id || '');
+          // If the current path explicitly includes the located node id, we're good.
+          if (s && c.currentPath.includes(s.id)) return true;
+
+          // Otherwise, be resilient: check that the node the player is currently
+          // in (the last id in currentPath) has the expected name. This handles
+          // cases where multiple nodes share the same name and the created one
+          // has a different id than an existing template node.
+          const lastId =
+            c.currentPath && c.currentPath.length
+              ? c.currentPath[c.currentPath.length - 1]
+              : undefined;
+          if (!lastId) return false;
+          const lastNode = getNodeById(c.fs, lastId);
+          return !!lastNode && lastNode.name === 'systemd-core';
         },
         completed: false,
       },
       {
         id: 'combo-1c',
         description:
-          "Relocate assets: Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return (H) and paste (p)",
+          "Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return to '~/workspace/systemd-core' (H) and paste into it (p)",
         check: (c) => {
-          const s = findNodeByName(c.fs, 'systemd-core');
+          // Scope the search to the workspace so the /daemons copy doesn't falsely satisfy the check
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
           return !!s?.children?.find((r) => r.name === 'uplink_v1.conf');
+        },
+        completed: false,
+      },
+      {
+        id: 'combo-1d',
+        description:
+          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return and paste into '~/workspace/systemd-core' (p)",
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
+        check: (c) => {
+          // Ensure the workspace copy received uplink_v2.conf
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+          return !!s?.children?.find((r) => r.name === 'uplink_v2.conf');
+        },
+        completed: false,
+      },
+      {
+        id: 'use-history-nav',
+        description:
+          'Use history to return to workspace after fetching uplink, then forward (H, L)',
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
+        check: (c, _s) => {
+          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
+          const hasUplink = !!systemdCore?.children?.some((n) => n.name === 'uplink_v1.conf');
+          return c.usedHistoryBack === true && c.usedHistoryForward === true && hasUplink;
         },
         completed: false,
       },
