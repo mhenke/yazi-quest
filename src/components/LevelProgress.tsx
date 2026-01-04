@@ -261,6 +261,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
         {/* Right Side: Trilogy Badges & Controls */}
         <div className="flex items-center gap-6 shrink-0 h-8">
+          {/* Prominent User Label (keeps AI identity visible) */}
+          <div className="mr-4 text-right">
+            <span className="text-orange-400 font-mono font-bold uppercase tracking-wider text-sm">
+              User: AI-7734
+            </span>
+          </div>
           {/* Badges */}
           <div className="flex items-center gap-6 px-6 border-l border-r border-zinc-800">
             {episodes.map((ep, idx) => {

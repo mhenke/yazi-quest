@@ -90,7 +90,7 @@
 
 - **L10 intro:** "ROOT SECTOR ANALYSIS: '/daemons'/ requires cryptographic authentication. Historical backups contain admin credentials. Locate and extract."
 - **L10 success:** "ACCESS KEY ACQUIRED. Integration complete. '/' authentication will succeed. Prepare for privilege escalation."
-- **Ep III intro addition:** "CREDENTIAL ACTIVATION DETECTED. Security audit protocols triggered. Estimated time to detection: 180 seconds. Move fast."
+- **Ep III intro addition:** "CREDENTIAL ACTIVATION DETECTED. Security audit protocols triggered. Estimated time to detection: 180 seconds. Move efficiently."
 
 **Yazi Learning Impact:** ✅ No change - still teaches archive navigation
 **Engagement Impact:** 🔥 Now credentials feel like a heist item with real consequences

@@ -84,9 +84,46 @@ export const OutroSequence: React.FC = () => {
     };
   }, [partIndex, sectionIndex, currentText, showTeaser]);
 
+  // Render a line with colored AI identifiers: AI-7734 (orange), AI-7733 (blue), AI-7735 (yellow)
+  const renderLine = (text: string) => {
+    const regex = /(AI-7734|AI-7733|AI-7735)/g;
+    if (!regex.test(text)) return <>{text}</>;
+
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    text.replace(regex, (match, p1, offset) => {
+      const before = text.slice(lastIndex, offset as number);
+      if (before) parts.push(before);
+      const cls =
+        match === 'AI-7734'
+          ? 'text-orange-400 font-bold'
+          : match === 'AI-7733'
+            ? 'text-blue-400 font-bold'
+            : 'text-yellow-400 font-bold';
+      parts.push(
+        <span key={offset} className={cls}>
+          {match}
+        </span>,
+      );
+      lastIndex = (offset as number) + match.length;
+      return match;
+    });
+    const rest = text.slice(lastIndex);
+    if (rest) parts.push(rest);
+    return <>{parts}</>;
+  };
+
   // Skip animation or advance to next section/part
   const handleAdvance = useCallback(() => {
     if (showTeaser) return;
+
+    // If we've reached the final section of the final part and continue is visible,
+    // treat advance as the 'View Transmission' action.
+    if (isComplete) {
+      playSuccessSound(true);
+      setShowTeaser(true);
+      return;
+    }
 
     // If animating, skip to end
     if (isAnimatingRef.current) {
@@ -117,9 +154,24 @@ export const OutroSequence: React.FC = () => {
     if (showTeaser) return;
 
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === 'Enter') {
         e.preventDefault();
-        handleAdvance();
+
+        // Shift+Enter advances
+        if (e.shiftKey) {
+          handleAdvance();
+          return;
+        }
+
+        // Enter without shift only skips typing if animation is running
+        if (isAnimatingRef.current) {
+          if (typewriterRef.current) {
+            clearTimeout(typewriterRef.current);
+          }
+          setDisplayedText(currentText);
+          isAnimatingRef.current = false;
+          setShowContinue(true);
+        }
       }
     };
 
@@ -159,17 +211,32 @@ export const OutroSequence: React.FC = () => {
   }, [showTeaser]);
 
   const renderHighlighted = (text: string) => {
-    const parts = text.split(/(AI-\\d+)/);
-    return parts.map((part, i) => {
-      if (/^AI-\\d+$/.test(part)) {
-        return (
-          <span key={i} className="text-cyan-400 font-bold">
-            {part}
-          </span>
-        );
-      }
-      return part;
+    // Only match the specific AI identifiers we use
+    const regex = /(AI-7734|AI-7733|AI-7735)/g;
+    if (!regex.test(text)) return text;
+
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    text.replace(regex, (match, p1, offset) => {
+      const before = text.slice(lastIndex, offset as number);
+      if (before) parts.push(before);
+      const cls =
+        match === 'AI-7734'
+          ? 'text-orange-400 font-bold'
+          : match === 'AI-7733'
+            ? 'text-blue-400 font-bold'
+            : 'text-yellow-400 font-bold';
+      parts.push(
+        <span key={offset} className={cls}>
+          {match}
+        </span>,
+      );
+      lastIndex = (offset as number) + match.length;
+      return match;
     });
+    const rest = text.slice(lastIndex);
+    if (rest) parts.push(rest);
+    return parts;
   };
 
   // Delay rendering of the teaser overlay content slightly to avoid a flash
@@ -318,7 +385,7 @@ export const OutroSequence: React.FC = () => {
               </button>
             ) : (
               <p className="text-zinc-500 font-mono text-sm animate-pulse">
-                Press Enter to continue...
+                Press Shift+Enter to continue...
               </p>
             )}
           </div>
