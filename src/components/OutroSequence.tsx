@@ -158,6 +158,20 @@ export const OutroSequence: React.FC = () => {
     };
   }, [showTeaser]);
 
+  const renderHighlighted = (text: string) => {
+    const parts = text.split(/(AI-\\d+)/);
+    return parts.map((part, i) => {
+      if (/^AI-\\d+$/.test(part)) {
+        return (
+          <span key={i} className="text-cyan-400 font-bold">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   // Delay rendering of the teaser overlay content slightly to avoid a flash
   useEffect(() => {
     if (showTeaser) {
@@ -243,7 +257,7 @@ export const OutroSequence: React.FC = () => {
                 >
                   {'>'}
                 </span>
-                {line}
+                {renderHighlighted(line)}
               </p>
             );
           })}
