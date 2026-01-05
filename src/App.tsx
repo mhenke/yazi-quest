@@ -38,6 +38,8 @@ import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
 import { ThreatAlert } from './components/ThreatAlert';
 import { HiddenFilesWarningModal } from './components/HiddenFilesWarningModal';
+import { SortWarningModal } from './components/SortWarningModal';
+import { FilterWarningModal } from './components/FilterWarningModal';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
 import { FuzzyFinder } from './components/FuzzyFinder';
@@ -243,6 +245,8 @@ export default function App() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showThreatAlert, setShowThreatAlert] = useState(false);
   const [showHiddenWarning, setShowHiddenWarning] = useState(false);
+  const [showSortWarning, setShowSortWarning] = useState(false);
+  const [showFilterWarning, setShowFilterWarning] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -353,13 +357,30 @@ export default function App() {
       (t) => t.completed || newlyCompleted.includes(t.id),
     );
 
+    // Determine if sort is default
+    const isSortDefault =
+      gameState.sortBy === 'natural' &&
+      gameState.sortDirection === 'asc' &&
+      gameState.linemode === 'size';
+
+    // Determine if filters are clear
+    const isFilterClear = Object.values(gameState.filters).every((filter) => !filter);
+
     if (tasksComplete) {
       if (gameState.showHidden) {
-        // Enforce hidden files must be toggled off to complete any level
         setShowHiddenWarning(true);
         setShowSuccessToast(false);
+      } else if (!isSortDefault) {
+        setShowSortWarning(true);
+        setShowSuccessToast(false);
+      } else if (!isFilterClear) {
+        setShowFilterWarning(true);
+        setShowSuccessToast(false);
       } else {
+        // All checks passed
         setShowHiddenWarning(false);
+        setShowSortWarning(false);
+        setShowFilterWarning(false);
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
           setShowSuccessToast(true);
@@ -367,6 +388,8 @@ export default function App() {
       }
     } else {
       setShowHiddenWarning(false);
+      setShowSortWarning(false);
+      setShowFilterWarning(false);
       setShowSuccessToast(false);
     }
   }, [gameState, currentLevel, isLastLevel, showNotification, showSuccessToast]);
@@ -488,11 +511,7 @@ export default function App() {
         levelStartPath: [...targetPath],
         currentPath: targetPath,
         cursorIndex: 0,
-        filters: {},
         clipboard: null,
-        sortBy: 'natural',
-        sortDirection: 'asc',
-        linemode: 'size',
         notification: onEnterError ? 'Level initialization failed' : null,
         selectedIds: [],
         showHint: false,
@@ -1133,6 +1152,8 @@ export default function App() {
       )}
 
       {showHiddenWarning && <HiddenFilesWarningModal />}
+      {showSortWarning && <SortWarningModal />}
+      {showFilterWarning && <FilterWarningModal />}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />

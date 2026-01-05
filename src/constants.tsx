@@ -2550,12 +2550,11 @@ export const LEVELS: Level[] = [
         description:
           "Navigate into '~/incoming/backup_logs.zip/credentials' (gi → enter backup_logs.zip → enter credentials)",
         check: (c) => {
-          const creds = findNodeByName(c.fs, 'credentials');
-          // Check we are in a directory named 'credentials' that is inside a zip archive
-          const parent = creds ? getNodeById(c.fs, creds.parentId) : undefined;
-          return (
-            c.currentPath.includes(creds?.id || '') && !!parent && parent.name.endsWith('.zip')
-          );
+          const backup = findNodeByName(c.fs, 'backup_logs.zip');
+          const creds = backup?.children?.find((p) => p.name === 'credentials');
+          // Check we are in the credentials directory inside the backup_logs.zip archive
+          if (!creds) return false;
+          return c.currentPath.includes(creds.id);
         },
         completed: false,
       },
@@ -2584,9 +2583,13 @@ export const LEVELS: Level[] = [
       {
         id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key",
+          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key (p)",
         check: (c) => {
-          const systemdCore = findNodeByName(c.fs, 'systemd-core');
+          // Scope lookup to workspace so we verify the paste occurred into the workspace copy
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const systemdCore = workspace
+            ? findNodeByName(workspace, 'systemd-core', 'dir')
+            : undefined;
           const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
           // Require that the credential exists AND the player performed a paste action during this level
           return !!credentials?.children?.some((n) => n.name === 'access_key_new.pem') && !!c.usedP;
