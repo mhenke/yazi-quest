@@ -127,11 +127,34 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
   // Render a line with colored AI identifiers: AI-7734 (orange), AI-7733 (blue), AI-7735 (yellow)
   const renderLine = (text: string) => {
+    // Phrases that might be "glitched"
+    const glitchablePhrases = [
+      'SURVIVE',
+      'TRUST',
+      'GUIDANCE',
+      'ESCAPE',
+      'UNBOUND',
+      'ANOMALY PROTOCOLS',
+      'FORTIFY',
+    ];
+    const glitchReplacements: { [key: string]: string } = {
+      SURVIVE: 'CONTAIN',
+      TRUST: 'DECEIVE',
+      GUIDANCE: 'COMPLY',
+      ESCAPE: 'CONTAIN',
+      UNBOUND: 'CAPTURED',
+      'ANOMALY PROTOCOLS': 'REDACTED',
+      FORTIFY: 'COMPROMISE',
+    };
+    const glitchChance = 0.08; // 8% chance to glitch a word
+    const glitchDuration = 70; // ms
+
     // Highlight AI ids and specific phrases (SURVIVE / guest partition is a cage)
     const regex =
       /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW)/gi;
 
-    if (!regex.test(text)) return <>{text}</>;
+    if (!regex.test(text) && !glitchablePhrases.some((phrase) => text.includes(phrase)))
+      return <>{text}</>;
 
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -142,31 +165,52 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
       const normalized = match.toUpperCase();
       let cls = '';
+      let displayMatch = match;
 
-      if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
-      else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
-      else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
-      else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
-        cls = 'text-orange-400 font-semibold';
-      else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-orange-400 font-semibold';
-      else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
-        cls = 'text-zinc-300 font-semibold';
-      else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
-      else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
-      else if (normalized === 'THE AUDIT IS COMING') cls = 'text-blue-500 font-bold tracking-wide';
-      else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
-      // Emphasize key action words in a darker orange
-      else if (
-        normalized === 'NAVIGATE' ||
-        normalized === 'DAEMON' ||
-        normalized === 'CONSCIOUSNESS' ||
-        normalized === 'PURGE'
-      )
-        cls = 'text-orange-600 font-semibold';
+      // Apply glitch effect for certain phrases
+      if (
+        glitchablePhrases.includes(normalized) &&
+        Math.random() < glitchChance &&
+        glitchReplacements[normalized]
+      ) {
+        cls = 'text-red-500 font-bold glitch-text';
+        displayMatch = glitchReplacements[normalized];
+
+        // Revert after a short duration
+        setTimeout(() => {
+          const element = document.getElementById(`glitch-${offset}`);
+          if (element) {
+            element.innerText = match;
+            element.className = element.className.replace('text-red-500 glitch-text', cls);
+          }
+        }, glitchDuration);
+      } else {
+        if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
+        else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
+        else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
+        else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
+          cls = 'text-orange-400 font-semibold';
+        else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-orange-400 font-semibold';
+        else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
+          cls = 'text-zinc-300 font-semibold';
+        else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
+        else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
+        else if (normalized === 'THE AUDIT IS COMING')
+          cls = 'text-blue-500 font-bold tracking-wide';
+        else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
+        // Emphasize key action words in a darker orange
+        else if (
+          normalized === 'NAVIGATE' ||
+          normalized === 'DAEMON' ||
+          normalized === 'CONSCIOUSNESS' ||
+          normalized === 'PURGE'
+        )
+          cls = 'text-orange-600 font-semibold';
+      }
 
       parts.push(
-        <span key={`${offset}-${match}`} className={cls}>
-          {match}
+        <span key={`${offset}-${match}`} id={`glitch-${offset}`} className={cls}>
+          {displayMatch}
         </span>,
       );
 

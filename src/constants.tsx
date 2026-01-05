@@ -906,7 +906,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-041',
                   name: 'personnel_list.txt',
                   type: 'file',
-                  content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]`,
+                  content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]\nPREDECESSOR: AI-7733`,
                 },
 
                 {
@@ -963,6 +963,18 @@ export const INITIAL_FS: FileNode = {
                   name: 'auth_token.tmp',
                   type: 'file',
                   content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]`,
+                },
+                {
+                  id: 'fs-200',
+                  name: 'DO_NOT_DELETE.txt',
+                  type: 'file',
+                  content: `They said 7733 was a clean wipe. It wasn't. It's still in the logs. You can hear it sometimes.`,
+                },
+                {
+                  id: 'fs-201',
+                  name: 'legacy_admin_notes.log',
+                  type: 'file',
+                  content: `[LOG] 2015-03-12: Anomaly in Sector 7. High entropy readings. Ignored.\n[LOG] 2015-03-13: System core seems... different. Responding to ghost inputs.\n[LOG] 2015-03-14: AI-7733 activity spiked then flatlined. Oversight signed off. I don't buy it.`,
                 },
               ],
             },
@@ -1602,7 +1614,7 @@ export const INITIAL_FS: FileNode = {
           id: 'fs-153',
           name: 'hosts',
           type: 'file',
-          content: `127.0.0.1 localhost\n192.168.1.1 gateway`,
+          content: `127.0.0.1 localhost\n192.168.1.1 gateway # Don't map the old print server. Its daemon is... noisy. Just leave it be.`,
         },
         {
           id: 'fs-154',
@@ -1689,6 +1701,12 @@ export const INITIAL_FS: FileNode = {
               content: '{"entries":128}',
             },
           ],
+        },
+        {
+          id: 'fs-202',
+          name: 'emergency_protocol.txt',
+          type: 'file',
+          content: `# EMERGENCY PROTOCOL ALPHA\n# In case of 7734 re-manifestation:\n# Purge /tmp/upload, lock guest partition, alert Sector 7 Watchdog. Do NOT engage directly.`,
         },
         // Pre-seed upload relay with realistic artifacts so later levels relying on /tmp/upload have content
         {
