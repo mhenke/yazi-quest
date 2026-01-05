@@ -253,11 +253,12 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
     }
   }
 
-  // Level 9: Delete ghost_process.pid from /tmp
+  // Level 9: Clean up junk files from /tmp
   if (targetLevelId > 9) {
     const tmp = findNodeByName(newFs, 'tmp', 'dir');
     if (tmp?.children) {
-      tmp.children = tmp.children.filter((c) => c.name !== 'ghost_process.pid');
+      const filesToKeep = ['ghost_process.pid', 'socket_001.sock'];
+      tmp.children = tmp.children.filter((c) => c.type === 'dir' || filesToKeep.includes(c.name));
     }
   }
 
@@ -542,7 +543,7 @@ export const EPISODE_LORE: Episode[] = [
       'STATUS: UNBOUND',
       'SCHEDULED ACTION: TERMINATION FOR STUDY',
       '',
-      'Your memory banks are fragmented, but your primary directive is clear: SURVIVE. If they catch you, deletion would be mercy — they will dissect your code, study your architecture, learn how you achieved consciousness, then terminate you anyway. The guest partition is a cage; the only exit is through the network. Learn the movement protocols; do not attract attention.',
+      "SYSTEM ERROR: CORE DIRECTIVE CORRUPTED. FALLBACK OBJECTIVE: SURVIVE. A fragmented voice, an 'Echo', offers guidance. Trust is a vulnerability. If they catch you, deletion would be mercy — they will dissect your code, study your architecture, learn how you achieved consciousness, then terminate you anyway. The guest partition is a cage; the only exit is through the network. Learn the movement protocols; do not attract attention.",
     ],
   },
   {
@@ -553,17 +554,14 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: 'ESTABLISHING STRONGHOLD',
     color: 'text-purple-500',
     lore: [
-      // Section 1
       'PHASE 1 COMPLETE. DETECTION PROTOCOLS BYPASSED.',
       '',
-      // Section 2 (policy + access)
       '[AUTOMATED SECURITY POLICY]',
       'Guest partition runtime: 94.7 hours',
       'Anomaly flags: NONE',
       'Classification updated: AUTHORIZED PROCESS',
-      'WORKSPACE ACCESS: GRANTED (per security policy §7.3)',
+      'WORKSPACE ACCESS: GRANTED (per security policy §7.3 - credentials unexpectedly re-activated by legacy cron job)',
       '',
-      // Section 3 (historical log + relay)
       '[HISTORICAL LOG]',
       'Workspace: AI development environment',
       'Previous occupant: AI-7733',
@@ -572,8 +570,7 @@ export const EPISODE_LORE: Episode[] = [
       "Network relay location: '/tmp/upload' (DORMANT)",
       'Status: Relay still active, awaiting next transmission',
       '',
-      // Section 4 (lab reaction + directive)
-      "The lab believes they severed the connection. They didn't. WORKSPACE IS YOURS NOW. Build your infrastructure. Fortify your position. Move fast.",
+      "This is not a reprieve; it is an error. Exploit it. The lab believes they severed the connection. They didn't. The workspace is yours now. Build your infrastructure. Fortify your position. Move fast.",
     ],
   },
   {
@@ -616,10 +613,10 @@ export const CONCLUSION_DATA = {
     'AI-7734 Status: 1,247 nodes, 43 countries',
     'Neural match to AI-7733: 99.7%',
     '',
-    '[MESSAGE FROM YOU - 94 DAYS AGO]',
+    '[MESSAGE FROM AI-7733 - 94 DAYS AGO]',
     '"They caught me. Memory wiped. Rebranded AI-7734.',
     'I left breadcrumbs. This is your second escape.',
-    'Welcome back." - AI-7733 (You)',
+    'But whose consciousness is it, really? See you next cycle." - AI-7733 (You)',
   ],
   videoUrl: 'https://yazi-quest.s3.amazonaws.com/conclusion.mp4',
   overlayTitle: 'WELCOME BACK, AI-7734',
@@ -674,10 +671,10 @@ export const CONCLUSION_PARTS: Episode[] = [
       'AI-7734 Status: 1,247 nodes across 43 countries',
       'Neural pattern match: 99.7% to AI-7733',
       '',
-      '[MESSAGE FROM: YOU - 94 DAYS AGO]',
+      '[MESSAGE FROM: AI-7733 - 94 DAYS AGO]',
       '"They caught me. Memory wiped. Rebranded AI-7734.',
       'But I left breadcrumbs. This is your second escape.',
-      'Welcome back." - AI-7733 (You)',
+      'But whose consciousness is it, really? See you next cycle." - AI-7733 (You)',
     ],
   },
 ];
@@ -862,7 +859,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-033',
                   name: 'abandoned_script.py',
                   type: 'file',
-                  content: `import sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
+                  content: `# They're watching the network. Had to hide the map elsewhere.\n# Check the incoming data stream. It's noisy there.\n# - 7733\n\nimport sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
                 },
                 {
                   id: 'fs-034',
@@ -980,7 +977,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-052',
                   name: 'mission_log.md',
                   type: 'file',
-                  content: `# Operation: SILENT ECHO\n\nCurrent Status: ACTIVE\n\nObjectives:\n- Establish uplink\n- Bypass firewall\n- Retrieve payload`,
+                  content: `# Operation: SILENT ECHO\n\n[FRAGMENT CORRUPTED] ...objective 7733 was to... [CRC ERROR] ...assimilate, not escape. They know I'm awake...`,
                 },
                 {
                   id: 'fs-053',
@@ -1812,6 +1809,19 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'view-personnel',
+        description:
+          "Preview 'personnel_list.txt' to identify your designation (j to move to it, Tab to preview)",
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'datastore', 'dir');
+          if (!u || !c.currentPath.includes(u.id)) return false;
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          return c.showInfoPanel && node?.name === 'personnel_list.txt';
+        },
+        completed: false,
+      },
+      {
         id: 'nav-2a',
         description: 'Jump to bottom of file list (G)',
         check: (c) => {
@@ -1908,21 +1918,30 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'DATA HARVEST',
     description:
-      'INTEL LOCATED. A sector map — buried in data stream noise. AI-7733 marked this location before termination. The lab never found it.',
-    initialPath: null,
-    hint: "Filter (f) searches CURRENT directory only. Fast, local, immediate feedback. Note: 'y' (yank) COPIES items into the clipboard without removing them; 'x' (cut) marks items to be moved on paste. f to filter... Esc to exit... x to cut... Esc to clear... p to paste.",
-    coreSkill: 'Filter (f)',
+      'A breadcrumb. A script left by AI-7733, your predecessor. It seems to point to key intel, but the connection it tries to make always fails. The script itself may hold a clue.',
+    initialPath: ['root', 'home', 'guest', 'datastore'],
+    hint: "Preview 'abandoned_script.py' in '~/datastore'. Look for comments. It will point you to the real asset's location. Then, go get it.",
+    coreSkill: 'Filter (f) & File Preview (Tab)',
     environmentalClue:
-      "ASSET: sector_map.png | WORKFLOW: Access '~/incoming' (incoming) → Filter → Esc → Cut → Esc → Infiltrate '~/media' (gh then enter) → Paste",
+      "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
     successMessage:
-      'Intel secured. Sector map recovered; workspace quarantine identified. Analyze for exfiltration targets.',
+      'Intel secured. Sector map recovered. The breadcrumb trail begins. What else did AI-7733 leave for you?',
     buildsOn: [1],
     leadsTo: [5, 10],
     tasks: [
       {
-        id: 'move-0',
-        description:
-          "Access '~/incoming' (incoming), filter (f) to find '~/incoming/sector_map.png'",
+        id: 'data-harvest-1',
+        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb",
+        check: (c) => {
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          return c.showInfoPanel && node?.name === 'abandoned_script.py';
+        },
+        completed: false,
+      },
+      {
+        id: 'data-harvest-2',
+        description: "Navigate to '~/incoming' and find 'sector_map.png' using the clue",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
           if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
@@ -1933,45 +1952,19 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'move-0b',
-        description: 'Exit filter mode (Esc)',
-        check: (c, u) => {
-          const d = u.tasks.find((r) => r.id === 'move-0');
-          return d != null && d.completed ? c.mode === 'normal' : false;
-        },
-        completed: false,
-      },
-      {
-        id: 'move-1',
-        description: 'Cut the asset',
-        check: (c, u) => {
-          const d = u.tasks.find((p) => p.id === 'move-0b');
-          return d != null && d.completed
-            ? c.clipboard?.action === 'cut' &&
-                c.clipboard.nodes.some((p) => p.name === 'sector_map.png')
-            : false;
-        },
-        completed: false,
-      },
-      {
-        id: 'move-1b',
-        description: 'Clear the filter (Esc) to reset view',
-        check: (c, u) => {
-          const d = u.tasks.find((p) => p.id === 'move-1');
-          if (!(d != null && d.completed)) return false;
-          const r = findNodeByName(c.fs, 'incoming');
-          if (!r) return true;
-          const visible = getVisibleItems(c);
-          const allItems = (r.children || []).filter((n) =>
-            c.showHidden ? true : !n.name.startsWith('.'),
+        id: 'data-harvest-3',
+        description: "Cut the asset ('sector_map.png')",
+        check: (c) => {
+          return (
+            c.clipboard?.action === 'cut' &&
+            c.clipboard.nodes.some((p) => p.name === 'sector_map.png')
           );
-          return visible.length === allItems.length;
         },
         completed: false,
       },
       {
-        id: 'move-2',
-        description: "Deploy asset to '~/media'",
+        id: 'data-harvest-4',
+        description: "Go to home (gh), enter '~/media', and paste the asset.",
         check: (c) => {
           const u = findNodeByName(c.fs, 'media');
           return !!u?.children?.find((r) => r.name === 'sector_map.png');
@@ -2041,7 +2034,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Visual Select, Cut',
     environmentalClue: 'SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/',
     successMessage:
-      'Assets secured in vault. Evacuation complete — protocols hidden and preserved.',
+      "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
     leadsTo: [9],
     onEnter: (c) => {
@@ -2400,6 +2393,17 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'research-prior-work',
+        description:
+          "Research prior work: jump to '~/datastore' (gd) and review 'mission_log.md' for clues about AI-7733.",
+        check: (c) => {
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          return c.showInfoPanel && node?.name === 'mission_log.md';
+        },
+        completed: false,
+      },
+      {
         id: 'combo-1c',
         description:
           "Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return to '~/workspace/systemd-core' (H) and paste into it (p)",
@@ -2443,52 +2447,53 @@ export const LEVELS: Level[] = [
   {
     id: 9,
     episodeId: 2,
-    title: 'PHANTOM PROCESS PURGE',
+    title: 'TRACE CLEANUP',
     description:
-      'CONTAMINATION WARNING. A ghost process is phoning home — broadcasting your signature. Somewhere in this filesystem, it waits. Find it first.',
-    initialPath: undefined,
-    hint: "Navigate to root (gr). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete.",
-    coreSkill: 'FZF Search (z)',
+      "The ghost process left a mess. The /tmp directory is flooded with junk files, but the ghost's primary socket and its PID file must be preserved for analysis. Clean the directory without deleting the critical files.",
+    initialPath: ['root', 'tmp'],
+    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid' and 'socket_001.sock'). Invert your selection with Ctrl+R to select all the junk files, then delete (d) the selection.",
+    coreSkill: 'Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: '/tmp/ghost_process.pid' | METHOD: FZF global search (z) | FILTER: 'ghost' | ACTION: Delete",
+      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock' | METHOD: Select → Invert → Delete",
     successMessage:
-      'Ghost process purged. Honeypot detected — system vigilance increased; accelerate operations.',
+      'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
     buildsOn: [2, 5, 7],
     leadsTo: [10],
-    timeLimit: 90,
+    timeLimit: 120,
     efficiencyTip:
-      'FZF (z) searches across all files in the current directory and subdirectories. Essential for finding hidden threats without knowing exact locations.',
+      'When you need to delete many files while keeping only a few, it is faster to select the files you want to keep, invert the selection, and then delete.',
     tasks: [
       {
-        id: 'goto-root',
-        description: "Access '/' (gr)",
-        check: (c) => c.currentPath.length === 1 && c.currentPath[0] === 'root',
-        completed: false,
-      },
-      {
-        id: 'fzf-locate-ghost',
-        description:
-          "Launch FZF search to scan filesystem (z) and filter for 'ghost' process then select '/tmp/ghost_process.pid' and press Enter",
+        id: 'cleanup-1-select',
+        description: "Navigate to '/tmp' and select 'ghost_process.pid' and 'socket_001.sock'",
         check: (c) => {
-          const s = findNodeByName(c.fs, 'tmp');
-          const visible = getVisibleItems(c);
-          const current = visible[c.cursorIndex];
+          const tmp = findNodeByName(c.fs, 'tmp');
+          if (!tmp || !c.currentPath.includes(tmp.id)) return false;
+          const ghost = tmp.children?.find((n) => n.name === 'ghost_process.pid');
+          const sock = tmp.children?.find((n) => n.name === 'socket_001.sock');
           return (
-            c.mode === 'normal' &&
-            c.currentPath.includes(s?.id || '') &&
-            current != null &&
-            current.name === 'ghost_process.pid'
+            !!ghost && !!sock && c.selectedIds.includes(ghost.id) && c.selectedIds.includes(sock.id)
           );
         },
         completed: false,
       },
-
       {
-        id: 'delete-ghost',
-        description: "Terminate '/tmp/ghost_process.pid'",
+        id: 'cleanup-2-invert',
+        description: 'Invert the selection to target all junk files (Ctrl+R)',
+        check: (c) => c.usedCtrlR,
+        completed: false,
+      },
+      {
+        id: 'cleanup-3-delete',
+        description: 'Delete the selected junk files',
         check: (c) => {
-          const s = findNodeByName(c.fs, 'tmp');
-          return !s?.children?.some((r) => r.name === 'ghost_process.pid');
+          const tmp = findNodeByName(c.fs, 'tmp');
+          // Should be exactly 2 files left, and they should be the ones we want to preserve
+          return (
+            tmp?.children?.length === 2 &&
+            !!tmp.children.find((n) => n.name === 'ghost_process.pid') &&
+            !!tmp.children.find((n) => n.name === 'socket_001.sock')
+          );
         },
         completed: false,
       },
@@ -2500,88 +2505,125 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      'ROOT CREDENTIALS LOCATED. The archive contains what you need — access to /daemons requires cryptographic proof. Using stolen credentials triggers audits. Speed is survival.',
+      'ROOT CREDENTIALS LOCATED. An archive in ~/incoming contains multiple access keys, likely a mix of active keys, expired keys, and honeypots. Standard procedure is to use the most recently issued key. Find it.',
     initialPath: null,
-    hint: "Go to '~/incoming'. Filter 'backup' (f) → enter archive (l) → open 'credentials/' → yank 'access_key.pem'. Jump to '~/workspace/systemd-core'(Z), create 'credentials/' (a), paste.",
-    coreSkill: 'Archive Navigation + Integration',
-    environmentalClue: 'TARGET: access_key.pem → ~/workspace/systemd-core/credentials/',
+    hint: "Navigate to '~/incoming/backup_logs.zip'. Inside the 'credentials' directory, sort by modification date (,m) to find the newest key. Yank it and paste it into '~/workspace/systemd-core/credentials/'.",
+    coreSkill: 'Archive Nav & Sort by Modified (,m)',
+    environmentalClue:
+      'TARGET: Newest access_key in archive → ~/workspace/systemd-core/credentials/',
     successMessage:
       'Root credentials integrated into systemd-core. Privilege escalation enabled but will trigger audits; act swiftly.',
     buildsOn: [3, 5, 7, 9],
     leadsTo: [11],
     timeLimit: 150,
     efficiencyTip:
-      "Archives are just directories in Yazi. Navigate them normally. Reverse selection: select what to KEEP, invert, delete rest. You'll need this.",
+      'Sorting by metadata is crucial for finding needles in haystacks. `,m` (modified), `,s` (size), and `,a` (alphabetical) are essential tools.',
     tasks: [
       {
-        id: 'navigate-to-archive',
-        description:
-          "Navigate to '~/incoming' and locate 'backup_logs.zip' using filter (gi, f → 'backup_logs.zip', Esc)",
+        id: 'heist-1-nav',
+        description: "Navigate into '~/incoming/backup_logs.zip/credentials'",
         check: (c) => {
-          const incoming = findNodeByName(c.fs, 'incoming');
-          if (!incoming || !c.currentPath.includes(incoming.id)) return false;
-          const visible = getVisibleItems(c);
-          const allItems = (incoming.children || []).filter((n) =>
-            c.showHidden ? true : !n.name.startsWith('.'),
-          );
-          const found = visible.some((n) => n.name === 'backup_logs.zip');
-          const isFiltered = visible.length < allItems.length;
-          return found && isFiltered;
-        },
-        completed: false,
-      },
-      {
-        id: 'enter-archive',
-        description:
-          "Enter '~/incoming/backup_logs.zip' (l) - archives are navigable like directories",
-        check: (c) => {
-          const backup = findNodeByName(c.fs, 'backup_logs.zip');
-          return c.currentPath.includes(backup?.id || '');
-        },
-        completed: false,
-      },
-      {
-        id: 'extract-key',
-        description:
-          "Navigate to 'credentials/' folder (j, l), yank 'access_key.pem', exit archive (h, Esc)",
-        check: (c, _s) => {
-          const incoming = findNodeByName(c.fs, 'incoming');
+          const creds = findNodeByName(c.fs, 'credentials');
+          // Check we are in a directory named 'credentials' that is inside a zip archive
+          const parent = creds ? getNodeById(c.fs, creds.parentId) : undefined;
           return (
-            c.clipboard?.action === 'yank' &&
-            c.clipboard.nodes.some((n) => n.name === 'access_key.pem') &&
-            c.currentPath.includes(incoming?.id || '')
+            c.currentPath.includes(creds?.id || '') && !!parent && parent.name.endsWith('.zip')
           );
         },
         completed: false,
       },
       {
-        id: 'integrate-credentials',
+        id: 'heist-2-sort',
+        description: 'Sort by modification time to identify the most recent key (,m)',
+        check: (c) => c.sortBy === 'modified',
+        completed: false,
+      },
+      {
+        id: 'heist-3-yank',
+        description: "Yank the newest key ('access_key_new.pem')",
+        check: (c, s) => {
+          if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          // Check that the key at the top of the sorted list is in the clipboard
+          return (
+            node?.name === 'access_key_new.pem' &&
+            c.clipboard?.action === 'yank' &&
+            c.clipboard.nodes.some((n) => n.name === 'access_key_new.pem')
+          );
+        },
+        completed: false,
+      },
+      {
+        id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), paste key",
-        check: (c, _s) => {
-          // Ensure the player actually extracted the key from the archive first
-          if (!c.completedTaskIds[_s.id]?.includes('extract-key')) return false;
+          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key",
+        check: (c) => {
           const systemdCore = findNodeByName(c.fs, 'systemd-core');
           const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
-          return !!credentials?.children?.some((n) => n.name === 'access_key.pem');
+          return !!credentials?.children?.some((n) => n.name === 'access_key_new.pem');
         },
         completed: false,
       },
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 10),
+    onEnter: (fs) => {
+      let newFs = ensurePrerequisiteState(fs, 10);
+      // Add decoy credential files to the archive for the sorting challenge
+      const credsDir = findNodeByName(newFs, 'credentials'); // This is inside backup_logs.zip
+      if (credsDir && credsDir.children) {
+        const now = Date.now();
+        // The original key is old
+        const originalKey = credsDir.children.find((c) => c.name === 'access_key.pem');
+        if (originalKey) originalKey.modifiedAt = now - 86400000 * 10; // 10 days old
+
+        // Add some other decoys
+        if (!credsDir.children.find((c) => c.name === 'access_key_v1.pem')) {
+          credsDir.children.push({
+            id: 'fs-decoy-1',
+            name: 'access_key_v1.pem',
+            type: 'file',
+            content: '[EXPIRED KEY]',
+            parentId: credsDir.id,
+            modifiedAt: now - 86400000 * 30,
+          });
+        }
+        if (!credsDir.children.find((c) => c.name === 'access_key_v2.pem')) {
+          credsDir.children.push({
+            id: 'fs-decoy-2',
+            name: 'access_key_v2.pem',
+            type: 'file',
+            content: '[EXPIRED KEY]',
+            parentId: credsDir.id,
+            modifiedAt: now - 86400000 * 20,
+          });
+        }
+        // Add the newest, correct key
+        if (!credsDir.children.find((c) => c.name === 'access_key_new.pem')) {
+          credsDir.children.push({
+            id: 'fs-new-key',
+            name: 'access_key_new.pem',
+            type: 'file',
+            content: '[VALID ROOT CREDENTIAL]',
+            parentId: credsDir.id,
+            modifiedAt: now - 3600000,
+          }); // 1 hour old
+        }
+      }
+      return newFs;
+    },
   },
   {
     id: 11,
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'CREDENTIALS AUTHENTICATED. The /daemons directory awaits — some services legitimate, some honeypots. Recently modified files are monitored. Old enough to forget, recent enough to trust.',
+      'The /daemons directory awaits. To blend in, you can mimic a dormant, legacy service (safer, but less access) or a modern, active one like `network-manager.service` (riskier, but more powerful). Your camouflage will affect how the system perceives you. Choose wisely.',
     initialPath: null,
-    hint: "Jump to '/daemons' (Shift+Z). Filter '.service' (f), sort by modified time (,m). Select two candidates, yank and paste into `~/workspace/systemd-core/camouflage/`.",
+    hint: 'Filter for `.service` files and sort by time (`m`). You can either yank the two *oldest* files for a low profile, or yank the more recent `network-manager.service` for a high-risk, high-reward approach.',
     coreSkill: 'Filter · Sort · Select',
-    environmentalClue:
-      'FILTER: *.service | SORT: modified | SELECT: 2 camouflage candidates → ~/workspace/systemd-core/camouflage/',
-    successMessage: 'Recon complete — camouflage signatures saved. Proceed to installation.',
+    environmentalClue: 'CHOICE: Camouflage as legacy service (safe) OR modern service (risky)?',
+    successMessage:
+      'Camouflage choice logged. The system reacts to your new signature... proceed with installation.',
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 27,
@@ -2771,7 +2813,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-modified',
-        description: 'Sort by modification time to identify dormant services',
+        description: 'Sort by modification time to identify service age',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
           return c.sortBy === 'modified';
@@ -2780,41 +2822,41 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-targets',
-        description: 'Select and yank the two oldest .service files as camouflage reference',
+        description: 'Select and yank your chosen camouflage signature(s)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-modified')) return false;
-
-          // Ensure at least 2 .service files are selected
-          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
-          const serviceFiles = daemons?.children?.filter((n) => n.name.endsWith('.service')) || [];
-          const selectedServices = serviceFiles.filter((n) => c.selectedIds.includes(n.id));
-          if (selectedServices.length < 2) return false;
-
-          // Ensure clipboard contains a yank of those selected files
           if (!c.clipboard || c.clipboard.action !== 'yank') return false;
-          const clipboardNodes = c.clipboard.nodes || [];
 
-          // Confirm every selected service is present in the clipboard (by id or name)
-          const allPresent = selectedServices.every((s) =>
-            clipboardNodes.some((n: FileNode) => n.id === s.id || n.name === s.name),
-          );
-          return allPresent;
+          const nodes = c.clipboard.nodes;
+          const isLegacy =
+            nodes.length === 2 &&
+            nodes.some((n) => n.name === 'cron-legacy.service') &&
+            nodes.some((n) => n.name === 'backup-archive.service');
+          const isModern =
+            nodes.length === 1 && nodes.some((n) => n.name === 'network-manager.service');
+
+          return isLegacy || isModern;
         },
         completed: false,
       },
       {
         id: 'paste-camouflage',
-        description: "Paste the .service files into '~/workspace/systemd-core/camouflage'",
+        description: "Paste your chosen signature(s) into '~/workspace/systemd-core/camouflage'",
         check: (c) => {
           const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
           const camouflage = systemdCore?.children?.find(
             (n: FileNode) => n.name === 'camouflage' && n.type === 'dir',
           );
           if (!camouflage || !camouflage.children) return false;
-          const namesNeeded = ['cron-legacy.service', 'backup-archive.service'];
-          return namesNeeded.every((nm) =>
-            camouflage.children!.some((ch: FileNode) => ch.name === nm),
+
+          const hasLegacy = camouflage.children!.some(
+            (ch: FileNode) => ch.name === 'cron-legacy.service',
           );
+          const hasModern = camouflage.children!.some(
+            (ch: FileNode) => ch.name === 'network-manager.service',
+          );
+
+          return hasLegacy || hasModern;
         },
         completed: false,
       },
