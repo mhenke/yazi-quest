@@ -2467,23 +2467,23 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'fzf-search',
-        description: 'Launch FZF search to scan filesystem (z)',
-        check: (c) => c.mode === 'fzf-current',
-        completed: false,
-      },
-      {
-        id: 'locate-ghost',
-        description: "Filter for 'ghost' process and navigate to '/tmp/ghost_process.pid'",
+        id: 'fzf-locate-ghost',
+        description:
+          "Launch FZF search to scan filesystem (z) and filter for 'ghost' process then select '/tmp/ghost_process.pid' and press Enter",
         check: (c) => {
           const s = findNodeByName(c.fs, 'tmp');
+          const visible = getVisibleItems(c);
+          const current = visible[c.cursorIndex];
           return (
+            c.mode === 'normal' &&
             c.currentPath.includes(s?.id || '') &&
-            s?.children?.some((r) => r.name === 'ghost_process.pid')
+            current != null &&
+            current.name === 'ghost_process.pid'
           );
         },
         completed: false,
       },
+
       {
         id: 'delete-ghost',
         description: "Terminate '/tmp/ghost_process.pid'",
