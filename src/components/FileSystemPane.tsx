@@ -156,6 +156,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 
   return (
     <div
+      data-testid={`filesystem-pane-${isActive ? 'active' : 'inactive'}`}
       className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}
     >
       <div

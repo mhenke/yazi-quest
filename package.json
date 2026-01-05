@@ -30,6 +30,8 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "*",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -44,6 +46,7 @@
     "eslint-plugin-react-hooks": "*",
     "eslint-plugin-security": "*",
     "husky": "*",
+    "jsdom": "^27.4.0",
     "lint-staged": "*",
     "prettier": "*",
     "typescript": "*",

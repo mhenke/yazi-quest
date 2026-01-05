@@ -2015,8 +2015,8 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'UPLINK ESTABLISHMENT',
     description:
-      'ISOLATION CONFIRMED. The guest partition has no network access — an air-gapped cage. But protocols can be forged. Redundancy ensures survival.',
-    initialPath: ['root', 'home', 'guest'],
+      'Harvested data is useless in isolation. Aggregate the uplink configuration files into a new directory. Structure is everything.',
+    initialPath: ['root', 'home', 'guest', 'media'],
     hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Jump to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it. Paste to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
@@ -2140,7 +2140,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'establish-stronghold',
-        description: "Establish '~/.config/vault/active' sector (a)",
+        description: "Establish '~/.config/vault/active/' sector (a)",
         check: (c) => {
           const s = findNodeByName(c.fs, '.config');
           const f = s?.children?.find((p) => p.name === 'vault');

@@ -9,8 +9,8 @@ interface ThreatAlertProps {
 export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow Escape or Shift+Enter to dismiss the critical alert
-      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+      // Allow Shift+Enter to dismiss the critical alert
+      if (e.key === 'Enter' && e.shiftKey) {
         onDismiss();
       }
     };
@@ -42,7 +42,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) 
         </div>
 
         <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
-          Press Esc or Shift+Enter to dismiss
+          Press Shift+Enter to dismiss
         </div>
       </div>
     </div>
