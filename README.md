@@ -46,10 +46,10 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 
 ## 📖 Documentation
 
-- **[NARRATIVE_OVERHAUL_SUMMARY.md](./NARRATIVE_OVERHAUL_SUMMARY.md)** - Complete story transformation
-- **[STORY_ARC.md](./STORY_ARC.md)** - Episode and level progression
+- **[STORY_ARC.md](./STORY_ARC.md)** - Complete story, episode, and level progression
 - **[THEATRE.md](./THEATRE.md)** - Detailed level breakdowns
 - **[Contributing Guide](./CONTRIBUTING.md)** - Development guidelines
+- **[GEMINI.md](./GEMINI.md)** - Project overview and development context for AI agents
 
 ### Per-level Filesystem Policies
 

@@ -1,6 +1,6 @@
 # YAZI QUEST — Story & Narrative Arc
 
-This document consolidates the game's narrative design, level progression, and key beats into a single reference. It merges the prior ARC guide and the longer story brief so designers and implementers have one canonical source.
+This document consolidates the game's narrative design, level progression, and key beats into a single canonical reference for designers and implementers.
 
 ## 🎯 Premise
 
@@ -108,6 +108,3 @@ Episode III — Mastery
 ## 📚 References & Next Steps
 
 - For a detailed level-by-level breakdown see `THEATRE.md`.
-- For implementation notes and the narrative overhaul summary see `NARRATIVE_OVERHAUL_SUMMARY.md`.
-
-If you'd like, I can also open a PR that removes `ARC.md` and points any references to the consolidated `STORY_ARC.md`.

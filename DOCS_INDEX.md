@@ -8,15 +8,15 @@ as guidance for contributors.
 
 - `README.md` — Project overview and quick start (canonical for runners).
 - `STORY_ARC.md` — Canonical narrative arc and episode order.
-- `NARRATIVE_OVERHAUL_SUMMARY.md` — High-level narrative overhaul summary.
 - `THEATRE.md` — Authoring prompts and theatre-style level guidance (level
   authors should consult this for tone and prompts).
 - `src/constants.tsx` — Canonical level definitions, hints, and per-level
   `allowedDeletePaths` policies. This is the authoritative source for level
   content used at runtime.
-- `IMPLEMENTATION_STATUS.md` — Implementation progress and status (deployment
-  readiness).
 - `CONTRIBUTING.md` — How to contribute and the development workflow.
+- `GEMINI.md` — Project overview and development context for AI agents.
+- `CLAUDE.md` — Specific guidance for Claude AI.
+- `QUESTIONS.md` — Open questions about the project.
 
 ## Policy notes
 
@@ -29,8 +29,7 @@ as guidance for contributors.
 
 - When updating levels, edit `src/constants.tsx` and update `THEATRE.md` if
   the level tone or prompts change.
-- For narrative revisions, update `NARRATIVE_OVERHAUL_SUMMARY.md` and
-  `STORY_ARC.md` to keep the top-level arc consistent.
+- For narrative revisions, update `STORY_ARC.md` to keep the top-level arc consistent.
 - If you add or remove canonical docs, update this `DOCS_INDEX.md`.
 
 ---
