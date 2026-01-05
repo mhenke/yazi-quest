@@ -226,6 +226,7 @@ export default function App() {
       usedUp: false,
       usedPreviewDown: false,
       usedPreviewUp: false,
+      usedP: false,
       completedTaskIds,
     };
   });
@@ -505,6 +506,7 @@ export default function App() {
         usedUp: false,
         usedPreviewDown: false,
         usedPreviewUp: false,
+        usedP: false,
         usedHistoryBack: false,
         usedHistoryForward: false,
         zoxideData: newZoxideData,
@@ -556,6 +558,7 @@ export default function App() {
         usedUp: false,
         usedPreviewDown: false,
         usedPreviewUp: false,
+        usedP: false,
         usedHistoryBack: false,
         usedHistoryForward: false,
         future: [],

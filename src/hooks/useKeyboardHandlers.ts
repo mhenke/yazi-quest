@@ -1,6 +1,6 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
-import { GameState, FileNode, Level, FsError, Result } from "../types";
+import { GameState, FileNode, Level, FsError, Result } from '../types';
 import {
   getNodeByPath,
   deleteNode,
@@ -9,10 +9,10 @@ import {
   isProtected,
   resolvePath,
   resolveAndCreatePath,
-} from "../utils/fsHelpers";
-import { getVisibleItems } from "../utils/viewHelpers";
-import { reportError } from "../utils/error";
-import { KEYBINDINGS } from "../constants/keybindings";
+} from '../utils/fsHelpers';
+import { getVisibleItems } from '../utils/viewHelpers';
+import { reportError } from '../utils/error';
+import { KEYBINDINGS } from '../constants/keybindings';
 
 // Helper to get a random element from an array
 const getRandomElement = <T>(arr: T[]): T => {
@@ -21,7 +21,7 @@ const getRandomElement = <T>(arr: T[]): T => {
 
 // Find the narrative description for a given key
 const getNarrativeAction = (key: string): string | null => {
-  const binding = KEYBINDINGS.find(b => b.keys.includes(key));
+  const binding = KEYBINDINGS.find((b) => b.keys.includes(key));
   if (binding && binding.narrativeDescription) {
     if (Array.isArray(binding.narrativeDescription)) {
       return getRandomElement(binding.narrativeDescription);
@@ -32,73 +32,73 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 export const useKeyboardHandlers = (
-  showNotification: (message: string, duration?: number) => void
+  showNotification: (message: string, duration?: number) => void,
 ) => {
   const handleSortModeKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
       const key = e.key;
       const shift = e.shiftKey;
 
-      if (key === "n" || key === "N") {
-        setGameState(prev => ({
+      if (key === 'n' || key === 'N') {
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
-          sortBy: "natural",
-          sortDirection: shift ? "desc" : "asc",
-          notification: `Sort: Natural ${shift ? "(rev)" : ""}`,
+          mode: 'normal',
+          sortBy: 'natural',
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: `Sort: Natural ${shift ? '(rev)' : ''}`,
         }));
-      } else if (key === "a" || key === "A") {
-        setGameState(prev => ({
+      } else if (key === 'a' || key === 'A') {
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
-          sortBy: "alphabetical",
-          sortDirection: shift ? "desc" : "asc",
-          notification: `Sort: A-Z ${shift ? "(rev)" : ""}`,
+          mode: 'normal',
+          sortBy: 'alphabetical',
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: `Sort: A-Z ${shift ? '(rev)' : ''}`,
         }));
-      } else if (key === "m" || key === "M") {
-        setGameState(prev => ({
+      } else if (key === 'm' || key === 'M') {
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
-          sortBy: "modified",
-          sortDirection: shift ? "asc" : "desc",
-          linemode: "mtime",
-          notification: `Sort: Modified ${shift ? "(old)" : "(new)"}`,
+          mode: 'normal',
+          sortBy: 'modified',
+          sortDirection: shift ? 'asc' : 'desc',
+          linemode: 'mtime',
+          notification: `Sort: Modified ${shift ? '(old)' : '(new)'}`,
         }));
-      } else if (key === "s" || key === "S") {
-        setGameState(prev => ({
+      } else if (key === 's' || key === 'S') {
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
-          sortBy: "size",
-          sortDirection: shift ? "asc" : "desc",
-          linemode: "size",
-          notification: `Sort: Size ${shift ? "(small)" : "(large)"}`,
+          mode: 'normal',
+          sortBy: 'size',
+          sortDirection: shift ? 'asc' : 'desc',
+          linemode: 'size',
+          notification: `Sort: Size ${shift ? '(small)' : '(large)'}`,
         }));
-      } else if (key === "e" || key === "E") {
-        setGameState(prev => ({
+      } else if (key === 'e' || key === 'E') {
+        setGameState((prev) => ({
           ...prev,
-          mode: "normal",
-          sortBy: "extension",
-          sortDirection: shift ? "desc" : "asc",
-          notification: `Sort: Extension ${shift ? "(rev)" : ""}`,
+          mode: 'normal',
+          sortBy: 'extension',
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: `Sort: Extension ${shift ? '(rev)' : ''}`,
         }));
-      } else if (key === "l") {
-        setGameState(prev => {
-          const modes: ("none" | "size" | "mtime" | "permissions")[] = [
-            "none",
-            "size",
-            "mtime",
-            "permissions",
+      } else if (key === 'l') {
+        setGameState((prev) => {
+          const modes: ('none' | 'size' | 'mtime' | 'permissions')[] = [
+            'none',
+            'size',
+            'mtime',
+            'permissions',
           ];
           const nextIndex = (modes.indexOf(prev.linemode) + 1) % modes.length;
-          return { ...prev, mode: "normal", linemode: modes[nextIndex] };
+          return { ...prev, mode: 'normal', linemode: modes[nextIndex] };
         });
-      } else if (key === "-") {
-        setGameState(prev => ({ ...prev, mode: "normal", linemode: "none" }));
-      } else if (key === "Escape") {
-        setGameState(prev => ({ ...prev, mode: "normal" }));
+      } else if (key === '-') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', linemode: 'none' }));
+      } else if (key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal' }));
       }
     },
-    []
+    [],
   );
 
   const handleConfirmDeleteModeKeyDown = useCallback(
@@ -106,22 +106,22 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       visibleItems: FileNode[],
-      currentLevelParam: Level
+      currentLevelParam: Level,
     ) => {
-      if (e.key === "y" || e.key === "Enter") {
-        setGameState(prev => {
+      if (e.key === 'y' || e.key === 'Enter') {
+        setGameState((prev) => {
           let newFs = prev.fs;
           let errorMsg: string | null | undefined = null;
 
           for (const id of prev.pendingDeleteIds) {
-            const node = visibleItems.find(n => n.id === id);
+            const node = visibleItems.find((n) => n.id === id);
             if (node) {
               const protection = isProtected(
                 prev.fs,
                 prev.currentPath,
                 node,
                 currentLevelParam,
-                "delete"
+                'delete',
               );
               if (protection) {
                 errorMsg = protection;
@@ -139,7 +139,7 @@ export const useKeyboardHandlers = (
           if (errorMsg) {
             return {
               ...prev,
-              mode: "normal",
+              mode: 'normal',
               pendingDeleteIds: [],
               notification: `🔒 PROTECTED: ${errorMsg}`,
             };
@@ -147,36 +147,36 @@ export const useKeyboardHandlers = (
           return {
             ...prev,
             fs: newFs,
-            mode: "normal",
+            mode: 'normal',
             pendingDeleteIds: [],
             selectedIds: [],
-            notification: getNarrativeAction("d") || "Items deleted",
+            notification: getNarrativeAction('d') || 'Items deleted',
           };
         });
-      } else if (e.key === "n" || e.key === "Escape") {
-        setGameState(prev => ({ ...prev, mode: "normal", pendingDeleteIds: [] }));
+      } else if (e.key === 'n' || e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
       }
     },
-    []
+    [],
   );
 
   const handleOverwriteConfirmKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
-      if (e.key === "y" || e.key === "Enter") {
-        setGameState(prev => {
-          if (!prev.pendingOverwriteNode) return { ...prev, mode: "normal" };
+      if (e.key === 'y' || e.key === 'Enter') {
+        setGameState((prev) => {
+          if (!prev.pendingOverwriteNode) return { ...prev, mode: 'normal' };
 
           let newFs = prev.fs;
           const deleteRes = deleteNode(
             newFs,
             prev.currentPath,
             prev.pendingOverwriteNode.id,
-            prev.levelIndex
+            prev.levelIndex,
           );
           if (!deleteRes.ok)
             return {
               ...prev,
-              mode: "normal",
+              mode: 'normal',
               notification: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
             };
           newFs = deleteRes.value;
@@ -186,8 +186,8 @@ export const useKeyboardHandlers = (
             return {
               ...prev,
               fs: newFs,
-              mode: "normal",
-              inputBuffer: "",
+              mode: 'normal',
+              inputBuffer: '',
               notification: createRes.error,
               pendingOverwriteNode: null,
             };
@@ -197,54 +197,54 @@ export const useKeyboardHandlers = (
             return {
               ...prev,
               fs: newFs,
-              mode: "overwrite-confirm",
+              mode: 'overwrite-confirm',
               inputBuffer: prev.inputBuffer,
               pendingOverwriteNode: createRes.collisionNode,
-              notification: "Collision still detected after overwrite attempt.",
+              notification: 'Collision still detected after overwrite attempt.',
             };
           }
 
           return {
             ...prev,
             fs: createRes.fs,
-            mode: "normal",
-            inputBuffer: "",
+            mode: 'normal',
+            inputBuffer: '',
             pendingOverwriteNode: null,
-            notification: "Overwritten successfully.",
+            notification: 'Overwritten successfully.',
           };
         });
-      } else if (e.key === "n" || e.key === "Escape") {
-        setGameState(prev => ({ ...prev, mode: "normal", pendingOverwriteNode: null }));
+      } else if (e.key === 'n' || e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', pendingOverwriteNode: null }));
       }
     },
-    []
+    [],
   );
 
   const handleGCommandKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
       switch (e.key) {
-        case "Escape":
-          setGameState(prev => ({ ...prev, mode: "normal" }));
+        case 'Escape':
+          setGameState((prev) => ({ ...prev, mode: 'normal' }));
           break;
-        case "g":
-          setGameState(prev => ({
+        case 'g':
+          setGameState((prev) => ({
             ...prev,
             cursorIndex: 0,
-            mode: "normal",
+            mode: 'normal',
             usedGG: true,
             previewScroll: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,
           }));
           break;
-        case "h": {
-          const homePath = ["root", "home", "guest"];
-          setGameState(prev => ({
+        case 'h': {
+          const homePath = ['root', 'home', 'guest'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: homePath,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to home",
+            mode: 'normal',
+            notification: 'Jumped to home',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -252,14 +252,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "c": {
-          const path = ["root", "home", "guest", ".config"];
-          setGameState(prev => ({
+        case 'c': {
+          const path = ['root', 'home', 'guest', '.config'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to config",
+            mode: 'normal',
+            notification: 'Jumped to config',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -268,14 +268,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "w": {
-          const path = ["root", "home", "guest", "workspace"];
-          setGameState(prev => ({
+        case 'w': {
+          const path = ['root', 'home', 'guest', 'workspace'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to workspace",
+            mode: 'normal',
+            notification: 'Jumped to workspace',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -283,14 +283,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "t": {
-          const path = ["root", "tmp"];
-          setGameState(prev => ({
+        case 't': {
+          const path = ['root', 'tmp'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to tmp",
+            mode: 'normal',
+            notification: 'Jumped to tmp',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -298,14 +298,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "r": {
-          const path = ["root"];
-          setGameState(prev => ({
+        case 'r': {
+          const path = ['root'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to root",
+            mode: 'normal',
+            notification: 'Jumped to root',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -313,14 +313,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "i": {
-          const path = ["root", "home", "guest", "incoming"];
-          setGameState(prev => ({
+        case 'i': {
+          const path = ['root', 'home', 'guest', 'incoming'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to incoming",
+            mode: 'normal',
+            notification: 'Jumped to incoming',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -329,14 +329,14 @@ export const useKeyboardHandlers = (
           }));
           break;
         }
-        case "d": {
-          const path = ["root", "home", "guest", "datastore"];
-          setGameState(prev => ({
+        case 'd': {
+          const path = ['root', 'home', 'guest', 'datastore'];
+          setGameState((prev) => ({
             ...prev,
             currentPath: path,
             cursorIndex: 0,
-            mode: "normal",
-            notification: "Jumped to datastore",
+            mode: 'normal',
+            notification: 'Jumped to datastore',
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -345,11 +345,11 @@ export const useKeyboardHandlers = (
           break;
         }
         default:
-          setGameState(prev => ({ ...prev, mode: "normal" }));
+          setGameState((prev) => ({ ...prev, mode: 'normal' }));
           break;
       }
     },
-    []
+    [],
   );
 
   const handleNormalModeKeyDown = useCallback(
@@ -361,12 +361,12 @@ export const useKeyboardHandlers = (
       parent: FileNode | null,
       currentItem: FileNode | null,
       currentLevel: Level,
-      advanceLevel: () => void
+      advanceLevel: () => void,
     ) => {
       switch (e.key) {
-        case "j":
-        case "ArrowDown":
-          setGameState(prev => ({
+        case 'j':
+        case 'ArrowDown':
+          setGameState((prev) => ({
             ...prev,
             cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
             previewScroll: 0,
@@ -375,9 +375,9 @@ export const useKeyboardHandlers = (
             usedPreviewUp: false,
           }));
           break;
-        case "k":
-        case "ArrowUp":
-          setGameState(prev => ({
+        case 'k':
+        case 'ArrowUp':
+          setGameState((prev) => ({
             ...prev,
             cursorIndex: Math.max(0, prev.cursorIndex - 1),
             previewScroll: 0,
@@ -386,31 +386,31 @@ export const useKeyboardHandlers = (
             usedPreviewUp: false,
           }));
           break;
-        case "J":
+        case 'J':
           if (e.shiftKey) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               previewScroll: prev.previewScroll + 5,
               usedPreviewDown: true,
             }));
           }
           break;
-        case "K":
+        case 'K':
           if (e.shiftKey) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               previewScroll: Math.max(0, prev.previewScroll - 5),
               usedPreviewUp: true,
             }));
           }
           break;
-        case "g":
+        case 'g':
           e.preventDefault();
-          setGameState(prev => ({ ...prev, mode: "g-command" }));
+          setGameState((prev) => ({ ...prev, mode: 'g-command' }));
           break;
-        case "h":
+        case 'h':
           if (parent) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
@@ -420,9 +420,9 @@ export const useKeyboardHandlers = (
             }));
           }
           break;
-        case "H":
+        case 'H':
           if (e.shiftKey && gameState.history.length > 0) {
-            setGameState(prev => {
+            setGameState((prev) => {
               const newHistory = [...prev.history];
               const previousPath = newHistory.pop();
               if (!previousPath) return prev;
@@ -438,15 +438,15 @@ export const useKeyboardHandlers = (
                 previewScroll: 0,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
-                notification: "Navigated back",
+                notification: 'Navigated back',
                 usedHistoryBack: true,
               };
             });
           }
           break;
-        case "L":
+        case 'L':
           if (e.shiftKey && gameState.future.length > 0) {
-            setGameState(prev => {
+            setGameState((prev) => {
               const newFuture = [...prev.future];
               const nextPath = newFuture.pop();
               if (!nextPath) return prev;
@@ -462,26 +462,26 @@ export const useKeyboardHandlers = (
                 previewScroll: 0,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
-                notification: "Navigated forward",
+                notification: 'Navigated forward',
                 usedHistoryForward: true,
               };
             });
           }
           break;
-        case "d":
+        case 'd':
           if (gameState.selectedIds.length > 0 || currentItem) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
-              mode: "confirm-delete",
+              mode: 'confirm-delete',
               pendingDeleteIds: prev.selectedIds.length > 0 ? prev.selectedIds : [currentItem!.id],
             }));
           }
           break;
-        case "G":
-          setGameState(prev => {
+        case 'G':
+          setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const inRequiredDir =
-              currentDir?.name === "datastore" || currentDir?.name === "incoming";
+              currentDir?.name === 'datastore' || currentDir?.name === 'incoming';
             return {
               ...prev,
               cursorIndex: items.length - 1,
@@ -492,9 +492,9 @@ export const useKeyboardHandlers = (
             };
           });
           break;
-        case "ArrowLeft":
+        case 'ArrowLeft':
           if (parent) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
@@ -504,16 +504,16 @@ export const useKeyboardHandlers = (
             }));
           }
           break;
-        case "l":
-        case "Enter":
-        case "ArrowRight": {
-          const allComplete = currentLevel.tasks.every(t => t.completed);
-          if (allComplete && !gameState.showHidden && e.key === "Enter" && e.shiftKey) {
+        case 'l':
+        case 'Enter':
+        case 'ArrowRight': {
+          const allComplete = currentLevel.tasks.every((t) => t.completed);
+          if (allComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
             advanceLevel();
             return;
           }
-          if (currentItem && (currentItem.type === "dir" || currentItem.type === "archive")) {
-            setGameState(prev => {
+          if (currentItem && (currentItem.type === 'dir' || currentItem.type === 'archive')) {
+            setGameState((prev) => {
               const nextPath = [...prev.currentPath, currentItem.id];
               const pathStr = resolvePath(prev.fs, nextPath);
               const now = Date.now();
@@ -540,11 +540,11 @@ export const useKeyboardHandlers = (
           }
           break;
         }
-        case " ":
+        case ' ':
           if (currentItem) {
-            setGameState(prev => {
+            setGameState((prev) => {
               const newSelected = prev.selectedIds.includes(currentItem.id)
-                ? prev.selectedIds.filter(id => id !== currentItem.id)
+                ? prev.selectedIds.filter((id) => id !== currentItem.id)
                 : [...prev.selectedIds, currentItem.id];
               return {
                 ...prev,
@@ -555,97 +555,97 @@ export const useKeyboardHandlers = (
             });
           }
           break;
-        case "a":
+        case 'a':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            const allIds = items.map(item => item.id);
-            setGameState(prev => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
+            const allIds = items.map((item) => item.id);
+            setGameState((prev) => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
             showNotification(
-              getNarrativeAction("Ctrl+A") || `Selected all (${allIds.length} items)`,
-              2000
+              getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
+              2000,
             );
           } else {
             e.preventDefault();
-            setGameState(prev => ({ ...prev, mode: "input-file", inputBuffer: "" }));
+            setGameState((prev) => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
           }
           break;
-        case "r":
+        case 'r':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            const allIds = items.map(item => item.id);
-            const inverted = allIds.filter(id => !gameState.selectedIds.includes(id));
-            setGameState(prev => ({ ...prev, selectedIds: inverted, usedCtrlR: true }));
+            const allIds = items.map((item) => item.id);
+            const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
+            setGameState((prev) => ({ ...prev, selectedIds: inverted, usedCtrlR: true }));
             showNotification(
-              getNarrativeAction("Ctrl+R") || `Inverted selection (${inverted.length} items)`,
-              2000
+              getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
+              2000,
             );
           } else if (gameState.selectedIds.length > 1) {
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
-              notification: "Batch rename not available in this version",
+              notification: 'Batch rename not available in this version',
             }));
           } else if (currentItem) {
             e.preventDefault();
-            setGameState(prev => ({ ...prev, mode: "rename", inputBuffer: currentItem.name }));
+            setGameState((prev) => ({ ...prev, mode: 'rename', inputBuffer: currentItem.name }));
           }
           break;
-        case "x":
-        case "y":
+        case 'x':
+        case 'y':
           if (gameState.selectedIds.length > 0) {
-            const nodes = getVisibleItems(gameState).filter(n =>
-              gameState.selectedIds.includes(n.id)
+            const nodes = getVisibleItems(gameState).filter((n) =>
+              gameState.selectedIds.includes(n.id),
             );
-            if (e.key === "x") {
+            if (e.key === 'x') {
               const protectedItem = nodes
-                .map(node =>
-                  isProtected(gameState.fs, gameState.currentPath, node, currentLevel, "cut")
+                .map((node) =>
+                  isProtected(gameState.fs, gameState.currentPath, node, currentLevel, 'cut'),
                 )
-                .find(res => res !== null);
+                .find((res) => res !== null);
               if (protectedItem) {
                 showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
                 return;
               }
             }
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               clipboard: {
                 nodes,
-                action: e.key === "x" ? "cut" : "yank",
+                action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
               },
               selectedIds: [],
               notification:
                 getNarrativeAction(e.key) ||
-                `${nodes.length} item(s) ${e.key === "x" ? "cut" : "yanked"}`,
+                `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
             }));
           } else if (currentItem) {
-            if (e.key === "x") {
+            if (e.key === 'x') {
               const protection = isProtected(
                 gameState.fs,
                 gameState.currentPath,
                 currentItem,
                 currentLevel,
-                "cut"
+                'cut',
               );
               if (protection) {
                 showNotification(`🔒 PROTECTED: ${protection}`, 4000);
                 return;
               }
             }
-            setGameState(prev => ({
+            setGameState((prev) => ({
               ...prev,
               clipboard: {
                 nodes: [currentItem],
-                action: e.key === "x" ? "cut" : "yank",
+                action: e.key === 'x' ? 'cut' : 'yank',
                 originalPath: prev.currentPath,
               },
               notification:
                 getNarrativeAction(e.key) ||
-                `"${currentItem.name}" ${e.key === "x" ? "cut" : "yanked"}`,
+                `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
             }));
           }
           break;
-        case "p":
+        case 'p':
           if (gameState.clipboard) {
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
             if (currentDir) {
@@ -655,15 +655,15 @@ export const useKeyboardHandlers = (
                 let errorNodeName: string | null = null;
 
                 for (const node of gameState.clipboard.nodes) {
-                  if (gameState.clipboard.action === "cut") {
+                  if (gameState.clipboard.action === 'cut') {
                     const deleteResult: Result<FileNode, FsError> = deleteNode(
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex
+                      gameState.levelIndex,
                     );
                     if (!deleteResult.ok) {
-                      if ((deleteResult as { ok: false; error: FsError }).error !== "NotFound") {
+                      if ((deleteResult as { ok: false; error: FsError }).error !== 'NotFound') {
                         error = (deleteResult as { ok: false; error: FsError }).error;
                         errorNodeName = node.name;
                         break;
@@ -676,7 +676,7 @@ export const useKeyboardHandlers = (
                   const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
                     newFs,
                     gameState.currentPath,
-                    node
+                    node,
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -689,26 +689,27 @@ export const useKeyboardHandlers = (
                 if (error) {
                   showNotification(`Paste failed for "${errorNodeName}": ${error}`, 4000);
                 } else {
-                  setGameState(prev => ({
+                  setGameState((prev) => ({
                     ...prev,
                     fs: newFs,
-                    clipboard: prev.clipboard?.action === "cut" ? null : prev.clipboard,
+                    clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
                     notification:
-                      getNarrativeAction("p") || `Deployed ${prev.clipboard?.nodes.length} assets`,
+                      getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`,
+                    usedP: true,
                   }));
                 }
               } catch (err) {
                 try {
-                  reportError(err, { phase: "paste", action: "p" });
+                  reportError(err, { phase: 'paste', action: 'p' });
                 } catch {
                   console.error(err);
                 }
-                showNotification("Paste failed", 4000);
+                showNotification('Paste failed', 4000);
               }
             }
           }
           break;
-        case "P":
+        case 'P':
           if (e.shiftKey && gameState.clipboard) {
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
             if (currentDir) {
@@ -719,7 +720,7 @@ export const useKeyboardHandlers = (
 
                 for (const node of gameState.clipboard.nodes) {
                   const existingNode = currentDir.children?.find(
-                    c => c.name === node.name && c.type === node.type
+                    (c) => c.name === node.name && c.type === node.type,
                   );
 
                   if (existingNode) {
@@ -727,7 +728,7 @@ export const useKeyboardHandlers = (
                       newFs,
                       gameState.currentPath,
                       existingNode.id,
-                      gameState.levelIndex
+                      gameState.levelIndex,
                     );
                     if (!deleteResult.ok) {
                       error = (deleteResult as { ok: false; error: FsError }).error;
@@ -740,7 +741,7 @@ export const useKeyboardHandlers = (
                   const addResult: Result<FileNode, FsError> = addNode(
                     newFs,
                     gameState.currentPath,
-                    node
+                    node,
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -749,12 +750,12 @@ export const useKeyboardHandlers = (
                   }
                   newFs = addResult.value;
 
-                  if (gameState.clipboard?.action === "cut") {
+                  if (gameState.clipboard?.action === 'cut') {
                     const deleteResult: Result<FileNode, FsError> = deleteNode(
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex
+                      gameState.levelIndex,
                     );
                     if (!deleteResult.ok) {
                       error = (deleteResult as { ok: false; error: FsError }).error;
@@ -768,57 +769,58 @@ export const useKeyboardHandlers = (
                 if (error) {
                   showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
                 } else {
-                  setGameState(prev => ({
+                  setGameState((prev) => ({
                     ...prev,
                     fs: newFs,
-                    clipboard: prev.clipboard?.action === "cut" ? null : prev.clipboard,
-                    notification: `(FORCED) ${getNarrativeAction("p") || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
+                    clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
+                    notification: `(FORCED) ${getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
+                    usedP: true,
                   }));
                 }
               } catch (err) {
                 try {
-                  reportError(err, { phase: "paste", action: "P" });
+                  reportError(err, { phase: 'paste', action: 'P' });
                 } catch {
                   console.error(err);
                 }
-                showNotification("Force paste failed", 4000);
+                showNotification('Force paste failed', 4000);
               }
             }
           }
           break;
-        case "f":
+        case 'f':
           e.preventDefault();
-          setGameState(prev => {
+          setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-            const existingFilter = currentDir ? prev.filters[currentDir.id] || "" : "";
-            showNotification(getNarrativeAction("f") || "Filter activated");
-            return { ...prev, mode: "filter", inputBuffer: existingFilter };
+            const existingFilter = currentDir ? prev.filters[currentDir.id] || '' : '';
+            showNotification(getNarrativeAction('f') || 'Filter activated');
+            return { ...prev, mode: 'filter', inputBuffer: existingFilter };
           });
           break;
-        case "\t":
-        case "Tab":
+        case '\t':
+        case 'Tab':
           e.preventDefault();
-          setGameState(prev => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
+          setGameState((prev) => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
           break;
-        case ".":
-          setGameState(prev => {
-            const narrative = getNarrativeAction(".");
+        case '.':
+          setGameState((prev) => {
+            const narrative = getNarrativeAction('.');
             const message = prev.showHidden ? `Cloaking Engaged` : `Revealing Hidden Traces`;
             showNotification(narrative || message);
             return { ...prev, showHidden: !prev.showHidden };
           });
           break;
-        case ",":
-          setGameState(prev => ({ ...prev, mode: "sort" }));
+        case ',':
+          setGameState((prev) => ({ ...prev, mode: 'sort' }));
           break;
-        case "Z":
+        case 'Z':
           if (e.shiftKey) {
-            setGameState(prev => {
-              showNotification(getNarrativeAction("Z") || "Zoxide jump");
+            setGameState((prev) => {
+              showNotification(getNarrativeAction('Z') || 'Zoxide jump');
               return {
                 ...prev,
-                mode: "zoxide-jump",
-                inputBuffer: "",
+                mode: 'zoxide-jump',
+                inputBuffer: '',
                 fuzzySelectedIndex: 0,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
@@ -826,14 +828,14 @@ export const useKeyboardHandlers = (
             });
           }
           break;
-        case "z":
+        case 'z':
           if (!e.shiftKey) {
-            setGameState(prev => {
-              showNotification(getNarrativeAction("z") || "FZF file search");
+            setGameState((prev) => {
+              showNotification(getNarrativeAction('z') || 'FZF file search');
               return {
                 ...prev,
-                mode: "fzf-current",
-                inputBuffer: "",
+                mode: 'fzf-current',
+                inputBuffer: '',
                 fuzzySelectedIndex: 0,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
@@ -841,18 +843,18 @@ export const useKeyboardHandlers = (
             });
           }
           break;
-        case "Escape":
-          setGameState(prev => {
+        case 'Escape':
+          setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const hasFilter = currentDir && prev.filters[currentDir.id];
             if (hasFilter) {
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
-              showNotification(getNarrativeAction("Escape") || "Scan filter deactivated");
+              showNotification(getNarrativeAction('Escape') || 'Scan filter deactivated');
               return { ...prev, filters: newFilters };
             }
             if (prev.selectedIds.length > 0) {
-              showNotification(getNarrativeAction("Escape") || "Selection cleared");
+              showNotification(getNarrativeAction('Escape') || 'Selection cleared');
               return { ...prev, selectedIds: [] };
             }
             return prev;
@@ -861,13 +863,13 @@ export const useKeyboardHandlers = (
         default:
           break;
       }
-      if (e.key === "Y" || e.key === "X") {
+      if (e.key === 'Y' || e.key === 'X') {
         e.preventDefault();
-        setGameState(prev => ({ ...prev, clipboard: null }));
-        showNotification(getNarrativeAction("Y") || "CLIPBOARD CLEARED", 2000);
+        setGameState((prev) => ({ ...prev, clipboard: null }));
+        showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 2000);
       }
     },
-    [showNotification]
+    [showNotification],
   );
 
   return {

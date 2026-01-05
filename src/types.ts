@@ -181,6 +181,7 @@ export interface GameState {
   usedUp?: boolean; // Tracks if player used k/up
   usedPreviewDown?: boolean; // Tracks if player used Shift+J
   usedPreviewUp?: boolean; // Tracks if player used Shift+K
+  usedP?: boolean; // Tracks if player used 'p' to paste
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level
 }
 

@@ -2409,7 +2409,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1-construct-calibrate',
         description:
-          "Construct '~/workspace/systemd-core' (a) and enter it (l) to calibrate quantum link",
+          "Construct '~/workspace/systemd-core/' (a) and enter it (l) to calibrate quantum link",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
           // If the current path explicitly includes the located node id, we're good.
@@ -2432,18 +2432,21 @@ export const LEVELS: Level[] = [
       {
         id: 'research-prior-work',
         description:
-          "Research prior work: jump to '~/datastore' (gd) and review 'mission_log.md' for clues about AI-7733.",
+          "Research prior work: jump to '~/datastore' (gd) and view 'mission_log.md' in the preview (f → type 'mission' → ESC)",
         check: (c) => {
+          const s = findNodeByName(c.fs, 'datastore');
+          if (!s || !c.currentPath.includes(s.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === 'mission_log.md';
+          // Considered reviewed when the preview pane shows the file (cursor is on it)
+          return node?.name === 'mission_log.md';
         },
         completed: false,
       },
       {
         id: 'combo-1c',
         description:
-          "Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return to '~/workspace/systemd-core' (H) and paste into it (p)",
+          "Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return to '~/workspace/systemd-core' (Z → 'core' → Enter) and paste into it (p)",
         check: (c) => {
           // Scope the search to the workspace so the /daemons copy doesn't falsely satisfy the check
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
@@ -2455,7 +2458,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1d',
         description:
-          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (L), yank 'uplink_v2.conf' (y), return (H) and paste into '~/workspace/systemd-core' (p)",
+          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return (L) and paste into '~/workspace/systemd-core' (p)",
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
         check: (c) => {
           // Ensure the workspace copy received uplink_v2.conf
@@ -2502,7 +2505,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'cleanup-1-select',
-        description: "Navigate to '/tmp' and select 'ghost_process.pid' and 'socket_001.sock'",
+        description: "Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'",
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -2598,7 +2601,8 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const systemdCore = findNodeByName(c.fs, 'systemd-core');
           const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
-          return !!credentials?.children?.some((n) => n.name === 'access_key_new.pem');
+          // Require that the credential exists AND the player performed a paste action during this level
+          return !!credentials?.children?.some((n) => n.name === 'access_key_new.pem') && !!c.usedP;
         },
         completed: false,
       },
