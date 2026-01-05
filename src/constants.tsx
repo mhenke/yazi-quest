@@ -2431,11 +2431,11 @@ export const LEVELS: Level[] = [
         description:
           "Finalize architecture: Create '~/workspace/systemd-core/weights/model.rs' inside systemd-core (a)",
         check: (c) => {
-          const s = findNodeByName(c.fs, 'systemd-core');
+          // Scope the lookup to the workspace so the /daemons copy doesn't interfere
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
           const f = s?.children?.find((h) => h.name === 'weights');
-          return !!f?.children?.find(
-            (h) => h.name === 'model.rs' || h.name === 'model.ts' || h.name === 'model.js',
-          );
+          return !!f?.children?.find((h) => h.name === 'model.rs');
         },
         completed: false,
       },
@@ -2448,7 +2448,7 @@ export const LEVELS: Level[] = [
     description:
       'CONTAMINATION WARNING. A ghost process is phoning home — broadcasting your signature. Somewhere in this filesystem, it waits. Find it first.',
     initialPath: undefined,
-    hint: "Navigate to root (root /). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete.",
+    hint: "Navigate to root (gr). Launch FZF search (z). Type 'ghost' to filter. Navigate to result. Delete.",
     coreSkill: 'FZF Search (z)',
     environmentalClue:
       "TARGET: '/tmp/ghost_process.pid' | METHOD: FZF global search (z) | FILTER: 'ghost' | ACTION: Delete",
@@ -2462,7 +2462,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'goto-root',
-        description: "Access '/' (root /)",
+        description: "Access '/' (gr)",
         check: (c) => c.currentPath.length === 1 && c.currentPath[0] === 'root',
         completed: false,
       },
