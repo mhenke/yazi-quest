@@ -1832,7 +1832,11 @@ export const LEVELS: Level[] = [
           if (!u || !c.currentPath.includes(u.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === 'personnel_list.txt' && c.usedG === true;
+          // The preview pane is always visible; require the cursor be on
+          // the personnel file and that the player used G to jump to it.
+          // Requiring `showInfoPanel` (Tab) was incorrect and prevented
+          // completion when players reviewed the preview pane instead.
+          return node?.name === 'personnel_list.txt' && c.usedG === true;
         },
         completed: false,
       },
