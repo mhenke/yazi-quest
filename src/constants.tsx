@@ -2415,7 +2415,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1d',
         description:
-          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return and paste into '~/workspace/systemd-core' (p)",
+          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return (L) and paste into '~/workspace/systemd-core' (p)",
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
         check: (c) => {
           // Ensure the workspace copy received uplink_v2.conf
@@ -2425,18 +2425,7 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
-      {
-        id: 'use-history-nav',
-        description:
-          'Use history to return to workspace after fetching uplink, then forward (H, L)',
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
-        check: (c, _s) => {
-          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
-          const hasUplink = !!systemdCore?.children?.some((n) => n.name === 'uplink_v1.conf');
-          return c.usedHistoryBack === true && c.usedHistoryForward === true && hasUplink;
-        },
-        completed: false,
-      },
+
       {
         id: 'combo-1b',
         description:

@@ -340,10 +340,13 @@ export default function App() {
       // completedTaskIds reflect the completed prerequisite (combo-1c) so it
       // will appear in Objectives immediately after this toast.
       if (newlyCompleted.includes('combo-1c')) {
-        showNotification(
-          'We need redundancy — fetch the secondary backup (uplink_v2.conf) via history (H), yank it (y), then paste next to the first (p)',
-          7000,
+        // Show a modal-style alert (same UX as ThreatAlert) so players can
+        // choose to dismiss with Esc or Shift+Enter — this mirrors the
+        // cancel-cut dialog behavior.
+        setAlertMessage(
+          'A secondary trace was detected — a fragile backup sleeps nearby. Recover it quietly and stitch it alongside the first copy; every extra shard increases our resilience.',
         );
+        setShowThreatAlert(true);
       }
     }
 
