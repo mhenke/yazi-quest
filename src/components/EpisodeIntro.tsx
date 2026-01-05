@@ -228,7 +228,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div
-          className={`border-b-2 border-dashed ${episode.color ? episode.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 mb-8 opacity-0 animate-in fade-in duration-1000`}
+          className={`border-b-2 border-dashed ${episode.color ? episode.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 mb-8 duration-1000`}
         >
           <div className="flex items-center gap-3 mb-2">
             <Terminal size={32} className={episode.color} />
