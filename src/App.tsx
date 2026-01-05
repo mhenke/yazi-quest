@@ -10,7 +10,7 @@ import {
   FsError,
   Result as _Result,
 } from './types';
-import { LEVELS, INITIAL_FS, EPISODE_LORE } from './constants';
+import { LEVELS, INITIAL_FS, EPISODE_LORE, ensurePrerequisiteState } from './constants';
 import {
   getNodeByPath,
   getParentNode,
@@ -161,10 +161,7 @@ export default function App() {
       }
     }
 
-    // Prepare File System with Level-Specific Overrides
-    // When jumping to a level via URL, replay all onEnter hooks from previous levels
-    // to ensure filesystem state matches what a player would see progressing naturally
-    let fs = cloneFS(INITIAL_FS);
+    let fs = ensurePrerequisiteState(cloneFS(INITIAL_FS), initialLevel.id);
 
     // Replay all onEnter hooks up to and including the target level
     for (let i = 0; i <= effectiveIndex; i++) {

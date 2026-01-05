@@ -1959,40 +1959,49 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'data-harvest-1',
-        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb",
+        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb (j)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === 'abandoned_script.py';
+          // Require the cursor land on the script via movement (j)
+          return node?.name === 'abandoned_script.py' && !!c.usedDown;
         },
         completed: false,
       },
       {
         id: 'data-harvest-2',
-        description: "Navigate to '~/incoming' and find 'sector_map.png' using the clue",
+        description:
+          "Navigate to '~/incoming' (gi) and find 'sector_map.png' using the clue (f, type 'sector_map.png', then ESC)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
-          if (!u || !u.children || !c.currentPath.includes(u.id)) return false;
+          if (!u || !c.currentPath.includes(u.id)) return false;
           const visible = getVisibleItems(c);
           const p = visible[c.cursorIndex];
-          return u.name === 'incoming' && p != null && p.name === 'sector_map.png';
+          // Completion when the cursor is on sector_map.png and we're in normal mode
+          return (
+            u.name === 'incoming' && p != null && p.name === 'sector_map.png' && c.mode === 'normal'
+          );
         },
         completed: false,
       },
       {
         id: 'data-harvest-3',
-        description: "Cut the asset ('sector_map.png')",
+        description: "Cut the 'sector_map.png' asset (x) and clear the filter (ESC)",
         check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
+          const hasActiveFilter = !!(u && c.filters && c.filters[u.id]);
           return (
             c.clipboard?.action === 'cut' &&
-            c.clipboard.nodes.some((p) => p.name === 'sector_map.png')
+            c.clipboard.nodes.some((p) => p.name === 'sector_map.png') &&
+            !hasActiveFilter &&
+            c.mode === 'normal'
           );
         },
         completed: false,
       },
       {
         id: 'data-harvest-4',
-        description: "Go to home (gh), enter '~/media', and paste the asset.",
+        description: "Go to home (gh), enter '~/media', and paste the asset (p)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'media');
           return !!u?.children?.find((r) => r.name === 'sector_map.png');
