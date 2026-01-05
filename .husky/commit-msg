@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 # Run commitlint if installed
 if [ -d "node_modules/@commitlint" ]; then
   npx --no-install --no-update-notifier @commitlint/cli --edit "$1"

@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 echo "Running pre-push checks..."
 npm run type-check || exit 1
 npm run build || exit 1
