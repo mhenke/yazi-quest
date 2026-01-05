@@ -8,8 +8,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { FileNode } from '../types';
-
+import { FileNode } from './types';
 import { INITIAL_FS, LEVELS, ensurePrerequisiteState } from './constants';
 import { findNodeByName, cloneFS } from './utils/fsHelpers';
 
