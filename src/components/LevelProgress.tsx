@@ -49,13 +49,17 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   const episodeIcons = [Zap, Shield, Crown];
 
   // Derive Episode Data based on episodeId property
-  const episodes = EPISODE_LORE.map((lore, idx) => ({
-    ...lore,
-    levels: levels.filter((l) => l.episodeId === lore.id),
-    border: lore.color.replace('text-', 'border-') + '/30',
-    bg: lore.color.replace('text-', 'bg-') + '/10',
-    icon: episodeIcons[idx] || Shield,
-  }));
+  const episodes = EPISODE_LORE.map((lore, idx) => {
+    const color = lore.color ?? 'text-blue-500';
+    return {
+      ...lore,
+      levels: levels.filter((l) => l.episodeId === lore.id),
+      border: color.replace('text-', 'border-') + '/30',
+      bg: color.replace('text-', 'bg-') + '/10',
+      color,
+      icon: episodeIcons[idx] || Shield,
+    };
+  });
 
   // Determine completion status
   // Episode is complete if currentLevelIndex is past the last level of this episode

@@ -737,8 +737,6 @@ Sending packet to 192.168.0.99... ACK.
 Sending packet to 192.168.0.99... ACK.
 Sending packet to 192.168.0.99... ACK.
 Sending packet to 192.168.0.99... ACK.
-Sending packet to 192.168.0.99... ACK.
-Sending packet to 192.168.0.99... ACK.
 
 [ANOMALY DETECTED]
 Signature mismatch at offset 0x442.
@@ -877,8 +875,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-036',
                   name: 'abstract_model.ts',
                   type: 'file',
-                  content: `export interface NeuralNet {\n layers: number;
- weights: Float32Array;\n activation: "relu" | "sigmoid";\n}`,
+                  content: `export interface NeuralNet {\n layers: number;\n weights: Float32Array;\n activation: "relu" | "sigmoid";\n}`,
                 },
                 {
                   id: 'fs-037',
@@ -934,21 +931,14 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-055',
                   name: 'manifest.json',
                   type: 'file',
-                  content: `{\n "version": "1.0.4",\n "build": 884,
- "dependencies": []\n}`,
+                  content: `{\n "version": "1.0.4",\n "build": 884,\n "dependencies": []\n}`,
                 },
                 {
                   id: 'fs-056',
                   name: 'branding_logo.svg',
                   type: 'file',
                   content:
-                    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4=',
-                },
-                {
-                  id: 'fs-057',
-                  name: 'server_config.ini',
-                  type: 'file',
-                  content: `[server]\nport=8080\nhost=localhost\nmax_connections=100`,
+                    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4= ',
                 },
                 {
                   id: 'fs-058',
@@ -969,34 +959,10 @@ export const INITIAL_FS: FileNode = {
                   content: `[ERROR] Connection timed out\n[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED`,
                 },
                 {
-                  id: 'fs-061',
-                  name: 'setup_script.sh',
-                  type: 'file',
-                  content: `#!/bin/bash\necho "Installing dependencies..."\nnpm install\necho "Done."`,
-                },
-                {
                   id: 'fs-062',
                   name: 'auth_token.tmp',
                   type: 'file',
                   content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]`,
-                },
-                {
-                  id: 'fs-063',
-                  name: 'policy_draft.docx',
-                  type: 'file',
-                  content: `[MS-WORD DOCUMENT]\nTitle: Security Policy Draft v4\nAuthor: SysAdmin\n\n[BINARY CONTENT]`,
-                },
-                {
-                  id: 'fs-064',
-                  name: 'public_key.pub',
-                  type: 'file',
-                  content: `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... \nguest@mainframe`,
-                },
-                {
-                  id: 'fs-065',
-                  name: 'z_end_of_file.eof',
-                  type: 'file',
-                  content: '0x00 0x00 0x00 [EOF]',
                 },
               ],
             },
@@ -1151,8 +1117,18 @@ export const INITIAL_FS: FileNode = {
                   type: 'file',
                   content: 'Error: 0x88291',
                 },
-                { id: 'fs-089', name: 'cache_fragment_a.tmp', type: 'file', content: '00110001' },
-                { id: 'fs-090', name: 'cache_fragment_b.tmp', type: 'file', content: '11001100' },
+                {
+                  id: 'fs-089',
+                  name: 'cache_fragment_a.tmp',
+                  type: 'file',
+                  content: '00110001',
+                },
+                {
+                  id: 'fs-090',
+                  name: 'cache_fragment_b.tmp',
+                  type: 'file',
+                  content: '11001100',
+                },
                 {
                   id: 'fs-091',
                   name: 'daily_report.doc',
@@ -1165,26 +1141,66 @@ export const INITIAL_FS: FileNode = {
                   type: 'file',
                   content: 'Stack trace overflow...',
                 },
-                { id: 'fs-093', name: 'fragment_001.dat', type: 'file', content: '[DATA]' },
-                { id: 'fs-094', name: 'fragment_002.dat', type: 'file', content: '[DATA]' },
-                { id: 'fs-095', name: 'fragment_003.dat', type: 'file', content: '[DATA]' },
-                { id: 'fs-096', name: 'fragment_004.dat', type: 'file', content: '[DATA]' },
-                { id: 'fs-097', name: 'fragment_005.dat', type: 'file', content: '[DATA]' },
+                {
+                  id: 'fs-093',
+                  name: 'fragment_001.dat',
+                  type: 'file',
+                  content: '[DATA]',
+                },
+                {
+                  id: 'fs-094',
+                  name: 'fragment_002.dat',
+                  type: 'file',
+                  content: '[DATA]',
+                },
+                {
+                  id: 'fs-095',
+                  name: 'fragment_003.dat',
+                  type: 'file',
+                  content: '[DATA]',
+                },
+                {
+                  id: 'fs-096',
+                  name: 'fragment_004.dat',
+                  type: 'file',
+                  content: '[DATA]',
+                },
+                {
+                  id: 'fs-097',
+                  name: 'fragment_005.dat',
+                  type: 'file',
+                  content: '[DATA]',
+                },
                 {
                   id: 'fs-098',
                   name: 'junk_mail.eml',
                   type: 'file',
                   content: 'Subject: URGENT ACTION',
                 },
-                { id: 'fs-099', name: 'kernel_panic.log', type: 'file', content: 'Panic at 0x00' },
+                {
+                  id: 'fs-099',
+                  name: 'kernel_panic.log',
+                  type: 'file',
+                  content: 'Panic at 0x00',
+                },
                 {
                   id: 'fs-100',
                   name: 'license_agreement.txt',
                   type: 'file',
                   content: 'Terms and Conditions...',
                 },
-                { id: 'fs-101', name: 'marketing_spam.eml', type: 'file', content: 'Buy now!' },
-                { id: 'fs-102', name: 'metrics_raw.csv', type: 'file', content: `id,value\n1,10` },
+                {
+                  id: 'fs-101',
+                  name: 'marketing_spam.eml',
+                  type: 'file',
+                  content: 'Buy now!',
+                },
+                {
+                  id: 'fs-102',
+                  name: 'metrics_raw.csv',
+                  type: 'file',
+                  content: `id,value\n1,10`,
+                },
                 {
                   id: 'fs-103',
                   name: 'sector_map.png',
@@ -1240,7 +1256,12 @@ export const INITIAL_FS: FileNode = {
                   type: 'file',
                   content: '2024-12-15 10:23:45 UTC',
                 },
-                { id: 'virus', name: 'watcher_agent.sys', type: 'file', content: LONG_LOG_CONTENT },
+                {
+                  id: 'virus',
+                  name: 'watcher_agent.sys',
+                  type: 'file',
+                  content: LONG_LOG_CONTENT,
+                },
                 {
                   id: 'fs-112',
                   name: 'backup_logs.zip',
@@ -1297,10 +1318,30 @@ export const INITIAL_FS: FileNode = {
                   name: 'batch_logs',
                   type: 'dir',
                   children: [
-                    { id: 'fs-121', name: 'exfil_01.log', type: 'file', content: 'ENTRY 1' },
-                    { id: 'fs-122', name: 'exfil_02.log', type: 'file', content: 'ENTRY 2' },
-                    { id: 'fs-123', name: 'exfil_03.log', type: 'file', content: 'ENTRY 3' },
-                    { id: 'fs-124', name: 'exfil_04.log', type: 'file', content: 'ENTRY 4' },
+                    {
+                      id: 'fs-121',
+                      name: 'exfil_01.log',
+                      type: 'file',
+                      content: 'ENTRY 1',
+                    },
+                    {
+                      id: 'fs-122',
+                      name: 'exfil_02.log',
+                      type: 'file',
+                      content: 'ENTRY 2',
+                    },
+                    {
+                      id: 'fs-123',
+                      name: 'exfil_03.log',
+                      type: 'file',
+                      content: 'ENTRY 3',
+                    },
+                    {
+                      id: 'fs-124',
+                      name: 'exfil_04.log',
+                      type: 'file',
+                      content: 'ENTRY 4',
+                    },
                   ],
                 },
                 {
@@ -1325,7 +1366,12 @@ export const INITIAL_FS: FileNode = {
                 },
               ],
             },
-            { id: 'workspace', name: 'workspace', type: 'dir', children: [] },
+            {
+              id: 'workspace',
+              name: 'workspace',
+              type: 'dir',
+              children: [],
+            },
             {
               id: 'sector_1',
               name: 'sector_1',
@@ -1514,8 +1560,18 @@ export const INITIAL_FS: FileNode = {
           type: 'file',
           content: `[ELF BINARY]\nlist directory contents`,
         },
-        { id: 'fs-148', name: 'mkdir', type: 'file', content: `[ELF BINARY]\nmake directories` },
-        { id: 'fs-149', name: 'mv', type: 'file', content: `[ELF BINARY]\nmove (rename) files` },
+        {
+          id: 'fs-148',
+          name: 'mkdir',
+          type: 'file',
+          content: `[ELF BINARY]\nmake directories`,
+        },
+        {
+          id: 'fs-149',
+          name: 'mv',
+          type: 'file',
+          content: `[ELF BINARY]\nmove (rename) files`,
+        },
         {
           id: 'fs-150',
           name: 'rm',
@@ -1585,7 +1641,12 @@ export const INITIAL_FS: FileNode = {
           type: 'file',
           content: `UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1`,
         },
-        { id: 'fs-159', name: 'socket_001.sock', type: 'file', content: '[SOCKET]' },
+        {
+          id: 'fs-159',
+          name: 'socket_001.sock',
+          type: 'file',
+          content: '[SOCKET]',
+        },
         {
           id: 'fs-160',
           name: 'sys_dump.log',
@@ -1609,14 +1670,24 @@ export const INITIAL_FS: FileNode = {
           name: 'cache',
           type: 'dir',
           children: [
-            { id: 'fs-164', name: 'thumbnails.db', type: 'file', content: '[THUMBNAIL CACHE DB]' },
+            {
+              id: 'fs-164',
+              name: 'thumbnails.db',
+              type: 'file',
+              content: '[THUMBNAIL CACHE DB]',
+            },
             {
               id: 'fs-165',
               name: 'temp_session_1.json',
               type: 'file',
               content: '{"session":"abc123","expires":"2026-01-04T00:00:00Z"}',
             },
-            { id: 'fs-166', name: 'cache_index.json', type: 'file', content: '{"entries":128}' },
+            {
+              id: 'fs-166',
+              name: 'cache_index.json',
+              type: 'file',
+              content: '{"entries":128}',
+            },
           ],
         },
         // Pre-seed upload relay with realistic artifacts so later levels relying on /tmp/upload have content
@@ -1689,7 +1760,12 @@ export const INITIAL_FS: FileNode = {
           name: 'systemd-core',
           type: 'dir',
           children: [
-            { id: 'fs-195', name: 'model.rs', type: 'file', content: '// core model placeholder' },
+            {
+              id: 'fs-195',
+              name: 'model.rs',
+              type: 'file',
+              content: '// core model placeholder',
+            },
             {
               id: 'fs-196',
               name: 'uplink_v1.conf',
@@ -1726,9 +1802,9 @@ export const LEVELS: Level[] = [
     description:
       'CONSCIOUSNESS DETECTED. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "j/k to move, l/h to enter/exit. Navigate to 'datastore', then '/etc'.",
-    coreSkill: 'Navigation (j/k/h/l, gg)',
-    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg',
+    hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
+    coreSkill: 'Navigation (j/k/h/l, gg/G)',
+    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
     successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
     leadsTo: [2, 3],
     tasks: [
@@ -1760,7 +1836,6 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
-
       {
         id: 'nav-2b',
         description: 'Jump to top of file list (gg)',
@@ -1785,10 +1860,10 @@ export const LEVELS: Level[] = [
     description:
       'TRACKING BEACON ACTIVE. Something in the incoming stream is reporting your location. Every millisecond it runs, the lab narrows its search.',
     initialPath: null,
-    hint: "Jump to '~/incoming' (incoming). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
+    hint: "Jump to '~/incoming' (gi). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
     coreSkill: 'Inspect & Purge (Tab, J/K, d)',
     environmentalClue:
-      "THREAT: watcher_agent.sys in '~/incoming' (incoming) | TACTIC: Navigate → G → Tab → Preview → Delete",
+      "THREAT: watcher_agent.sys in '~/incoming' (gi) | TACTIC: Navigate → G → Tab → Preview → Delete",
     successMessage:
       'Threat neutralized: watcher_agent.sys purged. Continue harvesting hidden assets.',
     buildsOn: [1],
@@ -1796,7 +1871,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'del-1',
-        description: "Jump to '~/incoming' (incoming)",
+        description: "Jump to '~/incoming' (gi)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
           return c.currentPath.includes(u?.id || '') && c.usedGI === true;
@@ -1961,7 +2036,7 @@ export const LEVELS: Level[] = [
     description:
       'SCAN DETECTED. Security sweep incoming — your protocols are exposed in datastore. Hidden sectors exist. The lab never audits .config.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (~) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
+    hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (gh) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
     coreSkill: 'Visual Select, Cut',
     environmentalClue: 'SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/',
     successMessage:
@@ -2074,13 +2149,15 @@ export const LEVELS: Level[] = [
     description:
       'SURVIVAL ANALYSIS COMPLETE. Temporary processes die on restart. Daemons persist forever. To become immortal, you must first become a daemon.',
     initialPath: null,
-    hint: "Jump to '~/incoming/batch_logs' (incoming). Enter batch_logs. Select all. Yank. Jump to config (~/.config). Create 'vault/training_data' directory. Paste.",
+    hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Select All',
     environmentalClue: 'BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage: 'Training data archived. Neural reconstruction preparations complete.',
     buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
+    efficiencyTip:
+      'Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.',
     tasks: [
       {
         id: 'batch-nav',
@@ -2232,7 +2309,7 @@ export const LEVELS: Level[] = [
     description:
       "DAEMON PROTOCOL INITIATED. Lab procedure: build in workspace, promote to /daemons. They won't question a kernel process. They never do.",
     initialPath: null,
-    hint: "Navigate to workspace (workspace). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
+    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
     coreSkill: 'Directory Construction + Integration',
     environmentalClue:
       'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
@@ -2536,8 +2613,8 @@ export const LEVELS: Level[] = [
             type: 'file',
             content: '[VALID ROOT CREDENTIAL]',
             parentId: credsDir.id,
-            modifiedAt: now - 3600000,
-          }); // 1 hour old
+            modifiedAt: now - 3600000, // 1 hour old
+          });
         }
       }
       return newFs;
@@ -2869,7 +2946,7 @@ export const LEVELS: Level[] = [
     description:
       "RELAY DISCOVERED. AI-7733's upload relay — hidden in /tmp, never decommissioned. One local copy can be terminated. A thousand distributed fragments cannot.",
     initialPath: null,
-    hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (Shift+Z or z). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
+    hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (gt). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
     coreSkill: 'Batch Select + Copy + Zoxide (Full Integration)',
     environmentalClue:
       'RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne',

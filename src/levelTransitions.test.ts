@@ -202,10 +202,20 @@ describe('Level Transition Consistency', () => {
   });
 
   describe('Level 9 → Level 10 Transition', () => {
-    it('Level 9 completion: ghost_process.pid should be deleted from /tmp', () => {
+    it('Level 9 completion: /tmp should only contain preserved files', () => {
       const fs = ensurePrerequisiteState(initialFs, 10);
-      const tmpChildren = getChildNames(fs, 'tmp');
-      expect(tmpChildren).not.toContain('ghost_process.pid');
+      const tmpDir = findNodeByName(fs, 'tmp', 'dir');
+      const tmpChildren = (tmpDir?.children || []).map((c) => c.name);
+
+      // It should contain the files we want to keep
+      expect(tmpChildren).toContain('ghost_process.pid');
+      expect(tmpChildren).toContain('socket_001.sock');
+
+      // It should NOT contain any of the junk files that should have been deleted
+      const junkFiles = ['debug_trace.log', 'metrics_buffer.json', 'overflow_heap.dmp'];
+      for (const junk of junkFiles) {
+        expect(tmpChildren).not.toContain(junk);
+      }
     });
   });
 
