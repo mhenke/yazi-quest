@@ -239,3 +239,5 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     </div>
   );
 };
+
+export default StatusBar;

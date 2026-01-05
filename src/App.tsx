@@ -26,7 +26,7 @@ import {
 import { sortNodes } from './utils/sortHelpers';
 import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
-import { StatusBar } from './components/StatusBar';
+import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
