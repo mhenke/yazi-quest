@@ -33,6 +33,7 @@ const getNarrativeAction = (key: string): string | null => {
 
 export const useKeyboardHandlers = (
   showNotification: (message: string, duration?: number) => void,
+  setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
   const handleSortModeKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
@@ -43,6 +44,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
+          acceptNextKeyForSort: false,
           sortBy: 'natural',
           sortDirection: shift ? 'desc' : 'asc',
           notification: `Sort: Natural ${shift ? '(rev)' : ''}`,
@@ -51,6 +53,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
+          acceptNextKeyForSort: false,
           sortBy: 'alphabetical',
           sortDirection: shift ? 'desc' : 'asc',
           notification: `Sort: A-Z ${shift ? '(rev)' : ''}`,
@@ -59,6 +62,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
+          acceptNextKeyForSort: false,
           sortBy: 'modified',
           sortDirection: shift ? 'asc' : 'desc',
           linemode: 'mtime',
@@ -68,6 +72,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
+          acceptNextKeyForSort: false,
           sortBy: 'size',
           sortDirection: shift ? 'asc' : 'desc',
           linemode: 'size',
@@ -77,6 +82,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
+          acceptNextKeyForSort: false,
           sortBy: 'extension',
           sortDirection: shift ? 'desc' : 'asc',
           notification: `Sort: Extension ${shift ? '(rev)' : ''}`,
@@ -90,12 +96,22 @@ export const useKeyboardHandlers = (
             'permissions',
           ];
           const nextIndex = (modes.indexOf(prev.linemode) + 1) % modes.length;
-          return { ...prev, mode: 'normal', linemode: modes[nextIndex] };
+          return {
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            linemode: modes[nextIndex],
+          };
         });
       } else if (key === '-') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', linemode: 'none' }));
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          acceptNextKeyForSort: false,
+          linemode: 'none',
+        }));
       } else if (key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        setGameState((prev) => ({ ...prev, mode: 'normal', acceptNextKeyForSort: false }));
       }
     },
     [],
@@ -811,7 +827,7 @@ export const useKeyboardHandlers = (
           });
           break;
         case ',':
-          setGameState((prev) => ({ ...prev, mode: 'sort' }));
+          setGameState((prev) => ({ ...prev, mode: 'sort', acceptNextKeyForSort: true }));
           break;
         case 'Z':
           if (e.shiftKey) {

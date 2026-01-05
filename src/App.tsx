@@ -229,6 +229,7 @@ export default function App() {
       usedPreviewDown: false,
       usedPreviewUp: false,
       usedP: false,
+      acceptNextKeyForSort: false,
       completedTaskIds,
     };
   });
@@ -294,7 +295,7 @@ export default function App() {
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
     handleNormalModeKeyDown,
-  } = useKeyboardHandlers(showNotification);
+  } = useKeyboardHandlers(showNotification, setShowFilterWarning);
 
   useEffect(() => {
     return () => {
@@ -364,7 +365,8 @@ export default function App() {
       gameState.linemode === 'size';
 
     // Determine if filters are clear
-    const isFilterClear = Object.values(gameState.filters).every((filter) => !filter);
+    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+    const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
     if (tasksComplete) {
       if (gameState.showHidden) {
@@ -526,6 +528,7 @@ export default function App() {
         usedPreviewDown: false,
         usedPreviewUp: false,
         usedP: false,
+        acceptNextKeyForSort: false,
         usedHistoryBack: false,
         usedHistoryForward: false,
         zoxideData: newZoxideData,
@@ -578,6 +581,7 @@ export default function App() {
         usedPreviewDown: false,
         usedPreviewUp: false,
         usedP: false,
+        acceptNextKeyForSort: false,
         usedHistoryBack: false,
         usedHistoryForward: false,
         future: [],
@@ -929,6 +933,16 @@ export default function App() {
           settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
           notification: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
         }));
+        return;
+      }
+
+      // Mode dispatch
+      // Special-case: if a previous key requested the sort handler to capture the next
+      // raw key (e.g., pressing ',' then quickly 'n'), handle that here even if React
+      // hasn't yet flushed mode:'sort' into state.
+      if (gameState.acceptNextKeyForSort && gameState.mode === 'normal') {
+        handleSortModeKeyDown(e, setGameState);
+        setGameState((p) => ({ ...p, acceptNextKeyForSort: false }));
         return;
       }
 
