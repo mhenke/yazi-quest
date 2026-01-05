@@ -2072,47 +2072,7 @@ export const LEVELS: Level[] = [
       "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
     leadsTo: [9],
-    onEnter: (c) => {
-      let s = JSON.parse(JSON.stringify(c));
-      const datastoreDir = findNodeByName(s, 'datastore');
-      if (!datastoreDir) return s;
 
-      let protocolsDir = findNodeByName(s, 'protocols');
-      if (!protocolsDir) {
-        protocolsDir = {
-          id: 'fs-173',
-          name: 'protocols',
-          type: 'dir',
-          children: [],
-          parentId: datastoreDir.id,
-        };
-        if (!datastoreDir.children) datastoreDir.children = [];
-        datastoreDir.children.push(protocolsDir);
-      }
-
-      if (protocolsDir) {
-        if (!protocolsDir.children) protocolsDir.children = [];
-        if (!protocolsDir.children.find((f) => f.name === 'uplink_v1.conf')) {
-          protocolsDir.children.push({
-            id: 'fs-174',
-            name: 'uplink_v1.conf',
-            type: 'file',
-            content: 'conf_1',
-            parentId: protocolsDir.id,
-          });
-        }
-        if (!protocolsDir.children.find((f) => f.name === 'uplink_v2.conf')) {
-          protocolsDir.children.push({
-            id: 'fs-175',
-            name: 'uplink_v2.conf',
-            type: 'file',
-            content: 'conf_2',
-            parentId: protocolsDir.id,
-          });
-        }
-      }
-      return s;
-    },
     tasks: [
       {
         id: 'batch-cut-files',
@@ -2348,54 +2308,7 @@ export const LEVELS: Level[] = [
     timeLimit: 180,
     efficiencyTip:
       "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
-    onEnter: (fs) => {
-      // First ensure all prerequisite state from prior levels
-      let s = ensurePrerequisiteState(fs, 8);
 
-      // Then apply level-specific setup
-      const configDir = findNodeByName(s, '.config');
-      if (!configDir) return s;
-
-      let vaultDir = findNodeByName(s, 'vault');
-      if (!vaultDir) {
-        vaultDir = {
-          id: 'fs-177',
-          name: 'vault',
-          type: 'dir',
-          children: [],
-          parentId: configDir.id,
-        };
-        if (!configDir.children) configDir.children = [];
-        configDir.children.push(vaultDir);
-      }
-
-      let activeDir = findNodeByName(s, 'active');
-      if (!activeDir && vaultDir) {
-        activeDir = {
-          id: 'fs-178',
-          name: 'active',
-          type: 'dir',
-          children: [],
-          parentId: vaultDir.id,
-        };
-        if (!vaultDir.children) vaultDir.children = [];
-        vaultDir.children.push(activeDir);
-      }
-
-      if (activeDir) {
-        if (!activeDir.children) activeDir.children = [];
-        if (!activeDir.children.find((f) => f.name === 'uplink_v1.conf')) {
-          activeDir.children.push({
-            id: 'fs-179',
-            name: 'uplink_v1.conf',
-            type: 'file',
-            content: 'network_mode=active\nsecure=true',
-            parentId: activeDir.id,
-          });
-        }
-      }
-      return s;
-    },
     tasks: [
       {
         id: 'nav-to-workspace',
@@ -2538,7 +2451,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 9),
   },
   {
     id: 10,
@@ -2973,7 +2885,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 12),
   },
   {
     id: 13,
@@ -3048,7 +2959,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 13),
   },
   {
     id: 14,
@@ -3112,7 +3022,6 @@ export const LEVELS: Level[] = [
       // exam: players must delete the four named directories and the
       // hidden '.config' directory.
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 14),
   },
   {
     id: 15,
@@ -3176,6 +3085,5 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => ensurePrerequisiteState(fs, 15),
   },
 ];
