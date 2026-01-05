@@ -2027,8 +2027,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description:
-          "Infiltrate '~/datastore' and construct '~/datastore/protocols/' directory (a)",
+        description: "Infiltrate '~/datastore' and construct 'protocols/' directory (a)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
@@ -2037,8 +2036,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'enter-and-create-v1',
-        description:
-          "Enter '~/datastore/protocols' directory (l) and create '~/datastore/protocols/uplink_v1.conf' (a)",
+        description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
         check: (c) => {
           const r = findNodeByName(c.fs, 'protocols');
           return (
@@ -2051,7 +2049,7 @@ export const LEVELS: Level[] = [
       {
         id: 'clone-and-rename',
         description:
-          "Duplicate '~/datastore/protocols/uplink_v1.conf' (y, p) and rename the copy to '~/datastore/protocols/uplink_v2.conf' (r)",
+          "Duplicate 'uplink_v1.conf' (y, p) and rename the copy to 'uplink_v2.conf' (r)",
         check: (c) => {
           const f = findNodeByName(c.fs, 'protocols');
           return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
@@ -2217,7 +2215,7 @@ export const LEVELS: Level[] = [
       {
         id: 'goto-config-vault',
         description:
-          "Jump to '~/.config' (gc) and create '~/.config/vault/training_data' directory (a)",
+          "Jump to '~/.config' (gc) and in 'vault/' create 'training_data/' directory (a)",
         check: (c) => {
           const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -2260,7 +2258,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'QUANTUM BYPASS',
     description:
-      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. The lab sets honeypots.',
+      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. The lab sets honeypots.\n\n<current_datetime>',
     initialPath: null,
     hint: "Jump to '/tmp' (Z → type 'tmp' → Enter). Cut '/tmp/access_token.key' to stage for exfiltration. Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'Zoxide Navigation + Operation Abort',
