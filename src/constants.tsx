@@ -2415,7 +2415,7 @@ export const LEVELS: Level[] = [
       {
         id: 'combo-1d',
         description:
-          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return (L) and paste into '~/workspace/systemd-core' (p)",
+          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (L), yank 'uplink_v2.conf' (y), return (H) and paste into '~/workspace/systemd-core' (p)",
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
         check: (c) => {
           // Ensure the workspace copy received uplink_v2.conf
