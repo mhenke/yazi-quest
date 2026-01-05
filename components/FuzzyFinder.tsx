@@ -85,8 +85,9 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       const node = findNodeFromPath(gameState.fs, selectedCandidate.path);
       return node?.children || [];
     } else {
-      if (selectedCandidate.pathIds && Array.isArray(selectedCandidate.pathIds)) {
-        const fullNodePath = [...gameState.currentPath, ...selectedCandidate.pathIds];
+      const pathIds = (selectedCandidate as unknown as { pathIds?: string[] }).pathIds || [];
+      if (pathIds && Array.isArray(pathIds)) {
+        const fullNodePath = [...gameState.currentPath, ...pathIds];
         const parentPath = fullNodePath.slice(0, -1);
         const parentNode = getNodeByPath(gameState.fs, parentPath);
         return parentNode?.children || [];
