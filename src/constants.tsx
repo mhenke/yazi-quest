@@ -2559,7 +2559,9 @@ export const LEVELS: Level[] = [
         id: 'integrate-credentials',
         description:
           "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), paste key",
-        check: (c) => {
+        check: (c, _s) => {
+          // Ensure the player actually extracted the key from the archive first
+          if (!c.completedTaskIds[_s.id]?.includes('extract-key')) return false;
           const systemdCore = findNodeByName(c.fs, 'systemd-core');
           const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
           return !!credentials?.children?.some((n) => n.name === 'access_key.pem');
