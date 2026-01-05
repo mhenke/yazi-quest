@@ -369,29 +369,16 @@ describe('Level Transition Consistency', () => {
   });
 
   describe('Daemons Directory Consistency', () => {
-    it('Level 11 onEnter should create /daemons with .service files', () => {
-      // Find Level 11 and run its onEnter
-      const level11 = LEVELS.find((l) => l.id === 11);
-      expect(level11).toBeDefined();
-      expect(level11?.onEnter).toBeDefined();
-
-      const fs = level11!.onEnter!(cloneFS(initialFs));
-      expect(pathExists(fs, 'root', 'daemons')).toBe(true);
-      const daemons = getNestedDir(fs, 'root', 'daemons');
+    it('Initial filesystem should include /daemons with .service files', () => {
+      expect(pathExists(initialFs, 'root', 'daemons')).toBe(true);
+      const daemons = getNestedDir(initialFs, 'root', 'daemons');
       const daemonChildren = (daemons?.children || []).map((c) => c.name);
       expect(daemonChildren).toContain('cron-legacy.service');
       expect(daemonChildren).toContain('backup-archive.service');
     });
 
-    it('Level 12 prerequisite should have daemons from Level 11 onEnter', () => {
-      // When jumping to level 12, the App replays all onEnter hooks
-      // But ensurePrerequisiteState only handles data changes
-      // The daemons directory is created in Level 11's onEnter
-      const level11 = LEVELS.find((l) => l.id === 11);
-      let fs = cloneFS(initialFs);
-      if (level11?.onEnter) {
-        fs = level11.onEnter(fs);
-      }
+    it('Level 12 prerequisite should include daemons (pre-seeded)', () => {
+      const fs = ensurePrerequisiteState(initialFs, 12);
       expect(pathExists(fs, 'root', 'daemons')).toBe(true);
     });
   });
