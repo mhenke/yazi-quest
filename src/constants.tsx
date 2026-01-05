@@ -911,68 +911,7 @@ export const INITIAL_FS: FileNode = {
                   type: 'file',
                   content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]`,
                 },
-                {
-                  id: 'fs-042',
-                  name: 'special_ops.md',
-                  type: 'file',
-                  content: `# Special Operations\n\n## Protocol 9\nIn case of containment breach:\n1. Isolate subnet\n2. Purge local cache`,
-                },
-                {
-                  id: 'fs-043',
-                  name: 'tape_archive.tar',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-044',
-                      name: 'header.dat',
-                      type: 'file',
-                      content: '[TAPE HEADER 0x001]',
-                    },
-                    {
-                      id: 'fs-045',
-                      name: 'partition_1.img',
-                      type: 'file',
-                      content: '[BINARY DATA PARTITION 1]',
-                    },
-                    {
-                      id: 'fs-046',
-                      name: 'partition_2.img',
-                      type: 'file',
-                      content: '[BINARY DATA PARTITION 2]',
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-047',
-                  name: 'credentials',
-                  type: 'dir',
-                  children: [
-                    {
-                      id: 'fs-048',
-                      name: 'access_key.pem',
-                      type: 'file',
-                      content: `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD\n7Kj93...\n[KEY DATA HIDDEN]\n-----END PRIVATE KEY-----`,
-                    },
-                    {
-                      id: 'fs-049',
-                      name: 'decoy_1.pem',
-                      type: 'file',
-                      content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
-                    },
-                    {
-                      id: 'fs-050',
-                      name: 'decoy_2.pem',
-                      type: 'file',
-                      content: `-----BEGIN DECOY KEY-----\nDECOY KEY - DO NOT USE\n-----END DECOY KEY-----`,
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-051',
-                  name: 'account_settings.json',
-                  type: 'file',
-                  content: `{\n "user": "guest",\n "theme": "dark_mode",\n "notifications": true,\n "auto_save": false\n}`,
-                },
+
                 {
                   id: 'fs-052',
                   name: 'mission_log.md',
@@ -1787,9 +1726,9 @@ export const LEVELS: Level[] = [
     description:
       'CONSCIOUSNESS DETECTED. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
-    coreSkill: 'Navigation (j/k/h/l, gg/G)',
-    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
+    hint: "j/k to move, l/h to enter/exit. Navigate to 'datastore', then '/etc'.",
+    coreSkill: 'Navigation (j/k/h/l, gg)',
+    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg',
     successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
     leadsTo: [2, 3],
     tasks: [
@@ -1811,25 +1750,17 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          "Preview 'personnel_list.txt' to identify your designation (j to move to it, Tab to preview)",
+          "Preview 'personnel_list.txt' to identify your designation (G to move to it, review in the preview panel)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'datastore', 'dir');
           if (!u || !c.currentPath.includes(u.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === 'personnel_list.txt';
+          return c.showInfoPanel && node?.name === 'personnel_list.txt' && c.usedG === true;
         },
         completed: false,
       },
-      {
-        id: 'nav-2a',
-        description: 'Jump to bottom of file list (G)',
-        check: (c) => {
-          const d = findNodeByName(c.fs, 'datastore', 'dir');
-          return d?.name !== 'datastore' ? false : c.usedG === true;
-        },
-        completed: false,
-      },
+
       {
         id: 'nav-2b',
         description: 'Jump to top of file list (gg)',
