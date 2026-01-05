@@ -2561,7 +2561,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'heist-1-nav',
-        description: "Navigate into '~/incoming/backup_logs.zip/credentials'",
+        description:
+          "Navigate into '~/incoming/backup_logs.zip/credentials' (gi → enter backup_logs.zip → enter credentials)",
         check: (c) => {
           const creds = findNodeByName(c.fs, 'credentials');
           // Check we are in a directory named 'credentials' that is inside a zip archive
@@ -2610,7 +2611,9 @@ export const LEVELS: Level[] = [
     onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 10);
       // Add decoy credential files to the archive for the sorting challenge
-      const credsDir = findNodeByName(newFs, 'credentials'); // This is inside backup_logs.zip
+      // Target the credentials folder inside the incoming backup_logs.zip archive to avoid grabbing the systemd-core credentials
+      const backupArchive = findNodeByName(newFs, 'backup_logs.zip');
+      const credsDir = backupArchive?.children?.find((c) => c.name === 'credentials');
       if (credsDir && credsDir.children) {
         const now = Date.now();
         // The original key is old
