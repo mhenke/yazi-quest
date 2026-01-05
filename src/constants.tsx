@@ -1301,12 +1301,38 @@ export const INITIAL_FS: FileNode = {
                           name: 'access_key.pem',
                           type: 'file',
                           content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
+                          modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
                         },
                         {
                           id: 'fs-117',
                           name: 'decoy_cert.pem',
                           type: 'file',
                           content: `-----BEGIN CERTIFICATE-----\n[DECOY - EXPIRED]\n-----END CERTIFICATE-----`,
+                          modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
+                        },
+                        {
+                          id: 'fs-decoy-1',
+                          name: 'access_key_v1.pem',
+                          type: 'file',
+                          content: '[EXPIRED KEY]',
+                          parentId: 'fs-115',
+                          modifiedAt: Date.parse('2025-12-06T21:13:32.032Z'),
+                        },
+                        {
+                          id: 'fs-decoy-2',
+                          name: 'access_key_v2.pem',
+                          type: 'file',
+                          content: '[EXPIRED KEY]',
+                          parentId: 'fs-115',
+                          modifiedAt: Date.parse('2025-12-16T21:13:32.032Z'),
+                        },
+                        {
+                          id: 'fs-new-key',
+                          name: 'access_key_new.pem',
+                          type: 'file',
+                          content: '[VALID ROOT CREDENTIAL]',
+                          parentId: 'fs-115',
+                          modifiedAt: Date.parse('2026-01-05T20:13:32.032Z'),
                         },
                       ],
                     },
@@ -1678,6 +1704,12 @@ export const INITIAL_FS: FileNode = {
           content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd`,
         },
         {
+          id: 'fs-176',
+          name: 'access_token.key',
+          type: 'file',
+          content: '# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm',
+        },
+        {
           id: 'fs-163',
           name: 'cache',
           type: 'dir',
@@ -1767,7 +1799,7 @@ export const INITIAL_FS: FileNode = {
       type: 'file',
       content: `[2024-12-18 08:00:01] System boot\n[2024-12-18 08:00:45] Network: eth0 up\n[2024-12-19 10:22:13] Firewall: Connection attempt blocked from 192.168.1.99\n[2024-12-19 14:11:02] User login: guest`,
     },
-    // Minimal /daemons pre-seeded so prerequisite logic and level transitions find expected services
+    // /daemons directory with service files for Level 11
     {
       id: 'daemons',
       name: 'daemons',
@@ -1804,7 +1836,70 @@ export const INITIAL_FS: FileNode = {
               ],
             },
           ],
-          parentId: 'root',
+          parentId: 'daemons',
+        },
+        // Service files for Level 11 daemon reconnaissance
+        {
+          id: 'fs-181',
+          name: 'cron-legacy.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
+          modifiedAt: Date.parse('2025-11-21T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-182',
+          name: 'backup-archive.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
+          modifiedAt: Date.parse('2025-12-06T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-183',
+          name: 'network-manager.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
+          modifiedAt: Date.parse('2025-12-29T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-184',
+          name: 'log-rotator.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
+          modifiedAt: Date.parse('2026-01-02T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-185',
+          name: 'security-audit.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
+          modifiedAt: Date.parse('2026-01-04T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-186',
+          name: 'watchdog-monitor.service',
+          type: 'file',
+          content:
+            '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
+          modifiedAt: Date.parse('2026-01-05T20:13:32.032Z'),
+        },
+        {
+          id: 'fs-187',
+          name: 'daemon.conf',
+          type: 'file',
+          content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
+          modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
+        },
+        {
+          id: 'fs-188',
+          name: 'README.md',
+          type: 'file',
+          content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
+          modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
         },
       ],
       parentId: 'root',
@@ -2269,27 +2364,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => {
-      let newFs = ensurePrerequisiteState(fs, 7);
-
-      // Add the suspicious honeypot file to /tmp
-      const tmp = findNodeByName(newFs, 'tmp');
-      if (tmp) {
-        if (!tmp.children) tmp.children = [];
-        // Add honeypot file if not present
-        if (!tmp.children.find((c) => c.name === 'access_token.key')) {
-          tmp.children.push({
-            id: 'fs-176',
-            name: 'access_token.key',
-            type: 'file',
-            content: '# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm',
-            parentId: tmp.id,
-          });
-        }
-      }
-
-      return newFs;
-    },
   },
   {
     id: 8,
@@ -2520,53 +2594,6 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
-    onEnter: (fs) => {
-      let newFs = ensurePrerequisiteState(fs, 10);
-      // Add decoy credential files to the archive for the sorting challenge
-      // Target the credentials folder inside the incoming backup_logs.zip archive to avoid grabbing the systemd-core credentials
-      const backupArchive = findNodeByName(newFs, 'backup_logs.zip');
-      const credsDir = backupArchive?.children?.find((c) => c.name === 'credentials');
-      if (credsDir && credsDir.children) {
-        const now = Date.now();
-        // The original key is old
-        const originalKey = credsDir.children.find((c) => c.name === 'access_key.pem');
-        if (originalKey) originalKey.modifiedAt = now - 86400000 * 10; // 10 days old
-
-        // Add some other decoys
-        if (!credsDir.children.find((c) => c.name === 'access_key_v1.pem')) {
-          credsDir.children.push({
-            id: 'fs-decoy-1',
-            name: 'access_key_v1.pem',
-            type: 'file',
-            content: '[EXPIRED KEY]',
-            parentId: credsDir.id,
-            modifiedAt: now - 86400000 * 30,
-          });
-        }
-        if (!credsDir.children.find((c) => c.name === 'access_key_v2.pem')) {
-          credsDir.children.push({
-            id: 'fs-decoy-2',
-            name: 'access_key_v2.pem',
-            type: 'file',
-            content: '[EXPIRED KEY]',
-            parentId: credsDir.id,
-            modifiedAt: now - 86400000 * 20,
-          });
-        }
-        // Add the newest, correct key
-        if (!credsDir.children.find((c) => c.name === 'access_key_new.pem')) {
-          credsDir.children.push({
-            id: 'fs-new-key',
-            name: 'access_key_new.pem',
-            type: 'file',
-            content: '[VALID ROOT CREDENTIAL]',
-            parentId: credsDir.id,
-            modifiedAt: now - 3600000, // 1 hour old
-          });
-        }
-      }
-      return newFs;
-    },
   },
   {
     id: 11,
@@ -2585,167 +2612,6 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 27,
     efficiencyTip:
       'Combine filter + sort for surgical precision. Filter narrows the field, sort reveals patterns, selection marks targets. This workflow scales to any reconnaissance task.',
-    onEnter: (fs) => {
-      // First ensure all prerequisite state from prior levels
-      let s = ensurePrerequisiteState(fs, 11);
-
-      // Then apply level-specific setup
-      const root = findNodeByName(s, 'root', 'dir');
-      if (!root) return s;
-
-      // Create /daemons with realistic daemon mix (services + honeypots)
-      let daemonsDir = root.children?.find((n: FileNode) => n.name === 'daemons');
-      if (!daemonsDir) {
-        const now = Date.now();
-        daemonsDir = {
-          id: 'fs-180',
-          name: 'daemons',
-          type: 'dir',
-          children: [
-            // Legitimate old services (TARGETS - to select)
-            {
-              id: 'fs-181',
-              name: 'cron-legacy.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
-              modifiedAt: now - 86400000 * 45, // 45 days old - OLDEST
-            },
-            {
-              id: 'fs-182',
-              name: 'backup-archive.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
-              modifiedAt: now - 86400000 * 30, // 30 days old - SECOND OLDEST
-            },
-            // Mid-range services
-            {
-              id: 'fs-183',
-              name: 'network-manager.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
-              modifiedAt: now - 86400000 * 7, // 7 days old
-            },
-            {
-              id: 'fs-184',
-              name: 'log-rotator.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
-              modifiedAt: now - 86400000 * 3, // 3 days old
-            },
-            // Honeypots (recently modified = MONITORED)
-            {
-              id: 'fs-185',
-              name: 'security-audit.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
-              modifiedAt: now - 86400000 * 1, // 1 day old - MONITORED
-            },
-            {
-              id: 'fs-186',
-              name: 'watchdog-monitor.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
-              modifiedAt: now - 3600000, // 1 hour old - HEAVILY MONITORED
-            },
-            // Non-.service files (should be filtered OUT)
-            {
-              id: 'fs-187',
-              name: 'daemon.conf',
-              type: 'file',
-              content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
-              modifiedAt: now - 86400000 * 10,
-            },
-            {
-              id: 'fs-188',
-              name: 'README.md',
-              type: 'file',
-              content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
-              modifiedAt: now - 86400000 * 60,
-            },
-          ],
-          parentId: root.id,
-        };
-        if (!root.children) root.children = [];
-        root.children.push(daemonsDir);
-      } else {
-        // Ensure service files exist even if /daemons was pre-seeded in INITIAL_FS
-        const now = Date.now();
-        const ensureService = (
-          name: string,
-          id: string,
-          content: string,
-          mtimeOffsetDays: number,
-        ) => {
-          if (!daemonsDir.children) daemonsDir.children = [];
-          if (!daemonsDir.children.find((c) => c.name === name)) {
-            daemonsDir.children.push({
-              id,
-              name,
-              type: 'file',
-              content,
-              modifiedAt: now - 86400000 * mtimeOffsetDays,
-            });
-          }
-        };
-
-        ensureService(
-          'cron-legacy.service',
-          'fs-181',
-          '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
-          45,
-        );
-        ensureService(
-          'backup-archive.service',
-          'fs-182',
-          '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
-          30,
-        );
-        ensureService(
-          'network-manager.service',
-          'fs-183',
-          '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
-          7,
-        );
-        ensureService(
-          'log-rotator.service',
-          'fs-184',
-          '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
-          3,
-        );
-        ensureService(
-          'security-audit.service',
-          'fs-185',
-          '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
-          1,
-        );
-        ensureService(
-          'watchdog-monitor.service',
-          'fs-186',
-          '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
-          0,
-        );
-        ensureService(
-          'daemon.conf',
-          'fs-187',
-          '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
-          10,
-        );
-        ensureService(
-          'README.md',
-          'fs-188',
-          '# Daemons Directory\nSystem services. Do not modify without authorization.',
-          60,
-        );
-      }
-
-      return s;
-    },
     tasks: [
       {
         id: 'jump-daemons',
