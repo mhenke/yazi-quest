@@ -16,7 +16,6 @@ const getCtx = (): AudioContext => {
     };
     const Ctor = w.AudioContext || w.webkitAudioContext;
     if (!Ctor) throw new Error('No AudioContext available');
-    // @ts-expect-error: constructor type is compatible
     audioCtx = new Ctor();
   }
   return audioCtx;

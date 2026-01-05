@@ -146,12 +146,11 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       if (
         selectedCandidate &&
         'pathIds' in selectedCandidate &&
-        Array.isArray(selectedCandidate.pathIds)
+        Array.isArray((selectedCandidate as unknown as { pathIds?: string[] }).pathIds)
       ) {
+        const pathIds = (selectedCandidate as unknown as { pathIds?: string[] }).pathIds || [];
         const fullNodePath =
-          selectedCandidate.pathIds[0] === gameState.fs.id
-            ? selectedCandidate.pathIds
-            : [...gameState.currentPath, ...(selectedCandidate.pathIds || [])];
+          pathIds[0] === gameState.fs.id ? pathIds : [...gameState.currentPath, ...pathIds];
         const parentPath = fullNodePath.slice(0, -1);
         const parentNode = getNodeByPath(gameState.fs, parentPath);
         return parentNode?.children || [];
@@ -213,7 +212,11 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
                   <div
                     key={String(item.path) + idx}
                     onClick={() =>
-                      _onSelect(String(item.path), isZoxide, (item as Candidate).pathIds)
+                      _onSelect(
+                        String(item.path),
+                        isZoxide,
+                        (item as unknown as { pathIds?: string[] }).pathIds,
+                      )
                     }
                     className={`px-4 py-2 flex items-center gap-3 text-sm transition-colors duration-75 cursor-pointer ${
                       isSelected ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-200'
