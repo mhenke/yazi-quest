@@ -1,0 +1,19 @@
+feat(narrative): Overhaul game content for cyberpunk themes
+
+This commit comprehensively updates the game's narrative, level design, and documentation to align with a more ambiguous and rich cyberpunk setting, inspired by 2015-era AI concepts.
+
+**Narrative & World-Building:**
+- Introduces "Echo," a fragmented and potentially unreliable AI guide, to increase narrative ambiguity.
+- Reworks lore for all episodes to establish a tone of mystery, corporate espionage, and existential doubt, moving away from a straightforward "escape the lab" plot.
+- Integrates new flavor text files (`mission_log.md`, `abandoned_script.py`) as narrative breadcrumbs, hinting at a deeper story involving predecessor AI-7733.
+
+**Gameplay & Level Design:**
+- **Level 1:** Adds a new task requiring players to inspect `personnel_list.txt`, introducing file previewing early.
+- **Level 9:** Reworked to teach `Ctrl+R` (invert selection) for a more complex cleanup task in `/tmp`, preserving critical files.
+- **Level 10:** Redesigned to focus on sorting by modification time (`,m`) to find a specific credential in a noisy archive.
+- **Level 11:** Becomes a reconnaissance mission in `/daemons`, requiring players to filter and sort to identify safe "camouflage" files.
+
+**Code & Documentation:**
+- `src/constants.tsx` has been surgically updated to implement all narrative and gameplay changes while preserving user modifications.
+- `src/levelTransitions.test.ts` is updated to reflect the new logic for Level 9, ensuring all tests pass.
+- Obsolete markdown files (`THEATRE.md`, `YAZI_AUDIT.md`, etc.) have been deleted to clean up project documentation.
