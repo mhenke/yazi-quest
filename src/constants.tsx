@@ -1029,48 +1029,10 @@ export const INITIAL_FS: FileNode = {
                   ],
                 },
                 {
-                  id: 'fs-073',
-                  name: 'archive_002.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-074',
-                      name: 'dataset.csv',
-                      type: 'file',
-                      content: 'id,value\n1,42\n2,84',
-                    },
-                    {
-                      id: 'fs-075',
-                      name: 'readme.md',
-                      type: 'file',
-                      content: 'Sample dataset accompanying screenshots.',
-                    },
-                  ],
-                },
-                {
                   id: 'fs-076',
                   name: 'audit_log_773.txt',
                   type: 'file',
                   content: 'Audit #773: Pass',
-                },
-                {
-                  id: 'fs-077',
-                  name: 'backup_cache_old.tar',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-078',
-                      name: 'cache_0001.tmp',
-                      type: 'file',
-                      content: '[CACHE BLOCK 0001]',
-                    },
-                    {
-                      id: 'fs-079',
-                      name: 'cache_0002.tmp',
-                      type: 'file',
-                      content: '[CACHE BLOCK 0002]',
-                    },
-                  ],
                 },
                 {
                   id: 'fs-080',
@@ -1100,25 +1062,6 @@ export const INITIAL_FS: FileNode = {
                       name: 'service_private.key.obf',
                       type: 'file',
                       content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-085',
-                  name: 'backup_legacy.tar',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-086',
-                      name: 'legacy_db.sql',
-                      type: 'file',
-                      content: '-- Legacy DB schema\nCREATE TABLE legacy (id INT);',
-                    },
-                    {
-                      id: 'fs-087',
-                      name: 'notes_old.txt',
-                      type: 'file',
-                      content: 'Old backup from legacy system.',
                     },
                   ],
                 },
