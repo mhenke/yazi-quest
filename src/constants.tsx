@@ -2309,7 +2309,7 @@ export const LEVELS: Level[] = [
     description:
       "DAEMON PROTOCOL INITIATED. Lab procedure: build in workspace, promote to /daemons. They won't question a kernel process. They never do.",
     initialPath: null,
-    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
+    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active' (Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
     coreSkill: 'Directory Construction + Integration',
     environmentalClue:
       'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
@@ -2503,7 +2503,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-3-yank',
-        description: "Yank the newest key ('access_key_new.pem')",
+        description: "Yank the newest key 'access_key_new.pem' (y)",
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -2520,7 +2520,7 @@ export const LEVELS: Level[] = [
       {
         id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key (p)",
+          "Jump to '~/workspace/systemd-core' (Z), create 'credentials/' folder (a), and paste the key (p)",
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
