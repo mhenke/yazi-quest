@@ -59,52 +59,52 @@ export const useKeyboardHandlers = (
       const key = e.key;
       const shift = e.shiftKey;
 
-      if (key === 'n' || key === 'N') {
+      if (key.toLowerCase() === 'n') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'natural',
-          sortDirection: 'asc',
-          notification: `Sort: Natural`,
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: `Sort: Natural${shift ? ' (rev)' : ''}`,
         }));
-      } else if (key === 'a' || key === 'A') {
+      } else if (key.toLowerCase() === 'a') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'alphabetical',
-          sortDirection: 'asc',
-          notification: `Sort: A-Z`,
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: shift ? `Sort: Z-A` : `Sort: A-Z`,
         }));
-      } else if (key === 'm' || key === 'M') {
+      } else if (key.toLowerCase() === 'm') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'modified',
-          sortDirection: 'desc',
+          sortDirection: shift ? 'asc' : 'desc',
           linemode: 'mtime',
-          notification: `Sort: Modified`,
+          notification: shift ? `Sort: Modified (old)` : `Sort: Modified (new)`,
         }));
-      } else if (key === 's' || key === 'S') {
+      } else if (key.toLowerCase() === 's') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'size',
-          sortDirection: 'desc',
+          sortDirection: shift ? 'asc' : 'desc',
           linemode: 'size',
-          notification: `Sort: Size`,
+          notification: shift ? `Sort: Size (small)` : `Sort: Size (large)`,
         }));
-      } else if (key === 'e' || key === 'E') {
+      } else if (key.toLowerCase() === 'e') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'extension',
-          sortDirection: 'asc',
-          notification: `Sort: Extension`,
+          sortDirection: shift ? 'desc' : 'asc',
+          notification: shift ? `Sort: Extension (rev)` : `Sort: Extension`,
         }));
       } else if (key === 'l') {
         setGameState((prev) => {
@@ -290,6 +290,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to home',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -305,6 +306,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to config',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -321,6 +323,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to workspace',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -336,6 +339,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to tmp',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -351,6 +355,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to root',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -366,6 +371,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to incoming',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -382,6 +388,7 @@ export const useKeyboardHandlers = (
             cursorIndex: 0,
             mode: 'normal',
             notification: 'Jumped to datastore',
+            history: [...prev.history, prev.currentPath],
             future: [],
             previewScroll: 0,
             usedPreviewDown: false,
@@ -464,6 +471,8 @@ export const useKeyboardHandlers = (
               currentPath: prev.currentPath.slice(0, -1),
               cursorIndex: 0,
               previewScroll: 0,
+              history: [...prev.history, prev.currentPath],
+              future: [],
               usedPreviewDown: false,
               usedPreviewUp: false,
             }));
@@ -614,6 +623,22 @@ export const useKeyboardHandlers = (
             }));
           }
           break;
+        case 'd': {
+          // Enter confirm-delete mode for selected items or current item
+          e.preventDefault();
+          const toDelete =
+            gameState.selectedIds.length > 0
+              ? gameState.selectedIds.slice()
+              : currentItem
+                ? [currentItem.id]
+                : [];
+          if (toDelete.length === 0) {
+            showNotification('Nothing to delete', 2000);
+            break;
+          }
+          setGameState((prev) => ({ ...prev, mode: 'confirm-delete', pendingDeleteIds: toDelete }));
+          break;
+        }
         case 'p':
           if (gameState.clipboard) {
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
