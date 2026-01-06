@@ -361,10 +361,7 @@ export default function App() {
     );
 
     // Determine if sort is default
-    const isSortDefault =
-      gameState.sortBy === 'natural' &&
-      gameState.sortDirection === 'asc' &&
-      gameState.linemode === 'size';
+    const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
 
     // Determine if filters are clear
     const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
