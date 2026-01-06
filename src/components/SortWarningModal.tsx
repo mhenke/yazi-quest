@@ -34,7 +34,7 @@ export const SortWarningModal: React.FC = () => {
                 <span className="bg-zinc-200 text-black px-1.5 py-0.5 rounded font-bold mx-1">
                   ,n
                 </span>{' '}
-                to reset sort to natural (ascending)
+                to reset sort to natural (ascending) and continue
               </p>
             </div>
           </div>

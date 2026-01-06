@@ -911,15 +911,56 @@ export default function App() {
         return; // Block other inputs
       }
 
-      // If the FilterWarning modal is shown, allow the sort dialog to still accept keys
+      // If FilterWarning modal is shown, only allow Escape to dismiss it
       if (showFilterWarning) {
-        if (gameState.mode === 'sort') {
-          // Allow sorting keys (,n, ,s, etc.) to be handled so players can reset sort even when a filter warning is visible.
-          handleSortModeKeyDown(e, setGameState);
+        if (e.key === 'Escape') {
+          setShowFilterWarning(false);
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
+        }
+        return; // Block other inputs if filter warning is active
+      }
+
+      // If SortWarningModal is visible, handle specific sort commands or Escape
+      if (showSortWarning) {
+        if (e.key === 'Escape') {
+          setShowSortWarning(false); // Only clear the warning, don't change sort
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
           return;
         }
-        // Otherwise block other inputs (user should clear filter first)
-        return;
+
+        // Allow sort commands (like ',' and then 'n') to be processed
+        // If user just pressed ',', set acceptNextKeyForSort and let it fall through
+        if (e.key === ',') {
+          setGameState((prev) => ({ ...prev, mode: 'sort', acceptNextKeyForSort: true }));
+          // Don't return here, let it fall through to the mode dispatch where handleSortModeKeyDown will be called
+        } else if (gameState.acceptNextKeyForSort) {
+          // If we are waiting for the second key of a sort command (e.g., 'n' after ',')
+          // Process the key with the sort handler
+          handleSortModeKeyDown(e, setGameState);
+          // After handling the sort command, check if the sort state is now default
+          setGameState((prev) => {
+            const isSortDefault =
+              prev.sortBy === 'natural' && prev.sortDirection === 'asc' && prev.linemode === 'none'; // Check if sort is truly default
+            if (isSortDefault) {
+              setShowSortWarning(false); // Dismiss the warning
+            }
+            return { ...prev, acceptNextKeyForSort: false, mode: 'normal' }; // Reset acceptNextKeyForSort and mode
+          });
+          return; // Block other inputs
+        } else {
+          // Block any other keys if sort warning is active and it's not a sort command
+          return;
+        }
       }
 
       // Count keystrokes (only if no blocking modal)
