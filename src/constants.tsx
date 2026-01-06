@@ -2557,7 +2557,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-modified',
-        description: 'Sort by modification time to identify service age',
+        description:
+          "Sort by modification time (press ',' then 'm') to surface oldest (legacy/safe) files first and newest (modern/risky) files last.",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
           return c.sortBy === 'modified';
@@ -2566,7 +2567,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-targets',
-        description: 'Select and yank your chosen camouflage signature(s)',
+        description:
+          "Steal an identity — take the two oldest services (stealth) or claim 'network-manager' (power).",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-modified')) return false;
           if (!c.clipboard || c.clipboard.action !== 'yank') return false;

@@ -67,11 +67,19 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         e.preventDefault();
 
         // If Shift+Enter -> advance (or initialize on last)
+        // Allow a single Shift+Enter to skip a still-typing section and move to the next.
         if (e.shiftKey) {
           if (!showContinue) {
-            // finish typing then show continue
-            setCurrentText(sections[sectionIndex]?.join('\n') || '');
-            setShowContinue(true);
+            // Skip current typing and advance immediately
+            if (sectionIndex < sections.length - 1) {
+              setSectionIndex((prev) => prev + 1);
+              // reset state for the new section
+              setCurrentText('');
+              setShowContinue(false);
+            } else {
+              // If it was the final section, finish the intro
+              onComplete();
+            }
           } else if (sectionIndex < sections.length - 1) {
             setSectionIndex((prev) => prev + 1);
           } else {
@@ -275,11 +283,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         </div>
 
         {/* Footer */}
-        <div
-          className={`pt-4 flex justify-between items-center transition-opacity duration-300 ${showContinue ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {/* Left instruction for non-final sections */}
-          {showContinue && sectionIndex < sections.length - 1 && (
+        <div className="pt-4 flex justify-between items-center transition-opacity duration-300 opacity-100">
+          {/* Left instruction for non-final sections (always visible) */}
+          {sectionIndex < sections.length - 1 && (
             <div className="text-zinc-600 text-sm flex items-center gap-2">
               <ChevronRight size={16} className="animate-pulse" />
               <span>Press Shift+Enter to continue</span>
