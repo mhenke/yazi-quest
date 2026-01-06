@@ -944,14 +944,19 @@ export default function App() {
           // If we are waiting for the second key of a sort command (e.g., 'n' after ',')
           // Process the key with the sort handler
           handleSortModeKeyDown(e, setGameState);
-          // After handling the sort command, check if the sort state is now default
-          setGameState((prev) => {
-            const isSortDefault = prev.sortBy === 'natural' && prev.sortDirection === 'asc';
-            if (isSortDefault) {
-              setShowSortWarning(false); // Dismiss the warning
-            }
-            return { ...prev, acceptNextKeyForSort: false, mode: 'normal' }; // Reset acceptNextKeyForSort and mode
-          });
+
+          // NOTE: React state updates from handleSortModeKeyDown are async and won't
+          // be visible immediately here. We can't reliably read `prev.sortBy` right
+          // after calling the handler. Instead, infer dismissal from the key the
+          // user pressed: only ',n' (natural sort) should clear the SortWarning.
+          const pressed = e.key || '';
+          const isNatural = pressed.toLowerCase() === 'n';
+          if (isNatural) {
+            setShowSortWarning(false);
+          }
+
+          // Reset the sort-accept state and return to normal mode
+          setGameState((prev) => ({ ...prev, acceptNextKeyForSort: false, mode: 'normal' }));
           return; // Block other inputs
         } else {
           // Block any other keys if sort warning is active and it's not a sort command

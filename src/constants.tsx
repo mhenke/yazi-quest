@@ -1009,25 +1009,7 @@ export const INITIAL_FS: FileNode = {
                     },
                   ],
                 },
-                {
-                  id: 'fs-070',
-                  name: 'archive_001.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-071',
-                      name: 'screenshot_001.png',
-                      type: 'file',
-                      content: '/images/screenshot_001.png',
-                    },
-                    {
-                      id: 'fs-072',
-                      name: 'notes.txt',
-                      type: 'file',
-                      content: 'Temporary meeting notes and screenshots',
-                    },
-                  ],
-                },
+
                 {
                   id: 'fs-076',
                   name: 'audit_log_773.txt',
