@@ -479,7 +479,8 @@ export const KEYBINDINGS = [
   { keys: ['J'], description: 'Scroll Preview Down' },
   { keys: ['K'], description: 'Scroll Preview Up' },
   { keys: ['a'], description: 'Create File/Directory' },
-  { keys: ['d'], description: 'Delete Selected' },
+  { keys: ['d'], description: 'Trash Selected' },
+  { keys: ['D'], description: 'Permanently Delete' },
   { keys: ['r'], description: 'Rename Selected' },
   { keys: ['Tab'], description: 'Show File Info Panel' },
   { keys: ['x'], description: 'Cut Selected' },
@@ -2470,10 +2471,10 @@ export const LEVELS: Level[] = [
     description:
       "The ghost process left a mess. The /tmp directory is flooded with junk files, but the ghost's primary socket and its PID file must be preserved for analysis. Clean the directory without deleting the critical files.",
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid' and 'socket_001.sock'). Invert your selection with Ctrl+R to select all the junk files, then delete (d) the selection.",
+    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid' and 'socket_001.sock'). Invert your selection with Ctrl+R to select all the junk files, then permanently delete (D) the selection.",
     coreSkill: 'Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock' | METHOD: Select → Invert → Delete",
+      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock' | METHOD: Select → Invert → Permanent Delete",
     successMessage:
       'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
     buildsOn: [2, 5, 7],
@@ -2504,11 +2505,12 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'cleanup-3-delete',
-        description: 'Delete the selected junk files (d)',
+        description: 'Permanently delete the selected junk files (D)',
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
           // Should be exactly 2 files left, and they should be the ones we want to preserve
           return (
+            c.usedD === true &&
             tmp?.children?.length === 2 &&
             !!tmp.children.find((n) => n.name === 'ghost_process.pid') &&
             !!tmp.children.find((n) => n.name === 'socket_001.sock')

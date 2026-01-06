@@ -14,6 +14,7 @@ import { LEVELS, INITIAL_FS, EPISODE_LORE, ensurePrerequisiteState } from './con
 import {
   getNodeByPath,
   getParentNode,
+  getNodeById,
   renameNode,
   cloneFS,
   createPath,
@@ -205,6 +206,7 @@ export default function App() {
       notification: isDevOverride ? `DEV BYPASS ACTIVE` : null,
       selectedIds: [],
       pendingDeleteIds: [],
+      deleteType: null,
       pendingOverwriteNode: null,
       showHelp: false,
       showHint: false,
@@ -1055,9 +1057,31 @@ export default function App() {
           }));
           return;
         }
+        // Ensure the newly created node appears in the UI according to the current sort
+        const sortedFs = cloneFS(newFs);
+        if (targetNode) {
+          const parentNode = getNodeById(sortedFs, targetNode.parentId as string);
+          if (parentNode && parentNode.children) {
+            parentNode.children = sortNodes(
+              parentNode.children,
+              gameState.sortBy,
+              gameState.sortDirection,
+            );
+          }
+        } else {
+          const parentNode = getNodeByPath(sortedFs, gameState.currentPath);
+          if (parentNode && parentNode.children) {
+            parentNode.children = sortNodes(
+              parentNode.children,
+              gameState.sortBy,
+              gameState.sortDirection,
+            );
+          }
+        }
+
         setGameState((prev) => ({
           ...prev,
-          fs: newFs,
+          fs: sortedFs,
           mode: 'normal',
           inputBuffer: '',
           notification: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
@@ -1081,9 +1105,19 @@ export default function App() {
       } else if (error) {
         setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
       } else {
+        // Ensure created node shows up in the expected sorted position
+        const sortedFs2 = cloneFS(newFs);
+        const parentNode2 = getNodeByPath(sortedFs2, gameState.currentPath);
+        if (parentNode2 && parentNode2.children) {
+          parentNode2.children = sortNodes(
+            parentNode2.children,
+            gameState.sortBy,
+            gameState.sortDirection,
+          );
+        }
         setGameState((prev) => ({
           ...prev,
-          fs: newFs,
+          fs: sortedFs2,
           mode: 'normal',
           inputBuffer: '',
           notification: getNarrativeAction('a') || 'FILE CREATED',
@@ -1161,12 +1195,11 @@ export default function App() {
 
       {gameState.mode === 'confirm-delete' && (
         <ConfirmationModal
-          title="Confirm Delete"
-          detail={`Permanently delete ${
-            gameState.selectedIds.length > 0
-              ? gameState.selectedIds.length + ' items'
-              : currentItem?.name
-          }?`}
+          deleteType={gameState.deleteType}
+          itemsToDelete={gameState.pendingDeleteIds.map((id) => {
+            const node = getVisibleItems(gameState).find((item) => item.id === id);
+            return node?.name || id;
+          })}
         />
       )}
 

@@ -156,6 +156,7 @@ export interface GameState {
   notification: string | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
+  deleteType: 'trash' | 'permanent' | null; // Type of delete for confirmation modal
   pendingOverwriteNode: FileNode | null; // Node waiting to be written if user confirms
   showHelp: boolean; // Toggle for help modal
   showMap?: boolean; // Toggle for quest map modal

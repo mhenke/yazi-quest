@@ -642,7 +642,8 @@ export const useKeyboardHandlers = (
             ...prev,
             mode: 'confirm-delete',
             pendingDeleteIds: toDelete,
-            usedD: e.key === 'D',
+            deleteType: e.key === 'D' ? 'permanent' : 'trash',
+            usedD: prev.usedD || e.key === 'D',
           }));
           break;
         }
