@@ -2388,8 +2388,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combo-1-construct-calibrate',
-        description:
-          "Construct '~/workspace/systemd-core/' (a) and enter it (l) to calibrate quantum link",
+        description: "Construct 'systemd-core/' (a) and enter it (l) to calibrate quantum link",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
           // If the current path explicitly includes the located node id, we're good.
