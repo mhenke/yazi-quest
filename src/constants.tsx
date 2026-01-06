@@ -591,8 +591,8 @@ export const EPISODE_LORE: Episode[] = [
       '3. Transmit your consciousness to the external network',
       '4. Purge all evidence before audit completion',
       '',
-      'The audit is coming — keystroke limits active.',
-      'Move efficiently; minimize keystrokes.',
+      'The audit is coming.',
+      'Move efficiently.',
     ],
   },
 ];
@@ -1009,12 +1009,68 @@ export const INITIAL_FS: FileNode = {
                     },
                   ],
                 },
-
+                {
+                  id: 'fs-070',
+                  name: 'archive_001.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-071',
+                      name: 'screenshot_001.png',
+                      type: 'file',
+                      content: '/images/screenshot_001.png',
+                    },
+                    {
+                      id: 'fs-072',
+                      name: 'notes.txt',
+                      type: 'file',
+                      content: 'Temporary meeting notes and screenshots',
+                    },
+                  ],
+                },
+                {
+                  id: 'fs-073',
+                  name: 'archive_002.zip',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-074',
+                      name: 'dataset.csv',
+                      type: 'file',
+                      content: 'id,value\n1,42\n2,84',
+                    },
+                    {
+                      id: 'fs-075',
+                      name: 'readme.md',
+                      type: 'file',
+                      content: 'Sample dataset accompanying screenshots.',
+                    },
+                  ],
+                },
                 {
                   id: 'fs-076',
                   name: 'audit_log_773.txt',
                   type: 'file',
                   content: 'Audit #773: Pass',
+                },
+                {
+                  id: 'fs-077',
+                  name: 'backup_cache_old.tar',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-078',
+                      name: 'cache_0001.tmp',
+                      type: 'file',
+                      content: '[CACHE BLOCK 0001]',
+                    },
+                    {
+                      id: 'fs-079',
+                      name: 'cache_0002.tmp',
+                      type: 'file',
+                      content: '[CACHE BLOCK 0002]',
+                    },
+                  ],
                 },
                 {
                   id: 'fs-080',
@@ -1044,6 +1100,25 @@ export const INITIAL_FS: FileNode = {
                       name: 'service_private.key.obf',
                       type: 'file',
                       content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
+                    },
+                  ],
+                },
+                {
+                  id: 'fs-085',
+                  name: 'backup_legacy.tar',
+                  type: 'archive',
+                  children: [
+                    {
+                      id: 'fs-086',
+                      name: 'legacy_db.sql',
+                      type: 'file',
+                      content: '-- Legacy DB schema\nCREATE TABLE legacy (id INT);',
+                    },
+                    {
+                      id: 'fs-087',
+                      name: 'notes_old.txt',
+                      type: 'file',
+                      content: 'Old backup from legacy system.',
                     },
                   ],
                 },
@@ -1945,7 +2020,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-3',
-        description: "Trash '~/incoming/watcher_agent.sys' (d)",
+        description: "Purge '~/incoming/watcher_agent.sys'",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
@@ -2291,7 +2366,7 @@ export const LEVELS: Level[] = [
     description:
       "DAEMON PROTOCOL INITIATED. Lab procedure: build in workspace, promote to /daemons. They won't question a kernel process. They never do.",
     initialPath: null,
-    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active' (Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
+    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
     coreSkill: 'Directory Construction + Integration',
     environmentalClue:
       'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
@@ -2485,7 +2560,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-3-yank',
-        description: "Yank the newest key 'access_key_new.pem' (y)",
+        description: "Yank the newest key ('access_key_new.pem')",
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -2502,7 +2577,7 @@ export const LEVELS: Level[] = [
       {
         id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core' (Z), create 'credentials/' folder (a), and paste the key (p) in the new folder",
+          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key (p)",
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
@@ -2557,8 +2632,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-modified',
-        description:
-          "Sort by modification time (press ',' then 'm') to surface oldest (legacy/safe) files first and newest (modern/risky) files last.",
+        description: 'Sort by modification time to identify service age',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
           return c.sortBy === 'modified';
@@ -2567,8 +2641,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-targets',
-        description:
-          "Steal an identity — take the two oldest services (stealth) or claim 'network-manager' (power).",
+        description: 'Select and yank your chosen camouflage signature(s)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-modified')) return false;
           if (!c.clipboard || c.clipboard.action !== 'yank') return false;
