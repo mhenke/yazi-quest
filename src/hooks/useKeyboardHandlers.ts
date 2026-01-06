@@ -31,6 +31,25 @@ const getNarrativeAction = (key: string): string | null => {
   return null;
 };
 
+// Helper to check for active filter in the current directory and block navigation
+export const checkFilterAndBlockNavigation = (
+  e: KeyboardEvent,
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
+  exitMode: GameState['mode'] = 'normal', // Mode to revert to if blocked
+): boolean => {
+  const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+  if (currentDirNode && gameState.filters[currentDirNode.id]) {
+    e.preventDefault();
+    setShowFilterWarning(true);
+    setGameState((prev) => ({ ...prev, mode: exitMode }));
+    return true; // Navigation blocked
+  }
+  setShowFilterWarning(false); // Clear warning if no filter, or if previous filter was cleared
+  return false; // Navigation allowed
+};
+
 export const useKeyboardHandlers = (
   showNotification: (message: string, duration?: number) => void,
   setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
@@ -46,8 +65,8 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'natural',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: `Sort: Natural ${shift ? '(rev)' : ''}`,
+          sortDirection: 'asc',
+          notification: `Sort: Natural`,
         }));
       } else if (key === 'a' || key === 'A') {
         setGameState((prev) => ({
@@ -55,8 +74,8 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'alphabetical',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: `Sort: A-Z ${shift ? '(rev)' : ''}`,
+          sortDirection: 'asc',
+          notification: `Sort: A-Z`,
         }));
       } else if (key === 'm' || key === 'M') {
         setGameState((prev) => ({
@@ -64,9 +83,9 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'modified',
-          sortDirection: shift ? 'asc' : 'desc',
+          sortDirection: 'desc',
           linemode: 'mtime',
-          notification: `Sort: Modified ${shift ? '(old)' : '(new)'}`,
+          notification: `Sort: Modified`,
         }));
       } else if (key === 's' || key === 'S') {
         setGameState((prev) => ({
@@ -74,9 +93,9 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'size',
-          sortDirection: shift ? 'asc' : 'desc',
+          sortDirection: 'desc',
           linemode: 'size',
-          notification: `Sort: Size ${shift ? '(small)' : '(large)'}`,
+          notification: `Sort: Size`,
         }));
       } else if (key === 'e' || key === 'E') {
         setGameState((prev) => ({
@@ -84,8 +103,8 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           acceptNextKeyForSort: false,
           sortBy: 'extension',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: `Sort: Extension ${shift ? '(rev)' : ''}`,
+          sortDirection: 'asc',
+          notification: `Sort: Extension`,
         }));
       } else if (key === 'l') {
         setGameState((prev) => {
@@ -237,7 +256,17 @@ export const useKeyboardHandlers = (
   );
 
   const handleGCommandKeyDown = useCallback(
-    (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
+    (
+      e: KeyboardEvent,
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+      gameState: GameState,
+      setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
+    ) => {
+      if (
+        checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
+      ) {
+        return;
+      }
       switch (e.key) {
         case 'Escape':
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
@@ -425,6 +454,10 @@ export const useKeyboardHandlers = (
           setGameState((prev) => ({ ...prev, mode: 'g-command' }));
           break;
         case 'h':
+        case 'ArrowLeft': {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            return;
+          }
           if (parent) {
             setGameState((prev) => ({
               ...prev,
@@ -436,93 +469,13 @@ export const useKeyboardHandlers = (
             }));
           }
           break;
-        case 'H':
-          if (e.shiftKey && gameState.history.length > 0) {
-            setGameState((prev) => {
-              const newHistory = [...prev.history];
-              const previousPath = newHistory.pop();
-              if (!previousPath) return prev;
-
-              const newFuture = [...prev.future, prev.currentPath];
-
-              return {
-                ...prev,
-                history: newHistory,
-                future: newFuture,
-                currentPath: previousPath,
-                cursorIndex: 0,
-                previewScroll: 0,
-                usedPreviewDown: false,
-                usedPreviewUp: false,
-                notification: 'Navigated back',
-                usedHistoryBack: true,
-              };
-            });
-          }
-          break;
-        case 'L':
-          if (e.shiftKey && gameState.future.length > 0) {
-            setGameState((prev) => {
-              const newFuture = [...prev.future];
-              const nextPath = newFuture.pop();
-              if (!nextPath) return prev;
-
-              const newHistory = [...prev.history, prev.currentPath];
-
-              return {
-                ...prev,
-                history: newHistory,
-                future: newFuture,
-                currentPath: nextPath,
-                cursorIndex: 0,
-                previewScroll: 0,
-                usedPreviewDown: false,
-                usedPreviewUp: false,
-                notification: 'Navigated forward',
-                usedHistoryForward: true,
-              };
-            });
-          }
-          break;
-        case 'd':
-          if (gameState.selectedIds.length > 0 || currentItem) {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'confirm-delete',
-              pendingDeleteIds: prev.selectedIds.length > 0 ? prev.selectedIds : [currentItem!.id],
-            }));
-          }
-          break;
-        case 'G':
-          setGameState((prev) => {
-            const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-            const inRequiredDir =
-              currentDir?.name === 'datastore' || currentDir?.name === 'incoming';
-            return {
-              ...prev,
-              cursorIndex: items.length - 1,
-              usedG: inRequiredDir ? true : prev.usedG,
-              previewScroll: 0,
-              usedPreviewDown: false,
-              usedPreviewUp: false,
-            };
-          });
-          break;
-        case 'ArrowLeft':
-          if (parent) {
-            setGameState((prev) => ({
-              ...prev,
-              currentPath: prev.currentPath.slice(0, -1),
-              cursorIndex: 0,
-              previewScroll: 0,
-              usedPreviewDown: false,
-              usedPreviewUp: false,
-            }));
-          }
-          break;
+        }
         case 'l':
         case 'Enter':
         case 'ArrowRight': {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            return;
+          }
           const allComplete = currentLevel.tasks.every((t) => t.completed);
           if (allComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
             advanceLevel();
@@ -867,6 +820,7 @@ export const useKeyboardHandlers = (
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
               showNotification(getNarrativeAction('Escape') || 'Scan filter deactivated');
+              setShowFilterWarning(false); // Dismiss warning
               return { ...prev, filters: newFilters };
             }
             if (prev.selectedIds.length > 0) {
@@ -885,7 +839,7 @@ export const useKeyboardHandlers = (
         showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 2000);
       }
     },
-    [showNotification],
+    [showNotification, setShowFilterWarning],
   );
 
   return {

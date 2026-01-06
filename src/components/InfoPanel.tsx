@@ -10,21 +10,22 @@ interface InfoPanelProps {
 export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose }) => {
   if (!file) return null;
 
-  // Format file size
+  // Compute approximate byte-size for a node (files, dirs, archives)
+  const computeBytes = (node: FileNode): number => {
+    if (node.type === 'dir' || node.type === 'archive') {
+      const children = node.children || [];
+      return children.reduce((sum, c) => sum + computeBytes(c), 0);
+    }
+    // files
+    return node.content ? node.content.length : 0;
+  };
+
   const formatSize = (node: FileNode): string => {
-    if (node.type === 'dir') {
-      const childCount = node.children?.length || 0;
-      return `${childCount} item${childCount !== 1 ? 's' : ''}`;
-    }
-    if (node.type === 'archive') {
-      const childCount = node.children?.length || 0;
-      return `${childCount} item${childCount !== 1 ? 's' : ''}`;
-    }
-    // For files, estimate size based on content length
-    const contentLength = node.content?.length || 0;
-    if (contentLength < 1024) return `${contentLength}B`;
-    if (contentLength < 1024 * 1024) return `${(contentLength / 1024).toFixed(1)}K`;
-    return `${(contentLength / (1024 * 1024)).toFixed(1)}M`;
+    const bytes = computeBytes(node);
+    if (bytes === 0) return '0B';
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}K`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
   };
 
   // Get mimetype
@@ -61,18 +62,42 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
 
   const size = formatSize(file);
   const mimetype = getMimetype(file);
+  const isDir = file.type === 'dir';
+  const isArchive = file.type === 'archive';
 
-  // Format timestamp
+  // Plugins heuristics — match wording in screenshots
+  const spotterLabel = isDir
+    ? 'folder'
+    : isArchive
+      ? 'archive'
+      : mimetype.startsWith('text')
+        ? 'code'
+        : mimetype.startsWith('image')
+          ? 'image'
+          : 'mime';
+
+  const previewerLabel = isDir
+    ? 'folder'
+    : isArchive
+      ? 'archive'
+      : mimetype.startsWith('text')
+        ? 'code'
+        : mimetype.startsWith('image')
+          ? 'image'
+          : 'file';
+
+  const fetchersLabel = isDir ? '-' : mimetype === 'application/octet-stream' ? 'binary' : 'mime';
+
+  // Format timestamp as dd/MM/yy HH:mm (24h) to match UI
   const formatDate = (timestamp?: number): string => {
     if (!timestamp) return '-';
     const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
+    return date.toLocaleString('en-GB', {
+      year: '2-digit',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
       hour12: false,
     });
   };
@@ -85,16 +110,23 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 shadow-2xl rounded-lg overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">File Info</h2>
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Info</h2>
         </div>
 
         {/* Content */}
         <div className="p-4 space-y-3">
           {/* Header with folder/file name and size */}
           <div className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
-            <div className="text-sm font-bold text-white mb-1">{file.name}</div>
+            <div className="flex items-center gap-3 mb-1">
+              <div
+                className={`text-[11px] font-bold tracking-widest ${isDir ? 'text-green-400' : isArchive ? 'text-yellow-400' : 'text-cyan-400'}`}
+              >
+                {isDir ? 'Folder' : isArchive ? 'Archive' : 'File'}
+              </div>
+              <div className="text-sm font-bold text-white">{file.name}</div>
+            </div>
             <div className="text-xs text-zinc-500 font-mono mb-3">
-              <span className="text-zinc-400">Size:</span> {size}
+              <span className="text-zinc-400">{isDir ? 'Items:' : 'Size:'}</span> {size}
             </div>
 
             <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">
@@ -124,17 +156,15 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-zinc-500">Spotter:</span>
-                <span className="text-zinc-300">{file.type}</span>
+                <span className="text-zinc-300">{spotterLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Previewer:</span>
-                <span className="text-zinc-300">
-                  {file.type === 'dir' ? 'folder' : file.type === 'archive' ? 'archive' : 'file'}
-                </span>
+                <span className="text-zinc-300">{previewerLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Fetchers:</span>
-                <span className="text-zinc-300">-</span>
+                <span className="text-zinc-300">{fetchersLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Preloaders:</span>

@@ -49,9 +49,9 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   previewScroll = 0,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
   const isArchiveDir = node?.type === 'archive';
+  const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   // Render level description with runtime tokens replaced (e.g., <current_datetime>)
   const renderedDescription = (level.description || '').replace(
     /<current_datetime>/g,
@@ -82,10 +82,6 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                   src={node.content}
                   alt={node.name}
                   className="max-w-full max-h-full object-contain rounded shadow-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).parentElement!.innerText = '[Image Load Failed]';
-                  }}
                 />
               </div>
             )}

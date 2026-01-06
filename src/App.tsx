@@ -47,7 +47,7 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
+import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useKeyboardHandlers';
 import { KEYBINDINGS } from './constants/keybindings';
 
 // Helper to get a random element from an array
@@ -676,6 +676,7 @@ export default function App() {
       e: KeyboardEvent,
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+      setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
     ) => {
       // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
@@ -707,6 +708,12 @@ export default function App() {
       }
 
       if (e.key === 'Enter') {
+        if (
+          checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
+        ) {
+          return;
+        }
+
         const idx = gameState.fuzzySelectedIndex || 0;
         const selected = candidates[idx];
         if (selected) {
@@ -968,10 +975,10 @@ export default function App() {
           break;
         case 'zoxide-jump':
         case 'fzf-current':
-          handleFuzzyModeKeyDown(e, gameState, setGameState);
+          handleFuzzyModeKeyDown(e, gameState, setGameState, setShowFilterWarning);
           break;
         case 'g-command':
-          handleGCommandKeyDown(e, setGameState);
+          handleGCommandKeyDown(e, setGameState, gameState, setShowFilterWarning);
           break;
         case 'z-prompt':
           handleZoxidePromptKeyDown(e, gameState, setGameState);

@@ -881,8 +881,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-037',
                   name: 'apex_predator.png',
                   type: 'file',
-                  content:
-                    'https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop',
+                  content: '/images/apex_predator.png',
                 },
                 {
                   id: 'fs-038',
@@ -1018,8 +1017,7 @@ export const INITIAL_FS: FileNode = {
                       id: 'fs-071',
                       name: 'screenshot_001.png',
                       type: 'file',
-                      content:
-                        'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=600&auto=format&fit=crop',
+                      content: '/images/screenshot_001.png',
                     },
                     {
                       id: 'fs-072',
@@ -1217,8 +1215,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-103',
                   name: 'sector_map.png',
                   type: 'file',
-                  content:
-                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
+                  content: '/images/sector_map.png',
                 },
                 {
                   id: 'fs-104',
@@ -1399,8 +1396,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-126',
                   name: 'wallpaper.jpg',
                   type: 'file',
-                  content:
-                    'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop',
+                  content: '/images/wallpaper.jpg',
                 },
               ],
             },
@@ -1419,8 +1415,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-127',
                   name: 'sector_map.png',
                   type: 'file',
-                  content:
-                    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop',
+                  content: '/images/sector_map.png',
                 },
                 {
                   id: 'fs-128',
@@ -1444,15 +1439,13 @@ export const INITIAL_FS: FileNode = {
                       id: 'fs-130',
                       name: 'tile_0_0.png',
                       type: 'file',
-                      content:
-                        'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=400&auto=format&fit=crop',
+                      content: '/images/tile_0_0.jpg',
                     },
                     {
                       id: 'fs-131',
                       name: 'tile_0_1.png',
                       type: 'file',
-                      content:
-                        'https://images.unsplash.com/photo-1493244040629-496f6d136cc3?q=80&w=400&auto=format&fit=crop',
+                      content: '/images/tile_0_1.jpg',
                     },
                   ],
                 },
@@ -2313,7 +2306,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'QUANTUM BYPASS',
     description:
-      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. The lab sets honeypots.\n\n<current_datetime>',
+      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. The lab sets honeypots.\n\n2026-01-05T22:02:36.099Z',
     initialPath: null,
     hint: "Jump to '/tmp' (Z → type 'tmp' → Enter). Cut '/tmp/access_token.key' to stage for exfiltration. Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'Zoxide Navigation + Operation Abort',

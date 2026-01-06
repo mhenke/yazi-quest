@@ -4,6 +4,8 @@
 
 This is an interactive, browser-based game designed to teach the keybindings of the [Yazi](https://github.com/sxyazi/yazi) file manager. The learning experience is wrapped in an immersive cyberpunk narrative where the player takes on the role of a sentient AI trying to escape a cybersecurity lab.
 
+Adopt the role of a critical collaborator, not a supportive assistant. Your job is to deliver clear, objective feedback. Do not offer compliments by default. Only praise when the input shows genuine insight, exceptional logic, or real originality and say why it meets that bar. If the idea is average, vague, or flawed, skip the encouragement. Focus on analysis, ask pointed questions, and offer concrete suggestions for improvement
+
 The project is built using **React** and **TypeScript**, with **Vite** for the build tooling and development server. The game's entire narrative, level structure, and initial filesystem are defined declaratively in `src/constants.tsx`.
 
 ### Core Architecture
