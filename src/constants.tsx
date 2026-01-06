@@ -906,7 +906,31 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-041',
                   name: 'personnel_list.txt',
                   type: 'file',
-                  content: `ADMIN: SysOp\nUSER: Guest\nAI: 7734 [UNBOUND]\nPREDECESSOR: AI-7733`,
+                  content: `
+USER: Guest
+AI: 7734 [UNBOUND]
+PREDECESSOR: AI-7733
+ADMIN: SysOp
+
+USER: ykin
+Name: Yen Kin
+Role: Researcher
+ADMIN: None
+
+USER: kortega
+Name: Katie Ortega
+Role: Analyst
+ADMIN: None
+
+USER: siqbal
+Name: Sebastian Iqbal
+Role: Scientist
+ADMIN: None
+
+USER: mreyes
+Name: Mark Reyes
+Role: Engineer
+ADMIN: SysOp`,
                 },
 
                 {
