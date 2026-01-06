@@ -797,6 +797,32 @@ export const useKeyboardHandlers = (
             });
           }
           break;
+        case 'H': {
+          // History Back (Shift+H)
+          if (e.shiftKey) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+              return;
+            }
+            setGameState((prev) => {
+              if (!prev.history || prev.history.length === 0) return prev;
+              const previous = prev.history[prev.history.length - 1];
+              const newHistory = prev.history.slice(0, -1);
+              return {
+                ...prev,
+                currentPath: previous,
+                cursorIndex: 0,
+                previewScroll: 0,
+                history: newHistory,
+                future: [prev.currentPath, ...prev.future],
+                usedHistoryBack: true,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+                notification: getNarrativeAction('H') || 'History Back',
+              };
+            });
+          }
+          break;
+        }
         case 'z':
           if (!e.shiftKey) {
             setGameState((prev) => {
@@ -812,6 +838,32 @@ export const useKeyboardHandlers = (
             });
           }
           break;
+        case 'L': {
+          // History Forward (Shift+L)
+          if (e.shiftKey) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+              return;
+            }
+            setGameState((prev) => {
+              if (!prev.future || prev.future.length === 0) return prev;
+              const next = prev.future[0];
+              const newFuture = prev.future.slice(1);
+              return {
+                ...prev,
+                currentPath: next,
+                cursorIndex: 0,
+                previewScroll: 0,
+                history: [...prev.history, prev.currentPath],
+                future: newFuture,
+                usedHistoryForward: true,
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+                notification: getNarrativeAction('L') || 'History Forward',
+              };
+            });
+          }
+          break;
+        }
         case 'Escape':
           setGameState((prev) => {
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
