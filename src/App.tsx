@@ -946,8 +946,7 @@ export default function App() {
           handleSortModeKeyDown(e, setGameState);
           // After handling the sort command, check if the sort state is now default
           setGameState((prev) => {
-            const isSortDefault =
-              prev.sortBy === 'natural' && prev.sortDirection === 'asc' && prev.linemode === 'none'; // Check if sort is truly default
+            const isSortDefault = prev.sortBy === 'natural' && prev.sortDirection === 'asc';
             if (isSortDefault) {
               setShowSortWarning(false); // Dismiss the warning
             }
