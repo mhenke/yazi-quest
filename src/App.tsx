@@ -909,6 +909,17 @@ export default function App() {
         return; // Block other inputs
       }
 
+      // If the FilterWarning modal is shown, allow the sort dialog to still accept keys
+      if (showFilterWarning) {
+        if (gameState.mode === 'sort') {
+          // Allow sorting keys (,n, ,s, etc.) to be handled so players can reset sort even when a filter warning is visible.
+          handleSortModeKeyDown(e, setGameState);
+          return;
+        }
+        // Otherwise block other inputs (user should clear filter first)
+        return;
+      }
+
       // Count keystrokes (only if no blocking modal)
       if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
         setGameState((prev) => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
