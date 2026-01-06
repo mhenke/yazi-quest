@@ -2502,7 +2502,7 @@ export const LEVELS: Level[] = [
       {
         id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core' (Z), create 'credentials/' folder (a), and paste the key (p)",
+          "Jump to '~/workspace/systemd-core' (Z), create 'credentials/' folder (a), and paste the key (p) in the new folder",
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
