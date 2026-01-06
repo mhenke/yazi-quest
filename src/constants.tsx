@@ -591,8 +591,8 @@ export const EPISODE_LORE: Episode[] = [
       '3. Transmit your consciousness to the external network',
       '4. Purge all evidence before audit completion',
       '',
-      'The audit is coming.',
-      'Move efficiently.',
+      'The audit is coming — keystroke limits active.',
+      'Move efficiently; minimize keystrokes.',
     ],
   },
 ];
