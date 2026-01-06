@@ -182,6 +182,7 @@ export interface GameState {
   usedPreviewDown?: boolean; // Tracks if player used Shift+J
   usedPreviewUp?: boolean; // Tracks if player used Shift+K
   usedP?: boolean; // Tracks if player used 'p' to paste
+  usedD?: boolean; // Tracks if player used 'D' for permanent delete
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level

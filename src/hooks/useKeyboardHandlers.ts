@@ -624,6 +624,7 @@ export const useKeyboardHandlers = (
             }));
           }
           break;
+        case 'D':
         case 'd': {
           // Enter confirm-delete mode for selected items or current item
           e.preventDefault();
@@ -637,7 +638,12 @@ export const useKeyboardHandlers = (
             showNotification('Nothing to delete', 2000);
             break;
           }
-          setGameState((prev) => ({ ...prev, mode: 'confirm-delete', pendingDeleteIds: toDelete }));
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'confirm-delete',
+            pendingDeleteIds: toDelete,
+            usedD: e.key === 'D',
+          }));
           break;
         }
         case 'p':
