@@ -1951,8 +1951,8 @@ export const LEVELS: Level[] = [
         id: 'nav-2b',
         description: 'Jump to top of file list (gg)',
         check: (c) => {
-          const d = findNodeByName(c.fs, 'datastore');
-          return d?.name !== 'datastore' ? false : c.usedGG === true;
+          const d = findNodeByName(c.fs, 'datastore', 'dir');
+          return !!d && c.currentPath.includes(d.id) && c.usedGG === true;
         },
         completed: false,
       },
