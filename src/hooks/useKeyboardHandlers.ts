@@ -479,6 +479,7 @@ export const useKeyboardHandlers = (
           }
           break;
         }
+        case 'o':
         case 'l':
         case 'Enter':
         case 'ArrowRight': {

@@ -27,12 +27,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
         setScrollPosition((prev) => prev + 5);
       } else if (e.key === 'K' && e.shiftKey) {
         setScrollPosition((prev) => Math.max(0, prev - 5));
-      } else if (e.key === 'h') {
-        // Allow 'h' to move up a small amount in the modal
-        setScrollPosition((prev) => Math.max(0, prev - 1));
-      } else if (e.key === 'l') {
-        // Allow 'l' to move down a small amount in the modal
-        setScrollPosition((prev) => prev + 1);
       }
     };
 

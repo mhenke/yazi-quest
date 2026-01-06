@@ -473,7 +473,7 @@ export const KEYBINDINGS = [
   { keys: ['j', '↓'], description: 'Move Down' },
   { keys: ['k', '↑'], description: 'Move Up' },
   { keys: ['h', '←'], description: 'Go to Parent Directory' },
-  { keys: ['l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
+  { keys: ['o', 'l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
   { keys: ['gg'], description: 'Jump to Top' },
   { keys: ['G'], description: 'Jump to Bottom' },
   { keys: ['J'], description: 'Scroll Preview Down' },
@@ -2504,7 +2504,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'cleanup-3-delete',
-        description: 'Delete the selected junk files',
+        description: 'Delete the selected junk files (d)',
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
           // Should be exactly 2 files left, and they should be the ones we want to preserve
