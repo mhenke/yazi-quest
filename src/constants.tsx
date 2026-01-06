@@ -2020,7 +2020,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'del-3',
-        description: "Purge '~/incoming/watcher_agent.sys' (d to trash)",
+        description: "Trash '~/incoming/watcher_agent.sys' (d)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
