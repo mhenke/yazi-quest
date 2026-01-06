@@ -183,15 +183,6 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       ) {
         cls = 'text-red-500 font-bold glitch-text';
         displayMatch = glitchReplacements[normalized];
-
-        // Revert after a short duration
-        setTimeout(() => {
-          const element = document.getElementById(`glitch-${offset}`);
-          if (element) {
-            element.innerText = match;
-            element.className = element.className.replace('text-red-500 glitch-text', cls);
-          }
-        }, glitchDuration);
       } else {
         if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
         else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
@@ -217,7 +208,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       }
 
       parts.push(
-        <span key={`${offset}-${match}`} id={`glitch-${offset}`} className={cls}>
+        <span
+          key={`${offset}-${match}`}
+          id={`glitch-${offset}`}
+          className={cls}
+          {...(cls.includes('glitch-text') ? { 'data-text': displayMatch } : {})}
+        >
           {displayMatch}
         </span>,
       );
@@ -242,6 +238,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
             <Terminal size={32} className={episode.color} />
             <h1
               className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
+              data-text={episode.title}
             >
               {episode.title}
             </h1>

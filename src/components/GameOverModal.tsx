@@ -35,7 +35,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </div>
 
           <div>
-            <h2 className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text">
+            <h2
+              className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text"
+              data-text="CONNECTION LOST"
+            >
               CONNECTION LOST
             </h2>
             <p className="text-red-400 font-mono uppercase tracking-wider text-sm">
