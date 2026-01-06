@@ -282,6 +282,25 @@ export const useKeyboardHandlers = (
             usedPreviewUp: false,
           }));
           break;
+        case 'G':
+          // Shift+G: jump to bottom of visible list
+          e.preventDefault();
+          try {
+            const items = getVisibleItems(gameState) || [];
+            const last = Math.max(0, items.length - 1);
+            setGameState((prev) => ({
+              ...prev,
+              cursorIndex: last,
+              mode: 'normal',
+              usedG: true,
+              previewScroll: 0,
+              usedPreviewDown: false,
+              usedPreviewUp: false,
+            }));
+          } catch (err) {
+            setGameState((prev) => ({ ...prev, mode: 'normal' }));
+          }
+          break;
         case 'h': {
           const homePath = ['root', 'home', 'guest'];
           setGameState((prev) => ({
@@ -460,6 +479,28 @@ export const useKeyboardHandlers = (
           e.preventDefault();
           setGameState((prev) => ({ ...prev, mode: 'g-command' }));
           break;
+        case 'G': {
+          // Direct Shift+G in normal mode: jump to bottom of visible list
+          e.preventDefault();
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            return;
+          }
+          try {
+            const items = getVisibleItems(gameState) || [];
+            const last = Math.max(0, items.length - 1);
+            setGameState((prev) => ({
+              ...prev,
+              cursorIndex: last,
+              previewScroll: 0,
+              usedG: true,
+              usedPreviewDown: false,
+              usedPreviewUp: false,
+            }));
+          } catch (err) {
+            // ignore
+          }
+          break;
+        }
         case 'h':
         case 'ArrowLeft': {
           if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
