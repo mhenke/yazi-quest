@@ -51,6 +51,8 @@ import { reportError } from './utils/error';
 import { measure } from './utils/perf';
 import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useKeyboardHandlers';
 import { KEYBINDINGS } from './constants/keybindings';
+import './glitch.css';
+import './glitch-text-3.css';
 
 // Helper to get a random element from an array
 const getRandomElement = <T,>(arr: T[]): T => {
@@ -240,6 +242,7 @@ export default function App() {
       usedP: false,
       acceptNextKeyForSort: false,
       completedTaskIds,
+      ignoreEpisodeIntro: false,
     };
   });
 
@@ -554,6 +557,7 @@ export default function App() {
         sortBy: 'natural',
         sortDirection: 'asc',
         filters: {},
+        ignoreEpisodeIntro: false, // Reset the flag on successful level advance
       };
     });
     setShowSuccessToast(false);
@@ -567,6 +571,9 @@ export default function App() {
       const currentLvl = LEVELS[prev.levelIndex];
       // Reset completed tasks for this level in the state map
       const newCompletedTaskIds = { ...prev.completedTaskIds, [currentLvl.id]: [] };
+
+      // For levels that start an episode, ensure restarting from failure doesn't re-trigger the intro
+      const shouldIgnoreIntro = currentLvl.id === 6 || currentLvl.id === 11;
 
       return {
         ...prev,
@@ -586,6 +593,8 @@ export default function App() {
         keystrokes: 0,
         showHint: false,
         hintStage: 0,
+        showEpisodeIntro: false, // Explicitly set to false
+        ignoreEpisodeIntro: shouldIgnoreIntro, // Prevent intro on next render if needed
         fuzzySelectedIndex: 0,
         usedG: false,
         usedGI: false,
@@ -1281,7 +1290,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
-      {gameState.showEpisodeIntro && (
+      {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
         <EpisodeIntro
           episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
           onComplete={() => setGameState((prev) => ({ ...prev, showEpisodeIntro: false }))}

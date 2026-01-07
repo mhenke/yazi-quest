@@ -1,0 +1,36 @@
+/* New Keyword Effect (.glitch-text-3) */
+.glitch-text-3 {
+  position: relative;
+  /* Sizing and color are inherited from parent */
+  animation: glitch-text-3-skew 1s infinite linear alternate-reverse, glitch-text-3-main-color 3s infinite linear;
+  display: inline-block; /* Added to make transform work correctly */
+  font-weight: bold;
+  text-shadow: 0 0 2px #ff00c1, 0 0 5px #ff00c1, 0 0 8px #00fff9;
+}
+
+.glitch-text-3::before {
+...
+@keyframes glitch-text-3-skew {
+  0% { transform: skew(-8deg) translateY(0); }
+  10% { transform: skew(6deg) translateY(-2px); }
+  20% { transform: skew(-10deg) translateY(1px); }
+  30% { transform: skew(9deg) translateY(0); }
+  40% { transform: skew(-7deg) translateY(3px); }
+  50% { transform: skew(5deg) translateY(-1px); }
+  60% { transform: skew(-12deg) translateY(0); }
+  70% { transform: skew(10deg) translateY(-2px); }
+  80% { transform: skew(-8deg) translateY(1px); }
+  90% { transform: skew(7deg) translateY(0); }
+  100% { transform: skew(0deg) translateY(0); }
+}
+
+@keyframes glitch-text-3-main-color {
+  0% { color: inherit; }
+  20% { color: inherit; }
+  22% { color: #ff00c1; } /* Brief flash */
+  24% { color: inherit; }
+  50% { color: inherit; }
+  52% { color: #00fff9; } /* Brief flash */
+  54% { color: inherit; }
+  100% { color: inherit; }
+}

@@ -187,6 +187,7 @@ export interface GameState {
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level
+  ignoreEpisodeIntro?: boolean;
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
