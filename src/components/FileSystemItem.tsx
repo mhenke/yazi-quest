@@ -161,7 +161,14 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   return (
     <React.Fragment>
       <div
-        className={getListItemRowClasses(isActive, isCursor, isMarked, isParent, isCut, rowTextClass)}
+        className={getListItemRowClasses(
+          isActive,
+          isCursor,
+          isMarked,
+          isParent,
+          isCut,
+          rowTextClass,
+        )}
       >
         <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`}>
           <Icon

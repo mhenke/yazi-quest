@@ -25,6 +25,7 @@ import {
   getRecursiveContent,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
+import { isValidZoxideData } from './utils/validation';
 import { getVisibleItems } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import StatusBar from './components/StatusBar';
@@ -128,11 +129,17 @@ export default function App() {
     try {
       const storedZoxide = localStorage.getItem('yazi-quest-zoxide-history');
       if (storedZoxide) {
-        initialZoxide = JSON.parse(storedZoxide);
+        const parsed = JSON.parse(storedZoxide);
+        if (isValidZoxideData(parsed)) {
+          initialZoxide = parsed;
+        } else {
+          throw new Error('Invalid zoxide data structure');
+        }
       } else {
         throw new Error('No stored zoxide history');
       }
-    } catch {
+    } catch (err) {
+      if (isDevOverride) console.error('Zoxide load error:', err);
       initialZoxide = {
         '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
         '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
