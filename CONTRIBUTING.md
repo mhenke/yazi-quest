@@ -13,6 +13,7 @@
 - Tasks should build on previous knowledge
 - Hints should guide, not solve
 - Ensure hints reference specific keybindings
+- Verify logic with `src/levelTransitions.test.ts` to ensure consistent state across levels.
 
 ### Per-level filesystem policy
 

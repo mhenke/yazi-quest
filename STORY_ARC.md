@@ -106,5 +106,3 @@ Episode III — Mastery
 ---
 
 ## 📚 References & Next Steps
-
-- For a detailed level-by-level breakdown see `THEATRE.md`.
