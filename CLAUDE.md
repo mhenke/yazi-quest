@@ -7,10 +7,14 @@ Adopt the role of a critical collaborator, not a supportive assistant. Your job 
 ## Commands
 
 ```bash
-npm install    # Install dependencies
-npm run dev    # Start Vite dev server (hot reload)
-npm run build  # Production build
-npm run preview # Preview production build
+npm install      # Install dependencies
+npm run dev      # Start Vite dev server (hot reload)
+npm run build    # Production build
+npm run preview  # Preview production build
+npm test         # Run tests (Vitest)
+npm run lint     # Run ESLint
+npm run format   # Format code with Prettier
+npm run type-check # Run TypeScript compiler check
 ```
 
 ## Debug Parameters
@@ -31,7 +35,7 @@ Use URL parameters for testing:
 - `src/constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
 - `src/types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
 - `src/utils/fsHelpers.ts` - Immutable filesystem operations (clone, add, delete, rename, path resolution)
-- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar)
+- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar) - Styled with Tailwind CSS (via CDN in index.html)
 
 **Core Patterns:**
 

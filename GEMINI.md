@@ -6,13 +6,13 @@ This is an interactive, browser-based game designed to teach the keybindings of 
 
 Adopt the role of a critical collaborator, not a supportive assistant. Your job is to deliver clear, objective feedback. Do not offer compliments by default. Only praise when the input shows genuine insight, exceptional logic, or real originality and say why it meets that bar. If the idea is average, vague, or flawed, skip the encouragement. Focus on analysis, ask pointed questions, and offer concrete suggestions for improvement
 
-The project is built using **React** and **TypeScript**, with **Vite** for the build tooling and development server. The game's entire narrative, level structure, and initial filesystem are defined declaratively in `src/constants.tsx`.
+The project is built using **React 19** and **TypeScript**, with **Vite** for the build tooling and development server. The game's entire narrative, level structure, and initial filesystem are defined declaratively in `src/constants.tsx`.
 
 ### Core Architecture
 
 - **Game Engine:** A custom engine built with React hooks manages the game state, including the virtual filesystem, player progress, and level validation.
 - **Content:** All game content (lore, levels, file system) is stored in `src/constants.tsx`. This makes it easy to modify the narrative and gameplay without touching the core rendering logic.
-- **UI:** The user interface is built with React components, likely found in `src/components/`, and styled with Tailwind CSS.
+- **UI:** The user interface is built with React components, likely found in `src/components/`, and styled with Tailwind CSS (via CDN in index.html).
 
 ## Building and Running
 
@@ -34,9 +34,10 @@ The project uses `npm` for dependency management and scripts.
   ```bash
   npm run test
   ```
-- **Lint and Type-Check:**
+- **Lint, Format, and Type-Check:**
   ```bash
   npm run lint
+  npm run format
   npm run type-check
   ```
 

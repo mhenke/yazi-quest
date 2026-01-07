@@ -15,16 +15,20 @@ Adopt the role of a critical collaborator, not a supportive assistant. Deliver c
 - **Framework:** React 19
 - **Language:** TypeScript
 - **Build Tool:** Vite
-- **Styling:** Tailwind CSS
+- **Styling:** Tailwind CSS (CDN)
 - **Icons:** Lucide React
 
 ## Commands
 
 ```bash
-npm install    # Install dependencies
-npm run dev    # Start Vite dev server (hot reload)
-npm run build  # Production build
-npm run preview # Preview production build
+npm install      # Install dependencies
+npm run dev      # Start Vite dev server (hot reload)
+npm run build    # Production build
+npm run preview  # Preview production build
+npm test         # Run tests (Vitest)
+npm run lint     # Run ESLint
+npm run format   # Format code with Prettier
+npm run type-check # Run TypeScript compiler check
 ```
 
 ## Debug Parameters
