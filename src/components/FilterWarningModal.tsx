@@ -12,16 +12,19 @@ export const FilterWarningModal: React.FC = () => {
             <AlertTriangle size={48} strokeWidth={1.5} />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3 w-full">
             <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
               Protocol Violation
             </h2>
-            <p className="text-zinc-400 font-mono text-sm">
-              Active filters detected. Operational integrity compromised.
-            </p>
+            <p className="text-zinc-400 font-mono text-sm">Active filters detected.</p>
+            <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
+              <p className="text-yellow-300 font-mono text-sm font-semibold">
+                Note: filters are global and persist with Yazi across sessions.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
+            <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
             <div className="bg-zinc-800 p-2 rounded-full">
               <Filter size={20} className="text-zinc-400" />
             </div>
@@ -30,13 +33,19 @@ export const FilterWarningModal: React.FC = () => {
                 Corrective Action
               </p>
               <p className="text-zinc-300 text-xs font-mono">
-                Press{' '}
-                <span className="bg-zinc-200 text-black px-1.5 py-0.5 rounded font-bold mx-1">
-                  Esc
-                </span>{' '}
-                (twice) to clear filter
+                Clear filter (Esc twice) to restore expected results.
               </p>
             </div>
+          </div>
+
+          <div className="w-full flex justify-center mt-4">
+            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+              Press{' '}
+              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                Shift+Enter
+              </span>
+              to continue...
+            </p>
           </div>
         </div>
       </div>

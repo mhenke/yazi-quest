@@ -550,9 +550,10 @@ export default function App() {
           ...prev.completedTaskIds,
           [nextLevel.id]: [], // Ensure array exists for next level
         },
-        // Ensure sort is reset at the beginning of each level
+        // Ensure sort and filters are reset at the beginning of each level
         sortBy: 'natural',
         sortDirection: 'asc',
+        filters: {},
       };
     });
     setShowSuccessToast(false);
@@ -927,7 +928,8 @@ export default function App() {
         return; // Block other inputs
       }
 
-      // If FilterWarning modal is shown, only allow Escape to dismiss it
+      // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
+      // to clear the active filter and continue (protocol-violation bypass).
       if (showFilterWarning) {
         if (e.key === 'Escape') {
           setShowFilterWarning(false);
@@ -937,7 +939,28 @@ export default function App() {
             acceptNextKeyForSort: false,
             notification: null,
           }));
+          return;
         }
+
+        if (e.key === 'Enter' && e.shiftKey) {
+          setShowFilterWarning(false);
+          setGameState((prev) => {
+            const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
+            const newFilters = { ...prev.filters };
+            if (currentDirNode) {
+              delete newFilters[currentDirNode.id];
+            }
+            return {
+              ...prev,
+              mode: 'normal',
+              filters: newFilters,
+              acceptNextKeyForSort: false,
+              notification: null,
+            };
+          });
+          return;
+        }
+
         return; // Block other inputs if filter warning is active
       }
 

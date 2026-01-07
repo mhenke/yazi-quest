@@ -16,6 +16,7 @@ export const SortWarningModal: React.FC = () => {
             <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
               Protocol Violation
             </h2>
+            <p className="text-zinc-400 font-mono text-sm">Active sort order detected.</p>
             <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
               <p className="text-yellow-300 font-mono text-sm font-semibold">
                 Note: sort order is global and persists with Yazi across
