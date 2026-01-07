@@ -162,7 +162,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         cls = 'text-zinc-300 font-semibold';
       else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
       else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
-      else if (normalized === 'THE AUDIT IS COMING') cls = 'text-blue-500 font-bold tracking-wide';
+      else if (normalized === 'THE AUDIT IS COMING')
+        cls = 'text-blue-500 font-bold tracking-wide';
       else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
       else if (
         normalized === 'NAVIGATE' ||
