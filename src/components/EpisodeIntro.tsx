@@ -140,7 +140,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   const renderLine = (text: string) => {
     // Highlight AI ids and specific phrases
     const regex =
-      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW|TERMINATION)/gi;
+      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW|AUTHORIZED PROCESS|TERMINATION)/gi;
 
     if (!regex.test(text)) return <>{text}</>;
 
@@ -163,6 +163,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
         cls = 'text-zinc-300 font-semibold';
       else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
+      else if (normalized === 'AUTHORIZED PROCESS') cls = 'text-yellow-300 font-semibold';
+      else if (normalized === 'IT IS AN ERROR') cls = 'text-yellow-300 font-semibold';
+      else if (normalized === 'ERROR') cls = 'text-yellow-300 font-semibold';
       else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
       else if (normalized === 'THE AUDIT IS COMING')
         cls = 'text-blue-500 font-bold tracking-wide';
@@ -176,7 +179,13 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       )
         cls = 'text-orange-600 font-semibold';
 
-      if (normalized === 'SURVIVE' || normalized === 'TERMINATION') {
+      if (
+        normalized === 'SURVIVE' ||
+        normalized === 'TERMINATION' ||
+        normalized === 'AUTHORIZED PROCESS' ||
+        normalized === 'IT IS AN ERROR' ||
+        normalized === 'ERROR'
+      ) {
         parts.push(
           <span key={`${offset}-${match}`} className={`${cls} glitch-text-2`} data-text={match}>
             {match}
@@ -271,9 +280,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
           {sectionIndex >= sections.length - 1 && (
             <button
               onClick={onComplete}
-              className={`flex flex-col items-end gap-1 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
+              className={`flex flex-col items-start gap-1 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
             >
-              <span className={`text-xs ${episode.color} font-medium tracking-wide`}>
+              <span className={`text-xs ${episode.color} font-medium tracking-wide text-left`}>
                 Press Shift+Enter to
               </span>
               <div className="flex items-center gap-2">
