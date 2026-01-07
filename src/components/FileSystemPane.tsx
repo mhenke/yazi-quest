@@ -49,9 +49,13 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
 
   // Use className directly if it contains grid layout classes, otherwise append default bg/width
-  const finalClass = className?.includes('grid')
+  const isGrid = !!className?.includes('grid');
+  const finalClass = isGrid
     ? className
     : `${defaultWidth} ${bgColors} ${className || ''}`;
+
+  // Pre-compute clipboard set for O(1) lookups
+  const clipboardSet = new Set(clipboard?.nodes?.map((n) => n.id));
 
   return (
     <div
@@ -60,7 +64,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     >
       <div
         ref={listRef}
-        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${className?.includes('grid') ? className : ''}`}
+        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${isGrid ? className : ''}`}
       >
         {items.length === 0 && (
           <div className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none">
@@ -71,7 +75,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const isCursor = idx === cursorIndex;
           const isMarked = selectedIds.includes(item.id);
 
-          const inClipboard = !!(clipboard?.nodes && clipboard.nodes.some((n) => n.id === item.id));
+          const inClipboard = clipboardSet.has(item.id);
           const isCut = !!(inClipboard && clipboard?.action === 'cut');
           const isYank = !!(inClipboard && clipboard?.action === 'yank');
           const showRename = isActive && isCursor && renameState?.isRenaming;
@@ -87,7 +91,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
               isCut={isCut}
               isYank={isYank}
               linemode={linemode}
-              isGrid={!!className?.includes('grid')}
+              isGrid={isGrid}
               renameState={showRename ? renameState : undefined}
               onRenameChange={showRename ? onRenameChange : undefined}
               onRenameSubmit={showRename ? onRenameSubmit : undefined}

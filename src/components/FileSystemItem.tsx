@@ -79,14 +79,22 @@ const formatSize = (node: FileNode) => {
 };
 
 const getFakeDate = (node: FileNode) => {
+  // Use actual modifiedAt if available, otherwise fallback to stable fake date
+  if (node.modifiedAt) {
+    const date = new Date(node.modifiedAt);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  // Fallback: Generate stable date from hash
   let hash = 0;
   for (let i = 0; i < node.id.length; i++) {
     hash = (hash << 5) - hash + node.id.charCodeAt(i);
     hash |= 0;
   }
-  const d = Date.now();
+  // Use a fixed base time (Jan 1, 2024) instead of Date.now() for stability
+  const baseTime = 1704067200000;
   const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
-  const date = new Date(d - offset);
+  const date = new Date(baseTime - offset);
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 
@@ -222,4 +230,18 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   );
 };
 
-export const MemoizedFileSystemItem = memo(FileSystemItem);
+export const MemoizedFileSystemItem = memo(FileSystemItem, (prev, next) => {
+  return (
+    prev.item === next.item &&
+    prev.isActive === next.isActive &&
+    prev.isCursor === next.isCursor &&
+    prev.isMarked === next.isMarked &&
+    prev.isParent === next.isParent &&
+    prev.isCut === next.isCut &&
+    prev.isYank === next.isYank &&
+    prev.linemode === next.linemode &&
+    prev.isGrid === next.isGrid &&
+    prev.renameState?.isRenaming === next.renameState?.isRenaming &&
+    prev.renameState?.inputBuffer === next.renameState?.inputBuffer
+  );
+});
