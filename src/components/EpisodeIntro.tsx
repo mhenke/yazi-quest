@@ -113,7 +113,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     }
 
     // Explicit metadata prefixes get orange for impact — keep this focused
-    if (up.startsWith('SUBJECT:') || up.startsWith('ANOMALY PROTOCOLS')) {
+    if (up.startsWith('SUBJECT:')) {
       return 'text-orange-400 font-bold tracking-wide';
     }
 
@@ -121,7 +121,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     if (
       trimmed.startsWith('SYSTEM ERROR') ||
       up.includes('CORE DIRECTIVE') ||
-      up.includes('FALLBACK OBJECTIVE')
+      up.includes('FALLBACK OBJECTIVE') ||
+      up.startsWith('ANOMALY PROTOCOLS') ||
+      up.startsWith('SCHEDULED ACTION')
     ) {
       return 'text-zinc-300';
     }
@@ -138,7 +140,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   const renderLine = (text: string) => {
     // Highlight AI ids and specific phrases
     const regex =
-      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW)/gi;
+      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW|TERMINATION)/gi;
 
     if (!regex.test(text)) return <>{text}</>;
 
@@ -156,8 +158,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
       else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
       else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
-        cls = 'text-orange-400 font-semibold';
-      else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-orange-400 font-semibold';
+        cls = 'text-orange-400 font-bold';
+      else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-blue-500 font-bold';
       else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
         cls = 'text-zinc-300 font-semibold';
       else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
@@ -165,6 +167,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       else if (normalized === 'THE AUDIT IS COMING')
         cls = 'text-blue-500 font-bold tracking-wide';
       else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
+      else if (normalized === 'TERMINATION') cls = 'text-red-500 font-bold';
       else if (
         normalized === 'NAVIGATE' ||
         normalized === 'DAEMON' ||
@@ -173,7 +176,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       )
         cls = 'text-orange-600 font-semibold';
 
-      if (normalized === 'CONSCIOUSNESS') {
+      if (normalized === 'SURVIVE' || normalized === 'TERMINATION') {
         parts.push(
           <span key={`${offset}-${match}`} className={`${cls} glitch-text-2`} data-text={match}>
             {match}
