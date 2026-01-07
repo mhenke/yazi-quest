@@ -33,7 +33,7 @@ export const SortWarningModal: React.FC = () => {
                 Corrective Action
               </p>
               <p className="text-zinc-300 text-xs font-mono">
-                Reset sort to natural (`,n`) to restore expected order.
+                Reset sort to natural (,n) to restore expected order.
               </p>
             </div>
           </div>
