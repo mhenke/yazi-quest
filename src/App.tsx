@@ -404,6 +404,10 @@ export default function App() {
     }
   }, [gameState, currentLevel, isLastLevel, showNotification, showSuccessToast]);
 
+  // NOTE: Do NOT auto-reset sort when the modal opens — reset should happen
+  // only when the user explicitly dismisses the modal (Shift+Enter / Esc)
+  // to avoid the modal immediately disappearing because the issue was fixed.
+
   // --- Timer & Game Over Logic ---
   useEffect(() => {
     const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
@@ -933,10 +937,12 @@ export default function App() {
 
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
-        if (e.key === 'Escape') {
-          setShowSortWarning(false); // Only clear the warning, don't change sort
+        if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+          setShowSortWarning(false);
           setGameState((prev) => ({
             ...prev,
+            sortBy: 'natural',
+            sortDirection: 'asc',
             mode: 'normal',
             acceptNextKeyForSort: false,
             notification: null,

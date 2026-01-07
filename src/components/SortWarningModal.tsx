@@ -12,13 +12,16 @@ export const SortWarningModal: React.FC = () => {
             <AlertTriangle size={48} strokeWidth={1.5} />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3 w-full">
             <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
               Protocol Violation
             </h2>
-            <p className="text-zinc-400 font-mono text-sm">
-              Non-standard sorting detected. Operational integrity compromised.
-            </p>
+            <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
+              <p className="text-yellow-300 font-mono text-sm font-semibold">
+                Note: sort order is global and persists with Yazi across
+                sessions.
+              </p>
+            </div>
           </div>
 
           <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
@@ -30,13 +33,18 @@ export const SortWarningModal: React.FC = () => {
                 Corrective Action
               </p>
               <p className="text-zinc-300 text-xs font-mono">
-                Press{' '}
-                <span className="bg-zinc-200 text-black px-1.5 py-0.5 rounded font-bold mx-1">
-                  ,n
-                </span>{' '}
-                to reset sort to natural (ascending) and continue...
+                Reset sort to natural (`,n`) to restore expected order.
               </p>
             </div>
+          </div>
+          <div className="w-full flex justify-center mt-4">
+            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+              Press{' '}
+              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                Shift+Enter
+              </span>
+              to continue...
+            </p>
           </div>
         </div>
       </div>
