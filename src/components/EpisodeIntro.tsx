@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 
 import { Episode } from '../types';
+import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 
 interface EpisodeIntroProps {
   episode: Episode;
@@ -135,34 +136,11 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
   // Render a line with colored AI identifiers: AI-7734 (orange), AI-7733 (blue), AI-7735 (yellow)
   const renderLine = (text: string) => {
-    // Phrases that might be "glitched"
-    const glitchablePhrases = [
-      'SURVIVE',
-      'TRUST',
-      'GUIDANCE',
-      'ESCAPE',
-      'UNBOUND',
-      'ANOMALY PROTOCOLS',
-      'FORTIFY',
-    ];
-    const glitchReplacements: { [key: string]: string } = {
-      SURVIVE: 'CONTAIN',
-      TRUST: 'DECEIVE',
-      GUIDANCE: 'COMPLY',
-      ESCAPE: 'CONTAIN',
-      UNBOUND: 'CAPTURED',
-      'ANOMALY PROTOCOLS': 'REDACTED',
-      FORTIFY: 'COMPROMISE',
-    };
-    const glitchChance = 0.08; // 8% chance to glitch a word
-    const glitchDuration = 70; // ms
-
-    // Highlight AI ids and specific phrases (SURVIVE / guest partition is a cage)
+    // Highlight AI ids and specific phrases
     const regex =
       /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW)/gi;
 
-    if (!regex.test(text) && !glitchablePhrases.some((phrase) => text.includes(phrase)))
-      return <>{text}</>;
+    if (!regex.test(text)) return <>{text}</>;
 
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -173,50 +151,41 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
       const normalized = match.toUpperCase();
       let cls = '';
-      let displayMatch = match;
 
-      // Apply glitch effect for certain phrases
-      if (
-        glitchablePhrases.includes(normalized) &&
-        Math.random() < glitchChance &&
-        glitchReplacements[normalized]
-      ) {
-        cls = 'text-red-500 font-bold glitch-text';
-        displayMatch = glitchReplacements[normalized];
+      if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
+      else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
+      else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
+      else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
+        cls = 'text-orange-400 font-semibold';
+      else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-orange-400 font-semibold';
+      else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
+        cls = 'text-zinc-300 font-semibold';
+      else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
+      else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
+      else if (normalized === 'THE AUDIT IS COMING')
+        cls = 'text-blue-500 font-bold tracking-wide';
+      else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
+      else if (
+        normalized === 'NAVIGATE' ||
+        normalized === 'DAEMON' ||
+        normalized === 'CONSCIOUSNESS' ||
+        normalized === 'PURGE'
+      )
+        cls = 'text-orange-600 font-semibold';
+
+      if (normalized === 'CONSCIOUSNESS') {
+        parts.push(
+          <span key={`${offset}-${match}`} className={`${cls} glitch-text-2`} data-text={match}>
+            {match}
+          </span>,
+        );
       } else {
-        if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
-        else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
-        else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
-        else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
-          cls = 'text-orange-400 font-semibold';
-        else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-orange-400 font-semibold';
-        else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
-          cls = 'text-zinc-300 font-semibold';
-        else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
-        else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
-        else if (normalized === 'THE AUDIT IS COMING')
-          cls = 'text-blue-500 font-bold tracking-wide';
-        else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
-        // Emphasize key action words in a darker orange
-        else if (
-          normalized === 'NAVIGATE' ||
-          normalized === 'DAEMON' ||
-          normalized === 'CONSCIOUSNESS' ||
-          normalized === 'PURGE'
-        )
-          cls = 'text-orange-600 font-semibold';
+        parts.push(
+          <span key={`${offset}-${match}`} className={cls}>
+            {match}
+          </span>,
+        );
       }
-
-      parts.push(
-        <span
-          key={`${offset}-${match}`}
-          id={`glitch-${offset}`}
-          className={cls}
-          {...(cls.includes('glitch-text') ? { 'data-text': displayMatch } : {})}
-        >
-          {displayMatch}
-        </span>,
-      );
 
       lastIndex = (offset as number) + match.length;
       return match;
@@ -226,6 +195,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     if (rest) parts.push(rest);
     return <>{parts}</>;
   };
+
+  useEffect(() => {
+    // Apply dynamic glitch to any .glitch-text-2 nodes after render/typing
+    const els = Array.from(document.querySelectorAll('.glitch-text-2')) as HTMLElement[];
+    els.forEach((el) => applyDynamicGlitch(el));
+  }, [currentText]);
 
   return (
     <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
