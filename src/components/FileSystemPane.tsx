@@ -50,9 +50,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 
   // Use className directly if it contains grid layout classes, otherwise append default bg/width
   const isGrid = !!className?.includes('grid');
-  const finalClass = isGrid
-    ? className
-    : `${defaultWidth} ${bgColors} ${className || ''}`;
+  const finalClass = isGrid ? className : `${defaultWidth} ${bgColors} ${className || ''}`;
 
   // Pre-compute clipboard set for O(1) lookups
   const clipboardSet = useMemo(
@@ -70,10 +68,15 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     >
       <div
         ref={listRef}
+        role="list"
+        aria-label="File Browser"
         className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${isGrid ? className : ''}`}
       >
         {items.length === 0 && (
-          <div className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none">
+          <div
+            className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none"
+            role="status"
+          >
             No items
           </div>
         )}
