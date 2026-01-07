@@ -18,9 +18,7 @@ export function applyDynamicGlitch(el: HTMLElement) {
       const tx = Math.floor(Math.random() * 3) - 1; // -1..1 px
       const ty = Math.floor(Math.random() * 3) - 1; // -1..1 px
       const skew = (Math.random() * 2 - 1).toFixed(2); // -1..1 deg
-      arr.push(
-        `${pct}% { clip: rect(${top}px, 9999px, ${bottom}px, 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`,
-      );
+      arr.push(`${pct}% { clip: rect(${top}px, 9999px, ${bottom}px, 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`);
     }
     return arr.join('\n');
   };

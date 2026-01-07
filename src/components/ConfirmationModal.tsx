@@ -42,10 +42,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         <div className="p-8 flex flex-col items-center justify-center min-h-[160px]">
-          <p
-            id="confirmation-modal-desc"
-            className="text-zinc-300 font-mono text-lg text-center mb-4"
-          >
+          <p id="confirmation-modal-desc" className="text-zinc-300 font-mono text-lg text-center mb-4">
             {detail}
           </p>
 
