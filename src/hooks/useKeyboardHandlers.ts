@@ -136,6 +136,67 @@ export const useKeyboardHandlers = (
     [],
   );
 
+  const confirmDelete = useCallback(
+    (
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+      visibleItems: FileNode[],
+      currentLevelParam: Level,
+    ) => {
+      setGameState((prev) => {
+        let newFs = prev.fs;
+        let errorMsg: string | null | undefined = null;
+
+        for (const id of prev.pendingDeleteIds) {
+          const node = visibleItems.find((n) => n.id === id);
+          if (node) {
+            const protection = isProtected(
+              prev.fs,
+              prev.currentPath,
+              node,
+              currentLevelParam,
+              'delete',
+            );
+            if (protection) {
+              errorMsg = protection;
+              break;
+            }
+            const res = deleteNode(newFs, prev.currentPath, id, prev.levelIndex);
+            if (!res.ok) {
+              errorMsg = (res as { ok: false; error: FsError }).error;
+              break;
+            }
+            newFs = res.value;
+          }
+        }
+
+        if (errorMsg) {
+          return {
+            ...prev,
+            mode: 'normal',
+            pendingDeleteIds: [],
+            notification: `🔒 PROTECTED: ${errorMsg}`,
+          };
+        }
+        return {
+          ...prev,
+          fs: newFs,
+          mode: 'normal',
+          pendingDeleteIds: [],
+          selectedIds: [],
+          notification: getNarrativeAction('d') || 'Items deleted',
+        };
+      });
+    },
+    [],
+  );
+
+  const cancelDelete = useCallback(
+    (setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
+      setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
+    },
+    [],
+  );
+
   const handleConfirmDeleteModeKeyDown = useCallback(
     (
       e: KeyboardEvent,
@@ -144,55 +205,12 @@ export const useKeyboardHandlers = (
       currentLevelParam: Level,
     ) => {
       if (e.key === 'y' || e.key === 'Enter') {
-        setGameState((prev) => {
-          let newFs = prev.fs;
-          let errorMsg: string | null | undefined = null;
-
-          for (const id of prev.pendingDeleteIds) {
-            const node = visibleItems.find((n) => n.id === id);
-            if (node) {
-              const protection = isProtected(
-                prev.fs,
-                prev.currentPath,
-                node,
-                currentLevelParam,
-                'delete',
-              );
-              if (protection) {
-                errorMsg = protection;
-                break;
-              }
-              const res = deleteNode(newFs, prev.currentPath, id, prev.levelIndex);
-              if (!res.ok) {
-                errorMsg = (res as { ok: false; error: FsError }).error;
-                break;
-              }
-              newFs = res.value;
-            }
-          }
-
-          if (errorMsg) {
-            return {
-              ...prev,
-              mode: 'normal',
-              pendingDeleteIds: [],
-              notification: `🔒 PROTECTED: ${errorMsg}`,
-            };
-          }
-          return {
-            ...prev,
-            fs: newFs,
-            mode: 'normal',
-            pendingDeleteIds: [],
-            selectedIds: [],
-            notification: getNarrativeAction('d') || 'Items deleted',
-          };
-        });
+        confirmDelete(setGameState, visibleItems, currentLevelParam);
       } else if (e.key === 'n' || e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
+        cancelDelete(setGameState);
       }
     },
-    [],
+    [confirmDelete, cancelDelete],
   );
 
   const handleOverwriteConfirmKeyDown = useCallback(
@@ -974,5 +992,7 @@ export const useKeyboardHandlers = (
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
     handleNormalModeKeyDown,
+    confirmDelete,
+    cancelDelete,
   };
 };

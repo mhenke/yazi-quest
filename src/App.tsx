@@ -297,6 +297,8 @@ export default function App() {
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
     handleNormalModeKeyDown,
+    confirmDelete,
+    cancelDelete,
   } = useKeyboardHandlers(showNotification, setShowFilterWarning);
 
   useEffect(() => {
@@ -1242,6 +1244,8 @@ export default function App() {
             const node = getVisibleItems(gameState).find((item) => item.id === id);
             return node?.name || id;
           })}
+          onConfirm={() => confirmDelete(setGameState, visibleItems, currentLevel)}
+          onCancel={() => cancelDelete(setGameState)}
         />
       )}
 
