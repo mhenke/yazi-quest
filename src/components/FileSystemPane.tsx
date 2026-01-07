@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { FileNode, ClipboardItem, Linemode } from '../types';
 import { MemoizedFileSystemItem } from './FileSystemItem';
 
@@ -55,7 +55,13 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     : `${defaultWidth} ${bgColors} ${className || ''}`;
 
   // Pre-compute clipboard set for O(1) lookups
-  const clipboardSet = new Set(clipboard?.nodes?.map((n) => n.id));
+  const clipboardSet = useMemo(
+    () => new Set(clipboard?.nodes?.map((n) => n.id)),
+    [clipboard],
+  );
+
+  // Pre-compute selected IDs set for O(1) lookups
+  const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   return (
     <div
@@ -73,7 +79,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
         )}
         {items.map((item, idx) => {
           const isCursor = idx === cursorIndex;
-          const isMarked = selectedIds.includes(item.id);
+          const isMarked = selectedIdsSet.has(item.id);
 
           const inClipboard = clipboardSet.has(item.id);
           const isCut = !!(inClipboard && clipboard?.action === 'cut');
