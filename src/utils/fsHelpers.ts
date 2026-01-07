@@ -50,16 +50,30 @@ export function findNodeByName(
   while (stack.length) {
     const n = stack.pop()!;
     if (n.name === name) {
-      if (!type) return n;
-      if (type === 'dir') {
-        if (n.type === 'dir' || n.type === 'archive') return n;
-      } else if (type === 'file') {
-        if (n.type === 'file') return n;
-      } else if (type === 'archive') {
-        if (n.type === 'archive') return n;
+      if (!type) {
+        return n;
+      }
+      switch (type) {
+        case 'dir':
+          if (n.type === 'dir' || n.type === 'archive') {
+            return n;
+          }
+          break;
+        case 'file':
+          if (n.type === 'file') {
+            return n;
+          }
+          break;
+        case 'archive':
+          if (n.type === 'archive') {
+            return n;
+          }
+          break;
       }
     }
-    if (n.children) stack.push(...n.children);
+    if (n.children) {
+      stack.push(...n.children);
+    }
   }
   return undefined;
 }

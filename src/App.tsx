@@ -618,73 +618,72 @@ export default function App() {
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
     ) => {
-      if (e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-        return;
-      }
+      switch (e.key) {
+        case 'Escape':
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          break;
+        case 'Backspace':
+          setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+          break;
+        case 'Enter': {
+          const { zoxideData, inputBuffer } = gameState;
+          const candidates = Object.keys(zoxideData)
+            .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
+            .sort((a, b) => b.score - a.score);
+          const bestMatch = candidates.find((c) =>
+            c.path.toLowerCase().includes(inputBuffer.toLowerCase()),
+          );
 
-      if (e.key === 'Backspace') {
-        setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
-        return;
-      }
-
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer + e.key }));
-        return;
-      }
-
-      if (e.key === 'Enter') {
-        const { zoxideData, inputBuffer } = gameState;
-        const candidates = Object.keys(zoxideData)
-          .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
-          .sort((a, b) => b.score - a.score);
-        const bestMatch = candidates.find((c) =>
-          c.path.toLowerCase().includes(inputBuffer.toLowerCase()),
-        );
-
-        if (bestMatch) {
-          const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => ({
-            node: d.node,
-            path: d.path,
-            display: resolvePath(gameState.fs, d.path),
-          }));
-          const match = allDirs.find((d) => d.display === bestMatch.path);
-          if (match) {
-            const now = Date.now();
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              currentPath: match.path,
-              cursorIndex: 0,
-              notification: `Jumped to ${bestMatch.path}`,
-              inputBuffer: '',
-              history: [...prev.history, prev.currentPath],
-              future: [],
-              stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-              zoxideData: {
-                ...prev.zoxideData,
-                [bestMatch.path]: {
-                  count: (prev.zoxideData[bestMatch.path]?.count || 0) + 1,
-                  lastAccess: now,
-                },
-              },
+          if (bestMatch) {
+            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => ({
+              node: d.node,
+              path: d.path,
+              display: resolvePath(gameState.fs, d.path),
             }));
+            const match = allDirs.find((d) => d.display === bestMatch.path);
+            if (match) {
+              const now = Date.now();
+              setGameState((prev) => ({
+                ...prev,
+                mode: 'normal',
+                currentPath: match.path,
+                cursorIndex: 0,
+                notification: `Jumped to ${bestMatch.path}`,
+                inputBuffer: '',
+                history: [...prev.history, prev.currentPath],
+                future: [],
+                stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                zoxideData: {
+                  ...prev.zoxideData,
+                  [bestMatch.path]: {
+                    count: (prev.zoxideData[bestMatch.path]?.count || 0) + 1,
+                    lastAccess: now,
+                  },
+                },
+              }));
+            } else {
+              setGameState((prev) => ({
+                ...prev,
+                mode: 'normal',
+                inputBuffer: '',
+                notification: `Path not found: ${bestMatch.path}`,
+              }));
+            }
           } else {
             setGameState((prev) => ({
               ...prev,
               mode: 'normal',
               inputBuffer: '',
-              notification: `Path not found: ${bestMatch.path}`,
+              notification: 'No match found',
             }));
           }
-        } else {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            inputBuffer: '',
-            notification: 'No match found',
-          }));
+          break;
         }
+        default:
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer + e.key }));
+          }
+          break;
       }
     },
     [],
@@ -726,138 +725,178 @@ export default function App() {
           }));
       }
 
-      if (e.key === 'Enter') {
-        if (
-          checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
-        ) {
+      // Handle Ctrl+key combinations separately for clarity
+      if (e.ctrlKey) {
+        if (e.key === 'n') {
+          setGameState((prev) => ({
+            ...prev,
+            fuzzySelectedIndex: Math.min(
+              candidates.length - 1,
+              (prev.fuzzySelectedIndex || 0) + 1,
+            ),
+          }));
           return;
         }
+        if (e.key === 'p') {
+          setGameState((prev) => ({
+            ...prev,
+            fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
+          }));
+          return;
+        }
+      }
 
-        const idx = gameState.fuzzySelectedIndex || 0;
-        const selected = candidates[idx];
-        if (selected) {
-          if (isZoxide) {
-            // Find path ids from string
-            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => {
-              return {
-                ...d.node,
-                path: d.path,
-                display: resolvePath(gameState.fs, d.path),
-              };
-            });
-            const match = allDirs.find((d) => d.display === selected.path);
-            if (match) {
-              const now = Date.now();
+      switch (e.key) {
+        case 'Enter': {
+          if (
+            checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
+          ) {
+            return;
+          }
 
-              // Add specific "Quantum" feedback for Level 7
-              const isQuantum = gameState.levelIndex === 6;
-              const notification = isQuantum
-                ? '>> QUANTUM TUNNEL ESTABLISHED <<'
-                : `Jumped to ${selected.path}`;
-
-              setGameState((prev) => ({
-                ...prev,
-                mode: 'normal',
-                currentPath: match.path,
-                cursorIndex: 0,
-                notification,
-                inputBuffer: '',
-                history: [...prev.history, prev.currentPath],
-                future: [], // Reset future on new jump
-                usedPreviewDown: false,
-                usedPreviewUp: false,
-                stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                zoxideData: {
-                  ...prev.zoxideData,
-                  [selected.path]: {
-                    count: (prev.zoxideData[selected.path]?.count || 0) + 1,
-                    lastAccess: now,
-                  },
-                },
-              }));
-            } else {
-              // Fallback: If for some reason match is not found, close dialog
-              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-            }
-          } else {
-            if (selected.pathIds && Array.isArray(selected.pathIds)) {
-              // FZF Logic: pathIds from getRecursiveContent are absolute (start with fs.id),
-              // but be defensive and handle relative arrays too.
-              const fullPath =
-                Array.isArray(selected.pathIds) && selected.pathIds[0] === gameState.fs.id
-                  ? selected.pathIds
-                  : [...gameState.currentPath, ...(selected.pathIds || [])];
-              const targetDir = fullPath.slice(0, -1);
-              const fileName = fullPath[fullPath.length - 1];
-
-              // Find the index of the selected file in the parent directory
-              const parentNode = getNodeByPath(gameState.fs, targetDir);
-
-              // Calculate index based on SORTED/VISIBLE items to ensure correct highlighting
-              let sortedChildren = parentNode?.children || [];
-              if (!gameState.showHidden) {
-                sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
-              }
-              // Note: We don't apply existing filters because we are clearing them below
-              sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
-
-              const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
-
-              setGameState((prev) => {
-                // CRITICAL FIX: Explicitly clear any filters for the target directory
-                // so that siblings are visible when jumping to the file.
-                const targetDirNode = getNodeByPath(prev.fs, targetDir);
-                const newFilters = { ...prev.filters };
-                if (targetDirNode) {
-                  delete newFilters[targetDirNode.id];
-                }
-
+          const idx = gameState.fuzzySelectedIndex || 0;
+          const selected = candidates[idx];
+          if (selected) {
+            if (isZoxide) {
+              // Find path ids from string
+              const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => {
                 return {
-                  ...prev,
-                  mode: 'normal',
-                  currentPath: targetDir,
-                  cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-                  filters: newFilters,
-                  inputBuffer: '',
-                  history: [...prev.history, prev.currentPath],
-                  future: [], // Reset future
-                  notification: `Found: ${selected.path}`,
-                  usedPreviewDown: false,
-                  usedPreviewUp: false,
-                  stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+                  ...d.node,
+                  path: d.path,
+                  display: resolvePath(gameState.fs, d.path),
                 };
               });
+              const match = allDirs.find((d) => d.display === selected.path);
+              if (match) {
+                const now = Date.now();
+
+                // Add specific "Quantum" feedback for Level 7
+                const isQuantum = gameState.levelIndex === 6;
+                const notification = isQuantum
+                  ? '>> QUANTUM TUNNEL ESTABLISHED <<'
+                  : `Jumped to ${selected.path}`;
+
+                setGameState((prev) => ({
+                  ...prev,
+                  mode: 'normal',
+                  currentPath: match.path,
+                  cursorIndex: 0,
+                  notification,
+                  inputBuffer: '',
+                  history: [...prev.history, prev.currentPath],
+                  future: [], // Reset future on new jump
+                  usedPreviewDown: false,
+                  usedPreviewUp: false,
+                  stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+                  zoxideData: {
+                    ...prev.zoxideData,
+                    [selected.path]: {
+                      count: (prev.zoxideData[selected.path]?.count || 0) + 1,
+                      lastAccess: now,
+                    },
+                  },
+                }));
+              } else {
+                // Fallback: If for some reason match is not found, close dialog
+                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+              }
             } else {
-              setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+              if (selected.pathIds && Array.isArray(selected.pathIds)) {
+                // FZF Logic: pathIds from getRecursiveContent are absolute (start with fs.id),
+                // but be defensive and handle relative arrays too.
+                const fullPath =
+                  Array.isArray(selected.pathIds) && selected.pathIds[0] === gameState.fs.id
+                    ? selected.pathIds
+                    : [...gameState.currentPath, ...(selected.pathIds || [])];
+                const targetDir = fullPath.slice(0, -1);
+                const fileName = fullPath[fullPath.length - 1];
+
+                // Find the index of the selected file in the parent directory
+                const parentNode = getNodeByPath(gameState.fs, targetDir);
+
+                // Calculate index based on SORTED/VISIBLE items to ensure correct highlighting
+                let sortedChildren = parentNode?.children || [];
+                if (!gameState.showHidden) {
+                  sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
+                }
+                // Note: We don't apply existing filters because we are clearing them below
+                sortedChildren = sortNodes(
+                  sortedChildren,
+                  gameState.sortBy,
+                  gameState.sortDirection,
+                );
+
+                const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
+
+                setGameState((prev) => {
+                  // CRITICAL FIX: Explicitly clear any filters for the target directory
+                  // so that siblings are visible when jumping to the file.
+                  const targetDirNode = getNodeByPath(prev.fs, targetDir);
+                  const newFilters = { ...prev.filters };
+                  if (targetDirNode) {
+                    delete newFilters[targetDirNode.id];
+                  }
+
+                  return {
+                    ...prev,
+                    mode: 'normal',
+                    currentPath: targetDir,
+                    cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+                    filters: newFilters,
+                    inputBuffer: '',
+                    history: [...prev.history, prev.currentPath],
+                    future: [], // Reset future
+                    notification: `Found: ${selected.path}`,
+                    usedPreviewDown: false,
+                    usedPreviewUp: false,
+                    stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+                  };
+                });
+              } else {
+                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+              }
             }
+          } else {
+            setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
           }
-        } else {
-          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          break;
         }
-      } else if (e.key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-      } else if (e.key === 'j' || e.key === 'ArrowDown' || (e.key === 'n' && e.ctrlKey)) {
-        setGameState((prev) => ({
-          ...prev,
-          fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
-        }));
-      } else if (e.key === 'k' || e.key === 'ArrowUp' || (e.key === 'p' && e.ctrlKey)) {
-        setGameState((prev) => ({
-          ...prev,
-          fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
-        }));
-      } else if (e.key === 'Backspace') {
-        setGameState((prev) => ({
-          ...prev,
-          inputBuffer: prev.inputBuffer.slice(0, -1),
-          fuzzySelectedIndex: 0,
-        }));
-      } else if (e.key.length === 1) {
-        setGameState((prev) => ({
-          ...prev,
-          inputBuffer: prev.inputBuffer + e.key,
-          fuzzySelectedIndex: 0,
-        }));
+        case 'Escape':
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          break;
+        case 'j':
+        case 'ArrowDown':
+          setGameState((prev) => ({
+            ...prev,
+            fuzzySelectedIndex: Math.min(
+              candidates.length - 1,
+              (prev.fuzzySelectedIndex || 0) + 1,
+            ),
+          }));
+          break;
+        case 'k':
+        case 'ArrowUp':
+          setGameState((prev) => ({
+            ...prev,
+            fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
+          }));
+          break;
+        case 'Backspace':
+          setGameState((prev) => ({
+            ...prev,
+            inputBuffer: prev.inputBuffer.slice(0, -1),
+            fuzzySelectedIndex: 0,
+          }));
+          break;
+        default:
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            setGameState((prev) => ({
+              ...prev,
+              inputBuffer: prev.inputBuffer + e.key,
+              fuzzySelectedIndex: 0,
+            }));
+          }
+          break;
       }
     },
     [],
