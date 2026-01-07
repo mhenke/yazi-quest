@@ -2072,9 +2072,9 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'data-harvest-1',
-        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb (j)",
+        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb (gd then j)",
         check: (c) => {
-          const items = getVisibleItems(c);
+          const items = getVisibleItems(c);``
           const node = items[c.cursorIndex];
           // Require the cursor land on the script via movement (j)
           return node?.name === 'abandoned_script.py' && !!c.usedDown;
