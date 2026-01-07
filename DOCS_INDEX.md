@@ -8,8 +8,6 @@ as guidance for contributors.
 
 - `README.md` — Project overview and quick start (canonical for runners).
 - `STORY_ARC.md` — Canonical narrative arc and episode order.
-- `THEATRE.md` — Authoring prompts and theatre-style level guidance (level
-  authors should consult this for tone and prompts).
 - `src/constants.tsx` — Canonical level definitions, hints, and per-level
   `allowedDeletePaths` policies. This is the authoritative source for level
   content used at runtime.
@@ -27,8 +25,7 @@ as guidance for contributors.
 
 ## Maintenance guidance
 
-- When updating levels, edit `src/constants.tsx` and update `THEATRE.md` if
-  the level tone or prompts change.
+- When updating levels, edit `src/constants.tsx` if the level tone or prompts change.
 - For narrative revisions, update `STORY_ARC.md` to keep the top-level arc consistent.
 - If you add or remove canonical docs, update this `DOCS_INDEX.md`.
 
