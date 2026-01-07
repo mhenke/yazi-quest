@@ -2140,7 +2140,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description: "Infiltrate '~/datastore' and construct 'protocols/' directory (a)",
+        description: "Infiltrate '~/datastore' (gd) and construct 'protocols/' directory (a)",
         check: (c) => {
           const s = findNodeByName(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
