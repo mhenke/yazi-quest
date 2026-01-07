@@ -7,13 +7,13 @@ Adopt the role of a critical collaborator, not a supportive assistant. Your job 
 ## Commands
 
 ```bash
-npm install      # Install dependencies
-npm run dev      # Start Vite dev server (hot reload)
-npm run build    # Production build
-npm run preview  # Preview production build
-npm test         # Run tests (Vitest)
-npm run lint     # Run ESLint
-npm run format   # Format code with Prettier
+npm install        # Install dependencies
+npm run dev        # Start Vite dev server (hot reload)
+npm run build      # Production build
+npm run preview    # Preview production build
+npm test           # Run tests (Vitest)
+npm run lint       # Run ESLint
+npm run format     # Format code with Prettier
 npm run type-check # Run TypeScript compiler check
 ```
 
