@@ -945,21 +945,18 @@ export default function App() {
         }
 
         // Allow sort commands (like ',' and then 'n') to be processed
-        // If user just pressed ',', set acceptNextKeyForSort and let it fall through
         if (e.key === ',') {
           setGameState((prev) => ({ ...prev, mode: 'sort', acceptNextKeyForSort: true }));
-          // Don't return here, let it fall through to the mode dispatch where handleSortModeKeyDown will be called
-        } else if (gameState.acceptNextKeyForSort) {
-          // If we are waiting for the second key of a sort command (e.g., 'n' after ',')
-          // Process the key with the sort handler
+          return; // Prevent fall-through
+        } 
+        
+        if (gameState.acceptNextKeyForSort) {
           handleSortModeKeyDown(e, setGameState);
 
-          // NOTE: React state updates from handleSortModeKeyDown are async and won't
-          // be visible immediately here. We can't reliably read `prev.sortBy` right
-          // after calling the handler. Instead, infer dismissal from the key the
-          // user pressed: only ',n' (natural sort) should clear the SortWarning.
+          // Infer dismissal from the key the user pressed: only ',n' (natural sort) should clear the SortWarning.
           const pressed = e.key || '';
-          const isNatural = pressed.toLowerCase() === 'n';
+          // Check for 'n' without shift (Natural Ascending)
+          const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
           if (isNatural) {
             setShowSortWarning(false);
           }
@@ -967,10 +964,10 @@ export default function App() {
           // Reset the sort-accept state and return to normal mode
           setGameState((prev) => ({ ...prev, acceptNextKeyForSort: false, mode: 'normal' }));
           return; // Block other inputs
-        } else {
-          // Block any other keys if sort warning is active and it's not a sort command
-          return;
         }
+
+        // Block any other keys if sort warning is active and it's not a valid interaction
+        return;
       }
 
       // Count keystrokes (only if no blocking modal)
