@@ -550,6 +550,9 @@ export default function App() {
           ...prev.completedTaskIds,
           [nextLevel.id]: [], // Ensure array exists for next level
         },
+        // Ensure sort is reset at the beginning of each level
+        sortBy: 'natural',
+        sortDirection: 'asc',
       };
     });
     setShowSuccessToast(false);
@@ -599,6 +602,9 @@ export default function App() {
         future: [],
         previewScroll: 0,
         completedTaskIds: newCompletedTaskIds,
+        // Ensure restarting a level also resets the global sort
+        sortBy: 'natural',
+        sortDirection: 'asc',
       };
     });
   }, []);
