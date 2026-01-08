@@ -34,7 +34,14 @@ vi.mock('./constants', async (importOriginal) => {
         leadsTo: [],
         timeLimit: 10, // 10 seconds
         maxKeystrokes: 5, // 5 keystrokes
-        tasks: [],
+        tasks: [
+          {
+            id: 'dummy-task',
+            description: 'Prevent auto completion',
+            completed: false,
+            check: () => false,
+          },
+        ],
         check: () => false, // Ensure check function exists usually
         onEnter: (fs: any) => fs,
       },
@@ -113,62 +120,59 @@ describe('App Integration - Constraint Pausing', () => {
     skipIntro();
 
     // Initial keystrokes: 0 / 5
-    // StatusBar likely shows "Keystrokes: 0 / 5"
-    expect(screen.getByText(/0 \/ 5/)).toBeDefined();
+    expect(await screen.findByText('0/5')).toBeDefined();
 
     // Normal keystroke
     fireEvent.keyDown(window, { key: 'j' });
-    expect(screen.getByText(/1 \/ 5/)).toBeDefined();
+    expect(await screen.findByText('1/5')).toBeDefined();
 
     // Open Help Modal
     fireEvent.keyDown(window, { key: '?', altKey: true });
+    expect(await screen.findByText('Help & Keybindings')).toBeDefined();
 
     // Press keys while modal is open
     fireEvent.keyDown(window, { key: 'k' });
     fireEvent.keyDown(window, { key: 'l' });
     fireEvent.keyDown(window, { key: 'h' });
 
-    // Should still be 1 / 5 (Help toggle key '?' is excluded per logic, 'j' was 1)
-    expect(screen.getByText(/1 \/ 5/)).toBeDefined();
+    // Should still be 1 / 5
+    expect(await screen.findByText('1/5')).toBeDefined();
 
     // Close Help
     fireEvent.keyDown(window, { key: 'Escape' });
 
     // Normal keystroke again
     fireEvent.keyDown(window, { key: 'j' });
-    expect(screen.getByText(/2 \/ 5/)).toBeDefined();
+    expect(await screen.findByText('2/5')).toBeDefined();
   });
 
-  it('should block navigation and keys when filter-warning mode is active', async () => {
-    // Is it possible to trigger filter warning in this mocked level?
-    // We assume INITIAL_FS has some files.
-    // We need to set a filter first. '/' to enter filter mode, type 'f', Enter.
-    // Then active filter.
-    // Then Shift+Z.
-
-    // Since App uses INITIAL_FS from mocked constants, we have 'root/home/guest'.
+  it('should block navigation and show warning if filter is active', async () => {
     render(<App />);
     skipIntro();
 
+    // Check initial state (no filter)
+    expect(screen.queryByText(/\(filter: foo\)/)).toBeNull();
     // 1. Enter Filter Mode
-    fireEvent.keyDown(window, { key: '/' });
-    fireEvent.keyDown(window, { key: 'f' }); // Filter char
-    fireEvent.keyDown(window, { key: 'Enter' }); // Confirm filter
+    fireEvent.keyDown(window, { key: 'f' });
+    fireEvent.keyDown(window, { key: 'x' }); // 'x' as filter
+    fireEvent.keyDown(window, { key: 'Enter' });
 
     // 2. Try to Jump (Shift+Z)
     fireEvent.keyDown(window, { key: 'Z', shiftKey: true });
 
-    // 3. Expect Filter Warning Modal
-    // Modal likely contains "Active filters detected"
-    expect(screen.getByText(/Active filters detected/)).toBeDefined();
+    // 3. Expect Filter Warning Modal (using findByText for async wait)
+    expect(await screen.findByText(/Active filters detected/)).toBeDefined();
 
     // 4. Verify Timer is Paused while warning is open
-    // Advance 5 seconds
+    // Timer should be at 10s initially
+    expect(screen.getByText(/10s/)).toBeDefined();
+
+    // Advance time
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(3000);
     });
-    // Timer shouldn't have changed significantly (maybe 1s for setup/animations, but checking stability)
-    // Actually, since we didn't advance before, it's at 10s.
+
+    // Timer should still be 10s because the modal pauses it.
     expect(screen.getByText(/10s/)).toBeDefined();
   });
 });

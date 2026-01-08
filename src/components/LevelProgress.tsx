@@ -129,28 +129,38 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           }
         },
         Enter: () => {
+          // Normal Enter: Try to jump
+          // If Shift is pressed, App handles it? No, we suppressed bubbling.
+          // Wait, 'actions' is keyed by key.
+        },
+      };
+
+      // Handle Shift+Enter manually or via 'Enter' logic?
+      // e.key is 'Enter'.
+      if (e.key === 'Enter' && e.shiftKey) {
+        // Shift+Enter to close
+        setShowLegend(false);
+        onToggleMap?.();
+        return;
+      }
+
+      const handler = actions[e.key];
+      if (handler) {
+        // If Enter, we check if it was Shift+Enter logic (already handled above)
+        // Standard Enter
+        if (e.key === 'Enter' && !e.shiftKey) {
           const selectedLevel = activeLevels[selectedMissionIdx];
           if (selectedLevel && onJumpToLevel) {
             const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
-            // Only allow jump if level is active or completed (not locked)
             if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
               onJumpToLevel(globalIdx);
               setShowLegend(false);
               onToggleMap?.();
             }
           }
-        },
-        Escape: () => {
-          setShowLegend(false);
-          onToggleMap?.();
-        },
-      };
-
-      const handler = actions[e.key];
-      if (handler) {
-        e.preventDefault();
-        e.stopPropagation();
-        handler();
+        } else if (e.key !== 'Enter') {
+          handler();
+        }
       }
     };
 
@@ -326,7 +336,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   </h2>
                 </div>
                 <div className="text-xs text-zinc-600 font-mono">
-                  h/l: episodes • j/k: missions • Enter: jump • Esc: close
+                  h/l: episodes • j/k: missions • Enter: jump • Esc or Shift+Enter: close
                 </div>
               </div>
             </div>

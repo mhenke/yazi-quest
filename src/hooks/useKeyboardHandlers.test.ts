@@ -217,4 +217,174 @@ describe('useKeyboardHandlers', () => {
     const newState = updateFn(initialGameState);
     expect(newState.cursorIndex).toBe(Math.min(items.length - 1, initialGameState.cursorIndex + 1));
   });
+  it('should handle "k" to move up', () => {
+    const { result } = getHook();
+    const event = new KeyboardEvent('keydown', { key: 'k' });
+    const state = { ...initialGameState, cursorIndex: 1 };
+
+    result.current.handleNormalModeKeyDown(
+      event,
+      state,
+      mockSetGameState,
+      [{ id: '1' }, { id: '2' }] as any[],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+    expect(newState.cursorIndex).toBe(0);
+  });
+
+  it('should handle "gg" to jump to top', () => {
+    const { result } = getHook();
+    const items = new Array(10).fill({ id: 'x' });
+    const state = { ...initialGameState, cursorIndex: 5, usedG: false };
+
+    // First 'g'
+    result.current.handleNormalModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'g' }),
+      state,
+      mockSetGameState,
+      items as any[],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    let updateFn = mockSetGameState.mock.calls[0][0];
+    let newState = updateFn(state);
+    expect(newState.usedG).toBe(true);
+
+    // Second 'g' - handled by handleGCommandKeyDown
+    mockSetGameState.mockClear();
+    result.current.handleGCommandKeyDown(
+      new KeyboardEvent('keydown', { key: 'g' }),
+      mockSetGameState,
+      { ...state, usedG: true, mode: 'g-command' } as GameState,
+    );
+
+    updateFn = mockSetGameState.mock.calls[0][0];
+    newState = updateFn({ ...state, usedG: true });
+    expect(newState.cursorIndex).toBe(0);
+    expect(newState.usedG).toBe(false);
+  });
+
+  it('should handle "G" to jump to bottom', () => {
+    const { result } = getHook();
+    const items = new Array(10).fill({ id: 'x' });
+    const state = { ...initialGameState, cursorIndex: 0 };
+
+    result.current.handleNormalModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'G', shiftKey: true }),
+      state,
+      mockSetGameState,
+      items as any[],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+    expect(newState.cursorIndex).toBe(9);
+  });
+
+  it('should handle "J" (Shift+J) to scroll preview down', () => {
+    const { result } = getHook();
+    result.current.handleNormalModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'J', shiftKey: true }),
+      initialGameState,
+      mockSetGameState,
+      [],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(initialGameState);
+    expect(newState.previewScroll).toBe(1);
+    expect(newState.usedPreviewDown).toBe(true);
+  });
+
+  it('should handle "K" (Shift+K) to scroll preview up', () => {
+    const { result } = getHook();
+    const state = { ...initialGameState, previewScroll: 5 };
+    result.current.handleNormalModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'K', shiftKey: true }),
+      state,
+      mockSetGameState,
+      [],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+    expect(newState.previewScroll).toBe(4);
+    expect(newState.usedPreviewUp).toBe(true);
+  });
+
+  it('should handle Go commands (gh -> Home)', () => {
+    const { result } = getHook();
+    const state: GameState = { ...initialGameState, mode: 'g-command' };
+
+    result.current.handleGCommandKeyDown(
+      new KeyboardEvent('keydown', { key: 'h' }),
+      mockSetGameState,
+      state,
+    );
+
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+    expect(newState.currentPath).toEqual(['root', 'home', 'guest']);
+    expect(newState.mode).toBe('normal');
+  });
+
+  it('should handle sort mode key "a" for alphabetical sort', () => {
+    const { result } = getHook();
+    const state: GameState = { ...initialGameState, mode: 'sort', acceptNextKeyForSort: true };
+
+    result.current.handleSortModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'a' }),
+      mockSetGameState,
+    );
+
+    expect(mockSetGameState).toHaveBeenCalled();
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+
+    expect(newState.mode).toBe('normal');
+    expect(newState.sortBy).toBe('alphabetical');
+    expect(newState.sortDirection).toBe('asc');
+    expect(newState.acceptNextKeyForSort).toBe(false);
+  });
+
+  it('should handle confirm delete mode key "y"', () => {
+    const { result } = getHook();
+    const state: GameState = {
+      ...initialGameState,
+      mode: 'confirm-delete',
+      pendingDeleteIds: ['some-id'],
+    };
+
+    // We can't easily test the full outcome of confirmDelete here without a complex mock of the FS.
+    // Instead, we spy on `confirmDelete` to ensure it's called.
+    const confirmDeleteSpy = vi.spyOn(result.current, 'confirmDelete');
+
+    result.current.handleConfirmDeleteModeKeyDown(
+      new KeyboardEvent('keydown', { key: 'y' }),
+      mockSetGameState,
+      [],
+      LEVELS[0],
+    );
+
+    expect(confirmDeleteSpy).toHaveBeenCalledWith(mockSetGameState, [], LEVELS[0]);
+  });
 });
