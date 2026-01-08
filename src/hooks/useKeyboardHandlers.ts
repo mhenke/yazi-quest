@@ -32,20 +32,15 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 // Helper to check for active filter in the current directory and block navigation
-
-// Helper to check for active filter in the current directory and block navigation
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
-  setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
-  exitMode: GameState['mode'] = 'normal', // Mode to revert to if blocked
 ): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
   if (currentDirNode && gameState.filters[currentDirNode.id]) {
     e.preventDefault();
-    setShowFilterWarning(true);
-    setGameState((prev) => ({ ...prev, mode: exitMode }));
+    setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
     return true; // Navigation blocked
   }
   return false; // Navigation allowed
@@ -53,7 +48,6 @@ export const checkFilterAndBlockNavigation = (
 
 export const useKeyboardHandlers = (
   showNotification: (message: string, duration?: number) => void,
-  setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
   const handleSortModeKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
@@ -298,11 +292,8 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       gameState: GameState,
-      setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
     ) => {
-      if (
-        checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
-      ) {
+      if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
         return;
       }
 
@@ -450,7 +441,7 @@ export const useKeyboardHandlers = (
         case 'G': {
           // Direct Shift+G in normal mode: jump to bottom of visible list
           e.preventDefault();
-          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
 
@@ -472,7 +463,7 @@ export const useKeyboardHandlers = (
         }
         case 'h':
         case 'ArrowLeft': {
-          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
           if (parent) {
@@ -493,7 +484,7 @@ export const useKeyboardHandlers = (
         case 'l':
         case 'Enter':
         case 'ArrowRight': {
-          if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
           const allComplete = currentLevel.tasks.every((t) => t.completed);
@@ -827,7 +818,7 @@ export const useKeyboardHandlers = (
           break;
         case 'Z':
           if (e.shiftKey) {
-            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
               return;
             }
             e.preventDefault();
@@ -847,7 +838,7 @@ export const useKeyboardHandlers = (
         case 'H': {
           // History Back (Shift+H)
           if (e.shiftKey) {
-            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
               return;
             }
             setGameState((prev) => {
@@ -872,7 +863,7 @@ export const useKeyboardHandlers = (
         }
         case 'z':
           if (!e.shiftKey) {
-            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
               return;
             }
             e.preventDefault();
@@ -892,7 +883,7 @@ export const useKeyboardHandlers = (
         case 'L': {
           // History Forward (Shift+L)
           if (e.shiftKey) {
-            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
               return;
             }
             setGameState((prev) => {
@@ -923,7 +914,6 @@ export const useKeyboardHandlers = (
               const newFilters = { ...prev.filters };
               delete newFilters[currentDir.id];
               showNotification(getNarrativeAction('Escape') || 'Scan filter deactivated');
-              setShowFilterWarning(false); // Dismiss warning
               return { ...prev, filters: newFilters };
             }
             if (prev.selectedIds.length > 0) {
@@ -942,7 +932,7 @@ export const useKeyboardHandlers = (
         showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 2000);
       }
     },
-    [showNotification, setShowFilterWarning],
+    [showNotification],
   );
 
   return {

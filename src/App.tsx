@@ -259,7 +259,6 @@ export default function App() {
   const [showThreatAlert, setShowThreatAlert] = useState(false);
   const [showHiddenWarning, setShowHiddenWarning] = useState(false);
   const [showSortWarning, setShowSortWarning] = useState(false);
-  const [showFilterWarning, setShowFilterWarning] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -302,14 +301,14 @@ export default function App() {
 
   // Extract keyboard handlers to custom hook
   const {
+    handleNormalModeKeyDown,
     handleSortModeKeyDown,
     handleConfirmDeleteModeKeyDown,
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
-    handleNormalModeKeyDown,
     confirmDelete,
     cancelDelete,
-  } = useKeyboardHandlers(showNotification, setShowFilterWarning);
+  } = useKeyboardHandlers(showNotification);
 
   useEffect(() => {
     return () => {
@@ -387,13 +386,14 @@ export default function App() {
         setShowSortWarning(true);
         setShowSuccessToast(false);
       } else if (!isFilterClear) {
-        setShowFilterWarning(true);
+        if (gameState.mode !== 'filter-warning') {
+          setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
+        }
         setShowSuccessToast(false);
       } else {
         // All checks passed
         setShowHiddenWarning(false);
         setShowSortWarning(false);
-        setShowFilterWarning(false);
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
           setShowSuccessToast(true);
@@ -402,7 +402,6 @@ export default function App() {
     } else {
       setShowHiddenWarning(false);
       setShowSortWarning(false);
-      setShowFilterWarning(false);
       setShowSuccessToast(false);
     }
   }, [gameState, currentLevel, isLastLevel, showNotification, showSuccessToast]);
@@ -476,7 +475,7 @@ export default function App() {
 
       setShowThreatAlert(true);
       // No auto-dismiss; require explicit dismissal (Esc or Shift+Enter)
-      return () => { };
+      return () => {};
     }
   }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
 
@@ -703,7 +702,6 @@ export default function App() {
       e: KeyboardEvent,
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
-      setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
     ) => {
       // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
@@ -739,10 +737,7 @@ export default function App() {
         if (e.key === 'n') {
           setGameState((prev) => ({
             ...prev,
-            fuzzySelectedIndex: Math.min(
-              candidates.length - 1,
-              (prev.fuzzySelectedIndex || 0) + 1,
-            ),
+            fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
           }));
           return;
         }
@@ -757,9 +752,7 @@ export default function App() {
 
       switch (e.key) {
         case 'Enter': {
-          if (
-            checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
-          ) {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
 
@@ -877,10 +870,7 @@ export default function App() {
         case 'ArrowDown':
           setGameState((prev) => ({
             ...prev,
-            fuzzySelectedIndex: Math.min(
-              candidates.length - 1,
-              (prev.fuzzySelectedIndex || 0) + 1,
-            ),
+            fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
           }));
           break;
         case 'k':
@@ -978,9 +968,10 @@ export default function App() {
 
       // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
       // to clear the active filter and continue (protocol-violation bypass).
-      if (showFilterWarning) {
+      // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
+      // to clear the active filter and continue (protocol-violation bypass).
+      if (gameState.mode === 'filter-warning') {
         if (e.key === 'Escape') {
-          setShowFilterWarning(false);
           setGameState((prev) => ({
             ...prev,
             mode: 'normal',
@@ -991,7 +982,6 @@ export default function App() {
         }
 
         if (e.key === 'Enter' && e.shiftKey) {
-          setShowFilterWarning(false);
           setGameState((prev) => {
             const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
             const newFilters = { ...prev.filters };
@@ -1119,10 +1109,10 @@ export default function App() {
           break;
         case 'zoxide-jump':
         case 'fzf-current':
-          handleFuzzyModeKeyDown(e, gameState, setGameState, setShowFilterWarning);
+          handleFuzzyModeKeyDown(e, gameState, setGameState);
           break;
         case 'g-command':
-          handleGCommandKeyDown(e, setGameState, gameState, setShowFilterWarning);
+          handleGCommandKeyDown(e, setGameState, gameState);
           break;
         case 'z-prompt':
           handleZoxidePromptKeyDown(e, gameState, setGameState);
@@ -1351,7 +1341,7 @@ export default function App() {
 
       {showHiddenWarning && <HiddenFilesWarningModal />}
       {showSortWarning && <SortWarningModal />}
-      {showFilterWarning && <FilterWarningModal />}
+      {gameState.mode === 'filter-warning' && <FilterWarningModal />}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
@@ -1389,8 +1379,8 @@ export default function App() {
           style={{
             opacity:
               gameState.mode === 'zoxide-jump' ||
-                gameState.mode === 'fzf-current' ||
-                gameState.mode === 'z-prompt'
+              gameState.mode === 'fzf-current' ||
+              gameState.mode === 'z-prompt'
                 ? 0.3
                 : 1,
           }}
@@ -1690,7 +1680,6 @@ export default function App() {
                     setGameState((prev) => {
                       const targetDirNode = getNodeByPath(prev.fs, targetDir);
                       const newFilters = { ...prev.filters };
-
 
                       return {
                         ...prev,
