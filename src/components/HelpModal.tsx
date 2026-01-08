@@ -65,14 +65,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       tabIndex={-1} // Make the div focusable
       ref={scrollRef} // Assign ref to the outermost div for focus
     >
-      <div className="w-full max-w-2xl md:max-w-3xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto">
+      <div className="w-full max-w-4xl md:max-w-6xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto">
         <div className="mb-6 border-b border-zinc-800 pb-2">
           <h2 className="text-xl font-bold text-orange-500 tracking-wider">HELP / KEYBINDINGS</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-6">
           <div>
             <h3 className="text-sm font-bold text-orange-400 mb-2">Core Yazi Commands</h3>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
               {KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
                   <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
@@ -93,7 +93,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           <div>
             <h3 className="text-sm font-bold text-yellow-400 mb-2">Game Meta Commands</h3>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2">
               {META_KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
                   <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
