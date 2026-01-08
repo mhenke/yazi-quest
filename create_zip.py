@@ -20,8 +20,13 @@ def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
     with zipfile.ZipFile(output_zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(source_dir):
             # Remove excluded directories from dirs list to prevent walking into them
-            dirs[:] = [d for d in dirs if os.path.join(root, d) != os.path.join(source_dir, '.git') and os.path.join(root, d) != os.path.join(source_dir, 'node_modules')]
-            
+            dirs[:] = [
+                d for d in dirs
+                if os.path.join(root, d) != os.path.join(source_dir, '.git')
+                and os.path.join(root, d) != os.path.join(source_dir, 'node_modules')
+                and os.path.join(root, d) != os.path.join(source_dir, '.husky')
+            ]
+
             for file in files:
                 file_path = os.path.join(root, file)
                 # Create a relative path for the archive
@@ -77,6 +82,7 @@ if __name__ == "__main__":
         'public/', # Exclude public directory
         'swappy-*.png', # Exclude swappy screenshots
         'Screenshot*.png', # Exclude screenshots
+        '.husky/', # Exclude husky hooks directory
     ]
 
     print(f"Creating optimized zip for AI Studio from: {current_directory}")
