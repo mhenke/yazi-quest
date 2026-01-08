@@ -74,9 +74,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <h3 className="text-sm font-bold text-orange-400 mb-2">Core Yazi Commands</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
               {KEYBINDINGS.map((binding, idx) => (
-                <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
-                  <div className="flex gap-1">
+                <div key={idx} className="flex items-center gap-2 text-sm p-1 rounded">
+                  <span className="text-zinc-400 flex-grow">{getDisplayDescription(binding)}</span>
+                  <div className="flex gap-1 flex-shrink-0">
                     {binding.keys.map((k) => (
                       <span
                         key={k}
@@ -95,9 +95,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <h3 className="text-sm font-bold text-yellow-400 mb-2">Game Meta Commands</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2">
               {META_KEYBINDINGS.map((binding, idx) => (
-                <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
-                  <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
-                  <div className="flex gap-1">
+                <div key={idx} className="flex items-center gap-2 text-sm p-1 rounded">
+                  <span className="text-zinc-400 flex-grow">{getDisplayDescription(binding)}</span>
+                  <div className="flex gap-1 flex-shrink-0">
                     {binding.keys.map((k) => (
                       <span
                         key={k}
