@@ -476,7 +476,7 @@ export default function App() {
 
       setShowThreatAlert(true);
       // No auto-dismiss; require explicit dismissal (Esc or Shift+Enter)
-      return () => {};
+      return () => { };
     }
   }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
 
@@ -1031,8 +1031,8 @@ export default function App() {
         if (e.key === ',') {
           setGameState((prev) => ({ ...prev, mode: 'sort', acceptNextKeyForSort: true }));
           return; // Prevent fall-through
-        } 
-        
+        }
+
         if (gameState.acceptNextKeyForSort) {
           handleSortModeKeyDown(e, setGameState);
 
@@ -1389,8 +1389,8 @@ export default function App() {
           style={{
             opacity:
               gameState.mode === 'zoxide-jump' ||
-              gameState.mode === 'fzf-current' ||
-              gameState.mode === 'z-prompt'
+                gameState.mode === 'fzf-current' ||
+                gameState.mode === 'z-prompt'
                 ? 0.3
                 : 1,
           }}
@@ -1690,9 +1690,7 @@ export default function App() {
                     setGameState((prev) => {
                       const targetDirNode = getNodeByPath(prev.fs, targetDir);
                       const newFilters = { ...prev.filters };
-                      if (targetDirNode) {
-                        delete newFilters[targetDirNode.id];
-                      }
+
 
                       return {
                         ...prev,

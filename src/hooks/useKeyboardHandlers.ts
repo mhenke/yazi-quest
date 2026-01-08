@@ -32,6 +32,9 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 // Helper to check for active filter in the current directory and block navigation
+
+
+// Helper to check for active filter in the current directory and block navigation
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
@@ -299,6 +302,7 @@ export const useKeyboardHandlers = (
       gameState: GameState,
       setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
     ) => {
+
       if (
         checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
       ) {
@@ -452,6 +456,7 @@ export const useKeyboardHandlers = (
           if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
             return;
           }
+
           try {
             const items = getVisibleItems(gameState) || [];
             const last = Math.max(0, items.length - 1);
@@ -825,6 +830,10 @@ export const useKeyboardHandlers = (
           break;
         case 'Z':
           if (e.shiftKey) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+              return;
+            }
+            e.preventDefault();
             setGameState((prev) => {
               showNotification(getNarrativeAction('Z') || 'Zoxide jump');
               return {
@@ -866,6 +875,10 @@ export const useKeyboardHandlers = (
         }
         case 'z':
           if (!e.shiftKey) {
+            if (checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning)) {
+              return;
+            }
+            e.preventDefault();
             setGameState((prev) => {
               showNotification(getNarrativeAction('z') || 'FZF file search');
               return {

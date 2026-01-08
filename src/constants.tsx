@@ -1429,6 +1429,7 @@ ADMIN: SysOp`,
               id: 'workspace',
               name: 'workspace',
               type: 'dir',
+              protected: true,
               children: [],
             },
             {
@@ -2213,9 +2214,9 @@ export const LEVELS: Level[] = [
         id: 'establish-stronghold',
         description: "Establish '~/.config/vault/active/' sector (a)",
         check: (c) => {
-          const s = findNodeByName(c.fs, '.config');
-          const f = s?.children?.find((p) => p.name === 'vault');
-          return !!f?.children?.find((p) => p.name === 'active' && p.type === 'dir');
+          const conf = findNodeByName(c.fs, '.config');
+          const vault = conf?.children?.find((p) => p.name === 'vault');
+          return !!vault?.children?.find((p) => p.name === 'active' && p.type === 'dir');
         },
         completed: false,
       },
@@ -2223,9 +2224,11 @@ export const LEVELS: Level[] = [
         id: 'deploy-assets',
         description: "Migrate configuration assets to '~/.config/vault/active' (p)",
         check: (c) => {
-          const s = findNodeByName(c.fs, 'active');
-          const f = s?.children?.some((z) => z.name === 'uplink_v1.conf');
-          const r = s?.children?.some((z) => z.name === 'uplink_v2.conf');
+          const conf = findNodeByName(c.fs, '.config');
+          const vault = conf?.children?.find((p) => p.name === 'vault');
+          const active = vault?.children?.find((p) => p.name === 'active');
+          const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
+          const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
           return !!f && !!r;
         },
         completed: false,
@@ -2235,9 +2238,11 @@ export const LEVELS: Level[] = [
         description: "Jump to '~' (gh) and hide hidden files (.)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
-          const s = findNodeByName(c.fs, 'active');
-          const f = s?.children?.some((z) => z.name === 'uplink_v1.conf');
-          const r = s?.children?.some((z) => z.name === 'uplink_v2.conf');
+          const conf = findNodeByName(c.fs, '.config');
+          const vault = conf?.children?.find((p) => p.name === 'vault');
+          const active = vault?.children?.find((p) => p.name === 'active');
+          const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
+          const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
           return !!f && !!r && !c.showHidden;
         },
         completed: false,

@@ -73,6 +73,12 @@ describe('Level Transition Consistency', () => {
       expect(guestChildren).toContain('.config');
     });
 
+    it('should have workspace directory protected initially', () => {
+      const workspace = getNestedDir(initialFs, 'root', 'home', 'guest', 'workspace');
+      expect(workspace).toBeDefined();
+      expect(workspace?.protected).toBe(true);
+    });
+
     it('should have watcher_agent.sys in incoming initially', () => {
       const incomingChildren = getChildNames(initialFs, 'incoming');
       expect(incomingChildren).toContain('watcher_agent.sys');
