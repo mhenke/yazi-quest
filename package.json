@@ -30,6 +30,7 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/node": "*",
@@ -46,6 +47,7 @@
     "eslint-plugin-react": "*",
     "eslint-plugin-react-hooks": "*",
     "eslint-plugin-security": "*",
+    "globals": "^17.0.0",
     "husky": "*",
     "jsdom": "^27.4.0",
     "lint-staged": "*",
