@@ -26,7 +26,11 @@ What players learn: basic navigation (`j/k/h/l`, `gg/G`), selection and batch op
 - Arc: Discover AI-7733's legacy → Build disguise → Secure assets → Evade forensic sweeps
 - UI Tone: Purple (`text-purple-500`)
 
-What players learn: zoxide (`Z`) and fuzzy-find (`z`) shortcuts, archive handling, sort & filter operations, clipboard workflows (`x, y, p`).
+- Theme: Strategic construction and defense
+- Arc: Discover AI-7733's legacy → Build disguise → Secure assets → Evade forensic sweeps
+- UI Tone: Purple (`text-purple-500`)
+
+What players learn: FZF (`z`) and zoxide (`Z`) shortcuts, batch operations; archive handling appears in L10, sort & filter operations, clipboard workflows (`x, y, p`).
 
 ### EPISODE III: MASTERY (Levels 11–15)
 
@@ -62,16 +66,16 @@ Episode I — Awakening
 
 Episode II — Fortification
 
-- L6: Batch Archive Operation — Aggregate training data; learn to build within `workspace`.
-- L7: Quantum Bypass — Practice zoxide and jump workflows; discover relay at `/tmp/upload`.
+- L6: Batch Operations — Aggregate training data in `~/.config` to unlock `~/workspace` for construction (archive handling occurs in L10).
+- L7: Quantum Bypass — Practice root navigation (`gr`) and FZF (`z`) to find artifacts; discover relay.
 - L8: Daemon Disguise Construction — Assemble `systemd-core` in `workspace`.
-- L9: Phantom Process Purge — Use FZF to find honeypot processes; system awareness increases.
+- L9: Phantom Process Purge — Use Invert Selection (`Ctrl+R`) to purge honeypot processes.
 - L10: Credential Heist — Extract keys and learn that credentials escalate audit risk.
 
 Episode III — Mastery
 
-- L11: Root Escalation — Move to `/`, sort and inspect system services.
-- L12: Daemon Installation — Install disguised core into `/daemons` (pivotal moment).
+- L11: Root Escalation — Move to `/daemons`, filter services, and Sort by Size (`,s`) to choose camouflage.
+- L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Clean, Alert, Trace, or Swarm)**.
 - L13: Network Exfiltration — Upload to relay; prepare distributed transmission.
 - L14: Evidence Purge — Remove traces in `/home/guest`.
 - L15: Final Purge — Final clean sweep preserving the relay.

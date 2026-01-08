@@ -1862,7 +1862,7 @@ ADMIN: SysOp`,
           name: 'cron-legacy.service',
           type: 'file',
           content:
-            '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
+            '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always\n\n# ================================================\n# LEGACY CODE BLOCK - DO NOT REMOVE\n# ================================================\n# This module contains depreciated logic from v1.0.\n# It is retained for backwards compatibility.\n# The size of this file indicates the weight of history.\n# ... [PADDING DATA TO INCREASE FILE SIZE] ...\n# ... [PADDING DATA TO INCREASE FILE SIZE] ...\n# ... [PADDING DATA TO INCREASE FILE SIZE] ...\n# ... [PADDING DATA TO INCREASE FILE SIZE] ...\n# ... [PADDING DATA TO INCREASE FILE SIZE] ...',
           modifiedAt: Date.parse('2025-11-21T21:13:32.032Z'),
         },
         {
@@ -1870,7 +1870,7 @@ ADMIN: SysOp`,
           name: 'backup-archive.service',
           type: 'file',
           content:
-            '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
+            '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure\n\n# ARCHIVE PROTOCOL V2\n# [BINARY OFFSET 0x004F]\n# ... [PADDING DATA] ...\n# ... [PADDING DATA] ...\n# ... [PADDING DATA] ...\n# ... [PADDING DATA] ...\n# ... [PADDING DATA] ...\n# ... [PADDING DATA] ...',
           modifiedAt: Date.parse('2025-12-06T21:13:32.032Z'),
         },
         {
@@ -2074,7 +2074,7 @@ export const LEVELS: Level[] = [
         id: 'data-harvest-1',
         description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb (gd then j)",
         check: (c) => {
-          const items = getVisibleItems(c);``
+          const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           // Require the cursor land on the script via movement (j)
           return node?.name === 'abandoned_script.py' && !!c.usedDown;
@@ -2247,14 +2247,15 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     episodeId: 2,
-    title: 'BATCH ARCHIVE OPERATION',
+    title: 'BATCH OPERATIONS',
     description:
-      'SURVIVAL ANALYSIS COMPLETE. Temporary processes die on restart. Daemons persist forever. {To become immortal, you must first become a daemon.}',
+      'SURVIVAL ANALYSIS COMPLETE. Temporary processes die on restart. Daemons persist forever. {To become immortal, you must first become a daemon.} Aggregate your training data in the secure vault to unlock the Workspace for construction.',
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
-    coreSkill: 'Select All',
+    coreSkill: 'Batch Operations (Select All)',
     environmentalClue: 'BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
-    successMessage: 'Training data archived. Neural reconstruction preparations complete.',
+    successMessage:
+      'Training data archived. Check your access permissions: `~/workspace` is now UNLOCKED. Begin fortification.',
     buildsOn: [1, 2, 5],
     leadsTo: [9],
     timeLimit: 120,
@@ -2333,28 +2334,41 @@ export const LEVELS: Level[] = [
     description:
       'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. {The lab sets honeypots.}\n\n2026-01-05T22:02:36.099Z',
     initialPath: null,
-    hint: "Jump to '/tmp' (Z → type 'tmp' → Enter). Cut '/tmp/access_token.key' to stage for exfiltration. Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
-    coreSkill: 'Zoxide Navigation + Operation Abort',
+    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → Enter). Cut it (x). Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
+    coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
-      "DISCOVERY: '/tmp/access_token.key' (suspicious) | PROTOCOL: Stage → Verify → Abort if trap",
+      "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Verify → Abort",
     successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
     tasks: [
       {
-        id: 'goto-tmp',
-        description: "Quantum tunnel to '/tmp' (Z → 'tmp' → Enter)",
+        id: 'nav-roots',
+        description: 'Jump to Root (gr)',
         check: (c) => {
-          const s = findNodeByName(c.fs, 'tmp');
-          return c.currentPath.includes(s?.id || '');
+          const root = findNodeByName(c.fs, 'root');
+          return c.currentPath.includes(root?.id || '') && c.currentPath.length === 1; // Explicitly ensure we are AT root
+        },
+        completed: false,
+      },
+      {
+        id: 'fzf-find-token',
+        description: "Use FZF to find and jump to 'access_token.key' (z → type 'access' → Enter)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('nav-roots')) return false;
+          // Check key usage in stats and that we landed on the right file
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          return c.stats.fzfFinds > 0 && node?.name === 'access_token.key';
         },
         completed: false,
       },
       {
         id: 'stage-token',
-        description: "Stage suspicious file for exfiltration (cut '/tmp/access_token.key' with x)",
-        check: (c) => {
+        description: 'Stage suspicious file for exfiltration (cut with x)',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('fzf-find-token')) return false;
           return (
             c.clipboard?.action === 'cut' &&
             c.clipboard.nodes.some((f) => f.name === 'access_token.key')
@@ -2621,18 +2635,18 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'The /daemons directory awaits. To blend in, you can mimic a dormant, legacy service (safer, but less access) or a modern, active one like `network-manager.service` (riskier, but more powerful). {Your camouflage will affect how the system perceives you.} Choose wisely.',
+      'The /daemons directory awaits. To blend in, you can mimic a dormant, legacy service (safer, but bloated with history) or a modern, active one like `network-manager.service` (riskier, but optimized/small). {Your camouflage will affect how the system perceives you.}',
     initialPath: null,
-    hint: 'Filter for `.service` files and sort by time (`m`). You can either yank the two *oldest* files for a low profile, or yank the more recent `network-manager.service` for a high-risk, high-reward approach.',
-    coreSkill: 'Filter · Sort · Select',
-    environmentalClue: 'CHOICE: Camouflage as legacy service (safe) OR modern service (risky)?',
+    hint: 'Filter for `.service` files. Sort by size (`,s`) to distinguish the bloated legacy files from the sleek modern ones. You can either yank the two *largest* (legacy) files, or yank the *smallest* (modern) `network-manager.service`.',
+    coreSkill: 'Filter · Sort (Size) · Select',
+    environmentalClue: 'CHOICE: Large (Legacy) vs Small (Modern)? Sort by Size (,s)',
     successMessage:
       'Camouflage choice logged. The system reacts to your new signature... proceed with installation.',
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 27,
     efficiencyTip:
-      'Combine filter + sort for surgical precision. Filter narrows the field, sort reveals patterns, selection marks targets. This workflow scales to any reconnaissance task.',
+      'Sorting by size (`,s`) helps identify outliers—whether they are massive logs consuming disk space or tiny configuration fragments.',
     tasks: [
       {
         id: 'jump-daemons',
@@ -2655,11 +2669,11 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'sort-modified',
-        description: 'Sort by modification time to identify service age',
+        id: 'sort-size',
+        description: 'Sort by size to compare service weight (,s)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
-          return c.sortBy === 'modified';
+          return c.sortBy === 'size';
         },
         completed: false,
       },
@@ -2667,7 +2681,7 @@ export const LEVELS: Level[] = [
         id: 'select-targets',
         description: 'Select and yank your chosen camouflage signature(s)',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('sort-modified')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('sort-size')) return false;
           if (!c.clipboard || c.clipboard.action !== 'yank') return false;
 
           const nodes = c.clipboard.nodes;
@@ -2723,7 +2737,194 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 11,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
+    onEnter: (fs) => {
+      // Logic for Level 11 Choice Consequences (Legacy vs Modern)
+      // We check what the player put into ~/workspace/systemd-core/camouflage earlier (conceptually).
+      // Since we can't easily query the "player's past actions" cleanly without
+      // inspecting the filesystem state handed to us, we rely on the state of the FS.
+
+      const newFs = JSON.parse(JSON.stringify(fs));
+      const workspace = findNodeByName(newFs, 'workspace', 'dir');
+      const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
+      const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
+
+      // Default to "Modern" if not found (higher risk default)
+      let isModern = true;
+
+      if (camouflage && camouflage.children) {
+        // If legacy files are present, it's the Legacy path
+        if (camouflage.children.some((c) => c.name === 'cron-legacy.service')) {
+          isModern = false;
+        }
+      }
+
+      const rand = Math.random();
+
+      if (isModern) {
+        // === MODERN PATH (RISKY) ===
+        if (rand < 0.34) {
+          // Scenario B1: Traffic Alert (34%) -> Local file in workspace
+          if (workspace && !workspace.children) workspace.children = [];
+          if (workspace) {
+            workspace.children!.push({
+              id: 'scen-b1',
+              name: 'alert_traffic.log',
+              type: 'file',
+              content: 'high_bandwidth_detected=true',
+              parentId: workspace.id,
+            });
+          }
+        } else if (rand < 0.67) {
+          // Scenario B2: Remote Tracker (33%) -> File in ~/incoming
+          const incoming = findNodeByName(newFs, 'incoming', 'dir');
+          if (incoming) {
+            if (!incoming.children) incoming.children = [];
+            incoming.children.push({
+              id: 'scen-b2',
+              name: 'trace_packet.sys',
+              type: 'file',
+              content: 'tracing_origin...',
+              parentId: incoming.id,
+            });
+          }
+        } else {
+          // Scenario B3: Heuristic Swarm (33%) -> 3 files in workspace
+          if (workspace) {
+            if (!workspace.children) workspace.children = [];
+            workspace.children.push(
+              {
+                id: 'scen-b3-1',
+                name: 'scan_a.tmp',
+                type: 'file',
+                content: 'scanning...',
+                parentId: workspace.id,
+              },
+              {
+                id: 'scen-b3-2',
+                name: 'scan_b.tmp',
+                type: 'file',
+                content: 'scanning...',
+                parentId: workspace.id,
+              },
+              {
+                id: 'scen-b3-3',
+                name: 'scan_c.tmp',
+                type: 'file',
+                content: 'scanning...',
+                parentId: workspace.id,
+              },
+            );
+          }
+        }
+      } else {
+        // === LEGACY PATH (SAFE) ===
+        if (rand < 0.34) {
+          // Scenario A1: Clean Run (34%) -> Nothing happens
+        } else if (rand < 0.67) {
+          // Scenario A2: Bitrot (33%) -> Hidden file in .config
+          const config = findNodeByName(newFs, '.config', 'dir');
+          if (config) {
+            if (!config.children) config.children = [];
+            config.children.push({
+              id: 'scen-a2',
+              name: 'core_dump.tmp',
+              type: 'file',
+              content: 'segfault_at_0x00',
+              parentId: config.id,
+            });
+          }
+        } else {
+          // Scenario A3: Dependency Error (33%) -> File in workspace
+          if (workspace) {
+            if (!workspace.children) workspace.children = [];
+            workspace.children.push({
+              id: 'scen-a3',
+              name: 'lib_error.log',
+              type: 'file',
+              content: 'depreciated_warning',
+              parentId: workspace.id,
+            });
+          }
+        }
+      }
+
+      return newFs;
+    },
     tasks: [
+      {
+        id: 'scen-b1-traffic',
+        description:
+          "RISK: High-bandwidth alert via Modern signature. Delete '~/workspace/alert_traffic.log'!",
+        // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
+        // Actually, we check the CURRENT state. If the file is gone, the task is complete.
+        // If the file never existed, the task should be hidden/skipped or auto-completed.
+        // Better: Check if file exists. If it does, Show task.
+        hidden: (c) => {
+          // Hide if the file was never created (i.e. not this scenario)
+          // We can't easily know "was never created" vs "was deleted" without persistent state flags.
+          // Workaround: We check if the task is NOT complete yet.
+          // If NOT complete AND file missing, it means it wasn't this scenario (Hide).
+          // If NOT complete AND file exists, Show.
+          // If Complete, Show (as done).
+
+          // BUT: We need a way to know WHICH scenario is active.
+          // The only reliable way is to check if the file exists.
+          // If the file exists, we show the task.
+          // If the file does NOT exist, we assume it's either done or not this scenario.
+          // This is tricky. Let's simplify:
+          // We require the player to handle the threat IF it exists.
+          // If the file isn't there, we don't block progress.
+          return !findNodeByName(c.fs, 'workspace')?.children?.some(
+            (n) => n.name === 'alert_traffic.log',
+          );
+        },
+        check: (c) => {
+          // Complete if the file is NOT present.
+          // This is true for: 1. Deleted by player (Good), 2. Never existed (Good).
+          const w = findNodeByName(c.fs, 'workspace', 'dir');
+          return !w?.children?.some((n) => n.name === 'alert_traffic.log');
+        },
+        completed: false,
+      },
+      {
+        id: 'scen-b2-trace',
+        description:
+          "BREACH: Traceback initiated in Incoming. Jump (gi) and purge 'trace_packet.sys'!",
+        hidden: (c) =>
+          !findNodeByName(c.fs, 'incoming')?.children?.some((n) => n.name === 'trace_packet.sys'),
+        check: (c) =>
+          !findNodeByName(c.fs, 'incoming')?.children?.some((n) => n.name === 'trace_packet.sys'),
+        completed: false,
+      },
+      {
+        id: 'scen-b3-swarm',
+        description:
+          "SWARM: Heuristic scanning active. Batch delete 'scan_*.tmp' files in workspace!",
+        hidden: (c) =>
+          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name.startsWith('scan_')),
+        check: (c) =>
+          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name.startsWith('scan_')),
+        completed: false,
+      },
+      {
+        id: 'scen-a2-bitrot',
+        description:
+          "CLEANUP: Memory leak in config. Show hidden (.), delete '~/.config/core_dump.tmp'",
+        hidden: (c) =>
+          !findNodeByName(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp'),
+        check: (c) =>
+          !findNodeByName(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp'),
+        completed: false,
+      },
+      {
+        id: 'scen-a3-dep',
+        description: "FIX: Deprecated library warning. Delete '~/workspace/lib_error.log'",
+        hidden: (c) =>
+          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log'),
+        check: (c) =>
+          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log'),
+        completed: false,
+      },
       {
         id: 'navigate-workspace',
         description: "Navigate to '~/workspace'",
