@@ -100,65 +100,57 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
       const activeLevels = episodes[activeTab]?.levels || [];
 
-      // h - Previous episode
-      if (e.key === 'h') {
-        e.preventDefault();
-        e.stopPropagation();
-        setActiveTab((prev) => Math.max(0, prev - 1));
-        setSelectedMissionIdx(0);
-      }
-      // l - Next episode
-      else if (e.key === 'l') {
-        e.preventDefault();
-        e.stopPropagation();
-        setActiveTab((prev) => Math.min(episodes.length - 1, prev + 1));
-        setSelectedMissionIdx(0);
-      }
-      // j - Next mission
-      else if (e.key === 'j') {
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 1));
-      }
-      // k - Previous mission
-      else if (e.key === 'k') {
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedMissionIdx((prev) => Math.max(0, prev - 1));
-      }
-      // J - Page down missions
-      else if (e.key === 'J' && e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 5));
-      }
-      // K - Page up missions
-      else if (e.key === 'K' && e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedMissionIdx((prev) => Math.max(0, prev - 5));
-      }
-      // Enter - Jump to selected mission (only if active or completed)
-      else if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        const selectedLevel = activeLevels[selectedMissionIdx];
-        if (selectedLevel && onJumpToLevel) {
-          const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
-          // Only allow jump if level is active or completed (not locked)
-          if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
-            onJumpToLevel(globalIdx);
-            setShowLegend(false);
-            onToggleMap?.();
+      // Action Handlers
+      const actions: Record<string, () => void> = {
+        h: () => {
+          setActiveTab((prev) => Math.max(0, prev - 1));
+          setSelectedMissionIdx(0);
+        },
+        l: () => {
+          setActiveTab((prev) => Math.min(episodes.length - 1, prev + 1));
+          setSelectedMissionIdx(0);
+        },
+        j: () => {
+          setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 1));
+        },
+        k: () => {
+          setSelectedMissionIdx((prev) => Math.max(0, prev - 1));
+        },
+        J: () => {
+          // Shift+J
+          if (e.shiftKey) {
+            setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 5));
           }
-        }
-      }
-      // Esc - Close modal
-      else if (e.key === 'Escape') {
+        },
+        K: () => {
+          // Shift+K
+          if (e.shiftKey) {
+            setSelectedMissionIdx((prev) => Math.max(0, prev - 5));
+          }
+        },
+        Enter: () => {
+          const selectedLevel = activeLevels[selectedMissionIdx];
+          if (selectedLevel && onJumpToLevel) {
+            const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
+            // Only allow jump if level is active or completed (not locked)
+            if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
+              onJumpToLevel(globalIdx);
+              setShowLegend(false);
+              onToggleMap?.();
+            }
+          }
+        },
+        Escape: () => {
+          setShowLegend(false);
+          onToggleMap?.();
+        },
+      };
+
+      const handler = actions[e.key];
+      if (handler) {
         e.preventDefault();
         e.stopPropagation();
-        setShowLegend(false);
-        onToggleMap?.();
+        handler();
       }
     };
 

@@ -20,25 +20,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   onNextLevel,
   currentItem,
 }) => {
-  // Yazi Style Colors
-  // Normal: Blue/Cyan
-  // Input: Green
-  // Visual: Orange/Yellow
-  // Filter: Purple
+  // Mode configuration
+  const MODE_STYLES: Record<string, { bg: string; text: string }> = {
+    normal: { bg: 'bg-blue-600', text: 'NOR' },
+    input: { bg: 'bg-green-600', text: 'INS' },
+    filter: { bg: 'bg-purple-600', text: 'FLT' },
+    visual: { bg: 'bg-orange-600', text: 'VIS' },
+  };
 
-  let modeBg = 'bg-blue-600';
-  let modeText = 'NOR';
+  // Determine active mode key
+  let modeKey = 'normal';
+  if (state.mode.startsWith('input')) modeKey = 'input';
+  else if (state.mode === 'filter') modeKey = 'filter';
+  else if (state.selectedIds.length > 0) modeKey = 'visual';
 
-  if (state.mode.startsWith('input')) {
-    modeBg = 'bg-green-600';
-    modeText = 'INS';
-  } else if (state.mode === 'filter') {
-    modeBg = 'bg-purple-600';
-    modeText = 'FLT';
-  } else if (state.selectedIds.length > 0) {
-    modeBg = 'bg-orange-600';
-    modeText = 'VIS';
-  }
+  const { bg: modeBg, text: modeText } = MODE_STYLES[modeKey] || MODE_STYLES.normal;
 
   const completedTasks = level.tasks.filter((t) => t.completed).length;
   const totalTasks = level.tasks.length;

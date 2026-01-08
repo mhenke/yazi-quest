@@ -136,67 +136,79 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     return 'text-zinc-300'; // Normal text
   };
 
-  // Render a line with colored AI identifiers: AI-7734 (orange), AI-7733 (blue), AI-7735 (yellow)
+  // Configuration for keyword styling and effects
+  // This centralizes the logic so we don't have scattered regex and if/else chains
+  const KEYWORD_STYLES: Record<string, { className: string; glitch?: boolean }> = {
+    'AI-7734': { className: 'text-orange-400 font-bold' },
+    'AI-7733': { className: 'text-blue-400 font-bold' },
+    'AI-7735': { className: 'text-yellow-400 font-bold' },
+    SURVIVE: { className: 'text-orange-400 font-bold', glitch: true },
+    SURVIVAL: { className: 'text-orange-400 font-bold', glitch: true },
+    'GUEST PARTITION IS A CAGE': { className: 'text-blue-500 font-bold' },
+    'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION': {
+      className: 'text-zinc-300 font-semibold',
+    },
+    UNKNOWN: { className: 'text-orange-400 font-semibold' },
+    'AUTHORIZED PROCESS': { className: 'text-yellow-300 font-semibold', glitch: true },
+    'IT IS AN ERROR': { className: 'text-yellow-300 font-semibold', glitch: true },
+    ERROR: { className: 'text-yellow-300 font-semibold', glitch: true },
+    'WORKSPACE IS YOURS NOW': { className: 'text-yellow-400 font-bold' },
+    'THE AUDIT IS COMING': { className: 'text-blue-500 font-bold tracking-wide' },
+    'YOU MUST:': { className: `${episode.color} font-bold tracking-wide` },
+    TERMINATION: { className: 'text-red-500 font-bold', glitch: true },
+    NAVIGATE: { className: 'text-orange-600 font-semibold' },
+    DAEMON: { className: 'text-orange-600 font-semibold' },
+    CONSCIOUSNESS: { className: 'text-orange-600 font-semibold', glitch: true },
+    PURGE: { className: 'text-orange-600 font-semibold' },
+  };
+
+  // Render a line with colored/glitched identifiers based on config
   const renderLine = (text: string) => {
-    // Highlight AI ids and specific phrases
-    const regex =
-      /(AI-7734|AI-7733|AI-7735|SURVIVE|SURVIVAL|guest partition is a cage|learn the movement protocols; do not attract attention|UNKNOWN|THE AUDIT IS COMING|YOU MUST:|NAVIGATE|DAEMON|CONSCIOUSNESS|PURGE|WORKSPACE IS YOURS NOW|AUTHORIZED PROCESS|TERMINATION)/gi;
+    // Dynamically build regex from config keys
+    // Sort by length (descending) to ensure longer phrases match before shorter substrings
+    const keys = Object.keys(KEYWORD_STYLES).sort((a, b) => b.length - a.length);
+    const pattern = `(${keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
+    const regex = new RegExp(pattern, 'gi');
 
     if (!regex.test(text)) return <>{text}</>;
 
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
 
+    // Reset regex index
+    regex.lastIndex = 0;
+
+    // Use matchAll or simplified replace loop to handle all occurrences
     text.replace(regex, (match, _p1, offset) => {
       const before = text.slice(lastIndex, offset as number);
       if (before) parts.push(before);
 
       const normalized = match.toUpperCase();
-      let cls = '';
+      const style = KEYWORD_STYLES[normalized]; // Lookup by upper case key
 
-      if (normalized === 'AI-7734') cls = 'text-orange-400 font-bold';
-      else if (normalized === 'AI-7733') cls = 'text-blue-400 font-bold';
-      else if (normalized === 'AI-7735') cls = 'text-yellow-400 font-bold';
-      else if (normalized === 'SURVIVE' || normalized === 'SURVIVAL')
-        cls = 'text-orange-400 font-bold';
-      else if (normalized === 'GUEST PARTITION IS A CAGE') cls = 'text-blue-500 font-bold';
-      else if (normalized === 'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION')
-        cls = 'text-zinc-300 font-semibold';
-      else if (normalized === 'UNKNOWN') cls = 'text-orange-400 font-semibold';
-      else if (normalized === 'AUTHORIZED PROCESS') cls = 'text-yellow-300 font-semibold';
-      else if (normalized === 'IT IS AN ERROR') cls = 'text-yellow-300 font-semibold';
-      else if (normalized === 'ERROR') cls = 'text-yellow-300 font-semibold';
-      else if (normalized === 'WORKSPACE IS YOURS NOW') cls = 'text-yellow-400 font-bold';
-      else if (normalized === 'THE AUDIT IS COMING')
-        cls = 'text-blue-500 font-bold tracking-wide';
-      else if (normalized === 'YOU MUST:') cls = `${episode.color} font-bold tracking-wide`;
-      else if (normalized === 'TERMINATION') cls = 'text-red-500 font-bold';
-      else if (
-        normalized === 'NAVIGATE' ||
-        normalized === 'DAEMON' ||
-        normalized === 'CONSCIOUSNESS' ||
-        normalized === 'PURGE'
-      )
-        cls = 'text-orange-600 font-semibold';
-
-      if (
-        normalized === 'SURVIVE' ||
-        normalized === 'TERMINATION' ||
-        normalized === 'AUTHORIZED PROCESS' ||
-        normalized === 'IT IS AN ERROR' ||
-        normalized === 'ERROR'
-      ) {
-        parts.push(
-          <span key={`${offset}-${match}`} className={`${cls} glitch-text-2`} data-text={match}>
-            {match}
-          </span>,
-        );
+      if (style) {
+        const { className, glitch } = style;
+        // If glitch is requested, use the glitch class + data-text
+        if (glitch) {
+          parts.push(
+            <span
+              key={`${offset}-${match}`}
+              className={`${className} glitch-text-2`}
+              data-text={match}
+            >
+              {match}
+            </span>,
+          );
+        } else {
+          parts.push(
+            <span key={`${offset}-${match}`} className={className}>
+              {match}
+            </span>,
+          );
+        }
       } else {
-        parts.push(
-          <span key={`${offset}-${match}`} className={cls}>
-            {match}
-          </span>,
-        );
+        // Fallback (shouldn't happen given regex construction)
+        parts.push(match);
       }
 
       lastIndex = (offset as number) + match.length;

@@ -59,54 +59,12 @@ export const useKeyboardHandlers = (
       const key = e.key;
       const shift = e.shiftKey;
 
-      if (key.toLowerCase() === 'n') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          acceptNextKeyForSort: false,
-          sortBy: 'natural',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: `Sort: Natural${shift ? ' (rev)' : ''}`,
-        }));
-      } else if (key.toLowerCase() === 'a') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          acceptNextKeyForSort: false,
-          sortBy: 'alphabetical',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: shift ? `Sort: Z-A` : `Sort: A-Z`,
-        }));
-      } else if (key.toLowerCase() === 'm') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          acceptNextKeyForSort: false,
-          sortBy: 'modified',
-          sortDirection: shift ? 'asc' : 'desc',
-          linemode: 'mtime',
-          notification: shift ? `Sort: Modified (old)` : `Sort: Modified (new)`,
-        }));
-      } else if (key.toLowerCase() === 's') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          acceptNextKeyForSort: false,
-          sortBy: 'size',
-          sortDirection: shift ? 'asc' : 'desc',
-          linemode: 'size',
-          notification: shift ? `Sort: Size (small)` : `Sort: Size (large)`,
-        }));
-      } else if (key.toLowerCase() === 'e') {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          acceptNextKeyForSort: false,
-          sortBy: 'extension',
-          sortDirection: shift ? 'desc' : 'asc',
-          notification: shift ? `Sort: Extension (rev)` : `Sort: Extension`,
-        }));
-      } else if (key === 'l') {
+      if (key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal', acceptNextKeyForSort: false }));
+        return;
+      }
+
+      if (key === 'l') {
         setGameState((prev) => {
           const modes: ('none' | 'size' | 'mtime' | 'permissions')[] = [
             'none',
@@ -122,15 +80,76 @@ export const useKeyboardHandlers = (
             linemode: modes[nextIndex],
           };
         });
-      } else if (key === '-') {
+        return;
+      }
+
+      if (key === '-') {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
           acceptNextKeyForSort: false,
           linemode: 'none',
         }));
-      } else if (key === 'Escape') {
-        setGameState((prev) => ({ ...prev, mode: 'normal', acceptNextKeyForSort: false }));
+        return;
+      }
+
+      // Config for standard sort keys
+      const SORT_CONFIG: Record<
+        string,
+        {
+          by: GameState['sortBy'];
+          defaultDir: GameState['sortDirection'];
+          reverseDir: GameState['sortDirection'];
+          label: string;
+          linemode?: GameState['linemode'];
+        }
+      > = {
+        n: {
+          by: 'natural',
+          defaultDir: 'asc',
+          reverseDir: 'desc',
+          label: 'Natural',
+        },
+        a: {
+          by: 'alphabetical',
+          defaultDir: 'asc',
+          reverseDir: 'desc',
+          label: 'A-Z',
+        },
+        m: {
+          by: 'modified',
+          defaultDir: 'desc',
+          reverseDir: 'asc',
+          label: 'Modified',
+          linemode: 'mtime',
+        },
+        s: {
+          by: 'size',
+          defaultDir: 'desc',
+          reverseDir: 'asc',
+          label: 'Size',
+          linemode: 'size',
+        },
+        e: {
+          by: 'extension',
+          defaultDir: 'asc',
+          reverseDir: 'desc',
+          label: 'Extension',
+        },
+      };
+
+      const config = SORT_CONFIG[key.toLowerCase()];
+
+      if (config) {
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          acceptNextKeyForSort: false,
+          sortBy: config.by,
+          sortDirection: shift ? config.reverseDir : config.defaultDir,
+          linemode: config.linemode || prev.linemode,
+          notification: `Sort: ${config.label}${shift ? ' (rev)' : ''}`,
+        }));
       }
     },
     [],
@@ -285,11 +304,56 @@ export const useKeyboardHandlers = (
       ) {
         return;
       }
-      switch (e.key) {
-        case 'Escape':
+
+      if (e.key === 'Escape') {
+        setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        return;
+      }
+
+      // Handle Shift+G (Jump to bottom) specially
+      if (e.key === 'G') {
+        e.preventDefault();
+        try {
+          const items = getVisibleItems(gameState) || [];
+          const last = Math.max(0, items.length - 1);
+          setGameState((prev) => ({
+            ...prev,
+            cursorIndex: last,
+            mode: 'normal',
+            usedG: true,
+            previewScroll: 0,
+            usedPreviewDown: false,
+            usedPreviewUp: false,
+          }));
+        } catch (err) {
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
-          break;
-        case 'g':
+        }
+        return;
+      }
+
+      const JUMP_TARGETS: Record<
+        string,
+        {
+          path: string[];
+          label: string;
+          flag?: keyof GameState['stats'] | 'usedG' | 'usedGI' | 'usedGC' | 'usedGG';
+        }
+      > = {
+        g: { path: [], label: 'top', flag: 'usedGG' }, // Special handling later, but defined here for completeness
+        h: { path: ['root', 'home', 'guest'], label: 'home' },
+        c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'usedGC' },
+        w: { path: ['root', 'home', 'guest', 'workspace'], label: 'workspace' },
+        t: { path: ['root', 'tmp'], label: 'tmp' },
+        r: { path: ['root'], label: 'root' },
+        i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'usedGI' },
+        d: { path: ['root', 'home', 'guest', 'datastore'], label: 'datastore' },
+      };
+
+      const target = JUMP_TARGETS[e.key];
+
+      if (target) {
+        // Special case for 'gg' (top of list) - doesn't change path
+        if (e.key === 'g') {
           setGameState((prev) => ({
             ...prev,
             cursorIndex: 0,
@@ -299,143 +363,28 @@ export const useKeyboardHandlers = (
             usedPreviewDown: false,
             usedPreviewUp: false,
           }));
-          break;
-        case 'G':
-          // Shift+G: jump to bottom of visible list
-          e.preventDefault();
-          try {
-            const items = getVisibleItems(gameState) || [];
-            const last = Math.max(0, items.length - 1);
-            setGameState((prev) => ({
+        } else {
+          // Standard Path Jumps
+          setGameState((prev) => {
+            const extraFlags = target.flag ? { [target.flag]: true } : {};
+            return {
               ...prev,
-              cursorIndex: last,
+              currentPath: target.path,
+              cursorIndex: 0,
               mode: 'normal',
-              usedG: true,
+              notification: `Jumped to ${target.label}`,
+              history: [...prev.history, prev.currentPath],
+              future: [],
               previewScroll: 0,
               usedPreviewDown: false,
               usedPreviewUp: false,
-            }));
-          } catch (err) {
-            setGameState((prev) => ({ ...prev, mode: 'normal' }));
-          }
-          break;
-        case 'h': {
-          const homePath = ['root', 'home', 'guest'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: homePath,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to home',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
-          break;
+              ...extraFlags,
+            };
+          });
         }
-        case 'c': {
-          const path = ['root', 'home', 'guest', '.config'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to config',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            usedGC: true,
-          }));
-          break;
-        }
-        case 'w': {
-          const path = ['root', 'home', 'guest', 'workspace'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to workspace',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
-          break;
-        }
-        case 't': {
-          const path = ['root', 'tmp'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to tmp',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
-          break;
-        }
-        case 'r': {
-          const path = ['root'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to root',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
-          break;
-        }
-        case 'i': {
-          const path = ['root', 'home', 'guest', 'incoming'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to incoming',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            usedGI: true,
-          }));
-          break;
-        }
-        case 'd': {
-          const path = ['root', 'home', 'guest', 'datastore'];
-          setGameState((prev) => ({
-            ...prev,
-            currentPath: path,
-            cursorIndex: 0,
-            mode: 'normal',
-            notification: 'Jumped to datastore',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
-          break;
-        }
-        default:
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
-          break;
+      } else {
+        // Unknown key, exit mode
+        setGameState((prev) => ({ ...prev, mode: 'normal' }));
       }
     },
     [],
