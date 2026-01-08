@@ -63,7 +63,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
   return (
     <div
       className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onKeyDown={(e) => e.stopPropagation()} // Prevent events from bubbling up
+      onKeyDown={(e) => {
+        // Only stop propagation if it's a key we handle preventing default,
+        // otherwise let it bubble to allow global Escape handling if needed.
+        // Actually, preventing propagation here blocks the window listener defined in THIS component.
+        // So we should NOT stop propagation unconditionally.
+      }}
       tabIndex={-1} // Make the div focusable
       ref={scrollRef} // Assign ref to the outermost div for focus
     >

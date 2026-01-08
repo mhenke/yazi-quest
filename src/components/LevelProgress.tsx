@@ -9,7 +9,8 @@ interface LevelProgressProps {
   currentLevelIndex: number;
   onToggleHint: () => void;
   onToggleHelp: () => void;
-  onToggleMap?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
   onJumpToLevel?: (levelIndex: number) => void;
 }
 
@@ -18,31 +19,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   currentLevelIndex,
   onToggleHint,
   onToggleHelp,
-  onToggleMap,
+  isOpen, // New prop
+  onClose, // New prop to close explicitly
   onJumpToLevel,
 }) => {
-  const [showLegend, setShowLegend] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [selectedMissionIdx, setSelectedMissionIdx] = useState<number>(0);
   const missionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const handleToggleMap = React.useCallback(() => {
-    setShowLegend((prev) => !prev);
-    onToggleMap?.(); // Notify parent if callback provided
-  }, [onToggleMap]);
-
-  // Keyboard shortcut: Alt+m to toggle map
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'm' && e.altKey) {
-        e.preventDefault();
-        handleToggleMap();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleToggleMap]);
+  // Removed internal showLegend state and Alt+m listener.
+  // App.tsx controls visibility via isOpen prop.
 
   // Helper icons for the 3 episodes (mapped by index)
   // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
@@ -76,7 +62,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   // Sync modal tab with current episode when opening
   useEffect(() => {
-    if (showLegend) {
+    if (isOpen) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(currentEpisodeIdx);
       // Find the current level within the episode and select it
@@ -86,13 +72,13 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
       );
       setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
     }
-  }, [showLegend, currentEpisodeIdx, episodes, levels, currentLevelIndex]);
+  }, [isOpen, currentEpisodeIdx, episodes, levels, currentLevelIndex]);
 
   const activeEpisode = episodes[activeTab] || episodes[0];
 
   // Keyboard navigation for Quest Map modal
   useEffect(() => {
-    if (!showLegend) return;
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent background handlers (App) from acting when the map is open
@@ -131,16 +117,13 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         Enter: () => {
           // Normal Enter: Try to jump
           // If Shift is pressed, App handles it? No, we suppressed bubbling.
-          // Wait, 'actions' is keyed by key.
         },
       };
 
-      // Handle Shift+Enter manually or via 'Enter' logic?
       // e.key is 'Enter'.
-      if (e.key === 'Enter' && e.shiftKey) {
-        // Shift+Enter to close
-        setShowLegend(false);
-        onToggleMap?.();
+      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
+        // Shift+Enter or Escape to close
+        onClose();
         return;
       }
 
@@ -154,8 +137,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
             if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
               onJumpToLevel(globalIdx);
-              setShowLegend(false);
-              onToggleMap?.();
+              onClose();
             }
           }
         } else if (e.key !== 'Enter') {
@@ -167,19 +149,19 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    showLegend,
+    isOpen,
     activeTab,
     selectedMissionIdx,
     episodes,
     levels,
     onJumpToLevel,
-    onToggleMap,
+    onClose,
     currentLevelIndex,
   ]);
 
   // Auto-scroll to selected mission
   useEffect(() => {
-    if (showLegend) {
+    if (isOpen) {
       setTimeout(() => {
         missionRefs.current[selectedMissionIdx]?.scrollIntoView({
           behavior: 'smooth',
@@ -187,7 +169,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         });
       }, 50); // Timeout ensures DOM is ready
     }
-  }, [selectedMissionIdx, showLegend, activeTab]);
+  }, [selectedMissionIdx, isOpen, activeTab]);
 
   return (
     <>
@@ -195,7 +177,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-6 overflow-hidden mr-4 h-8 flex-1">
           <button
-            onClick={handleToggleMap}
+            onClick={onClose} // Or use a designated toggle handler if we want the button to close too. Actually this button is "Map". It should toggle.
+            // The prop is 'onClose', but App probably passes a toggle function.
+            // Let's call it onClose for now as it triggers the action, or better:
+            // Since we lifted state, 'onClose' is strictly checking the prop.
+            // But verify: App.tsx usually passes () => set(p => !p) for toggles.
+            // Let's assume onClose is the toggle action provided by parent.
             className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
             title="Quest Map (Alt+M)"
           >
@@ -323,7 +310,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
       </div>
 
       {/* Legend Modal */}
-      {showLegend && (
+      {isOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             {/* Header */}
@@ -388,8 +375,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                       onClick={() => {
                         if (globalIdx <= currentLevelIndex && onJumpToLevel) {
                           onJumpToLevel(globalIdx);
-                          setShowLegend(false);
-                          onToggleMap?.();
+                          onClose();
                         }
                       }}
                     >

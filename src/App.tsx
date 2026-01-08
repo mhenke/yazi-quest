@@ -937,7 +937,7 @@ export default function App() {
         return;
       }
 
-      // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Esc/Tab handlers.
+      // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Esc/Tab/Alt toggles.
       if (gameState.showHelp || gameState.showHint || gameState.showMap) {
         if (e.key === 'Escape') {
           setGameState((prev) => ({
@@ -947,8 +947,27 @@ export default function App() {
             showInfoPanel: false,
             showMap: false,
           }));
-          e.preventDefault(); // Prevent further processing by other listeners
+          e.preventDefault();
         }
+
+        // Allow Alt+? to toggle Help OFF if it's open
+        else if (e.key === '?' && e.altKey && gameState.showHelp) {
+          e.preventDefault();
+          setGameState((prev) => ({ ...prev, showHelp: false }));
+        }
+
+        // Allow Alt+h to toggle Hint OFF if it's open
+        else if (e.key === 'h' && e.altKey && gameState.showHint) {
+          e.preventDefault();
+          setGameState((prev) => ({ ...prev, showHint: false }));
+        }
+
+        // Allow Alt+m to toggle Map OFF if it's open
+        else if (e.key === 'm' && e.altKey && gameState.showMap) {
+          e.preventDefault();
+          setGameState((prev) => ({ ...prev, showMap: false }));
+        }
+
         return; // Block all other keys from background Yazi
       }
 
@@ -1080,6 +1099,12 @@ export default function App() {
           }
           return { ...prev, showHint: true, hintStage: 0 };
         });
+        return;
+      }
+
+      if (e.key === 'm' && e.altKey && gameState.mode === 'normal') {
+        e.preventDefault();
+        setGameState((prev) => ({ ...prev, showMap: true }));
         return;
       }
 
@@ -1370,7 +1395,8 @@ export default function App() {
           currentLevelIndex={gameState.levelIndex}
           onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
           onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
-          onToggleMap={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
+          isOpen={gameState.showMap}
+          onClose={() => setGameState((prev) => ({ ...prev, showMap: false }))}
           onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);
