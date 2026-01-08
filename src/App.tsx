@@ -262,6 +262,18 @@ export default function App() {
   const [alertMessage, setAlertMessage] = useState('');
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const isGamePaused =
+    gameState.showHelp ||
+    gameState.showHint ||
+    gameState.showMap ||
+    gameState.showInfoPanel ||
+    gameState.mode === 'filter-warning' ||
+    gameState.mode === 'confirm-delete' ||
+    gameState.mode === 'overwrite-confirm' ||
+    showThreatAlert ||
+    showHiddenWarning ||
+    showSortWarning;
+
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevelRaw = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
 
@@ -419,7 +431,8 @@ export default function App() {
       !currentLevel.timeLimit ||
       isLastLevel ||
       gameState.showEpisodeIntro ||
-      gameState.isGameOver
+      gameState.isGameOver ||
+      isGamePaused
     )
       return;
 
@@ -452,6 +465,7 @@ export default function App() {
     gameState.isGameOver,
     currentLevel,
     gameState.showHidden,
+    isGamePaused,
   ]);
 
   // Check Keystroke Limit
@@ -1044,7 +1058,10 @@ export default function App() {
       }
 
       // Count keystrokes (only if no blocking modal)
-      if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)) {
+      if (
+        !isGamePaused &&
+        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)
+      ) {
         setGameState((prev) => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
       }
 
