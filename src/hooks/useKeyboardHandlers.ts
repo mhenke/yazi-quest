@@ -33,7 +33,6 @@ const getNarrativeAction = (key: string): string | null => {
 
 // Helper to check for active filter in the current directory and block navigation
 
-
 // Helper to check for active filter in the current directory and block navigation
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
@@ -49,7 +48,6 @@ export const checkFilterAndBlockNavigation = (
     setGameState((prev) => ({ ...prev, mode: exitMode }));
     return true; // Navigation blocked
   }
-  setShowFilterWarning(false); // Clear warning if no filter, or if previous filter was cleared
   return false; // Navigation allowed
 };
 
@@ -302,7 +300,6 @@ export const useKeyboardHandlers = (
       gameState: GameState,
       setShowFilterWarning: React.Dispatch<React.SetStateAction<boolean>>,
     ) => {
-
       if (
         checkFilterAndBlockNavigation(e, gameState, setGameState, setShowFilterWarning, 'normal')
       ) {
