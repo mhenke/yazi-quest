@@ -19,12 +19,12 @@ export const FilterWarningModal: React.FC = () => {
             <p className="text-zinc-400 font-mono text-sm">Active filters detected.</p>
             <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
               <p className="text-yellow-300 font-mono text-sm font-semibold">
-                Note: filters are global and persist with Yazi across sessions.
+                Note: filters are per directory and persist with Yazi across sessions.
               </p>
             </div>
           </div>
 
-            <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
+          <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
             <div className="bg-zinc-800 p-2 rounded-full">
               <Filter size={20} className="text-zinc-400" />
             </div>
