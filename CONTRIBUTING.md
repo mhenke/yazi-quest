@@ -42,7 +42,6 @@ See `DOCS_INDEX.md` for the canonical docs map.
 - `npm run dev`: Starts the local development server.
 - `npm run build`: Builds the application for production.
 - `npm run lint`: Lints the code using ESLint.
-- `npm run lint`: Lints the code using ESLint.
 - `npm run format`: Formats the code using Prettier.
 
 ## Debugging Scenarios
