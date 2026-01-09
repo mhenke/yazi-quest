@@ -42,4 +42,18 @@ See `DOCS_INDEX.md` for the canonical docs map.
 - `npm run dev`: Starts the local development server.
 - `npm run build`: Builds the application for production.
 - `npm run lint`: Lints the code using ESLint.
+- `npm run lint`: Lints the code using ESLint.
 - `npm run format`: Formats the code using Prettier.
+
+## Debugging Scenarios
+
+To test specific random events in Level 12 (Daemon Installation), you can force a scenario by modifying `src/constants.tsx`:
+
+1.  Locate `export const FORCE_SCENARIO: string | null = null;` near the top of the file.
+2.  Set it to one of the following IDs:
+    - `'scen-b1'`: Traffic Alert (Modern/Risky)
+    - `'scen-b2'`: Remote Tracker (Modern/Risky)
+    - `'scen-b3'`: Heuristic Swarm (Modern/Risky)
+    - `'scen-a2'`: Bitrot (Legacy/Safe)
+    - `'scen-a3'`: Dependency Error (Legacy/Safe)
+3.  Set back to `null` to restore normal random behavior.

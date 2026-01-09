@@ -524,6 +524,9 @@ export const META_KEYBINDINGS = [
   { keys: ['Alt+Shift+M'], description: 'Toggle Sound' },
 ];
 
+// DEBUG: Set to 'scen-b1', 'scen-b2', 'scen-b3', 'scen-a2', 'scen-a3' to force a specific path.
+export const FORCE_SCENARIO: string | null = null;
+
 export const EPISODE_LORE: Episode[] = [
   {
     id: 1,
@@ -2655,7 +2658,7 @@ export const LEVELS: Level[] = [
       'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
-    maxKeystrokes: 11,
+    maxKeystrokes: 25,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
     onEnter: (fs) => {
@@ -2679,7 +2682,29 @@ export const LEVELS: Level[] = [
         }
       }
 
-      const rand = Math.random();
+      // Override randomization if FORCE_SCENARIO is set
+      let rand = Math.random();
+
+      // If a specific scenario is forced, we manipulate the randomness/modernity to trigger it
+      if (FORCE_SCENARIO === 'scen-b1') {
+        isModern = true;
+        rand = 0.1; // < 0.34
+      } else if (FORCE_SCENARIO === 'scen-b2') {
+        isModern = true;
+        rand = 0.5; // < 0.67
+      } else if (FORCE_SCENARIO === 'scen-b3') {
+        isModern = true;
+        rand = 0.8; // > 0.67
+      } else if (FORCE_SCENARIO === 'scen-a1') {
+        isModern = false;
+        rand = 0.1;
+      } else if (FORCE_SCENARIO === 'scen-a2') {
+        isModern = false;
+        rand = 0.5;
+      } else if (FORCE_SCENARIO === 'scen-a3') {
+        isModern = false;
+        rand = 0.8;
+      }
 
       if (isModern) {
         // === MODERN PATH (RISKY) ===
@@ -2851,7 +2876,9 @@ export const LEVELS: Level[] = [
         description: "Navigate to '~/workspace'",
         check: (c) => {
           const workspace = findNodeByName(c.fs, 'workspace');
-          return c.currentPath.includes(workspace?.id || '');
+          // Strict check: we must be AT the workspace node, not just inside it
+          const currentDirId = c.currentPath[c.currentPath.length - 1];
+          return currentDirId === workspace?.id;
         },
         completed: false,
       },
