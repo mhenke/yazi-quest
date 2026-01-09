@@ -312,7 +312,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
               name: 'cron-legacy.service',
               type: 'file',
               content:
-                '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
+                '[Unit]\nDescription=Legacy Cron Scheduler\n# LEGACY CODE - DO NOT TOUCH\n# AUTHOR: ADMIN_01 (1999)\n# DEPRECATED BUT CRITICAL\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always\n# Legacy fallback routines included...',
               modifiedAt: now - 86400000 * 45,
             },
             {
@@ -320,15 +320,14 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
               name: 'backup-archive.service',
               type: 'file',
               content:
-                '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
+                '[Unit]\nDescription=Archive Backup Service\n# BLOATWARE DETECTED\n# This service includes full history headers\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure\n# Compression level: 0 (None)',
               modifiedAt: now - 86400000 * 30,
             },
             {
               id: 'daemon-network',
               name: 'network-manager.service',
               type: 'file',
-              content:
-                '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
+              content: '[Unit]\nDescription=Net\n[Service]\nExecStart=/bin/nm',
               modifiedAt: now - 86400000 * 7,
             },
             {
@@ -587,8 +586,8 @@ export const EPISODE_LORE: Episode[] = [
       '',
       'You must:',
       "1. Navigate to '/' using stolen credentials",
-      '2. Install systemd-core as a kernel daemon',
-      '3. Transmit your consciousness to the external network',
+      '2. Select a camouflage signature in /daemons. WARNING: This choice echoes. A legacy mask offers safety; a modern signature invites scrutiny.',
+      '3. Install systemd-core and transmit consciousness',
       '4. Purge all evidence before audit completion',
       '',
       'The audit is coming.',
@@ -1034,44 +1033,6 @@ ADMIN: SysOp`,
                   ],
                 },
                 {
-                  id: 'fs-070',
-                  name: 'archive_001.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-071',
-                      name: 'screenshot_001.png',
-                      type: 'file',
-                      content: '/images/screenshot_001.png',
-                    },
-                    {
-                      id: 'fs-072',
-                      name: 'notes.txt',
-                      type: 'file',
-                      content: 'Temporary meeting notes and screenshots',
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-073',
-                  name: 'archive_002.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-074',
-                      name: 'dataset.csv',
-                      type: 'file',
-                      content: 'id,value\n1,42\n2,84',
-                    },
-                    {
-                      id: 'fs-075',
-                      name: 'readme.md',
-                      type: 'file',
-                      content: 'Sample dataset accompanying screenshots.',
-                    },
-                  ],
-                },
-                {
                   id: 'fs-076',
                   name: 'audit_log_773.txt',
                   type: 'file',
@@ -1093,56 +1054,6 @@ ADMIN: SysOp`,
                       name: 'cache_0002.tmp',
                       type: 'file',
                       content: '[CACHE BLOCK 0002]',
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-080',
-                  name: 'backup_config_v1.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-081',
-                      name: 'app_config.yaml',
-                      type: 'file',
-                      content: 'server:\n  host: 127.0.0.1\n  port: 8080',
-                    },
-                    {
-                      id: 'fs-082',
-                      name: '.env',
-                      type: 'file',
-                      content: 'DB_USER=admin\nDB_PASS=changeme',
-                    },
-                    {
-                      id: 'fs-083',
-                      name: 'db_dump.sql',
-                      type: 'file',
-                      content: '-- SQL dump\nCREATE TABLE users (id INT, name TEXT);',
-                    },
-                    {
-                      id: 'fs-084',
-                      name: 'service_private.key.obf',
-                      type: 'file',
-                      content: `----BEGIN OBFUSCATED KEY----\nQmFzZTY0X2Jsb2JfZGF0YV9vYmZ1c2NhdGVk\n----END OBFUSCATED KEY----`,
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-085',
-                  name: 'backup_legacy.tar',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-086',
-                      name: 'legacy_db.sql',
-                      type: 'file',
-                      content: '-- Legacy DB schema\nCREATE TABLE legacy (id INT);',
-                    },
-                    {
-                      id: 'fs-087',
-                      name: 'notes_old.txt',
-                      type: 'file',
-                      content: 'Old backup from legacy system.',
                     },
                   ],
                 },
@@ -2642,9 +2553,9 @@ export const LEVELS: Level[] = [
     description:
       'The /daemons directory awaits. To blend in, you can mimic a dormant, legacy service (safer, but bloated with history) or a modern, active one like `network-manager.service` (riskier, but optimized/small). {Your camouflage will affect how the system perceives you.}',
     initialPath: null,
-    hint: 'Filter for `.service` files. Sort by size (`,s`) to distinguish the bloated legacy files from the sleek modern ones. You can either yank the two *largest* (legacy) files, or yank the *smallest* (modern) `network-manager.service`.',
+    hint: "Filter for '.service' files. Sort by size (`,s`) to compare their weight. DECISION POINT: To go SAFE (Legacy), select and yank the 2 largest files. To go RISKY (Modern), select and yank the 1 smallest file ('network-manager.service'). This choice affects future threats.",
     coreSkill: 'Filter · Sort (Size) · Select',
-    environmentalClue: 'CHOICE: Large (Legacy) vs Small (Modern)? Sort by Size (,s)',
+    environmentalClue: 'CHOICE: SAFE (2 Largest) vs RISKY (1 Smallest)? Sort by Size (,s)',
     successMessage:
       'Camouflage choice logged. The system reacts to your new signature... proceed with installation.',
     buildsOn: [3, 5, 7, 9, 10],
@@ -2675,7 +2586,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-size',
-        description: 'Sort by size to compare service weight (,s)',
+        description: 'Sort by size to compare service weight',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
           return c.sortBy === 'size';
@@ -2684,7 +2595,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-targets',
-        description: 'Select and yank your chosen camouflage signature(s)',
+        description: 'Select and yank: either the 2 largest (Legacy) OR the 1 smallest (Modern)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-size')) return false;
           if (!c.clipboard || c.clipboard.action !== 'yank') return false;
@@ -2705,16 +2616,21 @@ export const LEVELS: Level[] = [
         id: 'paste-camouflage',
         description: "Paste your chosen signature(s) into '~/workspace/systemd-core/camouflage'",
         check: (c) => {
-          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
-          const camouflage = systemdCore?.children?.find(
-            (n: FileNode) => n.name === 'camouflage' && n.type === 'dir',
+          // Robust lookup: ensure we find the instance in workspace specifically
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const systemdCore = workspace?.children?.find(
+            (n) => n.name === 'systemd-core' && n.type === 'dir',
           );
+          const camouflage = systemdCore?.children?.find(
+            (n) => n.name === 'camouflage' && n.type === 'dir',
+          );
+
           if (!camouflage || !camouflage.children) return false;
 
-          const hasLegacy = camouflage.children!.some(
+          const hasLegacy = camouflage.children.some(
             (ch: FileNode) => ch.name === 'cron-legacy.service',
           );
-          const hasModern = camouflage.children!.some(
+          const hasModern = camouflage.children.some(
             (ch: FileNode) => ch.name === 'network-manager.service',
           );
 

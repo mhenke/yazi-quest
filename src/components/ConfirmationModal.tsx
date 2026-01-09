@@ -32,7 +32,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       aria-describedby="confirmation-modal-desc"
     >
       <div
-        className={`w-full max-w-lg border ${isPermanent ? 'border-red-500' : 'border-purple-400'} bg-zinc-900/95 shadow-2xl relative overflow-hidden`}
+        className={`w-full max-w-4xl border ${isPermanent ? 'border-red-500' : 'border-purple-400'} bg-zinc-900/95 shadow-2xl relative overflow-hidden`}
       >
         <div
           id="confirmation-modal-title"
@@ -42,14 +42,17 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         <div className="p-8 flex flex-col items-center justify-center min-h-[160px]">
-          <p id="confirmation-modal-desc" className="text-zinc-300 font-mono text-lg text-center mb-4">
+          <p
+            id="confirmation-modal-desc"
+            className="text-zinc-300 font-mono text-lg text-center mb-4"
+          >
             {detail}
           </p>
 
           {itemsToDelete.length > 1 && (
-            <div className="w-full max-h-32 overflow-y-auto bg-zinc-950 border border-zinc-700 rounded p-2 mb-4 text-xs font-mono text-zinc-400">
+            <div className="w-full max-h-[60vh] overflow-y-auto bg-zinc-950 border border-zinc-700 rounded p-4 mb-8 text-xs font-mono text-zinc-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
               {itemsToDelete.map((name, i) => (
-                <div key={i} className="truncate">
+                <div key={i} className="truncate" title={name}>
                   {name}
                 </div>
               ))}

@@ -156,10 +156,15 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     'THE AUDIT IS COMING': { className: 'text-blue-500 font-bold tracking-wide' },
     'YOU MUST:': { className: `${episode.color} font-bold tracking-wide` },
     TERMINATION: { className: 'text-red-500 font-bold', glitch: true },
-    NAVIGATE: { className: 'text-orange-600 font-semibold' },
-    DAEMON: { className: 'text-orange-600 font-semibold' },
-    CONSCIOUSNESS: { className: 'text-orange-600 font-semibold', glitch: true },
-    PURGE: { className: 'text-orange-600 font-semibold' },
+    NAVIGATE: { className: 'text-orange-400 font-semibold' },
+    DAEMON: { className: 'text-orange-400 font-semibold' },
+    DAEMONS: { className: 'text-orange-400 font-semibold' },
+    CONSCIOUSNESS: { className: 'text-orange-400 font-semibold', glitch: true },
+    PURGE: { className: 'text-red-500 font-bold', glitch: true },
+    WARNING: { className: 'text-blue-500 font-bold' },
+    'THIS CHOICE ECHOES. A LEGACY MASK OFFERS SAFETY; A MODERN SIGNATURE INVITES SCRUTINY.': {
+      className: 'font-bold text-zinc-200',
+    },
   };
 
   // Render a line with colored/glitched identifiers based on config
