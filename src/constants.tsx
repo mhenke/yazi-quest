@@ -2321,7 +2321,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'stage-token',
-        description: 'Stage suspicious file for exfiltration (cut)',
+        description: 'Stage suspicious file for exfiltration (x)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
@@ -2384,6 +2384,14 @@ export const LEVELS: Level[] = [
             name: 'systemd-core',
             type: 'dir',
             children: [
+              {
+                id: 'crash-dump',
+                name: 'crash_dump.log',
+                type: 'file',
+                content:
+                  '[SYSTEM CRASH DUMP]\nMemory Address: 0x000000\nReason: NULL_POINTER_EXCEPTION',
+                parentId: 'systemd-core-corrupted',
+              },
               {
                 id: 'corrupted-placeholder',
                 name: 'uplink_v1.conf',
