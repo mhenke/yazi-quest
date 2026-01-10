@@ -1957,14 +1957,27 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'analyze-threat',
+        id: 'identify-threat-1',
         description:
-          "Analyze 'watcher_agent.sys' in '~/incoming': Inspect metadata (Tab) and scan the signal (Scroll preview with J/K)",
+          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect metadata (Tab)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
-          return c.showInfoPanel && !!c.usedPreviewDown && !!c.usedPreviewUp;
+          return c.showInfoPanel;
+        },
+        completed: false,
+      },
+      {
+        id: 'identify-threat-2',
+        description:
+          'Scan the signal: Scroll the preview content (J and K) to verify the threat signature',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-1')) return false;
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          if (node?.name !== 'watcher_agent.sys') return false;
+          return !!c.usedPreviewDown && !!c.usedPreviewUp;
         },
         completed: false,
       },
@@ -1972,7 +1985,7 @@ export const LEVELS: Level[] = [
         id: 'neutralize-threat',
         description: "Neutralize the threat: Permanently delete 'watcher_agent.sys' (d, then y)",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('analyze-threat')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-2')) return false;
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
           return !!u && !d;
