@@ -681,51 +681,12 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION', () => {
     }
   });
 
-  describe('Task: combo-1c (Paste uplink_v1.conf)', () => {
-    it('should NOT complete when only the corrupted placeholder exists', () => {
+  describe('Task: deploy-patch (Overwrite uplink_v1.conf with Shift+P)', () => {
+    it('should NOT complete when file is corrupted', () => {
       const level = getLevel(8);
-      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+      const task = level.tasks.find((t) => t.id === 'deploy-patch')!;
 
       // State: Just entered level, corrupted file exists
-      const state = createTestState(fs, {
-        completedTaskIds: { [8]: ['establish-workspace-presence'] }, // 'repair-corruption' NOT done
-      });
-
-      // Should return false because:
-      // 1. 'repair-corruption' is not in completedTaskIds
-      // 2. The file content contains "CORRUPTED"
-      expect(task.check(state, level)).toBe(false);
-    });
-
-    it('should NOT complete even if repair-corruption is mocked but file is still corrupted (state mismatch protection)', () => {
-      const level = getLevel(8);
-      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
-
-      // State: Claim 'repair-corruption' is done, but FS still has corrupted content
-      const state = createTestState(fs, {
-        completedTaskIds: { [8]: ['establish-workspace-presence', 'repair-corruption'] },
-      });
-
-      // Should return false because checks file content
-      expect(task.check(state, level)).toBe(false);
-    });
-
-    it('should NOT complete if file is valid but repair-corruption task not marked complete', () => {
-      const level = getLevel(8);
-      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
-
-      // Manually fix the file in FS - use direct path to be sure
-      const workspace = findNodeByName(fs, 'workspace', 'dir')!;
-      const systemdCore = workspace.children!.find((c) => c.name === 'systemd-core');
-      if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
-
-      const file = systemdCore.children!.find((c) => c.name === 'uplink_v1.conf');
-      if (!file) throw new Error('uplink_v1.conf not found in systemd-core for test setup');
-
-      file.content = 'VALID CONTENT';
-
-      // State: File is good, but task history missing 'repair-corruption'
-      // This ensures the dependency is enforced
       const state = createTestState(fs, {
         completedTaskIds: { [8]: ['establish-workspace-presence'] },
       });
@@ -733,25 +694,39 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION', () => {
       expect(task.check(state, level)).toBe(false);
     });
 
-    it('should complete when file is valid AND repair-corruption is done', () => {
+    it('should NOT complete if file is valid but Shift+P was NOT used', () => {
       const level = getLevel(8);
-      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+      const task = level.tasks.find((t) => t.id === 'deploy-patch')!;
 
-      // Manually fix the file in FS - use direct path to be sure
-      const workspace = findNodeByName(fs, 'workspace', 'dir')!;
-      const systemdCore = workspace.children!.find((c) => c.name === 'systemd-core');
+      // Fix file content in FS
+      const workspace = findNodeByName(fs, 'workspace', 'dir');
+      if (!workspace) throw new Error('workspace not found in test setup');
+      const systemdCore = workspace.children?.find((c) => c.name === 'systemd-core');
       if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
-
-      const file = systemdCore.children!.find((c) => c.name === 'uplink_v1.conf');
+      const file = systemdCore.children?.find((c) => c.name === 'uplink_v1.conf');
       if (!file) throw new Error('uplink_v1.conf not found in systemd-core for test setup');
 
       file.content = 'VALID CONTENT';
 
-      // State: correctly completed previous tasks
-      const state = createTestState(fs, {
-        completedTaskIds: { [8]: ['establish-workspace-presence', 'repair-corruption'] },
-      });
+      const state = createTestState(fs, { usedShiftP: false });
+      expect(task.check(state, level)).toBe(false);
+    });
 
+    it('should complete when file is valid AND Shift+P was used', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'deploy-patch')!;
+
+      // Fix file content in FS
+      const workspace = findNodeByName(fs, 'workspace', 'dir');
+      if (!workspace) throw new Error('workspace not found in test setup');
+      const systemdCore = workspace.children?.find((c) => c.name === 'systemd-core');
+      if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
+      const file = systemdCore.children?.find((c) => c.name === 'uplink_v1.conf');
+      if (!file) throw new Error('uplink_v1.conf not found in systemd-core for test setup');
+
+      file.content = 'VALID CONTENT';
+
+      const state = createTestState(fs, { usedShiftP: true });
       expect(task.check(state, level)).toBe(true);
     });
   });

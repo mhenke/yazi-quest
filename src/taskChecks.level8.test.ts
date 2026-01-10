@@ -96,6 +96,13 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       type: 'dir' as const,
       children: [
         {
+          id: 'crash-dump',
+          name: 'crash_dump.log',
+          type: 'file' as const,
+          content: '[SYSTEM CRASH DUMP]',
+          parentId: 'systemd-core-corrupted',
+        },
+        {
           id: 'corrupted-placeholder',
           name: 'uplink_v1.conf',
           type: 'file' as const,
@@ -127,6 +134,26 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
   });
 
   describe('Task: verify-damage', () => {
+    it('should NOT complete if cursor is on decoy file (regression test)', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'verify-damage')!;
+
+      const root = findNodeByName(fs, 'root')!;
+      const home = findNodeByName(fs, 'home')!;
+      const guest = findNodeByName(fs, 'guest')!;
+      const workspace = findNodeByName(fs, 'workspace')!;
+
+      // Use explicit ID to avoid ambiguity if findNodeByName matches something else
+      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core-corrupted'];
+
+      const state = createTestState(fs, {
+        currentPath: dynamicPath,
+        cursorIndex: 0, // Pointing to crash_dump.log (alphabetically first)
+      });
+
+      expect(task.check(state, level)).toBe(false);
+    });
+
     it('should complete when previewing correct file', () => {
       const level = getLevel(8);
       const task = level.tasks.find((t) => t.id === 'verify-damage')!;
@@ -141,7 +168,7 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
 
       const state = createTestState(fs, {
         currentPath: dynamicPath,
-        cursorIndex: 0,
+        cursorIndex: 1, // Pointing to uplink_v1.conf (second item)
       });
 
       expect(task.check(state, level)).toBe(true);
