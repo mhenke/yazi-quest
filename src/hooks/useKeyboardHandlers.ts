@@ -588,6 +588,17 @@ export const useKeyboardHandlers = (
             }));
           } else if (currentItem) {
             e.preventDefault();
+            const protection = isProtected(
+              gameState.fs,
+              gameState.currentPath,
+              currentItem,
+              currentLevel,
+              'rename',
+            );
+            if (protection) {
+              showNotification(`🔒 PROTECTED: ${protection}`, 4000);
+              return;
+            }
             setGameState((prev) => ({ ...prev, mode: 'rename', inputBuffer: currentItem.name }));
           }
           break;

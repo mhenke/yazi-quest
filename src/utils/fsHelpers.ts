@@ -457,27 +457,22 @@ export function isProtected(
 
   // General node protection
   if (node.protected) {
-    return `🔒 This is a protected system file: ${node.name}`;
+    if (action === 'rename') {
+      return `This is a protected system file: ${node.name}. Re-labeling prohibited.`;
+    }
+    return `This is a protected system file: ${node.name}. Corruption/Deletion blocked.`;
   }
 
   // Level 2 specific protection for 'watcher_agent.sys'
   if (level.id === 2 && node.name === 'watcher_agent.sys' && action === 'delete') {
-    const isDel1Complete = level.tasks.find((t) => t.id === 'del-1')?.completed;
-    const isDel2Complete = level.tasks.find((t) => t.id === 'del-2')?.completed;
-    const isVerifyMetaComplete = level.tasks.find((t) => t.id === 'verify-meta')?.completed;
-    const isVerifyContentComplete = level.tasks.find((t) => t.id === 'verify-content')?.completed;
+    const isIdentity1Complete = level.tasks.find((t) => t.id === 'identify-threat-1')?.completed;
+    const isIdentity2Complete = level.tasks.find((t) => t.id === 'identify-threat-2')?.completed;
 
-    if (!isDel1Complete) {
-      return 'Navigate to ~/incoming first. (Task: del-1)';
+    if (!isIdentity1Complete) {
+      return 'Locate and inspect metadata first. (Task: 1)';
     }
-    if (!isDel2Complete) {
-      return 'Jump to the bottom of the file list. (Task: del-2)';
-    }
-    if (!isVerifyMetaComplete) {
-      return "Verify the metadata of 'watcher_agent.sys' using TAB. (Task: verify-meta)";
-    }
-    if (!isVerifyContentComplete) {
-      return "Scan the content of 'watcher_agent.sys' by scrolling the preview. (Task: verify-content)";
+    if (!isIdentity2Complete) {
+      return 'Scan file content first. (Task: 2)';
     }
   }
 

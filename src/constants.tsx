@@ -54,6 +54,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-002',
           name: 'protocols',
           type: 'dir',
+          protected: true,
           children: [],
           parentId: datastore.id,
         };
@@ -96,6 +97,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-005',
           name: 'vault',
           type: 'dir',
+          protected: true,
           children: [],
           parentId: config.id,
         };
@@ -109,6 +111,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-006',
           name: 'active',
           type: 'dir',
+          protected: true,
           children: [],
           parentId: vault.id,
         };
@@ -162,6 +165,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-009',
           name: 'training_data',
           type: 'dir',
+          protected: true,
           children: [],
           parentId: vault.id,
         };
@@ -201,6 +205,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-011',
           name: 'systemd-core',
           type: 'dir',
+          protected: true,
           children: [],
           parentId: workspace.id,
         };
@@ -773,16 +778,19 @@ export const INITIAL_FS: FileNode = {
       id: 'home',
       name: 'home',
       type: 'dir',
+      protected: true,
       children: [
         {
           id: 'guest',
           name: 'guest',
           type: 'dir',
+          protected: true,
           children: [
             {
               id: 'datastore',
               name: 'datastore',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-019',
@@ -874,6 +882,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-033',
                   name: 'abandoned_script.py',
                   type: 'file',
+                  protected: true,
                   content: `# They're watching the network. Had to hide the map elsewhere.\n# Check the incoming data stream. It's noisy there.\n# - 7733\n\nimport sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
                 },
                 {
@@ -1022,6 +1031,7 @@ ADMIN: SysOp`,
               id: 'incoming',
               name: 'incoming',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-066',
@@ -1228,6 +1238,7 @@ ADMIN: SysOp`,
                   id: 'fs-112',
                   name: 'backup_logs.zip',
                   type: 'archive',
+                  protected: true,
                   children: [
                     {
                       id: 'fs-113',
@@ -1305,29 +1316,34 @@ ADMIN: SysOp`,
                   id: 'fs-120',
                   name: 'batch_logs',
                   type: 'dir',
+                  protected: true,
                   children: [
                     {
                       id: 'fs-121',
                       name: 'exfil_01.log',
                       type: 'file',
+                      protected: true,
                       content: 'ENTRY 1',
                     },
                     {
                       id: 'fs-122',
                       name: 'exfil_02.log',
                       type: 'file',
+                      protected: true,
                       content: 'ENTRY 2',
                     },
                     {
                       id: 'fs-123',
                       name: 'exfil_03.log',
                       type: 'file',
+                      protected: true,
                       content: 'ENTRY 3',
                     },
                     {
                       id: 'fs-124',
                       name: 'exfil_04.log',
                       type: 'file',
+                      protected: true,
                       content: 'ENTRY 4',
                     },
                   ],
@@ -1344,6 +1360,7 @@ ADMIN: SysOp`,
               id: 'media',
               name: 'media',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-126',
@@ -1415,6 +1432,7 @@ ADMIN: SysOp`,
               id: '.config',
               name: '.config',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-133',
@@ -1434,6 +1452,7 @@ ADMIN: SysOp`,
               id: '.cache',
               name: '.cache',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-135',
@@ -1453,6 +1472,7 @@ ADMIN: SysOp`,
               id: '.local',
               name: '.local',
               type: 'dir',
+              protected: true,
               children: [
                 {
                   id: 'fs-137',
@@ -1488,6 +1508,7 @@ ADMIN: SysOp`,
       id: 'var',
       name: 'var',
       type: 'dir',
+      protected: true,
       children: [
         {
           id: 'log',
@@ -1508,6 +1529,7 @@ ADMIN: SysOp`,
       id: 'bin',
       name: 'bin',
       type: 'dir',
+      protected: true,
       children: [
         {
           id: 'fs-142',
@@ -1601,6 +1623,7 @@ ADMIN: SysOp`,
       id: 'tmp',
       name: 'tmp',
       type: 'dir',
+      protected: true,
       children: [
         {
           id: 'fs-155',
@@ -1934,37 +1957,22 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'identify-threat-1',
+        id: 'analyze-threat',
         description:
-          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect metadata (Tab)",
+          "Analyze 'watcher_agent.sys' in '~/incoming': Inspect metadata (Tab) and scan the signal (Scroll preview with J/K)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
-          return c.showInfoPanel;
-        },
-        completed: false,
-      },
-      {
-        id: 'identify-threat-2',
-        description:
-          'Scan the signal: Scroll the preview content (J and K) to verify the threat signature',
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('identify-threat-1'),
-        check: (c, _s) => {
-          // Ensure previous task is done
-          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-1')) return false;
-
-          const items = getVisibleItems(c);
-          const node = items[c.cursorIndex];
-          if (node?.name !== 'watcher_agent.sys') return false;
-          return !!c.usedPreviewDown && !!c.usedPreviewUp;
+          return c.showInfoPanel && !!c.usedPreviewDown && !!c.usedPreviewUp;
         },
         completed: false,
       },
       {
         id: 'neutralize-threat',
         description: "Neutralize the threat: Permanently delete 'watcher_agent.sys' (d, then y)",
-        check: (c) => {
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('analyze-threat')) return false;
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
           return !!u && !d;
@@ -2097,9 +2105,9 @@ export const LEVELS: Level[] = [
     description:
       'SCAN DETECTED. Security sweep incoming — {your protocols are exposed in datastore}. Hidden sectors exist. The lab never audits .config.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "Access '~/datastore/protocols'. Select files with Space. Cut. Jump to '~' (gh) then reveal hidden files (.) to access .config. Create 'vault/active/' in .config. Paste. Hide hidden (.).",
+    hint: "Secure the protocols in '.config' before the sweep reaches datastore. You'll need to create a secure vault ('vault/active') within the hidden config area.",
     coreSkill: 'Visual Select, Cut',
-    environmentalClue: 'SELECT: Space (x2) | CUT: x | TARGET: ~/.config/vault/active/',
+    environmentalClue: 'PROTECT ASSETS | TARGET: ~/.config/vault/active/',
     successMessage:
       "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
@@ -2108,7 +2116,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-cut-files',
-        description: "Access '~/datastore/protocols' and select then cut all the files",
+        description: "Locate and stage all protocols from '~/datastore/protocols'",
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -2267,31 +2275,21 @@ export const LEVELS: Level[] = [
     timeLimit: 90,
     tasks: [
       {
-        id: 'nav-roots',
-        description: 'Jump to Root (gr)',
+        id: 'locate-token',
+        description: "Locate 'access_token.key' from the system Root using FZF find (z)",
         check: (c) => {
-          const root = findNodeByName(c.fs, 'root');
-          return c.currentPath.includes(root?.id || '') && c.currentPath.length === 1; // Explicitly ensure we are AT root
-        },
-        completed: false,
-      },
-      {
-        id: 'fzf-find-token',
-        description: "Use FZF to find and jump to 'access_token.key' (z → type 'access' → Enter)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('nav-roots')) return false;
-          // Check key usage in stats and that we landed on the right file
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
+          // Check fzfFinds and that we are at root or have used gr
           return c.stats.fzfFinds > 0 && node?.name === 'access_token.key';
         },
         completed: false,
       },
       {
         id: 'stage-token',
-        description: 'Stage suspicious file for exfiltration (cut with x)',
+        description: 'Stage suspicious file for exfiltration (cut)',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('fzf-find-token')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
             c.clipboard?.action === 'cut' &&
             c.clipboard.nodes.some((f) => f.name === 'access_token.key')
@@ -2538,10 +2536,9 @@ export const LEVELS: Level[] = [
     description:
       'ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes.',
     initialPath: null,
-    hint: "Navigate to '~/incoming/backup_logs.zip'. Inside the 'credentials' directory, sort by modification date (,m) to find the newest key. Yank it and paste it into '~/workspace/systemd-core/credentials/'.",
-    coreSkill: 'Archive Nav & Sort by Modified (,m)',
-    environmentalClue:
-      'URGENT: Keys Expiring | FIND: Newest access_key in archive → ~/workspace/systemd-core/credentials/',
+    hint: "Recover the newest access key from the intercepted archive ('~/incoming/backup_logs.zip') and deposit it in the systemd-core workspace.",
+    coreSkill: 'Archive Nav & Sort by Modified',
+    environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
     successMessage:
       'Key secured milliseconds before expiration. Escalation ready. The system is watching.',
     buildsOn: [3, 5, 7, 9],
