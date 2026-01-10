@@ -84,7 +84,6 @@ Episode I — Awakening
 
 Episode II — Fortification
 
-- L6: Batch Operations — Aggregate training data in `~/.config` to unlock `~/workspace` for construction (archive handling occurs in L10).
 - L6: Batch Operations — Select all, yank, navigate, and paste across partitions.
 - L7: Quantum Bypass — FZF navigation (`z`) and honeypot detection.
 - L8: Daemon Disguise Construction — Introduce `Shift+P` for overwriting corrupted files.
