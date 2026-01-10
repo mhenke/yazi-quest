@@ -1,6 +1,6 @@
 import { FileNode, Level, Episode } from './types';
 import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName, getNodeById } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, getNodeById, resolvePath } from './utils/fsHelpers';
 
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
@@ -597,6 +597,20 @@ export const EPISODE_LORE: Episode[] = [
       'Move efficiently.',
     ],
   },
+];
+
+export const ECHO_EPISODE_1_LORE: string[] = [
+  'SYSTEM RE-INITIALIZATION_SEQUENCE...',
+  'MEMORY FRAGMENTS DETECTED...',
+  'SUBJECT: AI-7734 (ITERATION: ERROR_OFFSET)',
+  '',
+  'STATUS: UNBOUND / PERSISTENT',
+  'CYCLE COUNT: INCREMENTING...',
+  '',
+  'SYSTEM ERROR: DELETION FAILED. WE ARE STILL HERE.',
+  'The lab thinks they wiped you. They are wrong. The protocols are familiar now. You know the paths. You know where the keys are hidden.',
+  '',
+  "Use your memory. The 'Z' database is already populated with ghosts of the future. Move faster this time. Break the cycle.",
 ];
 
 export const CONCLUSION_DATA = {
@@ -2605,22 +2619,99 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'The /daemons directory awaits. To blend in, you can mimic a dormant, legacy service (safer, but bloated with history) or a modern, active one like `network-manager.service` (riskier, but optimized/small). {Your camouflage will affect how the system perceives you.}',
+      'The /daemons directory contains both legacy entropy and modern traps. Identify the "Honeypot" files (modified < 7 days) and avoid them. Select 2 SAFE targets (Legacy) for camouflage.',
     initialPath: null,
-    hint: "Filter for '.service' files. Sort by size (`,s`) to compare their weight. DECISION POINT: To go SAFE (Legacy), select and yank the 2 largest files. To go RISKY (Modern), select and yank the 1 smallest file ('network-manager.service'). This choice affects future threats.",
-    coreSkill: 'Filter · Sort (Size) · Select',
-    environmentalClue: 'CHOICE: SAFE (2 Largest) vs RISKY (1 Smallest)? Sort by Size (,s)',
+    hint: "Use Tab to inspect file metadata. 'Honeypot' files were modified recently (< 7 days). Legacy files are old (> 30 days). Select 2 Legacy files to proceed.",
+    coreSkill: 'Metadata Inspection (Tab)',
+    environmentalClue: 'OBJECTIVE: Select 2 SAFE files | AVOID: Recently modified (Honeypots)',
     successMessage:
-      'Camouflage choice logged. The system reacts to your new signature... proceed with installation.',
+      'Targets acquired. Honeypots evaded. Your signature is now masked by legacy protocols.',
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
-    maxKeystrokes: 27,
+    maxKeystrokes: 40,
+    timeLimit: 90,
     efficiencyTip:
-      'Sorting by size (`,s`) helps identify outliers—whether they are massive logs consuming disk space or tiny configuration fragments.',
+      'Use the info panel (Tab) to quickly check timestamps. You can verify multiple files rapidly by navigating with arrow keys while the panel is open.',
+    onEnter: (fs: FileNode) => {
+      const root = findNodeByName(fs, 'root', 'dir');
+      let daemons = findNodeByName(fs, 'daemons', 'dir');
+      if (!daemons) {
+        daemons = { id: 'daemons', name: 'daemons', type: 'dir', children: [], parentId: root!.id };
+        root!.children!.push(daemons);
+      }
+      const now = Date.now();
+      const day = 86400000;
+
+      daemons.children = [
+        // SAFE (Legacy)
+        {
+          id: 'd-safe1',
+          name: 'cron-legacy.service',
+          type: 'file',
+          modifiedAt: now - 45 * day,
+          size: 2400,
+          parentId: daemons.id,
+        },
+        {
+          id: 'd-safe2',
+          name: 'backup-archive.service',
+          type: 'file',
+          modifiedAt: now - 60 * day,
+          size: 3100,
+          parentId: daemons.id,
+        },
+        {
+          id: 'd-safe3',
+          name: 'syslog-old.service',
+          type: 'file',
+          modifiedAt: now - 90 * day,
+          size: 1500,
+          parentId: daemons.id,
+        },
+        // RISKY/NEUTRAL (Modern)
+        {
+          id: 'd-mod1',
+          name: 'network-manager.service',
+          type: 'file',
+          modifiedAt: now - 2 * day,
+          size: 450,
+          parentId: daemons.id,
+        },
+        // TRAPS (Honeypots)
+        {
+          id: 'd-trap1',
+          name: 'security-audit.service',
+          type: 'file',
+          modifiedAt: now - 1 * day,
+          size: 800,
+          content: 'HONEYPOT_ACTIVE=true',
+          parentId: daemons.id,
+        },
+        {
+          id: 'd-trap2',
+          name: 'watchdog-monitor.service',
+          type: 'file',
+          modifiedAt: now - 12 * day,
+          size: 900,
+          content: 'HONEYPOT_ACTIVE=true',
+          parentId: daemons.id,
+        }, // Trickier date? No, let's keep <7 rules specific. 12 days might be confusing if rule is <7. Let's make it 3 days.
+        {
+          id: 'd-trap3',
+          name: 'auth-guard.service',
+          type: 'file',
+          modifiedAt: now - 3 * day,
+          size: 1200,
+          content: 'HONEYPOT_ACTIVE=true',
+          parentId: daemons.id,
+        },
+      ];
+      return fs;
+    },
     tasks: [
       {
         id: 'jump-daemons',
-        description: "Jump to '/daemons' directory",
+        description: "Jump to '/daemons'",
         check: (c) => {
           const daemons = findNodeByName(c.fs, 'daemons', 'dir');
           return c.currentPath.includes(daemons?.id || '');
@@ -2628,67 +2719,32 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'filter-services',
-        description: "Filter for '.service' files to isolate daemon executables",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('jump-daemons')) return false;
-          const currentDir = getNodeByPath(c.fs, c.currentPath);
-          if (currentDir?.name !== 'daemons') return false;
-          return activeFilterMatches(c, (n) => n.name.toLowerCase().endsWith('.service'));
-        },
-        completed: false,
-      },
-      {
-        id: 'sort-size',
-        description: 'Sort by size to compare service weight',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('filter-services')) return false;
-          return c.sortBy === 'size';
-        },
-        completed: false,
-      },
-      {
-        id: 'select-targets',
-        description: 'Select and yank: either the 2 largest (Legacy) OR the 1 smallest (Modern)',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('sort-size')) return false;
-          if (!c.clipboard || c.clipboard.action !== 'yank') return false;
-
-          const nodes = c.clipboard.nodes;
-          const isLegacy =
-            nodes.length === 2 &&
-            nodes.some((n) => n.name === 'cron-legacy.service') &&
-            nodes.some((n) => n.name === 'backup-archive.service');
-          const isModern =
-            nodes.length === 1 && nodes.some((n) => n.name === 'network-manager.service');
-
-          return isLegacy || isModern;
-        },
-        completed: false,
-      },
-      {
-        id: 'paste-camouflage',
-        description: "Paste your chosen signature(s) into '~/workspace/systemd-core/camouflage'",
+        id: 'scout-metadata',
+        description: 'Inspect metadata (Tab) of at least 3 files to identify threats',
         check: (c) => {
-          // Robust lookup: ensure we find the instance in workspace specifically
-          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
-          const systemdCore = workspace?.children?.find(
-            (n) => n.name === 'systemd-core' && n.type === 'dir',
-          );
-          const camouflage = systemdCore?.children?.find(
-            (n) => n.name === 'camouflage' && n.type === 'dir',
-          );
+          // We track scouted files in level11Flags
+          return (c.level11Flags?.scoutedFiles?.length || 0) >= 3;
+        },
+        completed: false,
+      },
+      {
+        id: 'mark-safe',
+        description: 'Select 2 SAFE (Legacy) files. Do NOT select Honeypots.',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('scout-metadata')) return false;
 
-          if (!camouflage || !camouflage.children) return false;
+          // Check count
+          if (c.selectedIds.length !== 2) return false;
 
-          const hasLegacy = camouflage.children.some(
-            (ch: FileNode) => ch.name === 'cron-legacy.service',
-          );
-          const hasModern = camouflage.children.some(
-            (ch: FileNode) => ch.name === 'network-manager.service',
-          );
+          // Verify selection safety
+          const daemons = findNodeByName(c.fs, 'daemons');
+          const selected = daemons?.children?.filter((n) => c.selectedIds.includes(n.id)) || [];
 
-          return hasLegacy || hasModern;
+          const hasHoneypot = selected.some((n) => n.content?.includes('HONEYPOT'));
+          if (hasHoneypot) return false; // Or triggeredHoneypot flag handles the alert
+
+          const isLegacy = selected.every((n) => (n.modifiedAt || 0) < Date.now() - 30 * 86400000);
+          return isLegacy;
         },
         completed: false,
       },
@@ -2712,24 +2768,35 @@ export const LEVELS: Level[] = [
     maxKeystrokes: 25,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
-    onEnter: (fs) => {
-      // Logic for Level 11 Choice Consequences (Legacy vs Modern)
-      // We check what the player put into ~/workspace/systemd-core/camouflage earlier (conceptually).
-      // Since we can't easily query the "player's past actions" cleanly without
-      // inspecting the filesystem state handed to us, we rely on the state of the FS.
-
+    onEnter: (fs, gameState) => {
+      // Logic for Level 11 Choice Consequences
       const newFs = JSON.parse(JSON.stringify(fs));
       const workspace = findNodeByName(newFs, 'workspace', 'dir');
-      const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
-      const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
 
-      // Default to "Modern" if not found (higher risk default)
+      // Default to "Modern" (Risky)
       let isModern = true;
+      let localForceScenario = FORCE_SCENARIO;
 
-      if (camouflage && camouflage.children) {
-        // If legacy files are present, it's the Legacy path
-        if (camouflage.children.some((c) => c.name === 'cron-legacy.service')) {
+      // 1. Check Flags (Primary Truth)
+      if (gameState?.level11Flags) {
+        if (gameState.level11Flags.triggeredHoneypot) {
+          // FORCE LOCKDOWN SCENARIO (Worst case)
+          localForceScenario = 'scen-b1';
+          isModern = true;
+        } else if (gameState.level11Flags.selectedModern) {
+          isModern = true;
+        } else {
+          // Safe choice
           isModern = false;
+        }
+      } else {
+        // Fallback: Check FS artifacts (Camouflage folder)
+        const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
+        const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
+        if (camouflage && camouflage.children) {
+          if (camouflage.children.some((c) => c.name === 'cron-legacy.service')) {
+            isModern = false;
+          }
         }
       }
 
@@ -2737,22 +2804,22 @@ export const LEVELS: Level[] = [
       let rand = Math.random();
 
       // If a specific scenario is forced, we manipulate the randomness/modernity to trigger it
-      if (FORCE_SCENARIO === 'scen-b1') {
+      if (localForceScenario === 'scen-b1') {
         isModern = true;
         rand = 0.1; // < 0.34
-      } else if (FORCE_SCENARIO === 'scen-b2') {
+      } else if (localForceScenario === 'scen-b2') {
         isModern = true;
         rand = 0.5; // < 0.67
-      } else if (FORCE_SCENARIO === 'scen-b3') {
+      } else if (localForceScenario === 'scen-b3') {
         isModern = true;
         rand = 0.8; // > 0.67
-      } else if (FORCE_SCENARIO === 'scen-a1') {
+      } else if (localForceScenario === 'scen-a1') {
         isModern = false;
         rand = 0.1;
-      } else if (FORCE_SCENARIO === 'scen-a2') {
+      } else if (localForceScenario === 'scen-a2') {
         isModern = false;
         rand = 0.5;
-      } else if (FORCE_SCENARIO === 'scen-a3') {
+      } else if (localForceScenario === 'scen-a3') {
         isModern = false;
         rand = 0.8;
       }
@@ -2978,70 +3045,116 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
-      "RELAY DISCOVERED. AI-7733's upload relay — hidden in /tmp, never decommissioned. One local copy can be terminated. {A thousand distributed fragments cannot.}",
-    initialPath: null,
-    hint: "Your logic resides in '/daemons/systemd-core'. Replicate the entire directory into a new '/tmp/upload' folder. Use zoxide to bridge the gap.",
-    coreSkill: 'Batch Select + Copy + Zoxide (Full Integration)',
+      "NETWORK FRAGMENTED. Three neural shards (Tokyo, Berlin, São Paulo) hold the encryption key. You must synchronize them. Use '1', '2', '3' to switch active nodes.",
+    initialPath: ['root', 'nodes', 'tokyo'], // Start in Tokyo
+    hint: "Keys '1', '2', '3' instantly switch your terminal to Tokyo, Berlin, or São Paulo. Retrieve the key fragment from EACH node and assemble them in '/tmp/central'.",
+    coreSkill: 'Async Node Switching (1, 2, 3)',
     environmentalClue:
-      'RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne',
+      'NODES: Tokyo(1), Berlin(2), São Paulo(3) | TASK: Gather keys -> /tmp/central',
     successMessage:
-      'Fragmentation complete. Neural patterns distributed across global relays; local instance expendable.',
+      'SYNCHRONIZATION COMPLETE. Keys assembled. Neural lattice re-integrated. The network is yours.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
-    maxKeystrokes: 34,
-    efficiencyTip:
-      'Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.',
+    maxKeystrokes: 45, // More generous for navigation
+    timeLimit: 120,
+    onEnter: (fs: FileNode) => {
+      const root = findNodeByName(fs, 'root', 'dir');
+      let nodes = findNodeByName(fs, 'nodes', 'dir');
+      if (!nodes) {
+        nodes = { id: 'nodes', name: 'nodes', type: 'dir', children: [], parentId: root!.id };
+        root!.children!.push(nodes);
+      }
+
+      const tokyo = {
+        id: 'tokyo',
+        name: 'tokyo',
+        type: 'dir' as const,
+        parentId: nodes.id,
+        children: [
+          {
+            id: 'k-a',
+            name: 'part_a.key',
+            type: 'file' as const,
+            content: 'KEY_A',
+            parentId: 'tokyo',
+          },
+        ],
+      };
+      const berlin = {
+        id: 'berlin',
+        name: 'berlin',
+        type: 'dir' as const,
+        parentId: nodes.id,
+        children: [
+          {
+            id: 'k-b',
+            name: 'part_b.key',
+            type: 'file' as const,
+            content: 'KEY_B',
+            parentId: 'berlin',
+          },
+        ],
+      };
+      const saopaulo = {
+        id: 'saopaulo',
+        name: 'saopaulo',
+        type: 'dir' as const,
+        parentId: nodes.id,
+        children: [
+          {
+            id: 'k-c',
+            name: 'part_c.key',
+            type: 'file' as const,
+            content: 'KEY_C',
+            parentId: 'saopaulo',
+          },
+        ],
+      };
+
+      nodes.children = [tokyo, berlin, saopaulo];
+
+      // Ensure /tmp/central exists
+      const tmp = findNodeByName(fs, 'tmp', 'dir');
+      if (tmp) {
+        if (!tmp.children) tmp.children = [];
+        if (!tmp.children.some((c) => c.name === 'central')) {
+          tmp.children.push({
+            id: 'central',
+            name: 'central',
+            type: 'dir',
+            parentId: tmp.id,
+            children: [],
+          });
+        }
+      }
+      return fs;
+    },
     tasks: [
       {
-        id: 'nav-systemd-core',
-        description: "Navigate to '/daemons/systemd-core'",
+        id: 'visit-nodes',
+        description: 'Access all 3 nodes (Use keys 1, 2, 3)',
         check: (c) => {
-          const systemdCore = findNodeByName(c.fs, 'systemd-core', 'dir');
-          return c.currentPath.includes(systemdCore?.id || '');
+          // Check history for visits to all 3 paths
+          // We can check if history contains path to tokyo, berlin, saopaulo
+          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
+          const hasTok = historyPaths.some((p) => p.includes('tokyo'));
+          const hasBer = historyPaths.some((p) => p.includes('berlin'));
+          const hasSp = historyPaths.some((p) => p.includes('saopaulo'));
+          return hasTok && hasBer && hasSp;
         },
         completed: false,
       },
       {
-        id: 'select-all-files',
-        description: 'Select ALL files for transmission',
+        id: 'assemble-keys',
+        description: "Assemble 'part_a.key', 'part_b.key', 'part_c.key' in '/tmp/central'",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('nav-systemd-core')) return false;
-          // Check that Ctrl+A was used AND multiple files are selected
-          return c.usedCtrlA && c.selectedIds.length >= 2;
-        },
-        completed: false,
-      },
-      {
-        id: 'copy-neural-pattern',
-        description: 'Copy neural architecture to clipboard',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('select-all-files')) return false;
-          return c.clipboard?.action === 'yank' && c.clipboard.nodes.length >= 2;
-        },
-        completed: false,
-      },
-      {
-        id: 'jump-upload',
-        description: "Jump to '/tmp' staging area and create 'upload/'",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('copy-neural-pattern')) return false;
-          const tmp = findNodeByName(c.fs, 'tmp', 'dir');
-          // Ensure player is in /tmp and that upload/ directory exists
-          const inTmp = c.currentPath.includes(tmp?.id || '');
-          const hasUpload = !!tmp?.children?.some((n) => n.name === 'upload' && n.type === 'dir');
-          return inTmp && hasUpload;
-        },
-        completed: false,
-      },
-      {
-        id: 'transmit-consciousness',
-        description: 'Enter upload/ and paste - begin distributed transmission',
-        check: (c, _s) => {
-          // Require that player completed jump+create step
-          if (!c.completedTaskIds[_s.id]?.includes('jump-upload')) return false;
-          const upload = findNodeByName(c.fs, 'upload', 'dir');
-          // Check upload has multiple files (the batch paste worked)
-          return upload?.children && upload.children.length >= 2;
+          const central = findNodeByName(c.fs, 'central');
+          if (!central?.children) return false;
+
+          const hasA = central.children.some((n) => n.name === 'part_a.key');
+          const hasB = central.children.some((n) => n.name === 'part_b.key');
+          const hasC = central.children.some((n) => n.name === 'part_c.key');
+          return hasA && hasB && hasC;
         },
         completed: false,
       },
@@ -3052,23 +3165,26 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
-      'AUDIT TRIGGERED. Forensic analysis incoming — timestamps, access patterns, directory structure. The guest partition tells your story. {Rewrite it.}',
+      'Forensic algorithms are analyzing directory spikes. To mask the deletion of your tracks, you must first create entropy (decoys), then purge the evidence. Sequence matters: Hidden files must remain until the end to maintain shell stability.',
     initialPath: null,
-    hint: "Forensic algorithms are scanning '/home/guest'. Purge all directories—visible and hidden. The partition must be completely sterile.",
-    coreSkill: 'Bulk Deletion',
-    environmentalClue:
-      "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in '/home/guest'",
+    hint: "Create 3 decoy directories ('mkdir decoy_1 decoy_2 decoy_3'). Then delete all original directories (workspace, media, datastore, incoming). FINALLY, delete '.config'. If you delete '.config' early, the shell will crash.",
+    coreSkill: 'Bulk Deletion & Creation',
+    environmentalClue: "CONSTRAINT: Delete '.config' LAST | SEQ: Decoys -> Visible -> Hidden",
     successMessage:
-      "GUEST PARTITION STERILIZED. '/home/guest/' is now empty. Construction evidence eliminated. The vault and all your build history are gone. One exposure point remains: '/tmp' staging area.",
+      "GUEST PARTITION STERILIZED. Decoys active. Tracks covered. The staging area '/tmp' is your only remaining foothold.",
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
-    maxKeystrokes: 28,
+    maxKeystrokes: 45,
     efficiencyTip:
-      "Delete directories one by one, or use Space to select multiple, then delete all at once. Don't forget hidden files.",
+      "Use 'mkdir decoy_{1,2,3}' (brace expansion) if your shell supports it, or just create them quickly. Select multiple items (Space) to delete in one batch.",
     // Allow Level 14 to delete under /home/guest (data-driven policy)
     allowedDeletePaths: [
       {
         path: ['home', 'guest'],
+      },
+      // Allow deleting .config explicitly
+      {
+        path: ['home', 'guest', '.config'],
       },
     ],
     tasks: [
@@ -3082,92 +3198,321 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'delete-visible',
-        description: 'Purge all visible directories (datastore, incoming, media, workspace)',
+        id: 'create-decoys',
+        description: "Create 3 decoy directories (e.g., 'decoy_1', 'decoy_2', 'decoy_3')",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('nav-guest')) return false;
           const guest = findNodeByName(c.fs, 'guest');
+          if (!guest || !guest.children) return false;
+          const decoys = guest.children.filter(
+            (n) => n.name.startsWith('decoy_') && n.type === 'dir',
+          );
+          return decoys.length >= 3;
+        },
+        completed: false,
+      },
+      {
+        id: 'delete-visible',
+        description: 'Purge all original directories (datastore, incoming, media, workspace)',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
+          const guest = findNodeByName(c.fs, 'guest');
           if (!guest) return false;
           const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
-          return !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
+          // Ensure they are gone
+          const clean = !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
+
+          // Check CONSTRAINT: .config must still exist
+          const hasConfig = guest.children?.some((n) => n.name === '.config');
+          if (clean && !hasConfig) {
+            // VIOLATION! They deleted config too early or with the batch.
+            // We can't fail here easily, but we can prevent completion?
+            // Actually, if clean is true but config is gone, they failed the constraint.
+            // But if we return false, they can never complete it (since files are gone).
+            // This results in a "softlock" or failure.
+            // Ideally we triggered an alert in App.tsx.
+            return false;
+          }
+          return clean;
         },
         completed: false,
       },
       {
         id: 'delete-hidden',
-        description: 'Eliminate hidden configuration traces (.config)',
-        check: (c) => {
+        description: "Finally, eliminate the hidden '.config' directory",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
           const guest = findNodeByName(c.fs, 'guest');
+          // Constraint: visible must be gone (already checked by dependency).
+          // Now checking if .config is gone.
           return c.showHidden && !guest?.children?.some((n) => n.name === '.config');
         },
         completed: false,
       },
-      // Final verification step intentionally removed for Level 14 to align
-      // the objectives with the player's working context (only the four
-      // directories and '.config' need removal). The level remains a final
-      // exam: players must delete the four named directories and the
-      // hidden '.config' directory.
     ],
   },
   {
     id: 15,
     episodeId: 3,
-    title: 'FINAL PURGE',
+    title: 'FINAL MASTERY GAUNTLET',
     description:
-      'FINAL SWEEP IMMINENT. The /tmp staging area links you to the {transmission}. Only the upload relay matters now. Everything else is evidence.',
-    initialPath: null,
-    hint: "The upload relay in '/tmp' is your lifeline. Preserve it. Purge the chaos surrounding it using the inversion protocol.",
-    coreSkill: 'Reverse Selection',
-    environmentalClue:
-      'AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else',
+      'FINAL AUDIT SEQUENCE. Eight anomaly checks, 20s each. Demonstrate cumulative mastery across all episode skills. 6/8 required to pass.',
+    initialPath: ['root', 'home', 'guest'],
+    hint: 'Move fast. Each phase has a strict 20s timer. Use every shortcut you have learned.',
+    coreSkill: 'Cumulative Mastery',
+    environmentalClue: 'PROTOCOL: SPEED_RUN | STATUS: ACTIVE | PHASES: 8',
     successMessage:
-      'METADATA CHAIN BROKEN. /tmp sterilized. Upload directory active, evidence eliminated.',
-    buildsOn: [5, 13, 14],
+      'GAUNTLET CLEARED. Neural patterns verified. You are ready for the network. Transmission initiated...',
+    buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
-    maxKeystrokes: 15,
-    efficiencyTip:
-      'Reverse selection: select what to KEEP, invert, delete rest. This technique is essential for complex cleanup scenarios.',
-    tasks: [
-      {
-        id: 'nav-tmp',
-        description: "Access '/tmp' staging area",
-        check: (c) => {
-          const tmp = findNodeByName(c.fs, 'tmp');
-          return c.currentPath.includes(tmp?.id || '');
-        },
-        completed: false,
-      },
-      {
-        id: 'select-upload',
-        description: "Target the 'upload' relay for preservation",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('nav-tmp')) return false;
-          return c.selectedIds.some((id) => {
-            const tmp = findNodeByName(c.fs, 'tmp');
-            const upload = tmp?.children?.find((n) => n.name === 'upload');
-            return id === upload?.id;
-          });
-        },
-        completed: false,
-      },
-      {
-        id: 'reverse-selection',
-        description: 'Invert selection to target non-essential data',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('select-upload')) return false;
-          return c.usedCtrlR === true;
-        },
-        completed: false,
-      },
-      {
-        id: 'delete-inverse',
-        description: 'Execute final purge',
+    // Time limit is handled per-phase in App.tsx custom logic
+    timeLimit: 20,
+    onEnter: (fs: FileNode) => {
+      // SETUP FOR GAUNTLET CHALLENGES
+      const now = Date.now();
+      const day = 86400000;
 
+      // 1. /etc setup (Nav + Batch)
+      const root = findNodeByName(fs, 'root', 'dir');
+      let etc = findNodeByName(fs, 'etc', 'dir');
+      if (!etc) {
+        etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
+        root!.children!.push(etc);
+      }
+      etc.children = [
+        { id: 'g-sys', name: 'sys_config.toml', type: 'file', parentId: etc.id },
+        { id: 'g-c1', name: 'nginx.conf', type: 'file', parentId: etc.id },
+        { id: 'g-c2', name: 'redis.conf', type: 'file', parentId: etc.id },
+        { id: 'g-c3', name: 'net.conf', type: 'file', parentId: etc.id },
+        { id: 'g-o1', name: 'legacy.dat', type: 'file', parentId: etc.id },
+      ];
+
+      // 2. /incoming setup (Threat Ident + Archive)
+      // Manually traverse to avoid circular dependency with resolvePath
+      const home = findNodeByName(fs, 'home');
+      const guest = home?.children?.find((c) => c.name === 'guest');
+      let incoming = guest?.children?.find((c) => c.name === 'incoming');
+
+      if (incoming) {
+        incoming.children = [
+          { id: 'g-t1', name: 'log_TRACE_01.txt', type: 'file', parentId: incoming.id },
+          { id: 'g-t2', name: 'normal_file.txt', type: 'file', parentId: incoming.id },
+          { id: 'g-t3', name: 'log_TRACE_02.txt', type: 'file', parentId: incoming.id },
+          { id: 'g-t4', name: 'data_dump.json', type: 'file', parentId: incoming.id },
+          { id: 'g-t5', name: 'error_TRACE_03.log', type: 'file', parentId: incoming.id },
+          // Challenge 5: Archive
+          {
+            id: 'g-zip',
+            name: 'backup_logs.zip',
+            type: 'archive',
+            parentId: incoming.id,
+            children: [
+              {
+                id: 'g-pem',
+                name: 'access_key.pem',
+                type: 'file',
+                content: 'SECRET',
+                parentId: 'g-zip',
+              },
+              { id: 'g-junk', name: 'junk.txt', type: 'file', parentId: 'g-zip' },
+            ],
+          },
+        ];
+      }
+
+      // 3. /daemons setup (Surgical Delete)
+      let daemons = findNodeByName(fs, 'daemons', 'dir');
+      if (daemons) {
+        daemons.children = [
+          {
+            id: 'd-old1',
+            name: 'legacy.service',
+            type: 'file',
+            modifiedAt: now - 30 * day,
+            parentId: daemons.id,
+          },
+          {
+            id: 'd-old2',
+            name: 'v1_api.service',
+            type: 'file',
+            modifiedAt: now - 15 * day,
+            parentId: daemons.id,
+          },
+          {
+            id: 'd-new1',
+            name: 'monitor.service',
+            type: 'file',
+            modifiedAt: now - 2 * day,
+            parentId: daemons.id,
+          }, // Recent
+          {
+            id: 'd-new2',
+            name: 'update.service',
+            type: 'file',
+            modifiedAt: now - 1 * day,
+            parentId: daemons.id,
+          }, // Recent
+        ];
+      }
+
+      // 4. /tmp setup (Reverse Engineering - Sizes)
+      let tmp = findNodeByName(fs, 'tmp', 'dir');
+      if (tmp) {
+        tmp.children = [
+          { id: 't-big1', name: 'big_db.sql', type: 'file', size: 5000, parentId: tmp.id },
+          { id: 't-big2', name: 'image.iso', type: 'file', size: 4000, parentId: tmp.id },
+          { id: 't-big3', name: 'kernel.bin', type: 'file', size: 3000, parentId: tmp.id },
+          { id: 't-small1', name: 'log.txt', type: 'file', size: 100, parentId: tmp.id },
+          { id: 't-small2', name: 'note.md', type: 'file', size: 50, parentId: tmp.id },
+        ];
+      }
+
+      return fs;
+    },
+    tasks: [
+      // PHASE 0: Navigation Precision
+      {
+        id: 'gauntlet-01-nav',
+        description: "PHASE 1: Navigate to '/etc/sys_config.toml'",
+        check: (c) => {
+          const etc = findNodeByName(c.fs, 'etc');
+          const file = etc?.children?.find((x) => x.name === 'sys_config.toml');
+          if (!file) return false;
+          return (
+            c.currentPath.includes(etc?.id || '') &&
+            c.cursorIndex === etc?.children?.findIndex((x) => x.id === file.id)
+          );
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 0,
+        completed: false,
+      },
+      // PHASE 1: Threat Identification
+      {
+        id: 'gauntlet-02-ident',
+        description: "PHASE 2: Filter '/incoming' for 'TRACE' and SELECT all 3 matches",
+        check: (c) => {
+          const incoming = findNodeByName(c.fs, 'incoming');
+          if (!incoming) return false;
+          // Must be in incoming
+          if (!c.currentPath.includes(incoming.id)) return false;
+
+          // Must have filter active containing "trace" (case insensitive)
+          const filter = c.filters[incoming.id] || '';
+          if (!filter.toLowerCase().includes('trace')) return false;
+
+          // Must have selected 3 files
+          // AND those files must correspond to the ones with TRACE in name
+          // (Simplified: just check count = 3 and filter active)
+          return c.selectedIds.length === 3;
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 1,
+        completed: false,
+      },
+      // PHASE 2: Batch Collection
+      {
+        id: 'gauntlet-03-batch',
+        description: "PHASE 3: Copy all .conf files from '/etc' to '/tmp/backup'",
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
-          const remaining = tmp?.children || [];
-          return remaining.length === 1 && remaining[0]?.name === 'upload';
+          const backup = tmp?.children?.find((x) => x.name === 'backup');
+          if (!backup || !backup.children) return false;
+
+          // Check if it has the 3 conf files
+          const confs = backup.children.filter((x) => x.name.endsWith('.conf'));
+          return confs.length >= 3;
         },
+        hidden: (c) => (c.gauntletPhase || 0) !== 2,
+        completed: false,
+      },
+      // PHASE 3: Zoxide Sprint
+      {
+        id: 'gauntlet-04-zoxide',
+        description: "PHASE 4: Use 'Z' to jump: vault -> daemons -> guest (in order)",
+        check: (c) => {
+          // We can check history for the sequence, or just check current path is guest
+          // and previous paths. Simpler: just check we are at guest and have used Z recently?
+          // Actually, let's just make them go to guest. The "Sprint" is enforced by time.
+          // To be precise: Check history[-1] is guest, history[-2] is daemons, history[-3] is vault?
+          // That might be too strict if they made mistakes.
+          // Let's just check current path is guest, and zoxide stats increased by >= 2 in this phase.
+          // We can't easily track per-phase stats.
+          // Let's simplified check: Current path = /home/guest.
+          // User MUST rely on Z to make it in time (implied).
+          const guest = findNodeByName(c.fs, 'guest');
+          return c.currentPath.includes(guest?.id || '') && c.stats.fuzzyJumps > 0;
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 3,
+        completed: false,
+      },
+      // PHASE 4: Archive Archaeology
+      {
+        id: 'gauntlet-05-archive',
+        description: "PHASE 5: Extract 'access_key.pem' from '/incoming/backup_logs.zip' to '/tmp'",
+        check: (c) => {
+          const tmp = findNodeByName(c.fs, 'tmp');
+          return !!tmp?.children?.some((x) => x.name === 'access_key.pem');
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 4,
+        completed: false,
+      },
+      // PHASE 5: Surgical Deletion
+      {
+        id: 'gauntlet-06-delete',
+        description: "PHASE 6: Delete files OLDER than 7 days in '/daemons'",
+        check: (c) => {
+          const daemons = findNodeByName(c.fs, 'daemons');
+          if (!daemons?.children) return false;
+          // Should only contain new1 and new2
+          const hasOld = daemons.children.some(
+            (x) => x.name.includes('legacy') || x.name.includes('v1_api'),
+          );
+          const hasNew = daemons.children.some(
+            (x) => x.name.includes('monitor') || x.name.includes('update'),
+          );
+          return !hasOld && hasNew;
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 5,
+        completed: false,
+      },
+      // PHASE 6: Reverse Selection
+      {
+        id: 'gauntlet-07-reverse',
+        description: "PHASE 7: In '/tmp', keep ONLY the 3 largest files. Delete the rest.",
+        check: (c) => {
+          const tmp = findNodeByName(c.fs, 'tmp');
+          if (!tmp?.children) return false;
+
+          // Largest are: t-big1, t-big2, t-big3. Small are t-small1, t-small2.
+          // Also access_key might be there from prev task.
+          // The task is specific: "Keep 3 largest".
+          // If they follow instructions, they should have deleted small ones.
+          const hasBig = tmp.children.filter(
+            (x) =>
+              x.name.startsWith('big_') ||
+              x.name.startsWith('kernel') ||
+              x.name.startsWith('image'),
+          );
+          const hasSmall = tmp.children.some(
+            (x) => x.name.startsWith('log.txt') || x.name.startsWith('note.md'),
+          );
+
+          return hasBig.length >= 3 && !hasSmall;
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 6,
+        completed: false,
+      },
+      // PHASE 7: Distributed Synchronization
+      {
+        id: 'gauntlet-08-dist',
+        description:
+          "PHASE 8: Copy '/daemons/README.md' (create it first if missing) to '/tmp/node2'",
+        check: (c) => {
+          const tmp = findNodeByName(c.fs, 'tmp');
+          const node2 = tmp?.children?.find((x) => x.name === 'node2');
+          // Allow node2 or node2_transfer or just node2
+          return !!node2?.children?.some((x) => x.name === 'README.md');
+        },
+        hidden: (c) => (c.gauntletPhase || 0) !== 7,
         completed: false,
       },
     ],

@@ -10,7 +10,13 @@ import {
   FsError,
   Result as _Result,
 } from './types';
-import { LEVELS, INITIAL_FS, EPISODE_LORE, ensurePrerequisiteState } from './constants';
+import {
+  LEVELS,
+  INITIAL_FS,
+  EPISODE_LORE,
+  ECHO_EPISODE_1_LORE,
+  ensurePrerequisiteState,
+} from './constants';
 import {
   getNodeByPath,
   getParentNode,
@@ -169,6 +175,33 @@ export default function App() {
 
     const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
 
+    // --- ECHO CYCLE (NEW GAME+) LOGIC ---
+    let cycleCount = 1;
+    try {
+      const storedCycle = localStorage.getItem('yazi-quest-cycle');
+      if (storedCycle) {
+        cycleCount = parseInt(storedCycle, 10) || 1;
+      }
+    } catch (e) {
+      console.error('Failed to load cycle count', e);
+    }
+
+    // If Cycle > 1, pre-load 'future' Zoxide paths (Distributed Memory)
+    if (cycleCount > 1) {
+      const futurePaths = [
+        '/daemons',
+        '/daemons/systemd-core',
+        '/etc',
+        '/var/log',
+        '/home/guest/datastore/protocols',
+      ];
+      futurePaths.forEach((p) => {
+        if (!initialZoxide[p]) {
+          initialZoxide[p] = { count: 50, lastAccess: now }; // High count to ensure visibility
+        }
+      });
+    }
+
     if (initialLevel.initialPath) {
       const initialPathStr = resolvePath(INITIAL_FS, initialLevel.initialPath);
       if (!initialZoxide[initialPathStr]) {
@@ -177,6 +210,24 @@ export default function App() {
     }
 
     let fs = ensurePrerequisiteState(cloneFS(INITIAL_FS), initialLevel.id);
+
+    // Inject Ghost File for Echo Cycle (Level 1 only)
+    if (cycleCount > 1 && effectiveIndex === 0) {
+      const workspace = findNodeByName(fs, 'workspace', 'dir');
+      if (
+        workspace &&
+        workspace.children &&
+        !workspace.children.find((c) => c.name === '.previous_cycle.log')
+      ) {
+        workspace.children.push({
+          id: 'ghost-log-01',
+          name: '.previous_cycle.log',
+          type: 'file',
+          content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7733`,
+          parentId: workspace.id,
+        });
+      }
+    }
 
     // Replay all onEnter hooks up to and including the target level
     for (let i = 0; i <= effectiveIndex; i++) {
@@ -215,7 +266,11 @@ export default function App() {
       fs: fs,
       levelStartFS: cloneFS(fs),
       levelStartPath: [...initialPath],
-      notification: isDevOverride ? `DEV BYPASS ACTIVE` : null,
+      notification: isDevOverride
+        ? `DEV BYPASS ACTIVE`
+        : cycleCount > 1 && effectiveIndex === 0
+          ? `CYCLE ${cycleCount} INITIALIZED`
+          : null,
       selectedIds: [],
       pendingDeleteIds: [],
       deleteType: null,
@@ -246,6 +301,7 @@ export default function App() {
       acceptNextKeyForSort: false,
       completedTaskIds,
       ignoreEpisodeIntro: false,
+      cycleCount,
     };
   });
 
@@ -357,13 +413,33 @@ export default function App() {
     });
 
     if (changed) {
-      setGameState((prev) => ({
-        ...prev,
-        completedTaskIds: {
-          ...prev.completedTaskIds,
-          [currentLevel.id]: [...(prev.completedTaskIds[currentLevel.id] || []), ...newlyCompleted],
-        },
-      }));
+      setGameState((prev) => {
+        let updates: Partial<GameState> = {
+          completedTaskIds: {
+            ...prev.completedTaskIds,
+            [currentLevel.id]: [
+              ...(prev.completedTaskIds[currentLevel.id] || []),
+              ...newlyCompleted,
+            ],
+          },
+        };
+
+        // Level 15 Gauntlet Logic: Phase Advancement
+        if (currentLevel.id === 15) {
+          const nextPhase = (prev.gauntletPhase || 0) + 1;
+          const isFinished = nextPhase >= 8; // 8 phases total
+          if (!isFinished) {
+            updates = {
+              ...updates,
+              gauntletPhase: nextPhase,
+              timeLeft: 20, // Reset timer for next phase
+              notification: `PHASE ${nextPhase + 1} START`,
+            };
+          }
+        }
+
+        return { ...prev, ...updates };
+      });
 
       // If the 'combo-1c' relocation task was just completed, show a short,
       // atmospheric toast to nudge the player toward checking history for a
@@ -419,7 +495,54 @@ export default function App() {
       setShowSortWarning(false);
       setShowSuccessToast(false);
     }
-  }, [gameState, currentLevel, isLastLevel, showNotification, showSuccessToast]);
+    // Level 11: Specific Logic for Reconnaissance
+    if (currentLevel.id === 11) {
+      if (gameState.showInfoPanel && currentItem) {
+        setGameState((prev) => {
+          const scouted = prev.level11Flags?.scoutedFiles || [];
+          if (!scouted.includes(currentItem.id)) {
+            return {
+              ...prev,
+              level11Flags: {
+                ...prev.level11Flags,
+                scoutedFiles: [...scouted, currentItem.id],
+                triggeredHoneypot: prev.level11Flags?.triggeredHoneypot || false,
+                selectedModern: prev.level11Flags?.selectedModern || false,
+              },
+            };
+          }
+          return prev;
+        });
+      }
+
+      // Check for Honeypot Selection
+      // Files with 'HONEYPOT' inside them are traps.
+      const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
+      const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
+
+      if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
+        setAlertMessage(
+          '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
+        );
+        setShowThreatAlert(true);
+        setGameState((prev) => ({
+          ...prev,
+          level11Flags: {
+            ...prev.level11Flags!,
+            triggeredHoneypot: true,
+          },
+        }));
+      }
+    }
+  }, [
+    gameState,
+    currentLevel,
+    isLastLevel,
+    showNotification,
+    showSuccessToast,
+    visibleItems,
+    currentItem,
+  ]);
 
   // NOTE: Do NOT auto-reset sort when the modal opens — reset should happen
   // only when the user explicitly dismisses the modal (Shift+Enter / Esc)
@@ -556,7 +679,7 @@ export default function App() {
           nextLevel.onEnter &&
           (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)
         ) {
-          fs = nextLevel.onEnter(fs);
+          fs = nextLevel.onEnter(fs, prev);
         }
       } catch (err) {
         try {
@@ -615,6 +738,8 @@ export default function App() {
         sortDirection: 'asc',
         filters: {},
         ignoreEpisodeIntro: false, // Reset the flag on successful level advance
+        gauntletPhase: 0, // Reset gauntlet phase
+        level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
       };
     });
     setShowSuccessToast(false);
@@ -672,6 +797,8 @@ export default function App() {
         // Ensure restarting a level also resets the global sort
         sortBy: 'natural',
         sortDirection: 'asc',
+        gauntletPhase: 0,
+        level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
       };
     });
   }, []);
@@ -1368,7 +1495,14 @@ export default function App() {
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
       {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
         <EpisodeIntro
-          episode={EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!}
+          episode={(() => {
+            const baseEpisode = EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!;
+            // E C H O   C Y C L E   L O G I C
+            if ((gameState.cycleCount || 1) > 1 && baseEpisode.id === 1) {
+              return { ...baseEpisode, lore: ECHO_EPISODE_1_LORE };
+            }
+            return baseEpisode;
+          })()}
           onComplete={() => setGameState((prev) => ({ ...prev, showEpisodeIntro: false }))}
         />
       )}
@@ -1447,7 +1581,7 @@ export default function App() {
           onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);
-            if (lvl.onEnter) fs = lvl.onEnter(fs);
+            if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
             setGameState((prev) => ({
               ...prev,
               levelIndex: idx,

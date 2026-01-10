@@ -393,6 +393,28 @@ export const useKeyboardHandlers = (
       currentLevel: Level,
       advanceLevel: () => void,
     ) => {
+      // Level 13: Async Distributed Node Switching
+      if (currentLevel.id === 13) {
+        const NODES: Record<string, { path: string[]; label: string }> = {
+          '1': { path: ['root', 'nodes', 'tokyo'], label: 'TOKYO' },
+          '2': { path: ['root', 'nodes', 'berlin'], label: 'BERLIN' },
+          '3': { path: ['root', 'nodes', 'saopaulo'], label: 'SÃO PAULO' },
+        };
+
+        if (NODES[e.key]) {
+          const target = NODES[e.key];
+          setGameState((prev) => ({
+            ...prev,
+            currentPath: target.path,
+            cursorIndex: 0,
+            notification: `>>> SYNC: ACTIVE NODE CHANGED TO ${target.label} <<<`,
+            history: [...prev.history, prev.currentPath], // Persist jump in history
+            future: [], // Clear future
+          }));
+          return;
+        }
+      }
+
       switch (e.key) {
         case 'j':
         case 'ArrowDown':

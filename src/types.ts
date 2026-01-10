@@ -7,6 +7,7 @@ export interface FileNode {
   parentId?: string | null; // Null for root
   children?: FileNode[]; // Only for type 'dir' or 'archive'
   content?: string; // Only for type 'file'
+  size?: number; // File size in bytes (simulated)
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
   protected?: boolean;
@@ -35,7 +36,7 @@ export interface Level {
   tasks: LevelTask[];
   initialPath?: string[] | null; // Path of IDs (null = stay in current)
   hint: string;
-  onEnter?: (fs: FileNode) => FileNode; // Setup hook to modify FS before level starts
+  onEnter?: (fs: FileNode, gameState?: GameState) => FileNode; // Setup hook to modify FS before level starts
   seedMode?: 'always' | 'fresh'; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
@@ -190,6 +191,14 @@ export interface GameState {
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level
   ignoreEpisodeIntro?: boolean;
+  cycleCount?: number;
+  gauntletPhase?: number; // 0-8 for Level 15 micro-challenges
+  phaseStartTime?: number; // Timestamp for current phase start
+  level11Flags?: {
+    triggeredHoneypot: boolean;
+    selectedModern: boolean;
+    scoutedFiles: string[]; // IDs of files inspected with Tab
+  };
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
