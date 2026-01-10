@@ -193,12 +193,15 @@ export interface GameState {
   ignoreEpisodeIntro?: boolean;
   cycleCount?: number;
   gauntletPhase?: number; // 0-8 for Level 15 micro-challenges
+  gauntletScore?: number; // Number of successful phases passed in Level 15
   phaseStartTime?: number; // Timestamp for current phase start
   level11Flags?: {
     triggeredHoneypot: boolean;
     selectedModern: boolean;
     scoutedFiles: string[]; // IDs of files inspected with Tab
   };
+  threatLevel: number; // 0-100 Global threat level
+  threatStatus: string; // CALM, ANALYZING, TRACING, BREACH
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

@@ -58,6 +58,8 @@ const initialGameState: GameState = {
   acceptNextKeyForSort: false,
   completedTaskIds: {},
   ignoreEpisodeIntro: false,
+  threatLevel: 0,
+  threatStatus: 'CALM',
 };
 
 describe('useKeyboardHandlers', () => {

@@ -302,6 +302,8 @@ export default function App() {
       completedTaskIds,
       ignoreEpisodeIntro: false,
       cycleCount,
+      threatLevel: 0,
+      threatStatus: 'CALM',
     };
   });
 
@@ -424,14 +426,34 @@ export default function App() {
           },
         };
 
-        // Level 15 Gauntlet Logic: Phase Advancement
+        // Level 15 Gauntlet Logic: Phase Advancement (Success Case)
         if (currentLevel.id === 15) {
           const nextPhase = (prev.gauntletPhase || 0) + 1;
+          const currentScore = (prev.gauntletScore || 0) + 1;
           const isFinished = nextPhase >= 8; // 8 phases total
-          if (!isFinished) {
+
+          if (isFinished) {
+            // Check Score Threshold (6/8)
+            if (currentScore < 6) {
+              return {
+                ...prev,
+                ...updates,
+                isGameOver: true,
+                gameOverReason: 'keystrokes', // Re-using existing modal types for simplicity (or add custom reason)
+                notification: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)`,
+              };
+            }
+            // If >= 6, let standard completion logic take over (notify success)
+            updates = {
+              ...updates,
+              gauntletScore: currentScore,
+              notification: `GAUNTLET CLEARED: Score ${currentScore}/8`,
+            };
+          } else {
             updates = {
               ...updates,
               gauntletPhase: nextPhase,
+              gauntletScore: currentScore,
               timeLeft: 20, // Reset timer for next phase
               notification: `PHASE ${nextPhase + 1} START`,
             };
@@ -576,6 +598,53 @@ export default function App() {
         }
 
         if (prev.timeLeft === null || prev.timeLeft <= 0) {
+          // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
+          if (currentLevel.id === 15) {
+            const nextPhase = (prev.gauntletPhase || 0) + 1;
+            const isFinished = nextPhase >= 8;
+
+            if (isFinished) {
+              // Final check on failure (same as success path check)
+              const score = prev.gauntletScore || 0;
+              if (score < 6) {
+                clearInterval(timer);
+                return {
+                  ...prev,
+                  isGameOver: true,
+                  gameOverReason: 'time',
+                  notification: `MASTERY FAILED: Score ${score}/8.`,
+                };
+              }
+              // If >= 6 (unlikely on failure step, but theoretically possible if they failed last 2), pass.
+              // We rely on standard completion check which happens elsewhere? No, timer is separate.
+              // Actually, if they Time Out on the LAST phase, they haven't completed the task.
+              // So standard completion logic won't fire. We must force completion or game over.
+              // If they passed 6/8 previously, they win even if they time out on #8?
+              // "Forgiveness" implies yes.
+              // So if score >= 6, we mark ALL tasks complete to force progression?
+              // Or just show Outro/Next?
+              // Let's force level advancement.
+              clearInterval(timer);
+              return {
+                ...prev,
+                // Mark all L15 tasks as complete to trick the completion check
+                completedTaskIds: {
+                  ...prev.completedTaskIds,
+                  [15]: currentLevel.tasks.map((t) => t.id),
+                },
+                notification: `GAUNTLET SURVIVED: Score ${score}/8`,
+              };
+            }
+
+            // Intermediate Phase Failure
+            return {
+              ...prev,
+              gauntletPhase: nextPhase,
+              timeLeft: 20,
+              notification: `PHASE FAILED! Next Phase...`,
+            };
+          }
+
           clearInterval(timer);
           return { ...prev, isGameOver: true, gameOverReason: 'time' };
         }
@@ -660,6 +729,66 @@ export default function App() {
     gameState.fs,
   ]);
 
+  // --- Global Threat Monitor (Audit 2.1) ---
+  useEffect(() => {
+    if (gameState.isGameOver || gameState.showEpisodeIntro || isGamePaused) return;
+
+    setGameState((prev) => {
+      let newThreat = prev.threatLevel;
+      let newStatus = prev.threatStatus;
+      const episodeId = currentLevel.episodeId;
+
+      // Base decay (threat slowly drops if not aggravated)
+      if (newThreat > 0) newThreat -= 0.1;
+
+      // Episode I: Time Pressure (Detection Risk)
+      if (episodeId === 1 && prev.timeLeft !== null && currentLevel.timeLimit) {
+        const timeRatio = 1 - prev.timeLeft / currentLevel.timeLimit;
+        const targetThreat = timeRatio * 100;
+        if (newThreat < targetThreat) newThreat = targetThreat;
+      }
+
+      // Episode II: Resource Usage (Keystroke Exhaustion)
+      else if (episodeId === 2 && currentLevel.maxKeystrokes) {
+        const keyRatio = prev.keystrokes / currentLevel.maxKeystrokes;
+        const targetThreat = keyRatio * 100;
+        if (newThreat < targetThreat) newThreat = targetThreat;
+      }
+
+      // Episode III: Active Countermeasures
+      else if (episodeId === 3) {
+        newThreat += 0.2; // Passive rise
+        if (prev.level11Flags?.triggeredHoneypot) {
+          if (newThreat < 90) newThreat = 90;
+        }
+      }
+
+      // Clamp & Status
+      if (newThreat < 0) newThreat = 0;
+      if (newThreat > 100) newThreat = 100;
+
+      if (newThreat < 20) newStatus = 'CALM';
+      else if (newThreat < 50) newStatus = 'ANALYZING';
+      else if (newThreat < 80) newStatus = 'TRACING';
+      else newStatus = 'BREACH';
+
+      if (Math.abs(newThreat - prev.threatLevel) < 0.1 && newStatus === prev.threatStatus) {
+        return prev;
+      }
+
+      return { ...prev, threatLevel: newThreat, threatStatus: newStatus };
+    });
+  }, [
+    gameState.timeLeft,
+    gameState.keystrokes,
+    gameState.isGameOver,
+    gameState.showEpisodeIntro,
+    isGamePaused,
+    currentLevel.episodeId,
+    currentLevel.timeLimit,
+    currentLevel.maxKeystrokes,
+  ]);
+
   const advanceLevel = useCallback(() => {
     setGameState((prev) => {
       const nextIdx = prev.levelIndex + 1;
@@ -739,6 +868,7 @@ export default function App() {
         filters: {},
         ignoreEpisodeIntro: false, // Reset the flag on successful level advance
         gauntletPhase: 0, // Reset gauntlet phase
+        gauntletScore: 0,
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
       };
     });
@@ -798,6 +928,7 @@ export default function App() {
         sortBy: 'natural',
         sortDirection: 'asc',
         gauntletPhase: 0,
+        gauntletScore: 0,
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
       };
     });

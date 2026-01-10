@@ -1934,46 +1934,30 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'del-1',
-        description: "Jump to '~/incoming' (gi)",
-        check: (c) => {
-          const u = findNodeByName(c.fs, 'incoming');
-          return c.currentPath.includes(u?.id || '') && c.usedGI === true;
-        },
-        completed: false,
-      },
-      {
-        id: 'del-2',
-        description: 'Jump to bottom of file list (G)',
-        check: (c) => {
-          const u = findNodeByName(c.fs, 'incoming');
-          return !c.currentPath.includes(u?.id || '') ? false : c.usedG === true;
-        },
-        completed: false,
-      },
-      {
-        id: 'verify-meta',
-        description: "Verify metadata: Open Info Panel (Tab) on '~/incoming/watcher_agent.sys'",
+        id: 'locate-beacon',
+        description: "Locate the signal source: Jump to '~/incoming' (gi) and go to the bottom (G)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return c.showInfoPanel && node?.name === 'watcher_agent.sys';
+          return node?.name === 'watcher_agent.sys';
         },
         completed: false,
       },
       {
-        id: 'verify-content',
-        description: 'Scan content: Scroll preview down (J) and up (K)',
+        id: 'analyze-signal',
+        description:
+          "Verify the threat: Inspect metadata (Tab) or content (J/K) to confirm it is 'watcher_agent.sys'",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          return node?.name === 'watcher_agent.sys' && !!c.usedPreviewDown && !!c.usedPreviewUp;
+          if (node?.name !== 'watcher_agent.sys') return false;
+          return c.showInfoPanel || (!!c.usedPreviewDown && !!c.usedPreviewUp);
         },
         completed: false,
       },
       {
-        id: 'del-3',
-        description: "Purge '~/incoming/watcher_agent.sys'",
+        id: 'neutralize-threat',
+        description: "Neutralize the threat: Permanently delete 'watcher_agent.sys' (d, then y)",
         check: (c) => {
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');

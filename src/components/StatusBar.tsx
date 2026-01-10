@@ -134,7 +134,34 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* 4. Timer / Metrics (Right Aligned) */}
       <div className="flex bg-zinc-800">
-        {/* Level Complete Trigger */}
+        {/* Threat Monitor (Audit 2.1) - Replaces basic notification area when high threat, or sits alongside? 
+            Let's put it to the left of the timer/notification area. 
+        */}
+
+        {/* Threat Status Indicator */}
+        <div
+          className={`px-2 flex items-center gap-2 border-l border-zinc-700 font-bold uppercase tracking-widest text-[10px] ${
+            state.threatLevel > 80
+              ? 'bg-red-600 text-black animate-pulse'
+              : state.threatLevel > 50
+                ? 'bg-orange-600 text-black'
+                : state.threatLevel > 20
+                  ? 'bg-yellow-600 text-black'
+                  : 'bg-zinc-800 text-zinc-500'
+          }`}
+        >
+          <span className="hidden sm:inline">LAB_STATUS:</span>
+          <span>{state.threatStatus}</span>
+          {/* Visual Bar */}
+          <div className="w-12 h-1.5 bg-black/30 rounded-full overflow-hidden ml-1">
+            <div
+              className="h-full bg-current transition-all duration-500 ease-out"
+              style={{ width: `${state.threatLevel}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Level Complete Trigger notification logic... */}
         {allTasksComplete ? (
           <>
             {level.successMessage && (
