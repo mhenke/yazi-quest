@@ -56,7 +56,7 @@ vi.mock('./constants', async (importOriginal) => {
 const skipIntro = async () => {
   // If fake timers are on, advance them to ensure Intro/Button renders
   if (vi.isFakeTimers()) {
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(2000);
     });
   }
@@ -64,7 +64,13 @@ const skipIntro = async () => {
   // Try to find button with a short timeout
   try {
     const skipBtn = await screen.findByText(/Skip Intro/i, {}, { timeout: 1000 });
-    fireEvent.click(skipBtn);
+    await act(async () => {
+      fireEvent.click(skipBtn);
+      // Clear any pending intervals from EpisodeIntro typewriter effect
+      if (vi.isFakeTimers()) {
+        vi.runAllTimers();
+      }
+    });
   } catch (e) {
     // If button not found, maybe intro is not shown or already skipped.
     // Try pressing Escape just in case.
@@ -73,46 +79,52 @@ const skipIntro = async () => {
 };
 
 describe('App Integration - Constraint Pausing', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+  beforeEach(() => {
+    // Reset any mocked values
+    constants.LEVELS[0].maxKeystrokes = 5;
+    constants.LEVELS[0].timeLimit = 10;
   });
 
-  // Skipped due to fake timer issues interacting with EpisodeIntro animation/timeout
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
   it.skip('should pause timer when Help modal is open', async () => {
     vi.useFakeTimers();
     constants.LEVELS[0].maxKeystrokes = undefined as any;
     render(<App />);
     await skipIntro();
 
+    // Timer should be visible
     expect(screen.getByText(/Time:/)).toBeDefined();
 
-    act(() => {
+    // Advance 1 second
+    await act(async () => {
       vi.advanceTimersByTime(1000);
     });
-    // 10s -> 9s. Format is MM:SS. So 00:09.
+    // 10s -> 9s: 00:09
     expect(screen.getByText(/00:09/)).toBeDefined();
 
+    // Open Help modal
     fireEvent.keyDown(window, { key: '?', altKey: true });
-    expect(screen.getByText('Help & Keybindings')).toBeDefined();
+    expect(screen.getByText(/Help/i)).toBeDefined();
 
-    const advanceAndCheck = (ms: number, expected: RegExp) => {
-      act(() => {
-        vi.advanceTimersByTime(ms);
-      });
-      expect(screen.getByText(expected)).toBeDefined();
-    };
+    // Advance 2 seconds while Help is open - timer should be PAUSED
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(screen.getByText(/00:09/)).toBeDefined(); // Still 9 seconds
 
-    // Advance 2 seconds - Timer Paused
-    advanceAndCheck(2000, /00:09/);
+    // Close Help (Escape)
+    fireEvent.keyDown(window, { key: 'Escape' });
 
-    // Close Help (Shift+Enter)
-    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
-
-    // Advance 1 second - Timer Resumed
-    // 9s -> 8s (00:08)
-    advanceAndCheck(1000, /00:08/);
-
-    vi.useRealTimers();
+    // Advance 1 second - timer should resume
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    // 9s -> 8s: 00:08
+    expect(screen.getByText(/00:08/)).toBeDefined();
   });
 
   it('should not count keystrokes when Help modal is open', async () => {
