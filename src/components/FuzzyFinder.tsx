@@ -176,7 +176,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 ${isZoxide ? 'right-[30%] lg:right-[34%]' : ''} z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? 'border-2 border-purple-500/30' : 'border border-zinc-900'}`}
+      className={`absolute inset-0 z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? 'border-2 border-purple-500/30' : 'border border-zinc-900'}`}
     >
       <div className="px-4 py-2 text-[11px] text-zinc-500 flex items-center gap-3 border-b border-zinc-900">
         <span className={`${accentTextClass} font-semibold tabular-nums`}>{countDisplay}</span>

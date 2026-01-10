@@ -1177,19 +1177,48 @@ export default function App() {
         case 'Escape':
           setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
           break;
-        case 'j':
         case 'ArrowDown':
           setGameState((prev) => ({
             ...prev,
             fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
           }));
           break;
-        case 'k':
         case 'ArrowUp':
           setGameState((prev) => ({
             ...prev,
             fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
           }));
+          break;
+        case 'n':
+          if (e.ctrlKey) {
+            setGameState((prev) => ({
+              ...prev,
+              fuzzySelectedIndex: Math.min(
+                candidates.length - 1,
+                (prev.fuzzySelectedIndex || 0) + 1,
+              ),
+            }));
+          } else {
+            setGameState((prev) => ({
+              ...prev,
+              inputBuffer: prev.inputBuffer + e.key,
+              fuzzySelectedIndex: 0,
+            }));
+          }
+          break;
+        case 'p':
+          if (e.ctrlKey) {
+            setGameState((prev) => ({
+              ...prev,
+              fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
+            }));
+          } else {
+            setGameState((prev) => ({
+              ...prev,
+              inputBuffer: prev.inputBuffer + e.key,
+              fuzzySelectedIndex: 0,
+            }));
+          }
           break;
         case 'Backspace':
           setGameState((prev) => ({
@@ -1631,6 +1660,100 @@ export default function App() {
     }
   };
 
+  const handleFuzzySelect = (path: string, isZoxide: boolean, pathIds?: string[]) => {
+    if (isZoxide) {
+      // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
+      const parts = path.split('/').filter(Boolean);
+      let cur: FileNode | undefined = gameState.fs;
+      const idPath: string[] = [gameState.fs.id];
+      let found = true;
+      for (const part of parts) {
+        if (!cur?.children) {
+          found = false;
+          break;
+        }
+        const next = cur.children.find((c: FileNode) => c.name === part);
+        if (!next) {
+          found = false;
+          break;
+        }
+        idPath.push(next.id);
+        cur = next;
+      }
+
+      if (found) {
+        const now = Date.now();
+        const notification =
+          gameState.levelIndex === 6 ? '>> QUANTUM TUNNEL ESTABLISHED <<' : `Jumped to ${path}`;
+
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          currentPath: idPath,
+          cursorIndex: 0,
+          notification,
+          stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+          zoxideData: {
+            ...prev.zoxideData,
+            [path]: {
+              count: (prev.zoxideData[path]?.count || 0) + 1,
+              lastAccess: now,
+            },
+          },
+          history: [...prev.history, prev.currentPath],
+          future: [],
+          usedPreviewDown: false,
+          usedPreviewUp: false,
+        }));
+      } else {
+        // Fallback: if path resolution fails, close dialog
+        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+      }
+    } else {
+      // FZF click/select handling: pathIds contains node id path relative to currentPath
+      if (pathIds && Array.isArray(pathIds)) {
+        const fullPathAbs =
+          Array.isArray(pathIds) && pathIds[0] === gameState.fs.id
+            ? pathIds
+            : [...gameState.currentPath, ...pathIds];
+        const targetDir = fullPathAbs.slice(0, -1);
+        const fileId = fullPathAbs[fullPathAbs.length - 1];
+
+        const parentNode = getNodeByPath(gameState.fs, targetDir);
+
+        let sortedChildren = parentNode?.children || [];
+        if (!gameState.showHidden) {
+          sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
+        }
+        sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
+
+        const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
+
+        setGameState((prev) => {
+          const targetDirNode = getNodeByPath(prev.fs, targetDir);
+          const newFilters = { ...prev.filters };
+
+          return {
+            ...prev,
+            mode: 'normal',
+            currentPath: targetDir,
+            cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+            filters: newFilters,
+            inputBuffer: '',
+            history: [...prev.history, prev.currentPath],
+            future: [],
+            notification: `Found: ${path}`,
+            usedPreviewDown: false,
+            usedPreviewUp: false,
+            stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+          };
+        });
+      } else {
+        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+      }
+    }
+  };
+
   if (isLastLevel) {
     return <OutroSequence />;
   }
@@ -1964,6 +2087,14 @@ export default function App() {
               onRenameSubmit={handleRenameConfirm}
               onRenameCancel={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
             />
+
+            {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+              <FuzzyFinder
+                gameState={gameState}
+                onSelect={handleFuzzySelect}
+                onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))}
+              />
+            )}
           </div>
 
           <PreviewPane
@@ -1972,112 +2103,6 @@ export default function App() {
             gameState={gameState}
             previewScroll={gameState.previewScroll}
           />
-
-          {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-            <FuzzyFinder
-              gameState={gameState}
-              onSelect={(path, isZoxide, pathIds) => {
-                if (isZoxide) {
-                  // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
-                  const parts = path.split('/').filter(Boolean);
-                  let cur: FileNode | undefined = gameState.fs;
-                  const idPath: string[] = [gameState.fs.id];
-                  let found = true;
-                  for (const part of parts) {
-                    if (!cur?.children) {
-                      found = false;
-                      break;
-                    }
-                    const next = cur.children.find((c: FileNode) => c.name === part);
-                    if (!next) {
-                      found = false;
-                      break;
-                    }
-                    idPath.push(next.id);
-                    cur = next;
-                  }
-
-                  if (found) {
-                    const now = Date.now();
-                    const notification =
-                      gameState.levelIndex === 6
-                        ? '>> QUANTUM TUNNEL ESTABLISHED <<'
-                        : `Jumped to ${path}`;
-
-                    setGameState((prev) => ({
-                      ...prev,
-                      mode: 'normal',
-                      currentPath: idPath,
-                      cursorIndex: 0,
-                      notification,
-                      stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                      zoxideData: {
-                        ...prev.zoxideData,
-                        [path]: {
-                          count: (prev.zoxideData[path]?.count || 0) + 1,
-                          lastAccess: now,
-                        },
-                      },
-                      history: [...prev.history, prev.currentPath],
-                      future: [],
-                      usedPreviewDown: false,
-                      usedPreviewUp: false,
-                    }));
-                  } else {
-                    // Fallback: if path resolution fails, close dialog
-                    setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-                  }
-                } else {
-                  // FZF click/select handling: pathIds contains node id path relative to currentPath
-                  if (pathIds && Array.isArray(pathIds)) {
-                    const fullPathAbs =
-                      Array.isArray(pathIds) && pathIds[0] === gameState.fs.id
-                        ? pathIds
-                        : [...gameState.currentPath, ...pathIds];
-                    const targetDir = fullPathAbs.slice(0, -1);
-                    const fileId = fullPathAbs[fullPathAbs.length - 1];
-
-                    const parentNode = getNodeByPath(gameState.fs, targetDir);
-
-                    let sortedChildren = parentNode?.children || [];
-                    if (!gameState.showHidden) {
-                      sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
-                    }
-                    sortedChildren = sortNodes(
-                      sortedChildren,
-                      gameState.sortBy,
-                      gameState.sortDirection,
-                    );
-
-                    const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
-
-                    setGameState((prev) => {
-                      const targetDirNode = getNodeByPath(prev.fs, targetDir);
-                      const newFilters = { ...prev.filters };
-
-                      return {
-                        ...prev,
-                        mode: 'normal',
-                        currentPath: targetDir,
-                        cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-                        filters: newFilters,
-                        inputBuffer: '',
-                        history: [...prev.history, prev.currentPath],
-                        future: [],
-                        notification: `Found: ${path}`,
-                        usedPreviewDown: false,
-                        usedPreviewUp: false,
-                        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-                      };
-                    });
-                  } else {
-                    setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-                  }
-                }
-              }}
-              onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))}
-            />
-          )}
         </div>
 
         <StatusBar

@@ -2290,7 +2290,7 @@ export const LEVELS: Level[] = [
     description:
       'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. {The lab sets honeypots.}\n\n2026-01-05T22:02:36.099Z',
     initialPath: null,
-    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → Enter). Cut it (x). Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
+    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → use Ctrl+n/p to select → Enter). Cut it (x). Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
       "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Verify → Abort",
@@ -2298,6 +2298,8 @@ export const LEVELS: Level[] = [
     buildsOn: [1],
     leadsTo: [8, 12],
     timeLimit: 90,
+    efficiencyTip:
+      'When using FZF (z), typing filters the list. Use `Ctrl+n` (next) and `Ctrl+p` (previous) to navigate the results without leaving the input field.',
     tasks: [
       {
         id: 'nav-to-root',
