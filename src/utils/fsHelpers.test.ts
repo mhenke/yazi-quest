@@ -528,7 +528,7 @@ describe('fsHelpers - Protection', () => {
         episodeId: 1,
         title: 'Test L2',
         hint: '',
-        tasks: [{ id: 'analyze-threat', description: '', check: () => false, completed: false }],
+        tasks: [{ id: 'identify-threat-2', description: '', check: () => false, completed: false }],
       };
 
       const result = isProtected(
@@ -539,7 +539,7 @@ describe('fsHelpers - Protection', () => {
         'delete',
       );
 
-      expect(result).toContain('Analyze threat');
+      expect(result).toContain('Complete threat analysis');
     });
   });
 });

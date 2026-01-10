@@ -158,9 +158,9 @@ describe('Task Check Functions - Episode I', () => {
   });
 
   describe('Level 2: THREAT NEUTRALIZATION', () => {
-    it('Task: analyze-threat - should complete when on watcher_agent.sys with panel and scroll', () => {
+    it('Task: identify-threat-1 - should complete when on watcher_agent.sys with panel', () => {
       const level = getLevel(2);
-      const task = level.tasks.find((t) => t.id === 'analyze-threat')!;
+      const task = level.tasks.find((t) => t.id === 'identify-threat-1')!;
 
       const incoming = findNodeByName(fs, 'incoming', 'dir')!;
 
@@ -175,8 +175,6 @@ describe('Task Check Functions - Episode I', () => {
         currentPath: ['root', 'home', 'guest', incoming.id],
         cursorIndex: watcherIndex,
         showInfoPanel: true,
-        usedPreviewDown: true,
-        usedPreviewUp: true,
       });
 
       expect(task.check(state, level)).toBe(true);
@@ -191,7 +189,7 @@ describe('Task Check Functions - Episode I', () => {
       incoming.children = incoming.children?.filter((c) => c.name !== 'watcher_agent.sys');
 
       const state = createTestState(fs, {
-        completedTaskIds: { [level.id]: ['analyze-threat'] },
+        completedTaskIds: { [level.id]: ['identify-threat-1', 'identify-threat-2'] },
       });
 
       expect(task.check(state, level)).toBe(true);
