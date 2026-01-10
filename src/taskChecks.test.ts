@@ -158,9 +158,23 @@ describe('Task Check Functions - Episode I', () => {
   });
 
   describe('Level 2: THREAT NEUTRALIZATION', () => {
-    it('Task: identify-threat-1 - should complete when on watcher_agent.sys with panel', () => {
+    it('Task: nav-incoming - should complete when in incoming directory with usedGI', () => {
       const level = getLevel(2);
-      const task = level.tasks.find((t) => t.id === 'identify-threat-1')!;
+      const task = level.tasks.find((t) => t.id === 'nav-incoming')!;
+
+      const incoming = findNodeByName(fs, 'incoming', 'dir')!;
+
+      const state = createTestState(fs, {
+        currentPath: ['root', 'home', 'guest', incoming.id],
+        usedGI: true,
+      });
+
+      expect(task.check(state, level)).toBe(true);
+    });
+
+    it('Task: inspect-threat - should complete when on watcher_agent.sys with panel and usedG', () => {
+      const level = getLevel(2);
+      const task = level.tasks.find((t) => t.id === 'inspect-threat')!;
 
       const incoming = findNodeByName(fs, 'incoming', 'dir')!;
 
@@ -175,6 +189,8 @@ describe('Task Check Functions - Episode I', () => {
         currentPath: ['root', 'home', 'guest', incoming.id],
         cursorIndex: watcherIndex,
         showInfoPanel: true,
+        usedG: true,
+        completedTaskIds: { [level.id]: ['nav-incoming'] }, // Prereq
       });
 
       expect(task.check(state, level)).toBe(true);
@@ -189,7 +205,7 @@ describe('Task Check Functions - Episode I', () => {
       incoming.children = incoming.children?.filter((c) => c.name !== 'watcher_agent.sys');
 
       const state = createTestState(fs, {
-        completedTaskIds: { [level.id]: ['identify-threat-1', 'identify-threat-2'] },
+        completedTaskIds: { [level.id]: ['nav-incoming', 'inspect-threat', 'identify-threat-2'] },
       });
 
       expect(task.check(state, level)).toBe(true);

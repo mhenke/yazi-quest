@@ -1947,7 +1947,7 @@ export const LEVELS: Level[] = [
     description:
       '{TRACKING BEACON ACTIVE}. Something in the incoming stream is reporting your location. Every millisecond it runs, the lab narrows its search.',
     initialPath: null,
-    hint: "Jump to '~/incoming' (gi). Use G to drop to the bottom. Use Tab to inspect metadata and J/K to review content. Once verified, press d, then y to confirm the purge.",
+    hint: "Jump to '~/incoming' (gi). (Tip: 'g' is the 'Go' prefix; check the other targets when you open the g dialog). Use G to drop to bottom. Inspect (Tab), verify (J/K), then purge (d, y).",
     coreSkill: 'Inspect & Purge (Tab, J/K, d)',
     environmentalClue:
       "THREAT: watcher_agent.sys in '~/incoming' (gi) | TACTIC: Navigate → G → Tab → Preview → Delete",
@@ -1957,14 +1957,26 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'identify-threat-1',
+        id: 'nav-incoming',
         description:
-          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect metadata (Tab)",
+          "Open the goto dialog (g). Pause to review other options then navigate to '~/incoming' (i)",
+        check: (c) => {
+          const u = findNodeByName(c.fs, 'incoming');
+          // Check that we are in the incoming directory
+          return !!u && c.currentPath.includes(u.id) && c.usedGI === true;
+        },
+        completed: false,
+      },
+      {
+        id: 'inspect-threat',
+        description: "Locate 'watcher_agent.sys' (G) and inspect metadata (Tab)",
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('nav-incoming'),
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
-          return c.showInfoPanel;
+          // Must have used G to jump to bottom where the file is
+          return c.showInfoPanel && c.usedG === true;
         },
         completed: false,
       },
@@ -1973,7 +1985,7 @@ export const LEVELS: Level[] = [
         description:
           'Scan the signal: Scroll the preview content (J and K) to verify the threat signature',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-1')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('inspect-threat')) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
@@ -1983,7 +1995,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'neutralize-threat',
-        description: "Neutralize the threat: Permanently delete 'watcher_agent.sys' (d, then y)",
+        description: "Neutralize the threat: Delete 'watcher_agent.sys' (d, then y)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('identify-threat-2')) return false;
           const u = findNodeByName(c.fs, 'incoming');
