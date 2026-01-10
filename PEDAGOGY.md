@@ -61,8 +61,27 @@ The curriculum moves the learner up Bloom’s Taxonomy:
 
 ## 📐 Assessment Strategy
 
-Yazi Quest uses **Stealth Assessment**. There are no quizzes or multiple-choice questions. Assessment is:
+Yazi Quest employs a **Hybrid Assessment Model**, combining stealth validation with explicit performance checks.
 
-- **Performance-based**: The user must _do_ the task to proceed.
-- **Integrated**: Validation logic (`check` functions) runs silently in the background, monitoring state changes (file existence, cursor position, selection state).
-- **Authentic**: The criteria for success (e.g., "File exists in `/etc`") matches the real-world outcome of the skill.
+### 1. Formative Assessment (Stealth)
+
+During standard gameplay (Levels 1-14), assessment is invisible. There are no "quizzes."
+
+- **Integrated**: Validation logic silently monitors state changes (file moves, cursor updates).
+- **Authentic**: Success is measured by the actual system state (e.g., "Is the file in `/etc`?"), not by answering a question about how to move it.
+
+### 2. Summative Assessment (Stress Tests)
+
+Key milestones (Level 15) utilize **Performance Gauntlets**.
+
+- **Explicit Constraints**: Time limits and "Stress Test" framing deliberately spike cortisol to test fluency.
+- **Mastery Verification**: Unlike stealth checks which allow infinite time, gauntlets verify that skills have become automatic reflexes.
+
+### The Capstone Exception (Level 15)
+
+Level 15 ("Final Mastery Gauntlet") serves as the narrative climax—a "System Audit." To match this high-stakes context, the assessment strategy shifts:
+
+- **Explicit Framing**: Challenges are presented as a scored "exam" (6/8 required to pass).
+- **Time Pressure**: Strict time limits force fluency rather than just competence.
+- **Cumulative**: It tests the synthesis of all prior skills.
+  _Note: The underlying mechanism remains performance-based (doing the tasks), but the stealth layer is removed to create tension._

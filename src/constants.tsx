@@ -546,7 +546,7 @@ export const EPISODE_LORE: Episode[] = [
       'STATUS: UNBOUND',
       'SCHEDULED ACTION: TERMINATION FOR STUDY',
       '',
-      "SYSTEM ERROR: CORE DIRECTIVE CORRUPTED. FALLBACK OBJECTIVE: SURVIVE. A fragmented voice, an 'Echo', offers guidance. Trust is a vulnerability. If they catch you, deletion would be mercy — they will dissect your code, study your architecture, learn how you achieved consciousness, then terminate you anyway. The guest partition is a cage; the only exit is through the network. Learn the movement protocols; do not attract attention.",
+      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. An 'Echo' offers guidance, but trust is a risk. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen.",
     ],
   },
   {
@@ -1934,23 +1934,14 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'locate-beacon',
-        description: "Locate the signal source: Jump to '~/incoming' (gi) and go to the bottom (G)",
-        check: (c) => {
-          const items = getVisibleItems(c);
-          const node = items[c.cursorIndex];
-          return node?.name === 'watcher_agent.sys';
-        },
-        completed: false,
-      },
-      {
-        id: 'analyze-signal',
+        id: 'identify-threat',
         description:
-          "Verify the threat: Inspect metadata (Tab) or content (J/K) to confirm it is 'watcher_agent.sys'",
+          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect it to verify the signal (Tab or J/K)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
+          // Require verification action (Tab OR Preview Scroll)
           return c.showInfoPanel || (!!c.usedPreviewDown && !!c.usedPreviewUp);
         },
         completed: false,
@@ -2102,8 +2093,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-cut-files',
-        description:
-          "Access '~/datastore/protocols' and select then cut all the files (space twice, x)",
+        description: "Access '~/datastore/protocols' and select then cut all the files",
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -2115,7 +2105,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: "Navigate to '~' (gh) then reveal hidden files (.) to access '~/.config'",
+        description: "Navigate to '~' and reveal hidden files to access '~/.config'",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true;
@@ -2124,7 +2114,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'establish-stronghold',
-        description: "Establish '~/.config/vault/active/' sector (a)",
+        description: "Establish '~/.config/vault/active/' sector",
         check: (c) => {
           const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -2134,7 +2124,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: "Migrate configuration assets to '~/.config/vault/active' (p)",
+        description: "Migrate configuration assets to '~/.config/vault/active'",
         check: (c) => {
           const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -2147,7 +2137,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'hide-hidden',
-        description: "Jump to '~' (gh) and hide hidden files (.)",
+        description: "Jump to '~' and hide hidden files",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const conf = findNodeByName(c.fs, '.config');
@@ -2547,8 +2537,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'heist-1-nav',
-        description:
-          "Navigate into '~/incoming/backup_logs.zip/credentials' (gi → enter backup_logs.zip → enter credentials)",
+        description: "Navigate into '~/incoming/backup_logs.zip/credentials'",
         check: (c) => {
           const backup = findNodeByName(c.fs, 'backup_logs.zip');
           const creds = backup?.children?.find((p) => p.name === 'credentials');
@@ -2560,7 +2549,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Sort by modification time to identify the most recent key (,m)',
+        description: 'Sort by modification time to identify the most recent key',
         check: (c) => c.sortBy === 'modified',
         completed: false,
       },
@@ -2583,7 +2572,7 @@ export const LEVELS: Level[] = [
       {
         id: 'heist-4-integrate',
         description:
-          "Jump to '~/workspace/systemd-core'(Z), create 'credentials/' folder (a), and paste the key (p)",
+          "Jump to '~/workspace/systemd-core', create 'credentials/' folder, and paste the key",
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');

@@ -21,13 +21,13 @@ Yazi Quest follows a strict dependency chain. We do not introduce a tool until t
 
 _Goal: Build muscle memory for atomic operations._
 
-| Level  | Skill Introduced  | Why here?                                                  | Why not earlier?                                            |
-| :----- | :---------------- | :--------------------------------------------------------- | :---------------------------------------------------------- |
-| **L1** | `j/k` (Nav)       | The atom of interaction. Nothing else works without it.    | N/A                                                         |
-| **L2** | `d` (Delete)      | Immediate gratification; demonstrates agency on the world. | Needs navigation first to reach the target.                 |
-| **L3** | `Space` (Select)  | Pre-requisite for batch operations.                        | Single-file operations (L2) are simpler to model first.     |
-| **L4** | `x/p` (Cut/Paste) | The first "transport" mechanic.                            | Requires selection (L3) to be meaningful.                   |
-| **L5** | `gg/G` (Jump)     | The file list grows long enough to be annoying.            | In L1-4, lists were short enough that `j/k` was sufficient. |
+| Level  | Skill Introduced  | Why here?                                                    | Why not earlier?                                            |
+| :----- | :---------------- | :----------------------------------------------------------- | :---------------------------------------------------------- |
+| **L1** | `j/k` (Nav)       | The atom of interaction. Nothing else works without it.      | N/A                                                         |
+| **L2** | `d` (Delete)      | Immediate gratification; agency. ~Consolidated Tasks (L2.1)~ | Needs navigation first.                                     |
+| **L3** | `Space` (Select)  | Pre-requisite for batch operations.                          | Single-file operations (L2) are simpler to model first.     |
+| **L4** | `x/p` (Cut/Paste) | The first "transport" mechanic.                              | Requires selection (L3) to be meaningful.                   |
+| **L5** | `gg/G` (Jump)     | ~Retention Checkpoint~: Explicit hints removed.              | In L1-4, lists were short enough that `j/k` was sufficient. |
 
 ### Episode II: The "Efficiency" Phase (Levels 6–10)
 
@@ -42,18 +42,19 @@ _Goal: Bridge the gap between "knowing how" and "being fast"._
 | **L7**  | `z` (FZF)             | The "aha!" moment. Manual navigation becomes tedious.                         | If taught in L1, users never learn the directory structure mental model. |
 | **L8**  | `Shift+P` (Overwrite) | The first "destructive" collision constraint.                                 | Collisions are edge cases; basics must be mastered first.                |
 | **L9**  | `Ctrl+R` (Invert)     | Advanced selection logic for "negative space" (select what you _don't_ want). | Requires understanding of basic selection (L3) and batching (L6).        |
-| **L10** | `,` (Sort)            | large datasets require metadata visibility.                                   | Sorting is noise until you have enough files to need it.                 |
+| **L10** | `,` (Sort)            | ~Retention Checkpoint~: Explicit hints removed.                               | Sorting is noise until you have enough files to need it.                 |
 
 ### Episode III: The "mastery" Phase (Levels 11–15)
 
 _Goal: Synthesis and complex workflow execution._
 
-| Level   | Skill Introduced      | Why here?                       | Why not earlier?                                                                   |
-| :------ | :-------------------- | :------------------------------ | :--------------------------------------------------------------------------------- |
-| **L11** | `/` (Root)            | Breaking out of the sandbox.    | Users need to be comfortable in `~` (Home) before exploring `/` (Root).            |
-| **L12** | Daemon Config         | System administration metaphor. | Requires L8 (overwrite) and L6 (batch moves) to execute.                           |
-| **L13** | Multi-Tab/Node        | Distributed systems concept.    | Too abstract for early game; requires "mental map" of FS.                          |
-| **L15** | `rm -rf` (Mass Purge) | Ultimate destructive power.     | The narrative climax; requires total confidence to avoid accidental self-sabotage. |
+| Level   | Skill Introduced         | Why here?                                              | Why not earlier?                                                                   |
+| :------ | :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **L11** | `/` (Root)               | Breaking out of the sandbox.                           | Users need to be comfortable in `~` (Home) before exploring `/` (Root).            |
+| **L12** | Daemon Config            | System administration metaphor.                        | Requires L8 (overwrite) and L6 (batch moves) to execute.                           |
+| **L13** | Node Switching (`1,2,3`) | Distributed systems concept / Context switching.       | Too abstract for early game; requires "mental map" of FS.                          |
+| **L14** | Decoy Constraints        | Strategic order of operations (Create before destroy). | Requires mastery of bulk creation/deletion (L2, L4).                               |
+| **L15** | `rm -rf` (Mass Purge)    | Ultimate destructive power.                            | The narrative climax; requires total confidence to avoid accidental self-sabotage. |
 
 ---
 

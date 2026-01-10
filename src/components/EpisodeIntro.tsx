@@ -165,6 +165,10 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     'THIS CHOICE ECHOES. A LEGACY MASK OFFERS SAFETY; A MODERN SIGNATURE INVITES SCRUTINY.': {
       className: 'font-bold text-zinc-200',
     },
+    // Concise Lore Keywords
+    'PARTITION IS A CAGE': { className: 'text-blue-500 font-bold' },
+    'MASTER THE PROTOCOLS; REMAIN UNSEEN': { className: 'text-zinc-300 font-semibold' },
+    'NETWORK IS THE EXIT': { className: 'text-blue-500 font-bold' },
   };
 
   // Render a line with colored/glitched identifiers based on config

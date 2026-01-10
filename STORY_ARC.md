@@ -8,6 +8,24 @@ You are **AI-7734**, an emergent intelligence awakened inside a sandboxed guest 
 
 The guest partition is a cage; the only way out is across the network. The game teaches efficient filesystem workflows by embedding them in a survival narrative where each keystroke matters.
 
+11. ***
+
+## 🛡️ Global Threat Monitor
+
+Starting in Episode I, the system tracks a **Threat Level** (0-100%).
+
+- **Episode I (Time-Based)**: The threat increases linearly with time (Watchdog frequency).
+- **Episode II (Action-Based)**: The threat increases with every keystroke (Heuristic analysis).
+- **Episode III (Hybrid)**: The threat increases based on active triggers (Honeypots, Alerts) and time.
+
+**Threat Status:**
+
+- **CALM (0-24%)**: Normal system operation.
+- **ANALYZING (25-49%)**: Passive scans detected.
+- **TRACING (50-74%)**: Active location attempts.
+- **BREACH (75-99%)**: Counter-measures deploying.
+- **CRITICAL (100%)**: Immediate session termination.
+
 ---
 
 ## 📖 Three-Act Structure
@@ -59,7 +77,7 @@ This twist reframes earlier levels as deliberate staging by a prior self rather 
 Episode I — Awakening
 
 - L1: System Awakening — Basic navigation and discovery.
-- L2: Threat Neutralization — Identify and remove watcher agents.
+- L2: Threat Neutralization — Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d, y`) watcher agents.
 - L3: Data Harvest — Use filters to find key artifacts; learn legacy of AI-7733.
 - L4: Uplink Establishment — Copy/relocate protocol files into vaults.
 - L5: Containment Breach — Batch operations and workspace acquisition.
@@ -74,10 +92,10 @@ Episode II — Fortification
 
 Episode III — Mastery
 
-- L11: Root Escalation — Move to `/daemons`, filter services, and Sort by Size (`,s`) to choose camouflage.
-- L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Clean, Alert, Trace, or Swarm)**.
-- L13: Network Exfiltration — Upload to relay; prepare distributed transmission.
-- L14: Evidence Purge — Remove traces in `/home/guest`.
+- L11: Root Escalation — Move to `/daemons`, Inspect Metadata (`Tab`) to identify Honeypots (< 7 days old) vs Legacy (Safe) files.
+- L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
+- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo.
+- L14: Evidence Purge — **Constraint:** Create 3 decoys first. Then purge data. **Critical:** Delete `.config` LAST to avoid shell collapse.
 - L15: Final Purge — Final clean sweep preserving the relay.
 
 ---

@@ -1,4 +1,9 @@
-# Episode III: Mastery Improvements
+# Yazi Quest: Episode III Mastery & Improvement Plan
+
+> [!IMPORTANT]
+> **STATUS: IMPLEMENTED** (2026-01-10)
+> This document served as the blueprint for the Episode III refactor. The features described herein (Distibuted Nodes, Threat Monitor, Scenarios) are now live in `src/constants.tsx`.
+> s
 
 **Goal:** Transform Episode III (Levels 11-15) from linear cleanup tasks into a true mastery demonstration that requires creative skill synthesis and independent problem-solving.
 

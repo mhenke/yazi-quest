@@ -605,4 +605,14 @@ Yazi Quest's narrative is strong, but the learning design is shallow. The game t
 3. Achieve mastery grades demonstrating efficiency improvements
 4. Transfer skills to real terminal usage (validate via user studies)
 
-**Estimated Total Effort:** 6-7 weeks (one developer, full-time) for Phases 1-4.
+\*\*
+
+## 6. Resolution Status (2026-01-10 Update)
+
+The following high-priority items have been addressed in the recent "Episode III Mastery" refactor:
+
+- **[RESOLVED] 1.3 Hidden Tasks**: Level 7 `abort-operation` has been refactored with better foreshadowing and environmental clues.
+- **[RESOLVED] 2.1 Engagement Cliff**: A Global Threat Monitor has been implemented, tracking threat levels across all episodes (Time-Based -> Action-Based -> Hybrid).
+- **[RESOLVED] 2.4 Randomization**: Level 12 now uses deterministic scenarios (Traffic Alert, Trace, Swarm) based on player choices in Level 11 (Legacy vs Modern).
+- **[RESOLVED] 3.2 Compound Challenges**: Level 13 now features "Async Distributed" node switching (Keys 1, 2, 3), requiring synthesis of navigation and key management.
+- **[RESOLVED] 4.1 Passive Conclusion**: The finale has been overhauled with active "Decoy Creation" constraints (Level 14) and a "Final Purge" gauntlet (Level 15).
