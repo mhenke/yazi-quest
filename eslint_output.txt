@@ -1,0 +1,160 @@
+
+/home/mhenke/Projects/yazi-quest/index.tsx
+  11:14  warning  Caution: `ReactDOM` also has a named export `createRoot`. Check if you meant to write `import {createRoot} from 'react-dom/client'` instead  import/no-named-as-default-member
+
+/home/mhenke/Projects/yazi-quest/src/App.test.tsx
+    3:36  warning  'beforeEach' is defined but never used    @typescript-eslint/no-unused-vars
+    6:13  warning  'sounds' is defined but never used        @typescript-eslint/no-unused-vars
+   46:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:12  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+   83:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/mhenke/Projects/yazi-quest/src/App.tsx
+     6:12  warning  '_Level' is defined but never used                                                                                                       @typescript-eslint/no-unused-vars
+     9:15  warning  '_Linemode' is defined but never used                                                                                                    @typescript-eslint/no-unused-vars
+    11:13  warning  '_Result' is defined but never used                                                                                                      @typescript-eslint/no-unused-vars
+    22:24  warning  '_getAllDirectories' is defined but never used                                                                                           @typescript-eslint/no-unused-vars
+    32:8   warning  Using exported name 'StatusBar' as identifier for default import                                                                         import/no-named-as-default
+    55:8   warning  '/home/mhenke/Projects/yazi-quest/src/glitch.css' imported multiple times                                                                import/no-duplicates
+    56:8   warning  '/home/mhenke/Projects/yazi-quest/src/glitch-text-3.css' imported multiple times                                                         import/no-duplicates
+    58:8   warning  '/home/mhenke/Projects/yazi-quest/src/glitch.css' imported multiple times                                                                import/no-duplicates
+    59:8   warning  '/home/mhenke/Projects/yazi-quest/src/glitch-text-3.css' imported multiple times                                                         import/no-duplicates
+   111:23  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   113:9   warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   113:37  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   116:9   warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   122:26  warning  Variable Assigned to Object Injection Sink                                                                                               security/detect-object-injection
+   129:9   warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   176:12  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   177:9   warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   185:21  warning  Variable Assigned to Object Injection Sink                                                                                               security/detect-object-injection
+   296:24  warning  Caution: `React` also has a named export `useMemo`. Check if you meant to write `import {useMemo} from 'react'` instead                  import/no-named-as-default-member
+   302:18  warning  Caution: `React` also has a named export `useMemo`. Check if you meant to write `import {useMemo} from 'react'` instead                  import/no-named-as-default-member
+   449:30  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   550:25  warning  Variable Assigned to Object Injection Sink                                                                                               security/detect-object-injection
+   577:7   warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   578:17  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+   699:62  warning  Function Call Object Injection Sink                                                                                                      security/detect-object-injection
+   771:60  warning  Function Call Object Injection Sink                                                                                                      security/detect-object-injection
+   820:28  warning  Variable Assigned to Object Injection Sink                                                                                               security/detect-object-injection
+  1218:6   warning  React Hook useEffect has missing dependencies: 'isGamePaused' and 'showSortWarning'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  1451:25  warning  Variable Assigned to Object Injection Sink                                                                                               security/detect-object-injection
+  1642:68  warning  Function Call Object Injection Sink                                                                                                      security/detect-object-injection
+  1736:35  warning  Generic Object Injection Sink                                                                                                            security/detect-object-injection
+  1774:29  warning  'targetDirNode' is assigned a value but never used                                                                                       @typescript-eslint/no-unused-vars
+
+/home/mhenke/Projects/yazi-quest/src/components/CelebrationConfetti.tsx
+  55:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/mhenke/Projects/yazi-quest/src/components/CelebrationConfetti.tsx:55:9
+  53 |         }
+  54 |
+> 55 |         setParticles(newParticles);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |     }, []);
+  57 |
+  58 |     return (  react-hooks/set-state-in-effect
+  69:25  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/ban-ts-comment
+
+/home/mhenke/Projects/yazi-quest/src/components/EpisodeIntro.tsx
+   18:20  warning  Caution: `React` also has a named export `useMemo`. Check if you meant to write `import {useMemo} from 'react'` instead  import/no-named-as-default-member
+   46:22  warning  Generic Object Injection Sink                                                                                            security/detect-object-injection
+   94:26  warning  Generic Object Injection Sink                                                                                            security/detect-object-injection
+  176:19  warning  Found non-literal argument to RegExp Constructor                                                                         security/detect-non-literal-regexp
+  192:21  warning  Variable Assigned to Object Injection Sink                                                                               security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/components/ErrorBoundary.tsx
+  7:44  warning  Caution: `React` also has a named export `Component`. Check if you meant to write `import {Component} from 'react'` instead  import/no-named-as-default-member
+
+/home/mhenke/Projects/yazi-quest/src/components/FileSystemPane.tsx
+   42:11  warning  Generic Object Injection Sink                                                                                      security/detect-object-injection
+   43:9   warning  Generic Object Injection Sink                                                                                      security/detect-object-injection
+  118:39  warning  Caution: `React` also has a named export `memo`. Check if you meant to write `import {memo} from 'react'` instead  import/no-named-as-default-member
+
+/home/mhenke/Projects/yazi-quest/src/components/FuzzyFinder.tsx
+  38:63  warning  Generic Object Injection Sink        security/detect-object-injection
+  92:58  warning  Function Call Object Injection Sink  security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/components/HelpModal.tsx
+  66:19  warning  'e' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/mhenke/Projects/yazi-quest/src/components/HintModal.tsx
+  29:3   warning  Caution: `React` also has a named export `useEffect`. Check if you meant to write `import {useEffect} from 'react'` instead  import/no-named-as-default-member
+  43:22  warning  Generic Object Injection Sink                                                                                                security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/components/LevelProgress.tsx
+   46:13   warning  Generic Object Injection Sink               security/detect-object-injection
+   59:24   warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+   69:36   warning  Generic Object Injection Sink               security/detect-object-injection
+   77:25   warning  Generic Object Injection Sink               security/detect-object-injection
+   87:28   warning  Generic Object Injection Sink               security/detect-object-injection
+  135:33   warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+  166:9    warning  Generic Object Injection Sink               security/detect-object-injection
+  203:92   warning  Generic Object Injection Sink               security/detect-object-injection
+  205:18   warning  Generic Object Injection Sink               security/detect-object-injection
+  210:16   warning  Generic Object Injection Sink               security/detect-object-injection
+  233:62   warning  Generic Object Injection Sink               security/detect-object-injection
+  233:100  warning  Generic Object Injection Sink               security/detect-object-injection
+  266:34   warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+  366:25   warning  Generic Object Injection Sink               security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/components/OutroSequence.tsx
+   22:23  warning  Generic Object Injection Sink                                                                                    security/detect-object-injection
+   48:26  warning  Generic Object Injection Sink                                                                                    security/detect-object-injection
+   88:9   warning  'renderLine' is assigned a value but never used                                                                  @typescript-eslint/no-unused-vars
+  150:6   warning  React Hook useCallback has a missing dependency: 'isComplete'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  180:6   warning  React Hook useEffect has a missing dependency: 'currentText'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+  435:30  warning  Generic Object Injection Sink                                                                                    security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/components/PreviewPane.tsx
+   56:9   warning  'renderedDescription' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  178:36  warning  Caution: `React` also has a named export `memo`. Check if you meant to write `import {memo} from 'react'` instead  import/no-named-as-default-member
+
+/home/mhenke/Projects/yazi-quest/src/components/StatusBar.tsx
+  37:42  warning  Generic Object Injection Sink  security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/dialogs.test.tsx
+  1:37  warning  'act' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/mhenke/Projects/yazi-quest/src/hooks/useKeyboardHandlers.test.ts
+    1:22  warning  'act' is defined but never used             @typescript-eslint/no-unused-vars
+    4:21  warning  'Level' is defined but never used           @typescript-eslint/no-unused-vars
+  208:16  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  229:37  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  251:16  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  278:11  warning  'items' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  383:11  warning  'state' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/mhenke/Projects/yazi-quest/src/hooks/useKeyboardHandlers.ts
+   75:23  warning  Generic Object Injection Sink    security/detect-object-injection
+  320:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  459:20  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  514:29  warning  Generic Object Injection Sink    security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/index.tsx
+  12:14  warning  Caution: `ReactDOM` also has a named export `createRoot`. Check if you meant to write `import {createRoot} from 'react-dom/client'` instead  import/no-named-as-default-member
+
+/home/mhenke/Projects/yazi-quest/src/levelTransitions.test.ts
+  334:22  warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/utils/dynamicGlitch.ts
+   4:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/mhenke/Projects/yazi-quest/src/utils/fsHelpers.ts
+  118:16  warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+  295:21  warning  Variable Assigned to Object Injection Sink  security/detect-object-injection
+
+/home/mhenke/Projects/yazi-quest/src/utils/validation.ts
+  17:15  warning  'key' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 97 problems (2 errors, 95 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+

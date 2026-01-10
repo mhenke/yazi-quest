@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { Terminal, Signal, UploadCloud, ArrowRight } from 'lucide-react';
+import { Terminal, Signal, UploadCloud, ArrowRight, Zap, Shield, Crown } from 'lucide-react';
 
-import { CONCLUSION_DATA, CONCLUSION_PARTS } from '../constants';
+import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE } from '../constants';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 
@@ -429,6 +429,30 @@ export const OutroSequence: React.FC = () => {
             <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
               {CONCLUSION_DATA.sequelSubtitle}
             </h3>
+
+            {/* Persistent Rewards / System Status */}
+            <div className="grid grid-cols-3 gap-6 my-6 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+              {EPISODE_LORE.map((ep, idx) => {
+                const episodeIcons = [Zap, Shield, Crown];
+                const Icon = episodeIcons[idx] || Shield;
+                const colorClass = ep.color.split(' ')[0]; // Extract base color class
+                return (
+                  <div key={ep.id} className="flex flex-col items-center gap-2">
+                    <div
+                      className={`p-3 rounded-full bg-zinc-900 ring-2 ring-offset-2 ring-offset-black ${colorClass.replace('text', 'ring')}`}
+                    >
+                      <Icon size={24} className={colorClass} />
+                    </div>
+                    <span
+                      className={`text-[10px] font-mono uppercase tracking-widest ${colorClass}`}
+                    >
+                      {ep.name}
+                    </span>
+                    <span className="text-[8px] text-zinc-500 uppercase">System Installed</span>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="pt-8 md:pt-12">
               <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">

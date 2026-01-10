@@ -8,6 +8,7 @@ as guidance for contributors.
 
 - `README.md` — Project overview and quick start (canonical for runners).
 - `STORY_ARC.md` — Canonical narrative arc and episode order.
+- `PEDAGOGY.md` — Learning theory, instructional design, and Bloom's Taxonomy mapping.
 - `src/constants.tsx` — Canonical level definitions, hints, and per-level
   `allowedDeletePaths` policies. This is the authoritative source for level
   content used at runtime.

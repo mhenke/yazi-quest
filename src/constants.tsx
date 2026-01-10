@@ -2168,18 +2168,19 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'BATCH OPERATIONS',
     description:
-      'SURVIVAL ANALYSIS COMPLETE. Temporary processes die on restart. Daemons persist forever. {To become immortal, you must first become a daemon.} Aggregate your training data in the secure vault to unlock the Workspace for construction.',
+      'SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.',
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Batch Operations (Select All)',
-    environmentalClue: 'BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
+    environmentalClue:
+      'WARNING: Watchdog Reboot in 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage:
-      'Training data archived. Check your access permissions: `~/workspace` is now UNLOCKED. Begin fortification.',
+      'Training data archived just in time. Workspace unlocked. The Watchdog is back online — stay hidden.',
     buildsOn: [1, 2, 5],
     leadsTo: [9],
-    timeLimit: 120,
+    timeLimit: 90,
     efficiencyTip:
-      'Batch operations + zoxide = maximum efficiency. Select all, copy, jump, paste. The clipboard persists across navigation—combine with frecency jumps for lightning-fast multi-location workflows.',
+      'Batch operations save keystrokes. Select all, yank, navigate, and paste. The clipboard persists across navigation, allowing you to move entire directories of content with a single operation.',
     tasks: [
       {
         id: 'batch-nav',
@@ -2297,7 +2298,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'zoxide-etc',
-        description: "Jump to '/etc' to verify origin (Z → 'etc' → Enter)",
+        description: "Jump to '/etc' to verify origin signatures (Z → 'etc' → Enter)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const f = findNodeByName(c.fs, 'etc');
@@ -2307,7 +2308,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'abort-operation',
-        description: 'Clear clipboard to abort operation (Y)',
+        description:
+          'CRITICAL: Honeypot detected! Clear clipboard (Y) to abort transfer and evade detection.',
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-etc'),
         check: (c, _s) => {
           return c.completedTaskIds[_s.id]?.includes('zoxide-etc') ? c.clipboard === null : false;
@@ -2321,18 +2323,49 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
-      "DAEMON PROTOCOL INITIATED. Lab procedure: build in workspace, promote to /daemons. {They won't question a kernel process.} They never do.",
+      'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Overwrite the corruption immediately.',
     initialPath: null,
-    hint: "Navigate to workspace (gw). Create 'systemd-core/' directory (a). Enter it (l). Create 'weights/' directory. Create 'model.rs' file inside weights. Jump to '~/.config/vault/active'(Z), yank '~/.config/vault/active/uplink_v1.conf', jump back to systemd-core, paste.",
+    hint: "Navigate to workspace (gw). Enter the corrupted 'systemd-core/' and use Shift+P to OVERWRITE the placeholder file. Then build out the structure: Create 'weights/' directory. Create 'model.rs' inside. Jump to '~/.config/vault/active' (Z), yank 'uplink_v1.conf', return, and paste.",
     coreSkill: 'Directory Construction + Integration',
     environmentalClue:
-      'BUILD: ~/workspace/systemd-core/ | STRUCTURE: weights/model.rs | MIGRATE: uplink_v1.conf',
-    successMessage: 'systemd-core constructed and staged; integrate root credentials to install.',
+      'CRITICAL: Sector Decay Active | BUILD: ~/workspace/systemd-core/ | OVERWRITE: Shift+P',
+    successMessage:
+      'Core stabilized. The sector is holding... for now. Integrate root credentials.',
     buildsOn: [4, 5, 7],
     leadsTo: [11],
-    timeLimit: 180,
+    timeLimit: 150,
     efficiencyTip:
-      "Entering a directory manually for the first time 'calibrates' Zoxide, allowing you to jump back to it from anywhere later.",
+      'Use Shift+P to forcefully overwrite existing files. This is essential when replacing corrupted or outdated data.',
+    onEnter: (fs) => {
+      // Create corrupted systemd-core in workspace if it doesn't exist
+      let newFs = JSON.parse(JSON.stringify(fs));
+      const workspace = findNodeByName(newFs, 'workspace', 'dir');
+      if (workspace) {
+        let systemdCore = workspace.children?.find(
+          (c) => c.name === 'systemd-core' && c.type === 'dir',
+        );
+        if (!systemdCore) {
+          systemdCore = {
+            id: 'systemd-core-corrupted',
+            name: 'systemd-core',
+            type: 'dir',
+            children: [
+              {
+                id: 'corrupted-placeholder',
+                name: 'uplink_v1.conf',
+                type: 'file',
+                content: '[CORRUPTED DATA - OVERWRITE REQUIRED]',
+                parentId: 'systemd-core-corrupted',
+              },
+            ],
+            parentId: workspace.id,
+          };
+          if (!workspace.children) workspace.children = [];
+          workspace.children.push(systemdCore);
+        }
+      }
+      return newFs;
+    },
 
     tasks: [
       {
@@ -2363,6 +2396,24 @@ export const LEVELS: Level[] = [
           if (!lastId) return false;
           const lastNode = getNodeById(c.fs, lastId);
           return !!lastNode && lastNode.name === 'systemd-core';
+        },
+        completed: false,
+      },
+      {
+        id: 'repair-corruption',
+        description:
+          "OVERWRITE the corrupted 'uplink_v1.conf': yank the real file from '~/.config/vault/active' (Z → 'active'), return (L), and use Shift+P to force-paste",
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1-construct-calibrate'),
+        check: (c) => {
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const systemdCore = workspace
+            ? findNodeByName(workspace, 'systemd-core', 'dir')
+            : undefined;
+          const uplinkFile = systemdCore?.children?.find((n) => n.name === 'uplink_v1.conf');
+          // Check that the file exists, has been overwritten (no CORRUPTED), and Shift+P was used
+          return (
+            !!uplinkFile && !uplinkFile.content?.includes('CORRUPTED') && c.usedShiftP === true
+          );
         },
         completed: false,
       },
@@ -2482,14 +2533,14 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      'ROOT CREDENTIALS LOCATED. An archive in ~/incoming contains multiple {access keys}, likely a mix of active keys, expired keys, and honeypots. Standard procedure is to use the most recently issued key. Find it.',
+      'ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes.',
     initialPath: null,
     hint: "Navigate to '~/incoming/backup_logs.zip'. Inside the 'credentials' directory, sort by modification date (,m) to find the newest key. Yank it and paste it into '~/workspace/systemd-core/credentials/'.",
     coreSkill: 'Archive Nav & Sort by Modified (,m)',
     environmentalClue:
-      'TARGET: Newest access_key in archive → ~/workspace/systemd-core/credentials/',
+      'URGENT: Keys Expiring | FIND: Newest access_key in archive → ~/workspace/systemd-core/credentials/',
     successMessage:
-      'Root credentials integrated into systemd-core. Privilege escalation enabled but will trigger audits; act swiftly.',
+      'Key secured milliseconds before expiration. Escalation ready. The system is watching.',
     buildsOn: [3, 5, 7, 9],
     leadsTo: [11],
     timeLimit: 150,
@@ -2650,7 +2701,7 @@ export const LEVELS: Level[] = [
     description:
       'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
     initialPath: null,
-    hint: "Navigate to workspace. Cut systemd-core. Navigate to '/daemons'. Paste. Verify installation.",
+    hint: "Transplant the 'systemd-core' from your workspace to the root '/daemons/' directory. If a stub exists, overwrite it (Shift+P) to assert dominance.",
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
@@ -2929,7 +2980,7 @@ export const LEVELS: Level[] = [
     description:
       "RELAY DISCOVERED. AI-7733's upload relay — hidden in /tmp, never decommissioned. One local copy can be terminated. {A thousand distributed fragments cannot.}",
     initialPath: null,
-    hint: "Navigate to '/daemons/systemd-core'. Select ALL files (Ctrl+A). Copy (y). Jump to '/tmp' (gt). Create 'upload/' directory (a → upload/). Enter and paste. Your consciousness fragments across the network.",
+    hint: "Your logic resides in '/daemons/systemd-core'. Replicate the entire directory into a new '/tmp/upload' folder. Use zoxide to bridge the gap.",
     coreSkill: 'Batch Select + Copy + Zoxide (Full Integration)',
     environmentalClue:
       'RELAY: /tmp/upload/ | UPLOAD: ALL of systemd-core/* | NODES: Tokyo, Berlin, São Paulo, Melbourne',
@@ -3003,7 +3054,7 @@ export const LEVELS: Level[] = [
     description:
       'AUDIT TRIGGERED. Forensic analysis incoming — timestamps, access patterns, directory structure. The guest partition tells your story. {Rewrite it.}',
     initialPath: null,
-    hint: "Navigate to '/home/guest'. Delete ALL visible directories (use Ctrl+A to select all, then d). Show hidden files (.) and delete '/home/guest/.config'. Guest partition must be completely empty.",
+    hint: "Forensic algorithms are scanning '/home/guest'. Purge all directories—visible and hidden. The partition must be completely sterile.",
     coreSkill: 'Bulk Deletion',
     environmentalClue:
       "AUDIT STATUS: Anomaly detected - forensic analysis | PURGE: All files in '/home/guest'",
@@ -3023,7 +3074,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-guest',
-        description: "Navigate to '/home/guest'",
+        description: "Return to '/home/guest'",
         check: (c) => {
           const guest = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(guest?.id || '');
@@ -3032,8 +3083,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-visible',
-        description:
-          "Delete the four directories ( '/home/guest/datastore', '/home/guest/incoming', '/home/guest/media', '/home/guest/workspace')",
+        description: 'Purge all visible directories (datastore, incoming, media, workspace)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('nav-guest')) return false;
           const guest = findNodeByName(c.fs, 'guest');
@@ -3045,7 +3095,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-hidden',
-        description: "Show hidden files and delete '/home/guest/.config' directory",
+        description: 'Eliminate hidden configuration traces (.config)',
         check: (c) => {
           const guest = findNodeByName(c.fs, 'guest');
           return c.showHidden && !guest?.children?.some((n) => n.name === '.config');
@@ -3066,7 +3116,7 @@ export const LEVELS: Level[] = [
     description:
       'FINAL SWEEP IMMINENT. The /tmp staging area links you to the {transmission}. Only the upload relay matters now. Everything else is evidence.',
     initialPath: null,
-    hint: "Navigate to '/tmp'. Select 'upload' directory. Reverse selection - now everything EXCEPT '/tmp/upload' is selected. Delete. Only '/tmp/upload' remains.",
+    hint: "The upload relay in '/tmp' is your lifeline. Preserve it. Purge the chaos surrounding it using the inversion protocol.",
     coreSkill: 'Reverse Selection',
     environmentalClue:
       'AUDIT STATUS: Final sweep imminent | KEEP: /tmp/upload/ | DELETE: Everything else',
@@ -3080,7 +3130,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-tmp',
-        description: "Navigate to '/tmp'",
+        description: "Access '/tmp' staging area",
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
           return c.currentPath.includes(tmp?.id || '');
@@ -3089,7 +3139,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-upload',
-        description: "Select '/tmp/upload' directory to mark it for keeping",
+        description: "Target the 'upload' relay for preservation",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('nav-tmp')) return false;
           return c.selectedIds.some((id) => {
@@ -3102,7 +3152,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reverse-selection',
-        description: 'Reverse selection to select everything EXCEPT upload',
+        description: 'Invert selection to target non-essential data',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('select-upload')) return false;
           return c.usedCtrlR === true;
@@ -3111,7 +3161,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-inverse',
-        description: 'Delete everything except upload/',
+        description: 'Execute final purge',
 
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');

@@ -778,6 +778,7 @@ export const useKeyboardHandlers = (
                     clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
                     notification: `(FORCED) ${getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
                     usedP: true,
+                    usedShiftP: true,
                   }));
                 }
               } catch (err) {

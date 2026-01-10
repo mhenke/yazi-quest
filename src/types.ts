@@ -184,6 +184,7 @@ export interface GameState {
   usedPreviewDown?: boolean; // Tracks if player used Shift+J
   usedPreviewUp?: boolean; // Tracks if player used Shift+K
   usedP?: boolean; // Tracks if player used 'p' to paste
+  usedShiftP?: boolean; // Tracks if player used 'Shift+P' (overwrite paste)
   usedD?: boolean; // Tracks if player used 'D' for permanent delete
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;

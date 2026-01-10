@@ -23,6 +23,7 @@ import {
   getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
+  findNodeByName,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
@@ -53,6 +54,8 @@ import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useK
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
+
+import { CelebrationConfetti } from './components/CelebrationConfetti';
 
 // Helper to get a random element from an array
 const getRandomElement = <T,>(arr: T[]): T => {
@@ -477,21 +480,62 @@ export default function App() {
     }
   }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
 
-  // Trigger ThreatAlert on Level 5 start
+  // Trigger ThreatAlert on Level 5 start OR Level 12 scenario detection
   useEffect(() => {
     if (gameState.isGameOver || gameState.showEpisodeIntro) return;
 
     const levelId = currentLevel.id;
+
+    // Level 5: Quarantine Alert
     if (levelId === 5) {
       setAlertMessage(
         '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.',
       );
-
       setShowThreatAlert(true);
-      // No auto-dismiss; require explicit dismissal (Esc or Shift+Enter)
       return () => {};
     }
-  }, [gameState.levelIndex, gameState.isGameOver, gameState.showEpisodeIntro, currentLevel.id]);
+
+    // Level 12: Scenario-specific Anomaly Alerts
+    if (levelId === 12) {
+      const workspace = findNodeByName(gameState.fs, 'workspace', 'dir');
+      const incoming = findNodeByName(gameState.fs, 'incoming', 'dir');
+      const config = findNodeByName(gameState.fs, '.config', 'dir');
+
+      if (workspace && findNodeByName(workspace, 'alert_traffic.log', 'file')) {
+        setAlertMessage(
+          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.',
+        );
+        setShowThreatAlert(true);
+      } else if (incoming && findNodeByName(incoming, 'trace_packet.sys', 'file')) {
+        setAlertMessage(
+          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.',
+        );
+        setShowThreatAlert(true);
+      } else if (
+        workspace &&
+        (findNodeByName(workspace, 'scan_a.tmp', 'file') ||
+          findNodeByName(workspace, 'scan_b.tmp', 'file'))
+      ) {
+        setAlertMessage(
+          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.',
+        );
+        setShowThreatAlert(true);
+      } else if (config && findNodeByName(config, 'core_dump.tmp', 'file')) {
+        setAlertMessage('WARNING: Process instability detected. Core dump written to .config.');
+        setShowThreatAlert(true);
+      } else if (workspace && findNodeByName(workspace, 'lib_error.log', 'file')) {
+        setAlertMessage('WARNING: Dependency failure. Error log generated.');
+        setShowThreatAlert(true);
+      }
+    }
+  }, [
+    gameState.levelIndex,
+    gameState.isGameOver,
+    gameState.showEpisodeIntro,
+    currentLevel.id,
+    // Add FS dependency so checking happens after onEnter mutations
+    gameState.fs,
+  ]);
 
   const advanceLevel = useCallback(() => {
     setGameState((prev) => {
@@ -1369,12 +1413,15 @@ export default function App() {
       )}
 
       {showSuccessToast && (
-        <SuccessToast
-          message={currentLevel.successMessage || 'Sector Cleared'}
-          levelTitle={currentLevel.title}
-          onDismiss={advanceLevel}
-          onClose={() => setShowSuccessToast(false)}
-        />
+        <>
+          <CelebrationConfetti />
+          <SuccessToast
+            message={currentLevel.successMessage || 'Sector Cleared'}
+            levelTitle={currentLevel.title}
+            onDismiss={advanceLevel}
+            onClose={() => setShowSuccessToast(false)}
+          />
+        </>
       )}
 
       {showThreatAlert && (
