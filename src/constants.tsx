@@ -1934,15 +1934,30 @@ export const LEVELS: Level[] = [
     leadsTo: [3],
     tasks: [
       {
-        id: 'identify-threat',
+        id: 'identify-threat-1',
         description:
-          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect it to verify the signal (Tab or J/K)",
+          "Locate 'watcher_agent.sys' in '~/incoming' (gi + G) and inspect metadata (Tab)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           if (node?.name !== 'watcher_agent.sys') return false;
-          // Require verification action (Tab OR Preview Scroll)
-          return c.showInfoPanel || (!!c.usedPreviewDown && !!c.usedPreviewUp);
+          return c.showInfoPanel;
+        },
+        completed: false,
+      },
+      {
+        id: 'identify-threat-2',
+        description:
+          'Scan the signal: Scroll the preview content (J and K) to verify the threat signature',
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('identify-threat-1'),
+        check: (c, _s) => {
+          // Ensure previous task is done
+          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-1')) return false;
+
+          const items = getVisibleItems(c);
+          const node = items[c.cursorIndex];
+          if (node?.name !== 'watcher_agent.sys') return false;
+          return !!c.usedPreviewDown && !!c.usedPreviewUp;
         },
         completed: false,
       },
