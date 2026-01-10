@@ -28,8 +28,8 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
   // Handle close shortcut locally
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
-        // Shift+Enter or Escape to close
+      if (e.key === 'Enter' && e.shiftKey) {
+        // Shift+Enter to close
         e.preventDefault();
         e.stopPropagation();
         _onClose();
@@ -62,7 +62,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
       <p className="text-zinc-300 text-xs leading-relaxed font-mono">{displayText}</p>
 
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-1">
-        Press Esc or Shift+Enter to close
+        Press Shift+Enter to close
       </div>
     </div>
   );

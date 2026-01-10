@@ -1970,7 +1970,6 @@ export const LEVELS: Level[] = [
       {
         id: 'inspect-threat',
         description: "Locate 'watcher_agent.sys' (G) and inspect metadata (Tab)",
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('nav-incoming'),
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -2130,7 +2129,7 @@ export const LEVELS: Level[] = [
     description:
       'SCAN DETECTED. Security sweep incoming — {your protocols are exposed in datastore}. Hidden sectors exist. The lab never audits .config.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "Secure the protocols in '.config' before the sweep reaches datastore. You'll need to create a secure vault ('vault/active') within the hidden config area.",
+    hint: 'Use Space to toggle-select both protocol files, then cut (x). Press . to reveal hidden files, navigate to .config, create vault/active, and paste (p). Press . again to hide hidden files when done.',
     coreSkill: 'Visual Select, Cut',
     environmentalClue: 'PROTECT ASSETS | TARGET: ~/.config/vault/active/',
     successMessage:
@@ -2141,7 +2140,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-cut-files',
-        description: "Locate and stage all protocols from '~/datastore/protocols'",
+        description:
+          "Select both files in '~/datastore/protocols' (Space to toggle selection) and cut (x)",
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -2153,7 +2153,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: "Navigate to '~' and reveal hidden files to access '~/.config'",
+        description: "Navigate to '~' (gh) and reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true;
@@ -2185,7 +2185,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'hide-hidden',
-        description: "Jump to '~' and hide hidden files",
+        description: "Jump to '~' (gh) and hide hidden files (. to toggle)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const conf = findNodeByName(c.fs, '.config');
@@ -2300,8 +2300,17 @@ export const LEVELS: Level[] = [
     timeLimit: 90,
     tasks: [
       {
+        id: 'nav-to-root',
+        description: 'Jump to the system Root (gr)',
+        check: (c) => {
+          const root = findNodeByName(c.fs, 'root', 'dir');
+          return c.usedGR === true && c.currentPath.length === 1 && c.currentPath[0] === root?.id;
+        },
+        completed: false,
+      },
+      {
         id: 'locate-token',
-        description: "Locate 'access_token.key' from the system Root using FZF find (z)",
+        description: "Locate 'access_token.key' using FZF find (z)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -2351,17 +2360,16 @@ export const LEVELS: Level[] = [
     description:
       'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Overwrite the corruption immediately.',
     initialPath: null,
-    hint: "Navigate to workspace (gw). Enter the corrupted 'systemd-core/' and use Shift+P to OVERWRITE the placeholder file. Then build out the structure: Create 'weights/' directory. Create 'model.rs' inside. Jump to '~/.config/vault/active' (Z), yank 'uplink_v1.conf', return, and paste.",
-    coreSkill: 'Directory Construction + Integration',
+    hint: "Navigate to '~/workspace/systemd-core' and preview 'uplink_v1.conf' to confirm corruption. Then jump to '~/.config/vault/active' to yank the clean version. Return and use Shift+P to overwrite.",
+    coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
-      'CRITICAL: Sector Decay Active | BUILD: ~/workspace/systemd-core/ | OVERWRITE: Shift+P',
-    successMessage:
-      'Core stabilized. The sector is holding... for now. Integrate root credentials.',
+      'CRITICAL: Sector Decay Active | OVERWRITE REQUIRED (Shift+P) | TARGET: uplink_v1.conf',
+    successMessage: 'Patch deployed successfully. Integrity restored. Protocol Shift+P verified.',
     buildsOn: [4, 5, 7],
     leadsTo: [11],
     timeLimit: 150,
     efficiencyTip:
-      'Use Shift+P to forcefully overwrite existing files. This is essential when replacing corrupted or outdated data.',
+      'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
     onEnter: (fs) => {
       // Create corrupted systemd-core in workspace if it doesn't exist
       let newFs = JSON.parse(JSON.stringify(fs));
@@ -2380,7 +2388,7 @@ export const LEVELS: Level[] = [
                 id: 'corrupted-placeholder',
                 name: 'uplink_v1.conf',
                 type: 'file',
-                content: '[CORRUPTED DATA - OVERWRITE REQUIRED]',
+                content: '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT',
                 parentId: 'systemd-core-corrupted',
               },
             ],
@@ -2395,11 +2403,14 @@ export const LEVELS: Level[] = [
 
     tasks: [
       {
-        id: 'establish-workspace-presence',
-        description: "Secure a foothold in '~/workspace' and initialize the 'systemd-core/' link",
+        id: 'investigate-corruption',
+        description: "Navigate to '~/workspace/systemd-core'",
         check: (c) => {
-          const s = findNodeByName(c.fs, 'systemd-core');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+
           if (s && c.currentPath.includes(s.id)) return true;
+          // Also verify looking at the dir name
           const lastId =
             c.currentPath && c.currentPath.length
               ? c.currentPath[c.currentPath.length - 1]
@@ -2411,73 +2422,47 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'repair-corruption',
-        description:
-          "OVERWRITE the corrupted 'uplink_v1.conf': yank the real file from '~/.config/vault/active' (Z → 'active'), return (L), and use Shift+P to force-paste",
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('establish-workspace-presence'),
+        id: 'verify-damage',
+        description: "Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink' -> Esc)",
+        check: (c) => {
+          // Must be in systemd-core and cursor on buffer
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+
+          if (!s || !c.currentPath.includes(s.id)) return false;
+
+          const items = getVisibleItems(c);
+          if (!items || items.length === 0) return false;
+
+          const node = items[c.cursorIndex];
+          return node?.name === 'uplink_v1.conf' && !!node.content?.includes('CORRUPTED');
+        },
+        completed: false,
+      },
+      {
+        id: 'acquire-patch',
+        description: "Perform a jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'",
+        check: (c) => {
+          // Check if we have the clean file in clipboard
+          if (!c.clipboard || c.clipboard.nodes.length === 0) return false;
+          const yanked = c.clipboard.nodes[0];
+          return yanked.name === 'uplink_v1.conf' && !yanked.content?.includes('CORRUPTED');
+        },
+        completed: false,
+      },
+      {
+        id: 'deploy-patch',
+        description: "Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) the file",
         check: (c) => {
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const systemdCore = workspace
             ? findNodeByName(workspace, 'systemd-core', 'dir')
             : undefined;
           const uplinkFile = systemdCore?.children?.find((n) => n.name === 'uplink_v1.conf');
-          // Check that the file exists, has been overwritten (no CORRUPTED), and Shift+P was used
+
           return (
             !!uplinkFile && !uplinkFile.content?.includes('CORRUPTED') && c.usedShiftP === true
           );
-        },
-        completed: false,
-      },
-      {
-        id: 'research-prior-work',
-        description:
-          "Research prior work: jump to '~/datastore' (gd) and view 'mission_log.md' in the preview (f → type 'mission' → ESC)",
-        check: (c) => {
-          const s = findNodeByName(c.fs, 'datastore');
-          if (!s || !c.currentPath.includes(s.id)) return false;
-          const items = getVisibleItems(c);
-          const node = items[c.cursorIndex];
-          // Considered reviewed when the preview pane shows the file (cursor is on it)
-          return node?.name === 'mission_log.md';
-        },
-        completed: false,
-      },
-      {
-        id: 'combo-1c',
-        description:
-          "Jump to '~/.config/vault/active' (Z → 'active' → Enter), yank 'uplink_v1.conf' (y), return to '~/workspace/systemd-core' (Z → 'core' → Enter) and paste into it (p)",
-        check: (c) => {
-          // Scope the search to the workspace so the /daemons copy doesn't falsely satisfy the check
-          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
-          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
-          return !!s?.children?.find((r) => r.name === 'uplink_v1.conf');
-        },
-        completed: false,
-      },
-      {
-        id: 'combo-1d',
-        description:
-          "Fetch the secondary backup: use history to return to '~/.config/vault/active' (H), yank 'uplink_v2.conf' (y), return (L) and paste into '~/workspace/systemd-core' (p)",
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1c'),
-        check: (c) => {
-          // Ensure the workspace copy received uplink_v2.conf
-          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
-          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
-          return !!s?.children?.find((r) => r.name === 'uplink_v2.conf');
-        },
-        completed: false,
-      },
-
-      {
-        id: 'combo-1b',
-        description:
-          "Finalize architecture: Create '~/workspace/systemd-core/weights/model.rs' inside systemd-core (a)",
-        check: (c) => {
-          // Scope the lookup to the workspace so the /daemons copy doesn't interfere
-          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
-          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
-          const f = s?.children?.find((h) => h.name === 'weights');
-          return !!f?.children?.find((h) => h.name === 'model.rs');
         },
         completed: false,
       },

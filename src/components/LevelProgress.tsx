@@ -121,8 +121,8 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
       };
 
       // e.key is 'Enter'.
-      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
-        // Shift+Enter or Escape to close
+      if (e.key === 'Enter' && e.shiftKey) {
+        // Shift+Enter to close
         onClose();
         return;
       }
@@ -323,7 +323,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   </h2>
                 </div>
                 <div className="text-xs text-zinc-600 font-mono">
-                  h/l: episodes • j/k: missions • Enter: jump • Esc or Shift+Enter: close
+                  h/l: episodes • j/k: missions • Enter: jump • Shift+Enter: close
                 </div>
               </div>
             </div>

@@ -291,6 +291,7 @@ export default function App() {
       usedG: false,
       usedGI: false,
       usedGC: false,
+      usedGR: false,
       usedCtrlA: false,
       usedGG: false,
       usedDown: false,
@@ -321,6 +322,7 @@ export default function App() {
   const [showHiddenWarning, setShowHiddenWarning] = useState(false);
   const [showSortWarning, setShowSortWarning] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const shownInitialAlertForLevelRef = useRef<number | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isGamePaused =
@@ -415,7 +417,9 @@ export default function App() {
     });
 
     if (changed) {
+      console.log('DEBUG: Tasks changed. Newly completed:', newlyCompleted);
       setGameState((prev) => {
+        // ... existing update code ...
         let updates: Partial<GameState> = {
           completedTaskIds: {
             ...prev.completedTaskIds,
@@ -426,24 +430,22 @@ export default function App() {
           },
         };
 
-        // Level 15 Gauntlet Logic: Phase Advancement (Success Case)
+        // Level 15 Gauntlet Logic ...
         if (currentLevel.id === 15) {
           const nextPhase = (prev.gauntletPhase || 0) + 1;
           const currentScore = (prev.gauntletScore || 0) + 1;
-          const isFinished = nextPhase >= 8; // 8 phases total
+          const isFinished = nextPhase >= 8;
 
           if (isFinished) {
-            // Check Score Threshold (6/8)
             if (currentScore < 6) {
               return {
                 ...prev,
                 ...updates,
                 isGameOver: true,
-                gameOverReason: 'keystrokes', // Re-using existing modal types for simplicity (or add custom reason)
+                gameOverReason: 'keystrokes',
                 notification: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)`,
               };
             }
-            // If >= 6, let standard completion logic take over (notify success)
             updates = {
               ...updates,
               gauntletScore: currentScore,
@@ -454,7 +456,7 @@ export default function App() {
               ...updates,
               gauntletPhase: nextPhase,
               gauntletScore: currentScore,
-              timeLeft: 20, // Reset timer for next phase
+              timeLeft: 20,
               notification: `PHASE ${nextPhase + 1} START`,
             };
           }
@@ -462,21 +464,7 @@ export default function App() {
 
         return { ...prev, ...updates };
       });
-
-      // If the 'combo-1c' relocation task was just completed, show a short,
-      // atmospheric toast to nudge the player toward checking history for a
-      // secondary/backup. The actual history task remains hidden until the
-      // completedTaskIds reflect the completed prerequisite (combo-1c) so it
-      // will appear in Objectives immediately after this toast.
-      if (newlyCompleted.includes('combo-1c')) {
-        // Show a modal-style alert (same UX as ThreatAlert) so players can
-        // choose to dismiss with Esc or Shift+Enter — this mirrors the
-        // cancel-cut dialog behavior.
-        setAlertMessage(
-          'A secondary trace was detected — a fragile backup sleeps nearby. Recover it quietly and stitch it alongside the first copy; every extra shard increases our resilience.',
-        );
-        setShowThreatAlert(true);
-      }
+      // ... existing code ...
     }
 
     // Check if everything is complete (including just finished ones)
@@ -484,14 +472,18 @@ export default function App() {
       (t) => t.completed || newlyCompleted.includes(t.id),
     );
 
-    // Determine if sort is default
-    const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
-
-    // Determine if filters are clear
-    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-    const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
-
+    // Check for Protocol Violations - ONLY on final task completion
+    // For intermediate tasks, warnings are handled by navigation handlers (checkFilterAndBlockNavigation)
     if (tasksComplete) {
+      // Determine if sort is default
+      const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
+
+      // Determine if filters are clear
+      const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+      const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
+
+      // Check violations - show auto-fix warnings for final task
+      // Priority: Hidden > Sort > Filter
       if (gameState.showHidden) {
         setShowHiddenWarning(true);
         setShowSuccessToast(false);
@@ -504,7 +496,7 @@ export default function App() {
         }
         setShowSuccessToast(false);
       } else {
-        // All checks passed
+        // All clear - show success
         setShowHiddenWarning(false);
         setShowSortWarning(false);
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
@@ -513,9 +505,16 @@ export default function App() {
         }
       }
     } else {
-      setShowHiddenWarning(false);
-      setShowSortWarning(false);
-      setShowSuccessToast(false);
+      // Tasks not complete - only clear warnings if user manually fixed the issue
+      // Don't trigger new warnings here (handled by navigation handlers)
+      const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
+      const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+      const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
+
+      if (!gameState.showHidden && showHiddenWarning) setShowHiddenWarning(false);
+      if (isSortDefault && showSortWarning) setShowSortWarning(false);
+      if (isFilterClear && gameState.mode === 'filter-warning')
+        setGameState((prev) => ({ ...prev, mode: 'normal' }));
     }
     // Level 11: Specific Logic for Reconnaissance
     if (currentLevel.id === 11) {
@@ -670,13 +669,14 @@ export default function App() {
 
     const levelId = currentLevel.id;
 
-    // Level 5: Quarantine Alert
-    if (levelId === 5) {
+    // Level 5: Quarantine Alert (only show once per level entry)
+    if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
+      shownInitialAlertForLevelRef.current = 5;
       setAlertMessage(
         '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.',
       );
       setShowThreatAlert(true);
-      return () => {};
+      return;
     }
 
     // Level 12: Scenario-specific Anomaly Alerts
@@ -866,6 +866,7 @@ export default function App() {
     });
     setShowSuccessToast(false);
     setShowThreatAlert(false);
+    shownInitialAlertForLevelRef.current = null; // Reset so alert can show for new level
   }, []);
 
   const handleRestartLevel = useCallback(() => {
@@ -903,6 +904,7 @@ export default function App() {
         usedG: false,
         usedGI: false,
         usedGC: false,
+        usedGR: false,
         usedCtrlA: false,
         usedGG: false,
         usedDown: false,
@@ -924,6 +926,7 @@ export default function App() {
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
       };
     });
+    shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
   }, []);
 
   // --- Handlers ---
@@ -1225,27 +1228,17 @@ export default function App() {
       }
 
       if (showThreatAlert) {
-        if (e.key === 'Escape') {
+        if (e.key === 'Enter' && e.shiftKey) {
           setShowThreatAlert(false);
         }
         return;
       }
 
-      // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Esc/Tab/Alt toggles.
+      // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Alt toggles and Shift+Enter.
+      // Note: Shift+Enter is handled by individual modal components internally.
       if (gameState.showHelp || gameState.showHint || gameState.showMap) {
-        if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            showHelp: false,
-            showHint: false,
-            showInfoPanel: false,
-            showMap: false,
-          }));
-          e.preventDefault();
-        }
-
         // Allow Alt+? to toggle Help OFF if it's open
-        else if (e.key === '?' && e.altKey && gameState.showHelp) {
+        if (e.key === '?' && e.altKey && gameState.showHelp) {
           e.preventDefault();
           setGameState((prev) => ({ ...prev, showHelp: false }));
         }
@@ -1287,8 +1280,15 @@ export default function App() {
 
       // Handle hidden files warning modal interception
       if (showHiddenWarning) {
+        const canAutoFix = tasksComplete && !gameState.showHidden; // Actually logic below overrides this
+        // Check if we can auto-fix (only last task)
+        // Re-calculate tasksComplete here or rely on prop? rely on variable
         if (e.key === '.') {
           setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
+        }
+        // Allow Shift+Enter to auto-fix ONLY if tasks are complete
+        if (e.key === 'Enter' && e.shiftKey && tasksComplete) {
+          setGameState((prev) => ({ ...prev, showHidden: false }));
         }
         return; // Block other inputs
       }
@@ -1309,20 +1309,23 @@ export default function App() {
         }
 
         if (e.key === 'Enter' && e.shiftKey) {
-          setGameState((prev) => {
-            const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
-            const newFilters = { ...prev.filters };
-            if (currentDirNode) {
-              delete newFilters[currentDirNode.id];
-            }
-            return {
-              ...prev,
-              mode: 'normal',
-              filters: newFilters,
-              acceptNextKeyForSort: false,
-              notification: null,
-            };
-          });
+          // Conditional Auto-Fix
+          if (tasksComplete) {
+            setGameState((prev) => {
+              const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
+              const newFilters = { ...prev.filters };
+              if (currentDirNode) {
+                delete newFilters[currentDirNode.id];
+              }
+              return {
+                ...prev,
+                mode: 'normal',
+                filters: newFilters,
+                acceptNextKeyForSort: false,
+                notification: null,
+              };
+            });
+          }
           return;
         }
 
@@ -1331,16 +1334,34 @@ export default function App() {
 
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
-        if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+        const allowAutoFix = tasksComplete;
+
+        if (e.key === 'Escape') {
+          // Escape just closes the modal, does NOT fix the sort (unless user did it manually)
+          // Actually, standard behavior for Escape in dialogs is just to close.
+          // But here, if we close it, the violation persists.
+          // If we are mid-level, that's fine, user continues.
+          // If we are end-level, the loop will re-trigger it?
+          // The loop runs on 'changed' or 'App' render? No, usually in effect.
+          // App effect runs on [gameState, ...].
+          // If we just setShowSortWarning(false), and don't change state, the effect might not re-run immediately
+          // to show it again, giving user time to fix it.
           setShowSortWarning(false);
-          setGameState((prev) => ({
-            ...prev,
-            sortBy: 'natural',
-            sortDirection: 'asc',
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          return;
+        }
+
+        if (e.key === 'Enter' && e.shiftKey) {
+          if (allowAutoFix) {
+            setShowSortWarning(false);
+            setGameState((prev) => ({
+              ...prev,
+              sortBy: 'natural',
+              sortDirection: 'asc',
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          }
           return;
         }
 
@@ -1477,9 +1498,9 @@ export default function App() {
     advanceLevel,
     showHiddenWarning,
     showThreatAlert,
-    visibleItems, // Added
-    currentItem, // Added
-    parent, // Added
+    visibleItems,
+    currentItem,
+    parent,
   ]);
 
   // Logic for create/rename input handled via input element events mainly
@@ -1685,9 +1706,15 @@ export default function App() {
         <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
       )}
 
-      {showHiddenWarning && <HiddenFilesWarningModal />}
-      {showSortWarning && <SortWarningModal />}
-      {gameState.mode === 'filter-warning' && <FilterWarningModal />}
+      {showHiddenWarning && (
+        <HiddenFilesWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+      )}
+      {showSortWarning && (
+        <SortWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+      )}
+      {gameState.mode === 'filter-warning' && (
+        <FilterWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+      )}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />

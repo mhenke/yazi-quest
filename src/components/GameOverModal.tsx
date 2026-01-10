@@ -14,7 +14,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 }) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
+      if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         onRestart();
       }
@@ -71,7 +71,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </button>
 
           <div className="text-[10px] text-red-500/70 font-mono uppercase tracking-widest mt-2">
-            Press Esc or Shift+Enter to close
+            Press Shift+Enter to close
           </div>
         </div>
       </div>

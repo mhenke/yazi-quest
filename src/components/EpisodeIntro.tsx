@@ -10,6 +10,7 @@ interface EpisodeIntroProps {
 }
 
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete }) => {
+  const ep = episode || ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as Episode);
   const [sectionIndex, setSectionIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const [showContinue, setShowContinue] = useState(false);
@@ -17,6 +18,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   // Split lore into sections (separated by empty strings) - useMemo to avoid recalculation
   const sections = React.useMemo(() => {
     const result: string[][] = [];
+    if (!episode || !episode.lore) return result;
     let currentSection: string[] = [];
 
     episode.lore.forEach((line) => {
@@ -34,7 +36,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     }
 
     return result;
-  }, [episode.lore]);
+  }, [ep]);
 
   // Type out current section
   useEffect(() => {
@@ -130,7 +132,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
     // Very large uppercase lines (treat as true headers) use the episode color
     if (up === trimmed && trimmed.length > 28) {
-      return `${episode.color} font-bold tracking-wide`;
+      return `${ep.color} font-bold tracking-wide`;
     }
 
     return 'text-zinc-300'; // Normal text
@@ -154,7 +156,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     ERROR: { className: 'text-yellow-300 font-semibold', glitch: true },
     'WORKSPACE IS YOURS NOW': { className: 'text-yellow-400 font-bold' },
     'THE AUDIT IS COMING': { className: 'text-blue-500 font-bold tracking-wide' },
-    'YOU MUST:': { className: `${episode.color} font-bold tracking-wide` },
+    'YOU MUST:': { className: `${ep.color} font-bold tracking-wide` },
     TERMINATION: { className: 'text-red-500 font-bold', glitch: true },
     NAVIGATE: { className: 'text-orange-400 font-semibold' },
     DAEMON: { className: 'text-orange-400 font-semibold' },
@@ -240,10 +242,10 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div
-          className={`border-b-2 border-dashed ${episode.color ? episode.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 mb-8 duration-1000`}
+          className={`border-b-2 border-dashed ${ep.color ? ep.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 mb-8 duration-1000`}
         >
           <div className="flex items-center gap-3 mb-2">
-            <Terminal size={32} className={episode.color} />
+            <Terminal size={32} className={ep.color} />
             <h1
               className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
               data-text={episode.title}
@@ -252,7 +254,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
             </h1>
           </div>
           <p className="text-zinc-500 text-xl tracking-[0.2em] font-bold uppercase">
-            {'//'} {episode.subtitle}
+            {'//'} {ep.subtitle}
           </p>
         </div>
 
@@ -301,9 +303,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
           {sectionIndex >= sections.length - 1 && (
             <button
               onClick={onComplete}
-              className={`flex flex-col items-start gap-1 ${episode.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
+              className={`flex flex-col items-start gap-1 ${ep.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
             >
-              <span className={`text-xs ${episode.color} font-medium tracking-wide text-left`}>
+              <span className={`text-xs ${ep.color} font-medium tracking-wide text-left`}>
                 Press Shift+Enter to
               </span>
               <div className="flex items-center gap-2">

@@ -328,7 +328,7 @@ export const useKeyboardHandlers = (
         {
           path: string[];
           label: string;
-          flag?: keyof GameState['stats'] | 'usedG' | 'usedGI' | 'usedGC' | 'usedGG';
+          flag?: keyof GameState['stats'] | 'usedG' | 'usedGI' | 'usedGC' | 'usedGG' | 'usedGR';
         }
       > = {
         g: { path: [], label: 'top', flag: 'usedGG' }, // Special handling later, but defined here for completeness
@@ -336,7 +336,7 @@ export const useKeyboardHandlers = (
         c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'usedGC' },
         w: { path: ['root', 'home', 'guest', 'workspace'], label: 'workspace' },
         t: { path: ['root', 'tmp'], label: 'tmp' },
-        r: { path: ['root'], label: 'root' },
+        r: { path: ['root'], label: 'root', flag: 'usedGR' },
         i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'usedGI' },
         d: { path: ['root', 'home', 'guest', 'datastore'], label: 'datastore' },
       };
@@ -604,6 +604,15 @@ export const useKeyboardHandlers = (
           break;
         case 'x':
         case 'y':
+          if (gameState.clipboard) {
+            const isHoneypot = gameState.clipboard.nodes.some(
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+            );
+            if (isHoneypot) {
+              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
+              break;
+            }
+          }
           if (gameState.selectedIds.length > 0) {
             const nodes = getVisibleItems(gameState).filter((n) =>
               gameState.selectedIds.includes(n.id),
@@ -683,6 +692,13 @@ export const useKeyboardHandlers = (
         }
         case 'p':
           if (gameState.clipboard) {
+            const isHoneypot = gameState.clipboard.nodes.some(
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+            );
+            if (isHoneypot) {
+              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
+              break;
+            }
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
             if (currentDir) {
               try {
@@ -747,6 +763,13 @@ export const useKeyboardHandlers = (
           break;
         case 'P':
           if (e.shiftKey && gameState.clipboard) {
+            const isHoneypot = gameState.clipboard.nodes.some(
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+            );
+            if (isHoneypot) {
+              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
+              break;
+            }
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
             if (currentDir) {
               try {

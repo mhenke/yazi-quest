@@ -1,7 +1,11 @@
 import React from 'react';
 import { ListOrdered, AlertTriangle } from 'lucide-react';
 
-export const SortWarningModal: React.FC = () => {
+interface SortWarningModalProps {
+  allowAutoFix: boolean;
+}
+
+export const SortWarningModal: React.FC<SortWarningModalProps> = ({ allowAutoFix }) => {
   return (
     <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-8 max-w-md text-center relative overflow-hidden rounded-lg">
@@ -19,8 +23,7 @@ export const SortWarningModal: React.FC = () => {
             <p className="text-zinc-400 font-mono text-sm">Active sort order detected.</p>
             <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
               <p className="text-yellow-300 font-mono text-sm font-semibold">
-                Note: sort order is global and persists with Yazi across
-                sessions.
+                Note: sort order is global and persists with Yazi across sessions.
               </p>
             </div>
           </div>
@@ -39,13 +42,20 @@ export const SortWarningModal: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex justify-center mt-4">
-            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-              Press{' '}
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                Shift+Enter
-              </span>
-              to continue...
-            </p>
+            {allowAutoFix ? (
+              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+                Press{' '}
+                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                  Shift+Enter
+                </span>
+                to continue...
+              </p>
+            ) : (
+              <p className="text-zinc-500 text-sm font-mono tracking-wide">
+                Press <span className="font-bold text-zinc-300">Esc</span> to dismiss and fix
+                manually.
+              </p>
+            )}
           </div>
         </div>
       </div>

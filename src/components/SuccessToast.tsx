@@ -54,7 +54,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({
         </div>
 
         <div className="mt-4 text-[10px] text-green-500/70 font-mono uppercase tracking-widest animate-pulse">
-          Press SHIFT+ENTER to continue
+          Shift+Enter: continue • Escape: stay here
         </div>
       </div>
     </div>

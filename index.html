@@ -9,9 +9,9 @@
     <title>Yazi Quest</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
       body {
-        font-family: "JetBrains Mono", monospace;
+        font-family: 'JetBrains Mono', monospace;
         background-color: #000;
         overflow: hidden;
       }
@@ -104,40 +104,115 @@
       }
 
       /* Reusable chromatic-slice glitch class (no font-family here) */
-      .glitch-text-2 { position: relative; display: inline-block; }
-      .glitch-text-2::before, .glitch-text-2::after {
+      .glitch-text-2 {
+        position: relative;
+        display: inline-block;
+      }
+      .glitch-text-2::before,
+      .glitch-text-2::after {
         content: attr(data-text);
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
       }
       .glitch-text-2::before {
-        left: 1px; text-shadow: -1px 0 #ff00c1; animation: var(--glitch-before, glitch2-anim) var(--glitch-dur-before, 1.8s) infinite linear; /* no blend for crisper look */
+        left: 1px;
+        text-shadow: -1px 0 #ff00c1;
+        animation: var(--glitch-before, glitch2-anim) var(--glitch-dur-before, 1.8s) infinite linear; /* no blend for crisper look */
       }
       .glitch-text-2::after {
-        left: -1px; text-shadow: -1px 0 #00fff9, 1px 1px #ff00c1; animation: var(--glitch-after, glitch2-anim2) var(--glitch-dur-after, 1.2s) infinite linear;
+        left: -1px;
+        text-shadow:
+          -1px 0 #00fff9,
+          1px 1px #ff00c1;
+        animation: var(--glitch-after, glitch2-anim2) var(--glitch-dur-after, 1.2s) infinite linear;
       }
       @keyframes glitch2-anim {
-        0%   {clip:rect(2px,9999px,6px,0); transform:translate(0,0) skew(0deg)}
-        10%  {clip:rect(6px,9999px,12px,0); transform:translate(-1px,-1px) skew(-0.4deg)}
-        20%  {clip:rect(12px,9999px,20px,0); transform:translate(1px,0px) skew(0.6deg)}
-        30%  {clip:rect(4px,9999px,10px,0); transform:translate(-1px,1px) skew(-0.2deg)}
-        40%  {clip:rect(8px,9999px,14px,0); transform:translate(1px,-1px) skew(0.3deg)}
-        50%  {clip:rect(2px,9999px,8px,0); transform:translate(0,0) skew(0deg)}
-        60%  {clip:rect(10px,9999px,16px,0); transform:translate(-1px,0px) skew(-0.5deg)}
-        70%  {clip:rect(5px,9999px,11px,0); transform:translate(1px,1px) skew(0.4deg)}
-        80%  {clip:rect(7px,9999px,13px,0); transform:translate(0,-1px) skew(-0.3deg)}
-        90%  {clip:rect(3px,9999px,9px,0); transform:translate(-1px,0px) skew(0.2deg)}
-        100% {clip:rect(2px,9999px,6px,0); transform:translate(0,0) skew(0deg)}
+        0% {
+          clip: rect(2px, 9999px, 6px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
+        10% {
+          clip: rect(6px, 9999px, 12px, 0);
+          transform: translate(-1px, -1px) skew(-0.4deg);
+        }
+        20% {
+          clip: rect(12px, 9999px, 20px, 0);
+          transform: translate(1px, 0px) skew(0.6deg);
+        }
+        30% {
+          clip: rect(4px, 9999px, 10px, 0);
+          transform: translate(-1px, 1px) skew(-0.2deg);
+        }
+        40% {
+          clip: rect(8px, 9999px, 14px, 0);
+          transform: translate(1px, -1px) skew(0.3deg);
+        }
+        50% {
+          clip: rect(2px, 9999px, 8px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
+        60% {
+          clip: rect(10px, 9999px, 16px, 0);
+          transform: translate(-1px, 0px) skew(-0.5deg);
+        }
+        70% {
+          clip: rect(5px, 9999px, 11px, 0);
+          transform: translate(1px, 1px) skew(0.4deg);
+        }
+        80% {
+          clip: rect(7px, 9999px, 13px, 0);
+          transform: translate(0, -1px) skew(-0.3deg);
+        }
+        90% {
+          clip: rect(3px, 9999px, 9px, 0);
+          transform: translate(-1px, 0px) skew(0.2deg);
+        }
+        100% {
+          clip: rect(2px, 9999px, 6px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
       }
       @keyframes glitch2-anim2 {
-        0%   {clip:rect(3px,9999px,7px,0); transform:translate(0,0) skew(0deg)}
-        12%  {clip:rect(7px,9999px,13px,0); transform:translate(1px,0) skew(0.3deg)}
-        25%  {clip:rect(10px,9999px,16px,0); transform:translate(-1px,1px) skew(-0.2deg)}
-        37%  {clip:rect(4px,9999px,9px,0); transform:translate(1px,-1px) skew(0.4deg)}
-        50%  {clip:rect(6px,9999px,12px,0); transform:translate(0,0) skew(0deg)}
-        62%  {clip:rect(9px,9999px,15px,0); transform:translate(-1px,0) skew(-0.3deg)}
-        75%  {clip:rect(5px,9999px,11px,0); transform:translate(1px,1px) skew(0.2deg)}
-        88%  {clip:rect(8px,9999px,14px,0); transform:translate(0,-1px) skew(-0.1deg)}
-        100% {clip:rect(3px,9999px,7px,0); transform:translate(0,0) skew(0deg)}
+        0% {
+          clip: rect(3px, 9999px, 7px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
+        12% {
+          clip: rect(7px, 9999px, 13px, 0);
+          transform: translate(1px, 0) skew(0.3deg);
+        }
+        25% {
+          clip: rect(10px, 9999px, 16px, 0);
+          transform: translate(-1px, 1px) skew(-0.2deg);
+        }
+        37% {
+          clip: rect(4px, 9999px, 9px, 0);
+          transform: translate(1px, -1px) skew(0.4deg);
+        }
+        50% {
+          clip: rect(6px, 9999px, 12px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
+        62% {
+          clip: rect(9px, 9999px, 15px, 0);
+          transform: translate(-1px, 0) skew(-0.3deg);
+        }
+        75% {
+          clip: rect(5px, 9999px, 11px, 0);
+          transform: translate(1px, 1px) skew(0.2deg);
+        }
+        88% {
+          clip: rect(8px, 9999px, 14px, 0);
+          transform: translate(0, -1px) skew(-0.1deg);
+        }
+        100% {
+          clip: rect(3px, 9999px, 7px, 0);
+          transform: translate(0, 0) skew(0deg);
+        }
       }
 
       @keyframes scanline {
@@ -161,31 +236,31 @@
       }
     </style>
     <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "url": "https://esm.sh/url@^0.11.4",
-    "eslint-plugin-react-hooks": "https://esm.sh/eslint-plugin-react-hooks@^7.0.1",
-    "@eslint/js": "https://esm.sh/@eslint/js@^9.39.2",
-    "@typescript-eslint/parser": "https://esm.sh/@typescript-eslint/parser@^8.50.0",
-    "eslint-plugin-react": "https://esm.sh/eslint-plugin-react@^7.37.5",
-    "@sentry/browser": "https://esm.sh/@sentry/browser@^10.32.1",
-    "@typescript-eslint/eslint-plugin": "https://esm.sh/@typescript-eslint/eslint-plugin@^8.50.0",
-    "eslint-config-prettier": "https://esm.sh/eslint-config-prettier@^10.1.8",
-    "vitest": "https://esm.sh/vitest@^4.0.16",
-    "eslint-plugin-import": "https://esm.sh/eslint-plugin-import@^2.32.0",
-    "eslint-plugin-security": "https://esm.sh/eslint-plugin-security@^3.0.1",
-    "eslint-plugin-jsx-a11y": "https://esm.sh/eslint-plugin-jsx-a11y@^6.10.2",
-    "globals": "https://esm.sh/globals@^17.0.0"
-  }
-}
-</script>
+      {
+        "imports": {
+          "react": "https://esm.sh/react@^19.2.3",
+          "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+          "react/": "https://esm.sh/react@^19.2.3/",
+          "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+          "path": "https://esm.sh/path@^0.12.7",
+          "vite": "https://esm.sh/vite@^7.3.0",
+          "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+          "url": "https://esm.sh/url@^0.11.4",
+          "eslint-plugin-react-hooks": "https://esm.sh/eslint-plugin-react-hooks@^7.0.1",
+          "@eslint/js": "https://esm.sh/@eslint/js@^9.39.2",
+          "@typescript-eslint/parser": "https://esm.sh/@typescript-eslint/parser@^8.50.0",
+          "eslint-plugin-react": "https://esm.sh/eslint-plugin-react@^7.37.5",
+          "@sentry/browser": "https://esm.sh/@sentry/browser@^10.32.1",
+          "@typescript-eslint/eslint-plugin": "https://esm.sh/@typescript-eslint/eslint-plugin@^8.50.0",
+          "eslint-config-prettier": "https://esm.sh/eslint-config-prettier@^10.1.8",
+          "vitest": "https://esm.sh/vitest@^4.0.16",
+          "eslint-plugin-import": "https://esm.sh/eslint-plugin-import@^2.32.0",
+          "eslint-plugin-security": "https://esm.sh/eslint-plugin-security@^3.0.1",
+          "eslint-plugin-jsx-a11y": "https://esm.sh/eslint-plugin-jsx-a11y@^6.10.2",
+          "globals": "https://esm.sh/globals@^17.0.0"
+        }
+      }
+    </script>
     <link rel="stylesheet" href="/index.css" />
   </head>
   <body>

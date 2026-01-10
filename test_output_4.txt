@@ -1,0 +1,61 @@
+
+> yazi-quest@0.0.0 test
+> vitest run src/warnings.test.tsx
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90m/home/mhenke/Projects/yazi-quest[39m
+
+[90mstdout[2m | src/warnings.test.tsx[2m > [22m[2mProtocol Violation Warnings[2m > [22m[2mIntermediate task violation (Sort) shows warning but disables Shift+Enter
+[22m[39mDEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+DEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+
+[90mstdout[2m | src/warnings.test.tsx[2m > [22m[2mProtocol Violation Warnings[2m > [22m[2mFinal task violation (Sort) allows Shift+Enter to auto-fix
+[22m[39mDEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+DEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+
+[90mstdout[2m | src/warnings.test.tsx[2m > [22m[2mProtocol Violation Warnings[2m > [22m[2mIntermediate task violation (Filter) shows warning but disables Shift+Enter
+[22m[39mDEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+DEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+
+[90mstdout[2m | src/warnings.test.tsx[2m > [22m[2mProtocol Violation Warnings[2m > [22m[2mIntermediate task violation (Hidden Files) shows warning but disables Shift+Enter
+[22m[39mDEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+DEBUG: getVisibleItems - Dir found: guest Children: [33m3[39m
+
+ [31m❯[39m src/warnings.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 48[2mms[22m[39m
+[31m     [31m×[31m Intermediate task violation (Sort) shows warning but disables Shift+Enter[39m[32m 35[2mms[22m[39m
+[31m     [31m×[31m Final task violation (Sort) allows Shift+Enter to auto-fix[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m Intermediate task violation (Filter) shows warning but disables Shift+Enter[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m Intermediate task violation (Hidden Files) shows warning but disables Shift+Enter[39m[32m 3[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/warnings.test.tsx[2m > [22mProtocol Violation Warnings[2m > [22mIntermediate task violation (Sort) shows warning but disables Shift+Enter
+[41m[1m FAIL [22m[49m src/warnings.test.tsx[2m > [22mProtocol Violation Warnings[2m > [22mFinal task violation (Sort) allows Shift+Enter to auto-fix
+[41m[1m FAIL [22m[49m src/warnings.test.tsx[2m > [22mProtocol Violation Warnings[2m > [22mIntermediate task violation (Filter) shows warning but disables Shift+Enter
+[41m[1m FAIL [22m[49m src/warnings.test.tsx[2m > [22mProtocol Violation Warnings[2m > [22mIntermediate task violation (Hidden Files) shows warning but disables Shift+Enter
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'lore')[39m
+[36m [2m❯[22m EpisodeIntro src/components/EpisodeIntro.tsx:[2m37:15[22m[39m
+    [90m 35| [39m
+    [90m 36| [39m    [35mreturn[39m result[33m;[39m
+    [90m 37| [39m  }[33m,[39m [episode[33m.[39mlore])[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 38| [39m
+    [90m 39| [39m  [90m// Type out current section[39m
+[90m [2m❯[22m Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:[2m25904:20[22m[39m
+[90m [2m❯[22m renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:[2m7662:22[22m[39m
+[90m [2m❯[22m updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:[2m10166:19[22m[39m
+[90m [2m❯[22m beginWork node_modules/react-dom/cjs/react-dom-client.development.js:[2m11778:18[22m[39m
+[90m [2m❯[22m runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:[2m874:13[22m[39m
+[90m [2m❯[22m performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:[2m17641:22[22m[39m
+[90m [2m❯[22m workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:[2m17469:41[22m[39m
+[90m [2m❯[22m renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:[2m17450:11[22m[39m
+[90m [2m❯[22m performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:[2m16583:35[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[90m (4)[39m
+[2m   Start at [22m 13:17:45
+[2m   Duration [22m 1.28s[2m (transform 377ms, setup 0ms, import 587ms, tests 48ms, environment 529ms)[22m
+

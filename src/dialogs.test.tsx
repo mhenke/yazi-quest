@@ -62,7 +62,8 @@ describe('Dialog Interactions', () => {
   });
 
   // Test Map Highlighting Edge Case (Simulated)
-  test('Esc should close Map even after highlighting a level', async () => {
+  // NOTE: As of the dismiss key standardization, Escape no longer closes most dialogs
+  test('Escape should NOT close Map (only Shift+Enter closes it)', async () => {
     render(<App />);
     fireEvent.click(await screen.findByText(/Skip Intro/i));
 
@@ -76,8 +77,13 @@ describe('Dialog Interactions', () => {
     // Ensure map is still open
     expect(screen.getByText('Quest Map')).toBeTruthy();
 
-    // Try Closing
+    // Try Escape - should NOT close
     fireEvent.keyDown(window, { key: 'Escape' });
+    // Map should still be visible
+    expect(screen.getByText('Quest Map')).toBeTruthy();
+
+    // Now use Shift+Enter to actually close
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
     await waitFor(() => expect(screen.queryByText('Quest Map')).toBeNull());
   });
 
@@ -125,5 +131,92 @@ describe('Dialog Interactions', () => {
       await new Promise((r) => setTimeout(r, 100));
     });
     expect(screen.queryByText('HELP / KEYBINDINGS')).toBeNull();
+  });
+});
+
+/**
+ * Regression Tests - Dialog Dismiss Key Standardization
+ *
+ * These tests verify that dialog dismissal is consistent:
+ * - Most dialogs: Shift+Enter only (no Escape)
+ * - SuccessToast: Both Shift+Enter (advance) and Escape (stay here)
+ */
+describe('Regression: Dialog Dismiss Key Consistency', () => {
+  beforeEach(async () => {
+    window.localStorage.clear();
+  });
+
+  test('Help modal should NOT close with Escape', async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText(/Skip Intro/i));
+
+    // Open Help
+    fireEvent.keyDown(window, { key: '?', altKey: true });
+    await waitFor(() => expect(screen.getByText('HELP / KEYBINDINGS')).toBeTruthy());
+
+    // Try Escape - should NOT close
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByText('HELP / KEYBINDINGS')).toBeTruthy();
+
+    // Shift+Enter should close
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText('HELP / KEYBINDINGS')).toBeNull());
+  });
+
+  test('Hint modal should NOT close with Escape', async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText(/Skip Intro/i));
+
+    // Open Hint
+    fireEvent.keyDown(window, { key: 'h', altKey: true });
+    await waitFor(() => expect(screen.getByText(/Hint \(/)).toBeTruthy());
+
+    // Try Escape - should NOT close
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByText(/Hint \(/)).toBeTruthy();
+
+    // Shift+Enter should close
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText(/Hint \(/)).toBeNull());
+  });
+
+  test('Map modal should NOT close with Escape', async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText(/Skip Intro/i));
+
+    // Open Map
+    fireEvent.keyDown(window, { key: 'm', altKey: true });
+    await waitFor(() => expect(screen.getByText('Quest Map')).toBeTruthy());
+
+    // Try Escape - should NOT close
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByText('Quest Map')).toBeTruthy();
+
+    // Shift+Enter should close
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText('Quest Map')).toBeNull());
+  });
+
+  test('All standard dialogs should close with Shift+Enter', async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText(/Skip Intro/i));
+
+    // Test Help
+    fireEvent.keyDown(window, { key: '?', altKey: true });
+    await waitFor(() => expect(screen.getByText('HELP / KEYBINDINGS')).toBeTruthy());
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText('HELP / KEYBINDINGS')).toBeNull());
+
+    // Test Hint
+    fireEvent.keyDown(window, { key: 'h', altKey: true });
+    await waitFor(() => expect(screen.getByText(/Hint \(/)).toBeTruthy());
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText(/Hint \(/)).toBeNull());
+
+    // Test Map
+    fireEvent.keyDown(window, { key: 'm', altKey: true });
+    await waitFor(() => expect(screen.getByText('Quest Map')).toBeTruthy());
+    fireEvent.keyDown(window, { key: 'Enter', shiftKey: true });
+    await waitFor(() => expect(screen.queryByText('Quest Map')).toBeNull());
   });
 });

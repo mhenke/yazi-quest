@@ -17,7 +17,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       // Prevent default to avoid side effects on the main app
       e.preventDefault();
 
-      if (e.key === 'Escape') {
+      if (e.key === 'Enter' && e.shiftKey) {
         onClose();
       } else if (e.key === 'j' || e.key === 'ArrowDown') {
         setScrollPosition((prev) => prev + 1);
@@ -27,8 +27,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
         setScrollPosition((prev) => prev + 5);
       } else if (e.key === 'K' && e.shiftKey) {
         setScrollPosition((prev) => Math.max(0, prev - 5));
-      } else if (e.key === 'Enter' && e.shiftKey) {
-        onClose();
       }
     };
 
@@ -120,7 +118,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           </div>
         </div>
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
-          Query command reference (?) • Press Esc or Shift+Enter to close
+          Query command reference (?) • Press Shift+Enter to close
         </div>
       </div>
     </div>

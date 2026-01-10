@@ -57,6 +57,7 @@ const createTestState = (fs: FileNode, overrides: Partial<GameState> = {}): Game
   usedGG: false,
   usedGI: false,
   usedGC: false,
+  usedGR: false,
   usedCtrlA: false,
   usedPreviewDown: false,
   usedPreviewUp: false,
@@ -418,6 +419,63 @@ describe('Task Check Functions - Selected Episode II & III', () => {
     });
   });
 
+  /**
+   * Regression: Level 7 QUANTUM BYPASS
+   * Issue: Level 7 needs an initial task to go to root (gr) before doing the current first task.
+   * Fix: Added 'nav-to-root' task that requires usedGR flag and being at root path.
+   */
+  describe('Level 7: QUANTUM BYPASS - nav-to-root regression', () => {
+    it('Task: nav-to-root - should NOT complete without usedGR flag', () => {
+      fs = ensurePrerequisiteState(fs, 7);
+      const level = getLevel(7);
+      const task = level.tasks.find((t) => t.id === 'nav-to-root')!;
+
+      expect(task).toBeDefined();
+
+      // At root path but without usedGR flag
+      const state = createTestState(fs, {
+        currentPath: ['root'],
+        usedGR: false,
+      });
+
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('Task: nav-to-root - should NOT complete with usedGR but wrong path', () => {
+      fs = ensurePrerequisiteState(fs, 7);
+      const level = getLevel(7);
+      const task = level.tasks.find((t) => t.id === 'nav-to-root')!;
+
+      // Used GR but at home directory instead of root
+      const state = createTestState(fs, {
+        currentPath: ['root', 'home', 'guest'],
+        usedGR: true,
+      });
+
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('Task: nav-to-root - should complete when at root with usedGR', () => {
+      fs = ensurePrerequisiteState(fs, 7);
+      const level = getLevel(7);
+      const task = level.tasks.find((t) => t.id === 'nav-to-root')!;
+
+      // Correct: at root path with usedGR flag set
+      const state = createTestState(fs, {
+        currentPath: ['root'],
+        usedGR: true,
+      });
+
+      expect(task.check(state, level)).toBe(true);
+    });
+
+    it('Level 7 should have nav-to-root as first task', () => {
+      const level = getLevel(7);
+      expect(level.tasks[0].id).toBe('nav-to-root');
+      expect(level.tasks[0].description).toContain('gr');
+    });
+  });
+
   describe('Level 9: TMP CLEANUP', () => {
     it('Task should verify junk files can be detected', () => {
       fs = ensurePrerequisiteState(fs, 9);
@@ -551,6 +609,150 @@ describe('Warning Condition Logic', () => {
       const currentDirId = guest.id;
       const isFilterClear = !state.filters[currentDirId];
       expect(isFilterClear).toBe(true); // No filter on current dir
+    });
+  });
+});
+
+/**
+ * Regression Tests - Level 5 Keybinding Hints
+ *
+ * These tests ensure task descriptions include keybinding hints
+ * for concepts introduced in Level 5 that weren't covered in prior levels:
+ * - Space (toggle selection)
+ * - . (toggle hidden files)
+ * - gh (goto home)
+ */
+describe('Regression: Level 5 Task Descriptions Include Keybinding Hints', () => {
+  const level = getLevel(5);
+
+  it('batch-cut-files task should mention Space for toggle selection', () => {
+    const task = level.tasks.find((t) => t.id === 'batch-cut-files')!;
+    expect(task.description).toContain('Space');
+    expect(task.description.toLowerCase()).toContain('toggle selection');
+  });
+
+  it('reveal-hidden task should mention . for toggle hidden and gh for navigation', () => {
+    const task = level.tasks.find((t) => t.id === 'reveal-hidden')!;
+    expect(task.description).toContain('.');
+    expect(task.description).toContain('gh');
+    expect(task.description.toLowerCase()).toContain('hidden');
+  });
+
+  it('hide-hidden task should mention . for toggle hidden', () => {
+    const task = level.tasks.find((t) => t.id === 'hide-hidden')!;
+    expect(task.description).toContain('.');
+    expect(task.description).toContain('gh');
+  });
+
+  it('Level 5 hint should mention Space and . keybindings', () => {
+    expect(level.hint).toContain('Space');
+    expect(level.hint).toContain('.');
+  });
+});
+
+describe('Level 8: DAEMON DISGUISE CONSTRUCTION', () => {
+  let fs: FileNode;
+
+  beforeEach(() => {
+    fs = cloneFS(INITIAL_FS);
+    // Setup Level 8 initial state (simulating onEnter logic)
+    // Create workspace/systemd-core with corrupted file
+    const workspace = findNodeByName(fs, 'workspace', 'dir');
+    if (workspace) {
+      // Ensure systemd-core doesn't exist yet (or recreate it)
+      workspace.children = workspace.children?.filter((c) => c.name !== 'systemd-core') || [];
+
+      const systemdCore = {
+        id: 'systemd-core-corrupted',
+        name: 'systemd-core',
+        type: 'dir' as const,
+        children: [
+          {
+            id: 'corrupted-placeholder',
+            name: 'uplink_v1.conf',
+            type: 'file' as const, // Cast to literal type
+            content: '[CORRUPTED DATA - OVERWRITE REQUIRED]',
+            parentId: 'systemd-core-corrupted',
+          },
+        ],
+        parentId: workspace.id,
+      };
+      workspace.children.push(systemdCore);
+    }
+  });
+
+  describe('Task: combo-1c (Paste uplink_v1.conf)', () => {
+    it('should NOT complete when only the corrupted placeholder exists', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+
+      // State: Just entered level, corrupted file exists
+      const state = createTestState(fs, {
+        completedTaskIds: { [8]: ['establish-workspace-presence'] }, // 'repair-corruption' NOT done
+      });
+
+      // Should return false because:
+      // 1. 'repair-corruption' is not in completedTaskIds
+      // 2. The file content contains "CORRUPTED"
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('should NOT complete even if repair-corruption is mocked but file is still corrupted (state mismatch protection)', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+
+      // State: Claim 'repair-corruption' is done, but FS still has corrupted content
+      const state = createTestState(fs, {
+        completedTaskIds: { [8]: ['establish-workspace-presence', 'repair-corruption'] },
+      });
+
+      // Should return false because checks file content
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('should NOT complete if file is valid but repair-corruption task not marked complete', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+
+      // Manually fix the file in FS - use direct path to be sure
+      const workspace = findNodeByName(fs, 'workspace', 'dir')!;
+      const systemdCore = workspace.children!.find((c) => c.name === 'systemd-core');
+      if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
+
+      const file = systemdCore.children!.find((c) => c.name === 'uplink_v1.conf');
+      if (!file) throw new Error('uplink_v1.conf not found in systemd-core for test setup');
+
+      file.content = 'VALID CONTENT';
+
+      // State: File is good, but task history missing 'repair-corruption'
+      // This ensures the dependency is enforced
+      const state = createTestState(fs, {
+        completedTaskIds: { [8]: ['establish-workspace-presence'] },
+      });
+
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('should complete when file is valid AND repair-corruption is done', () => {
+      const level = getLevel(8);
+      const task = level.tasks.find((t) => t.id === 'combo-1c')!;
+
+      // Manually fix the file in FS - use direct path to be sure
+      const workspace = findNodeByName(fs, 'workspace', 'dir')!;
+      const systemdCore = workspace.children!.find((c) => c.name === 'systemd-core');
+      if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
+
+      const file = systemdCore.children!.find((c) => c.name === 'uplink_v1.conf');
+      if (!file) throw new Error('uplink_v1.conf not found in systemd-core for test setup');
+
+      file.content = 'VALID CONTENT';
+
+      // State: correctly completed previous tasks
+      const state = createTestState(fs, {
+        completedTaskIds: { [8]: ['establish-workspace-presence', 'repair-corruption'] },
+      });
+
+      expect(task.check(state, level)).toBe(true);
     });
   });
 });

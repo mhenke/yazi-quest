@@ -177,6 +177,7 @@ export interface GameState {
   usedG?: boolean; // Tracks if player used G (jump to bottom)
   usedGI?: boolean; // Tracks if player used gi (g then i) to jump specifically to incoming
   usedGC?: boolean; // Tracks if player used gc (g then c) to jump specifically to .config
+  usedGR?: boolean; // Tracks if player used gr (g then r) to jump specifically to root
   usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all in a directory
   usedCtrlR?: boolean; // Tracks if player used Ctrl+R for redo/refresh actions
   usedGG?: boolean; // Tracks if player used gg (jump to top)

@@ -7,17 +7,8 @@ interface ThreatAlertProps {
 }
 
 export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow Shift+Enter to dismiss the critical alert
-      if (e.key === 'Enter' && e.shiftKey) {
-        onDismiss();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDismiss]);
+  // Keyboard handling is managed globally in App.tsx to coordinate with game state
+  // (e.g. blocking dismissal for Honeypot traps until clipboard is cleared)
 
   return (
     <div
