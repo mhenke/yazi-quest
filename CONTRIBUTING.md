@@ -23,7 +23,11 @@
   content so authors and designers can review runtime behavior without
   searching for external policy files.
 
-See `DOCS_INDEX.md` for the canonical docs map.
+See the documentation index for detailed rationale:
+
+- [STORY_ARC.md](./STORY_ARC.md) - Narrative and level progression.
+- [LEARNING_DESIGN.md](./LEARNING_DESIGN.md) - Pedagogical rationale.
+- [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) - Historical audit and refactor logs.
 
 ## Styling
 
@@ -44,7 +48,13 @@ See `DOCS_INDEX.md` for the canonical docs map.
 - `npm run lint`: Lints the code using ESLint.
 - `npm run format`: Formats the code using Prettier.
 
-## Debugging Scenarios
+To test the game state, use URL parameters:
+
+- `?ep=2` - Start from Episode 2.
+- `?lvl=5` - Jump to specific Level ID.
+- `?tasks=all` - Auto-complete current tasks.
+- `?intro=false` - Skip intro cinematics.
+- `?debug=outro` - Jump directly to end sequence.
 
 To test specific random events in Level 12 (Daemon Installation), you can force a scenario by modifying `src/constants.tsx`:
 
@@ -53,6 +63,5 @@ To test specific random events in Level 12 (Daemon Installation), you can force 
     - `'scen-b1'`: Traffic Alert (Modern/Risky)
     - `'scen-b2'`: Remote Tracker (Modern/Risky)
     - `'scen-b3'`: Heuristic Swarm (Modern/Risky)
-    - `'scen-a2'`: Bitrot (Legacy/Safe)
-    - `'scen-a3'`: Dependency Error (Legacy/Safe)
-3.  Set back to `null` to restore normal random behavior.
+    - `'scen-a1'`, `'scen-a2'`, `'scen-a3'`: Legacy variants.
+3.  Set back to `null` to restore normal behavior.

@@ -80,6 +80,21 @@ const getNarrativeAction = (key: string): string | null => {
   return null;
 };
 
+export const checkPrerequisites = (
+  levelId: number,
+  completedTaskIds: Record<number, string[]>,
+): number[] => {
+  const level = LEVELS.find((l) => l.id === levelId);
+  if (!level || !level.buildsOn) return [];
+
+  return level.buildsOn.filter((preId) => {
+    const preLevel = LEVELS.find((l) => l.id === preId);
+    if (!preLevel) return false;
+    const completedTasks = completedTaskIds[preId] || [];
+    return completedTasks.length < preLevel.tasks.length;
+  });
+};
+
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     // 1. Initialize Completed Tasks State
@@ -266,11 +281,14 @@ export default function App() {
       fs: fs,
       levelStartFS: cloneFS(fs),
       levelStartPath: [...initialPath],
-      notification: isDevOverride
-        ? `DEV BYPASS ACTIVE`
-        : cycleCount > 1 && effectiveIndex === 0
-          ? `CYCLE ${cycleCount} INITIALIZED`
-          : null,
+      notification:
+        lvlParam && checkPrerequisites(initialLevel.id, completedTaskIds).length > 0
+          ? `PREREQUISITE WARNING: Level ${initialLevel.id} skipped some learning steps.`
+          : isDevOverride
+            ? `DEV BYPASS ACTIVE`
+            : cycleCount > 1 && effectiveIndex === 0
+              ? `CYCLE ${cycleCount} INITIALIZED`
+              : null,
       selectedIds: [],
       pendingDeleteIds: [],
       deleteType: null,
@@ -798,6 +816,18 @@ export default function App() {
       }
 
       const nextLevel = LEVELS[nextIdx];
+
+      // Enforce buildsOn prerequisites (P0 requirement)
+      const missingPrereqs = checkPrerequisites(nextLevel.id, prev.completedTaskIds);
+      if (missingPrereqs.length > 0) {
+        // Find the first missing prerequisite title for the notification
+        const firstMissing = LEVELS.find((l) => l.id === missingPrereqs[0]);
+        return {
+          ...prev,
+          notification: `PREREQUISITE UNMET: Complete ${firstMissing?.title || 'previous levels'} first.`,
+        };
+      }
+
       const isNewEp = nextLevel.episodeId !== LEVELS[prev.levelIndex].episodeId;
 
       let fs = cloneFS(prev.fs);

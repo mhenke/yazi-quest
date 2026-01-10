@@ -23,8 +23,9 @@ We strictly manage cognitive load to prevent overwhelming the learner:
 We use a **fading guidance** strategy.
 
 - **Early Levels (1-3)**: Instructions are explicit and prescriptive (e.g., "Press `j` to move down"). The cognitive work is low; the focus is on motor memory.
+- **Retention Checkpoints (L5, L10)**: Scaffolding is abruptly removed. Objective-based hints replace step-by-step keys to verify skill retention.
 - **Mid Levels (4-8)**: Guidance becomes strategic (e.g., "Aggregate the uplink files"). The user must recall specific keys (`Space`, `x`, `p`) to achieve the goal.
-- **Late Levels (11-15)**: Instructions are objective-based (e.g., "Install the daemon"). The user must synthesize multiple skills (navigation, selection, copying, root access) without explicit key prompting.
+- **Late Levels (11-15)**: Instructions are objective-based (e.g., "Install the daemon"). The user must synthesize multiple skills without explicit prompting.
 
 ### 2. Spaced Repetition & Interleaving
 

@@ -21,7 +21,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 - **15 Progressive Levels** teaching Yazi through narrative-driven challenges
 - **Memory Wipe Twist** - A conclusion that recontextualizes everything
 - **Real Yazi Simulation** - Authentic keybindings and file manager behavior
-- **Quest Map** (M) - Track objectives, skills, and progression
+- **Quest Map** (Alt+M) - Track objectives, skills, and progression
 - **Debug Parameters** - `?lvl=5`, `?ep=2`, `?tasks=all`, `?intro=false`, `FORCE_SCENARIO` (see CONTRIBUTING.md)
 
 ## 🚀 Play Online
@@ -47,6 +47,7 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 ## 📖 Documentation
 
 - **[STORY_ARC.md](./STORY_ARC.md)** - Complete story, episode, and level progression
+- **[LEARNING_DESIGN.md](./LEARNING_DESIGN.md)** - Pedagogical rationale and skill progression
 - **[Contributing Guide](./CONTRIBUTING.md)** - Development guidelines
 - **[GEMINI.md](./GEMINI.md)** - Project overview and development context for AI agents
 

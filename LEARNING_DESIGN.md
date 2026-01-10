@@ -76,9 +76,12 @@ We explicitly exclude certain skills to protect the learning curve:
 The difficulty does not climb linearly. It follows a "Sawtooth" pattern:
 
 1.  **Intro (L1)**: Low Friction.
-2.  **Spike (L6)**: High Friction (Batch ops introduction).
-3.  **Relief (L7)**: Low Friction (Tool `z` makes life easier).
-4.  **Spike (L12)**: High Friction (Complex multi-step daemon install).
-5.  **Relief (L13)**: High Friction (Flow state, repeating known patterns fast).
+2.  **Ep I Checkpoint (L5)**: High Friction. First removal of explicit keybinding hints.
+3.  **Spike (L6)**: High Friction. Batch operations introduction.
+4.  **Relief (L7)**: Low Friction. Tool `z` makes life easier.
+5.  **Ep II Checkpoint (L10)**: High Friction. Verification of metadata and archive skills without guidance.
+6.  **Spike (L12)**: High Friction. Complex multi-step daemon install with randomized consequences.
+7.  **Relief (L13)**: Med Friction. Flow state achieved via node switching repetition.
+8.  **Final Mastery (L15)**: CRITICAL Friction. Cumulative gauntlet with zero assistance.
 
-This rhythm prevents burnout by alternating between _learning new hard things_ and _feeling powerful with new tools_.
+This rhythm prevents burnout by alternating between _learning new hard things_, _demonstrating independent mastery_, and _feeling powerful with new tools_.

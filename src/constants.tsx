@@ -2370,26 +2370,11 @@ export const LEVELS: Level[] = [
 
     tasks: [
       {
-        id: 'nav-to-workspace',
-        description: "Navigate to '~/workspace' (gw)",
-        check: (c) => {
-          const s = findNodeByName(c.fs, 'workspace');
-          return c.currentPath.includes(s?.id || '');
-        },
-        completed: false,
-      },
-      {
-        id: 'combo-1-construct-calibrate',
-        description: "Construct 'systemd-core/' (a) and enter it (l) to calibrate quantum link",
+        id: 'establish-workspace-presence',
+        description: "Secure a foothold in '~/workspace' and initialize the 'systemd-core/' link",
         check: (c) => {
           const s = findNodeByName(c.fs, 'systemd-core');
-          // If the current path explicitly includes the located node id, we're good.
           if (s && c.currentPath.includes(s.id)) return true;
-
-          // Otherwise, be resilient: check that the node the player is currently
-          // in (the last id in currentPath) has the expected name. This handles
-          // cases where multiple nodes share the same name and the created one
-          // has a different id than an existing template node.
           const lastId =
             c.currentPath && c.currentPath.length
               ? c.currentPath[c.currentPath.length - 1]
@@ -2404,7 +2389,7 @@ export const LEVELS: Level[] = [
         id: 'repair-corruption',
         description:
           "OVERWRITE the corrupted 'uplink_v1.conf': yank the real file from '~/.config/vault/active' (Z → 'active'), return (L), and use Shift+P to force-paste",
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('combo-1-construct-calibrate'),
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('establish-workspace-presence'),
         check: (c) => {
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const systemdCore = workspace
@@ -2606,7 +2591,7 @@ export const LEVELS: Level[] = [
     description:
       'The /daemons directory contains both legacy entropy and modern traps. Identify the "Honeypot" files (modified < 7 days) and avoid them. Select 2 SAFE targets (Legacy) for camouflage.',
     initialPath: null,
-    hint: "Use Tab to inspect file metadata. 'Honeypot' files were modified recently (< 7 days). Legacy files are old (> 30 days). Select 2 Legacy files to proceed.",
+    hint: 'Identify the modern and legacy camouflage signatures within the root daemons. Your choice here will influence the security response in the next phase.',
     coreSkill: 'Metadata Inspection (Tab)',
     environmentalClue: 'OBJECTIVE: Select 2 SAFE files | AVOID: Recently modified (Honeypots)',
     successMessage:
@@ -2742,7 +2727,7 @@ export const LEVELS: Level[] = [
     description:
       'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
     initialPath: null,
-    hint: "Transplant the 'systemd-core' from your workspace to the root '/daemons/' directory. If a stub exists, overwrite it (Shift+P) to assert dominance.",
+    hint: 'Stabilize the daemon by integrating the correct camouflage signature and resolving configuration conflicts. The system is reacting to your presence—move with purpose.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
@@ -2908,6 +2893,10 @@ export const LEVELS: Level[] = [
         // Actually, we check the CURRENT state. If the file is gone, the task is complete.
         // If the file never existed, the task should be hidden/skipped or auto-completed.
         // Better: Check if file exists. If it does, Show task.
+        // If the file does NOT exist, we assume it's either done or not this scenario.
+        // This is tricky. Let's simplify:
+        // We require the player to handle the threat IF it exists.
+        // If the file isn't there, we don't block progress.
         hidden: (c) => {
           // Hide if the file was never created (i.e. not this scenario)
           // We can't easily know "was never created" vs "was deleted" without persistent state flags.
@@ -2920,9 +2909,6 @@ export const LEVELS: Level[] = [
           // The only reliable way is to check if the file exists.
           // If the file exists, we show the task.
           // If the file does NOT exist, we assume it's either done or not this scenario.
-          // This is tricky. Let's simplify:
-          // We require the player to handle the threat IF it exists.
-          // If the file isn't there, we don't block progress.
           return !findNodeByName(c.fs, 'workspace')?.children?.some(
             (n) => n.name === 'alert_traffic.log',
           );
@@ -3032,7 +3018,7 @@ export const LEVELS: Level[] = [
     description:
       "NETWORK FRAGMENTED. Three neural shards (Tokyo, Berlin, São Paulo) hold the encryption key. You must synchronize them. Use '1', '2', '3' to switch active nodes.",
     initialPath: ['root', 'nodes', 'tokyo'], // Start in Tokyo
-    hint: "Keys '1', '2', '3' instantly switch your terminal to Tokyo, Berlin, or São Paulo. Retrieve the key fragment from EACH node and assemble them in '/tmp/central'.",
+    hint: "Synchronize the payload across the global node network. You'll need to rapidly switch between terminal contexts (1, 2, 3) to manage the distributed transfer.",
     coreSkill: 'Async Node Switching (1, 2, 3)',
     environmentalClue:
       'NODES: Tokyo(1), Berlin(2), São Paulo(3) | TASK: Gather keys -> /tmp/central',
@@ -3152,7 +3138,7 @@ export const LEVELS: Level[] = [
     description:
       'Forensic algorithms are analyzing directory spikes. To mask the deletion of your tracks, you must first create entropy (decoys), then purge the evidence. Sequence matters: Hidden files must remain until the end to maintain shell stability.',
     initialPath: null,
-    hint: "Create 3 decoy directories ('mkdir decoy_1 decoy_2 decoy_3'). Then delete all original directories (workspace, media, datastore, incoming). FINALLY, delete '.config'. If you delete '.config' early, the shell will crash.",
+    hint: 'Sterilize the partition by creating decoys and purging original tracks. Sequence is critical—preserve the core configuration until the end to maintain system stability.',
     coreSkill: 'Bulk Deletion & Creation',
     environmentalClue: "CONSTRAINT: Delete '.config' LAST | SEQ: Decoys -> Visible -> Hidden",
     successMessage:

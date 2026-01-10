@@ -55,4 +55,7 @@ The project uses `npm` for dependency management and scripts.
 - `src/constants.tsx`: **The most important file for game content.** It contains all level definitions, episode lore, keybindings, and the initial filesystem structure.
 - `src/types.ts`: Defines the core data structures for the game, such as `Level`, `Episode`, and `FileNode`.
 - `src/App.tsx`: The main React component that brings all the game elements together.
+- `STORY_ARC.md`: Complete story, episode, and level progression.
+- `LEARNING_DESIGN.md`: Pedagogical rationale and skill progression.
+- `CHANGELOG_ARCHIVE.md`: Historical audit and refactor logs.
 - `NARRATIVE_*.md`: A collection of documents detailing the game's story, level design, and narrative decisions.
