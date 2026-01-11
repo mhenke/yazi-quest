@@ -94,6 +94,21 @@ export async function getCurrentPath(page: Page): Promise<string> {
   if (await pathElement.isVisible({ timeout: 1000 }).catch(() => false)) {
     return (await pathElement.textContent()) || '';
   }
+
+  // Look for elements with font-mono and try to find a path-like string
+  const texts = await page.locator('.font-mono').allTextContents();
+  for (const txt of texts) {
+    if (!txt) continue;
+    const lower = txt.toLowerCase();
+    if (
+      txt.includes('/') ||
+      txt.includes('~') ||
+      /guest|datastore|incoming|workspace|tmp|config|root/i.test(lower)
+    ) {
+      return txt.trim();
+    }
+  }
+
   // Fallback: look for the path bar
   const pathBar = page.locator('.font-mono.text-zinc-400').first();
   return (await pathBar.textContent()) || '';
@@ -149,4 +164,28 @@ export async function enterFilter(page: Page, filterText: string): Promise<void>
 export async function exitFilterMode(page: Page): Promise<void> {
   await pressKey(page, 'Escape');
   await page.waitForTimeout(200);
+}
+
+/**
+ * Check if the fuzzy finder (search) input is visible.
+ */
+export async function isFuzzyFinderVisible(page: Page): Promise<boolean> {
+  const finder = page.locator('[data-test-id="fuzzy-finder"]');
+  return finder.isVisible({ timeout: 1000 });
+}
+
+/**
+ * Expect a file with a given name to be visible in the file list.
+ */
+export async function expectFileInView(page: Page, filename: string): Promise<void> {
+  const fileLocator = page.locator(`[data-test-id="file-${filename}"]`);
+  await expect(fileLocator).toBeVisible({ timeout: 2000 });
+}
+
+/**
+ * Expect a file with a given name to NOT be visible in the file list.
+ */
+export async function expectFileNotInView(page: Page, filename: string): Promise<void> {
+  const fileLocator = page.locator(`[data-test-id="file-${filename}"]`);
+  await expect(fileLocator).not.toBeVisible({ timeout: 2000 });
 }

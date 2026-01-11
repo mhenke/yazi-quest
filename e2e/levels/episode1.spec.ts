@@ -345,4 +345,34 @@ test.describe('Episode I - Level Completion', () => {
       await page.keyboard.press('Shift+Enter');
     }
   });
+
+  test('Regression: Level 5 Quarantine Alert - Shows once and dismisses', async ({ page }) => {
+    // Jump to Level 5 (index 4)
+    // Jump to Level 5 directly via URL to isolate Alert logic from Map navigation
+    await page.goto('/?level=5');
+    await waitForGameLoad(page);
+    await dismissEpisodeIntro(page);
+    await page.waitForTimeout(1000);
+
+    // Verify Alert Appears
+    // Use Regex for loose matching of "QUARANTINE ALERT"
+    const alert = page.getByText(/QUARANTINE ALERT/i);
+    await expect(alert).toBeVisible({ timeout: 5000 });
+
+    // Dismiss Alert
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(500);
+    await expect(alert).not.toBeVisible();
+
+    // Verify it doesn't reappear on interaction
+    await pressKey(page, 'j');
+    await page.waitForTimeout(200);
+    await expect(alert).not.toBeVisible();
+
+    // Verify it doesn't reappear on navigation elsewhere
+    await pressKey(page, 'g');
+    await pressKey(page, 'd');
+    await page.waitForTimeout(500);
+    await expect(alert).not.toBeVisible();
+  });
 });

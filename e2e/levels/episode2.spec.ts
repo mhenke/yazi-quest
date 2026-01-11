@@ -342,4 +342,45 @@ test.describe('Episode II - Level Completion', () => {
       await page.keyboard.press('Shift+Enter');
     }
   });
+
+  test('Regression: Level 7 Honeypot - Block paste until clear', async ({ page }) => {
+    // Jump to Level 7
+    await jumpToLevel(page, 6);
+    await dismissEpisodeIntro(page);
+    await page.waitForTimeout(500);
+
+    // 0. Jump to Root (gr) so FZF can find the file
+    await pressKey(page, 'g');
+    await page.keyboard.press('r');
+    await page.waitForTimeout(500);
+
+    // 1. Get the honeypot file into clipboard
+    // Use FZF to quickly find it (as per level design)
+    await pressKey(page, 'z');
+    await typeText(page, 'access_token');
+    await page.waitForTimeout(300);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+
+    // Yank it
+    await pressKey(page, 'y');
+    await page.waitForTimeout(300);
+    // Should see "Yanked" notification - implicit success
+
+    // 2. Try to Paste (p) -> SHOULD FAIL with TRAP WARNING
+    await pressKey(page, 'p');
+    await expect(page.getByText('SYSTEM TRAP ACTIVE', { exact: false })).toBeVisible();
+
+    // 3. Try to Yank (y) another file (e.g. current one again) -> SHOULD FAIL
+    await pressKey(page, 'y');
+    await expect(page.getByText('SYSTEM TRAP ACTIVE', { exact: false })).toBeVisible();
+
+    // 4. Clear Clipboard with Shift+Y
+    await page.keyboard.press('Shift+y');
+    await page.waitForTimeout(500);
+
+    // 5. Try Paste (p) again -> Should NOT show TRAP WARNING
+    await pressKey(page, 'p');
+    await expect(page.getByText('SYSTEM TRAP ACTIVE')).not.toBeVisible();
+  });
 });

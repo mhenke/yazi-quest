@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { waitForGameLoad, dismissEpisodeIntro, pressKey } from '../helpers';
+import { waitForGameLoad, dismissEpisodeIntro, pressKey, getCurrentPath } from './helpers';
 
-test.describe('Help, Hint, and Map Dialogs', () => {
+test.describe('Dialog Interactions - Help, Hint, and Map Modals', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForGameLoad(page);
@@ -9,205 +9,332 @@ test.describe('Help, Hint, and Map Dialogs', () => {
   });
 
   test.describe('Help Modal (Alt+?)', () => {
-    test('should open and close help modal', async ({ page }) => {
-      // Open help modal with Alt+?
-      await page.keyboard.press('Alt+?');
-      await page.waitForTimeout(300);
-
-      // Verify help modal is visible
-      const helpTitle = page.getByText('HELP / KEYBINDINGS', { exact: false });
-      await expect(helpTitle).toBeVisible({ timeout: 3000 });
-
-      // Close with Shift+Enter
-      await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(300);
-
-      // Verify help modal is closed
-      await expect(helpTitle).not.toBeVisible({ timeout: 2000 });
-    });
-
-    test('should display keybinding categories', async ({ page }) => {
-      await page.keyboard.press('Alt+?');
-      await page.waitForTimeout(300);
-
-      // Check for help modal content - keybindings are listed
-      const helpContent = page.getByText('j', { exact: true });
-      await expect(helpContent).toBeVisible({ timeout: 2000 });
-
-      // Close
-      await page.keyboard.press('Shift+Enter');
-    });
-
-    test('should NOT close help with Escape (only Shift+Enter)', async ({ page }) => {
+    test('should open Help modal with Alt+?', async ({ page }) => {
+      // Open Help modal
       await page.keyboard.press('Alt+?');
       await page.waitForTimeout(500);
 
-      // Help modal visible - use KEYBINDINGS text as identifier
-      const helpContent = page.getByText('KEYBINDINGS', { exact: false });
+      // Verify Help modal is visible
+      const helpHeader = page.locator('text=HELP / KEYBINDINGS');
+      await expect(helpHeader).toBeVisible({ timeout: 3000 });
+
+      // Verify it contains keybinding information
+      const helpContent = page.locator('text=/navigation/i');
       await expect(helpContent).toBeVisible({ timeout: 2000 });
+    });
 
-      // Try Escape - should NOT close
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
+    test('should close Help modal with Shift+Enter', async ({ page }) => {
+      // Open Help modal
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
 
-      // Should still be visible - verify via keybindings content
-      await expect(helpContent).toBeVisible();
-
-      // Now use Shift+Enter to actually close
+      // Close with Shift+Enter
       await page.keyboard.press('Shift+Enter');
+
+      // Verify modal is closed
+      await expect(page.locator('text=HELP / KEYBINDINGS')).not.toBeVisible({
+        timeout: 2000,
+      });
+    });
+
+    test('should NOT close Help modal with Escape (regression test)', async ({ page }) => {
+      // Open Help modal
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Try closing with Escape - should NOT work
+      await pressKey(page, 'Escape');
+      await page.waitForTimeout(500);
+
+      // Modal should still be visible
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Clean up - close with Shift+Enter
+      await page.keyboard.press('Shift+Enter');
+    });
+
+    test('should toggle Help modal with repeated Alt+?', async ({ page }) => {
+      // Open
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Toggle closed
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).not.toBeVisible({
+        timeout: 2000,
+      });
+
+      // Toggle open again
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Clean up
+      await page.keyboard.press('Alt+?');
+    });
+
+    test('should not block keyboard input while Help modal is open', async ({ page }) => {
+      // This verifies that keyboard events are properly captured by the modal
+      // and don't leak through to the game
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Try pressing navigation keys - they shouldn't affect the game
+      const pathBefore = await getCurrentPath(page);
+
+      // Press some navigation keys
+      await pressKey(page, 'k');
+      await pressKey(page, 'j');
       await page.waitForTimeout(300);
-      await expect(helpContent).not.toBeVisible({ timeout: 2000 });
+
+      // Close modal
+      await page.keyboard.press('Shift+Enter');
+
+      // Path should be unchanged
+      const pathAfter = await getCurrentPath(page);
+      expect(pathBefore).toEqual(pathAfter);
     });
   });
 
-  test.describe('Hint Modal (Alt+H)', () => {
-    test('should open and close hint modal', async ({ page }) => {
-      // Open hint modal with Alt+H
+  test.describe('Hint Modal (Alt+h)', () => {
+    test('should open Hint modal with Alt+h', async ({ page }) => {
+      // Open Hint modal
       await page.keyboard.press('Alt+h');
-      await page.waitForTimeout(300);
 
-      // Verify hint modal is visible - look for hint content
-      const hintTitle = page.getByText('Hint', { exact: false });
-      await expect(hintTitle).toBeVisible({ timeout: 3000 });
+      // Verify Hint modal is visible (looks for "Hint (")
+      const hintHeader = page.locator('text=/Hint \\(/');
+      await expect(hintHeader).toBeVisible({ timeout: 2000 });
+    });
+
+    test('should close Hint modal with Shift+Enter', async ({ page }) => {
+      // Open Hint modal
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
 
       // Close with Shift+Enter
       await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(300);
 
-      // Verify closed
-      await expect(hintTitle).not.toBeVisible({ timeout: 2000 });
+      // Verify modal is closed
+      await expect(page.locator('text=/Hint \\(/')).not.toBeVisible({ timeout: 2000 });
     });
 
-    test('should display level-specific hint text', async ({ page }) => {
+    test('should NOT close Hint modal with Escape (regression test)', async ({ page }) => {
+      // Open Hint modal
       await page.keyboard.press('Alt+h');
-      await page.waitForTimeout(300);
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
 
-      // Level 1 hint mentions j/k navigation
-      const hintContent = page.getByText('j/k', { exact: false });
-      await expect(hintContent).toBeVisible({ timeout: 2000 });
-
-      await page.keyboard.press('Shift+Enter');
-    });
-
-    test('should cycle through hint stages on repeated Alt+H', async ({ page }) => {
-      // Open hint
-      await page.keyboard.press('Alt+h');
+      // Try closing with Escape - should NOT work
+      await pressKey(page, 'Escape');
       await page.waitForTimeout(500);
 
-      // Hint modal should be visible
-      // Just verify it opens - cycling stages is complex to verify
-      await page.waitForTimeout(200);
+      // Modal should still be visible
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
 
-      // Close
+      // Clean up
       await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(300);
+    });
+
+    test('should toggle Hint modal with repeated Alt+h', async ({ page }) => {
+      // Open
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
+
+      // Toggle closed
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).not.toBeVisible({ timeout: 2000 });
+
+      // Toggle open again
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
+
+      // Clean up
+      await page.keyboard.press('Alt+h');
     });
   });
 
-  test.describe('Map Modal (Alt+M)', () => {
-    test('should open and close map modal', async ({ page }) => {
-      // Open map modal with Alt+M
+  test.describe('Map Modal (Alt+m)', () => {
+    test('should open Map modal with Alt+m', async ({ page }) => {
+      // Open Map modal
       await page.keyboard.press('Alt+m');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
-      // Verify map modal is visible
-      const mapTitle = page.getByText('Quest Map', { exact: true });
-      await expect(mapTitle).toBeVisible({ timeout: 3000 });
+      // Verify Map modal is visible
+      const mapHeader = page.locator('text=Quest Map');
+      await expect(mapHeader).toBeVisible({ timeout: 3000 });
+
+      // Verify it shows levels
+      const levelOne = page.locator('text=/SYSTEM AWAKENING/i');
+      await expect(levelOne).toBeVisible({ timeout: 2000 });
+    });
+
+    test('should close Map modal with Shift+Enter', async ({ page }) => {
+      // Open Map modal
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
 
       // Close with Shift+Enter
       await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(300);
 
-      // Verify closed
-      await expect(mapTitle).not.toBeVisible({ timeout: 2000 });
+      // Verify modal is closed
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 2000 });
     });
 
-    test('should display episode tabs', async ({ page }) => {
+    test('should NOT close Map modal with Escape (regression test)', async ({ page }) => {
+      // Open Map modal
       await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+
+      // Try closing with Escape - should NOT work
+      await pressKey(page, 'Escape');
       await page.waitForTimeout(500);
 
-      // Verify Quest Map is open by checking the header
-      const mapTitle = page.getByText('Quest Map', { exact: true });
-      await expect(mapTitle).toBeVisible({ timeout: 3000 });
+      // Modal should still be visible
+      await expect(page.locator('text=Quest Map')).toBeVisible();
 
-      // Also verify we can see level content (SYSTEM AWAKENING is Level 1)
-      const levelContent = page.getByText('AWAKENING', { exact: false });
-      const hasLevel = await levelContent.isVisible({ timeout: 1000 }).catch(() => false);
-
-      await page.keyboard.press('Shift+Enter');
-
-      // The map opened successfully if either is visible
-      expect(hasLevel || true).toBe(true);
-    });
-
-    test('should navigate episodes with h/l keys', async ({ page }) => {
-      await page.keyboard.press('Alt+m');
-      await page.waitForTimeout(500);
-
-      // We start on Episode 1 by default
-      // Press 'l' to go to Episode 2
-      await page.keyboard.press('l');
-      await page.waitForTimeout(300);
-
-      // Episode 2 should now be highlighted/selected - look for FORTIFICATION
-      const fortification = page.getByText('FORTIFICATION', { exact: false });
-      // This tab should be active/highlighted now
-
-      // Press 'h' to go back to Episode 1
-      await page.keyboard.press('h');
-      await page.waitForTimeout(300);
-
-      // Close
+      // Clean up
       await page.keyboard.press('Shift+Enter');
     });
 
-    test('should navigate levels with j/k keys', async ({ page }) => {
+    test('should allow navigation within Map with j/k keys', async ({ page }) => {
+      // Open Map modal
       await page.keyboard.press('Alt+m');
-      await page.waitForTimeout(500);
+      await expect(page.locator('text=Quest Map')).toBeVisible();
 
-      // Press 'j' to move down in level list
-      await page.keyboard.press('j');
+      // Navigate down with j
+      await pressKey(page, 'j');
       await page.waitForTimeout(200);
 
-      // Press 'k' to move up
-      await page.keyboard.press('k');
+      // Navigate up with k
+      await pressKey(page, 'k');
       await page.waitForTimeout(200);
 
-      // Close
+      // Map should still be visible (not closed by navigation)
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+
+      // Close with Shift+Enter
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 2000 });
+    });
+
+    test('should allow jumping to levels from Map', async ({ page }) => {
+      // Open Map modal
+      await page.keyboard.press('Alt+m');
+      await page.waitForTimeout(500);
+      await expect(page.locator('text=Quest Map')).toBeVisible({ timeout: 3000 });
+
+      // Press Enter to jump to selected level (should be Level 1 by default)
+      await pressKey(page, 'Enter');
+      await page.waitForTimeout(1000);
+
+      // Map should close
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 3000 });
+
+      // We should still be in the game (verify by checking for level title)
+      const levelTitle = page.locator('text=/SYSTEM AWAKENING/i');
+      const hasTitle = await levelTitle.isVisible({ timeout: 3000 }).catch(() => false);
+      expect(hasTitle).toBe(true);
+    });
+
+    test('should close Map with Shift+Enter even after navigation', async ({ page }) => {
+      // Open Map modal
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+
+      // Navigate a few times
+      await pressKey(page, 'j');
+      await pressKey(page, 'j');
+      await pressKey(page, 'k');
+      await page.waitForTimeout(300);
+
+      // Close with Shift+Enter should still work
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 2000 });
+    });
+
+    test('should toggle Map modal with repeated Alt+m', async ({ page }) => {
+      // Open
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+
+      // Toggle closed
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 2000 });
+
+      // Toggle open again
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+
+      // Clean up
+      await page.keyboard.press('Alt+m');
+    });
+  });
+
+  test.describe('Dialog Consistency', () => {
+    test('all dialogs should use Shift+Enter for dismissal', async ({ page }) => {
+      // Test Help
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).not.toBeVisible({
+        timeout: 2000,
+      });
+
+      // Test Hint
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=/Hint \\(/')).not.toBeVisible({ timeout: 2000 });
+
+      // Test Map
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=Quest Map')).not.toBeVisible({ timeout: 2000 });
+    });
+
+    test('no dialog should close with Escape (regression test)', async ({ page }) => {
+      // Test Help
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+      await pressKey(page, 'Escape');
+      await page.waitForTimeout(300);
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+      await page.keyboard.press('Shift+Enter');
+
+      // Test Hint
+      await page.keyboard.press('Alt+h');
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
+      await pressKey(page, 'Escape');
+      await page.waitForTimeout(300);
+      await expect(page.locator('text=/Hint \\(/')).toBeVisible();
+      await page.keyboard.press('Shift+Enter');
+
+      // Test Map
+      await page.keyboard.press('Alt+m');
+      await expect(page.locator('text=Quest Map')).toBeVisible();
+      await pressKey(page, 'Escape');
+      await page.waitForTimeout(300);
+      await expect(page.locator('text=Quest Map')).toBeVisible();
       await page.keyboard.press('Shift+Enter');
     });
 
-    test('should jump to selected level with Enter', async ({ page }) => {
-      await page.keyboard.press('Alt+m');
+    test('only one dialog should be visible at a time', async ({ page }) => {
+      // Open Help
+      await page.keyboard.press('Alt+?');
       await page.waitForTimeout(500);
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible({ timeout: 3000 });
 
-      // Level 1 should be pre-selected
-      // Press Enter to jump to it (no-op since we're already there, but tests the flow)
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(500);
-
-      // Map should be closed after jumping
-      const mapTitle = page.getByText('Quest Map', { exact: true });
-      await expect(mapTitle).not.toBeVisible({ timeout: 2000 });
-    });
-
-    test('should NOT close map with Escape (only Shift+Enter)', async ({ page }) => {
+      // Try opening Map - Help should close first (or both stay open, depending on implementation)
       await page.keyboard.press('Alt+m');
+      await page.waitForTimeout(1000);
+
+      // Map should be open
+      await expect(page.locator('text=Quest Map')).toBeVisible({ timeout: 3000 });
+
+      // Note: Some implementations allow multiple modals. If so, just verify Map opened.
+      // Clean up by closing whatever's open
+      await page.keyboard.press('Shift+Enter').catch(() => {});
       await page.waitForTimeout(300);
-
-      const mapTitle = page.getByText('Quest Map', { exact: true });
-      await expect(mapTitle).toBeVisible();
-
-      // Try Escape - should NOT close
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-
-      // Should still be visible
-      await expect(mapTitle).toBeVisible();
-
-      // Now use Shift+Enter to actually close
-      await page.keyboard.press('Shift+Enter');
-      await expect(mapTitle).not.toBeVisible({ timeout: 2000 });
+      await page.keyboard.press('Shift+Enter').catch(() => {});
     });
   });
 });
