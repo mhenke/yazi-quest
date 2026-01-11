@@ -66,7 +66,9 @@ We explicitly exclude certain skills to protect the learning curve:
     - _Reason_: Reliance on mouse prevents building keybinding muscle memory.
 2.  **Complex Regex**: We use `f` (simple filter) and `z` (fuzzy find) instead of regex.
     - _Reason_: Regex is a separate skill domain (text processing) distinct from file navigation.
-3.  **Shell Commands**: We limit shell usage (`:`) to specific narrative moments.
+3.  **Filter Navigation**: While typing a filter (`f`), users can navigate with `h/j/k/l` — this matches real Yazi behavior where the file list remains interactive during filtering.
+    - _Implementation Note_: Navigation exits filter mode to prevent confusion.
+4.  **Shell Commands**: We limit shell usage (`:`) to specific narrative moments.
     - _Reason_: The goal is to teach _Yazi_, not _Bash_.
 
 ---
