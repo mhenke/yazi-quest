@@ -192,6 +192,7 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       const state = createTestState(fs, {
         currentPath: dynamicPath,
         cursorIndex: targetIndex,
+        usedFilter: true,
       });
 
       expect(task.check(state, level)).toBe(true);
@@ -217,6 +218,7 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       const state = createTestState(fs, {
         currentPath: dynamicPath,
         cursorIndex: incorrectIndex,
+        usedFilter: true,
       });
 
       expect(task.check(state, level)).toBe(false);

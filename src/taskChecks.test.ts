@@ -357,6 +357,7 @@ describe('Task Check Functions - Episode I', () => {
       const state = createTestState(fs, {
         currentPath: ['root', 'home', guest.id],
         showHidden: true,
+        usedGH: true,
       });
 
       expect(task.check(state, level)).toBe(true);

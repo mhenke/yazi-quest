@@ -2581,7 +2581,8 @@ export const LEVELS: Level[] = [
           const node = items[c.cursorIndex];
           return (
             node?.name === 'uplink_v1.conf' &&
-            !!node.content?.includes('CORRUPTED') &&
+            !!node.content &&
+            node.content.toLowerCase().includes('corrupt') &&
             c.usedFilter === true
           );
         },
