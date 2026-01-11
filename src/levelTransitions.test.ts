@@ -180,23 +180,12 @@ describe('Level Transition Consistency', () => {
   });
 
   describe('Level 8 → Level 9 Transition', () => {
-    it('Level 8 completion: systemd-core should exist in workspace with weights/model.rs', () => {
+    it('Level 8 completion: systemd-core should exist in workspace with lib.rs', () => {
       const fs = ensurePrerequisiteState(initialFs, 9);
       expect(pathExists(fs, 'root', 'home', 'guest', 'workspace', 'systemd-core')).toBe(true);
-      expect(pathExists(fs, 'root', 'home', 'guest', 'workspace', 'systemd-core', 'weights')).toBe(
-        true,
-      );
-      const weights = getNestedDir(
-        fs,
-        'root',
-        'home',
-        'guest',
-        'workspace',
-        'systemd-core',
-        'weights',
-      );
-      const weightsChildren = (weights?.children || []).map((c) => c.name);
-      expect(weightsChildren).toContain('model.rs');
+      const systemdCore = getNestedDir(fs, 'root', 'home', 'guest', 'workspace', 'systemd-core');
+      const coreChildren = (systemdCore?.children || []).map((c) => c.name);
+      expect(coreChildren).toContain('lib.rs');
     });
 
     it('Level 8 completion: systemd-core should have uplink_v1.conf', () => {
@@ -375,12 +364,12 @@ describe('Level Transition Consistency', () => {
   });
 
   describe('Daemons Directory Consistency', () => {
-    it('Initial filesystem should include /daemons with .service files', () => {
+    it('Initial filesystem should include a populated /daemons directory', () => {
       expect(pathExists(initialFs, 'root', 'daemons')).toBe(true);
       const daemons = getNestedDir(initialFs, 'root', 'daemons');
-      const daemonChildren = (daemons?.children || []).map((c) => c.name);
-      expect(daemonChildren).toContain('cron-legacy.service');
-      expect(daemonChildren).toContain('backup-archive.service');
+      const children = (daemons?.children || []).map((c) => c.name);
+      expect(children).toContain('systemd-core');
+      expect(daemons?.protected).toBe(true);
     });
 
     it('Level 12 prerequisite should include daemons (pre-seeded)', () => {

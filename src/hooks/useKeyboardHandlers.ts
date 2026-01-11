@@ -292,6 +292,7 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       gameState: GameState,
+      currentLevel: Level,
     ) => {
       if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
         return;
@@ -356,6 +357,26 @@ export const useKeyboardHandlers = (
             usedPreviewUp: false,
           }));
         } else {
+          // Check for protection
+          const targetNode = getNodeByPath(gameState.fs, target.path);
+          if (targetNode) {
+            const protection = isProtected(
+              gameState.fs,
+              gameState.currentPath,
+              targetNode,
+              currentLevel,
+              'jump',
+            );
+            if (protection) {
+              setGameState((prev) => ({
+                ...prev,
+                mode: 'normal',
+                notification: `🔒 ${protection}`,
+              }));
+              return;
+            }
+          }
+
           // Standard Path Jumps
           setGameState((prev) => {
             const extraFlags = target.flag ? { [target.flag]: true } : {};
@@ -515,6 +536,19 @@ export const useKeyboardHandlers = (
             return;
           }
           if (currentItem && (currentItem.type === 'dir' || currentItem.type === 'archive')) {
+            // Check for protection
+            const protection = isProtected(
+              gameState.fs,
+              gameState.currentPath,
+              currentItem,
+              currentLevel,
+              'enter',
+            );
+            if (protection) {
+              showNotification(`🔒 ${protection}`, 4000);
+              return;
+            }
+
             setGameState((prev) => {
               const nextPath = [...prev.currentPath, currentItem.id];
               const pathStr = resolvePath(prev.fs, nextPath);
@@ -860,6 +894,19 @@ export const useKeyboardHandlers = (
         case '\t':
         case 'Tab':
           e.preventDefault();
+          if (!gameState.showInfoPanel && currentItem) {
+            const protection = isProtected(
+              gameState.fs,
+              gameState.currentPath,
+              currentItem,
+              currentLevel,
+              'info',
+            );
+            if (protection) {
+              showNotification(`🔒 ${protection}`, 4000);
+              return;
+            }
+          }
           setGameState((prev) => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
           break;
         case '.':

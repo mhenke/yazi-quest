@@ -30,6 +30,7 @@ import {
   resolvePath,
   getRecursiveContent,
   findNodeByName,
+  isProtected,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
@@ -821,6 +822,18 @@ export default function App() {
         lastAccess: now,
       };
 
+      // Level-specific notifications for narrative events
+      let levelNotification: string | null = null;
+      if (onEnterError) {
+        levelNotification = 'Level initialization failed';
+      } else if (nextLevel.id === 6) {
+        levelNotification =
+          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.';
+      } else if (nextLevel.id === 8) {
+        levelNotification =
+          '⚠️ SECTOR DECAY DETECTED: ~/workspace/systemd-core/uplink_v1.conf corrupted';
+      }
+
       return {
         ...prev,
         levelIndex: nextIdx,
@@ -830,7 +843,7 @@ export default function App() {
         currentPath: targetPath,
         cursorIndex: 0,
         clipboard: null,
-        notification: onEnterError ? 'Level initialization failed' : null,
+        notification: levelNotification,
         selectedIds: [],
         showHint: false,
         hintStage: 0,
@@ -954,13 +967,31 @@ export default function App() {
           );
 
           if (bestMatch) {
-            const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => ({
+            const currentLevel = LEVELS[gameState.levelIndex];
+            const allDirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel).map((d) => ({
               node: d.node,
               path: d.path,
               display: resolvePath(gameState.fs, d.path),
             }));
             const match = allDirs.find((d) => d.display === bestMatch.path);
             if (match) {
+              const protection = isProtected(
+                gameState.fs,
+                gameState.currentPath,
+                match.node,
+                currentLevel,
+                'jump',
+              );
+              if (protection) {
+                setGameState((prev) => ({
+                  ...prev,
+                  mode: 'normal',
+                  notification: `🔒 ${protection}`,
+                  inputBuffer: '',
+                }));
+                return;
+              }
+
               const now = Date.now();
               setGameState((prev) => ({
                 ...prev,
@@ -1014,10 +1045,11 @@ export default function App() {
       gameState: GameState,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
     ) => {
-      // 1. Calculate Candidates - Match FuzzyFinder logic for consistency
+      // Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
       let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
       if (isZoxide) {
+        const currentLevel = LEVELS[gameState.levelIndex];
         candidates = Object.keys(gameState.zoxideData)
           .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
           .sort((a, b) => {
@@ -1025,9 +1057,15 @@ export default function App() {
             if (Math.abs(diff) > 0.0001) return diff;
             return a.path.localeCompare(b.path);
           })
-          .filter((c) => c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase()));
+          .filter((c) => {
+            const dir = getAllDirectoriesWithPaths(gameState.fs, currentLevel).find(
+              (d) => resolvePath(gameState.fs, d.path) === c.path,
+            );
+            return dir && c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase());
+          });
       } else {
-        candidates = getRecursiveContent(gameState.fs, gameState.currentPath)
+        const currentLevel = LEVELS[gameState.levelIndex];
+        candidates = getRecursiveContent(gameState.fs, gameState.currentPath, currentLevel)
           .filter((c: FileNode) => {
             const d = c.display;
             return (
@@ -1043,24 +1081,6 @@ export default function App() {
           }));
       }
 
-      // Handle Ctrl+key combinations separately for clarity
-      if (e.ctrlKey) {
-        if (e.key === 'n') {
-          setGameState((prev) => ({
-            ...prev,
-            fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
-          }));
-          return;
-        }
-        if (e.key === 'p') {
-          setGameState((prev) => ({
-            ...prev,
-            fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
-          }));
-          return;
-        }
-      }
-
       switch (e.key) {
         case 'Enter': {
           if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
@@ -1071,8 +1091,9 @@ export default function App() {
           const selected = candidates[idx];
           if (selected) {
             if (isZoxide) {
+              const currentLevel = LEVELS[gameState.levelIndex];
               // Find path ids from string
-              const allDirs = getAllDirectoriesWithPaths(gameState.fs).map((d) => {
+              const allDirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel).map((d) => {
                 return {
                   ...d.node,
                   path: d.path,
@@ -1081,6 +1102,24 @@ export default function App() {
               });
               const match = allDirs.find((d) => d.display === selected.path);
               if (match) {
+                const protection = isProtected(
+                  gameState.fs,
+                  gameState.currentPath,
+                  match,
+                  currentLevel,
+                  'jump',
+                );
+
+                if (protection) {
+                  setGameState((prev) => ({
+                    ...prev,
+                    mode: 'normal',
+                    notification: `🔒 ${protection}`,
+                    inputBuffer: '',
+                  }));
+                  return;
+                }
+
                 const now = Date.now();
 
                 // Add specific "Quantum" feedback for Level 7
@@ -1121,6 +1160,28 @@ export default function App() {
                   Array.isArray(selected.pathIds) && selected.pathIds[0] === gameState.fs.id
                     ? selected.pathIds
                     : [...gameState.currentPath, ...(selected.pathIds || [])];
+
+                const targetNode = getNodeByPath(gameState.fs, fullPath);
+                if (targetNode) {
+                  const currentLevel = LEVELS[gameState.levelIndex];
+                  const protection = isProtected(
+                    gameState.fs,
+                    gameState.currentPath,
+                    targetNode,
+                    currentLevel,
+                    'jump',
+                  );
+                  if (protection) {
+                    setGameState((prev) => ({
+                      ...prev,
+                      mode: 'normal',
+                      notification: `🔒 ${protection}`,
+                      inputBuffer: '',
+                    }));
+                    return;
+                  }
+                }
+
                 const targetDir = fullPath.slice(0, -1);
                 const fileName = fullPath[fullPath.length - 1];
 
@@ -1191,6 +1252,7 @@ export default function App() {
           break;
         case 'n':
           if (e.ctrlKey) {
+            e.preventDefault();
             setGameState((prev) => ({
               ...prev,
               fuzzySelectedIndex: Math.min(
@@ -1208,6 +1270,7 @@ export default function App() {
           break;
         case 'p':
           if (e.ctrlKey) {
+            e.preventDefault();
             setGameState((prev) => ({
               ...prev,
               fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
@@ -1498,7 +1561,7 @@ export default function App() {
           handleFuzzyModeKeyDown(e, gameState, setGameState);
           break;
         case 'g-command':
-          handleGCommandKeyDown(e, setGameState, gameState);
+          handleGCommandKeyDown(e, setGameState, gameState, currentLevel);
           break;
         case 'z-prompt':
           handleZoxidePromptKeyDown(e, gameState, setGameState);

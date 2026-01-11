@@ -91,23 +91,47 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
     workspace.children = workspace.children?.filter((c) => c.name !== 'systemd-core') || [];
 
     const systemdCore = {
-      id: 'systemd-core-corrupted',
+      id: 'systemd-core',
       name: 'systemd-core',
       type: 'dir' as const,
       children: [
+        { id: 'gitignore', name: '.gitignore', type: 'file' as const, parentId: 'systemd-core' },
+        { id: 'cargo-toml', name: 'Cargo.toml', type: 'file' as const, parentId: 'systemd-core' },
+        { id: 'readme-md', name: 'README.md', type: 'file' as const, parentId: 'systemd-core' },
+        {
+          id: 'kernel-panic',
+          name: 'kernel-panic.log',
+          type: 'file' as const,
+          parentId: 'systemd-core',
+        },
+        { id: 'lib-rs', name: 'lib.rs', type: 'file' as const, parentId: 'systemd-core' },
+        { id: 'main-rs', name: 'main.rs', type: 'file' as const, parentId: 'systemd-core' },
+        { id: 'system-log', name: 'system.log', type: 'file' as const, parentId: 'systemd-core' },
+        {
+          id: 'uplink-v0-bak',
+          name: 'uplink_v0.conf.bak',
+          type: 'file' as const,
+          parentId: 'systemd-core',
+        },
         {
           id: 'crash-dump',
           name: 'crash_dump.log',
           type: 'file' as const,
           content: '[SYSTEM CRASH DUMP]',
-          parentId: 'systemd-core-corrupted',
+          parentId: 'systemd-core',
         },
         {
           id: 'corrupted-placeholder',
           name: 'uplink_v1.conf',
           type: 'file' as const,
           content: '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT',
-          parentId: 'systemd-core-corrupted',
+          parentId: 'systemd-core',
+        },
+        {
+          id: 'uplink-snapshot',
+          name: 'uplink_v1.conf.snapshot',
+          type: 'file' as const,
+          parentId: 'systemd-core',
         },
       ],
       parentId: workspace.id,
@@ -119,16 +143,9 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
     it('should complete when user navigates into systemd-core', () => {
       const level = getLevel(8);
       const task = level.tasks.find((t) => t.id === 'investigate-corruption')!;
-      const systemdCore = findNodeByName(fs, 'systemd-core', 'dir');
-      if (!systemdCore) throw new Error('systemd-core not found in workspace for test setup');
-
       const state = createTestState(fs, {
-        currentPath: ['root', 'home', 'guest', 'workspace', 'systemd-core-corrupted'],
+        currentPath: ['root', 'home', 'guest', 'workspace', 'systemd-core'],
       });
-      // Ensure ID matching logic works in the check function
-      // (The mock state uses a manually constructed path which might not match exact ID implementation details
-      // so we rely on findNodeByName logic in the task check)
-
       expect(task.check(state, level)).toBe(true);
     });
   });
@@ -143,12 +160,11 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       const guest = findNodeByName(fs, 'guest')!;
       const workspace = findNodeByName(fs, 'workspace')!;
 
-      // Use explicit ID to avoid ambiguity if findNodeByName matches something else
-      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core-corrupted'];
+      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core'];
 
       const state = createTestState(fs, {
         currentPath: dynamicPath,
-        cursorIndex: 0, // Pointing to crash_dump.log (alphabetically first)
+        cursorIndex: 0, // Should be .gitignore (alphabetically)
       });
 
       expect(task.check(state, level)).toBe(false);
@@ -162,13 +178,17 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       const home = findNodeByName(fs, 'home')!;
       const guest = findNodeByName(fs, 'guest')!;
       const workspace = findNodeByName(fs, 'workspace')!;
+      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core'];
 
-      // Use explicit ID to avoid ambiguity if findNodeByName matches something else
-      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core-corrupted'];
+      const stateForIndices = createTestState(fs, {
+        currentPath: dynamicPath,
+      });
+      const visibleItems = getVisibleItems(stateForIndices);
+      const targetIndex = visibleItems.findIndex((c) => c.name === 'uplink_v1.conf');
 
       const state = createTestState(fs, {
         currentPath: dynamicPath,
-        cursorIndex: 1, // Pointing to uplink_v1.conf (second item)
+        cursorIndex: targetIndex,
       });
 
       expect(task.check(state, level)).toBe(true);
@@ -178,21 +198,22 @@ describe('Level 8: DAEMON DISGUISE CONSTRUCTION (Simplified)', () => {
       const level = getLevel(8);
       const task = level.tasks.find((t) => t.id === 'verify-damage')!;
 
-      const workspace = findNodeByName(fs, 'workspace', 'dir');
-      if (!workspace) throw new Error('workspace not found in test setup');
-      const systemdCore = workspace.children?.find((c) => c.name === 'systemd-core');
-      if (!systemdCore) throw new Error('Systemd-core not found in workspace for neg test');
+      const root = findNodeByName(fs, 'root')!;
+      const home = findNodeByName(fs, 'home')!;
+      const guest = findNodeByName(fs, 'guest')!;
+      const workspace = findNodeByName(fs, 'workspace', 'dir')!;
+      const dynamicPath = [root.id, home.id, guest.id, workspace.id, 'systemd-core'];
 
-      systemdCore.children?.unshift({
-        id: 'dummy',
-        name: 'dummy',
-        type: 'file',
-        parentId: systemdCore.id,
+      const stateForIndices = createTestState(fs, {
+        currentPath: dynamicPath,
       });
+      const visibleItems = getVisibleItems(stateForIndices);
+      const targetIndex = visibleItems.findIndex((c) => c.name === 'uplink_v1.conf');
+      const incorrectIndex = (targetIndex + 1) % visibleItems.length;
 
       const state = createTestState(fs, {
-        currentPath: ['root', 'home', 'guest', 'workspace', 'systemd-core-corrupted'],
-        cursorIndex: 0, // Now point to dummy
+        currentPath: dynamicPath,
+        cursorIndex: incorrectIndex,
       });
 
       expect(task.check(state, level)).toBe(false);

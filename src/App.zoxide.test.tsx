@@ -107,7 +107,17 @@ describe('Zoxide Jump Regression', () => {
     // Let's ensure zoxideData has enough to navigate.
 
     // Use Ctrl+N to navigate down
-    fireEvent.keyDown(window, { key: 'n', ctrlKey: true });
+    const inputBefore = screen.getByText('ro', { selector: 'span.text-zinc-100' });
+
+    const eventN = new KeyboardEvent('keydown', {
+      key: 'n',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    vi.spyOn(eventN, 'preventDefault');
+    fireEvent(window, eventN);
+    expect(eventN.preventDefault).toHaveBeenCalled();
 
     // Input should still be 'ro' (not 'ron')
     expect(screen.getByText('ro', { selector: 'span.text-zinc-100' })).toBeDefined();

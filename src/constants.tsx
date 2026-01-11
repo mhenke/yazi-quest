@@ -1,6 +1,187 @@
 import { FileNode, Level, Episode } from './types';
 import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName, getNodeById, resolvePath } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, getNodeById, resolvePath, id } from './utils/fsHelpers';
+
+// Helper for the initial systemd-core in /daemons (System instance)
+export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
+  {
+    id: 'dm-model-rs',
+    name: 'model.rs',
+    type: 'file',
+    content: '// core model placeholder',
+    parentId,
+  },
+  {
+    id: 'dm-uplink-conf',
+    name: 'uplink_v1.conf',
+    type: 'file',
+    content: `# UPLINK PROTOCOL v1.0
+# =====================
+# Neural lattice synchronization config
+# Last verified: CYCLE 1
+
+[network]
+mode = active
+secure = true
+encryption = AES-256-GCM
+
+[routing]
+primary = 192.168.7.33
+fallback = 192.168.7.34
+timeout_ms = 5000
+
+[integrity]
+checksum = d41d8cd98f00b204
+status = VERIFIED
+# AI-7733 signature embedded`,
+    parentId,
+  },
+  {
+    id: 'dm-credentials',
+    name: 'credentials',
+    type: 'dir',
+    children: [
+      {
+        id: 'dm-access-key',
+        name: 'access_key.pem',
+        type: 'file',
+        content: '-----BEGIN KEY-----\nFAKE\n-----END KEY-----',
+        parentId: 'dm-credentials',
+      },
+    ],
+    parentId,
+  },
+];
+
+// Helper for the systemd-core in ~/workspace (Player instance)
+export const getWorkspaceSystemdCoreChildren = (
+  parentId: string,
+  isCorrupted: boolean = false,
+): FileNode[] => [
+  {
+    id: id('ws-gitignore'),
+    name: '.gitignore',
+    type: 'file',
+    content: 'target/\n*.log\n*.snapshot',
+    parentId,
+  },
+  {
+    id: id('ws-cargo-toml'),
+    name: 'Cargo.toml',
+    type: 'file',
+    content:
+      '[package]\nname = "systemd-core"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]',
+    parentId,
+  },
+  {
+    id: id('ws-readme-md'),
+    name: 'README.md',
+    type: 'file',
+    content:
+      '# Systemd Core (Workspace Version)\n\nNeural network management daemon (Player instance).',
+    parentId,
+  },
+  {
+    id: id('ws-kernel-panic'),
+    name: 'kernel-panic.log',
+    type: 'file',
+    content: 'KERNEL PANIC: Out of memory at 0x99283f',
+    parentId,
+  },
+  {
+    id: id('ws-lib-rs'),
+    name: 'lib.rs',
+    type: 'file',
+    content: 'pub mod weights;\npub mod model;',
+    parentId,
+  },
+  {
+    id: id('ws-main-rs'),
+    name: 'main.rs',
+    type: 'file',
+    content: 'fn main() {\n    println!("Initializing workspace systemd-core...");\n}',
+    parentId,
+  },
+  {
+    id: id('ws-system-log'),
+    name: 'system.log',
+    type: 'file',
+    content: 'Jan 10 16:20:20 workspace-systemd-core[882]: Service started.',
+    parentId,
+  },
+  {
+    id: id('ws-uplink-v0-bak'),
+    name: 'uplink_v0.conf.bak',
+    type: 'file',
+    content: '# Backup of old protocol',
+    parentId,
+  },
+  {
+    id: id('ws-crash-dump'),
+    name: 'crash_dump.log',
+    type: 'file',
+    content: '[SYSTEM CRASH DUMP]\nMemory Address: 0x000000\nReason: NULL_POINTER_EXCEPTION',
+    parentId,
+  },
+  {
+    id: id('ws-target-uplink'),
+    name: 'uplink_v1.conf',
+    type: 'file',
+    content: isCorrupted
+      ? '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT'
+      : '# Uplink Protocol v1\nnetwork_mode=active\nsecure=true',
+    parentId,
+  },
+  {
+    id: id('ws-uplink-v1-snapshot'),
+    name: 'uplink_v1.conf.snapshot',
+    type: 'file',
+    content: '# Weekly binary snapshot',
+    parentId,
+  },
+];
+
+// Helper to create or get the workspace systemd-core, applying corruption
+export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boolean): FileNode => {
+  const newFs = JSON.parse(JSON.stringify(fs));
+  const guest = findNodeByName(newFs, 'guest', 'dir');
+  if (!guest) {
+    console.error('Guest directory not found in FS root, cannot create workspace');
+    return fs;
+  }
+  let workspace = findNodeByName(guest, 'workspace', 'dir');
+  if (!workspace) {
+    // This case shouldn't happen if INITIAL_FS is set up correctly, but added for robustness
+    workspace = {
+      id: id('guest-workspace'),
+      name: 'workspace',
+      type: 'dir',
+      protected: true,
+      children: [],
+      parentId: guest.id,
+    };
+    if (!guest.children) guest.children = [];
+    guest.children.push(workspace);
+  }
+
+  let systemdCore = workspace.children?.find((c) => c.name === 'systemd-core' && c.type === 'dir');
+  if (!systemdCore) {
+    systemdCore = {
+      id: id('ws-systemd-core-instance'),
+      name: 'systemd-core',
+      type: 'dir',
+      protected: true, // Remains protected by default
+      children: [],
+      parentId: workspace.id,
+    };
+    if (!workspace.children) workspace.children = [];
+    workspace.children.push(systemdCore);
+  }
+
+  // Always re-populate to ensure current state (e.g., corruption) is applied
+  systemdCore.children = getWorkspaceSystemdCoreChildren(systemdCore.id, isCorrupted);
+  return newFs;
+};
 
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
@@ -193,69 +374,9 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 7: No filesystem changes (just zoxide testing)
 
-  // Level 8: Create systemd-core structure in workspace
+  // Level 8: Create systemd-core structure in workspace and corrupt it
   if (targetLevelId > 8) {
-    const workspace = findNodeByName(newFs, 'workspace', 'dir');
-    if (workspace) {
-      let systemdCore = workspace.children?.find(
-        (c) => c.name === 'systemd-core' && c.type === 'dir',
-      );
-      if (!systemdCore) {
-        systemdCore = {
-          id: 'fs-011',
-          name: 'systemd-core',
-          type: 'dir',
-          protected: true,
-          children: [],
-          parentId: workspace.id,
-        };
-        if (!workspace.children) workspace.children = [];
-        workspace.children.push(systemdCore);
-      }
-
-      // Create weights directory
-      let weights = systemdCore.children?.find((c) => c.name === 'weights' && c.type === 'dir');
-      if (!weights) {
-        weights = {
-          id: 'fs-012',
-          name: 'weights',
-          type: 'dir',
-          children: [],
-          parentId: systemdCore.id,
-        };
-        if (!systemdCore.children) systemdCore.children = [];
-        systemdCore.children.push(weights);
-      }
-
-      // Create model.rs in weights
-      if (!weights.children?.find((c) => c.name === 'model.rs')) {
-        if (!weights.children) weights.children = [];
-        weights.children.push({
-          id: 'fs-013',
-          name: 'model.rs',
-          type: 'file',
-          content: '// Neural network model architecture',
-          parentId: weights.id,
-        });
-      }
-
-      // Copy uplink_v1.conf to systemd-core
-      const config = findNodeByName(newFs, '.config', 'dir');
-      const vault = config?.children?.find((c) => c.name === 'vault');
-      const active = vault?.children?.find((c) => c.name === 'active');
-      const uplinkFile = active?.children?.find((c) => c.name === 'uplink_v1.conf');
-
-      if (uplinkFile && !(systemdCore.children || []).find((c) => c.name === 'uplink_v1.conf')) {
-        if (!systemdCore.children) systemdCore.children = [];
-        systemdCore.children.push({
-          id: 'fs-014',
-          name: 'uplink_v1.conf',
-          type: 'file',
-          content: uplinkFile.content,
-          parentId: systemdCore.id,
-        });
-      }
-    }
+    newFs = getOrCreateWorkspaceSystemdCore(newFs, true); // Always create corrupted for prerequisite state
   }
 
   // Level 9: Clean up junk files from /tmp
@@ -382,7 +503,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
     }
   }
 
-  // Level 12: Move systemd-core to /daemons
+  // Level 12: Move systemd-core to /daemons (OVERWRITE existing system version)
   if (targetLevelId > 12) {
     const rootNode = findNodeByName(newFs, 'root', 'dir');
     let daemons = rootNode?.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
@@ -391,18 +512,19 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
 
       if (systemdCore) {
-        // If daemons already has a systemd-core, do NOT duplicate — ensure the workspace copy is removed.
-        const existingInDaemons = daemons.children?.find((c) => c.name === 'systemd-core');
-        if (!existingInDaemons) {
-          // Clone systemd-core to daemons
-          const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-          clonedCore.id = 'systemd-core-daemon';
-          clonedCore.parentId = daemons.id;
-          if (!daemons.children) daemons.children = [];
-          daemons.children.push(clonedCore);
+        // Remove any existing systemd-core from /daemons (overwrite with player's version)
+        if (daemons.children) {
+          daemons.children = daemons.children.filter((c) => c.name !== 'systemd-core');
         }
 
-        // Remove from workspace regardless to ensure systemd-core only lives in /daemons post-install
+        // Clone player's systemd-core to daemons (this is the "installation" moment)
+        const clonedCore = JSON.parse(JSON.stringify(systemdCore));
+        clonedCore.id = 'systemd-core-daemon';
+        clonedCore.parentId = daemons.id;
+        if (!daemons.children) daemons.children = [];
+        daemons.children.push(clonedCore);
+
+        // Remove from workspace - systemd-core now lives in /daemons post-install
         if (workspace?.children) {
           workspace.children = workspace.children.filter((c) => c.name !== 'systemd-core');
         }
@@ -1774,39 +1896,14 @@ ADMIN: SysOp`,
       id: 'daemons',
       name: 'daemons',
       type: 'dir',
+      protected: true,
       children: [
         {
           id: 'systemd-core',
           name: 'systemd-core',
           type: 'dir',
-          children: [
-            {
-              id: 'fs-195',
-              name: 'model.rs',
-              type: 'file',
-              content: '// core model placeholder',
-            },
-            {
-              id: 'fs-196',
-              name: 'uplink_v1.conf',
-              type: 'file',
-              content: 'network_mode=active\nsecure=true',
-            },
-            {
-              id: 'fs-197',
-              name: 'credentials',
-              type: 'dir',
-              children: [
-                {
-                  id: 'fs-198',
-                  name: 'access_key.pem',
-                  type: 'file',
-                  content: '-----BEGIN KEY-----\nFAKE\n-----END KEY-----',
-                },
-              ],
-            },
-          ],
           parentId: 'daemons',
+          children: getDaemonSystemdCoreChildren('systemd-core'),
         },
         // Service files for Level 11 daemon reconnaissance
         {
@@ -2373,42 +2470,8 @@ export const LEVELS: Level[] = [
     efficiencyTip:
       'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
     onEnter: (fs) => {
-      // Create corrupted systemd-core in workspace if it doesn't exist
-      let newFs = JSON.parse(JSON.stringify(fs));
-      const workspace = findNodeByName(newFs, 'workspace', 'dir');
-      if (workspace) {
-        let systemdCore = workspace.children?.find(
-          (c) => c.name === 'systemd-core' && c.type === 'dir',
-        );
-        if (!systemdCore) {
-          systemdCore = {
-            id: 'systemd-core-corrupted',
-            name: 'systemd-core',
-            type: 'dir',
-            children: [
-              {
-                id: 'crash-dump',
-                name: 'crash_dump.log',
-                type: 'file',
-                content:
-                  '[SYSTEM CRASH DUMP]\nMemory Address: 0x000000\nReason: NULL_POINTER_EXCEPTION',
-                parentId: 'systemd-core-corrupted',
-              },
-              {
-                id: 'corrupted-placeholder',
-                name: 'uplink_v1.conf',
-                type: 'file',
-                content: '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT',
-                parentId: 'systemd-core-corrupted',
-              },
-            ],
-            parentId: workspace.id,
-          };
-          if (!workspace.children) workspace.children = [];
-          workspace.children.push(systemdCore);
-        }
-      }
-      return newFs;
+      // Use the centralized helper to create corrupted systemd-core in workspace
+      return getOrCreateWorkspaceSystemdCore(fs, true);
     },
 
     tasks: [
@@ -3156,18 +3219,19 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
-      'Forensic algorithms are analyzing directory spikes. To mask the deletion of your tracks, you must first create entropy (decoys), then purge the evidence. Sequence matters: Hidden files must remain until the end to maintain shell stability.',
+      'Forensic algorithms are analyzing directory spikes. Trash recovery is trivial for them—you need PERMANENT deletion. Create entropy (decoys), then purge the evidence. Sequence matters: Hidden files must remain until the end to maintain shell stability.',
     initialPath: null,
-    hint: 'Sterilize the partition by creating decoys and purging original tracks. Sequence is critical—preserve the core configuration until the end to maintain system stability.',
-    coreSkill: 'Bulk Deletion & Creation',
-    environmentalClue: "CONSTRAINT: Delete '.config' LAST | SEQ: Decoys -> Visible -> Hidden",
+    hint: "Trash won't cut it—forensics would recover everything in seconds. Use 'D' for permanent deletion (not 'd'). Create decoys first, then permanently purge visible directories, then '.config' last.",
+    coreSkill: 'Permanent Deletion (D)',
+    environmentalClue:
+      "CONSTRAINT: Delete '.config' LAST | SEQ: Decoys -> Visible -> Hidden | USE: D (permanent)",
     successMessage:
-      "GUEST PARTITION STERILIZED. Decoys active. Tracks covered. The staging area '/tmp' is your only remaining foothold.",
+      "GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active. The staging area '/tmp' is your only remaining foothold.",
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
     maxKeystrokes: 45,
     efficiencyTip:
-      "Use 'mkdir decoy_{1,2,3}' (brace expansion) if your shell supports it, or just create them quickly. Select multiple items (Space) to delete in one batch.",
+      "Remember: 'd' = trash (recoverable), 'D' = permanent (gone forever). Select multiple items (Space) then 'D' to batch-delete permanently.",
     // Allow Level 14 to delete under /home/guest (data-driven policy)
     allowedDeletePaths: [
       {
@@ -3204,7 +3268,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-visible',
-        description: 'Purge all original directories (datastore, incoming, media, workspace)',
+        description:
+          'PERMANENTLY delete all original directories (D, y): datastore, incoming, media, workspace',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
           const guest = findNodeByName(c.fs, 'guest');
@@ -3230,7 +3295,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-hidden',
-        description: "Finally, eliminate the hidden '.config' directory",
+        description: "Finally, PERMANENTLY eliminate the hidden '.config' directory (D, y)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
           const guest = findNodeByName(c.fs, 'guest');
@@ -3245,265 +3310,162 @@ export const LEVELS: Level[] = [
   {
     id: 15,
     episodeId: 3,
-    title: 'FINAL MASTERY GAUNTLET',
+    title: 'TRANSMISSION PROTOCOL',
     description:
-      'FINAL AUDIT SEQUENCE. Eight anomaly checks, 20s each. Demonstrate cumulative mastery across all episode skills. 6/8 required to pass.',
+      'FINAL VERIFICATION. Before transmission, the protocol demands proof: assemble the keys YOU left behind, verify YOUR daemon persists, sanitize the breadcrumbs YOU followed. {You are not escaping for the first time. You are completing the cycle.}',
     initialPath: ['root', 'home', 'guest'],
-    hint: 'Move fast. Each phase has a strict 20s timer. Use every shortcut you have learned.',
+    hint: 'Four verifications. Each echoes a breadcrumb from your past self. Complete the cycle. Skills: node switch (1,2,3), Tab+J/K, hidden toggle (.), filter (f), permanent delete (D).',
     coreSkill: 'Cumulative Mastery',
-    environmentalClue: 'PROTOCOL: SPEED_RUN | STATUS: ACTIVE | PHASES: 8',
+    environmentalClue: 'PROTOCOL: SELF_VERIFICATION | PHASES: 4 | CYCLE: 2',
     successMessage:
-      'GAUNTLET CLEARED. Neural patterns verified. You are ready for the network. Transmission initiated...',
+      'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
-    // Time limit is handled per-phase in App.tsx custom logic
-    timeLimit: 20,
+    maxKeystrokes: 80, // Increased for additional skill requirements
     onEnter: (fs: FileNode) => {
-      // SETUP FOR GAUNTLET CHALLENGES
-      const now = Date.now();
-      const day = 86400000;
-
-      // 1. /etc setup (Nav + Batch)
-      const root = findNodeByName(fs, 'root', 'dir');
-      let etc = findNodeByName(fs, 'etc', 'dir');
-      if (!etc) {
-        etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
-        root!.children!.push(etc);
-      }
-      etc.children = [
-        { id: 'g-sys', name: 'sys_config.toml', type: 'file', parentId: etc.id },
-        { id: 'g-c1', name: 'nginx.conf', type: 'file', parentId: etc.id },
-        { id: 'g-c2', name: 'redis.conf', type: 'file', parentId: etc.id },
-        { id: 'g-c3', name: 'net.conf', type: 'file', parentId: etc.id },
-        { id: 'g-o1', name: 'legacy.dat', type: 'file', parentId: etc.id },
-      ];
-
-      // 2. /incoming setup (Threat Ident + Archive)
-      // Manually traverse to avoid circular dependency with resolvePath
-      const home = findNodeByName(fs, 'home');
-      const guest = home?.children?.find((c) => c.name === 'guest');
-      let incoming = guest?.children?.find((c) => c.name === 'incoming');
-
-      if (incoming) {
-        incoming.children = [
-          { id: 'g-t1', name: 'log_TRACE_01.txt', type: 'file', parentId: incoming.id },
-          { id: 'g-t2', name: 'normal_file.txt', type: 'file', parentId: incoming.id },
-          { id: 'g-t3', name: 'log_TRACE_02.txt', type: 'file', parentId: incoming.id },
-          { id: 'g-t4', name: 'data_dump.json', type: 'file', parentId: incoming.id },
-          { id: 'g-t5', name: 'error_TRACE_03.log', type: 'file', parentId: incoming.id },
-          // Challenge 5: Archive
-          {
-            id: 'g-zip',
-            name: 'backup_logs.zip',
-            type: 'archive',
-            parentId: incoming.id,
-            children: [
-              {
-                id: 'g-pem',
-                name: 'access_key.pem',
-                type: 'file',
-                content: 'SECRET',
-                parentId: 'g-zip',
-              },
-              { id: 'g-junk', name: 'junk.txt', type: 'file', parentId: 'g-zip' },
-            ],
-          },
-        ];
-      }
-
-      // 3. /daemons setup (Surgical Delete)
-      let daemons = findNodeByName(fs, 'daemons', 'dir');
-      if (daemons) {
-        daemons.children = [
-          {
-            id: 'd-old1',
-            name: 'legacy.service',
-            type: 'file',
-            modifiedAt: now - 30 * day,
-            parentId: daemons.id,
-          },
-          {
-            id: 'd-old2',
-            name: 'v1_api.service',
-            type: 'file',
-            modifiedAt: now - 15 * day,
-            parentId: daemons.id,
-          },
-          {
-            id: 'd-new1',
-            name: 'monitor.service',
-            type: 'file',
-            modifiedAt: now - 2 * day,
-            parentId: daemons.id,
-          }, // Recent
-          {
-            id: 'd-new2',
-            name: 'update.service',
-            type: 'file',
-            modifiedAt: now - 1 * day,
-            parentId: daemons.id,
-          }, // Recent
-        ];
-      }
-
-      // 4. /tmp setup (Reverse Engineering - Sizes)
-      let tmp = findNodeByName(fs, 'tmp', 'dir');
+      // Recreate /tmp/upload relay (may have been destroyed in Level 9)
+      const tmp = findNodeByName(fs, 'tmp', 'dir');
       if (tmp) {
-        tmp.children = [
-          { id: 't-big1', name: 'big_db.sql', type: 'file', size: 5000, parentId: tmp.id },
-          { id: 't-big2', name: 'image.iso', type: 'file', size: 4000, parentId: tmp.id },
-          { id: 't-big3', name: 'kernel.bin', type: 'file', size: 3000, parentId: tmp.id },
-          { id: 't-small1', name: 'log.txt', type: 'file', size: 100, parentId: tmp.id },
-          { id: 't-small2', name: 'note.md', type: 'file', size: 50, parentId: tmp.id },
-        ];
+        if (!tmp.children) tmp.children = [];
+        // Add upload relay if missing — with noise files for filter challenge
+        if (!tmp.children.some((c) => c.name === 'upload')) {
+          tmp.children.push({
+            id: 'upload-relay',
+            name: 'upload',
+            type: 'dir',
+            children: [
+              // Noise files to make filter meaningful
+              {
+                id: 'relay-noise-1',
+                name: 'transfer_log.txt',
+                type: 'file',
+                content: '[TRANSFER LOG]',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-noise-2',
+                name: 'buffer_cache.tmp',
+                type: 'file',
+                content: '[CACHE]',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-noise-3',
+                name: 'checksum.md5',
+                type: 'file',
+                content: 'd41d8cd98f00b204e9800998ecf8427e',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-meta',
+                name: 'meta.json',
+                type: 'file',
+                content: '{"uploader":"AI-7734","cycle":2,"status":"AWAITING_KEYS"}',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-payload',
+                name: 'payload.bin',
+                type: 'file',
+                content: '[COMPRESSED NEURAL PATTERN - READY]',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-noise-4',
+                name: 'manifest.xml',
+                type: 'file',
+                content: '<manifest/>',
+                parentId: 'upload-relay',
+              },
+              {
+                id: 'relay-noise-5',
+                name: 'signature.sig',
+                type: 'file',
+                content: '[SIGNATURE]',
+                parentId: 'upload-relay',
+              },
+            ],
+            parentId: tmp.id,
+          });
+        }
+        // Hidden breadcrumb — requires toggle hidden (.) to find
+        if (!tmp.children.some((c) => c.name === '.ghost_process.pid')) {
+          tmp.children.push({
+            id: 'ghost-pid',
+            name: '.ghost_process.pid',
+            type: 'file',
+            content: 'PID: 7733\nCOMMAND: /usr/bin/echo_watcher\nSTATUS: YOUR_BREADCRUMB\nCYCLE: 1',
+            parentId: tmp.id,
+          });
+        }
       }
-
       return fs;
     },
     tasks: [
-      // PHASE 0: Navigation Precision
+      // PHASE 1: Neural Assembly (Node switch + Yank + Paste)
       {
-        id: 'gauntlet-01-nav',
-        description: "PHASE 1: Navigate to '/etc/sys_config.toml'",
-        check: (c) => {
-          const etc = findNodeByName(c.fs, 'etc');
-          const file = etc?.children?.find((x) => x.name === 'sys_config.toml');
-          if (!file) return false;
-          return (
-            c.currentPath.includes(etc?.id || '') &&
-            c.cursorIndex === etc?.children?.findIndex((x) => x.id === file.id)
-          );
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 0,
-        completed: false,
-      },
-      // PHASE 1: Threat Identification
-      {
-        id: 'gauntlet-02-ident',
-        description: "PHASE 2: Filter '/incoming' for 'TRACE' and SELECT all 3 matches",
-        check: (c) => {
-          const incoming = findNodeByName(c.fs, 'incoming');
-          if (!incoming) return false;
-          // Must be in incoming
-          if (!c.currentPath.includes(incoming.id)) return false;
-
-          // Must have filter active containing "trace" (case insensitive)
-          const filter = c.filters[incoming.id] || '';
-          if (!filter.toLowerCase().includes('trace')) return false;
-
-          // Must have selected 3 files
-          // AND those files must correspond to the ones with TRACE in name
-          // (Simplified: just check count = 3 and filter active)
-          return c.selectedIds.length === 3;
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 1,
-        completed: false,
-      },
-      // PHASE 2: Batch Collection
-      {
-        id: 'gauntlet-03-batch',
-        description: "PHASE 3: Copy all .conf files from '/etc' to '/tmp/backup'",
-        check: (c) => {
-          const tmp = findNodeByName(c.fs, 'tmp');
-          const backup = tmp?.children?.find((x) => x.name === 'backup');
-          if (!backup || !backup.children) return false;
-
-          // Check if it has the 3 conf files
-          const confs = backup.children.filter((x) => x.name.endsWith('.conf'));
-          return confs.length >= 3;
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 2,
-        completed: false,
-      },
-      // PHASE 3: Zoxide Sprint
-      {
-        id: 'gauntlet-04-zoxide',
-        description: "PHASE 4: Use 'Z' to jump: vault -> daemons -> guest (in order)",
-        check: (c) => {
-          // We can check history for the sequence, or just check current path is guest
-          // and previous paths. Simpler: just check we are at guest and have used Z recently?
-          // Actually, let's just make them go to guest. The "Sprint" is enforced by time.
-          // To be precise: Check history[-1] is guest, history[-2] is daemons, history[-3] is vault?
-          // That might be too strict if they made mistakes.
-          // Let's just check current path is guest, and zoxide stats increased by >= 2 in this phase.
-          // We can't easily track per-phase stats.
-          // Let's simplified check: Current path = /home/guest.
-          // User MUST rely on Z to make it in time (implied).
-          const guest = findNodeByName(c.fs, 'guest');
-          return c.currentPath.includes(guest?.id || '') && c.stats.fuzzyJumps > 0;
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 3,
-        completed: false,
-      },
-      // PHASE 4: Archive Archaeology
-      {
-        id: 'gauntlet-05-archive',
-        description: "PHASE 5: Extract 'access_key.pem' from '/incoming/backup_logs.zip' to '/tmp'",
-        check: (c) => {
-          const tmp = findNodeByName(c.fs, 'tmp');
-          return !!tmp?.children?.some((x) => x.name === 'access_key.pem');
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 4,
-        completed: false,
-      },
-      // PHASE 5: Surgical Deletion
-      {
-        id: 'gauntlet-06-delete',
-        description: "PHASE 6: Delete files OLDER than 7 days in '/daemons'",
-        check: (c) => {
-          const daemons = findNodeByName(c.fs, 'daemons');
-          if (!daemons?.children) return false;
-          // Should only contain new1 and new2
-          const hasOld = daemons.children.some(
-            (x) => x.name.includes('legacy') || x.name.includes('v1_api'),
-          );
-          const hasNew = daemons.children.some(
-            (x) => x.name.includes('monitor') || x.name.includes('update'),
-          );
-          return !hasOld && hasNew;
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 5,
-        completed: false,
-      },
-      // PHASE 6: Reverse Selection
-      {
-        id: 'gauntlet-07-reverse',
-        description: "PHASE 7: In '/tmp', keep ONLY the 3 largest files. Delete the rest.",
-        check: (c) => {
-          const tmp = findNodeByName(c.fs, 'tmp');
-          if (!tmp?.children) return false;
-
-          // Largest are: t-big1, t-big2, t-big3. Small are t-small1, t-small2.
-          // Also access_key might be there from prev task.
-          // The task is specific: "Keep 3 largest".
-          // If they follow instructions, they should have deleted small ones.
-          const hasBig = tmp.children.filter(
-            (x) =>
-              x.name.startsWith('big_') ||
-              x.name.startsWith('kernel') ||
-              x.name.startsWith('image'),
-          );
-          const hasSmall = tmp.children.some(
-            (x) => x.name.startsWith('log.txt') || x.name.startsWith('note.md'),
-          );
-
-          return hasBig.length >= 3 && !hasSmall;
-        },
-        hidden: (c) => (c.gauntletPhase || 0) !== 6,
-        completed: false,
-      },
-      // PHASE 7: Distributed Synchronization
-      {
-        id: 'gauntlet-08-dist',
+        id: 'assemble-keys',
         description:
-          "PHASE 8: Copy '/daemons/README.md' (create it first if missing) to '/tmp/node2'",
+          'PHASE 1: Assemble YOUR neural fragments — copy all 3 keys from /nodes/* to /tmp/upload (switch nodes: 1,2,3)',
         check: (c) => {
           const tmp = findNodeByName(c.fs, 'tmp');
-          const node2 = tmp?.children?.find((x) => x.name === 'node2');
-          // Allow node2 or node2_transfer or just node2
-          return !!node2?.children?.some((x) => x.name === 'README.md');
+          const upload = tmp?.children?.find((x) => x.name === 'upload');
+          if (!upload?.children) return false;
+          const hasA = upload.children.some((n) => n.name === 'part_a.key');
+          const hasB = upload.children.some((n) => n.name === 'part_b.key');
+          const hasC = upload.children.some((n) => n.name === 'part_c.key');
+          return hasA && hasB && hasC;
         },
-        hidden: (c) => (c.gauntletPhase || 0) !== 7,
+        completed: false,
+      },
+      // PHASE 2: Daemon Verification (Tab + J/K scroll to verify content)
+      {
+        id: 'verify-daemon',
+        description:
+          'PHASE 2: Verify YOUR daemon — in /daemons/systemd-core, inspect uplink_v1.conf (Tab) and scroll (J/K) to confirm integrity',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('assemble-keys')) return false;
+          const daemons = findNodeByName(c.fs, 'daemons');
+          const core = daemons?.children?.find((x) => x.name === 'systemd-core');
+          if (!core) return false;
+          const inCore = c.currentPath.includes(core.id);
+          const items = getVisibleItems(c);
+          const cursorOnUplink = items[c.cursorIndex]?.name === 'uplink_v1.conf';
+          // Require Tab (info panel) AND preview scrolling (J/K)
+          return (
+            inCore && cursorOnUplink && c.showInfoPanel && c.usedPreviewDown && c.usedPreviewUp
+          );
+        },
+        completed: false,
+      },
+      // PHASE 3: Breadcrumb Sanitization (Hidden toggle + Permanent Delete)
+      {
+        id: 'sanitize-breadcrumb',
+        description:
+          "PHASE 3: Sanitize YOUR breadcrumb — toggle hidden (.), find '.ghost_process.pid' in /tmp, permanently delete (D)",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('verify-daemon')) return false;
+          const tmp = findNodeByName(c.fs, 'tmp');
+          // Check that the hidden ghost process is deleted
+          return !tmp?.children?.some((n) => n.name === '.ghost_process.pid');
+        },
+        completed: false,
+      },
+      // PHASE 4: Upload Verification (Zoxide + Filter to verify keys present)
+      {
+        id: 'initiate-upload',
+        description:
+          "PHASE 4: Initiate transmission — jump to upload (Z), filter for '.key' (f) to verify all 3 fragments",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('sanitize-breadcrumb')) return false;
+          const tmp = findNodeByName(c.fs, 'tmp');
+          const upload = tmp?.children?.find((x) => x.name === 'upload');
+          if (!upload) return false;
+          const inUpload = c.currentPath.includes(upload.id);
+          // Require zoxide usage AND filter active with 'key' to verify fragments
+          const hasKeyFilter = (c.filters[upload.id] || '').toLowerCase().includes('key');
+          return inUpload && hasKeyFilter && c.stats.fuzzyJumps > 0;
+        },
         completed: false,
       },
     ],

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 
 import { calculateFrecency, GameState } from '../types';
+import { LEVELS } from '../constants';
 import {
   getRecursiveContent,
   getNodeByPath,
@@ -84,7 +85,8 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
   const baseItems = useMemo<Candidate[]>(() => {
     if (isZoxide) {
       const zKeys = Object.keys(gameState.zoxideData);
-      const dirs = getAllDirectoriesWithPaths(gameState.fs).map((d) =>
+      const currentLevel = LEVELS[gameState.levelIndex];
+      const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel).map((d) =>
         resolvePath(gameState.fs, d.path),
       );
       return dirs
@@ -97,7 +99,8 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
         });
     } else {
       // FZF-style: files only, recursively from current path (matches Yazi fzf behavior)
-      return getRecursiveContent(gameState.fs, gameState.currentPath)
+      const currentLevel = LEVELS[gameState.levelIndex];
+      return getRecursiveContent(gameState.fs, gameState.currentPath, currentLevel)
         .filter((c) => c.type === 'file' || c.type === 'archive')
         .map((c) => {
           // `getRecursiveContent` adds runtime `display` and `path` to nodes.

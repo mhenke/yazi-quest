@@ -494,7 +494,7 @@ describe('fsHelpers - Protection', () => {
       const hosts = findNodeByName(fs, 'hosts', 'file')!;
       const result = isProtected(fs, ['root', 'etc'], hosts, mockLevel, 'delete');
 
-      expect(result).toContain('protected');
+      expect(result).toContain('PROTECTED');
     });
 
     it('should return null for unprotected node', () => {
@@ -508,7 +508,7 @@ describe('fsHelpers - Protection', () => {
       const hosts = findNodeByName(fs, 'hosts', 'file')!;
       const result = isProtected(fs, ['root', 'etc'], hosts, mockLevel, 'rename');
 
-      expect(result).toContain('Re-labeling');
+      expect(result).toContain('immutable');
     });
 
     it('should check Level 2 watcher_agent.sys protection', () => {

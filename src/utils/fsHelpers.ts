@@ -89,7 +89,10 @@ export function getAllDirectories(root: FileNode): FileNode[] {
   return result;
 }
 
-export function getAllDirectoriesWithPaths(root: FileNode): { node: FileNode; path: string[] }[] {
+export function getAllDirectoriesWithPaths(
+  root: FileNode,
+  level?: Level,
+): { node: FileNode; path: string[] }[] {
   const result: { node: FileNode; path: string[] }[] = [];
   const stack: { node: FileNode; path: string[] }[] = [{ node: root, path: [root.id] }];
 
@@ -99,6 +102,11 @@ export function getAllDirectoriesWithPaths(root: FileNode): { node: FileNode; pa
     // We add the directory to the list
     if (n.type === 'dir' || n.type === 'archive') {
       result.push({ node: n, path: p });
+    }
+
+    // Protection check: if recursive gathering, we block descending into protected areas
+    if (level && isProtected(root, undefined, n, level, 'enter')) {
+      continue;
     }
 
     // We check for children and add them to the stack
@@ -125,7 +133,11 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
   return '/' + names.filter(Boolean).join('/');
 }
 
-export function getRecursiveContent(root: FileNode, path: string[] | undefined): FileNode[] {
+export function getRecursiveContent(
+  root: FileNode,
+  path: string[] | undefined,
+  level?: Level,
+): FileNode[] {
   const startNode = getNodeByPath(root, path) || root;
   const startPath = path && path.length ? [...path] : [root.id];
   const out: FileNode[] = [];
@@ -136,10 +148,17 @@ export function getRecursiveContent(root: FileNode, path: string[] | undefined):
   }));
   while (stack.length) {
     const { node: n, pathIds } = stack.pop()!;
+
     // Augment node with runtime-only helpers expected elsewhere
     n.path = [...pathIds];
     n.display = resolvePath(root, [...pathIds]);
     out.push(n as FileNode);
+
+    // Prune protected subtrees if level provided
+    if (level && isProtected(root, undefined, n, level, 'enter')) {
+      continue;
+    }
+
     if (n.children) {
       for (const c of n.children) {
         stack.push({ node: c, pathIds: [...pathIds, c.id] });
@@ -458,9 +477,23 @@ export function isProtected(
   // General node protection
   if (node.protected) {
     if (action === 'rename') {
-      return `This is a protected system file: ${node.name}. Re-labeling prohibited.`;
+      return `PROTECTED: ${node.name} is immutable.`;
     }
-    return `This is a protected system file: ${node.name}. Corruption/Deletion blocked.`;
+    if (action === 'enter' || action === 'jump' || action === 'info') {
+      // workspace is quarantined until Episode II (Level 7+)
+      if (node.name === 'workspace' && level.id < 7) {
+        return `ACCESS DENIED: ${node.name} is quarantined.`;
+      }
+      // daemons is quarantined until Episode III (Level 11+)
+      if (node.name === 'daemons' && level.id < 11) {
+        return `ACCESS DENIED: ${node.name} is a restricted system area.`;
+      }
+      // Other protected directories (incoming, datastore, .config, tmp, etc.)
+      // are navigable - the protected flag only blocks destructive operations
+      return null;
+    }
+    // For delete/cut and other destructive operations, block the action
+    return `PROTECTED: ${node.name} cannot be purged.`;
   }
 
   // Level 2 specific protection for 'watcher_agent.sys'
