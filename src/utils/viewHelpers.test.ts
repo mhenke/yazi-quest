@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getVisibleItems, activeFilterMatches } from './viewHelpers';
+import { getVisibleItems, activeFilterMatches, getRecursiveSearchResults } from './viewHelpers';
 import { GameState, FileNode } from '../types';
-import { cloneFS } from './fsHelpers';
+import { cloneFS, getNodeByPath } from './fsHelpers';
 
 /**
  * Tests for viewHelpers.ts - View layer utilities
@@ -90,6 +90,9 @@ const createTestState = (fs: FileNode, overrides: Partial<GameState> = {}): Game
   ignoreEpisodeIntro: false,
   threatLevel: 0,
   threatStatus: 'CALM',
+  searchQuery: null,
+  searchResults: [],
+  usedSearch: false,
   ...overrides,
 });
 
@@ -254,6 +257,89 @@ describe('viewHelpers', () => {
         (n) => n.type === 'file' && n.name.includes('notes'),
       );
       expect(result).toBe(true);
+    });
+  });
+
+  describe('getRecursiveSearchResults', () => {
+    // Import valid function first (it was exported in implementation)
+    // Tested function is imported at top level
+
+    it('should return empty array for empty query', () => {
+      const items = getRecursiveSearchResults(fs, '');
+      expect(items).toEqual([]);
+    });
+
+    it('should find files matching query in current directory', () => {
+      const items = getRecursiveSearchResults(fs, 'readme');
+      expect(items.length).toBe(1);
+      expect(items[0].name).toBe('readme.txt');
+    });
+
+    it('should find files matching query in nested directories', () => {
+      // Create nested file
+      const root = cloneFS(fs);
+      const guest = getNodeByPath(root, ['root', 'home', 'guest']);
+      if (guest && guest.children) {
+        guest.children[4].children = [
+          {
+            id: 'doc1',
+            name: 'nested_readme.txt',
+            type: 'file',
+            content: 'Nested',
+            parentId: 'dir1',
+          },
+        ];
+      }
+
+      const items = getRecursiveSearchResults(root, 'readme');
+      expect(items.length).toBe(2);
+      expect(items.some((n: FileNode) => n.name === 'readme.txt')).toBe(true);
+      expect(items.some((n: FileNode) => n.name === 'nested_readme.txt')).toBe(true);
+    });
+
+    it('should be case-insensitive', () => {
+      const items = getRecursiveSearchResults(fs, 'README');
+      expect(items.length).toBe(1);
+      expect(items[0].name).toBe('readme.txt');
+    });
+
+    it('should includes matching directories', () => {
+      const items = getRecursiveSearchResults(fs, 'docs');
+      expect(items.length).toBe(1);
+      expect(items[0].name).toBe('docs');
+      expect(items[0].type).toBe('dir');
+    });
+
+    it('should respect hidden file settings (default: false)', () => {
+      const items = getRecursiveSearchResults(fs, 'hidden');
+      expect(items.length).toBe(0); // .hidden should be skipped
+    });
+
+    it('should show hidden files if showHidden is true', () => {
+      const items = getRecursiveSearchResults(fs, 'hidden', true);
+      expect(items.length).toBe(1);
+      expect(items[0].name).toBe('.hidden');
+    });
+
+    it('should search inside archives', () => {
+      const root = cloneFS(fs);
+      const guest = getNodeByPath(root, ['root', 'home', 'guest']);
+      const archive = guest?.children?.find((c) => c.name === 'backup.zip');
+      if (archive) {
+        archive.children = [
+          {
+            id: 'archived1',
+            name: 'archived_file.txt',
+            type: 'file',
+            content: '',
+            parentId: archive.id,
+          },
+        ];
+      }
+
+      const items = getRecursiveSearchResults(root, 'archived');
+      expect(items.length).toBe(1);
+      expect(items[0].name).toBe('archived_file.txt');
     });
   });
 });

@@ -67,6 +67,9 @@ const createTestState = (fs: FileNode, overrides: Partial<GameState> = {}): Game
   ignoreEpisodeIntro: false,
   threatLevel: 0,
   threatStatus: 'CALM',
+  searchQuery: null,
+  searchResults: [],
+  usedSearch: false,
   ...overrides,
 });
 
@@ -397,21 +400,38 @@ describe('Task Check Functions - Selected Episode II & III', () => {
   });
 
   describe('Level 6: BATCH OPERATIONS', () => {
-    it('Task: select-all-batch - should complete when Ctrl+A used and all logs yanked', () => {
+    it('Task: recursive-search - should complete when search used with "log"', () => {
       fs = ensurePrerequisiteState(fs, 6);
       const level = getLevel(6);
-      const task = level.tasks.find((t) => t.id === 'select-all-batch')!;
-
-      const batchLogs = findNodeByName(fs, 'batch_logs', 'dir')!;
-      const allLogs = batchLogs.children || [];
+      const task = level.tasks.find((t) => t.id === 'recursive-search')!;
 
       const state = createTestState(fs, {
-        currentPath: ['root', 'home', 'guest', 'incoming', batchLogs.id],
+        usedSearch: true,
+        searchQuery: 'log',
+      });
+
+      expect(task.check(state, level)).toBe(true);
+    });
+
+    it('Task: select-all-search - should complete when Ctrl+A used on search results', () => {
+      fs = ensurePrerequisiteState(fs, 6);
+      const level = getLevel(6);
+      const task = level.tasks.find((t) => t.id === 'select-all-search')!;
+
+      // Mock search results
+      const logFiles = [
+        { id: '1', name: 'a.log', type: 'file' as const, parentId: 'x' },
+        { id: '2', name: 'b.log', type: 'file' as const, parentId: 'x' },
+        { id: '3', name: 'c.log', type: 'file' as const, parentId: 'x' },
+        { id: '4', name: 'd.log', type: 'file' as const, parentId: 'x' },
+      ];
+
+      const state = createTestState(fs, {
         usedCtrlA: true,
         clipboard: {
           action: 'yank',
-          nodes: allLogs,
-          originalPath: ['root', 'home', 'guest', 'incoming', batchLogs.id],
+          nodes: logFiles,
+          originalPath: ['root', 'home', 'guest', 'incoming', 'batch_logs'],
         },
       });
 

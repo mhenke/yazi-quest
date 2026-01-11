@@ -105,6 +105,11 @@ export const KEYBINDINGS = [
     narrativeDescription: ['Scan Signatures', 'Isolate Targets', 'Run Diagnostics'],
   },
   {
+    keys: ['s'],
+    description: 'Search (Recursive)',
+    narrativeDescription: ['Deep Scan', 'Recursive Pattern Search', 'Trace Files via fd'],
+  },
+  {
     keys: ['z'],
     description: 'FZF Find (Recursive)',
     narrativeDescription: ['Quantum Jump', 'Global Search', 'Recursive Scan'],

@@ -56,6 +56,9 @@ const createTestState = (fs: FileNode, overrides: Partial<GameState> = {}): Game
   ignoreEpisodeIntro: false,
   threatLevel: 0,
   threatStatus: 'CALM',
+  searchQuery: null,
+  searchResults: [],
+  usedSearch: false,
   ...overrides,
 });
 

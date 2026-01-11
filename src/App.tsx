@@ -34,7 +34,7 @@ import {
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
-import { getVisibleItems } from './utils/viewHelpers';
+import { getVisibleItems, getRecursiveSearchResults } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
@@ -306,6 +306,9 @@ export default function App() {
       cycleCount,
       threatLevel: 0,
       threatStatus: 'CALM',
+      searchQuery: null,
+      searchResults: [],
+      usedSearch: false,
     };
   });
 
@@ -1595,7 +1598,32 @@ export default function App() {
     parent,
   ]);
 
-  // Logic for create/rename input handled via input element events mainly
+  const handleSearchConfirm = () => {
+    if (gameState.mode === 'search') {
+      const query = gameState.inputBuffer;
+      // Perform recursive search starting from CURRENT directory
+      const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+      const results = currentDir
+        ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
+        : [];
+
+      setGameState((prev) => ({
+        ...prev,
+        mode: 'normal',
+        searchQuery: query,
+        searchResults: results,
+        inputBuffer: '',
+        usedSearch: true,
+        // Reset cursor and preview logic
+        cursorIndex: 0,
+        previewScroll: 0,
+        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 }, // Counting search as find? Or add new stat?
+        // Let's reuse fzfFinds or filterUsage, or just ignore.
+        // User asked for persistent search like filter.
+      }));
+    }
+  };
+
   const handleInputConfirm = () => {
     if (gameState.mode === 'input-file') {
       const input = gameState.inputBuffer || '';
@@ -1948,6 +1976,9 @@ export default function App() {
           <div className="font-mono text-sm text-zinc-400">
             {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
             {(() => {
+              if (gameState.searchQuery) {
+                return <span className="text-green-400"> (search: {gameState.searchQuery})</span>;
+              }
               const dir = getNodeByPath(gameState.fs, gameState.currentPath);
               const filter = dir ? gameState.filters[dir.id] : null;
               return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
@@ -2075,6 +2106,33 @@ export default function App() {
               </div>
             )}
 
+            {gameState.mode === 'search' && (
+              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
+                    Search via fd:
+                  </span>
+                  <input
+                    type="text"
+                    value={gameState.inputBuffer}
+                    onChange={(e) =>
+                      setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSearchConfirm();
+                      if (e.key === 'Escape') setGameState((p) => ({ ...p, mode: 'normal' }));
+                      e.stopPropagation();
+                    }}
+                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
+                    autoFocus
+                  />
+                </div>
+                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
+                  Type to search recursively • Enter to confirm • Esc to cancel
+                </div>
+              </div>
+            )}
+
             {gameState.mode === 'input-file' && (
               <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                 <div className="flex items-center gap-2">
@@ -2136,7 +2194,11 @@ export default function App() {
               })()}
 
             <FileSystemPane
-              items={visibleItems}
+              items={
+                gameState.searchQuery
+                  ? sortNodes(gameState.searchResults, gameState.sortBy, gameState.sortDirection)
+                  : visibleItems
+              }
               isActive={true}
               cursorIndex={gameState.cursorIndex}
               selectedIds={gameState.selectedIds}

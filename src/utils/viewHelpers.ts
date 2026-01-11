@@ -36,3 +36,45 @@ export const activeFilterMatches = (
 
   return visible.every(predicate);
 };
+
+/**
+ * Recursively search for files matching a query string.
+ * Searches all files in the given directory and its subdirectories.
+ * Returns flattened array of matching FileNodes.
+ */
+export const getRecursiveSearchResults = (
+  rootNode: FileNode,
+  query: string,
+  showHidden: boolean = false,
+): FileNode[] => {
+  if (!query || !rootNode) return [];
+
+  const results: FileNode[] = [];
+  const lowerQuery = query.toLowerCase();
+
+  const searchRecursive = (node: FileNode) => {
+    if (!node.children) return;
+
+    for (const child of node.children) {
+      // Skip hidden files unless showHidden is true
+      if (!showHidden && child.name.startsWith('.')) continue;
+
+      // Check if file matches query
+      if (child.type === 'file' && child.name.toLowerCase().includes(lowerQuery)) {
+        results.push(child);
+      }
+
+      // Recurse into directories and archives
+      if (child.type === 'dir' || child.type === 'archive') {
+        // Also check if directory name matches
+        if (child.name.toLowerCase().includes(lowerQuery)) {
+          results.push(child);
+        }
+        searchRecursive(child);
+      }
+    }
+  };
+
+  searchRecursive(rootNode);
+  return results;
+};

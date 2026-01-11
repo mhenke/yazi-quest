@@ -131,6 +131,7 @@ export interface GameState {
     | 'input-dir'
     | 'confirm-delete'
     | 'filter'
+    | 'search'
     | 'zoxide-jump'
     | 'rename'
     | 'bulk-rename'
@@ -203,6 +204,10 @@ export interface GameState {
   };
   threatLevel: number; // 0-100 Global threat level
   threatStatus: string; // CALM, ANALYZING, TRACING, BREACH
+  // Recursive search state
+  searchQuery: string | null; // Active recursive search query (null = no search)
+  searchResults: FileNode[]; // Flattened results from recursive search
+  usedSearch?: boolean; // Tracks if player used 's' for recursive search
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

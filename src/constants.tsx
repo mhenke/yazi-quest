@@ -1,6 +1,13 @@
 import { FileNode, Level, Episode } from './types';
 import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName, getNodeById, resolvePath, id } from './utils/fsHelpers';
+import {
+  getNodeByPath,
+  findNodeByName,
+  getNodeById,
+  resolvePath,
+  id,
+  resolveAndCreatePath,
+} from './utils/fsHelpers';
 
 // Helper for the initial systemd-core in /daemons (System instance)
 export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
@@ -2116,7 +2123,7 @@ export const LEVELS: Level[] = [
     successMessage:
       'Intel secured. Sector map recovered. The breadcrumb trail begins. What else did AI-7733 leave for you?',
     buildsOn: [1],
-    leadsTo: [5, 10],
+    leadsTo: [4],
     tasks: [
       {
         id: 'data-harvest-1',
@@ -2184,7 +2191,7 @@ export const LEVELS: Level[] = [
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
     successMessage: 'Uplink protocols established and duplicated; redundant channel ready.',
     buildsOn: [1],
-    leadsTo: [5, 8],
+    leadsTo: [5],
     tasks: [
       {
         id: 'nav-and-create-dir',
@@ -2232,7 +2239,7 @@ export const LEVELS: Level[] = [
     successMessage:
       "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
-    leadsTo: [9],
+    leadsTo: [6],
 
     tasks: [
       {
@@ -2309,32 +2316,36 @@ export const LEVELS: Level[] = [
       'WARNING: Watchdog Reboot in 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage:
       'Training data archived just in time. Workspace unlocked. The Watchdog is back online — stay hidden.',
-    buildsOn: [1, 2, 5],
-    leadsTo: [9],
+    buildsOn: [5],
+    leadsTo: [7],
     timeLimit: 90,
     efficiencyTip:
       'Batch operations save keystrokes. Select all, yank, navigate, and paste. The clipboard persists across navigation, allowing you to move entire directories of content with a single operation.',
     tasks: [
       {
-        id: 'batch-nav',
+        id: 'batch-descend',
         description: "Jump to '~/incoming/batch_logs' (gi → enter batch_logs)",
         check: (c) => {
-          const u = findNodeByName(c.fs, 'batch_logs');
-          return c.currentPath.includes(u?.id || '');
+          const u = findNodeByName(c.fs, 'incoming');
+          const b = u?.children?.find((n) => n.name === 'batch_logs');
+          return c.currentPath.includes(b?.id || '');
         },
         completed: false,
       },
       {
-        id: 'select-all-batch',
-        description: 'Select all files in batch_logs and yank (Ctrl+A, y)',
+        id: 'recursive-search',
+        description: "Logs are scattered. Use recursive search (s) to find 'log'",
         check: (c) => {
-          const u = findNodeByName(c.fs, 'batch_logs');
-          const expected = u?.children?.length || 0;
+          return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('log');
+        },
+        completed: false,
+      },
+      {
+        id: 'select-all-search',
+        description: 'Select all search results and yank (Ctrl+A, y)',
+        check: (c) => {
           return (
-            c.currentPath.includes(u?.id || '') &&
-            c.usedCtrlA === true &&
-            c.clipboard?.action === 'yank' &&
-            c.clipboard.nodes.length === expected
+            c.usedCtrlA === true && c.clipboard?.action === 'yank' && c.clipboard.nodes.length >= 4 // At least 4 logs
           );
         },
         completed: false,
@@ -2377,6 +2388,58 @@ export const LEVELS: Level[] = [
         workspace.protected = false;
       }
 
+      // Setup scattered logs in batch_logs
+      const batchLogs = resolveAndCreatePath(
+        newFs,
+        ['root', 'home', 'guest', 'incoming'],
+        'batch_logs',
+      ).targetNode;
+      if (batchLogs) {
+        // Flatten existing children? Or just ensure they exist in nested structure
+        batchLogs.children = []; // Reset to ensure structure
+
+        const s1 = {
+          id: 's1',
+          name: 'server_1',
+          type: 'dir' as const,
+          parentId: batchLogs.id,
+          children: [],
+        };
+        const s2 = {
+          id: 's2',
+          name: 'server_2',
+          type: 'dir' as const,
+          parentId: batchLogs.id,
+          children: [],
+        };
+        const archive = {
+          id: 'arc',
+          name: 'old_logs',
+          type: 'dir' as const,
+          parentId: batchLogs.id,
+          children: [],
+        };
+
+        s1.children = [
+          {
+            id: 'l1',
+            name: 'sys_error.log',
+            type: 'file' as const,
+            parentId: 's1',
+            content: 'ERR',
+          },
+          { id: 'l2', name: 'sys_out.log', type: 'file' as const, parentId: 's1', content: 'OUT' },
+        ];
+        s2.children = [
+          { id: 'l3', name: 'auth.log', type: 'file' as const, parentId: 's2', content: 'AUTH' },
+        ];
+        archive.children = [
+          { id: 'l4', name: 'legacy.log', type: 'file' as const, parentId: 'arc', content: 'OLD' },
+        ];
+
+        batchLogs.children = [s1, s2, archive];
+      }
+
       return newFs;
     },
   },
@@ -2392,8 +2455,8 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Verify → Abort",
     successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
-    buildsOn: [1],
-    leadsTo: [8, 12],
+    buildsOn: [6],
+    leadsTo: [8],
     timeLimit: 90,
     efficiencyTip:
       'When using FZF (z), typing filters the list. Use `Ctrl+n` (next) and `Ctrl+p` (previous) to navigate the results without leaving the input field.',
@@ -2464,8 +2527,8 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'CRITICAL: Sector Decay Active | OVERWRITE REQUIRED (Shift+P) | TARGET: uplink_v1.conf',
     successMessage: 'Patch deployed successfully. Integrity restored. Protocol Shift+P verified.',
-    buildsOn: [4, 5, 7],
-    leadsTo: [11],
+    buildsOn: [7],
+    leadsTo: [9],
     timeLimit: 150,
     efficiencyTip:
       'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
@@ -2554,7 +2617,7 @@ export const LEVELS: Level[] = [
       "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock' | METHOD: Select → Invert → Permanent Delete",
     successMessage:
       'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
-    buildsOn: [2, 5, 7],
+    buildsOn: [8],
     leadsTo: [10],
     timeLimit: 120,
     efficiencyTip:
@@ -2609,7 +2672,7 @@ export const LEVELS: Level[] = [
     environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
     successMessage:
       'Key secured milliseconds before expiration. Escalation ready. The system is watching.',
-    buildsOn: [3, 5, 7, 9],
+    buildsOn: [9],
     leadsTo: [11],
     timeLimit: 150,
     efficiencyTip:
@@ -3404,17 +3467,19 @@ export const LEVELS: Level[] = [
     tasks: [
       // PHASE 1: Neural Assembly (Node switch + Yank + Paste)
       {
-        id: 'assemble-keys',
+        id: 'gauntlet-01-switch',
         description:
-          'PHASE 1: Assemble YOUR neural fragments — copy all 3 keys from /nodes/* to /tmp/upload (switch nodes: 1,2,3)',
+          "PHASE 1: KEY FRAGMENTS. Use recursive search (s) to find 3 hidden keys ('.key') dispersed across '/nodes'. Copy (y) each key and paste (p) them into '/tmp/upload'.",
         check: (c) => {
-          const tmp = findNodeByName(c.fs, 'tmp');
-          const upload = tmp?.children?.find((x) => x.name === 'upload');
-          if (!upload?.children) return false;
-          const hasA = upload.children.some((n) => n.name === 'part_a.key');
-          const hasB = upload.children.some((n) => n.name === 'part_b.key');
-          const hasC = upload.children.some((n) => n.name === 'part_c.key');
-          return hasA && hasB && hasC;
+          const uploadPath = ['root', 'tmp', 'upload'];
+          const uploadNode = getNodeByPath(c.fs, uploadPath);
+          if (!uploadNode || !uploadNode.children) return false;
+
+          const keys = ['key_tokyo.key', 'key_berlin.key', 'key_saopaulo.key'];
+          const found = keys.filter((k) => uploadNode.children!.some((n) => n.name === k));
+
+          // Require use of search at least once
+          return found.length === 3 && c.usedSearch === true;
         },
         completed: false,
       },

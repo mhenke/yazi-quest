@@ -44,10 +44,6 @@ What players learn: basic navigation (`j/k/h/l`, `gg/G`), selection and batch op
 - Arc: Discover AI-7733's legacy → Build disguise → Secure assets → Evade forensic sweeps
 - UI Tone: Purple (`text-purple-500`)
 
-- Theme: Strategic construction and defense
-- Arc: Discover AI-7733's legacy → Build disguise → Secure assets → Evade forensic sweeps
-- UI Tone: Purple (`text-purple-500`)
-
 What players learn: FZF (`z`) and zoxide (`Z`) shortcuts, batch operations; archive handling appears in L10, sort & filter operations, clipboard workflows (`x, y, p`).
 
 ### EPISODE III: MASTERY (Levels 11–15)
@@ -85,7 +81,7 @@ Episode I — Awakening
 Episode II — Fortification
 
 - L6: Batch Operations — Select all, yank, navigate, and paste across partitions.
-- L7: Quantum Bypass — FZF navigation (`z`) and honeypot detection.
+- L7: Quantum Bypass — FZF find (`z`) to locate files; honeypot detection and abort.
 - L8: Daemon Disguise Construction — Introduce `Shift+P` for overwriting corrupted files.
 - L9: Trace Cleanup — Advanced selection logic (`Ctrl+R` to invert).
 - L10: Credential Heist — **Retention Checkpoint:** Sorting and Archive navigation without explicit key hints.

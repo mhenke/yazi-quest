@@ -909,6 +909,19 @@ export const useKeyboardHandlers = (
           }
           setGameState((prev) => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
           break;
+        case 's':
+          e.preventDefault();
+          setGameState((prev) => {
+            showNotification(getNarrativeAction('s') || 'Recursive search');
+            return {
+              ...prev,
+              mode: 'search',
+              inputBuffer: '',
+              searchQuery: null,
+              searchResults: [],
+            };
+          });
+          break;
         case '.':
           setGameState((prev) => {
             const narrative = getNarrativeAction('.');
@@ -1012,6 +1025,16 @@ export const useKeyboardHandlers = (
         }
         case 'Escape':
           setGameState((prev) => {
+            if (prev.searchQuery) {
+              showNotification(getNarrativeAction('Escape') || 'Search cleared');
+              return {
+                ...prev,
+                searchQuery: null,
+                searchResults: [],
+                mode: 'normal',
+                inputBuffer: '',
+              };
+            }
             const currentDir = getNodeByPath(prev.fs, prev.currentPath);
             const hasFilter = currentDir && prev.filters[currentDir.id];
             if (hasFilter) {

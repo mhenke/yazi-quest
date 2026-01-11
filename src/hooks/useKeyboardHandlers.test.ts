@@ -61,6 +61,9 @@ const initialGameState: GameState = {
   ignoreEpisodeIntro: false,
   threatLevel: 0,
   threatStatus: 'CALM',
+  searchQuery: null,
+  searchResults: [],
+  usedSearch: false,
 };
 
 describe('useKeyboardHandlers', () => {
@@ -1172,5 +1175,30 @@ describe('useKeyboardHandlers', () => {
 
     expect(newState.linemode).toBe('mtime'); // size -> mtime
     expect(newState.mode).toBe('normal');
+  });
+
+  it('should enter search mode with "s"', () => {
+    const { result } = getHook();
+    const event = new KeyboardEvent('keydown', { key: 's' });
+
+    result.current.handleNormalModeKeyDown(
+      event,
+      initialGameState,
+      mockSetGameState,
+      [],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    expect(mockSetGameState).toHaveBeenCalled();
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(initialGameState);
+
+    expect(newState.mode).toBe('search');
+    expect(newState.searchQuery).toBe(null);
+    expect(newState.searchResults).toEqual([]);
+    expect(newState.inputBuffer).toBe('');
   });
 });
