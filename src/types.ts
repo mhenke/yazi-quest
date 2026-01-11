@@ -179,6 +179,7 @@ export interface GameState {
   usedGI?: boolean; // Tracks if player used gi (g then i) to jump specifically to incoming
   usedGC?: boolean; // Tracks if player used gc (g then c) to jump specifically to .config
   usedGR?: boolean; // Tracks if player used gr (g then r) to jump specifically to root
+  usedGH?: boolean; // Tracks if player used gh (g then h) to jump specifically to home
   usedCtrlA?: boolean; // Tracks if player used Ctrl+A to select all in a directory
   usedCtrlR?: boolean; // Tracks if player used Ctrl+R for redo/refresh actions
   usedGG?: boolean; // Tracks if player used gg (jump to top)
@@ -189,6 +190,7 @@ export interface GameState {
   usedP?: boolean; // Tracks if player used 'p' to paste
   usedShiftP?: boolean; // Tracks if player used 'Shift+P' (overwrite paste)
   usedD?: boolean; // Tracks if player used 'D' for permanent delete
+  usedTrashDelete?: boolean; // Tracks if player used 'd' for trash delete
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level
@@ -208,6 +210,7 @@ export interface GameState {
   searchQuery: string | null; // Active recursive search query (null = no search)
   searchResults: FileNode[]; // Flattened results from recursive search
   usedSearch?: boolean; // Tracks if player used 's' for recursive search
+  usedFilter?: boolean; // Tracks if player used 'f' for filter mode
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

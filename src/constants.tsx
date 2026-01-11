@@ -2103,7 +2103,8 @@ export const LEVELS: Level[] = [
           if (!c.completedTaskIds[_s.id]?.includes('identify-threat-2')) return false;
           const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
-          return !!u && !d;
+          // Require usedTrashDelete to enforce lowercase d (not D for permanent)
+          return !!u && !d && c.usedTrashDelete === true;
         },
         completed: false,
       },
@@ -2147,7 +2148,11 @@ export const LEVELS: Level[] = [
           const p = visible[c.cursorIndex];
           // Completion when the cursor is on sector_map.png and we're in normal mode
           return (
-            u.name === 'incoming' && p != null && p.name === 'sector_map.png' && c.mode === 'normal'
+            u.name === 'incoming' &&
+            p != null &&
+            p.name === 'sector_map.png' &&
+            c.mode === 'normal' &&
+            c.usedFilter === true
           );
         },
         completed: false,
@@ -2260,7 +2265,7 @@ export const LEVELS: Level[] = [
         description: "Navigate to '~' (gh) and reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
           const s = findNodeByName(c.fs, 'guest');
-          return c.currentPath.includes(s?.id || '') && c.showHidden === true;
+          return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
         },
         completed: false,
       },
@@ -2297,7 +2302,10 @@ export const LEVELS: Level[] = [
           const active = vault?.children?.find((p) => p.name === 'active');
           const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
           const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
-          return !!f && !!r && !c.showHidden;
+          if (!f || !r) return false;
+
+          const s = findNodeByName(c.fs, 'guest');
+          return c.currentPath.includes(s?.id || '') && c.showHidden === false && c.usedGH === true;
         },
         completed: false,
       },
@@ -2571,7 +2579,11 @@ export const LEVELS: Level[] = [
           if (!items || items.length === 0) return false;
 
           const node = items[c.cursorIndex];
-          return node?.name === 'uplink_v1.conf' && !!node.content?.includes('CORRUPTED');
+          return (
+            node?.name === 'uplink_v1.conf' &&
+            !!node.content?.includes('CORRUPTED') &&
+            c.usedFilter === true
+          );
         },
         completed: false,
       },
@@ -3345,14 +3357,9 @@ export const LEVELS: Level[] = [
           const hasConfig = guest.children?.some((n) => n.name === '.config');
           if (clean && !hasConfig) {
             // VIOLATION! They deleted config too early or with the batch.
-            // We can't fail here easily, but we can prevent completion?
-            // Actually, if clean is true but config is gone, they failed the constraint.
-            // But if we return false, they can never complete it (since files are gone).
-            // This results in a "softlock" or failure.
-            // Ideally we triggered an alert in App.tsx.
             return false;
           }
-          return clean;
+          return clean && c.usedD === true;
         },
         completed: false,
       },
@@ -3364,7 +3371,9 @@ export const LEVELS: Level[] = [
           const guest = findNodeByName(c.fs, 'guest');
           // Constraint: visible must be gone (already checked by dependency).
           // Now checking if .config is gone.
-          return c.showHidden && !guest?.children?.some((n) => n.name === '.config');
+          return (
+            c.showHidden && !guest?.children?.some((n) => n.name === '.config') && c.usedD === true
+          );
         },
         completed: false,
       },
@@ -3512,7 +3521,7 @@ export const LEVELS: Level[] = [
           if (!c.completedTaskIds[_s.id]?.includes('verify-daemon')) return false;
           const tmp = findNodeByName(c.fs, 'tmp');
           // Check that the hidden ghost process is deleted
-          return !tmp?.children?.some((n) => n.name === '.ghost_process.pid');
+          return !tmp?.children?.some((n) => n.name === '.ghost_process.pid') && c.usedD === true;
         },
         completed: false,
       },

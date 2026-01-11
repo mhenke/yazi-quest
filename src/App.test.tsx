@@ -450,131 +450,6 @@ describe('Regression: Honeypot & Clipboard', () => {
 });
 
 /**
- * Filter Navigation Tests
- *
- * Verifies that while in filter mode:
- * 1. j/k keys navigate through filtered items (cursor moves)
- * 2. l key opens the focused directory and exits filter mode
- * 3. h key goes to parent directory and exits filter mode
- * 4. Space toggles selection
- * 5. Navigation hint is displayed correctly
- */
-describe('Filter Navigation (matches real Yazi)', () => {
-  beforeEach(() => {
-    // Set up a test level with files to navigate
-    constants.LEVELS[0] = {
-      id: 999,
-      episodeId: 1,
-      title: 'FILTER NAV TEST',
-      description: 'Test Description',
-      initialPath: ['root', 'home', 'guest'],
-      hint: 'Test Hint',
-      coreSkill: 'Filtering',
-      environmentalClue: 'Test Clue',
-      successMessage: 'Test Success',
-      buildsOn: [],
-      leadsTo: [],
-      tasks: [
-        {
-          id: 'dummy-task',
-          description: 'Prevent auto completion',
-          completed: false,
-          check: () => false,
-        },
-      ],
-      onEnter: (fs: any) => fs,
-    } as any;
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
-  });
-
-  it('should display correct navigation hint in filter mode', async () => {
-    render(<App />);
-    await skipIntro();
-
-    // Enter filter mode
-    fireEvent.keyDown(window, { key: 'f' });
-
-    // Should show updated hint
-    await waitFor(() => {
-      expect(screen.getByText(/j\/k to navigate/i)).toBeDefined();
-    });
-  });
-
-  it('should allow j/k navigation while typing filter', async () => {
-    vi.useFakeTimers();
-
-    act(() => {
-      render(<App />);
-    });
-    skipIntroSync();
-
-    // Enter filter mode
-    act(() => {
-      fireEvent.keyDown(window, { key: 'f' });
-    });
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    // Verify filter input is shown
-    expect(screen.getByText(/Filter:/i)).toBeDefined();
-
-    // Find the input and focus it
-    const input = screen.getByRole('textbox');
-    expect(input).toBeDefined();
-
-    // Press 'j' to navigate down - should NOT add 'j' to input
-    act(() => {
-      fireEvent.keyDown(input, { key: 'j' });
-    });
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    // Input should still be empty (j was intercepted for navigation)
-    expect((input as HTMLInputElement).value).toBe('');
-  });
-
-  it('should close filter mode with Escape', async () => {
-    vi.useFakeTimers();
-
-    act(() => {
-      render(<App />);
-    });
-    skipIntroSync();
-
-    // Enter filter mode
-    act(() => {
-      fireEvent.keyDown(window, { key: 'f' });
-    });
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    // Verify filter dialog exists
-    expect(screen.getByText(/Filter:/i)).toBeDefined();
-
-    // Find the input
-    const input = screen.getByRole('textbox');
-
-    // Press Escape to close
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Escape' });
-    });
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    // Filter dialog should be gone
-    expect(screen.queryByText(/Filter:/i)).toBeNull();
-  });
-});
-
-/**
  * Search Navigation Tests
  *
  * Verifies that while in search mode:
@@ -620,9 +495,9 @@ describe('Search Navigation (matches real Yazi)', () => {
     // Enter search mode (s key)
     fireEvent.keyDown(window, { key: 's' });
 
-    // Should show updated hint
+    // Should show search input - the UI shows navigation hints via arrows
     await waitFor(() => {
-      expect(screen.getByText(/j\/k to navigate/i)).toBeDefined();
+      expect(screen.getByText(/Search via fd:/i)).toBeDefined();
     });
   });
 
@@ -667,16 +542,13 @@ describe('Search Navigation (matches real Yazi)', () => {
     // by checking the mode returned to normal, not the search results directly)
   });
 
-  it('should navigate to parent with h key in search mode', async () => {
+  it('should allow h key to be typed in search input (not intercepted)', async () => {
     vi.useFakeTimers();
 
     act(() => {
       render(<App />);
     });
     skipIntroSync();
-
-    // Navigate into a subdirectory first using normal mode
-    // (The default path is ['root', 'home', 'guest'] which has length > 1)
 
     // Enter search mode
     act(() => {
@@ -690,21 +562,24 @@ describe('Search Navigation (matches real Yazi)', () => {
     expect(screen.getByText(/Search via fd:/i)).toBeDefined();
 
     // Find the input
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
 
-    // Press h to navigate to parent - should exit search mode and go to parent
+    // Type 'h' in the input - it should be captured as text input, not navigation
     act(() => {
-      fireEvent.keyDown(input, { key: 'h' });
+      fireEvent.change(input, { target: { value: 'h' } });
     });
     act(() => {
       vi.advanceTimersByTime(100);
     });
 
-    // Search dialog should be gone (exited search mode)
-    expect(screen.queryByText(/Search via fd:/i)).toBeNull();
+    // The 'h' should be typed into the input, not trigger navigation
+    expect(input.value).toBe('h');
+
+    // Search dialog should still be visible (h didn't exit search mode)
+    expect(screen.getByText(/Search via fd:/i)).toBeDefined();
   });
 
-  it('should navigate with j/k keys in search mode', async () => {
+  it('should allow typing all letters (including h,j,k,l) in search input', async () => {
     vi.useFakeTimers();
 
     act(() => {
@@ -721,17 +596,53 @@ describe('Search Navigation (matches real Yazi)', () => {
     });
 
     // Find the input
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
 
-    // Press j to navigate down - should NOT add 'j' to input value
+    // Type letters that were previously intercepted - they should ALL be typeable
     act(() => {
-      fireEvent.keyDown(input, { key: 'j' });
+      fireEvent.change(input, { target: { value: 'help' } }); // contains h, e, l, p
     });
     act(() => {
       vi.advanceTimersByTime(100);
     });
 
-    // Input should still be empty (j was intercepted for navigation)
-    expect((input as HTMLInputElement).value).toBe('');
+    // Input should contain the typed text
+    expect(input.value).toBe('help');
+  });
+
+  it('should navigate with arrow keys in search input', async () => {
+    vi.useFakeTimers();
+
+    act(() => {
+      render(<App />);
+    });
+    skipIntroSync();
+
+    // Enter search mode
+    act(() => {
+      fireEvent.keyDown(window, { key: 's' });
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Find the input
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+
+    // Type something first
+    act(() => {
+      fireEvent.change(input, { target: { value: 'test' } });
+    });
+
+    // Press ArrowDown - should navigate cursor, not affect input
+    act(() => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Input should still have the typed text
+    expect(input.value).toBe('test');
   });
 });

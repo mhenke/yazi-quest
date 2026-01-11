@@ -229,6 +229,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
               }}
               className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
               autoFocus
+              onBlur={(e) => e.target.focus()}
             />
           </div>
           <div className="text-[10px] text-zinc-500 mt-2 font-mono">

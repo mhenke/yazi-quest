@@ -329,11 +329,18 @@ export const useKeyboardHandlers = (
         {
           path: string[];
           label: string;
-          flag?: keyof GameState['stats'] | 'usedG' | 'usedGI' | 'usedGC' | 'usedGG' | 'usedGR';
+          flag?:
+            | keyof GameState['stats']
+            | 'usedG'
+            | 'usedGI'
+            | 'usedGC'
+            | 'usedGG'
+            | 'usedGR'
+            | 'usedGH';
         }
       > = {
         g: { path: [], label: 'top', flag: 'usedGG' }, // Special handling later, but defined here for completeness
-        h: { path: ['root', 'home', 'guest'], label: 'home' },
+        h: { path: ['root', 'home', 'guest'], label: 'home', flag: 'usedGH' },
         c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'usedGC' },
         w: { path: ['root', 'home', 'guest', 'workspace'], label: 'workspace' },
         t: { path: ['root', 'tmp'], label: 'tmp' },
@@ -605,6 +612,19 @@ export const useKeyboardHandlers = (
             setGameState((prev) => ({ ...prev, mode: 'input-file', inputBuffer: '' }));
           }
           break;
+        case 'f':
+          if (e.ctrlKey || e.metaKey) {
+            // Future: Ctrl+F for something else?
+          } else {
+            e.preventDefault();
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'filter',
+              inputBuffer: '',
+              usedFilter: true, // Track filter usage
+            }));
+          }
+          break;
         case 'r':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
@@ -721,6 +741,7 @@ export const useKeyboardHandlers = (
             pendingDeleteIds: toDelete,
             deleteType: e.key === 'D' ? 'permanent' : 'trash',
             usedD: prev.usedD || e.key === 'D',
+            usedTrashDelete: prev.usedTrashDelete || e.key === 'd',
           }));
           break;
         }

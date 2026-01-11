@@ -2086,98 +2086,21 @@ export default function App() {
                       });
                     }}
                     onKeyDown={(e) => {
-                      // Navigation keys work while filtering (matches real Yazi)
-                      const navActions: Record<string, () => void> = {
-                        j: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                          }));
-                        },
-                        ArrowDown: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                          }));
-                        },
-                        k: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.max(0, p.cursorIndex - 1),
-                          }));
-                        },
-                        ArrowUp: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.max(0, p.cursorIndex - 1),
-                          }));
-                        },
-                        l: () => {
-                          // Open current item and exit filter mode
-                          const item = visibleItems[gameState.cursorIndex];
-                          if (item && (item.type === 'dir' || item.type === 'archive')) {
-                            const nextPath = [...gameState.currentPath, item.id];
-                            const pathStr = resolvePath(gameState.fs, nextPath);
-                            const now = Date.now();
-                            setGameState((p) => ({
-                              ...p,
-                              currentPath: nextPath,
-                              cursorIndex: 0,
-                              mode: 'normal',
-                              inputBuffer: '',
-                              filters: {}, // Clear filters when navigating into directory
-                              history: [...p.history, p.currentPath],
-                              future: [],
-                              stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
-                              zoxideData: {
-                                ...p.zoxideData,
-                                [pathStr]: {
-                                  count: (p.zoxideData[pathStr]?.count || 0) + 1,
-                                  lastAccess: now,
-                                },
-                              },
-                            }));
-                          }
-                        },
-                        h: () => {
-                          // Go to parent, clear filter, exit filter mode
-                          if (parent) {
-                            setGameState((p) => ({
-                              ...p,
-                              currentPath: p.currentPath.slice(0, -1),
-                              cursorIndex: 0,
-                              mode: 'normal',
-                              inputBuffer: '',
-                              filters: {}, // Clear filters
-                              history: [...p.history, p.currentPath],
-                              future: [],
-                              stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
-                            }));
-                          }
-                        },
-                        ' ': () => {
-                          // Toggle selection on current item
-                          const item = visibleItems[gameState.cursorIndex];
-                          if (item) {
-                            setGameState((p) => {
-                              const newSelected = p.selectedIds.includes(item.id)
-                                ? p.selectedIds.filter((id) => id !== item.id)
-                                : [...p.selectedIds, item.id];
-                              return {
-                                ...p,
-                                selectedIds: newSelected,
-                                cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                              };
-                            });
-                          }
-                        },
-                      };
-
-                      const handler = navActions[e.key];
-                      if (handler) {
+                      // Only arrow keys for navigation during input (allows typing hjkl)
+                      if (e.key === 'ArrowDown') {
                         e.preventDefault();
-                        e.stopPropagation();
-                        handler();
+                        setGameState((p) => ({
+                          ...p,
+                          cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
+                        }));
+                        return;
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setGameState((p) => ({
+                          ...p,
+                          cursorIndex: Math.max(0, p.cursorIndex - 1),
+                        }));
                         return;
                       }
 
@@ -2193,10 +2116,12 @@ export default function App() {
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
                     autoFocus
+                    onBlur={(e) => e.target.focus()}
+                    data-testid="filter-input"
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Type to filter • j/k to navigate • l to open • Esc to close
+                  Type to filter • ↑/↓ to navigate • Enter/Esc to close
                 </div>
               </div>
             )}
@@ -2214,99 +2139,21 @@ export default function App() {
                       setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
                     }
                     onKeyDown={(e) => {
-                      // Navigation keys work while searching (matches real Yazi)
-                      const navActions: Record<string, () => void> = {
-                        j: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                          }));
-                        },
-                        ArrowDown: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                          }));
-                        },
-                        k: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.max(0, p.cursorIndex - 1),
-                          }));
-                        },
-                        ArrowUp: () => {
-                          setGameState((p) => ({
-                            ...p,
-                            cursorIndex: Math.max(0, p.cursorIndex - 1),
-                          }));
-                        },
-                        l: () => {
-                          // Open current item and exit search mode
-                          const item = visibleItems[gameState.cursorIndex];
-                          if (item && (item.type === 'dir' || item.type === 'archive')) {
-                            const nextPath = [...gameState.currentPath, item.id];
-                            const pathStr = resolvePath(gameState.fs, nextPath);
-                            const now = Date.now();
-                            setGameState((p) => ({
-                              ...p,
-                              currentPath: nextPath,
-                              cursorIndex: 0,
-                              mode: 'normal',
-                              inputBuffer: '',
-                              searchQuery: null,
-                              searchResults: [],
-                              history: [...p.history, p.currentPath],
-                              future: [],
-                              zoxideData: {
-                                ...p.zoxideData,
-                                [pathStr]: {
-                                  count: (p.zoxideData[pathStr]?.count || 0) + 1,
-                                  lastAccess: now,
-                                },
-                              },
-                            }));
-                          }
-                        },
-                        h: () => {
-                          // Go to parent, clear search, exit search mode
-                          // Check if we can go up (path length > 1)
-                          if (gameState.currentPath.length > 1) {
-                            setGameState((p) => ({
-                              ...p,
-                              currentPath: p.currentPath.slice(0, -1),
-                              cursorIndex: 0,
-                              mode: 'normal',
-                              inputBuffer: '',
-                              searchQuery: null,
-                              searchResults: [],
-                              history: [...p.history, p.currentPath],
-                              future: [],
-                            }));
-                          }
-                        },
-                        ' ': () => {
-                          // Toggle selection on current item
-                          const item = visibleItems[gameState.cursorIndex];
-                          if (item) {
-                            setGameState((p) => {
-                              const newSelected = p.selectedIds.includes(item.id)
-                                ? p.selectedIds.filter((id) => id !== item.id)
-                                : [...p.selectedIds, item.id];
-                              return {
-                                ...p,
-                                selectedIds: newSelected,
-                                cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                              };
-                            });
-                          }
-                        },
-                      };
-
-                      const handler = navActions[e.key];
-                      if (handler) {
+                      // Only arrow keys for navigation during input (allows typing hjkl)
+                      if (e.key === 'ArrowDown') {
                         e.preventDefault();
-                        e.stopPropagation();
-                        handler();
+                        setGameState((p) => ({
+                          ...p,
+                          cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
+                        }));
+                        return;
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setGameState((p) => ({
+                          ...p,
+                          cursorIndex: Math.max(0, p.cursorIndex - 1),
+                        }));
                         return;
                       }
 
@@ -2331,10 +2178,11 @@ export default function App() {
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
                     autoFocus
+                    onBlur={(e) => e.target.focus()}
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Type to search • j/k nav • l open • Esc close (keeps search)
+                  Type to search • ↑/↓ to preview • Enter confirm • Esc close
                 </div>
               </div>
             )}
@@ -2358,6 +2206,7 @@ export default function App() {
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
                     autoFocus
+                    onBlur={(e) => e.target.focus()}
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">

@@ -200,17 +200,35 @@ describe('Task Check Functions - Episode I', () => {
       expect(task.check(state, level)).toBe(true);
     });
 
-    it('Task: neutralize-threat - should complete when watcher_agent.sys deleted', () => {
+    it('Task: neutralize-threat - should NOT complete when watcher_agent.sys deleted without "d" key', () => {
       const level = getLevel(2);
       const task = level.tasks.find((t) => t.id === 'neutralize-threat')!;
 
-      // Modify FS to remove watcher_agent.sys
+      // Modify FS to remove watcher_agent.sys (simulating external delete or wrong key)
       const incoming = findNodeByName(fs, 'incoming', 'dir')!;
       incoming.children = incoming.children?.filter((c) => c.name !== 'watcher_agent.sys');
 
       const state = createTestState(fs, {
         completedTaskIds: { [level.id]: ['nav-incoming', 'inspect-threat', 'identify-threat-2'] },
+        usedTrashDelete: false, // Explicitly false
+        usedD: true, // Even if they used "D", it should fail based on current strict rules
       });
+
+      expect(task.check(state, level)).toBe(false);
+    });
+
+    it('Task: neutralize-threat - should complete when watcher_agent.sys deleted (trash)', () => {
+      const level = getLevel(2);
+      const task = level.tasks.find((t) => t.id === 'neutralize-threat')!;
+
+      const state = createTestState(fs, { usedTrashDelete: true });
+      // Simulate file deletion
+      const incoming = findNodeByName(state.fs, 'incoming');
+      if (incoming && incoming.children) {
+        incoming.children = incoming.children.filter((n) => n.name !== 'watcher_agent.sys');
+      }
+      // Mock previous task completion
+      state.completedTaskIds[2] = ['identify-threat-2'];
 
       expect(task.check(state, level)).toBe(true);
     });
