@@ -244,6 +244,74 @@ describe('useKeyboardHandlers', () => {
     expect(newState.cursorIndex).toBe(0);
   });
 
+  it('should wrap around to top when pressing "j" at the bottom', () => {
+    const { result } = getHook();
+
+    // Create 3 items
+    const items = [
+      { id: '1', name: '1', type: 'file' },
+      { id: '2', name: '2', type: 'file' },
+      { id: '3', name: '3', type: 'file' },
+    ];
+
+    // Set cursor at the last item (index 2)
+    const state = { ...initialGameState, cursorIndex: 2 };
+
+    // Simulate 'j' key press
+    const event = new KeyboardEvent('keydown', { key: 'j' });
+
+    result.current.handleNormalModeKeyDown(
+      event,
+      state,
+      mockSetGameState,
+      items as any[],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    expect(mockSetGameState).toHaveBeenCalled();
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+
+    expect(newState.cursorIndex).toBe(0);
+  });
+
+  it('should wrap around to bottom when pressing "k" at the top', () => {
+    const { result } = getHook();
+
+    // Create 3 items
+    const items = [
+      { id: '1', name: '1', type: 'file' },
+      { id: '2', name: '2', type: 'file' },
+      { id: '3', name: '3', type: 'file' },
+    ];
+
+    // Set cursor at the top (index 0)
+    const state = { ...initialGameState, cursorIndex: 0 };
+
+    // Simulate 'k' key press
+    const event = new KeyboardEvent('keydown', { key: 'k' });
+
+    result.current.handleNormalModeKeyDown(
+      event,
+      state,
+      mockSetGameState,
+      items as any[],
+      null,
+      null,
+      LEVELS[0],
+      vi.fn(),
+    );
+
+    expect(mockSetGameState).toHaveBeenCalled();
+    const updateFn = mockSetGameState.mock.calls[0][0];
+    const newState = updateFn(state);
+
+    expect(newState.cursorIndex).toBe(2);
+  });
+
   it('should handle "gg" to jump to top', () => {
     const { result } = getHook();
     const items = new Array(10).fill({ id: 'x' });

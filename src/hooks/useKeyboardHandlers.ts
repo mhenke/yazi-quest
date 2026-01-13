@@ -450,7 +450,7 @@ export const useKeyboardHandlers = (
         case 'ArrowDown':
           setGameState((prev) => ({
             ...prev,
-            cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
+            cursorIndex: prev.cursorIndex >= items.length - 1 ? 0 : prev.cursorIndex + 1,
             previewScroll: 0,
             usedDown: true,
             usedPreviewDown: false,
@@ -461,7 +461,8 @@ export const useKeyboardHandlers = (
         case 'ArrowUp':
           setGameState((prev) => ({
             ...prev,
-            cursorIndex: Math.max(0, prev.cursorIndex - 1),
+            cursorIndex:
+              prev.cursorIndex <= 0 ? Math.max(0, items.length - 1) : prev.cursorIndex - 1,
             previewScroll: 0,
             usedUp: true,
             usedPreviewDown: false,
