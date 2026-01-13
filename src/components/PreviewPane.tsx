@@ -11,9 +11,11 @@ import {
   FileCog,
   FileLock,
   Terminal as TerminalIcon,
+  ShieldAlert,
 } from 'lucide-react';
 
 import { sortNodes } from '../utils/sortHelpers';
+import { isProtected } from '../utils/fsHelpers';
 import { FileNode, Level, GameState } from '../types';
 
 interface PreviewPaneProps {
@@ -94,14 +96,39 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
             )}
 
             {/* CASE 3: Directory / Archive Listing */}
-            {showChildren && (
-              <div className="flex flex-col gap-0.5">
-                {!node.children || node.children.length === 0 ? (
-                  <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>
-                ) : (
-                  (() => {
-                    const sorted = sortNodes(node.children || [], 'natural', 'asc');
-                    return sorted.map((child) => {
+            {showChildren &&
+              (() => {
+                // Check if this directory/node is protected from viewing
+                const protectionMessage = isProtected(
+                  gameState.fs,
+                  gameState.currentPath,
+                  node,
+                  level,
+                  'enter',
+                );
+
+                if (protectionMessage) {
+                  // Show access denied message for protected directories
+                  return (
+                    <div className="flex flex-col items-center justify-center min-h-[100px] gap-3 text-zinc-500">
+                      <ShieldAlert size={32} className="text-red-500/70" />
+                      <div className="text-xs font-mono text-center">
+                        <div className="text-red-500/80">[RESTRICTED]</div>
+                        <div className="mt-1 text-zinc-600">{protectionMessage}</div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Normal directory listing
+                if (!node.children || node.children.length === 0) {
+                  return <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>;
+                }
+
+                const sorted = sortNodes(node.children || [], 'natural', 'asc');
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    {sorted.map((child) => {
                       const { icon: Icon, color } = getPreviewIcon(child);
                       return (
                         <div
@@ -116,11 +143,10 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                           </span>
                         </div>
                       );
-                    });
-                  })()
-                )}
-              </div>
-            )}
+                    })}
+                  </div>
+                );
+              })()}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-zinc-700">
