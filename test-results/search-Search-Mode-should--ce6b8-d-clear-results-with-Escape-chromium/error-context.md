@@ -183,7 +183,7 @@
             - generic [ref=e349]:
                 - generic [ref=e350]: 'LAB_STATUS:'
                 - generic [ref=e351]: CALM
-            - generic [ref=e353]: '🔒 ACCESS DENIED: workspace is quarantined.'
+            - generic [ref=e353]: Search cleared
         - generic [ref=e354]:
             - generic [ref=e355]: 'HIDDEN: OFF'
             - generic [ref=e356]: size

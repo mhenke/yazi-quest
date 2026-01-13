@@ -167,11 +167,19 @@ export async function exitFilterMode(page: Page): Promise<void> {
 }
 
 /**
- * Check if the fuzzy finder (search) input is visible.
+ * Check if the fuzzy finder (z/Z) input is visible.
  */
 export async function isFuzzyFinderVisible(page: Page): Promise<boolean> {
   const finder = page.locator('[data-test-id="fuzzy-finder"]');
   return finder.isVisible({ timeout: 1000 });
+}
+
+/**
+ * Check if the search (s key) input is visible.
+ */
+export async function isSearchInputVisible(page: Page): Promise<boolean> {
+  const searchInput = page.locator('[data-testid="search-input"]');
+  return searchInput.isVisible({ timeout: 1000 });
 }
 
 /**

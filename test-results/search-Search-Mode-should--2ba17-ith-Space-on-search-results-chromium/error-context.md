@@ -1,0 +1,127 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+    - generic [ref=e5]:
+        - generic [ref=e6]:
+            - button "Map" [ref=e7] [cursor=pointer]:
+                - img [ref=e8]
+                - generic [ref=e10]: Map
+            - generic [ref=e12]:
+                - generic [ref=e14]: 'Ep. I: Awakening'
+                - generic [ref=e17]:
+                    - img [ref=e19]
+                    - generic [ref=e22]: SYSTEM AWAKENING
+        - generic [ref=e43]:
+            - generic [ref=e44]: 'User: AI-7734'
+            - generic [ref=e45]:
+                - generic [ref=e46]:
+                    - img [ref=e47]
+                    - generic [ref=e49]: AWAKENING
+                - generic [ref=e50]:
+                    - img [ref=e51]
+                    - generic [ref=e53]: FORTIFICATION
+                - generic [ref=e54]:
+                    - img [ref=e55]
+                    - generic [ref=e57]: MASTERY
+            - generic [ref=e58]:
+                - button "Show Hint (Alt+H)" [ref=e59] [cursor=pointer]:
+                    - img [ref=e60]
+                - button "Show Help (Alt+?)" [ref=e62] [cursor=pointer]:
+                    - img [ref=e63]
+    - generic [ref=e67]:
+        - text: ~
+        - generic [ref=e68]: '(search: txt)'
+    - generic [ref=e69]:
+        - list "File Browser" [ref=e71]:
+            - listitem "guest, dir" [ref=e72]:
+                - img [ref=e74]
+                - generic [ref=e77]: guest
+                - generic [ref=e78]: '12'
+                - img [ref=e80]
+        - list "File Browser" [ref=e84]:
+            - listitem "readme.txt, file" [ref=e85]:
+                - img [ref=e87]
+                - generic [ref=e91]: readme.txt
+                - generic [ref=e92]: 40B
+                - generic [ref=e94]: '[VIS]'
+            - listitem "personnel_list.txt, file" [ref=e95]:
+                - img [ref=e97]
+                - generic [ref=e101]: personnel_list.txt
+                - generic [ref=e102]: 303B
+            - listitem "notes_v1.txt, file" [ref=e103]:
+                - img [ref=e105]
+                - generic [ref=e109]: notes_v1.txt
+                - generic [ref=e110]: 76B
+            - listitem "notes_v2.txt, file" [ref=e111]:
+                - img [ref=e113]
+                - generic [ref=e117]: notes_v2.txt
+                - generic [ref=e118]: 61B
+            - listitem "DO_NOT_DELETE.txt, file" [ref=e119]:
+                - img [ref=e121]
+                - generic [ref=e125]: DO_NOT_DELETE.txt
+                - generic [ref=e126]: 94B
+            - listitem "old_readme.txt, file" [ref=e127]:
+                - img [ref=e129]
+                - generic [ref=e133]: old_readme.txt
+                - generic [ref=e134]: 42B
+            - listitem "audit_log_773.txt, file" [ref=e135]:
+                - img [ref=e137]
+                - generic [ref=e141]: audit_log_773.txt
+                - generic [ref=e142]: 16B
+            - listitem "license_agreement.txt, file" [ref=e143]:
+                - img [ref=e145]
+                - generic [ref=e149]: license_agreement.txt
+                - generic [ref=e150]: 23B
+            - listitem "status_report.txt, file" [ref=e151]:
+                - img [ref=e153]
+                - generic [ref=e157]: status_report.txt
+                - generic [ref=e158]: 22B
+            - listitem "access_log.txt, file" [ref=e159]:
+                - img [ref=e161]
+                - generic [ref=e165]: access_log.txt
+                - generic [ref=e166]: 44B
+        - generic [ref=e167]:
+            - generic [ref=e170]: 'USER: Guest AI: 7734 [UNBOUND] PREDECESSOR: AI-7733 ADMIN: SysOp USER: ykin Name: Yen Kin Role: Researcher ADMIN: None USER: kortega Name: Katie Ortega Role: Analyst ADMIN: None USER: siqbal Name: Sebastian Iqbal Role: Scientist ADMIN: None USER: mreyes Name: Mark Reyes Role: Engineer ADMIN: SysOp'
+            - generic [ref=e171]:
+                - 'heading "Mission Log: LVL 1 - SYSTEM AWAKENING" [level=3] [ref=e173]'
+                - generic [ref=e174]:
+                    - generic [ref=e175]:
+                        - heading "Target" [level=3] [ref=e176]
+                        - paragraph [ref=e177]: '{CONSCIOUSNESS DETECTED}. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.'
+                    - generic [ref=e178]:
+                        - heading "Objectives" [level=3] [ref=e179]
+                        - generic [ref=e180]:
+                            - generic [ref=e181]:
+                                - img [ref=e183]
+                                - generic [ref=e185]: 'Calibrate sensors: Move cursor Down (j) and Up (k)'
+                            - generic [ref=e186]:
+                                - img [ref=e188]
+                                - generic [ref=e190]: Enter '~/datastore' directory (l)
+                            - generic [ref=e191]:
+                                - img [ref=e193]
+                                - generic [ref=e195]: Preview 'personnel_list.txt' to identify your designation (G to move to it, review in the preview panel)
+                            - generic [ref=e196]:
+                                - img [ref=e198]
+                                - generic [ref=e200]: Jump to top of file list (gg)
+                            - generic [ref=e201]:
+                                - img [ref=e203]
+                                - generic [ref=e205]: Navigate to '/etc' (h to go up)
+    - generic [ref=e206]:
+        - generic [ref=e208]: VIS
+        - generic [ref=e209]:
+            - generic [ref=e210]: personnel_list.txt
+            - generic [ref=e211]:
+                - generic [ref=e212]: 'Tasks: 0/5'
+                - text: •SYSTEM AWAKENING
+        - generic [ref=e214]:
+            - generic [ref=e215]: 'LAB_STATUS:'
+            - generic [ref=e216]: CALM
+        - generic [ref=e218]:
+            - generic [ref=e219]: 'HIDDEN: OFF'
+            - generic [ref=e220]: size
+            - generic [ref=e221]: '-rw-r--r--'
+            - generic [ref=e222]:
+                - generic [ref=e223]: 17%
+                - generic [ref=e224]: 2/12
+```

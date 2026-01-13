@@ -1592,7 +1592,14 @@ export default function App() {
           handleConfirmDeleteModeKeyDown(e, setGameState, visibleItems, currentLevel);
           break;
         case 'search':
-        case 'search':
+          // Search mode has its own inline handler in the input component
+          // Only handle Enter here as fallback
+          if (e.key === 'Enter') {
+            handleSearchConfirm();
+          } else if (e.key === 'Escape') {
+            setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          }
+          break;
         case 'zoxide-jump':
         case 'fzf-current':
           handleFuzzyModeKeyDown(e, gameState, setGameState);
@@ -2020,6 +2027,41 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 min-h-0 relative">
+          {/* Search Input - displayed at top when in search mode */}
+          {gameState.mode === 'search' && (
+            <div className="absolute top-0 left-0 right-0 z-30 bg-zinc-900 border-b border-green-700 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-green-500 uppercase tracking-widest font-mono">
+                  fd:
+                </span>
+                <input
+                  type="text"
+                  value={gameState.inputBuffer}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGameState((prev) => ({ ...prev, inputBuffer: val }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearchConfirm();
+                      e.stopPropagation();
+                    } else if (e.key === 'Escape') {
+                      setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                      e.stopPropagation();
+                    }
+                  }}
+                  className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
+                  autoFocus
+                  onBlur={(e) => e.target.focus()}
+                  data-testid="search-input"
+                  placeholder="Type filename pattern..."
+                />
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  Enter to search • Esc to cancel
+                </span>
+              </div>
+            </div>
+          )}
           <FileSystemPane
             items={(() => {
               const parent = getParentNode(gameState.fs, gameState.currentPath);
@@ -2178,40 +2220,6 @@ export default function App() {
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">
                   Type to filter • ↑/↓ to navigate • Enter/Esc to close
-                </div>
-              </div>
-            )}
-
-            {gameState.mode === 'search' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-green-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
-                    Search:
-                  </span>
-                  <input
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setGameState((prev) => ({ ...prev, inputBuffer: val }));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearchConfirm();
-                        e.stopPropagation();
-                      } else if (e.key === 'Escape') {
-                        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-                        e.stopPropagation();
-                      }
-                    }}
-                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
-                    autoFocus
-                    onBlur={(e) => e.target.focus()}
-                    data-testid="search-input"
-                  />
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Recursive fd search • Enter to run • Esc to cancel
                 </div>
               </div>
             )}

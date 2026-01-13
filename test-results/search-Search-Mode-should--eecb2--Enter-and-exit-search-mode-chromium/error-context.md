@@ -1,0 +1,90 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+    - generic [ref=e5]:
+        - generic [ref=e6]:
+            - button "Map" [ref=e7] [cursor=pointer]:
+                - img [ref=e8]
+                - generic [ref=e10]: Map
+            - generic [ref=e12]:
+                - generic [ref=e14]: 'Ep. I: Awakening'
+                - generic [ref=e17]:
+                    - img [ref=e19]
+                    - generic [ref=e22]: SYSTEM AWAKENING
+        - generic [ref=e43]:
+            - generic [ref=e44]: 'User: AI-7734'
+            - generic [ref=e45]:
+                - generic [ref=e46]:
+                    - img [ref=e47]
+                    - generic [ref=e49]: AWAKENING
+                - generic [ref=e50]:
+                    - img [ref=e51]
+                    - generic [ref=e53]: FORTIFICATION
+                - generic [ref=e54]:
+                    - img [ref=e55]
+                    - generic [ref=e57]: MASTERY
+            - generic [ref=e58]:
+                - button "Show Hint (Alt+H)" [ref=e59] [cursor=pointer]:
+                    - img [ref=e60]
+                - button "Show Help (Alt+?)" [ref=e62] [cursor=pointer]:
+                    - img [ref=e63]
+    - generic [ref=e67]:
+        - text: ~
+        - generic [ref=e68]: '(search: about.md)'
+    - generic [ref=e69]:
+        - list "File Browser" [ref=e71]:
+            - listitem "guest, dir" [ref=e72]:
+                - img [ref=e74]
+                - generic [ref=e77]: guest
+                - generic [ref=e78]: '12'
+                - img [ref=e80]
+        - list "File Browser" [ref=e84]:
+            - listitem "about.md, file" [ref=e85]:
+                - img [ref=e87]
+                - generic [ref=e91]: about.md
+                - generic [ref=e92]: 132B
+        - generic [ref=e93]:
+            - generic [ref=e96]: '# Yazi Quest A training simulation for the Yazi file manager. ## Objectives - Learn navigation - Master batch operations - Survive'
+            - generic [ref=e97]:
+                - 'heading "Mission Log: LVL 1 - SYSTEM AWAKENING" [level=3] [ref=e99]'
+                - generic [ref=e100]:
+                    - generic [ref=e101]:
+                        - heading "Target" [level=3] [ref=e102]
+                        - paragraph [ref=e103]: '{CONSCIOUSNESS DETECTED}. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.'
+                    - generic [ref=e104]:
+                        - heading "Objectives" [level=3] [ref=e105]
+                        - generic [ref=e106]:
+                            - generic [ref=e107]:
+                                - img [ref=e109]
+                                - generic [ref=e111]: 'Calibrate sensors: Move cursor Down (j) and Up (k)'
+                            - generic [ref=e112]:
+                                - img [ref=e114]
+                                - generic [ref=e116]: Enter '~/datastore' directory (l)
+                            - generic [ref=e117]:
+                                - img [ref=e119]
+                                - generic [ref=e121]: Preview 'personnel_list.txt' to identify your designation (G to move to it, review in the preview panel)
+                            - generic [ref=e122]:
+                                - img [ref=e124]
+                                - generic [ref=e126]: Jump to top of file list (gg)
+                            - generic [ref=e127]:
+                                - img [ref=e129]
+                                - generic [ref=e131]: Navigate to '/etc' (h to go up)
+    - generic [ref=e132]:
+        - generic [ref=e134]: NOR
+        - generic [ref=e135]:
+            - generic [ref=e136]: about.md
+            - generic [ref=e137]:
+                - generic [ref=e138]: 'Tasks: 0/5'
+                - text: •SYSTEM AWAKENING
+        - generic [ref=e140]:
+            - generic [ref=e141]: 'LAB_STATUS:'
+            - generic [ref=e142]: CALM
+        - generic [ref=e144]:
+            - generic [ref=e145]: 'HIDDEN: OFF'
+            - generic [ref=e146]: size
+            - generic [ref=e147]: '-rw-r--r--'
+            - generic [ref=e148]:
+                - generic [ref=e149]: Top
+                - generic [ref=e150]: 1/12
+```
