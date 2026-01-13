@@ -16,12 +16,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onCancel,
 }) => {
   const isPermanent = deleteType === 'permanent';
-  const title = isPermanent ? 'Confirm Permanent Deletion' : 'Confirm Trash';
-  const detailPrefix = isPermanent ? 'Permanently delete' : 'Send to trash';
 
-  const singleItemName = itemsToDelete.length === 1 ? ` '${itemsToDelete[0]}'` : '';
-  const multipleItemsName = itemsToDelete.length > 1 ? ` ${itemsToDelete.length} items` : '';
-  const detail = `${detailPrefix}${singleItemName}${multipleItemsName}?`;
+  // Construct the question for the border title
+  const count = itemsToDelete.length;
+  const action = isPermanent ? 'Delete' : 'Trash';
+  const suffix = count === 1 ? 'file' : 'files';
+  const title = `${action} ${count} selected ${suffix}?`;
 
   return (
     <div
@@ -29,56 +29,50 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
-      aria-describedby="confirmation-modal-desc"
     >
       <div
-        className={`w-full max-w-4xl border ${isPermanent ? 'border-red-500' : 'border-purple-400'} bg-zinc-900/95 shadow-2xl relative overflow-hidden`}
+        className={`w-full max-w-4xl border ${isPermanent ? 'border-red-500' : 'border-purple-400'} bg-zinc-900/95 shadow-2xl relative`}
       >
+        {/* Border Title */}
         <div
           id="confirmation-modal-title"
-          className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 bg-zinc-900 ${isPermanent ? 'text-red-500' : 'text-purple-400'} text-sm font-mono`}
+          className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 bg-zinc-900 ${isPermanent ? 'text-red-500' : 'text-purple-400'} text-sm font-mono whitespace-nowrap`}
         >
           {title}
         </div>
 
-        <div className="p-8 flex flex-col items-center justify-center min-h-[160px]">
-          <p
-            id="confirmation-modal-desc"
-            className="text-zinc-300 font-mono text-lg text-center mb-4"
-          >
-            {detail}
-          </p>
+        <div className="p-8 flex flex-col items-center justify-center min-h-[200px]">
+          {/* File List / Paths */}
+          <div className="w-full max-h-[60vh] overflow-y-auto mb-8 text-lg font-mono text-zinc-400 grid grid-cols-1 gap-y-1 justify-items-center">
+            {itemsToDelete.map((name, i) => (
+              <div key={i} className="truncate max-w-full">
+                {name}
+              </div>
+            ))}
+          </div>
 
-          {itemsToDelete.length > 1 && (
-            <div className="w-full max-h-[60vh] overflow-y-auto bg-zinc-950 border border-zinc-700 rounded p-4 mb-8 text-xs font-mono text-zinc-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-              {itemsToDelete.map((name, i) => (
-                <div key={i} className="truncate" title={name}>
-                  {name}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-12 font-mono text-lg">
+          {/* Action Bar */}
+          <div className="flex gap-16 font-mono text-xl w-full justify-center border-t border-zinc-800 pt-8 mt-auto">
             <button
-              className="group flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-zinc-500 rounded px-2 py-1"
+              className="group flex items-center gap-0 focus:outline-none"
               onClick={onConfirm}
               aria-label="Confirm deletion"
+              autoFocus
             >
-              <span
-                className={`px-1 font-bold ${isPermanent ? 'bg-red-500 text-white' : 'bg-zinc-200 text-black'}`}
+              <div
+                className={`px-2 py-0.5 font-bold ${isPermanent ? 'bg-red-500 text-white' : 'bg-gray-200 text-black'}`}
               >
                 [Y]
-              </span>
-              <span className="text-zinc-400 group-hover:text-white">es</span>
+              </div>
+              <span className="text-gray-400 group-hover:text-white ml-0.5">es</span>
             </button>
             <button
-              className="group flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-zinc-500 rounded px-2 py-1"
+              className="group flex items-center gap-0 focus:outline-none"
               onClick={onCancel}
               aria-label="Cancel deletion"
             >
-              <span className="text-zinc-500 font-bold">(N)</span>
-              <span className="text-zinc-400 group-hover:text-white">o</span>
+              <div className="text-zinc-500 font-bold px-2 py-0.5">(N)</div>
+              <span className="text-zinc-500 group-hover:text-white ml-0.5">o</span>
             </button>
           </div>
         </div>

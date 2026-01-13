@@ -79,7 +79,7 @@ if __name__ == "__main__":
         'index.css', # Exclude generated CSS
         'postcss.config.js', # Exclude config files
         'tailwind.config.js',
-        'public/', # Exclude public directory
+        # 'public/', # Exclude public directory (commented out so public images are included in zip)
         'swappy-*.png', # Exclude swappy screenshots
         'Screenshot*.png', # Exclude screenshots
         '.husky/', # Exclude husky hooks directory

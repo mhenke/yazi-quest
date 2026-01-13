@@ -1,3 +1,4 @@
+import { InputModal } from './components/InputModal';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 import {
@@ -363,13 +364,13 @@ export default function App() {
         }
         return getVisibleItems(gameState);
       }),
-    [gameState],
+    [gameState]
   );
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
   const parent = React.useMemo(
     () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
-    [gameState.fs, gameState.currentPath],
+    [gameState.fs, gameState.currentPath]
   );
 
   // Helper to show notification with auto-clear
@@ -419,7 +420,7 @@ export default function App() {
         // Level 7: Trigger honeypot alert when player reaches /etc
         if (currentLevel.id === 7 && task.id === 'zoxide-etc') {
           setAlertMessage(
-            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
+            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
           );
           setShowThreatAlert(true);
         }
@@ -479,7 +480,7 @@ export default function App() {
 
     // Check if everything is complete (including just finished ones)
     const tasksComplete = currentLevel.tasks.every(
-      (t) => t.completed || newlyCompleted.includes(t.id),
+      (t) => t.completed || newlyCompleted.includes(t.id)
     );
 
     // Check for Protocol Violations - ONLY on final task completion
@@ -553,7 +554,7 @@ export default function App() {
 
       if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
         setAlertMessage(
-          '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
+          '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.'
         );
         setShowThreatAlert(true);
         setGameState((prev) => ({
@@ -683,7 +684,7 @@ export default function App() {
     if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
       shownInitialAlertForLevelRef.current = 5;
       setAlertMessage(
-        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.',
+        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.'
       );
       setShowThreatAlert(true);
       return;
@@ -697,12 +698,12 @@ export default function App() {
 
       if (workspace && findNodeByName(workspace, 'alert_traffic.log', 'file')) {
         setAlertMessage(
-          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.',
+          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.'
         );
         setShowThreatAlert(true);
       } else if (incoming && findNodeByName(incoming, 'trace_packet.sys', 'file')) {
         setAlertMessage(
-          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.',
+          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.'
         );
         setShowThreatAlert(true);
       } else if (
@@ -711,7 +712,7 @@ export default function App() {
           findNodeByName(workspace, 'scan_b.tmp', 'file'))
       ) {
         setAlertMessage(
-          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.',
+          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.'
         );
         setShowThreatAlert(true);
       } else if (config && findNodeByName(config, 'core_dump.tmp', 'file')) {
@@ -978,7 +979,7 @@ export default function App() {
     (
       e: KeyboardEvent,
       gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>
     ) => {
       switch (e.key) {
         case 'Escape':
@@ -993,7 +994,7 @@ export default function App() {
             .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
             .sort((a, b) => b.score - a.score);
           const bestMatch = candidates.find((c) =>
-            c.path.toLowerCase().includes(inputBuffer.toLowerCase()),
+            c.path.toLowerCase().includes(inputBuffer.toLowerCase())
           );
 
           if (bestMatch) {
@@ -1010,7 +1011,7 @@ export default function App() {
                 gameState.currentPath,
                 match.node,
                 currentLevel,
-                'jump',
+                'jump'
               );
               if (protection) {
                 setGameState((prev) => ({
@@ -1066,14 +1067,14 @@ export default function App() {
           break;
       }
     },
-    [],
+    []
   );
 
   const handleFuzzyModeKeyDown = useCallback(
     (
       e: KeyboardEvent,
       gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+      setGameState: React.Dispatch<React.SetStateAction<GameState>>
     ) => {
       // Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
@@ -1089,7 +1090,7 @@ export default function App() {
           })
           .filter((c) => {
             const dir = getAllDirectoriesWithPaths(gameState.fs, currentLevel).find(
-              (d) => resolvePath(gameState.fs, d.path) === c.path,
+              (d) => resolvePath(gameState.fs, d.path) === c.path
             );
             return dir && c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase());
           });
@@ -1142,7 +1143,7 @@ export default function App() {
                   gameState.currentPath,
                   match,
                   currentLevel,
-                  'jump',
+                  'jump'
                 );
 
                 if (protection) {
@@ -1204,7 +1205,7 @@ export default function App() {
                     gameState.currentPath,
                     targetNode,
                     currentLevel,
-                    'jump',
+                    'jump'
                   );
                   if (protection) {
                     setGameState((prev) => ({
@@ -1232,7 +1233,7 @@ export default function App() {
                 sortedChildren = sortNodes(
                   sortedChildren,
                   gameState.sortBy,
-                  gameState.sortDirection,
+                  gameState.sortDirection
                 );
 
                 const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
@@ -1292,7 +1293,7 @@ export default function App() {
               ...prev,
               fuzzySelectedIndex: Math.min(
                 candidates.length - 1,
-                (prev.fuzzySelectedIndex || 0) + 1,
+                (prev.fuzzySelectedIndex || 0) + 1
               ),
             }));
           } else {
@@ -1336,7 +1337,7 @@ export default function App() {
           break;
       }
     },
-    [],
+    []
   );
 
   // Global Key Down Handler
@@ -1582,7 +1583,7 @@ export default function App() {
             parent || null,
             currentItem,
             currentLevel,
-            advanceLevel,
+            advanceLevel
           );
           break;
         case 'sort':
@@ -1703,7 +1704,7 @@ export default function App() {
             parentNode.children = sortNodes(
               parentNode.children,
               gameState.sortBy,
-              gameState.sortDirection,
+              gameState.sortDirection
             );
           }
         } else {
@@ -1712,7 +1713,7 @@ export default function App() {
             parentNode.children = sortNodes(
               parentNode.children,
               gameState.sortBy,
-              gameState.sortDirection,
+              gameState.sortDirection
             );
           }
         }
@@ -1750,7 +1751,7 @@ export default function App() {
           parentNode2.children = sortNodes(
             parentNode2.children,
             gameState.sortBy,
-            gameState.sortDirection,
+            gameState.sortDirection
           );
         }
         setGameState((prev) => ({
@@ -1771,7 +1772,7 @@ export default function App() {
         gameState.currentPath,
         currentItem.id,
         gameState.inputBuffer,
-        gameState.levelIndex,
+        gameState.levelIndex
       );
       if (!res.ok) {
         setGameState((prev) => ({
@@ -1937,7 +1938,11 @@ export default function App() {
           deleteType={gameState.deleteType}
           itemsToDelete={gameState.pendingDeleteIds.map((id) => {
             const node = getVisibleItems(gameState).find((item) => item.id === id);
-            return node?.name || id;
+            // Construct full pseudo-path for display
+            const currentDir = resolvePath(gameState.fs, gameState.currentPath);
+            // Ensure no double slash if root is weird, though resolvePath usually handles it
+            const displayPath = node ? `${currentDir === '/' ? '' : currentDir}/${node.name}` : id;
+            return displayPath;
           })}
           onConfirm={() => confirmDelete(setGameState, visibleItems, currentLevel)}
           onCancel={() => cancelDelete(setGameState)}
@@ -2056,6 +2061,7 @@ export default function App() {
               </div>
             </div>
           )}
+
           <FileSystemPane
             items={(() => {
               const parent = getParentNode(gameState.fs, gameState.currentPath);
@@ -2080,16 +2086,6 @@ export default function App() {
               selectedIds={gameState.selectedIds}
               clipboard={gameState.clipboard}
               linemode={gameState.linemode}
-              renameState={
-                gameState.mode === 'rename'
-                  ? { isRenaming: true, inputBuffer: gameState.inputBuffer }
-                  : undefined
-              }
-              onRenameChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
-              onRenameSubmit={handleRenameConfirm}
-              onRenameCancel={() =>
-                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
-              }
               className="flex-1"
             />
 
@@ -2099,7 +2095,7 @@ export default function App() {
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                     Sort Options
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-600">Which-Key</span>
+                  <span className="text-xs font-mono text-zinc-600">Which-Key</span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
                   <div className="flex gap-2">
@@ -2159,63 +2155,65 @@ export default function App() {
               <GCommandDialog onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))} />
             )}
 
-            {gameState.mode === 'filter' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">
-                    Filter:
-                  </span>
-                  <input
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setGameState((prev) => {
-                        const dir = getNodeByPath(prev.fs, prev.currentPath);
-                        const newFilters = { ...prev.filters };
-                        if (dir) newFilters[dir.id] = val;
-                        return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
-                      });
-                    }}
-                    onKeyDown={(e) => {
-                      // Only arrow keys for navigation during input (allows typing hjkl)
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setGameState((p) => ({
-                          ...p,
-                          cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                        }));
-                        return;
-                      }
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setGameState((p) => ({
-                          ...p,
-                          cursorIndex: Math.max(0, p.cursorIndex - 1),
-                        }));
-                        return;
-                      }
+            {gameState.mode === 'input-file' && (
+              <InputModal
+                label="Create"
+                value={gameState.inputBuffer}
+                onChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
+                onConfirm={handleInputConfirm}
+                onCancel={() =>
+                  setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
+                }
+                borderColorClass="border-green-500"
+                testid="create-input"
+              />
+            )}
 
-                      if (e.key === 'Enter' || e.key === 'Escape') {
-                        setGameState((p) => ({
-                          ...p,
-                          mode: 'normal',
-                          inputBuffer: '',
-                          stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
-                        }));
-                        e.stopPropagation();
-                      }
-                    }}
-                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-orange-500"
-                    autoFocus
-                    onBlur={(e) => e.target.focus()}
-                    data-testid="filter-input"
-                  />
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Type to filter • ↑/↓ to navigate • Enter/Esc to close
-                </div>
-              </div>
+            {gameState.mode === 'filter' && (
+              <InputModal
+                label="Filter"
+                value={gameState.inputBuffer}
+                onChange={(val) => {
+                  setGameState((prev) => {
+                    const dir = getNodeByPath(prev.fs, prev.currentPath);
+                    const newFilters = { ...prev.filters };
+                    if (dir) newFilters[dir.id] = val;
+                    return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
+                  });
+                }}
+                onConfirm={() => {
+                  setGameState((p) => ({
+                    ...p,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
+                  }));
+                }}
+                onCancel={() => {
+                  setGameState((p) => ({
+                    ...p,
+                    mode: 'normal',
+                    inputBuffer: '',
+                    stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
+                  }));
+                }}
+                borderColorClass="border-orange-500"
+                testid="filter-input"
+              />
+            )}
+
+            {gameState.mode === 'rename' && (
+              <InputModal
+                label="Rename"
+                value={gameState.inputBuffer}
+                onChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
+                onConfirm={handleRenameConfirm}
+                onCancel={() =>
+                  setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
+                }
+                borderColorClass="border-cyan-500" // or green/cyan mix
+                testid="rename-input"
+              />
             )}
 
             {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (

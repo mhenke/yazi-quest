@@ -11,13 +11,6 @@ interface FileSystemPaneProps {
   clipboard: ClipboardItem | null;
   linemode: Linemode;
   className?: string;
-  renameState?: {
-    isRenaming: boolean;
-    inputBuffer: string;
-  };
-  onRenameChange?: (value: string) => void;
-  onRenameSubmit?: () => void;
-  onRenameCancel?: () => void;
 }
 
 export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
@@ -29,10 +22,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   clipboard,
   linemode,
   className,
-  renameState,
-  onRenameChange,
-  onRenameSubmit,
-  onRenameCancel,
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +73,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const inClipboard = clipboardSet.has(item.id);
           const isCut = !!(inClipboard && clipboard?.action === 'cut');
           const isYank = !!(inClipboard && clipboard?.action === 'yank');
-          const showRename = isActive && isCursor && renameState?.isRenaming;
 
           return (
             <MemoizedFileSystemItem
@@ -98,10 +86,6 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
               isYank={isYank}
               linemode={linemode}
               isGrid={isGrid}
-              renameState={showRename ? renameState : undefined}
-              onRenameChange={showRename ? onRenameChange : undefined}
-              onRenameSubmit={showRename ? onRenameSubmit : undefined}
-              onRenameCancel={showRename ? onRenameCancel : undefined}
             />
           );
         })}

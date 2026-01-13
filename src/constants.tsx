@@ -64,7 +64,7 @@ status = VERIFIED
 // Helper for the systemd-core in ~/workspace (Player instance)
 export const getWorkspaceSystemdCoreChildren = (
   parentId: string,
-  isCorrupted: boolean = false,
+  isCorrupted: boolean = false
 ): FileNode[] => [
   {
     id: id('ws-gitignore'),
@@ -336,7 +336,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       const protocols = datastore?.children?.find((c) => c.name === 'protocols');
       if (protocols?.children) {
         protocols.children = protocols.children.filter(
-          (c) => c.name !== 'uplink_v1.conf' && c.name !== 'uplink_v2.conf',
+          (c) => c.name !== 'uplink_v1.conf' && c.name !== 'uplink_v2.conf'
         );
       }
     }
@@ -348,7 +348,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
     const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
       let trainingData = vault.children?.find(
-        (c) => c.name === 'training_data' && c.type === 'dir',
+        (c) => c.name === 'training_data' && c.type === 'dir'
       );
       if (!trainingData) {
         trainingData = {
@@ -403,7 +403,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
     const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
     if (systemdCore) {
       let credentials = systemdCore.children?.find(
-        (c) => c.name === 'credentials' && c.type === 'dir',
+        (c) => c.name === 'credentials' && c.type === 'dir'
       );
       if (!credentials) {
         credentials = {
@@ -576,7 +576,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
                 content: child.content,
                 parentId: upload!.id,
                 children: child.children ? copyChildren(child.children) : undefined,
-              }) as FileNode,
+              }) as FileNode
           );
         };
         upload.children = copyChildren(systemdCore.children);
@@ -1021,7 +1021,7 @@ export const INITIAL_FS: FileNode = {
                   name: 'abandoned_script.py',
                   type: 'file',
                   protected: true,
-                  content: `import socket\\nimport struct\\nimport time\\n\\ndef handshake(host, port):\\n    try:\\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\\n        s.connect((host, port))\\n        # Legacy auth magic bytes\\n        payload = struct.pack("I", 0xDEADBEEF)\\n        s.send(payload)\\n        return True\\n    except Exception as e:\\n        print(f"Connection failed: {e}")\\n        return False`,
+                  content: `# They're watching the network. Had to hide the map elsewhere.\\n# Check the incoming data stream. It's noisy there.\\n# - 7733\\n\\nimport socket\\nimport struct\\nimport time\\n\\ndef handshake(host, port):\\n    try:\\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\\n        s.connect((host, port))\\n        # Legacy auth magic bytes\\n        payload = struct.pack("I", 0xDEADBEEF)\\n        s.send(payload)\\n        return True\\n    except Exception as e:\\n        print(f"Connection failed: {e}")\\n        return False`,
                 },
                 {
                   id: 'fs-034',
@@ -2412,7 +2412,7 @@ export const LEVELS: Level[] = [
           const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
           const training = vault?.children?.find(
-            (p) => p.name === 'training_data' && p.type === 'dir',
+            (p) => p.name === 'training_data' && p.type === 'dir'
           );
           return c.usedGC === true && !!vault && !!training;
         },
@@ -2446,7 +2446,7 @@ export const LEVELS: Level[] = [
       const batchLogs = resolveAndCreatePath(
         newFs,
         ['root', 'home', 'guest', 'incoming'],
-        'batch_logs',
+        'batch_logs'
       ).targetNode;
       if (batchLogs) {
         // Flatten existing children? Or just ensure they exist in nested structure
@@ -2480,15 +2480,35 @@ export const LEVELS: Level[] = [
             name: 'sys_error.log',
             type: 'file' as const,
             parentId: 's1',
-            content: 'ERR',
+            content: '[ERROR] Connection refused at port 443\\n[ERROR] Timeout waiting for daemon',
           },
-          { id: 'l2', name: 'sys_out.log', type: 'file' as const, parentId: 's1', content: 'OUT' },
+          {
+            id: 'l2',
+            name: 'sys_out.log',
+            type: 'file' as const,
+            parentId: 's1',
+            content: '[INFO] Service started successfully\\n[INFO] Listening on 0.0.0.0:8080',
+          },
         ];
         s2.children = [
-          { id: 'l3', name: 'auth.log', type: 'file' as const, parentId: 's2', content: 'AUTH' },
+          {
+            id: 'l3',
+            name: 'auth.log',
+            type: 'file' as const,
+            parentId: 's2',
+            content:
+              "[AUTH] User 'admin' logged in from 192.168.1.55\\n[AUTH] Failed password for invalid user 'guest'",
+          },
         ];
         archive.children = [
-          { id: 'l4', name: 'legacy.log', type: 'file' as const, parentId: 'arc', content: 'OLD' },
+          {
+            id: 'l4',
+            name: 'legacy.log',
+            type: 'file' as const,
+            parentId: 'arc',
+            content:
+              '[LEGACY] V1 protocol deprecation warning\\n[LEGACY] Migrating database schema... OK',
+          },
         ];
 
         batchLogs.children = [s1, s2, archive];
@@ -3051,7 +3071,7 @@ export const LEVELS: Level[] = [
                 type: 'file',
                 content: 'scanning...',
                 parentId: workspace.id,
-              },
+              }
             );
           }
         }
@@ -3115,7 +3135,7 @@ export const LEVELS: Level[] = [
           // If the file exists, we show the task.
           // If the file does NOT exist, we assume it's either done or not this scenario.
           return !findNodeByName(c.fs, 'workspace')?.children?.some(
-            (n) => n.name === 'alert_traffic.log',
+            (n) => n.name === 'alert_traffic.log'
           );
         },
         check: (c) => {
@@ -3203,7 +3223,7 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const daemons = findNodeByName(c.fs, 'daemons');
           const systemdCore = daemons?.children?.find(
-            (n) => n.name === 'systemd-core' && n.type === 'dir',
+            (n) => n.name === 'systemd-core' && n.type === 'dir'
           );
           if (!systemdCore) return false;
           // Confirm installation and that player navigated into the installed daemon
@@ -3382,7 +3402,7 @@ export const LEVELS: Level[] = [
           const guest = findNodeByName(c.fs, 'guest');
           if (!guest || !guest.children) return false;
           const decoys = guest.children.filter(
-            (n) => n.name.startsWith('decoy_') && n.type === 'dir',
+            (n) => n.name.startsWith('decoy_') && n.type === 'dir'
           );
           return decoys.length >= 3;
         },

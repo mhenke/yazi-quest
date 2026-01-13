@@ -15,11 +15,6 @@ import {
 } from 'lucide-react';
 import { FileNode, Linemode } from '../types';
 
-interface RenameState {
-  isRenaming: boolean;
-  inputBuffer: string;
-}
-
 interface FileSystemItemProps {
   item: FileNode;
   isActive: boolean;
@@ -30,10 +25,6 @@ interface FileSystemItemProps {
   isYank: boolean;
   linemode: Linemode;
   isGrid: boolean;
-  renameState?: RenameState;
-  onRenameChange?: (value: string) => void;
-  onRenameSubmit?: () => void;
-  onRenameCancel?: () => void;
 }
 
 const getFileStyle = (node: FileNode) => {
@@ -108,7 +99,7 @@ const getListItemRowClasses = (
   isMarked: boolean,
   isParent: boolean,
   isCut: boolean,
-  rowText: string,
+  rowText: string
 ): string => {
   let rowBg = '';
 
@@ -141,13 +132,8 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   isYank,
   linemode,
   isGrid,
-  renameState,
-  onRenameChange,
-  onRenameSubmit,
-  onRenameCancel,
 }) => {
   const { color, icon: Icon } = getFileStyle(item);
-  const showRename = isActive && isCursor && renameState?.isRenaming;
 
   let rowTextClass = '';
   if (isCursor) {
@@ -171,7 +157,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
           isMarked,
           isParent,
           isCut,
-          rowTextClass,
+          rowTextClass
         )}
       >
         <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`} aria-hidden="true">
@@ -212,32 +198,6 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
           </span>
         )}
       </div>
-
-      {showRename && (
-        <div className="mx-4 my-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[250px] animate-in fade-in slide-in-from-top-1 duration-150">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
-              Rename:
-            </span>
-            <input
-              type="text"
-              value={renameState?.inputBuffer}
-              onChange={(e) => onRenameChange?.(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onRenameSubmit?.();
-                if (e.key === 'Escape') onRenameCancel?.();
-                e.stopPropagation();
-              }}
-              className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
-              autoFocus
-              onBlur={(e) => e.target.focus()}
-            />
-          </div>
-          <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-            Enter new name • Enter to confirm • Esc to cancel
-          </div>
-        </div>
-      )}
     </React.Fragment>
   );
 };
@@ -252,8 +212,6 @@ export const MemoizedFileSystemItem = memo(FileSystemItem, (prev, next) => {
     prev.isCut === next.isCut &&
     prev.isYank === next.isYank &&
     prev.linemode === next.linemode &&
-    prev.isGrid === next.isGrid &&
-    prev.renameState?.isRenaming === next.renameState?.isRenaming &&
-    prev.renameState?.inputBuffer === next.renameState?.inputBuffer
+    prev.isGrid === next.isGrid
   );
 });
