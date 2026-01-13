@@ -162,6 +162,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
     <React.Fragment>
       <div
         role="listitem"
+        data-test-id={`file-${item.name}`}
         aria-current={isCursor ? 'location' : undefined}
         aria-label={`${item.name}, ${item.type}`}
         className={getListItemRowClasses(

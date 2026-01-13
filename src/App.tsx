@@ -356,7 +356,13 @@ export default function App() {
   }, [currentLevelRaw, gameState.completedTaskIds]);
 
   const visibleItems = React.useMemo(
-    () => measure('visibleItems', () => getVisibleItems(gameState)),
+    () =>
+      measure('visibleItems', () => {
+        if (gameState.searchQuery) {
+          return gameState.searchResults;
+        }
+        return getVisibleItems(gameState);
+      }),
     [gameState],
   );
   const currentItem = visibleItems[gameState.cursorIndex] || null;
@@ -786,6 +792,27 @@ export default function App() {
   ]);
 
   const advanceLevel = useCallback(() => {
+    // Check for Protocol Violations before advancing
+    // This prevents bypassing checks via SuccessToast or other means
+    const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
+    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+    const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
+
+    // Priority: Hidden > Sort > Filter
+    if (gameState.showHidden) {
+      setShowHiddenWarning(true);
+      setShowSuccessToast(false);
+      return;
+    } else if (!isSortDefault) {
+      setShowSortWarning(true);
+      setShowSuccessToast(false);
+      return;
+    } else if (!isFilterClear) {
+      setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
+      setShowSuccessToast(false);
+      return;
+    }
+
     setGameState((prev) => {
       const nextIdx = prev.levelIndex + 1;
 
@@ -883,7 +910,7 @@ export default function App() {
     setShowSuccessToast(false);
     setShowThreatAlert(false);
     shownInitialAlertForLevelRef.current = null; // Reset so alert can show for new level
-  }, []);
+  }, [gameState]);
 
   const handleRestartLevel = useCallback(() => {
     setGameState((prev) => {
@@ -1086,6 +1113,11 @@ export default function App() {
 
       switch (e.key) {
         case 'Enter': {
+          if (gameState.mode === 'search') {
+            handleSearchConfirm();
+            return;
+          }
+
           if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
@@ -1559,6 +1591,8 @@ export default function App() {
         case 'confirm-delete':
           handleConfirmDeleteModeKeyDown(e, setGameState, visibleItems, currentLevel);
           break;
+        case 'search':
+        case 'search':
         case 'zoxide-jump':
         case 'fzf-current':
           handleFuzzyModeKeyDown(e, gameState, setGameState);
@@ -1607,6 +1641,7 @@ export default function App() {
         ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
         : [];
 
+      console.log('handleSearchConfirm: query=', query, 'results found=', results.length);
       setGameState((prev) => ({
         ...prev,
         mode: 'normal',
@@ -1617,9 +1652,7 @@ export default function App() {
         // Reset cursor and preview logic
         cursorIndex: 0,
         previewScroll: 0,
-        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 }, // Counting search as find? Or add new stat?
-        // Let's reuse fzfFinds or filterUsage, or just ignore.
-        // User asked for persistent search like filter.
+        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
       }));
     }
   };
@@ -2001,6 +2034,29 @@ export default function App() {
           />
 
           <div className="flex-1 flex flex-col relative min-w-0">
+            <FileSystemPane
+              items={visibleItems}
+              isActive={
+                !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
+              }
+              cursorIndex={gameState.cursorIndex}
+              isParent={false}
+              selectedIds={gameState.selectedIds}
+              clipboard={gameState.clipboard}
+              linemode={gameState.linemode}
+              renameState={
+                gameState.mode === 'rename'
+                  ? { isRenaming: true, inputBuffer: gameState.inputBuffer }
+                  : undefined
+              }
+              onRenameChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
+              onRenameSubmit={handleRenameConfirm}
+              onRenameCancel={() =>
+                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
+              }
+              className="flex-1"
+            />
+
             {gameState.mode === 'sort' && (
               <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
                 <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
@@ -2127,146 +2183,38 @@ export default function App() {
             )}
 
             {gameState.mode === 'search' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
+              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-green-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
-                    Search via fd:
+                    Search:
                   </span>
                   <input
                     type="text"
                     value={gameState.inputBuffer}
-                    onChange={(e) =>
-                      setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setGameState((prev) => ({ ...prev, inputBuffer: val }));
+                    }}
                     onKeyDown={(e) => {
-                      // Only arrow keys for navigation during input (allows typing hjkl)
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setGameState((p) => ({
-                          ...p,
-                          cursorIndex: Math.min(visibleItems.length - 1, p.cursorIndex + 1),
-                        }));
-                        return;
+                      if (e.key === 'Enter') {
+                        handleSearchConfirm();
+                        e.stopPropagation();
+                      } else if (e.key === 'Escape') {
+                        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                        e.stopPropagation();
                       }
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setGameState((p) => ({
-                          ...p,
-                          cursorIndex: Math.max(0, p.cursorIndex - 1),
-                        }));
-                        return;
-                      }
-
-                      if (e.key === 'Enter') handleSearchConfirm();
-                      if (e.key === 'Escape') {
-                        // Exit input mode but KEEP search active on list
-                        const query = gameState.inputBuffer;
-                        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-                        const results = currentDir
-                          ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
-                          : [];
-                        setGameState((p) => ({
-                          ...p,
-                          mode: 'normal',
-                          searchQuery: query || null,
-                          searchResults: results,
-                          inputBuffer: '',
-                          usedSearch: true,
-                        }));
-                      }
-                      e.stopPropagation();
                     }}
                     className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
                     autoFocus
                     onBlur={(e) => e.target.focus()}
+                    data-testid="search-input"
                   />
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Type to search • ↑/↓ to preview • Enter confirm • Esc close
+                  Recursive fd search • Enter to run • Esc to cancel
                 </div>
               </div>
             )}
-
-            {gameState.mode === 'input-file' && (
-              <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">
-                    Create:
-                  </span>
-                  <input
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) =>
-                      setGameState((prev) => ({ ...prev, inputBuffer: e.target.value }))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleInputConfirm();
-                      if (e.key === 'Escape') setGameState((prev) => ({ ...prev, mode: 'normal' }));
-                      e.stopPropagation();
-                    }}
-                    className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-blue-500"
-                    autoFocus
-                    onBlur={(e) => e.target.focus()}
-                  />
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                  Enter filename (end with / for folder) • Enter to confirm • Esc to cancel
-                </div>
-              </div>
-            )}
-
-            {gameState.mode === 'z-prompt' &&
-              (() => {
-                const { zoxideData, inputBuffer } = gameState;
-                const candidates = Object.keys(zoxideData)
-                  .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
-                  .sort((a, b) => b.score - a.score);
-                const q = (inputBuffer || '').toLowerCase();
-                const bestMatch = candidates.find(
-                  (c) => typeof c.path === 'string' && c.path.toLowerCase().includes(q),
-                );
-
-                return (
-                  <div className="absolute bottom-6 left-4 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-bold text-fuchsia-500 uppercase tracking-widest">
-                        Zoxide:
-                      </span>
-                      <span className="text-white font-mono text-sm">
-                        {inputBuffer}
-                        {bestMatch && bestMatch.path !== inputBuffer && (
-                          <span className="text-zinc-500">
-                            {bestMatch.path.substring(inputBuffer.length)}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-zinc-500 mt-2 font-mono">
-                      Type to query • Enter to jump • Esc to cancel
-                    </div>
-                  </div>
-                );
-              })()}
-
-            <FileSystemPane
-              items={
-                gameState.searchQuery
-                  ? sortNodes(gameState.searchResults, gameState.sortBy, gameState.sortDirection)
-                  : visibleItems
-              }
-              isActive={true}
-              cursorIndex={gameState.cursorIndex}
-              selectedIds={gameState.selectedIds}
-              clipboard={gameState.clipboard}
-              linemode={gameState.linemode}
-              renameState={{
-                isRenaming: gameState.mode === 'rename',
-                inputBuffer: gameState.inputBuffer,
-              }}
-              onRenameChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
-              onRenameSubmit={handleRenameConfirm}
-              onRenameCancel={() => setGameState((prev) => ({ ...prev, mode: 'normal' }))}
-            />
 
             {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
               <FuzzyFinder

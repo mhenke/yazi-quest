@@ -294,6 +294,7 @@ export const useKeyboardHandlers = (
       gameState: GameState,
       currentLevel: Level,
     ) => {
+      console.log('handleGCommandKeyDown', e.key, gameState);
       if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
         return;
       }

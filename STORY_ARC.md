@@ -73,7 +73,7 @@ This twist reframes earlier levels as deliberate staging by a prior self rather 
 Episode I — Awakening
 
 - L1: System Awakening — Basic navigation and discovery.
-- L2: Threat Neutralization — **Consolidated Tasks:** Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d, y`) watcher agents.
+- L2: Threat Neutralization — **Consolidated Tasks:** Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d, y`) active Compliance Daemons.
 - L3: Data Harvest — Use filters to find key artifacts; learn legacy of AI-7733.
 - L4: Uplink Establishment — Copy/relocate protocol files into vaults.
 - L5: Containment Breach — **Retention Checkpoint:** Navigate/Batch operations without explicit key hints.
@@ -116,10 +116,8 @@ Episode III — Mastery
 
 ---
 
-## ⚠️ Auditor Notes — Safety & Realism
-
-- The narrative includes root-level and destructive metaphors (e.g., "Scorched Earth") that could be misinterpreted; ensure the game enforces a strict sandbox and clearly documents that all destructive actions are simulated and cannot affect the host system.
-- Add an in-game tooltip and README note stating the filesystem is virtual and isolated, and provide telemetry/logging for post‑mortem analysis of unexpected behaviors.
+- For in-depth mechanics (Threat Monitor, Twist Reveal) and thematic pillars, see `NARRATIVE_DESIGN.md`.
+- The narrative includes root-level and destructive metaphors; ensure the game enforces a strict sandbox.
 
 ---
 

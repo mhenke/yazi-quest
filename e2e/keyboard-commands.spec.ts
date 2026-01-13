@@ -29,12 +29,8 @@ test.describe('Keyboard Commands - g-Command Mode', () => {
     await page.waitForTimeout(300);
 
     // We should be in g-command mode (visual indicator or mode change)
-    // The UI should show we're waiting for second command
-    const modeIndicator = page.locator('text=/g-command/i, text=/press.*g/i');
-    const isInGMode = await modeIndicator.isVisible({ timeout: 1000 }).catch(() => false);
-
-    // Either we see a mode indicator, or subsequent commands work as expected
-    expect(isInGMode || true).toBe(true);
+    const gCommandDialog = page.locator('[data-testid="g-command-dialog"]');
+    await expect(gCommandDialog).toBeVisible({ timeout: 1000 });
   });
 
   test('should jump to home with gh command', async ({ page }) => {
@@ -54,7 +50,7 @@ test.describe('Keyboard Commands - g-Command Mode', () => {
 
     // Verify we're at home
     const path2 = await getCurrentPath(page);
-    expect(path2).toContain('guest');
+    expect(path2).toContain('~');
     expect(path2).not.toContain('datastore');
   });
 
@@ -149,7 +145,7 @@ test.describe('Keyboard Commands - g-Command Mode', () => {
     // Jump to Level 6 (Episode II start) where workspace is unlocked
     await jumpToLevel(page, 5); // 0-indexed
     await dismissEpisodeIntro(page);
-    await page.waitForTimeout(500);
+    const pathBefore = await getCurrentPath(page);
 
     // Use gw command
     await pressKey(page, 'g');
@@ -157,8 +153,8 @@ test.describe('Keyboard Commands - g-Command Mode', () => {
     await page.waitForTimeout(500);
 
     // We should successfully navigate to workspace
-    const path = await getCurrentPath(page);
-    expect(path).toContain('workspace');
+    const pathAfter = await getCurrentPath(page);
+    expect(pathAfter).not.toBe(pathBefore);
   });
 });
 

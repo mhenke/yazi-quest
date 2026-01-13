@@ -6,6 +6,7 @@ import {
   jumpToLevel,
   openLevelMap,
   getCurrentPath,
+  expectFileInView,
 } from './helpers';
 
 test.describe('Level Transitions - Episode I', () => {
@@ -46,9 +47,9 @@ test.describe('Level Transitions - Episode I', () => {
     expect(hasTitle || path.length > 0).toBe(true);
   });
 
-  test('should have protocols directory at Level 4', async ({ page }) => {
-    // Jump to level 4 (index 3) - should have prerequisite state from L3
-    await jumpToLevel(page, 3);
+  test('should have protocols directory at Level 5 (Prerequisite from L4)', async ({ page }) => {
+    // Jump to level 5 (index 4) - should have prerequisite state from L4 (protocols created)
+    await jumpToLevel(page, 4);
     await dismissEpisodeIntro(page);
     await page.waitForTimeout(500);
 
@@ -57,18 +58,13 @@ test.describe('Level Transitions - Episode I', () => {
     await pressKey(page, 'd');
     await page.waitForTimeout(500);
 
-    // Look for protocols directory (created as prerequisite from L3)
-    const protocolsDir = page.locator('text=protocols');
-    const hasProtocols = await protocolsDir.isVisible({ timeout: 2000 }).catch(() => false);
-
-    // If protocols is visible, we have correct prerequisite state
-    // If not visible, we might just be in wrong directory or files need navigation
-    expect(hasProtocols || true).toBe(true); // Soft assertion - focus is on transition working
+    // Look for protocols directory (created as prerequisite from L4)
+    await expectFileInView(page, 'protocols');
   });
 
-  test('should have vault/active directory at Level 5', async ({ page }) => {
-    // Jump to level 5 (index 4) - should have vault/active from L4
-    await jumpToLevel(page, 4);
+  test('should have vault/active directory at Level 6 (Prerequisite from L5)', async ({ page }) => {
+    // Jump to level 6 (index 5) - should have vault/active from L5
+    await jumpToLevel(page, 5);
     await dismissEpisodeIntro(page);
     await page.waitForTimeout(500);
 
@@ -78,11 +74,7 @@ test.describe('Level Transitions - Episode I', () => {
     await page.waitForTimeout(500);
 
     // Look for vault directory
-    const vaultDir = page.locator('text=vault');
-    const hasVault = await vaultDir.isVisible({ timeout: 2000 }).catch(() => false);
-
-    // Vault should be visible in .config (created by prerequisite state)
-    expect(hasVault || true).toBe(true); // Soft assertion
+    await expectFileInView(page, 'vault');
   });
 
   test('should show correct level title in status bar', async ({ page }) => {

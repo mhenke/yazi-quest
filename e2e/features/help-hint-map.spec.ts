@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForGameLoad, dismissEpisodeIntro, pressKey, getCurrentPath } from './helpers';
+import { waitForGameLoad, dismissEpisodeIntro, pressKey, getCurrentPath } from '../helpers';
 
 test.describe('Dialog Interactions - Help, Hint, and Map Modals', () => {
   test.beforeEach(async ({ page }) => {
@@ -335,6 +335,68 @@ test.describe('Dialog Interactions - Help, Hint, and Map Modals', () => {
       await page.keyboard.press('Shift+Enter').catch(() => {});
       await page.waitForTimeout(300);
       await page.keyboard.press('Shift+Enter').catch(() => {});
+    });
+  });
+  test.describe('Game Timer Constraint', () => {
+    test('should pause timer when Help modal is open', async ({ page }) => {
+      // Use direct URL navigation to Level 6 (ID 6) to avoid Map Jump flakiness
+      // Level 6 has timeLimit: 90
+      await page.goto('/?level=6&intro=false');
+      await waitForGameLoad(page);
+      // We explicitly disable intro via URL param if supported, otherwise dismiss
+      // App.tsx line 98: const skipIntro = params.get('intro') === 'false';
+      // So '&intro=false' should skip intro! Great.
+
+      // Verify Timer format matches "Time: MM:SS"
+      // Locator for timer value
+      const timerLabel = page.locator('text=/Time:/i');
+      await expect(timerLabel).toBeVisible();
+
+      const timerValue = timerLabel.locator('xpath=..').locator('.font-mono');
+      await expect(timerValue).toBeVisible();
+
+      // Initial Time (should be ~01:30 or less)
+      const initialText = await timerValue.textContent();
+      expect(initialText).toMatch(/\d{2}:\d{2}/);
+
+      // Wait 1 second to confirm it's ticking
+      await page.waitForTimeout(1000);
+      const textAfter1s = await timerValue.textContent();
+      // It might be same if 1s matches boundary, but likely changed or we wait 2s
+
+      // Open Help Modal
+      await page.keyboard.press('Alt+?');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).toBeVisible();
+
+      // Capture time when paused
+      const pausedText = await timerValue.textContent();
+
+      // Wait 2 seconds
+      await page.waitForTimeout(2000);
+
+      // Verify time hasn't changed
+      const textAfterPause = await timerValue.textContent();
+      expect(textAfterPause).toBe(pausedText);
+
+      // Close Help Modal
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.locator('text=HELP / KEYBINDINGS')).not.toBeVisible();
+
+      // Wait 1 second (should resume)
+      await page.waitForTimeout(1500);
+      const textResumed = await timerValue.textContent();
+
+      // Time should remain same or decrease?
+      // Resume means it starts ticking.
+      // If we wait 1.5s, it should decrease.
+      // But text string comparison depends on seconds decreasing.
+      // Parse to seconds.
+      const parseSeconds = (s: string) => {
+        const [m, sec] = s.split(':').map(Number);
+        return m * 60 + sec;
+      };
+
+      expect(parseSeconds(textResumed!)).toBeLessThan(parseSeconds(pausedText!));
     });
   });
 });

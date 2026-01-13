@@ -7,6 +7,7 @@ interface GCommandDialogProps {
 export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose: _onClose }) => {
   return (
     <div
+      data-testid="g-command-dialog"
       className="absolute bottom-16 left-0 right-0 mx-auto w-fit bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-sm z-50 rounded-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
       role="dialog"
       aria-modal="false"

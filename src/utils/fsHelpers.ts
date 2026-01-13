@@ -481,7 +481,7 @@ export function isProtected(
     }
     if (action === 'enter' || action === 'jump' || action === 'info') {
       // workspace is quarantined until Episode II (Level 7+)
-      if (node.name === 'workspace' && level.id < 7) {
+      if (node.name === 'workspace' && level.id < 6) {
         return `ACCESS DENIED: ${node.name} is quarantined.`;
       }
       // daemons is quarantined until Episode III (Level 11+)
