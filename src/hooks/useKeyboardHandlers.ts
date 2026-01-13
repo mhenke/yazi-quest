@@ -300,6 +300,19 @@ export const useKeyboardHandlers = (
         return;
       }
 
+      // Level 1 Pedagogical Constraint: Block shortcuts (gd, gw, etc.) to force manual navigation
+      // Only allow 'g' (for gg) or Escape
+      if (currentLevel.id === 1) {
+        if (e.key !== 'g' && e.key !== 'Escape') {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            notification: 'Shortcuts disabled in Level 1. Use manual navigation.',
+          }));
+          return;
+        }
+      }
+
       if (e.key === 'Escape') {
         setGameState((prev) => ({ ...prev, mode: 'normal' }));
         return;

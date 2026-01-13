@@ -435,6 +435,45 @@ describe('useKeyboardHandlers', () => {
     expect(newState.mode).toBe('normal');
   });
 
+  it('should restriction g commands (like gd) in Level 1, but allow gg', () => {
+    const { result } = getHook();
+    const state: GameState = { ...initialGameState, mode: 'g-command' };
+
+    // Try 'd' (gd) in Level 1
+    result.current.handleGCommandKeyDown(
+      new KeyboardEvent('keydown', { key: 'd' }),
+      mockSetGameState,
+      state,
+      { ...LEVELS[0], id: 1 },
+    );
+
+    let updateFn = mockSetGameState.mock.calls[0][0];
+    let newState = updateFn(state);
+
+    // Should be blocked
+    expect(newState.mode).toBe('normal');
+    expect(newState.notification).toContain('Shortcuts disabled in Level 1');
+    expect(newState.currentPath).toEqual(initialGameState.currentPath); // Path unchanged
+
+    mockSetGameState.mockClear();
+
+    // Try 'g' (gg) in Level 1 - Should be allowed (triggers jump to top logic)
+    result.current.handleGCommandKeyDown(
+      new KeyboardEvent('keydown', { key: 'g' }),
+      mockSetGameState,
+      state,
+      { ...LEVELS[0], id: 1 },
+    );
+
+    updateFn = mockSetGameState.mock.calls[0][0];
+    newState = updateFn(state);
+
+    // Should NOT be blocked (gg logic sets cursor to 0)
+    expect(newState.cursorIndex).toBe(0);
+    expect(newState.usedGG).toBe(true);
+    expect(newState.notification).toBeNull(); // No error notification
+  });
+
   it('should handle sort mode key "a" for alphabetical sort', () => {
     const { result } = getHook();
     const state: GameState = { ...initialGameState, mode: 'sort', acceptNextKeyForSort: true };
@@ -1005,7 +1044,7 @@ describe('useKeyboardHandlers', () => {
       new KeyboardEvent('keydown', { key: 'i' }),
       mockSetGameState,
       state,
-      LEVELS[0],
+      LEVELS[1],
     );
 
     expect(mockSetGameState).toHaveBeenCalled();
@@ -1025,7 +1064,7 @@ describe('useKeyboardHandlers', () => {
       new KeyboardEvent('keydown', { key: 'd' }),
       mockSetGameState,
       state,
-      LEVELS[0],
+      LEVELS[1],
     );
 
     const updateFn = mockSetGameState.mock.calls[0][0];
@@ -1042,7 +1081,7 @@ describe('useKeyboardHandlers', () => {
       new KeyboardEvent('keydown', { key: 'c' }),
       mockSetGameState,
       state,
-      LEVELS[0],
+      LEVELS[1],
     );
 
     const updateFn = mockSetGameState.mock.calls[0][0];
@@ -1060,7 +1099,7 @@ describe('useKeyboardHandlers', () => {
       new KeyboardEvent('keydown', { key: 't' }),
       mockSetGameState,
       state,
-      LEVELS[0],
+      LEVELS[1],
     );
 
     const updateFn = mockSetGameState.mock.calls[0][0];
@@ -1077,7 +1116,7 @@ describe('useKeyboardHandlers', () => {
       new KeyboardEvent('keydown', { key: 'r' }),
       mockSetGameState,
       state,
-      LEVELS[0],
+      LEVELS[1],
     );
 
     const updateFn = mockSetGameState.mock.calls[0][0];
