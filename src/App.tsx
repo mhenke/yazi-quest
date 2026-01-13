@@ -2027,13 +2027,11 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 min-h-0 relative">
-          {/* Search Input - displayed at top when in search mode */}
+          {/* Search Input - centered overlay popup matching Yazi style */}
           {gameState.mode === 'search' && (
-            <div className="absolute top-0 left-0 right-0 z-30 bg-zinc-900 border-b border-green-700 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-green-500 uppercase tracking-widest font-mono">
-                  fd:
-                </span>
+            <div className="absolute inset-0 z-30 flex items-start justify-center pt-4 pointer-events-none">
+              <div className="pointer-events-auto bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 min-w-[400px] backdrop-blur-sm">
+                <div className="text-zinc-400 text-sm font-mono mb-2">Search via fd:</div>
                 <input
                   type="text"
                   value={gameState.inputBuffer}
@@ -2050,15 +2048,11 @@ export default function App() {
                       e.stopPropagation();
                     }
                   }}
-                  className="flex-1 bg-zinc-800 text-white font-mono text-sm px-2 py-1 border border-zinc-600 rounded-sm outline-none focus:border-green-500"
+                  className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
                   autoFocus
                   onBlur={(e) => e.target.focus()}
                   data-testid="search-input"
-                  placeholder="Type filename pattern..."
                 />
-                <span className="text-[10px] text-zinc-500 font-mono">
-                  Enter to search • Esc to cancel
-                </span>
               </div>
             </div>
           )}

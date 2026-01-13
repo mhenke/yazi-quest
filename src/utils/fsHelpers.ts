@@ -24,6 +24,26 @@ export function getNodeById(root: FileNode, id: string | undefined): FileNode | 
   return undefined;
 }
 
+/**
+ * Find the path (array of IDs) leading to a node with the given ID.
+ * Returns undefined if the node is not found.
+ */
+export function findPathById(root: FileNode, targetId: string): string[] | undefined {
+  if (root.id === targetId) return [root.id];
+
+  const stack: { node: FileNode; path: string[] }[] = [{ node: root, path: [root.id] }];
+  while (stack.length) {
+    const { node, path } = stack.pop()!;
+    if (!node.children) continue;
+    for (const child of node.children) {
+      const childPath = [...path, child.id];
+      if (child.id === targetId) return childPath;
+      if (child.children) stack.push({ node: child, path: childPath });
+    }
+  }
+  return undefined;
+}
+
 export function getNodeByPath(root: FileNode, path: string[] | undefined): FileNode | undefined {
   if (!path || path.length === 0) return undefined;
   // Path is an array of node ids from root

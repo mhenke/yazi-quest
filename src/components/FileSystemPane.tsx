@@ -46,7 +46,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   }, [cursorIndex]);
 
   const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
-  const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-600' : 'bg-zinc-900/80 text-zinc-300';
+  const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-400' : 'bg-zinc-900/80 text-zinc-300';
 
   // Use className directly if it contains grid layout classes, otherwise append default bg/width
   const isGrid = !!className?.includes('grid');

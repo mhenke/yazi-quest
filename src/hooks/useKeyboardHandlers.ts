@@ -9,6 +9,7 @@ import {
   isProtected,
   resolvePath,
   resolveAndCreatePath,
+  findPathById,
 } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { reportError } from '../utils/error';
@@ -517,6 +518,28 @@ export const useKeyboardHandlers = (
           if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
             return;
           }
+
+          // If search is active, navigate to the parent folder of the selected search result
+          if (gameState.searchQuery && currentItem) {
+            const itemPath = findPathById(gameState.fs, currentItem.id);
+            if (itemPath && itemPath.length > 1) {
+              // Get parent path (exclude the item itself)
+              const parentPath = itemPath.slice(0, -1);
+              setGameState((prev) => ({
+                ...prev,
+                currentPath: parentPath,
+                cursorIndex: 0,
+                previewScroll: 0,
+                searchQuery: null,
+                searchResults: [],
+                history: [...prev.history, prev.currentPath],
+                future: [],
+              }));
+              return;
+            }
+          }
+
+          // Normal h behavior - go to parent
           if (parent) {
             setGameState((prev) => ({
               ...prev,
@@ -527,6 +550,9 @@ export const useKeyboardHandlers = (
               future: [],
               usedPreviewDown: false,
               usedPreviewUp: false,
+              // Also clear any search when navigating
+              searchQuery: null,
+              searchResults: [],
             }));
           }
           break;
@@ -557,6 +583,38 @@ export const useKeyboardHandlers = (
               return;
             }
 
+            // If in search mode, find the full path to this directory and navigate to it
+            if (gameState.searchQuery) {
+              const itemPath = findPathById(gameState.fs, currentItem.id);
+              if (itemPath) {
+                const pathStr = resolvePath(gameState.fs, itemPath);
+                const now = Date.now();
+                setGameState((prev) => ({
+                  ...prev,
+                  currentPath: itemPath,
+                  cursorIndex: 0,
+                  usedG: false,
+                  usedGG: false,
+                  usedPreviewDown: false,
+                  usedPreviewUp: false,
+                  history: [...prev.history, prev.currentPath],
+                  future: [],
+                  previewScroll: 0,
+                  searchQuery: null,
+                  searchResults: [],
+                  zoxideData: {
+                    ...prev.zoxideData,
+                    [pathStr]: {
+                      count: (prev.zoxideData[pathStr]?.count || 0) + 1,
+                      lastAccess: now,
+                    },
+                  },
+                }));
+                return;
+              }
+            }
+
+            // Normal navigation - append to current path
             setGameState((prev) => {
               const nextPath = [...prev.currentPath, currentItem.id];
               const pathStr = resolvePath(prev.fs, nextPath);
@@ -903,15 +961,6 @@ export const useKeyboardHandlers = (
               }
             }
           }
-          break;
-        case 'f':
-          e.preventDefault();
-          setGameState((prev) => {
-            const currentDir = getNodeByPath(prev.fs, prev.currentPath);
-            const existingFilter = currentDir ? prev.filters[currentDir.id] || '' : '';
-            showNotification(getNarrativeAction('f') || 'Filter activated');
-            return { ...prev, mode: 'filter', inputBuffer: existingFilter };
-          });
           break;
         case '\t':
         case 'Tab':

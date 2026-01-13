@@ -37,7 +37,7 @@ interface FileSystemItemProps {
 }
 
 const getFileStyle = (node: FileNode) => {
-  if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
+  if (node.type === 'dir') return { color: 'text-cyan-400', icon: Folder };
   if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
 
   const name = node.name.toLowerCase();
@@ -126,7 +126,7 @@ const getListItemRowClasses = (
     ${baseClasses}
     ${rowBg}
     ${isMarked ? 'text-yellow-400' : rowText}
-    ${isParent && !isCursor ? 'opacity-50 grayscale' : ''}
+    ${isParent && !isCursor ? 'opacity-70' : ''}
     ${isCut ? 'opacity-50' : ''}
   `;
 };
@@ -184,7 +184,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
 
         <span className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}>
           <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
-            {item.name}
+            {item.displayPath || item.name}
           </span>
         </span>
 

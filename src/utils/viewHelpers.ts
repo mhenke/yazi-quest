@@ -40,7 +40,7 @@ export const activeFilterMatches = (
 /**
  * Recursively search for files matching a query string.
  * Searches all files in the given directory and its subdirectories.
- * Returns flattened array of matching FileNodes.
+ * Returns flattened array of matching FileNodes with displayPath for full relative paths.
  */
 export const getRecursiveSearchResults = (
   rootNode: FileNode,
@@ -52,29 +52,33 @@ export const getRecursiveSearchResults = (
   const results: FileNode[] = [];
   const lowerQuery = query.toLowerCase();
 
-  const searchRecursive = (node: FileNode) => {
+  const searchRecursive = (node: FileNode, pathPrefix: string) => {
     if (!node.children) return;
 
     for (const child of node.children) {
       // Skip hidden files unless showHidden is true
       if (!showHidden && child.name.startsWith('.')) continue;
 
+      // Build relative path for display
+      const relativePath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+
       // Check if file matches query
       if (child.type === 'file' && child.name.toLowerCase().includes(lowerQuery)) {
-        results.push(child);
+        // Clone node and add displayPath for showing full relative path
+        results.push({ ...child, displayPath: relativePath });
       }
 
       // Recurse into directories and archives
       if (child.type === 'dir' || child.type === 'archive') {
         // Also check if directory name matches
         if (child.name.toLowerCase().includes(lowerQuery)) {
-          results.push(child);
+          results.push({ ...child, displayPath: relativePath });
         }
-        searchRecursive(child);
+        searchRecursive(child, relativePath);
       }
     }
   };
 
-  searchRecursive(rootNode);
+  searchRecursive(rootNode, '');
   return results;
 };

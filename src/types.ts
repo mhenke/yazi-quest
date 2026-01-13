@@ -14,6 +14,7 @@ export interface FileNode {
   // Runtime helpers (added dynamically by utilities)
   path?: string[];
   display?: string;
+  displayPath?: string; // Full relative path for search results display
 }
 
 export interface FileSystemState {

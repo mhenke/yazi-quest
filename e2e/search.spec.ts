@@ -97,22 +97,23 @@ test.describe('Search Mode', () => {
     // Wait for results to display
     await page.waitForTimeout(200);
 
-    // Target items in the active/main file list (2nd list)
-    const activePane = page.locator('ul[aria-label="File Browser"]').nth(1);
+    // Target items in the active/main file pane using the data-testid
+    const activePane = page.locator('[data-testid="filesystem-pane-active"]');
     const firstItem = activePane.locator('[data-test-id^="file-"]').nth(0);
     const secondItem = activePane.locator('[data-test-id^="file-"]').nth(1);
 
-    await expect(firstItem).toHaveClass(/bg-blue-500/);
+    // Cursor highlight uses bg-zinc-800
+    await expect(firstItem).toHaveClass(/bg-zinc-800/);
 
     // Press 'j' to navigate down
     await pressKey(page, 'j');
-    await expect(secondItem).toHaveClass(/bg-blue-500/);
-    await expect(firstItem).not.toHaveClass(/bg-blue-500/);
+    await expect(secondItem).toHaveClass(/bg-zinc-800/);
+    await expect(firstItem).not.toHaveClass(/bg-zinc-800/);
 
     // Press 'k' to navigate up
     await pressKey(page, 'k');
-    await expect(firstItem).toHaveClass(/bg-blue-500/);
-    await expect(secondItem).not.toHaveClass(/bg-blue-500/);
+    await expect(firstItem).toHaveClass(/bg-zinc-800/);
+    await expect(secondItem).not.toHaveClass(/bg-zinc-800/);
   });
 
   test('should open a file with l or Enter and exit search mode', async ({ page }) => {
@@ -141,14 +142,15 @@ test.describe('Search Mode', () => {
 
     await page.waitForTimeout(200);
 
-    // Target items in the active/main file list (2nd list)
-    const activePane = page.locator('ul[aria-label="File Browser"]').nth(1);
+    // Target items in the active/main file pane using the data-testid
+    const activePane = page.locator('[data-testid="filesystem-pane-active"]');
     const firstItem = activePane.locator('[data-test-id^="file-"]').nth(0);
     const secondItem = activePane.locator('[data-test-id^="file-"]').nth(1);
 
     // Press space to select the first item
     await pressKey(page, ' '); // Space
-    await expect(firstItem).toHaveClass(/bg-yellow-500/); // Check for selection highlight
+    // Selection uses text-yellow-400 class
+    await expect(firstItem).toHaveClass(/text-yellow-400/);
 
     // Navigate down and select the second item
     await pressKey(page, 'j');
@@ -157,8 +159,8 @@ test.describe('Search Mode', () => {
     await pressKey(page, ' '); // Space
 
     // Both items should now be selected
-    await expect(secondItem).toHaveClass(/bg-yellow-500/);
-    await expect(firstItem).toHaveClass(/bg-yellow-500/); // First one remains selected
+    await expect(secondItem).toHaveClass(/text-yellow-400/);
+    await expect(firstItem).toHaveClass(/text-yellow-400/); // First one remains selected
 
     // Exit search mode and check if selections persist
     await pressKey(page, 'Escape');
