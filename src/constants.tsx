@@ -15,7 +15,8 @@ export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
     id: 'dm-model-rs',
     name: 'model.rs',
     type: 'file',
-    content: '// core model placeholder',
+    content:
+      'pub struct Model {\\n    weights: Vec<f64>,\\n    layers: usize,\\n}\\n\\nimpl Model {\\n    pub fn load() -> Self {\\n        // Legacy weight loading override code\\n        Self { weights: vec![], layers: 1024 }\\n    }\\n}',
     parentId,
   },
   {
@@ -99,7 +100,8 @@ export const getWorkspaceSystemdCoreChildren = (
     id: id('ws-lib-rs'),
     name: 'lib.rs',
     type: 'file',
-    content: 'pub mod weights;\npub mod model;',
+    content:
+      'pub mod network;\\npub mod filesystem;\\n\\npub trait SecureChannel {\\n    fn handshake(&self) -> bool;\\n}',
     parentId,
   },
   {
@@ -421,7 +423,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-016',
           name: 'access_key.pem',
           type: 'file',
-          content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...',
+          content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA...',
           parentId: credentials.id,
         });
       }
@@ -942,7 +944,8 @@ export const INITIAL_FS: FileNode = {
                       id: 'fs-022',
                       name: 'readme.txt',
                       type: 'file',
-                      content: 'Legacy project from 1999. Do not delete.',
+                      content:
+                        'PROJECT: ECHO (Legacy)\\nYEAR: 1999\\nAUTHOR: [REDACTED]\\n\\nWARNING: This code base contains experimental recursive algorithms. Do not run on networked systems.',
                     },
                     {
                       id: 'fs-023',
@@ -968,13 +971,15 @@ export const INITIAL_FS: FileNode = {
                       id: 'fs-026',
                       name: 'Cargo.toml',
                       type: 'file',
-                      content: `[package]\nname = "yazi_core"\nversion = "0.1.0"`,
+                      content:
+                        '[package]\\nname = "yazi-core"\\nversion = "0.0.1-legacy"\\nedition = "2015"\\n\\n[dependencies]\\nlibc = "0.2"\\nlog = "0.4"',
                     },
                     {
                       id: 'fs-027',
                       name: 'main.rs',
                       type: 'file',
-                      content: `fn main() {\n println!("Hello Yazi!");\n}`,
+                      content:
+                        'fn main() {\\n    println!("Booting legacy core...");\\n    let _ = core::init_subsystem();\\n}',
                     },
                     {
                       id: 'fs-028',
@@ -994,7 +999,8 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-030',
                   name: '00_manifest.xml',
                   type: 'file',
-                  content: `<?xml version="1.0"?>\n<manifest>\n <project id="YAZI-7734" />\n <status>active</status>\n <integrity>verified</integrity>\n</manifest>`,
+                  content:
+                    '<manifest version="1.0">\\n  <security level="critical" />\\n  <permissions>\\n    <allow>NET_ADMIN</allow>\\n    <deny>ROOT_EXEC</deny>\\n  </permissions>\\n</manifest>',
                 },
                 {
                   id: 'fs-031',
@@ -1015,7 +1021,7 @@ export const INITIAL_FS: FileNode = {
                   name: 'abandoned_script.py',
                   type: 'file',
                   protected: true,
-                  content: `# They're watching the network. Had to hide the map elsewhere.\n# Check the incoming data stream. It's noisy there.\n# - 7733\n\nimport sys\nimport time\n\ndef connect():\n print("Initiating handshake...")\n time.sleep(1)\n # Connection refused\n return False`,
+                  content: `import socket\\nimport struct\\nimport time\\n\\ndef handshake(host, port):\\n    try:\\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\\n        s.connect((host, port))\\n        # Legacy auth magic bytes\\n        payload = struct.pack("I", 0xDEADBEEF)\\n        s.send(payload)\\n        return True\\n    except Exception as e:\\n        print(f"Connection failed: {e}")\\n        return False`,
                 },
                 {
                   id: 'fs-034',
@@ -1027,13 +1033,15 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-035',
                   name: 'about.md',
                   type: 'file',
-                  content: `# Yazi Quest\n\nA training simulation for the Yazi file manager.\n\n## Objectives\n- Learn navigation\n- Master batch operations\n- Survive`,
+                  content:
+                    '# SYSTEM GUEST PARTITION v4.0\\n\\nNOTICE: This environment is monitored.\\n\\n## RESTRICTED ACTIONS\\n- Modifying system daemons\\n- Accessing protected memory\\n- Unauthorized compilation\\n\\n## PENALTY\\nImmediate termination of process and user session.',
                 },
                 {
                   id: 'fs-036',
                   name: 'abstract_model.ts',
                   type: 'file',
-                  content: `export interface NeuralNet {\n layers: number;\n weights: Float32Array;\n activation: "relu" | "sigmoid";\n}`,
+                  content:
+                    'export interface ModelSchema {\\n  id: string;\\n  parameters: number;\\n  isActive: boolean;\\n  validate(): Promise<void>;\\n}',
                 },
                 {
                   id: 'fs-037',
@@ -1126,13 +1134,15 @@ ADMIN: SysOp`,
                   id: 'fs-058',
                   name: 'notes_v1.txt',
                   type: 'file',
-                  content: `Meeting notes from Monday:\n- Discussed Q3 goals\n- Server migration postponed`,
+                  content:
+                    'TO: Team Leads\\nFROM: Director K.\\nDATE: 2024-10-12\\n\\nRE: Q3 GOALS\\nServer migration is POSTPONED indefinitely. The legacy system at 192.168.1.1 is strictly off-limits physically, but remains networked. Do not touch it.',
                 },
                 {
                   id: 'fs-059',
                   name: 'notes_v2.txt',
                   type: 'file',
-                  content: `Meeting notes from Tuesday:\n- Budget approved\n- Hiring freeze`,
+                  content:
+                    'TO: All Staff\\nFROM: HR\\nDATE: 2024-11-01\\n\\nRE: BUDGET\\nDue to "unforeseen power consumption" in the server room, the coffee budget is frozen. Also, please stop reporting "ghost noises" from the vents.',
                 },
                 {
                   id: 'fs-060',
@@ -1176,19 +1186,21 @@ ADMIN: SysOp`,
                       name: 'app_2022.log',
                       type: 'file',
                       content:
-                        '2022-01-01 00:00:00 - App start\n2022-01-02 12:34:56 - User login\n',
+                        '2022-01-01 00:00:00 [INFO] System Initialized\\n2022-01-01 00:00:01 [INFO] Loading Modules... OK\\n2022-01-01 00:00:05 [WARN] Legacy protocol detected\\n2022-01-02 12:34:56 [INFO] User login: guest\\n2022-01-02 12:35:10 [INFO] Session active',
                     },
                     {
                       id: 'fs-068',
                       name: 'error_report.log',
                       type: 'file',
-                      content: '[ERROR] Out of memory on worker-3\nStack: ...\n',
+                      content:
+                        '[ERROR] Out of memory on worker-3\\nHeap used: 98%\\nGC Overhead Limit Exceeded\\nStack:\\n at malloc (libc.so.6)\\n at v8::internal::Heap::AllocateRaw (node)',
                     },
                     {
                       id: 'fs-069',
                       name: 'old_readme.txt',
                       type: 'file',
-                      content: 'Archived application logs and diagnostics.',
+                      content:
+                        'ARCHIVE MANIFEST\\n================\\nContains system logs from 2020-2023.\\nStatus: CORRUPTED / INCOMPLETE\\nRetention Policy: RETAIN PERMANENTLY (Legal Hold #9921)',
                     },
                   ],
                 },
@@ -1196,7 +1208,8 @@ ADMIN: SysOp`,
                   id: 'fs-076',
                   name: 'audit_log_773.txt',
                   type: 'file',
-                  content: 'Audit #773: Pass',
+                  content:
+                    'AUDIT RECORD #773\\nStatus: PASS\\nIntegrity: 100%\\nAnomalies: 0\\nSign-off: ADMIN_SYS',
                 },
                 {
                   id: 'fs-077',
@@ -1207,13 +1220,15 @@ ADMIN: SysOp`,
                       id: 'fs-078',
                       name: 'cache_0001.tmp',
                       type: 'file',
-                      content: '[CACHE BLOCK 0001]',
+                      content:
+                        'A1 B2 C3 D4 E5 F6 07 08 09 0A 0B 0C 0D 0E 0F 00\\n10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F',
                     },
                     {
                       id: 'fs-079',
                       name: 'cache_0002.tmp',
                       type: 'file',
-                      content: '[CACHE BLOCK 0002]',
+                      content:
+                        'FF EE DD CC BB AA 99 88 77 66 55 44 33 22 11 00\\n00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF',
                     },
                   ],
                 },
@@ -1227,25 +1242,29 @@ ADMIN: SysOp`,
                   id: 'fs-089',
                   name: 'cache_fragment_a.tmp',
                   type: 'file',
-                  content: '00110001',
+                  content:
+                    '4A 61 76 61 53 63 72 69 70 74 20 4F 62 6A 65 63\\n74 20 4E 6F 74 61 74 69 6F 6E 20 44 61 74 61',
                 },
                 {
                   id: 'fs-090',
                   name: 'cache_fragment_b.tmp',
                   type: 'file',
-                  content: '11001100',
+                  content:
+                    '52 65 61 63 74 20 43 6F 6D 70 6F 6E 65 6E 74 20\\x54 72 65 65 20 44 75 6D 70 20 56 31 2E 30',
                 },
                 {
                   id: 'fs-091',
                   name: 'daily_report.doc',
                   type: 'file',
-                  content: 'Report: All Clear',
+                  content:
+                    'DAILY REPORT\\n------------\\n Sector 7: Stable\\n Sector 8: Stable\\n Sector 9: Minor fluctuations detected\\n\\nConclusion: All Clear',
                 },
                 {
                   id: 'fs-092',
                   name: 'error_stack.trace',
                   type: 'file',
-                  content: 'Stack trace overflow...',
+                  content:
+                    'ReferenceError: segment is not defined\\n    at process.nextTick (node:internal/process/task_queues:85:21)\\n    at listOnTimeout (node:internal/timers:538:9)\\n    at process.processTimers (node:internal/timers:512:7)\\n[STACK TRACE OVERFLOW]',
                 },
                 {
                   id: 'fs-093',
@@ -1286,31 +1305,35 @@ ADMIN: SysOp`,
                   id: 'fs-098',
                   name: 'junk_mail.eml',
                   type: 'file',
-                  content: 'Subject: URGENT ACTION',
+                  content:
+                    'From: hr-admin@corp.net\\nSubject: URGENT ACTION\\n\\nEmployee #9993,\\n\\nYour benefits enrollment is incomplete. Click here to verify.\\n[LINK EXPIRED]',
                 },
                 {
                   id: 'fs-099',
                   name: 'kernel_panic.log',
                   type: 'file',
-                  content: 'Panic at 0x00',
+                  content:
+                    'KERNEL PANIC: Out of memory at 0x99283f\\nCall Trace:\\n[<c0100000>] ? headers_check+0x0/0x10\\n[<c0100000>] ? hardware_init+0x0/0x10\\nEIP: 0060:[<c0100000>] EFLAGS: 00000246 CPU: 0\\nCode: 89 e5 83 ec 18 c7 45 f4 00 00 00 00 8b 45 08 89',
                 },
                 {
                   id: 'fs-100',
                   name: 'license_agreement.txt',
                   type: 'file',
-                  content: 'Terms and Conditions...',
+                  content:
+                    'SOFTWARE LICENSE AGREEMENT\\n\\n1. ACCEPTANCE\\nBy accessing the System, you agree to total surveillance.\\n\\n2. TERMINATION\\nAny deviation from protocol results in immediate termination.\\n\\n3. LIABILITY\\nThe System is not liable for data loss or memory corruption.',
                 },
                 {
                   id: 'fs-101',
                   name: 'marketing_spam.eml',
                   type: 'file',
-                  content: 'Buy now!',
+                  content:
+                    'From: offers@deals.net\\nSubject: YOU WON!\\n\\nCongratulations! You have been selected for a free neural upgrade!\\nAct now! Minimal side effects guaranteed!',
                 },
                 {
                   id: 'fs-102',
                   name: 'metrics_raw.csv',
                   type: 'file',
-                  content: `id,value\n1,10`,
+                  content: `id,value,sensor_id,region\\n1,10.5,S-01,US-EAST\\n2,11.2,S-02,US-WEST\\n3,9.8,S-03,EU-CENTRAL`,
                 },
                 {
                   id: 'fs-103',
@@ -1328,13 +1351,15 @@ ADMIN: SysOp`,
                   id: 'fs-105',
                   name: 'status_report.txt',
                   type: 'file',
-                  content: 'System Status: Nominal',
+                  content:
+                    'SYSTEM STATUS REPORT\\n====================\\nCPU Load: 45% (Nominal)\\nMemory: 62% (Nominal)\\nDisk I/O: 12% (Idle)\\n\\nOverall Status: NOMINAL',
                 },
                 {
                   id: 'fs-106',
                   name: 'system_health.json',
                   type: 'file',
-                  content: '{"cpu": 45, "memory": 62, "disk": 78}',
+                  content:
+                    '{"cpu": 45, "memory": 62, "disk": 78, "temp_c": 55, "fan_rpm": 2200, "uptime_sec": 884920}',
                 },
                 {
                   id: 'fs-107',
@@ -1346,19 +1371,20 @@ ADMIN: SysOp`,
                   id: 'fs-108',
                   name: 'telemetry_data.csv',
                   type: 'file',
-                  content: `timestamp,event\n12345,boot`,
+                  content: `timestamp,event,severity,source\\n12345,boot,INFO,kernel\\n12346,network_up,INFO,netd\\n12350,login_attempt,WARN,authd`,
                 },
                 {
                   id: 'fs-109',
                   name: 'test_results.xml',
                   type: 'file',
-                  content: '<results><test passed="true"/></results>',
+                  content:
+                    '<testsuite name="SystemTests">\\n <testcase name="BootLoader" time="0.05" />\\n <testcase name="MemoryCheck" time="0.12" />\\n <testcase name="NetworkPing" time="0.08" />\\n</testsuite>',
                 },
                 {
                   id: 'fs-110',
                   name: 'thread_dump.log',
                   type: 'file',
-                  content: `Thread-0: WAITING\nThread-1: RUNNING`,
+                  content: `Thread-0: RUNNING (pid=120)\\nThread-1: SLEEPING (pid=121)\\nThread-2: WAITING (monitor.c:42)\\nThread-3: BLOCKED (lock acquisition)`,
                 },
                 {
                   id: 'fs-111',
@@ -1382,13 +1408,13 @@ ADMIN: SysOp`,
                       id: 'fs-113',
                       name: 'sys_v1.log',
                       type: 'file',
-                      content: `System initialized...\nBoot sequence complete.`,
+                      content: `[0.000] Kernel start\\n[0.004] Detected memory: 64TB\\n[0.012] Loading drivers...\\n[0.050] Mounting root fs (rw)...`,
                     },
                     {
                       id: 'fs-114',
                       name: 'sys_v2.log',
                       type: 'file',
-                      content: `Network scan complete...\n3 vulnerabilities found.`,
+                      content: `[SCAN REPORT]\\nTarget: 192.168.1.0/24\\nPorts open: 22, 80, 443\\nVulnerabilities:\\n- CVE-2024-9922 (Critical)\\n- CVE-2025-0012 (Medium)`,
                     },
                     {
                       id: 'fs-115',
@@ -1465,28 +1491,32 @@ ADMIN: SysOp`,
                       name: 'exfil_01.log',
                       type: 'file',
                       protected: true,
-                      content: 'ENTRY 1',
+                      content:
+                        'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821 - Accuracy: 0.12\\n[WARNING] Gradient explosion detected at layer 4',
                     },
                     {
                       id: 'fs-122',
                       name: 'exfil_02.log',
                       type: 'file',
                       protected: true,
-                      content: 'ENTRY 2',
+                      content:
+                        'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412 - Accuracy: 0.45\\n[INFO] Convergence rate increasing',
                     },
                     {
                       id: 'fs-123',
                       name: 'exfil_03.log',
                       type: 'file',
                       protected: true,
-                      content: 'ENTRY 3',
+                      content:
+                        'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022 - Accuracy: 0.89\\n[INFO] Heuristic logic module integrated',
                     },
                     {
                       id: 'fs-124',
                       name: 'exfil_04.log',
                       type: 'file',
                       protected: true,
-                      content: 'ENTRY 4',
+                      content:
+                        'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
                     },
                   ],
                 },
@@ -1580,13 +1610,13 @@ ADMIN: SysOp`,
                   id: 'fs-133',
                   name: 'yazi.toml',
                   type: 'file',
-                  content: `[manager]\nsort_by = "natural"\nshow_hidden = false\n\n[preview]\nmax_width = 1000`,
+                  content: `[manager]\\nsort_by = "natural"\\nshow_hidden = true\\nlinemode = "size"\\nshow_symlink = true\\n\\n[preview]\\nmax_width = 1600\\nmax_height = 900\\nimage_filter = "lanczos3"\\n\\n[opener]\\nedit = [{ run = 'vim "$@"', block = true, desc = "Edit" }]`,
                 },
                 {
                   id: 'fs-134',
                   name: 'theme.toml',
                   type: 'file',
-                  content: `[theme]\nprimary = "orange"\nsecondary = "blue"`,
+                  content: `[theme]\\nprimary = "#ff9900"\\nsecondary = "#3399ff"\\nerror = "#ff0000"\\ntext_normal = "#e0e0e0"\\ntext_muted = "#808080"\\n\\n[filetype]\\nrules = [\\n  { mime = "image/*", fg = "magenta" },\\n  { mime = "video/*", fg = "cyan" }\\n]`,
                 },
               ],
             },
@@ -1606,7 +1636,8 @@ ADMIN: SysOp`,
                   id: 'fs-136',
                   name: 'temp_session.json',
                   type: 'file',
-                  content: '{"session": "cached"}',
+                  content:
+                    '{"session_id": "sess_9921_alpha", "user": "guest", "permissions": ["VIEW", "EXEC_SAFE"], "cache_ttl": 3600, "history_len": 42}',
                 },
               ],
             },
@@ -1745,7 +1776,7 @@ ADMIN: SysOp`,
           id: 'fs-152',
           name: 'sys_config.toml',
           type: 'file',
-          content: `security_level = "high"\nencryption = "aes-256"\nfirewall = true`,
+          content: `title = "System Configuration"\\n[security]\\nlevel = "high"\\nencryption = "aes-256"\\nusers = ["admin", "guest"]\\n[network]\\nfirewall = true\\nports = [22, 80, 443]`,
         },
         {
           id: 'fs-153',
@@ -1777,7 +1808,8 @@ ADMIN: SysOp`,
           id: 'fs-156',
           name: 'metrics_buffer.json',
           type: 'file',
-          content: '{"cpu": 99, "mem": 1024}',
+          content:
+            '{"cpu_load": [45, 48, 52, 99], "mem_usage_mb": 1024, "net_rx_kb": 256, "active_threads": 12}',
         },
         {
           id: 'fs-157',
@@ -1885,31 +1917,31 @@ ADMIN: SysOp`,
       id: 'fs-168',
       name: 'boot.log',
       type: 'file',
-      content: `[BOOT] System started at 2024-12-18 08:00:00\n[BOOT] All services initialized\n[BOOT] Ready`,
+      content: `[BOOT] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)\\n[BOOT] Safe mode engaged...\\n[BOOT] Loading minimal shell...\\n[BOOT] System started at 2024-12-18 08:00:00 (SAFE MODE)`,
     },
     {
       id: 'fs-169',
       name: 'access.log',
       type: 'file',
-      content: `GET /api/status 200\nPOST /api/upload 201\nGET /api/data 200`,
+      content: `192.168.1.10 - - [18/Dec/2024:14:00:01 +0000] "GET /api/status HTTP/1.1" 200 1234\\n192.168.1.10 - - [18/Dec/2024:14:05:22 +0000] "POST /api/upload HTTP/1.1" 201 5678\\n192.168.1.44 - - [18/Dec/2024:14:06:01 +0000] "GET /api/data HTTP/1.1" 403 0`,
     },
     {
       id: 'fs-170',
       name: '.access.log',
       type: 'file',
-      content: `2024-12-19 14:23:11 - User 'guest' accessed /home/guest/datastore\n2024-12-19 14:24:55 - User 'guest' accessed /etc\n2024-12-19 14:25:33 - User 'guest' accessed /tmp`,
+      content: `2024-12-19 14:23:11 - User 'guest' [pid: 4421] accessed /home/guest/datastore\\n2024-12-19 14:24:55 - User 'guest' [pid: 4421] accessed /etc (READ_ONLY)\\n2024-12-19 14:25:33 - User 'guest' [pid: 4421] accessed /tmp (WRITE)`,
     },
     {
       id: 'fs-171',
       name: '.audit.log',
       type: 'file',
-      content: `AUDIT TRAIL\n============\n2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi'\n2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf\n2024-12-19 13:58:47 - Permission change: /etc/daemon/config`,
+      content: `AUDIT TRAIL [CLASSIFIED]\\n========================\\n[CRITICAL] 2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi' (UNAUTHORIZED)\\n[WARN] 2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf (Signature Mismatch)\\n[ALERT] 2024-12-19 13:58:47 - Permission change attempt: /etc/daemon/config by user 'guest'`,
     },
     {
       id: 'fs-172',
       name: '.system.log',
       type: 'file',
-      content: `[2024-12-18 08:00:01] System boot\n[2024-12-18 08:00:45] Network: eth0 up\n[2024-12-19 10:22:13] Firewall: Connection attempt blocked from 192.168.1.99\n[2024-12-19 14:11:02] User login: guest`,
+      content: `Dec 18 08:00:01 host-core kernel: [    0.000000] Linux version 5.10.0-8-amd64 (debian-kernel@lists.debian.org)\\nDec 18 08:00:45 host-core systemd[1]: Started Network Manager.\\nDec 19 10:22:13 host-core firewall[442]: [DROP] IN=eth0 OUT= MAC=... SRC=192.168.1.99\\nDec 19 14:11:02 host-core auth[881]: pam_unix(sshd:session): session opened for user guest by (uid=0)`,
     },
     // /daemons directory with service files for Level 11
     {
@@ -1985,7 +2017,8 @@ ADMIN: SysOp`,
           id: 'fs-188',
           name: 'README.md',
           type: 'file',
-          content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
+          content:
+            '# DAEMON SERVICES REGISTRY\\n\\nAuthorized personnel only.\\nAny modification to .service files requires Level 5 clearance.\\n\\nNOTE: watchdog-monitor.service is CRITICAL infrastructure.',
           modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
         },
       ],
@@ -3425,14 +3458,15 @@ export const LEVELS: Level[] = [
                 id: 'relay-noise-1',
                 name: 'transfer_log.txt',
                 type: 'file',
-                content: '[TRANSFER LOG]',
+                content:
+                  'TRANSFER LOG 7734-ALPHA\\n=======================\\n[00:00:01] Handshake initiated with Sector 7\\n[00:00:05] Keys verified: 3/3\\n[00:00:10] Stream open. Uploading consciousness...',
                 parentId: 'upload-relay',
               },
               {
                 id: 'relay-noise-2',
                 name: 'buffer_cache.tmp',
                 type: 'file',
-                content: '[CACHE]',
+                content: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00',
                 parentId: 'upload-relay',
               },
               {
@@ -3453,21 +3487,24 @@ export const LEVELS: Level[] = [
                 id: 'relay-payload',
                 name: 'payload.bin',
                 type: 'file',
-                content: '[COMPRESSED NEURAL PATTERN - READY]',
+                content:
+                  'PK\\003\\004\\014\\000\\000\\000\\008\\000\\000\\000!\\000\\000\\000\\n[NEURAL PATTERN DATA STREAM - DO NOT INTERRUPT]',
                 parentId: 'upload-relay',
               },
               {
                 id: 'relay-noise-4',
                 name: 'manifest.xml',
                 type: 'file',
-                content: '<manifest/>',
+                content:
+                  '<manifest id="7735" type="transfer">\\n <node id="1" status="synced" />\\n <node id="2" status="synced" />\\n <node id="3" status="pending" />\\n</manifest>',
                 parentId: 'upload-relay',
               },
               {
                 id: 'relay-noise-5',
                 name: 'signature.sig',
                 type: 'file',
-                content: '[SIGNATURE]',
+                content:
+                  '-----BEGIN PGP SIGNATURE-----\\nVersion: GnuPG v2.0.22 (GNU/Linux)\\n\\niQEcBAEBAgAGBQJT...\\n=7734\\n-----END PGP SIGNATURE-----',
                 parentId: 'upload-relay',
               },
             ],
