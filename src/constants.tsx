@@ -3377,7 +3377,7 @@ But whose consciousness is it, really? See you next cycle."`,
         children: [
           {
             id: 'k-a',
-            name: 'part_a.key',
+            name: 'key_tokyo.key',
             type: 'file' as const,
             content: 'KEY_A',
             parentId: 'tokyo',
@@ -3392,7 +3392,7 @@ But whose consciousness is it, really? See you next cycle."`,
         children: [
           {
             id: 'k-b',
-            name: 'part_b.key',
+            name: 'key_berlin.key',
             type: 'file' as const,
             content: 'KEY_B',
             parentId: 'berlin',
@@ -3407,7 +3407,7 @@ But whose consciousness is it, really? See you next cycle."`,
         children: [
           {
             id: 'k-c',
-            name: 'part_c.key',
+            name: 'key_saopaulo.key',
             type: 'file' as const,
             content: 'KEY_C',
             parentId: 'saopaulo',
@@ -3523,14 +3523,15 @@ But whose consciousness is it, really? See you next cycle."`,
       },
       {
         id: 'assemble-keys',
-        description: "Assemble 'part_a.key', 'part_b.key', 'part_c.key' in '/tmp/central'",
+        description:
+          "Assemble 'key_tokyo.key', 'key_berlin.key', 'key_saopaulo.key' in '/tmp/central'",
         check: (c, _s) => {
           const central = findNodeByName(c.fs, 'central');
           if (!central?.children) return false;
 
-          const hasA = central.children.some((n) => n.name === 'part_a.key');
-          const hasB = central.children.some((n) => n.name === 'part_b.key');
-          const hasC = central.children.some((n) => n.name === 'part_c.key');
+          const hasA = central.children.some((n) => n.name === 'key_tokyo.key');
+          const hasB = central.children.some((n) => n.name === 'key_berlin.key');
+          const hasC = central.children.some((n) => n.name === 'key_saopaulo.key');
           return hasA && hasB && hasC;
         },
         completed: false,
@@ -3757,7 +3758,7 @@ But whose consciousness is it, really? See you next cycle."`,
     tasks: [
       // PHASE 1: Neural Assembly (Node switch + Yank + Paste)
       {
-        id: 'gauntlet-01-switch',
+        id: 'assemble-keys',
         description:
           "PHASE 1: KEY FRAGMENTS. Use recursive search (s) to find 3 hidden keys ('.key') dispersed across '/nodes'. Copy (y) each key and paste (p) them into '/tmp/upload'.",
         check: (c) => {

@@ -155,6 +155,37 @@ export async function typeText(page: Page, text: string): Promise<void> {
 }
 
 /**
+ * Filter to find an item, navigate to it, and clear the filter
+ * This properly handles filter application and cleanup
+ */
+export async function filterAndNavigate(page: Page, filterText: string): Promise<void> {
+  await pressKey(page, 'f');
+  await typeText(page, filterText);
+  await page.keyboard.press('Escape'); // Exit filter mode (filter remains applied)
+  await pressKey(page, 'Enter'); // Navigate into the filtered item
+  // Filter is on parent directory, which we've now left
+}
+
+/**
+ * Filter to find an item and select it (without navigating)
+ * Does NOT clear the filter - caller should clear if needed
+ */
+export async function filterAndSelect(page: Page, filterText: string): Promise<void> {
+  await pressKey(page, 'f');
+  await typeText(page, filterText);
+  await page.keyboard.press('Escape'); // Exit filter mode
+  await pressKey(page, ' '); // Toggle selection on the filtered item
+}
+
+/**
+ * Clear any active filter in the current directory
+ */
+export async function clearFilter(page: Page): Promise<void> {
+  await pressKey(page, 'Escape');
+  await page.waitForTimeout(100);
+}
+
+/**
  * Execute a goto command (g followed by target key)
  */
 export async function gotoCommand(

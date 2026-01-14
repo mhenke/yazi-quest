@@ -11,8 +11,9 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --quiet",
     "format": "prettier --write .",
-    "test": "echo \"No tests\"",
-    "prepush": "npm run type-check && npm run build"
+    "test": "echo \"No unit tests specified\"",
+    "test:e2e": "playwright test",
+    "prepush": "npm run type-check && npm run build && npm run test:e2e"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
