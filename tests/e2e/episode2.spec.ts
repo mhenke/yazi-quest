@@ -10,6 +10,7 @@ import {
   filterAndSelect,
   ensureCleanState,
   cleanupBeforeComplete,
+  isTaskCompleted,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -118,6 +119,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await typeText(page, 'uplink_v1');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
+    // Wait for task completion before clearing filter
+    await expect.poll(async () => await isTaskCompleted(page, 1), { timeout: 2000 }).toBe(true);
+
     // Clear filter before navigating away to avoid Protocol Violation
     await ensureCleanState(page);
 
@@ -214,6 +218,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await typeText(page, 'access_key_new');
     await page.keyboard.press('Escape');
     await pressKey(page, 'y');
+
+    // Wait for task completion before clearing state (Task 2 is index 2)
+    await expect.poll(async () => await isTaskCompleted(page, 2), { timeout: 2000 }).toBe(true);
+
     // Clear filter before navigating away
     await ensureCleanState(page);
 
