@@ -109,51 +109,58 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test('Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite', async ({ page }) => {
     await goToLevel(page, 8);
 
-    // Task 1: Navigate to '~/workspace/systemd-core'
+    // Objective 1: Navigate to '~/workspace/systemd-core'
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
+    await expect(page.getByText('Tasks: 1/4')).toBeVisible();
 
-    // Task 2: Preview 'uplink_v1.conf' to confirm corruption
-    // Use filter to find and position cursor on the file
+    // Objective 2: Preview 'uplink_v1.conf' to confirm corruption
+    // Note: Task check requires usedFilter === true
     await pressKey(page, 'f');
     await typeText(page, 'uplink_v1');
+    await page.keyboard.press('Escape'); // Stay on the file with filter active
+    await expect(page.getByText('Tasks: 2/4')).toBeVisible();
+
+    // Clear filter before leaving to stay clean
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
-    // Wait for task completion before clearing filter
-    await expect.poll(async () => await isTaskCompleted(page, 1), { timeout: 2000 }).toBe(true);
+    await page.waitForTimeout(100);
 
-    // Clear filter before navigating away to avoid Protocol Violation
-    await ensureCleanState(page);
-
-    // Task 3: Jump to '~/.config/vault/active' and yank clean version
-    await gotoCommand(page, 'c');
+    // Objective 3: Jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
+    await pressKey(page, '.'); // Show hidden files for .config
+    await gotoCommand(page, 'h'); // gh to home
+    await filterAndNavigate(page, '.config');
     await filterAndNavigate(page, 'vault');
     await filterAndNavigate(page, 'active');
 
-    // Find and yank uplink_v1.conf
+    // Find and yank clean file
     await pressKey(page, 'f');
     await typeText(page, 'uplink_v1');
     await page.keyboard.press('Escape');
     await pressKey(page, 'y');
-    await page.waitForTimeout(200);
-    // Clear filter before navigating away
-    await ensureCleanState(page);
+    await expect(page.getByText('Tasks: 3/4')).toBeVisible();
 
-    // Task 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P)
+    // Clear filter and hide files before returning
+    await page.keyboard.press('Escape');
+    await pressKey(page, '.');
+    await page.waitForTimeout(100);
+
+    // Objective 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) local file
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
 
-    // Find the corrupted file
+    // Find the file robustly with a filter
     await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1');
+    await typeText(page, 'uplink_v1.conf');
+    await page.keyboard.press('Escape'); // Position cursor on the file
+    await page.waitForTimeout(200);
+
+    // CRITICAL: Clear filter BEFORE overwriting so we are in protocol compliance
+    // at the moment the level completes.
     await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
 
-    // Overwrite with Shift+P
+    // Overwrite with Shift+P. This completes Task 4 and triggers Mission Complete.
     await pressKey(page, 'Shift+P');
-    await page.waitForTimeout(300);
-
-    // Clean up state
-    // await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON DISGUISE CONSTRUCTION')).toBeVisible();
@@ -200,32 +207,40 @@ test.describe('Episode 2: FORTIFICATION', () => {
   }) => {
     await goToLevel(page, 10);
 
-    // Task 1: Navigate into '~/incoming/backup_logs.zip/credentials'
+    // Objective 1: Navigate into '~/incoming/backup_logs.zip/credentials'
     await gotoCommand(page, 'i');
     await filterAndNavigate(page, 'backup_logs.zip');
     await filterAndNavigate(page, 'credentials');
+    await expect(page.getByText('Tasks: 1/4')).toBeVisible();
 
-    // Task 2: Sort by modification time (,m)
+    // Objective 2: Sort by modification time (,m)
     await pressKey(page, ',');
     await pressKey(page, 'm');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200);
+    await expect(page.getByText('Tasks: 2/4')).toBeVisible();
 
-    // Task 3: Yank newest key (access_key_new.pem should be at top after sort desc)
-    // Go to top and filter to ensure we're on the right file
+    // Objective 3: Yank newest key (access_key_new.pem should be at top after sort desc)
     await pressKey(page, 'g');
-    await pressKey(page, 'g');
+    await pressKey(page, 'g'); // Ensure we are at the top
+
+    // Explicitly verify the file is there before yanking
     await pressKey(page, 'f');
     await typeText(page, 'access_key_new');
     await page.keyboard.press('Escape');
+    await expect(
+      page.getByTestId('filesystem-pane-active').getByText('access_key_new.pem')
+    ).toBeVisible();
+
     await pressKey(page, 'y');
+    await expect(page.getByText('Tasks: 3/4')).toBeVisible();
 
-    // Wait for task completion before clearing state (Task 2 is index 2)
-    await expect.poll(async () => await isTaskCompleted(page, 2), { timeout: 2000 }).toBe(true);
+    // Reset sort AND clear filter BEFORE leaving to stay clean
+    await page.keyboard.press('Escape'); // Clear 'access_key_new' filter
+    await pressKey(page, ',');
+    await pressKey(page, 'n');
+    await page.waitForTimeout(200);
 
-    // Clear filter before navigating away
-    await ensureCleanState(page);
-
-    // Task 4: Jump to '~/workspace/systemd-core', create credentials/, paste
+    // Objective 4: Jump to '~/workspace/systemd-core', create credentials/, paste
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
 
@@ -238,12 +253,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Enter credentials/
     await filterAndNavigate(page, 'credentials');
 
-    // Paste the key
+    // Paste the key. This completes Task 4 and triggers Mission Complete.
     await pressKey(page, 'p');
-    await page.waitForTimeout(300);
-
-    // Clean up state (reset sort and clear any filters)
-    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('CREDENTIAL HEIST')).toBeVisible();

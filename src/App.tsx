@@ -516,6 +516,9 @@ export default function App() {
         // All clear - show success
         setShowHiddenWarning(false);
         setShowSortWarning(false);
+        if (gameState.mode === 'filter-warning') {
+          setGameState((prev) => ({ ...prev, mode: 'normal' }));
+        }
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
           setShowSuccessToast(true);
@@ -1355,7 +1358,9 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tasksComplete = currentLevel.tasks.every((t) => t.completed);
-      if (tasksComplete && !gameState.showHidden) {
+      // Only enter completion lockdown if the success toast is actually shown.
+      // If blocked by a protocol violation warning, we MUST allow keys through so the user can fix it.
+      if (tasksComplete && showSuccessToast) {
         if (e.key === 'Enter' && e.shiftKey) {
           e.preventDefault();
           advanceLevel();

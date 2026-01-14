@@ -242,18 +242,20 @@ export async function getTaskCount(page: Page): Promise<string> {
  * Check if a task is completed (has checkmark)
  */
 export async function isTaskCompleted(page: Page, taskIndex: number): Promise<boolean> {
-  const objectives = page.locator('[class*="OBJECTIVES"] ~ div, .objectives div');
+  // Objectives are in the PreviewPane with opacity-50 when complete
+  const objectives = page.locator('h3:has-text("Objectives") + div > div');
   const task = objectives.nth(taskIndex);
-  // Check for checkmark icon or completed styling
-  const hasCheck = await task.locator('svg, [class*="text-green"]').count();
-  return hasCheck > 0;
+  return await task.evaluate((el) => el.classList.contains('opacity-50'));
 }
 
 /**
  * Wait for mission complete dialog
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
-  await expect(page.getByText('MISSION COMPLETE')).toBeVisible({ timeout: 10000 });
+  // Use a case-insensitive regex to be safe and wait for the alert role
+  await expect(page.getByRole('alert').getByText(/Mission Complete/i)).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 /**
