@@ -90,7 +90,7 @@ export interface ZoxideEntry {
 // Recent visits weight higher: last hour ×4, last day ×2, last week ÷2, older ÷4
 export function calculateFrecency(
   entry: ZoxideEntry | undefined,
-  now: number = Date.now(),
+  now: number = Date.now()
 ): number {
   if (!entry) return 0;
 
@@ -143,7 +143,8 @@ export interface GameState {
     | 'sort'
     | 'g-command'
     | 'z-prompt'
-    | 'filter-warning';
+    | 'filter-warning'
+    | 'search-warning';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   sortBy: SortBy; // Global sticky sort setting

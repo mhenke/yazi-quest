@@ -32,6 +32,7 @@ import {
   getRecursiveContent,
   findNodeByName,
   isProtected,
+  findPathById,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
@@ -51,6 +52,7 @@ import { ThreatAlert } from './components/ThreatAlert';
 import { HiddenFilesWarningModal } from './components/HiddenFilesWarningModal';
 import { SortWarningModal } from './components/SortWarningModal';
 import { FilterWarningModal } from './components/FilterWarningModal';
+import { SearchWarningModal } from './components/SearchWarningModal';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
 import { FuzzyFinder } from './components/FuzzyFinder';
@@ -58,7 +60,11 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useKeyboardHandlers';
+import {
+  useKeyboardHandlers,
+  checkFilterAndBlockNavigation,
+  checkSearchAndBlockNavigation,
+} from './hooks/useKeyboardHandlers';
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
@@ -968,6 +974,11 @@ export default function App() {
         gauntletPhase: 0,
         gauntletScore: 0,
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
+        // Reset Search & View State
+        showHidden: false,
+        searchQuery: null,
+        searchResults: [],
+        usedSearch: false,
       };
     });
     shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
@@ -1460,6 +1471,37 @@ export default function App() {
         return; // Block other inputs if filter warning is active
       }
 
+      // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
+      // to clear the active search and continue (protocol-violation bypass).
+      if (gameState.mode === 'search-warning') {
+        if (e.key === 'Escape') {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
+          return;
+        }
+
+        if (e.key === 'Enter' && e.shiftKey) {
+          // Conditional Auto-Fix - clear search
+          if (tasksComplete) {
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'normal',
+              searchQuery: null,
+              searchResults: [],
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          }
+          return;
+        }
+
+        return; // Block other inputs if search warning is active
+      }
+
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
         const allowAutoFix = tasksComplete;
@@ -1635,6 +1677,7 @@ export default function App() {
     advanceLevel,
     showHiddenWarning,
     showThreatAlert,
+    showSortWarning,
     visibleItems,
     currentItem,
     parent,
@@ -1698,6 +1741,8 @@ export default function App() {
         }
         // Ensure the newly created node appears in the UI according to the current sort
         const sortedFs = cloneFS(newFs);
+
+        // 1. Sort the immediate parent of the created node (deep sort)
         if (targetNode) {
           const parentNode = getNodeById(sortedFs, targetNode.parentId as string);
           if (parentNode && parentNode.children) {
@@ -1707,14 +1752,48 @@ export default function App() {
               gameState.sortDirection
             );
           }
-        } else {
-          const parentNode = getNodeByPath(sortedFs, gameState.currentPath);
-          if (parentNode && parentNode.children) {
-            parentNode.children = sortNodes(
-              parentNode.children,
-              gameState.sortBy,
-              gameState.sortDirection
-            );
+        }
+
+        // 2. Determine which node in the CURRENT view to highlight
+        let nodeToHighlightId: string | undefined;
+        if (targetNode) {
+          // Robustly find the child in the current view that leads to targetNode
+          const currentDirId = gameState.currentPath[gameState.currentPath.length - 1];
+
+          let candidate: FileNode | undefined = targetNode;
+          // Traverse up from targetNode until we find a node whose parent is the current directory
+          while (candidate && candidate.parentId !== currentDirId) {
+            // Look up parent
+            candidate = getNodeById(sortedFs, candidate.parentId as string);
+            // Safety break for root or detached nodes
+            if (!candidate || candidate.id === sortedFs.id) break;
+          }
+
+          if (candidate && candidate.parentId === currentDirId) {
+            nodeToHighlightId = candidate.id;
+          }
+        }
+
+        // 3. Sort the CURRENT directory (visible view) and find index
+        const currentDirNode = getNodeByPath(sortedFs, gameState.currentPath);
+        let newCursorIndex = 0;
+
+        if (currentDirNode && currentDirNode.children) {
+          // Sort current directory
+          currentDirNode.children = sortNodes(
+            currentDirNode.children,
+            gameState.sortBy,
+            gameState.sortDirection
+          );
+
+          // Find cursor index
+          if (nodeToHighlightId) {
+            let visibleChildren = currentDirNode.children;
+            if (!gameState.showHidden) {
+              visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
+            }
+            const idx = visibleChildren.findIndex((c) => c.id === nodeToHighlightId);
+            if (idx >= 0) newCursorIndex = idx;
           }
         }
 
@@ -1723,6 +1802,7 @@ export default function App() {
           fs: sortedFs,
           mode: 'normal',
           inputBuffer: '',
+          cursorIndex: newCursorIndex,
           notification: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
         }));
         return;
@@ -1733,6 +1813,7 @@ export default function App() {
         error,
         collision,
         collisionNode,
+        newNodeId,
       } = createPath(gameState.fs, gameState.currentPath, input);
       if (collision && collisionNode) {
         setGameState((prev) => ({
@@ -1754,11 +1835,19 @@ export default function App() {
             gameState.sortDirection
           );
         }
+        // Find the index of the newly created item to position cursor on it
+        // Need to account for hidden files filtering in the visible list
+        let visibleChildren = parentNode2?.children || [];
+        if (!gameState.showHidden) {
+          visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
+        }
+        const newCursorIndex = visibleChildren.findIndex((c) => c.id === newNodeId);
         setGameState((prev) => ({
           ...prev,
           fs: sortedFs2,
           mode: 'normal',
           inputBuffer: '',
+          cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
           notification: getNarrativeAction('a') || 'FILE CREATED',
         }));
       }
@@ -1973,6 +2062,9 @@ export default function App() {
       )}
       {gameState.mode === 'filter-warning' && (
         <FilterWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+      )}
+      {gameState.mode === 'search-warning' && (
+        <SearchWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
       )}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (

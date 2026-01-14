@@ -7,7 +7,8 @@ import {
   typeText,
   filterAndNavigate,
   filterAndSelect,
-  clearFilter,
+  ensureCleanState,
+  cleanupBeforeComplete,
 } from './utils';
 
 test.describe('Episode 3: MASTERY', () => {
@@ -22,22 +23,26 @@ test.describe('Episode 3: MASTERY', () => {
     await filterAndNavigate(page, 'daemons');
 
     // Task 2: Inspect metadata (Tab) of at least 3 files
-    // Open info panel and navigate through files
-    await pressKey(page, 'Tab'); // Open info panel
+    // Open info panel - this starts tracking scouted files
+    await pressKey(page, 'Tab');
     await page.waitForTimeout(200);
-    await pressKey(page, 'j'); // Move to next file (counts as inspection while panel open)
-    await page.waitForTimeout(200);
-    await pressKey(page, 'j'); // Move to next file
-    await page.waitForTimeout(200);
-    await pressKey(page, 'j'); // Move to next file (3rd inspection)
+    // Navigate through files while panel is open - each file visited is "scouted"
+    await pressKey(page, 'j'); // Move to next file (1st scout)
+    await page.waitForTimeout(150);
+    await pressKey(page, 'j'); // Move to next file (2nd scout)
+    await page.waitForTimeout(150);
+    await pressKey(page, 'j'); // Move to next file (3rd scout)
+    await page.waitForTimeout(150);
     await pressKey(page, 'Tab'); // Close info panel
 
     // Task 3: Select 2 SAFE (Legacy) files
-    // Safe files are: cron-legacy.service, backup-archive.service, syslog-old.service
+    // Safe files are: cron-legacy.service (>30 days old), backup-archive.service, syslog-old.service
     await filterAndSelect(page, 'cron-legacy');
-    await clearFilter(page);
+    await ensureCleanState(page);
     await filterAndSelect(page, 'backup-archive');
-    await clearFilter(page);
+
+    // Clean up before completion
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON RECONNAISSANCE')).toBeVisible();
@@ -47,52 +52,29 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 12: DAEMON INSTALLATION - installs daemon and handles threats', async ({ page }) => {
     await goToLevel(page, 12);
 
-    // Task 1: Navigate to '~/workspace'
+    // Task: Navigate to '~/workspace'
     await gotoCommand(page, 'w');
 
-    // Handle potential scenario threats in workspace if they exist
-    const threatFiles = [
-      'alert_traffic.log',
-      'lib_error.log',
-      'scan_a.tmp',
-      'scan_b.tmp',
-      'scan_c.tmp',
-    ];
-    for (const threat of threatFiles) {
-      const fileName = threat.split('.')[0];
-      await pressKey(page, 'f');
-      await typeText(page, fileName);
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(100);
-
-      const fileVisible = await page
-        .getByText(threat)
-        .isVisible()
-        .catch(() => false);
-      if (fileVisible) {
-        await pressKey(page, 'd');
-        await pressKey(page, 'y');
-      }
-      await clearFilter(page);
-    }
-
-    // Task 2: Cut '~/workspace/systemd-core'
+    // Task: Cut '~/workspace/systemd-core'
     await pressKey(page, 'f');
     await typeText(page, 'systemd-core');
     await page.keyboard.press('Escape');
     await pressKey(page, 'x'); // Cut
-    await clearFilter(page);
+    await ensureCleanState(page);
 
-    // Task 3: Navigate to '/daemons'
+    // Task: Navigate to '/daemons'
     await gotoCommand(page, 'r');
     await filterAndNavigate(page, 'daemons');
 
-    // Task 4: Paste (Install) systemd-core
+    // Task: Paste (Install) systemd-core
     await pressKey(page, 'p');
     await page.waitForTimeout(300);
 
     // Navigate into the installed systemd-core
     await filterAndNavigate(page, 'systemd-core');
+
+    // Clean up
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
@@ -109,31 +91,39 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, '1'); // Ensure we are in Tokyo
     await page.waitForTimeout(200);
     await pressKey(page, 'y'); // Yank key_tokyo.key (only file in tokyo)
+    await ensureCleanState(page);
 
     // Go to /tmp/central and paste
     await gotoCommand(page, 't'); // Go to /tmp
     await filterAndNavigate(page, 'central');
     await pressKey(page, 'p'); // Paste key_tokyo.key
+    await ensureCleanState(page);
 
     // Node 2 (Berlin) - yank key_berlin.key
     await pressKey(page, '2');
     await page.waitForTimeout(200);
     await pressKey(page, 'y'); // Yank key_berlin.key
+    await ensureCleanState(page);
 
     // Paste in /tmp/central
     await gotoCommand(page, 't');
     await filterAndNavigate(page, 'central');
     await pressKey(page, 'p');
+    await ensureCleanState(page);
 
     // Node 3 (Sao Paulo) - yank key_saopaulo.key
     await pressKey(page, '3');
     await page.waitForTimeout(200);
     await pressKey(page, 'y'); // Yank key_saopaulo.key
+    await ensureCleanState(page);
 
     // Paste in /tmp/central
     await gotoCommand(page, 't');
     await filterAndNavigate(page, 'central');
     await pressKey(page, 'p');
+
+    // Clean up
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DISTRIBUTED CONSCIOUSNESS')).toBeVisible();
@@ -167,11 +157,12 @@ test.describe('Episode 3: MASTERY', () => {
     const targets = ['datastore', 'incoming', 'media', 'workspace'];
     for (const target of targets) {
       await filterAndSelect(page, target);
-      await clearFilter(page);
+      await ensureCleanState(page);
     }
 
     await pressKey(page, 'Shift+D'); // Permanent delete
     await pressKey(page, 'y'); // Confirm
+    await page.waitForTimeout(200);
 
     // Task 4: Permanently eliminate hidden '.config'
     await pressKey(page, '.'); // Show hidden files
@@ -182,6 +173,11 @@ test.describe('Episode 3: MASTERY', () => {
 
     await pressKey(page, 'Shift+D'); // Permanent delete
     await pressKey(page, 'y'); // Confirm
+    await page.waitForTimeout(200);
+
+    // Clean up: hide hidden files and clear any filters
+    await pressKey(page, '.'); // Hide hidden files again
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('EVIDENCE PURGE')).toBeVisible();
@@ -204,28 +200,18 @@ test.describe('Episode 3: MASTERY', () => {
     // Select all found keys and copy
     await pressKey(page, 'Control+A');
     await pressKey(page, 'y');
-    await page.keyboard.press('Escape'); // Exit search mode
+    await ensureCleanState(page); // Exit search mode
 
     // Navigate to /tmp/upload and paste
     await gotoCommand(page, 't');
-    await pressKey(page, 'f');
-    await typeText(page, 'upload');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'Enter');
+    await filterAndNavigate(page, 'upload');
     await pressKey(page, 'p');
     await page.waitForTimeout(300);
 
     // Phase 2: Verify daemon in /daemons/systemd-core
     await gotoCommand(page, 'r');
-    await pressKey(page, 'f');
-    await typeText(page, 'daemons');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'Enter');
-
-    await pressKey(page, 'f');
-    await typeText(page, 'systemd-core');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'Enter');
+    await filterAndNavigate(page, 'daemons');
+    await filterAndNavigate(page, 'systemd-core');
 
     // Find uplink_v1.conf and inspect with Tab + scroll
     await pressKey(page, 'f');
@@ -236,17 +222,22 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'Shift+J'); // Scroll down
     await pressKey(page, 'Shift+J');
     await pressKey(page, 'Shift+K'); // Scroll up
-    await pressKey(page, 'Tab'); // Keep panel open for verification (close when not needed)
+    await pressKey(page, 'Tab'); // Close panel
+    await ensureCleanState(page);
 
     // Phase 3: Sanitize breadcrumb in /tmp (.ghost_process.pid)
     await gotoCommand(page, 't');
-    await pressKey(page, '.'); // Toggle hidden files
+    await pressKey(page, '.'); // Toggle hidden files ON
     await page.waitForTimeout(200);
     await pressKey(page, 'f');
     await typeText(page, 'ghost');
     await page.keyboard.press('Escape');
     await pressKey(page, 'Shift+D'); // Permanent delete
     await pressKey(page, 'y'); // Confirm
+    await page.waitForTimeout(200);
+    // Hide hidden files again
+    await pressKey(page, '.');
+    await ensureCleanState(page);
 
     // Phase 4: Init Upload using Zoxide jump and filter for keys
     await pressKey(page, 'Shift+Z'); // Zoxide jump
@@ -258,6 +249,9 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'f');
     await typeText(page, 'key');
     await page.keyboard.press('Escape');
+
+    // Clean up
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('TRANSMISSION PROTOCOL')).toBeVisible();

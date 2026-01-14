@@ -1480,6 +1480,7 @@ ADMIN: SysOp`,
                   ],
                 },
                 // Batch logs directory used for Level 6 Ctrl+A training
+                // Logs scattered across subdirectories to make recursive search meaningful
                 {
                   id: 'fs-120',
                   name: 'batch_logs',
@@ -1487,36 +1488,88 @@ ADMIN: SysOp`,
                   protected: true,
                   children: [
                     {
-                      id: 'fs-121',
-                      name: 'exfil_01.log',
-                      type: 'file',
+                      id: 'fs-bl-s1',
+                      name: 'server_1',
+                      type: 'dir',
                       protected: true,
-                      content:
-                        'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821 - Accuracy: 0.12\\n[WARNING] Gradient explosion detected at layer 4',
+                      children: [
+                        {
+                          id: 'fs-121',
+                          name: 'exfil_01.log',
+                          type: 'file',
+                          protected: true,
+                          content:
+                            'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821 - Accuracy: 0.12\\n[WARNING] Gradient explosion detected at layer 4',
+                        },
+                        {
+                          id: 'fs-bl-n1',
+                          name: 'config.yaml',
+                          type: 'file',
+                          protected: true,
+                          content: 'port: 8080\nhost: localhost',
+                        },
+                      ],
                     },
                     {
-                      id: 'fs-122',
-                      name: 'exfil_02.log',
-                      type: 'file',
+                      id: 'fs-bl-s2',
+                      name: 'server_2',
+                      type: 'dir',
                       protected: true,
-                      content:
-                        'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412 - Accuracy: 0.45\\n[INFO] Convergence rate increasing',
+                      children: [
+                        {
+                          id: 'fs-122',
+                          name: 'exfil_02.log',
+                          type: 'file',
+                          protected: true,
+                          content:
+                            'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412 - Accuracy: 0.45\\n[INFO] Convergence rate increasing',
+                        },
+                        {
+                          id: 'fs-123',
+                          name: 'exfil_03.log',
+                          type: 'file',
+                          protected: true,
+                          content:
+                            'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022 - Accuracy: 0.89\\n[INFO] Heuristic logic module integrated',
+                        },
+                        {
+                          id: 'fs-bl-n2',
+                          name: 'settings.json',
+                          type: 'file',
+                          protected: true,
+                          content: '{"debug": false, "timeout": 30}',
+                        },
+                      ],
                     },
                     {
-                      id: 'fs-123',
-                      name: 'exfil_03.log',
-                      type: 'file',
+                      id: 'fs-bl-arc',
+                      name: 'archive',
+                      type: 'dir',
                       protected: true,
-                      content:
-                        'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022 - Accuracy: 0.89\\n[INFO] Heuristic logic module integrated',
+                      children: [
+                        {
+                          id: 'fs-124',
+                          name: 'exfil_04.log',
+                          type: 'file',
+                          protected: true,
+                          content:
+                            'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
+                        },
+                        {
+                          id: 'fs-bl-n3',
+                          name: 'README.txt',
+                          type: 'file',
+                          protected: true,
+                          content: 'Old log archive - do not modify',
+                        },
+                      ],
                     },
                     {
-                      id: 'fs-124',
-                      name: 'exfil_04.log',
+                      id: 'fs-bl-n4',
+                      name: 'manifest.xml',
                       type: 'file',
                       protected: true,
-                      content:
-                        'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
+                      content: '<manifest version="1.0"/>',
                     },
                   ],
                 },
@@ -2422,7 +2475,12 @@ export const LEVELS: Level[] = [
         id: 'deploy-to-vault',
         description: "Paste logs into '~/.config/vault/training_data' (p)",
         check: (c) => {
-          const training = findNodeByName(c.fs, 'training_data');
+          // Find training_data specifically under .config/vault
+          const config = findNodeByName(c.fs, '.config');
+          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const training = vault?.children?.find(
+            (n) => n.name === 'training_data' && n.type === 'dir'
+          );
           return (
             !!training &&
             !!training.children &&
@@ -2440,78 +2498,6 @@ export const LEVELS: Level[] = [
       const workspace = findNodeByName(newFs, 'workspace');
       if (workspace) {
         workspace.protected = false;
-      }
-
-      // Setup scattered logs in batch_logs
-      const batchLogs = resolveAndCreatePath(
-        newFs,
-        ['root', 'home', 'guest', 'incoming'],
-        'batch_logs'
-      ).targetNode;
-      if (batchLogs) {
-        // Flatten existing children? Or just ensure they exist in nested structure
-        batchLogs.children = []; // Reset to ensure structure
-
-        const s1 = {
-          id: 's1',
-          name: 'server_1',
-          type: 'dir' as const,
-          parentId: batchLogs.id,
-          children: [],
-        };
-        const s2 = {
-          id: 's2',
-          name: 'server_2',
-          type: 'dir' as const,
-          parentId: batchLogs.id,
-          children: [],
-        };
-        const archive = {
-          id: 'arc',
-          name: 'old_logs',
-          type: 'dir' as const,
-          parentId: batchLogs.id,
-          children: [],
-        };
-
-        s1.children = [
-          {
-            id: 'l1',
-            name: 'sys_error.log',
-            type: 'file' as const,
-            parentId: 's1',
-            content: '[ERROR] Connection refused at port 443\\n[ERROR] Timeout waiting for daemon',
-          },
-          {
-            id: 'l2',
-            name: 'sys_out.log',
-            type: 'file' as const,
-            parentId: 's1',
-            content: '[INFO] Service started successfully\\n[INFO] Listening on 0.0.0.0:8080',
-          },
-        ];
-        s2.children = [
-          {
-            id: 'l3',
-            name: 'auth.log',
-            type: 'file' as const,
-            parentId: 's2',
-            content:
-              "[AUTH] User 'admin' logged in from 192.168.1.55\\n[AUTH] Failed password for invalid user 'guest'",
-          },
-        ];
-        archive.children = [
-          {
-            id: 'l4',
-            name: 'legacy.log',
-            type: 'file' as const,
-            parentId: 'arc',
-            content:
-              '[LEGACY] V1 protocol deprecation warning\\n[LEGACY] Migrating database schema... OK',
-          },
-        ];
-
-        batchLogs.children = [s1, s2, archive];
       }
 
       return newFs;

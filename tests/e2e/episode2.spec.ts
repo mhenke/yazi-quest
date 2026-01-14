@@ -8,7 +8,8 @@ import {
   typeText,
   filterAndNavigate,
   filterAndSelect,
-  clearFilter,
+  ensureCleanState,
+  cleanupBeforeComplete,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -18,39 +19,53 @@ test.describe('Episode 2: FORTIFICATION', () => {
   }) => {
     await goToLevel(page, 6);
 
-    // Task 1: Jump to '~/incoming/batch_logs' (gi -> filter -> enter batch_logs)
-    await gotoCommand(page, 'i');
-    // Filter to find and enter batch_logs
-    await filterAndNavigate(page, 'batch_logs');
+    // Task 1: Jump to '~/incoming/batch_logs' (gi → l to enter)
+    await gotoCommand(page, 'i'); // gi -> ~/incoming
+    await page.waitForTimeout(500);
+    // batch_logs should be first item, use l to enter it
+    await pressKey(page, 'l'); // Enter batch_logs
+    await page.waitForTimeout(500);
 
     // Task 2: Use recursive search (s) to find 'log'
     await pressKey(page, 's');
     await typeText(page, 'log');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(1500); // Wait for search results
+    await page.waitForTimeout(1000);
 
     // Task 3: Select all search results and yank (Ctrl+A, y)
     await pressKey(page, 'Control+A');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200);
     await pressKey(page, 'y');
-    await pressKey(page, 'Escape'); // Exit search mode
+    await page.waitForTimeout(300);
 
-    // Task 4: Jump to '~/.config' (gc) and create 'vault/training_data'
-    await gotoCommand(page, 'c');
-    // Filter to find and enter vault
-    await filterAndNavigate(page, 'vault');
+    // Exit search mode - CRITICAL to clear search before navigation
+    await ensureCleanState(page);
+    await page.waitForTimeout(500);
 
-    // Create 'training_data' directory using 'a' command with trailing slash
+    // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
+    await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
+    await page.waitForTimeout(500);
+
+    // vault is already highlighted after gc, just enter it
+    await pressKey(page, 'l'); // Enter vault
+    await page.waitForTimeout(300);
+
+    // Create 'training_data/' directory
     await pressKey(page, 'a');
     await typeText(page, 'training_data/');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500); // Wait for creation
+    await page.waitForTimeout(500);
 
-    // Task 5: Paste logs into '~/.config/vault/training_data'
-    // Navigate into the newly created training_data directory
-    await filterAndNavigate(page, 'training_data');
+    // Task 5: Navigate into training_data and paste
+    // Verify 'training_data' is selected automatically
+    await expect(page.locator('[aria-current="location"]')).toContainText('training_data');
 
-    await pressKey(page, 'p'); // Paste the logs
+    await pressKey(page, 'l'); // Enter training_data
+    await page.waitForTimeout(300);
+
+    // Paste the logs
+    await pressKey(page, 'p');
+    await page.waitForTimeout(500);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('BATCH OPERATIONS')).toBeVisible();
@@ -98,10 +113,13 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await filterAndNavigate(page, 'systemd-core');
 
     // Task 2: Preview 'uplink_v1.conf' to confirm corruption
+    // Use filter to find and position cursor on the file
     await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
+    await typeText(page, 'uplink_v1');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300); // Wait for preview
+    await page.waitForTimeout(200);
+    // Clear filter before navigating away to avoid Protocol Violation
+    await ensureCleanState(page);
 
     // Task 3: Jump to '~/.config/vault/active' and yank clean version
     await gotoCommand(page, 'c');
@@ -110,21 +128,28 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Find and yank uplink_v1.conf
     await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
+    await typeText(page, 'uplink_v1');
     await page.keyboard.press('Escape');
     await pressKey(page, 'y');
-    await page.waitForTimeout(300); // Wait for yank
+    await page.waitForTimeout(200);
+    // Clear filter before navigating away
+    await ensureCleanState(page);
 
     // Task 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P)
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
 
-    // Find the corrupted file and overwrite
+    // Find the corrupted file
     await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
+    await typeText(page, 'uplink_v1');
     await page.keyboard.press('Escape');
 
+    // Overwrite with Shift+P
     await pressKey(page, 'Shift+P');
+    await page.waitForTimeout(300);
+
+    // Clean up state
+    // await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON DISGUISE CONSTRUCTION')).toBeVisible();
@@ -179,16 +204,18 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Task 2: Sort by modification time (,m)
     await pressKey(page, ',');
     await pressKey(page, 'm');
-    await page.waitForTimeout(500); // Wait for sort
+    await page.waitForTimeout(300);
 
-    // Task 3: Yank newest key (access_key_new.pem should be at top after sort)
+    // Task 3: Yank newest key (access_key_new.pem should be at top after sort desc)
+    // Go to top and filter to ensure we're on the right file
     await pressKey(page, 'g');
-    await pressKey(page, 'g'); // Go to top
-    // Filter to ensure we're on the right file
+    await pressKey(page, 'g');
     await pressKey(page, 'f');
     await typeText(page, 'access_key_new');
     await page.keyboard.press('Escape');
-    await pressKey(page, 'y'); // Yank
+    await pressKey(page, 'y');
+    // Clear filter before navigating away
+    await ensureCleanState(page);
 
     // Task 4: Jump to '~/workspace/systemd-core', create credentials/, paste
     await gotoCommand(page, 'w');
@@ -203,7 +230,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Enter credentials/
     await filterAndNavigate(page, 'credentials');
 
-    await pressKey(page, 'p'); // Paste
+    // Paste the key
+    await pressKey(page, 'p');
+    await page.waitForTimeout(300);
+
+    // Clean up state (reset sort and clear any filters)
+    await cleanupBeforeComplete(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('CREDENTIAL HEIST')).toBeVisible();

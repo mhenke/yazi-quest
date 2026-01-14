@@ -64,7 +64,7 @@ export function getParentNode(root: FileNode, path: string[] | undefined): FileN
 export function findNodeByName(
   root: FileNode,
   name: string,
-  type?: 'file' | 'dir' | 'archive',
+  type?: 'file' | 'dir' | 'archive'
 ): FileNode | undefined {
   const stack: FileNode[] = [root];
   while (stack.length) {
@@ -111,7 +111,7 @@ export function getAllDirectories(root: FileNode): FileNode[] {
 
 export function getAllDirectoriesWithPaths(
   root: FileNode,
-  level?: Level,
+  level?: Level
 ): { node: FileNode; path: string[] }[] {
   const result: { node: FileNode; path: string[] }[] = [];
   const stack: { node: FileNode; path: string[] }[] = [{ node: root, path: [root.id] }];
@@ -156,7 +156,7 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
 export function getRecursiveContent(
   root: FileNode,
   path: string[] | undefined,
-  level?: Level,
+  level?: Level
 ): FileNode[] {
   const startNode = getNodeByPath(root, path) || root;
   const startPath = path && path.length ? [...path] : [root.id];
@@ -193,7 +193,7 @@ export function deleteNode(
   root: FileNode,
   parentPath: string[] | undefined,
   nodeId: string,
-  _levelIndex?: number,
+  _levelIndex?: number
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
@@ -212,7 +212,7 @@ export function deleteNode(
 export function addNode(
   root: FileNode,
   parentPath: string[] | undefined,
-  node: FileNode,
+  node: FileNode
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
@@ -231,7 +231,7 @@ export function renameNode(
   parentPath: string[] | undefined,
   nodeId: string,
   newName: string,
-  _levelIndex?: number,
+  _levelIndex?: number
 ): Result<FileNode, FsError> {
   try {
     const newRoot = cloneFS(root);
@@ -248,8 +248,14 @@ export function renameNode(
 export function createPath(
   root: FileNode,
   currentPath: string[] | undefined,
-  input: string,
-): { fs: FileNode; error?: string | null; collision?: boolean; collisionNode?: FileNode | null } {
+  input: string
+): {
+  fs: FileNode;
+  error?: string | null;
+  collision?: boolean;
+  collisionNode?: FileNode | null;
+  newNodeId?: string;
+} {
   const newRoot = cloneFS(root);
   const parent = currentPath && currentPath.length ? getNodeByPath(newRoot, currentPath) : newRoot;
   if (!parent) return { fs: newRoot, error: 'NotFound', collision: false, collisionNode: null };
@@ -266,26 +272,27 @@ export function createPath(
   // Allow a file and a directory to share the same name in the same parent.
   // Collision should only occur if an item with the same name AND same type exists.
   const sameTypeExists = parent.children.find(
-    (c) => c.name === normalizedName && c.type === (isDir ? 'dir' : 'file'),
+    (c) => c.name === normalizedName && c.type === (isDir ? 'dir' : 'file')
   );
   if (sameTypeExists) {
     return { fs: newRoot, error: null, collision: true, collisionNode: sameTypeExists };
   }
+  const newId = id();
   const node: FileNode = {
-    id: id(),
+    id: newId,
     name: normalizedName,
     type: isDir ? 'dir' : 'file',
     parentId: parent.id,
   };
   if (node.type === 'dir') node.children = [];
   parent.children.push(node);
-  return { fs: newRoot, error: null, collision: false, collisionNode: null };
+  return { fs: newRoot, error: null, collision: false, collisionNode: null, newNodeId: newId };
 }
 
 export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],
-  inputPath: string,
+  inputPath: string
 ): {
   fs: FileNode;
   targetNode: FileNode | undefined;
@@ -342,11 +349,11 @@ export function resolveAndCreatePath(
     if (currentWorkingNode.children) {
       if (wantDir) {
         sameTypeChild = currentWorkingNode.children.find(
-          (c) => c.name === segment && (c.type === 'dir' || c.type === 'archive'),
+          (c) => c.name === segment && (c.type === 'dir' || c.type === 'archive')
         );
       } else {
         sameTypeChild = currentWorkingNode.children.find(
-          (c) => c.name === segment && c.type === 'file',
+          (c) => c.name === segment && c.type === 'file'
         );
       }
       anySameName = currentWorkingNode.children.find((c) => c.name === segment);
@@ -417,7 +424,7 @@ export function resolveAndCreatePath(
 export function addNodeWithConflictResolution(
   root: FileNode,
   parentPath: string[] | undefined,
-  node: FileNode,
+  node: FileNode
 ): Result<FileNode, FsError> {
   let newRoot = cloneFS(root);
   const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
@@ -449,7 +456,7 @@ export function isProtected(
   currentPath: string[] | undefined,
   node: FileNode,
   level: Level,
-  action?: string,
+  action?: string
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === 'delete') {
@@ -461,7 +468,7 @@ export function isProtected(
       for (const n of names) {
         if (!current || !current.children) return undefined;
         current = current.children.find(
-          (c) => c.name === n && (c.type === 'dir' || c.type === 'archive'),
+          (c) => c.name === n && (c.type === 'dir' || c.type === 'archive')
         );
         if (!current) return undefined;
       }

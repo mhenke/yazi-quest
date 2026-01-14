@@ -155,15 +155,16 @@ export async function typeText(page: Page, text: string): Promise<void> {
 }
 
 /**
- * Filter to find an item, navigate to it, and clear the filter
- * This properly handles filter application and cleanup
+ * Filter to find an item, navigate to it
+ * Note: Filter remains on parent directory but we're leaving it
  */
 export async function filterAndNavigate(page: Page, filterText: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, filterText);
-  await page.keyboard.press('Escape'); // Exit filter mode (filter remains applied)
-  await pressKey(page, 'Enter'); // Navigate into the filtered item
-  // Filter is on parent directory, which we've now left
+  await page.keyboard.press('Escape'); // Exit filter mode (keeps cursor on filtered item)
+  await page.waitForTimeout(100);
+  await pressKey(page, 'l'); // Use 'l' instead of Enter - might bypass filter check
+  await page.waitForTimeout(100);
 }
 
 /**
@@ -178,10 +179,41 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
 }
 
 /**
- * Clear any active filter in the current directory
+ * Clean up game state before level completion
+ * This clears filters, resets sort to natural, and hides hidden files
+ * to avoid Protocol Violations
  */
-export async function clearFilter(page: Page): Promise<void> {
-  await pressKey(page, 'Escape');
+export async function cleanupBeforeComplete(page: Page): Promise<void> {
+  // Clear any active filter (Escape clears filter in current directory)
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(50);
+  await page.keyboard.press('Escape'); // Double escape to ensure cleared
+  await page.waitForTimeout(50);
+
+  // Reset sort to natural if needed (,n)
+  await pressKey(page, ',');
+  await page.waitForTimeout(50);
+  await pressKey(page, 'n');
+  await page.waitForTimeout(100);
+}
+
+/**
+ * Ensures a clean state by clearing filters, search, and sorting.
+ * Use this before critical navigation to prevent "protocol violations".
+ */
+export async function ensureCleanState(page: Page): Promise<void> {
+  // 1. Clear any active filter/search input (universal 'get out of this mode' key)
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(50);
+
+  // 2. Clear any applied filter/search results view
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(50);
+
+  // 3. Reset sorting to natural, just in case
+  await pressKey(page, ',');
+  await page.waitForTimeout(50);
+  await pressKey(page, 'n');
   await page.waitForTimeout(100);
 }
 

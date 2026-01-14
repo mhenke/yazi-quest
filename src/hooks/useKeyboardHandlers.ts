@@ -37,9 +37,21 @@ export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  direction: 'forward' | 'backward' = 'backward'
 ): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
   if (currentDirNode && gameState.filters[currentDirNode.id]) {
+    if (direction === 'forward') {
+      // When navigating INTO a subdirectory, clear the filter and allow navigation
+      e.preventDefault();
+      setGameState((prev) => {
+        const newFilters = { ...prev.filters };
+        delete newFilters[currentDirNode.id];
+        return { ...prev, filters: newFilters };
+      });
+      return false; // Allow navigation after clearing filter
+    }
+    // Backward navigation with filter active - show warning
     e.preventDefault();
     setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
     return true; // Navigation blocked
@@ -47,8 +59,21 @@ export const checkFilterAndBlockNavigation = (
   return false; // Navigation allowed
 };
 
+export const checkSearchAndBlockNavigation = (
+  e: KeyboardEvent,
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>
+): boolean => {
+  if (gameState.searchQuery && gameState.searchResults.length > 0) {
+    e.preventDefault();
+    setGameState((prev) => ({ ...prev, mode: 'search-warning' }));
+    return true; // Navigation blocked
+  }
+  return false; // Navigation allowed
+};
+
 export const useKeyboardHandlers = (
-  showNotification: (message: string, duration?: number) => void,
+  showNotification: (message: string, duration?: number) => void
 ) => {
   const handleSortModeKeyDown = useCallback(
     (e: KeyboardEvent, setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
@@ -148,14 +173,14 @@ export const useKeyboardHandlers = (
         }));
       }
     },
-    [],
+    []
   );
 
   const confirmDelete = useCallback(
     (
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       visibleItems: FileNode[],
-      currentLevelParam: Level,
+      currentLevelParam: Level
     ) => {
       setGameState((prev) => {
         let newFs = prev.fs;
@@ -169,7 +194,7 @@ export const useKeyboardHandlers = (
               prev.currentPath,
               node,
               currentLevelParam,
-              'delete',
+              'delete'
             );
             if (protection) {
               errorMsg = protection;
@@ -202,14 +227,14 @@ export const useKeyboardHandlers = (
         };
       });
     },
-    [],
+    []
   );
 
   const cancelDelete = useCallback(
     (setGameState: React.Dispatch<React.SetStateAction<GameState>>) => {
       setGameState((prev) => ({ ...prev, mode: 'normal', pendingDeleteIds: [] }));
     },
-    [],
+    []
   );
 
   const handleConfirmDeleteModeKeyDown = useCallback(
@@ -217,7 +242,7 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       visibleItems: FileNode[],
-      currentLevelParam: Level,
+      currentLevelParam: Level
     ) => {
       if (e.key === 'y' || e.key === 'Enter') {
         confirmDelete(setGameState, visibleItems, currentLevelParam);
@@ -225,7 +250,7 @@ export const useKeyboardHandlers = (
         cancelDelete(setGameState);
       }
     },
-    [confirmDelete, cancelDelete],
+    [confirmDelete, cancelDelete]
   );
 
   const handleOverwriteConfirmKeyDown = useCallback(
@@ -239,7 +264,7 @@ export const useKeyboardHandlers = (
             newFs,
             prev.currentPath,
             prev.pendingOverwriteNode.id,
-            prev.levelIndex,
+            prev.levelIndex
           );
           if (!deleteRes.ok)
             return {
@@ -285,7 +310,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({ ...prev, mode: 'normal', pendingOverwriteNode: null }));
       }
     },
-    [],
+    []
   );
 
   const handleGCommandKeyDown = useCallback(
@@ -293,7 +318,7 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       setGameState: React.Dispatch<React.SetStateAction<GameState>>,
       gameState: GameState,
-      currentLevel: Level,
+      currentLevel: Level
     ) => {
       console.log('handleGCommandKeyDown', e.key, gameState);
       if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
@@ -379,6 +404,10 @@ export const useKeyboardHandlers = (
             usedPreviewUp: false,
           }));
         } else {
+          // Check for active search - block navigation
+          if (checkSearchAndBlockNavigation(e, gameState, setGameState)) {
+            return;
+          }
           // Check for protection
           const targetNode = getNodeByPath(gameState.fs, target.path);
           if (targetNode) {
@@ -387,7 +416,7 @@ export const useKeyboardHandlers = (
               gameState.currentPath,
               targetNode,
               currentLevel,
-              'jump',
+              'jump'
             );
             if (protection) {
               setGameState((prev) => ({
@@ -422,7 +451,7 @@ export const useKeyboardHandlers = (
         setGameState((prev) => ({ ...prev, mode: 'normal' }));
       }
     },
-    [],
+    []
   );
 
   const handleNormalModeKeyDown = useCallback(
@@ -434,7 +463,7 @@ export const useKeyboardHandlers = (
       parent: FileNode | null,
       currentItem: FileNode | null,
       currentLevel: Level,
-      advanceLevel: () => void,
+      advanceLevel: () => void
     ) => {
       // Level 13: Async Distributed Node Switching
       if (currentLevel.id === 13) {
@@ -575,7 +604,7 @@ export const useKeyboardHandlers = (
         case 'l':
         case 'Enter':
         case 'ArrowRight': {
-          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
+          if (checkFilterAndBlockNavigation(e, gameState, setGameState, 'forward')) {
             return;
           }
           const allComplete = currentLevel.tasks.every((t) => t.completed);
@@ -590,7 +619,7 @@ export const useKeyboardHandlers = (
               gameState.currentPath,
               currentItem,
               currentLevel,
-              'enter',
+              'enter'
             );
             if (protection) {
               showNotification(`🔒 ${protection}`, 4000);
@@ -678,7 +707,7 @@ export const useKeyboardHandlers = (
             setGameState((prev) => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
             showNotification(
               getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
-              2000,
+              2000
             );
           } else {
             e.preventDefault();
@@ -706,7 +735,7 @@ export const useKeyboardHandlers = (
             setGameState((prev) => ({ ...prev, selectedIds: inverted, usedCtrlR: true }));
             showNotification(
               getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
-              2000,
+              2000
             );
           } else if (gameState.selectedIds.length > 1) {
             setGameState((prev) => ({
@@ -720,7 +749,7 @@ export const useKeyboardHandlers = (
               gameState.currentPath,
               currentItem,
               currentLevel,
-              'rename',
+              'rename'
             );
             if (protection) {
               showNotification(`🔒 PROTECTED: ${protection}`, 4000);
@@ -733,7 +762,7 @@ export const useKeyboardHandlers = (
         case 'y':
           if (gameState.clipboard) {
             const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
             );
             if (isHoneypot) {
               showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
@@ -741,13 +770,12 @@ export const useKeyboardHandlers = (
             }
           }
           if (gameState.selectedIds.length > 0) {
-            const nodes = getVisibleItems(gameState).filter((n) =>
-              gameState.selectedIds.includes(n.id),
-            );
+            // Use items (passed from caller - already handles search mode)
+            const nodes = items.filter((n) => gameState.selectedIds.includes(n.id));
             if (e.key === 'x') {
               const protectedItem = nodes
                 .map((node) =>
-                  isProtected(gameState.fs, gameState.currentPath, node, currentLevel, 'cut'),
+                  isProtected(gameState.fs, gameState.currentPath, node, currentLevel, 'cut')
                 )
                 .find((res) => res !== null);
               if (protectedItem) {
@@ -774,7 +802,7 @@ export const useKeyboardHandlers = (
                 gameState.currentPath,
                 currentItem,
                 currentLevel,
-                'cut',
+                'cut'
               );
               if (protection) {
                 showNotification(`🔒 PROTECTED: ${protection}`, 4000);
@@ -821,7 +849,7 @@ export const useKeyboardHandlers = (
         case 'p':
           if (gameState.clipboard) {
             const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
             );
             if (isHoneypot) {
               showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
@@ -840,7 +868,7 @@ export const useKeyboardHandlers = (
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex,
+                      gameState.levelIndex
                     );
                     if (!deleteResult.ok) {
                       if ((deleteResult as { ok: false; error: FsError }).error !== 'NotFound') {
@@ -856,7 +884,7 @@ export const useKeyboardHandlers = (
                   const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
                     newFs,
                     gameState.currentPath,
-                    node,
+                    node
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -892,7 +920,7 @@ export const useKeyboardHandlers = (
         case 'P':
           if (e.shiftKey && gameState.clipboard) {
             const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key',
+              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
             );
             if (isHoneypot) {
               showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
@@ -907,7 +935,7 @@ export const useKeyboardHandlers = (
 
                 for (const node of gameState.clipboard.nodes) {
                   const existingNode = currentDir.children?.find(
-                    (c) => c.name === node.name && c.type === node.type,
+                    (c) => c.name === node.name && c.type === node.type
                   );
 
                   if (existingNode) {
@@ -915,7 +943,7 @@ export const useKeyboardHandlers = (
                       newFs,
                       gameState.currentPath,
                       existingNode.id,
-                      gameState.levelIndex,
+                      gameState.levelIndex
                     );
                     if (!deleteResult.ok) {
                       error = (deleteResult as { ok: false; error: FsError }).error;
@@ -928,7 +956,7 @@ export const useKeyboardHandlers = (
                   const addResult: Result<FileNode, FsError> = addNode(
                     newFs,
                     gameState.currentPath,
-                    node,
+                    node
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -942,7 +970,7 @@ export const useKeyboardHandlers = (
                       newFs,
                       gameState.clipboard.originalPath,
                       node.id,
-                      gameState.levelIndex,
+                      gameState.levelIndex
                     );
                     if (!deleteResult.ok) {
                       error = (deleteResult as { ok: false; error: FsError }).error;
@@ -985,7 +1013,7 @@ export const useKeyboardHandlers = (
               gameState.currentPath,
               currentItem,
               currentLevel,
-              'info',
+              'info'
             );
             if (protection) {
               showNotification(`🔒 ${protection}`, 4000);
@@ -1144,7 +1172,7 @@ export const useKeyboardHandlers = (
         showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 2000);
       }
     },
-    [showNotification],
+    [showNotification]
   );
 
   return {
