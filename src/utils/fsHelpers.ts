@@ -456,7 +456,8 @@ export function isProtected(
   currentPath: string[] | undefined,
   node: FileNode,
   level: Level,
-  action?: string
+  action?: string,
+  completedTaskIds?: Record<number, string[]>
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === 'delete') {
@@ -480,12 +481,10 @@ export function isProtected(
         const namePath = entry.path;
         const requiredTask = entry.requiresTaskId;
 
-        // If the rule requires a task to be completed on the Level definition,
-        // check that the task's static `completed` flag is true. This mirrors
-        // existing level-based checks in this file which inspect `level.tasks`.
+        // If the rule requires a task to be completed, check runtime state
         if (requiredTask) {
-          const task = level.tasks?.find((t) => t.id === requiredTask);
-          if (!task?.completed) continue;
+          const levelTaskIds = completedTaskIds?.[level.id] || [];
+          if (!levelTaskIds.includes(requiredTask)) continue;
         }
 
         const targetRoot = getNodeByNamePath(root, namePath);

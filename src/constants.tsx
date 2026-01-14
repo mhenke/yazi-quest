@@ -2976,10 +2976,20 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'acquire-legacy',
-        description: 'Yank 2 LEGACY files (> 30 days old) — AVOID honeypots (< 7 days)!',
+        id: 'sort-by-modified',
+        description: 'Sort results by modified time to separate honeypots from legacy',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('search-services')) return false;
+          // Must have sorted by modified time
+          return c.sortBy === 'modified';
+        },
+        completed: false,
+      },
+      {
+        id: 'acquire-legacy',
+        description: 'Yank 2 LEGACY files (oldest) — recent files are honeypots!',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('sort-by-modified')) return false;
 
           // Must have yanked 2 files
           if (!c.clipboard || c.clipboard.action !== 'yank' || c.clipboard.nodes.length !== 2)
@@ -3019,7 +3029,7 @@ export const LEVELS: Level[] = [
     description:
       'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
     initialPath: null,
-    hint: 'Stabilize the daemon by integrating the correct camouflage signature and resolving configuration conflicts. The system is reacting to your presence—move with purpose.',
+    hint: 'Cut systemd-core from ~/workspace and paste it into /daemons. Watch for threat files that may have spawned—delete them first if present.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
@@ -3817,9 +3827,10 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         path: ['home', 'guest'],
       },
-      // Allow deleting .config explicitly
+      // Allow deleting .config ONLY after visible dirs are deleted
       {
         path: ['home', 'guest', '.config'],
+        requiresTaskId: 'delete-visible',
       },
     ],
     tasks: [

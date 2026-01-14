@@ -194,7 +194,8 @@ export const useKeyboardHandlers = (
               prev.currentPath,
               node,
               currentLevelParam,
-              'delete'
+              'delete',
+              prev.completedTaskIds
             );
             if (protection) {
               errorMsg = protection;
