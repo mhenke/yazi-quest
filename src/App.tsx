@@ -366,7 +366,19 @@ export default function App() {
     () =>
       measure('visibleItems', () => {
         if (gameState.searchQuery) {
-          return gameState.searchResults;
+          // Apply sorting to search results
+          let results = gameState.searchResults;
+
+          // Apply filter on search results if active (search -> filter chaining)
+          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+          const filter = currentDir ? gameState.filters[currentDir.id] : null;
+          if (filter) {
+            results = results.filter((item) =>
+              item.name.toLowerCase().includes(filter.toLowerCase())
+            );
+          }
+
+          return sortNodes(results, gameState.sortBy, gameState.sortDirection);
         }
         return getVisibleItems(gameState);
       }),

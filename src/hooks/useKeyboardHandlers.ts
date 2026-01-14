@@ -490,14 +490,34 @@ export const useKeyboardHandlers = (
       switch (e.key) {
         case 'j':
         case 'ArrowDown':
-          setGameState((prev) => ({
-            ...prev,
-            cursorIndex: prev.cursorIndex >= items.length - 1 ? 0 : prev.cursorIndex + 1,
-            previewScroll: 0,
-            usedDown: true,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
+          setGameState((prev) => {
+            const newCursorIndex = prev.cursorIndex >= items.length - 1 ? 0 : prev.cursorIndex + 1;
+            const newItem = items[newCursorIndex];
+
+            // Level 11 scouting: track file if info panel is open
+            let updatedLevel11Flags = prev.level11Flags;
+            if (currentLevel.id === 11 && prev.showInfoPanel && newItem) {
+              const scouted = prev.level11Flags?.scoutedFiles || [];
+              if (!scouted.includes(newItem.id)) {
+                updatedLevel11Flags = {
+                  ...prev.level11Flags,
+                  scoutedFiles: [...scouted, newItem.id],
+                  triggeredHoneypot: prev.level11Flags?.triggeredHoneypot || false,
+                  selectedModern: prev.level11Flags?.selectedModern || false,
+                };
+              }
+            }
+
+            return {
+              ...prev,
+              cursorIndex: newCursorIndex,
+              previewScroll: 0,
+              usedDown: true,
+              usedPreviewDown: false,
+              usedPreviewUp: false,
+              level11Flags: updatedLevel11Flags,
+            };
+          });
           break;
         case 'k':
         case 'ArrowUp':
@@ -1020,18 +1040,42 @@ export const useKeyboardHandlers = (
               return;
             }
           }
-          setGameState((prev) => ({ ...prev, showInfoPanel: !prev.showInfoPanel }));
+          setGameState((prev) => {
+            const newShowInfoPanel = !prev.showInfoPanel;
+
+            // Level 11 scouting: track file when opening info panel
+            let updatedLevel11Flags = prev.level11Flags;
+            if (currentLevel.id === 11 && newShowInfoPanel && currentItem) {
+              const scouted = prev.level11Flags?.scoutedFiles || [];
+              if (!scouted.includes(currentItem.id)) {
+                updatedLevel11Flags = {
+                  ...prev.level11Flags,
+                  scoutedFiles: [...scouted, currentItem.id],
+                  triggeredHoneypot: prev.level11Flags?.triggeredHoneypot || false,
+                  selectedModern: prev.level11Flags?.selectedModern || false,
+                };
+              }
+            }
+
+            return {
+              ...prev,
+              showInfoPanel: newShowInfoPanel,
+              level11Flags: updatedLevel11Flags,
+            };
+          });
           break;
         case 's':
           e.preventDefault();
           setGameState((prev) => {
             showNotification(getNarrativeAction('s') || 'Recursive search');
+            // Clear filters when entering search - search rescans full filesystem
             return {
               ...prev,
               mode: 'search',
               inputBuffer: '',
               searchQuery: null,
               searchResults: [],
+              filters: {}, // Search discards prior filter per Yazi behavior
             };
           });
           break;

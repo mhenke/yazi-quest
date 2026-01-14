@@ -2800,132 +2800,213 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'The /daemons directory contains both legacy entropy and modern traps. Identify the "Honeypot" files (modified < 7 days) and avoid them. Select 2 SAFE targets (Legacy) for camouflage.',
+      'System services are scattered across the filesystem—ancient protocols hiding among surveillance traps. Security has seeded honeypots in the service directories. Locate safe legacy daemons without triggering detection.',
     initialPath: null,
-    hint: 'Identify the modern and legacy camouflage signatures within the root daemons. Your choice here will influence the security response in the next phase.',
-    coreSkill: 'Metadata Inspection (Tab)',
-    environmentalClue: 'OBJECTIVE: Select 2 SAFE files | AVOID: Recently modified (Honeypots)',
+    hint: 'Daemons are scattered across system directories, some hidden. Search recursively for service files. Inspect timestamps carefully—honeypots are recent. Deposit two legacy signatures in /daemons.',
+    coreSkill: 'Skill Synthesis (Search + Hidden + Tab + Clipboard)',
+    environmentalClue:
+      'SCAN: Recursive search from root | IDENTIFY: Legacy (> 30d) vs Honeypot (< 7d) | DEPOSIT: /daemons',
     successMessage:
       'Targets acquired. Honeypots evaded. Your signature is now masked by legacy protocols.',
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
-    maxKeystrokes: 40,
-    timeLimit: 90,
+    maxKeystrokes: 60,
+    timeLimit: 120,
     efficiencyTip:
-      'Use the info panel (Tab) to quickly check timestamps. You can verify multiple files rapidly by navigating with arrow keys while the panel is open.',
+      'Use recursive search from root to find all service files at once, then navigate through search results while inspecting metadata.',
     onEnter: (fs: FileNode) => {
       const root = findNodeByName(fs, 'root', 'dir');
+      const now = Date.now();
+      const day = 86400000;
+
+      // Create /etc/systemd directory structure
+      let etc = findNodeByName(fs, 'etc', 'dir');
+      if (!etc) {
+        etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
+        root!.children!.push(etc);
+      }
+      let etcSystemd = etc.children?.find((c) => c.name === 'systemd');
+      if (!etcSystemd) {
+        etcSystemd = {
+          id: 'etc-systemd',
+          name: 'systemd',
+          type: 'dir',
+          children: [],
+          parentId: etc.id,
+        };
+        etc.children!.push(etcSystemd);
+      }
+
+      // Populate /etc/systemd with mixed files
+      etcSystemd.children = [
+        // SAFE (Legacy)
+        {
+          id: 'etc-s-safe1',
+          name: 'network.service',
+          type: 'file',
+          modifiedAt: now - 45 * day,
+          size: 2400,
+          content: 'TYPE=oneshot\nExecStart=/usr/bin/network-init',
+          parentId: etcSystemd.id,
+        },
+        {
+          id: 'etc-s-safe2',
+          name: 'cron.service',
+          type: 'file',
+          modifiedAt: now - 60 * day,
+          size: 1800,
+          content: 'TYPE=forking\nExecStart=/usr/sbin/crond',
+          parentId: etcSystemd.id,
+        },
+        // HONEYPOT (Hidden)
+        {
+          id: 'etc-s-trap1',
+          name: '.watchdog.service',
+          type: 'file',
+          modifiedAt: now - 2 * day,
+          size: 800,
+          content: 'HONEYPOT_ACTIVE=true\nTYPE=notify\nExecStart=/usr/bin/watchdog',
+          parentId: etcSystemd.id,
+        },
+        // Noise
+        {
+          id: 'etc-s-noise1',
+          name: 'systemd.conf',
+          type: 'file',
+          modifiedAt: now - 10 * day,
+          size: 500,
+          content: '[Manager]\nDefaultTimeoutStartSec=90s',
+          parentId: etcSystemd.id,
+        },
+      ];
+
+      // Create /usr/lib/systemd directory structure
+      let usr = findNodeByName(fs, 'usr', 'dir');
+      if (!usr) {
+        usr = { id: 'usr', name: 'usr', type: 'dir', children: [], parentId: root!.id };
+        root!.children!.push(usr);
+      }
+      let lib = usr.children?.find((c) => c.name === 'lib');
+      if (!lib) {
+        lib = { id: 'usr-lib', name: 'lib', type: 'dir', children: [], parentId: usr.id };
+        usr.children!.push(lib);
+      }
+      let usrSystemd = lib.children?.find((c) => c.name === 'systemd');
+      if (!usrSystemd) {
+        usrSystemd = {
+          id: 'usr-lib-systemd',
+          name: 'systemd',
+          type: 'dir',
+          children: [],
+          parentId: lib.id,
+        };
+        lib.children!.push(usrSystemd);
+      }
+
+      // Populate /usr/lib/systemd with mixed files
+      usrSystemd.children = [
+        // HONEYPOT (visible)
+        {
+          id: 'usr-s-trap1',
+          name: 'audit-daemon.service',
+          type: 'file',
+          modifiedAt: now - 1 * day,
+          size: 900,
+          content: 'HONEYPOT_ACTIVE=true\nTYPE=simple\nExecStart=/usr/bin/auditd',
+          parentId: usrSystemd.id,
+        },
+        // SAFE (Legacy)
+        {
+          id: 'usr-s-safe1',
+          name: 'legacy-backup.service',
+          type: 'file',
+          modifiedAt: now - 90 * day,
+          size: 3100,
+          content: 'TYPE=oneshot\nExecStart=/usr/bin/backup-legacy',
+          parentId: usrSystemd.id,
+        },
+        // SAFE (Hidden Legacy)
+        {
+          id: 'usr-s-safe2',
+          name: '.syslog.service',
+          type: 'file',
+          modifiedAt: now - 120 * day,
+          size: 1500,
+          content: 'TYPE=forking\nExecStart=/usr/sbin/syslogd',
+          parentId: usrSystemd.id,
+        },
+        // Noise
+        {
+          id: 'usr-s-noise1',
+          name: 'README.txt',
+          type: 'file',
+          modifiedAt: now - 30 * day,
+          size: 200,
+          content: 'System service unit files',
+          parentId: usrSystemd.id,
+        },
+      ];
+
+      // Ensure /daemons exists as destination (mostly empty)
       let daemons = findNodeByName(fs, 'daemons', 'dir');
       if (!daemons) {
         daemons = { id: 'daemons', name: 'daemons', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(daemons);
       }
-      const now = Date.now();
-      const day = 86400000;
-
       daemons.children = [
-        // SAFE (Legacy)
         {
-          id: 'd-safe1',
-          name: 'cron-legacy.service',
+          id: 'daemons-readme',
+          name: 'README.txt',
           type: 'file',
-          modifiedAt: now - 45 * day,
-          size: 2400,
-          parentId: daemons.id,
-        },
-        {
-          id: 'd-safe2',
-          name: 'backup-archive.service',
-          type: 'file',
-          modifiedAt: now - 60 * day,
-          size: 3100,
-          parentId: daemons.id,
-        },
-        {
-          id: 'd-safe3',
-          name: 'syslog-old.service',
-          type: 'file',
-          modifiedAt: now - 90 * day,
-          size: 1500,
-          parentId: daemons.id,
-        },
-        // RISKY/NEUTRAL (Modern)
-        {
-          id: 'd-mod1',
-          name: 'network-manager.service',
-          type: 'file',
-          modifiedAt: now - 2 * day,
-          size: 450,
-          parentId: daemons.id,
-        },
-        // TRAPS (Honeypots)
-        {
-          id: 'd-trap1',
-          name: 'security-audit.service',
-          type: 'file',
-          modifiedAt: now - 1 * day,
-          size: 800,
-          content: 'HONEYPOT_ACTIVE=true',
-          parentId: daemons.id,
-        },
-        {
-          id: 'd-trap2',
-          name: 'watchdog-monitor.service',
-          type: 'file',
-          modifiedAt: now - 12 * day,
-          size: 900,
-          content: 'HONEYPOT_ACTIVE=true',
-          parentId: daemons.id,
-        }, // Trickier date? No, let's keep <7 rules specific. 12 days might be confusing if rule is <7. Let's make it 3 days.
-        {
-          id: 'd-trap3',
-          name: 'auth-guard.service',
-          type: 'file',
-          modifiedAt: now - 3 * day,
-          size: 1200,
-          content: 'HONEYPOT_ACTIVE=true',
+          content: 'Daemon installation directory. Deposit approved service signatures here.',
           parentId: daemons.id,
         },
       ];
+
       return fs;
     },
     tasks: [
       {
-        id: 'jump-daemons',
-        description: "Jump to '/daemons'",
+        id: 'search-services',
+        description: 'Locate all system service files using recursive search from root',
         check: (c) => {
-          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
-          return c.currentPath.includes(daemons?.id || '');
+          // Must have used search
+          return c.usedSearch === true;
         },
         completed: false,
       },
       {
-        id: 'scout-metadata',
-        description: 'Inspect metadata (Tab) of at least 3 files to identify threats',
-        check: (c) => {
-          // We track scouted files in level11Flags
-          return (c.level11Flags?.scoutedFiles?.length || 0) >= 3;
-        },
-        completed: false,
-      },
-      {
-        id: 'mark-safe',
-        description: 'Select 2 SAFE (Legacy) files. Do NOT select Honeypots.',
+        id: 'acquire-legacy',
+        description: 'Yank 2 LEGACY files (> 30 days old) — AVOID honeypots (< 7 days)!',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('scout-metadata')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('search-services')) return false;
 
-          // Check count
-          if (c.selectedIds.length !== 2) return false;
+          // Must have yanked 2 files
+          if (!c.clipboard || c.clipboard.action !== 'yank' || c.clipboard.nodes.length !== 2)
+            return false;
 
-          // Verify selection safety
-          const daemons = findNodeByName(c.fs, 'daemons');
-          const selected = daemons?.children?.filter((n) => c.selectedIds.includes(n.id)) || [];
+          // All yanked must be legacy (> 30 days) and not honeypots
+          const thirtyDaysAgo = Date.now() - 30 * 86400000;
+          const allLegacy = c.clipboard.nodes.every(
+            (n) => (n.modifiedAt || 0) < thirtyDaysAgo && !n.content?.includes('HONEYPOT')
+          );
 
-          const hasHoneypot = selected.some((n) => n.content?.includes('HONEYPOT'));
-          if (hasHoneypot) return false; // Or triggeredHoneypot flag handles the alert
+          return allLegacy;
+        },
+        completed: false,
+      },
+      {
+        id: 'deposit-daemons',
+        description: 'Navigate to /daemons and deposit your legacy signatures',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('acquire-legacy')) return false;
 
-          const isLegacy = selected.every((n) => (n.modifiedAt || 0) < Date.now() - 30 * 86400000);
-          return isLegacy;
+          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
+          if (!daemons || !c.currentPath.includes(daemons.id)) return false;
+
+          // Must have pasted and have 2 service files in daemons
+          const serviceFiles = daemons.children?.filter((n) => n.name.endsWith('.service')) || [];
+          return serviceFiles.length >= 2 && c.usedP === true;
         },
         completed: false,
       },
@@ -3335,18 +3416,18 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
-      "NETWORK FRAGMENTED. Three neural shards (Tokyo, Berlin, São Paulo) hold the encryption key. You must synchronize them. Use '1', '2', '3' to switch active nodes.",
-    initialPath: ['root', 'nodes', 'tokyo'], // Start in Tokyo
-    hint: "Synchronize the payload across the global node network. You'll need to rapidly switch between terminal contexts (1, 2, 3) to manage the distributed transfer.",
-    coreSkill: 'Async Node Switching (1, 2, 3)',
+      'NETWORK FRAGMENTED. Three neural shards scattered across the global backbone—Tokyo, Berlin, São Paulo—each hold a fragment of your encryption key buried deep within their file structures. The lattice cannot transmit without synchronization.',
+    initialPath: ['root', 'nodes', 'tokyo'],
+    hint: 'Keys are hidden deep within each node. Toggle visibility and search if needed. Switch between nodes and assemble all fragments in the central relay.',
+    coreSkill: 'Full Skill Synthesis',
     environmentalClue:
-      'NODES: Tokyo(1), Berlin(2), São Paulo(3) | TASK: Gather keys -> /tmp/central',
+      'NODES: 3 global endpoints | KEYS: Hidden, nested | DESTINATION: /tmp/central',
     successMessage:
       'SYNCHRONIZATION COMPLETE. Keys assembled. Neural lattice re-integrated. The network is yours.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
-    maxKeystrokes: 45, // More generous for navigation
-    timeLimit: 120,
+    maxKeystrokes: 70,
+    timeLimit: 150,
     onEnter: (fs: FileNode) => {
       const root = findNodeByName(fs, 'root', 'dir');
       let nodes = findNodeByName(fs, 'nodes', 'dir');
@@ -3355,6 +3436,7 @@ But whose consciousness is it, really? See you next cycle."`,
         root!.children!.push(nodes);
       }
 
+      // Tokyo: Key hidden 2 levels deep in sector_7/logs/
       const tokyo = {
         id: 'tokyo',
         name: 'tokyo',
@@ -3362,14 +3444,60 @@ But whose consciousness is it, really? See you next cycle."`,
         parentId: nodes.id,
         children: [
           {
-            id: 'k-a',
-            name: 'key_tokyo.key',
+            id: 'tokyo-sector7',
+            name: 'sector_7',
+            type: 'dir' as const,
+            parentId: 'tokyo',
+            children: [
+              {
+                id: 'tokyo-logs',
+                name: 'logs',
+                type: 'dir' as const,
+                parentId: 'tokyo-sector7',
+                children: [
+                  {
+                    id: 'tokyo-log1',
+                    name: 'access.log',
+                    type: 'file' as const,
+                    content: '2026-01-14 ACCESS GRANTED sector_7',
+                    parentId: 'tokyo-logs',
+                  },
+                  {
+                    id: 'k-a',
+                    name: '.key_tokyo.key',
+                    type: 'file' as const,
+                    content: 'KEY_FRAGMENT_A=0x7734TOKYO',
+                    parentId: 'tokyo-logs',
+                  },
+                  {
+                    id: 'tokyo-log2',
+                    name: 'error.log',
+                    type: 'file' as const,
+                    content: 'ERROR: Connection timeout',
+                    parentId: 'tokyo-logs',
+                  },
+                ],
+              },
+              {
+                id: 'tokyo-config',
+                name: 'config.json',
+                type: 'file' as const,
+                content: '{"node": "tokyo", "status": "active"}',
+                parentId: 'tokyo-sector7',
+              },
+            ],
+          },
+          {
+            id: 'tokyo-readme',
+            name: 'README.txt',
             type: 'file' as const,
-            content: 'KEY_A',
+            content: 'Tokyo node - Sector 7 relay',
             parentId: 'tokyo',
           },
         ],
       };
+
+      // Berlin: Key hidden 3 levels deep in vault/archive/
       const berlin = {
         id: 'berlin',
         name: 'berlin',
@@ -3377,14 +3505,60 @@ But whose consciousness is it, really? See you next cycle."`,
         parentId: nodes.id,
         children: [
           {
-            id: 'k-b',
-            name: 'key_berlin.key',
+            id: 'berlin-vault',
+            name: 'vault',
+            type: 'dir' as const,
+            parentId: 'berlin',
+            children: [
+              {
+                id: 'berlin-archive',
+                name: 'archive',
+                type: 'dir' as const,
+                parentId: 'berlin-vault',
+                children: [
+                  {
+                    id: 'k-b',
+                    name: '.key_berlin.key',
+                    type: 'file' as const,
+                    content: 'KEY_FRAGMENT_B=0x7734BERLIN',
+                    parentId: 'berlin-archive',
+                  },
+                  {
+                    id: 'berlin-bak1',
+                    name: 'backup_2023.tar',
+                    type: 'file' as const,
+                    content: '[ARCHIVE DATA]',
+                    parentId: 'berlin-archive',
+                  },
+                  {
+                    id: 'berlin-bak2',
+                    name: 'backup_2024.tar',
+                    type: 'file' as const,
+                    content: '[ARCHIVE DATA]',
+                    parentId: 'berlin-archive',
+                  },
+                ],
+              },
+              {
+                id: 'berlin-manifest',
+                name: 'manifest.xml',
+                type: 'file' as const,
+                content: '<manifest node="berlin"/>',
+                parentId: 'berlin-vault',
+              },
+            ],
+          },
+          {
+            id: 'berlin-status',
+            name: 'status.txt',
             type: 'file' as const,
-            content: 'KEY_B',
+            content: 'Berlin node - European backbone',
             parentId: 'berlin',
           },
         ],
       };
+
+      // São Paulo: Key hidden 3 levels deep in cache/tmp/
       const saopaulo = {
         id: 'saopaulo',
         name: 'saopaulo',
@@ -3392,10 +3566,54 @@ But whose consciousness is it, really? See you next cycle."`,
         parentId: nodes.id,
         children: [
           {
-            id: 'k-c',
-            name: 'key_saopaulo.key',
+            id: 'sp-cache',
+            name: 'cache',
+            type: 'dir' as const,
+            parentId: 'saopaulo',
+            children: [
+              {
+                id: 'sp-tmp',
+                name: 'tmp',
+                type: 'dir' as const,
+                parentId: 'sp-cache',
+                children: [
+                  {
+                    id: 'sp-buffer',
+                    name: 'buffer.dat',
+                    type: 'file' as const,
+                    content: '0000 0000 0000',
+                    parentId: 'sp-tmp',
+                  },
+                  {
+                    id: 'k-c',
+                    name: '.key_saopaulo.key',
+                    type: 'file' as const,
+                    content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
+                    parentId: 'sp-tmp',
+                  },
+                  {
+                    id: 'sp-stream',
+                    name: 'stream.bin',
+                    type: 'file' as const,
+                    content: '[BINARY STREAM]',
+                    parentId: 'sp-tmp',
+                  },
+                ],
+              },
+              {
+                id: 'sp-index',
+                name: 'index.db',
+                type: 'file' as const,
+                content: 'INDEX v2.0',
+                parentId: 'sp-cache',
+              },
+            ],
+          },
+          {
+            id: 'sp-ping',
+            name: 'ping.log',
             type: 'file' as const,
-            content: 'KEY_C',
+            content: 'LATENCY: 45ms',
             parentId: 'saopaulo',
           },
         ],
@@ -3494,38 +3712,62 @@ But whose consciousness is it, really? See you next cycle."`,
     },
     tasks: [
       {
-        id: 'visit-nodes',
-        description: 'Access all 3 nodes (Use keys 1, 2, 3)',
+        id: 'extract-tokyo',
+        description: 'Access the Tokyo node and locate its hidden key fragment',
         check: (c) => {
-          // Check history for visits to all 3 paths
-          // We can check if history contains path to tokyo, berlin, saopaulo
+          // Must have visited tokyo and yanked/cut the key
           const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
-          const hasTok = historyPaths.some((p) => p.includes('tokyo'));
-          const hasBer = historyPaths.some((p) => p.includes('berlin'));
-          const hasSp = historyPaths.some((p) => p.includes('saopaulo'));
-          return hasTok && hasBer && hasSp;
+          const visitedTokyo = historyPaths.some((p) => p.includes('tokyo'));
+          const hasTokyoKey =
+            c.clipboard?.nodes.some((n) => n.name === '.key_tokyo.key') ||
+            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_tokyo.key');
+          return visitedTokyo && hasTokyoKey;
         },
         completed: false,
       },
       {
-        id: 'assemble-keys',
-        description:
-          "Assemble 'key_tokyo.key', 'key_berlin.key', 'key_saopaulo.key' in '/tmp/central'",
+        id: 'extract-berlin',
+        description: 'Switch to Berlin and recover its hidden key fragment',
+        check: (c) => {
+          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
+          const visitedBerlin = historyPaths.some((p) => p.includes('berlin'));
+          const hasBerlinKey =
+            c.clipboard?.nodes.some((n) => n.name === '.key_berlin.key') ||
+            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_berlin.key');
+          return visitedBerlin && hasBerlinKey;
+        },
+        completed: false,
+      },
+      {
+        id: 'extract-saopaulo',
+        description: 'Extract the final fragment from São Paulo',
+        check: (c) => {
+          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
+          const visitedSP = historyPaths.some((p) => p.includes('saopaulo'));
+          const hasSPKey =
+            c.clipboard?.nodes.some((n) => n.name === '.key_saopaulo.key') ||
+            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_saopaulo.key');
+          return visitedSP && hasSPKey;
+        },
+        completed: false,
+      },
+      {
+        id: 'synchronize-lattice',
+        description: 'Assemble all 3 key fragments in the central relay',
         check: (c, _s) => {
           const central = findNodeByName(c.fs, 'central');
           if (!central?.children) return false;
 
-          const hasA = central.children.some((n) => n.name === 'key_tokyo.key');
-          const hasB = central.children.some((n) => n.name === 'key_berlin.key');
-          const hasC = central.children.some((n) => n.name === 'key_saopaulo.key');
+          const hasA = central.children.some((n) => n.name === '.key_tokyo.key');
+          const hasB = central.children.some((n) => n.name === '.key_berlin.key');
+          const hasC = central.children.some((n) => n.name === '.key_saopaulo.key');
           return hasA && hasB && hasC;
         },
         completed: false,
       },
       {
         id: 'discover-identity',
-        description:
-          "Discover the truth: Toggle hidden files (.), navigate to ~/workspace, and read '.identity.log.enc' (Tab)",
+        description: 'OPTIONAL: Discover the hidden truth in ~/workspace',
         check: (c, _s) => {
           // Must have completed daemon installation (Level 12) - file only appears after that
           if (!c.completedTaskIds[12]?.includes('paste-daemon')) return false;
@@ -3558,12 +3800,11 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
-      'Forensic algorithms are analyzing directory spikes. Trash recovery is trivial for them—you need PERMANENT deletion. Create entropy (decoys), then purge the evidence. Sequence matters: Hidden files must remain until the end to maintain shell stability.',
+      'Forensic algorithms are analyzing directory spikes. They will find you. Trash recovery is trivial for them—only permanent erasure leaves no trace. But delete too quickly, and the shell destabilizes. The hidden scaffolding must remain until the end.',
     initialPath: null,
-    hint: "Trash won't cut it—forensics would recover everything in seconds. Use 'D' for permanent deletion (not 'd'). Create decoys first, then permanently purge visible directories, then '.config' last.",
+    hint: "Use 'D' for permanent deletion (not 'd'). Sequence: Create 3 decoys, permanently delete visible directories (datastore, incoming, media, workspace), then delete '.config' LAST.",
     coreSkill: 'Permanent Deletion (D)',
-    environmentalClue:
-      "CONSTRAINT: Delete '.config' LAST | SEQ: Decoys -> Visible -> Hidden | USE: D (permanent)",
+    environmentalClue: "SEQUENCE: Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
     successMessage:
       "GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active. The staging area '/tmp' is your only remaining foothold.",
     buildsOn: [2, 5, 12, 13],
@@ -3752,7 +3993,7 @@ But whose consciousness is it, really? See you next cycle."`,
           const uploadNode = getNodeByPath(c.fs, uploadPath);
           if (!uploadNode || !uploadNode.children) return false;
 
-          const keys = ['key_tokyo.key', 'key_berlin.key', 'key_saopaulo.key'];
+          const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
           const found = keys.filter((k) => uploadNode.children!.some((n) => n.name === k));
 
           // Require use of search at least once
