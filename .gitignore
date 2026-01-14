@@ -29,3 +29,11 @@ yazi-quest-ai-studio-*.zip
 # Screenshots
 swappy-*.png
 Screenshot*.png
+# Playwright artifacts
+playwright-report/
+playwright-report/**/data/
+test-results/
+.playwright/
+videos/
+screenshots/
+traces/
