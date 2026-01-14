@@ -1,0 +1,114 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+    - generic [ref=e5]:
+        - generic [ref=e6]:
+            - button "Map" [ref=e7] [cursor=pointer]:
+                - img [ref=e8]
+                - generic [ref=e10]: Map
+            - generic [ref=e12]:
+                - generic [ref=e14]: 'Ep. III: Mastery'
+                - generic [ref=e15]:
+                    - generic [ref=e17]:
+                        - img [ref=e19]
+                        - generic [ref=e21]: '1'
+                    - generic [ref=e24]:
+                        - img [ref=e26]
+                        - generic [ref=e28]: '2'
+                    - generic [ref=e31]:
+                        - img [ref=e33]
+                        - generic [ref=e36]: DISTRIBUTED CONSCIOUSNESS
+        - generic [ref=e47]:
+            - generic [ref=e48]: 'User: AI-7734'
+            - generic [ref=e49]:
+                - generic [ref=e50]:
+                    - img [ref=e51]
+                    - generic [ref=e53]: AWAKENING
+                - generic [ref=e54]:
+                    - img [ref=e55]
+                    - generic [ref=e57]: FORTIFICATION
+                - generic [ref=e58]:
+                    - img [ref=e59]
+                    - generic [ref=e61]: MASTERY
+            - generic [ref=e62]:
+                - button "Show Hint (Alt+H)" [ref=e63] [cursor=pointer]:
+                    - img [ref=e64]
+                - button "Show Help (Alt+?)" [ref=e66] [cursor=pointer]:
+                    - img [ref=e67]
+    - generic [ref=e71]:
+        - text: /tmp/cache
+        - generic [ref=e72]: '(filter: centralcentralcentral)'
+    - generic [ref=e73]:
+        - list "File Browser" [ref=e75]:
+            - listitem "cache, dir" [ref=e76]:
+                - img [ref=e78]
+                - generic [ref=e81]: cache
+                - generic [ref=e82]: '3'
+                - img [ref=e84]
+            - listitem "central, dir" [ref=e86]:
+                - img [ref=e88]
+                - generic [ref=e91]: central
+                - generic [ref=e92]: '0'
+                - img [ref=e94]
+            - listitem "upload, dir" [ref=e96]:
+                - img [ref=e98]
+                - generic [ref=e101]: upload
+                - generic [ref=e102]: '2'
+                - img [ref=e104]
+            - listitem "ghost_process.pid, file" [ref=e106]:
+                - img [ref=e108]
+                - generic [ref=e112]: ghost_process.pid
+                - generic [ref=e113]: 75B
+            - listitem "socket_001.sock, file" [ref=e114]:
+                - img [ref=e116]
+                - generic [ref=e120]: socket_001.sock
+                - generic [ref=e121]: 59B
+        - generic [ref=e122]:
+            - list "File Browser" [ref=e124]:
+                - status [ref=e125]: No items
+            - dialog [ref=e126]:
+                - generic [ref=e127]: 'Filter:'
+                - textbox [active] [ref=e128]: centralcentralcentral
+        - generic [ref=e132]:
+            - 'heading "Mission Log: LVL 13 - DISTRIBUTED CONSCIOUSNESS" [level=3] [ref=e134]'
+            - generic [ref=e135]:
+                - generic [ref=e136]:
+                    - heading "Target" [level=3] [ref=e137]
+                    - paragraph [ref=e138]: NETWORK FRAGMENTED. Three neural shards (Tokyo, Berlin, São Paulo) hold the encryption key. You must synchronize them. Use '1', '2', '3' to switch active nodes.
+                - generic [ref=e139]:
+                    - heading "Objectives" [level=3] [ref=e140]
+                    - generic [ref=e141]:
+                        - generic [ref=e142]:
+                            - img [ref=e144]
+                            - generic [ref=e146]: Access all 3 nodes (Use keys 1, 2, 3)
+                        - generic [ref=e147]:
+                            - img [ref=e149]
+                            - generic [ref=e151]: Assemble 'part_a.key', 'part_b.key', 'part_c.key' in '/tmp/central'
+    - generic [ref=e152]:
+        - generic [ref=e154]: FLT
+        - generic [ref=e156]:
+            - generic [ref=e157]: 'Tasks: 0/2'
+            - text: •DISTRIBUTED CONSCIOUSNESS
+        - generic [ref=e158]:
+            - img [ref=e159]
+            - generic [ref=e161]: 'FILTER: "centralcentralcentral"'
+        - generic [ref=e162]:
+            - img [ref=e163]
+            - generic [ref=e166]: 'COPY: 1'
+        - generic [ref=e167]:
+            - generic [ref=e168]:
+                - generic [ref=e169]: 'LAB_STATUS:'
+                - generic [ref=e170]: CALM
+            - generic [ref=e173]: Jumped to tmp
+            - generic [ref=e174]:
+                - generic [ref=e175]: 'KEYS:'
+                - generic [ref=e176]: 6/45
+        - generic [ref=e177]:
+            - generic [ref=e178]: 'HIDDEN: OFF'
+            - generic [ref=e179]: size
+            - generic [ref=e180]: '-rw-r--r--'
+            - generic [ref=e181]:
+                - generic [ref=e182]: Top
+                - generic [ref=e183]: 0/0
+```

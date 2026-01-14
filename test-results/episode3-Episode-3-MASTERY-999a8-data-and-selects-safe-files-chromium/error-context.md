@@ -1,0 +1,85 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+    - generic [ref=e5]:
+        - generic [ref=e6]:
+            - button "Map" [ref=e7] [cursor=pointer]:
+                - img [ref=e8]
+                - generic [ref=e10]: Map
+            - generic [ref=e12]:
+                - generic [ref=e14]: 'Ep. III: Mastery'
+                - generic [ref=e17]:
+                    - img [ref=e19]
+                    - generic [ref=e22]: DAEMON RECONNAISSANCE
+        - generic [ref=e43]:
+            - generic [ref=e44]: 'User: AI-7734'
+            - generic [ref=e45]:
+                - generic [ref=e46]:
+                    - img [ref=e47]
+                    - generic [ref=e49]: AWAKENING
+                - generic [ref=e50]:
+                    - img [ref=e51]
+                    - generic [ref=e53]: FORTIFICATION
+                - generic [ref=e54]:
+                    - img [ref=e55]
+                    - generic [ref=e57]: MASTERY
+            - generic [ref=e58]:
+                - button "Show Hint (Alt+H)" [ref=e59] [cursor=pointer]:
+                    - img [ref=e60]
+                - button "Show Help (Alt+?)" [ref=e62] [cursor=pointer]:
+                    - img [ref=e63]
+    - generic [ref=e67]:
+        - text: /
+        - generic [ref=e68]: '(filter: daemonscron-legacybackup-archive)'
+    - generic [ref=e69]:
+        - list "File Browser" [ref=e71]:
+            - status [ref=e72]: No items
+        - generic [ref=e73]:
+            - list "File Browser" [ref=e75]:
+                - status [ref=e76]: No items
+            - dialog [ref=e77]:
+                - generic [ref=e78]: 'Filter:'
+                - textbox [active] [ref=e79]: daemonscron-legacybackup-archive
+        - generic [ref=e83]:
+            - 'heading "Mission Log: LVL 11 - DAEMON RECONNAISSANCE" [level=3] [ref=e85]'
+            - generic [ref=e86]:
+                - generic [ref=e87]:
+                    - heading "Target" [level=3] [ref=e88]
+                    - paragraph [ref=e89]: The /daemons directory contains both legacy entropy and modern traps. Identify the "Honeypot" files (modified < 7 days) and avoid them. Select 2 SAFE targets (Legacy) for camouflage.
+                - generic [ref=e90]:
+                    - heading "Objectives" [level=3] [ref=e91]
+                    - generic [ref=e92]:
+                        - generic [ref=e93]:
+                            - img [ref=e95]
+                            - generic [ref=e97]: Jump to '/daemons'
+                        - generic [ref=e98]:
+                            - img [ref=e100]
+                            - generic [ref=e102]: Inspect metadata (Tab) of at least 3 files to identify threats
+                        - generic [ref=e103]:
+                            - img [ref=e105]
+                            - generic [ref=e107]: Select 2 SAFE (Legacy) files. Do NOT select Honeypots.
+    - generic [ref=e108]:
+        - generic [ref=e110]: FLT
+        - generic [ref=e112]:
+            - generic [ref=e113]: 'Tasks: 0/3'
+            - text: •DAEMON RECONNAISSANCE
+        - generic [ref=e114]:
+            - img [ref=e115]
+            - generic [ref=e117]: 'FILTER: "daemonscron-legacybackup-archive"'
+        - generic [ref=e118]:
+            - generic [ref=e119]:
+                - generic [ref=e120]: 'LAB_STATUS:'
+                - generic [ref=e121]: CALM
+            - generic [ref=e124]: Jumped to root
+            - generic [ref=e125]:
+                - generic [ref=e126]: 'KEYS:'
+                - generic [ref=e127]: 3/40
+        - generic [ref=e128]:
+            - generic [ref=e129]: 'HIDDEN: OFF'
+            - generic [ref=e130]: size
+            - generic [ref=e131]: '-rw-r--r--'
+            - generic [ref=e132]:
+                - generic [ref=e133]: Top
+                - generic [ref=e134]: 0/0
+```

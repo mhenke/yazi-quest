@@ -25,8 +25,8 @@
 
 See the documentation index for detailed rationale:
 
-- [STORY_ARC.md](./STORY_ARC.md) - Narrative and level progression.
-- [LEARNING_DESIGN.md](./LEARNING_DESIGN.md) - Pedagogical rationale.
+- [STORY_ARC.md](./docs/STORY_ARC.md) - Narrative and level progression.
+- [LEARNING_DESIGN.md](./docs/LEARNING_DESIGN.md) - Pedagogical rationale.
 - [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) - Historical audit and refactor logs.
 
 ## Styling

@@ -1,0 +1,114 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+    - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+            - heading "Protocol Violation" [level=2] [ref=e11]
+            - paragraph [ref=e12]: Active filters detected.
+            - paragraph [ref=e14]: 'Note: filters are per directory and persist with Yazi across sessions.'
+        - generic [ref=e15]:
+            - img [ref=e17]
+            - generic [ref=e19]:
+                - paragraph [ref=e20]: Corrective Action
+                - paragraph [ref=e21]: Clear filter (Esc twice) to restore expected results.
+        - paragraph [ref=e23]: Press Esc to dismiss and fix manually.
+    - generic [ref=e24]:
+        - generic [ref=e25]:
+            - generic [ref=e26]:
+                - button "Map" [ref=e27] [cursor=pointer]:
+                    - img [ref=e28]
+                    - generic [ref=e30]: Map
+                - generic [ref=e32]:
+                    - generic [ref=e34]: 'Ep. II: Fortification'
+                    - generic [ref=e37]:
+                        - img [ref=e39]
+                        - generic [ref=e42]: BATCH OPERATIONS
+            - generic [ref=e63]:
+                - generic [ref=e64]: 'User: AI-7734'
+                - generic [ref=e65]:
+                    - generic [ref=e66]:
+                        - img [ref=e67]
+                        - generic [ref=e69]: AWAKENING
+                    - generic [ref=e70]:
+                        - img [ref=e71]
+                        - generic [ref=e73]: FORTIFICATION
+                    - generic [ref=e74]:
+                        - img [ref=e75]
+                        - generic [ref=e77]: MASTERY
+                - generic [ref=e78]:
+                    - button "Show Hint (Alt+H)" [ref=e79] [cursor=pointer]:
+                        - img [ref=e80]
+                    - button "Show Help (Alt+?)" [ref=e82] [cursor=pointer]:
+                        - img [ref=e83]
+        - generic [ref=e87]:
+            - text: ~/.config/vault
+            - generic [ref=e88]: '(filter: training_data)'
+        - generic [ref=e89]:
+            - list "File Browser" [ref=e91]:
+                - listitem "vault, dir" [ref=e92]:
+                    - img [ref=e94]
+                    - generic [ref=e97]: vault
+                    - generic [ref=e98]: '2'
+                    - img [ref=e100]
+                - listitem "theme.toml, file" [ref=e102]:
+                    - img [ref=e104]
+                    - generic [ref=e117]: theme.toml
+                    - generic [ref=e118]: 225B
+                - listitem "yazi.toml, file" [ref=e119]:
+                    - img [ref=e121]
+                    - generic [ref=e134]: yazi.toml
+                    - generic [ref=e135]: 238B
+            - list "File Browser" [ref=e138]:
+                - status [ref=e139]: No items
+            - generic [ref=e143]:
+                - 'heading "Mission Log: LVL 6 - BATCH OPERATIONS" [level=3] [ref=e145]'
+                - generic [ref=e146]:
+                    - generic [ref=e147]:
+                        - heading "Target" [level=3] [ref=e148]
+                        - paragraph [ref=e149]: SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.
+                    - generic [ref=e150]:
+                        - heading "Objectives" [level=3] [ref=e151]
+                        - generic [ref=e152]:
+                            - generic [ref=e153]:
+                                - img [ref=e155]
+                                - generic [ref=e158]: Jump to '~/incoming/batch_logs' (gi → enter batch_logs)
+                            - generic [ref=e159]:
+                                - img [ref=e161]
+                                - generic [ref=e164]: Logs are scattered. Use recursive search (s) to find 'log'
+                            - generic [ref=e165]:
+                                - img [ref=e167]
+                                - generic [ref=e170]: Select all search results and yank (Ctrl+A, y)
+                            - generic [ref=e171]:
+                                - img [ref=e173]
+                                - generic [ref=e175]: Jump to '~/.config' (gc) and in 'vault/' create 'training_data/' directory (a)
+                            - generic [ref=e176]:
+                                - img [ref=e178]
+                                - generic [ref=e180]: Paste logs into '~/.config/vault/training_data' (p)
+        - generic [ref=e181]:
+            - generic [ref=e183]: NOR
+            - generic [ref=e185]:
+                - generic [ref=e186]: 'Tasks: 3/5'
+                - text: •BATCH OPERATIONS
+            - generic [ref=e187]:
+                - img [ref=e188]
+                - generic [ref=e190]: 'FILTER: "training_data"'
+            - generic [ref=e191]:
+                - img [ref=e192]
+                - generic [ref=e195]: 'COPY: 4'
+            - generic [ref=e196]:
+                - generic [ref=e197]:
+                    - generic [ref=e198]: 'LAB_STATUS:'
+                    - generic [ref=e199]: CALM
+                - generic [ref=e201]:
+                    - generic [ref=e202]: 'Time:'
+                    - generic [ref=e203]: 01:26
+            - generic [ref=e204]:
+                - generic [ref=e205]: 'HIDDEN: OFF'
+                - generic [ref=e206]: size
+                - generic [ref=e207]: '-rw-r--r--'
+                - generic [ref=e208]:
+                    - generic [ref=e209]: Top
+                    - generic [ref=e210]: 0/0
+```

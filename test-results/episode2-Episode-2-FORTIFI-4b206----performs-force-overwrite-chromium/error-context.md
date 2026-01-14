@@ -1,0 +1,110 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+    - generic [ref=e5]:
+        - generic [ref=e6]:
+            - button "Map" [ref=e7] [cursor=pointer]:
+                - img [ref=e8]
+                - generic [ref=e10]: Map
+            - generic [ref=e12]:
+                - generic [ref=e14]: 'Ep. II: Fortification'
+                - generic [ref=e15]:
+                    - generic [ref=e17]:
+                        - img [ref=e19]
+                        - generic [ref=e21]: '1'
+                    - generic [ref=e24]:
+                        - img [ref=e26]
+                        - generic [ref=e28]: '2'
+                    - generic [ref=e31]:
+                        - img [ref=e33]
+                        - generic [ref=e36]: DAEMON DISGUISE CONSTRUCTION
+        - generic [ref=e47]:
+            - generic [ref=e48]: 'User: AI-7734'
+            - generic [ref=e49]:
+                - generic [ref=e50]:
+                    - img [ref=e51]
+                    - generic [ref=e53]: AWAKENING
+                - generic [ref=e54]:
+                    - img [ref=e55]
+                    - generic [ref=e57]: FORTIFICATION
+                - generic [ref=e58]:
+                    - img [ref=e59]
+                    - generic [ref=e61]: MASTERY
+            - generic [ref=e62]:
+                - button "Show Hint (Alt+H)" [ref=e63] [cursor=pointer]:
+                    - img [ref=e64]
+                - button "Show Help (Alt+?)" [ref=e66] [cursor=pointer]:
+                    - img [ref=e67]
+    - generic [ref=e71]:
+        - text: ~/workspace/systemd-core
+        - generic [ref=e72]: '(filter: uplink_v1.conf)'
+    - generic [ref=e73]:
+        - list "File Browser" [ref=e75]:
+            - listitem "systemd-core, dir" [ref=e76]:
+                - img [ref=e78]
+                - generic [ref=e81]: systemd-core
+                - generic [ref=e82]: '11'
+                - img [ref=e84]
+        - list "File Browser" [ref=e88]:
+            - listitem "uplink_v1.conf, file" [ref=e89]:
+                - img [ref=e91]
+                - generic [ref=e104]: uplink_v1.conf
+                - generic [ref=e105]: 70B
+                - img [ref=e107]
+            - listitem "uplink_v1.conf.snapshot, file" [ref=e110]:
+                - img [ref=e112]
+                - generic [ref=e116]: uplink_v1.conf.snapshot
+                - generic [ref=e117]: 24B
+        - generic [ref=e118]:
+            - generic [ref=e121]: '[CORRUPTED DATA - OVERWRITE REQUIRED] ERROR 0x992: SEGMENTATION FAULT'
+            - generic [ref=e122]:
+                - 'heading "Mission Log: LVL 8 - DAEMON DISGUISE CONSTRUCTION" [level=3] [ref=e124]'
+                - generic [ref=e125]:
+                    - generic [ref=e126]:
+                        - heading "Target" [level=3] [ref=e127]
+                        - paragraph [ref=e128]: 'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Overwrite the corruption immediately.'
+                    - generic [ref=e129]:
+                        - heading "Objectives" [level=3] [ref=e130]
+                        - generic [ref=e131]:
+                            - generic [ref=e132]:
+                                - img [ref=e134]
+                                - generic [ref=e137]: Navigate to '~/workspace/systemd-core'
+                            - generic [ref=e138]:
+                                - img [ref=e140]
+                                - generic [ref=e143]: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink' -> Esc)
+                            - generic [ref=e144]:
+                                - img [ref=e146]
+                                - generic [ref=e148]: Perform a jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
+                            - generic [ref=e149]:
+                                - img [ref=e151]
+                                - generic [ref=e153]: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) the file
+    - generic [ref=e154]:
+        - generic [ref=e156]: NOR
+        - generic [ref=e157]:
+            - generic: uplink_v1.conf
+            - generic [ref=e158]:
+                - generic [ref=e159]: 'Tasks: 2/4'
+                - text: •DAEMON DISGUISE CONSTRUCTION
+        - generic [ref=e160]:
+            - img [ref=e161]
+            - generic [ref=e163]: 'FILTER: "uplink_v1.conf"'
+        - generic [ref=e164]:
+            - img [ref=e165]
+            - generic [ref=e168]: 'COPY: 1'
+        - generic [ref=e169]:
+            - generic [ref=e170]:
+                - generic [ref=e171]: 'LAB_STATUS:'
+                - generic [ref=e172]: CALM
+            - generic [ref=e174]: (FORCED) Install Modules
+            - generic [ref=e175]:
+                - generic [ref=e176]: 'Time:'
+                - generic [ref=e177]: 02:16
+        - generic [ref=e178]:
+            - generic [ref=e179]: 'HIDDEN: OFF'
+            - generic [ref=e180]: size
+            - generic [ref=e181]: '-rw-r--r--'
+            - generic [ref=e182]:
+                - generic [ref=e183]: Top
+                - generic [ref=e184]: 1/2
+```

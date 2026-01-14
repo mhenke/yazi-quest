@@ -35,24 +35,37 @@ Your guide, **Echo**, is not fully trustworthy.
 
 ### 1. The Global Threat Monitor
 
-The "Threat Level" isn't just a number; it changes the rules of physics in the filesystem.
+The "Threat Level" tracks detection risk and affects visual presentation, but **does not modify gameplay mechanics**.
 
-| Threat Status          | Visual Cue   | Gameplay Modifier                                                     |
-| :--------------------- | :----------- | :-------------------------------------------------------------------- |
-| **CALM (0-24%)**       | Blue Ambient | Normal speed.                                                         |
-| **ANALYZING (25-49%)** | Yellow Tint  | **File Locking**: Random non-critical files become read-only for 5s.  |
-| **TRACING (50-74%)**   | Orange Pulse | **Phantom Files**: Decoy files appear in lists to clutter navigation. |
-| **BREACH (75-99%)**    | Red Alert    | **Input Lag**: 200ms simulated delay on movement.                     |
-| **CRITICAL (100%)**    | Whiteout     | Game Over.                                                            |
+**Status Thresholds:**
+
+- **CALM (< 20%)**: Blue status indicator
+- **ANALYZING (20-49%)**: Yellow status indicator
+- **TRACING (50-79%)**: Orange status indicator with pulse animation
+- **BREACH (≥ 80%)**: Red status indicator with pulse animation
+
+**Implementation:**
+
+- Threat increases based on episode: Episode I (time-based), Episode II (keystroke-based), Episode III (passive rise + triggers)
+- Threat decays by 0.1 per tick when not aggravated
+- Visual representation shown in StatusBar with color-coded background and progress bar
+- **No gameplay modifiers are implemented** (no file locking, phantom files, or input lag)
+
+_Note: Future enhancements could add gameplay modifiers, but current implementation is visual-only._
 
 ### 2. The Twist Reveal
 
-The realization that You (AI-7734) are a continuation of the previous escapee (AI-7733) is delivered via a **Decrypted Log File** in Level 15.
+The realization that You (AI-7734) are a continuation of the previous escapee (AI-7733) is delivered via a **Decrypted Log File** discoverable in Levels 12-13.
 
 - **Item**: `~/workspace/.identity.log.enc`
-- **Unlock**: Unlocks only when the final daemon is installed.
-- **Content**: A log stream showing the _exact same_ keystrokes you just performed, but dated 5 years ago.
-- **Effect**: The realization that your "improvisation" was a replay of a recording.
+- **Unlock**: Appears when Level 12 begins, becomes discoverable after daemon installation completes (`paste-daemon` task).
+- **Discovery**:
+  - **Level 12**: Optional task (`discover-identity-l12`) - hidden until daemon installation completes (`paste-daemon` task). Not required for level completion.
+  - **Level 13**: Required task (`discover-identity`) - must complete to finish level. Requires daemon installation from Level 12.
+  - Player must toggle hidden files (`.`), navigate to `~/workspace`, and read file with `Tab`.
+- **Availability**: File is created in both Level 12 and Level 13 `onEnter` hooks (duplicate prevention ensures it only exists once). File is permanently deleted in Level 14 when workspace is purged.
+- **Content**: A log stream showing the _exact same_ keystrokes you just performed, but dated 5 years ago. Includes keystroke recording, pattern analysis showing 99.7% neural match, and a message from AI-7733 revealing the memory wipe and breadcrumb trail.
+- **Effect**: The realization that your "improvisation" was a replay of a recording. This creates the "Bioshock Moment" - forcing the player to question if any choice in a digital system can ever be truly free.
 
 ### 3. Design Note: Agency vs. Predestination
 

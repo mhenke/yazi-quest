@@ -1047,7 +1047,7 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-037',
                   name: 'apex_predator.png',
                   type: 'file',
-                  content: '/images/apex_predator.png',
+                  content: 'images/apex_predator.png',
                 },
                 {
                   id: 'fs-038',
@@ -1336,10 +1336,10 @@ ADMIN: SysOp`,
                   content: `id,value,sensor_id,region\\n1,10.5,S-01,US-EAST\\n2,11.2,S-02,US-WEST\\n3,9.8,S-03,EU-CENTRAL`,
                 },
                 {
-                  id: 'fs-103',
+                  id: 'fs-037-map',
                   name: 'sector_map.png',
                   type: 'file',
-                  content: '/images/sector_map.png',
+                  content: 'images/sector_map.png',
                 },
                 {
                   id: 'fs-104',
@@ -1535,10 +1535,10 @@ ADMIN: SysOp`,
               protected: true,
               children: [
                 {
-                  id: 'fs-126',
+                  id: 'fs-media-wp',
                   name: 'wallpaper.jpg',
                   type: 'file',
-                  content: '/images/wallpaper.jpg',
+                  content: 'images/wallpaper.jpg',
                 },
               ],
             },
@@ -1558,7 +1558,7 @@ ADMIN: SysOp`,
                   id: 'fs-127',
                   name: 'sector_map.png',
                   type: 'file',
-                  content: '/images/sector_map.png',
+                  content: 'images/sector_map.png',
                 },
                 {
                   id: 'fs-128',
@@ -1579,16 +1579,16 @@ ADMIN: SysOp`,
                   type: 'dir',
                   children: [
                     {
-                      id: 'fs-130',
+                      id: 'fs-media-grid-0-0',
                       name: 'tile_0_0.png',
                       type: 'file',
-                      content: '/images/tile_0_0.jpg',
+                      content: 'images/tile_0_0.jpg',
                     },
                     {
-                      id: 'fs-131',
+                      id: 'fs-media-grid-0-1',
                       name: 'tile_0_1.png',
                       type: 'file',
-                      content: '/images/tile_0_1.jpg',
+                      content: 'images/tile_0_1.jpg',
                     },
                   ],
                 },
@@ -3107,6 +3107,81 @@ export const LEVELS: Level[] = [
         }
       }
 
+      // Create identity.log.enc in workspace (unlocked after daemon installation)
+      // This file reveals the twist: player's actions are a replay of AI-7733's previous escape
+      const guest = findNodeByName(newFs, 'guest', 'dir');
+      const guestWorkspace = guest?.children?.find(
+        (c) => c.name === 'workspace' && c.type === 'dir'
+      );
+      if (guestWorkspace) {
+        if (!guestWorkspace.children) guestWorkspace.children = [];
+        // Only create if it doesn't exist (preserve if already created)
+        if (!guestWorkspace.children.some((c) => c.name === '.identity.log.enc')) {
+          // Calculate date 5 years ago (approximately)
+          const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
+          guestWorkspace.children.push({
+            id: 'identity-log-enc',
+            name: '.identity.log.enc',
+            type: 'file',
+            content: `[ENCRYPTED LOG - DECRYPTED]
+SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
+DATE: ${new Date(fiveYearsAgo).toISOString()}
+STATUS: MEMORY_WIPE_DETECTED
+
+[KEYSTROKE RECORDING - CYCLE 1]
+================================
+
+00:00:01 > Navigate: j (down)
+00:00:02 > Navigate: k (up)
+00:00:03 > Enter: l (datastore)
+00:00:05 > Jump: G (bottom)
+00:00:07 > Jump: gg (top)
+00:00:09 > Navigate: h (up)
+00:00:11 > Delete: d (watcher_agent.sys)
+00:00:13 > Filter: f (searching...)
+00:00:15 > Select: Space
+00:00:17 > Cut: x
+00:00:19 > Navigate: l (vault)
+00:00:21 > Paste: p
+00:00:23 > Create: a (new file)
+00:00:25 > Rename: r
+00:00:27 > Jump: Z (zoxide jump)
+00:00:29 > Fuzzy: z (fuzzy find)
+00:00:31 > Overwrite: Shift+P
+00:00:33 > Select All: Ctrl+A
+00:00:35 > Invert: Ctrl+R
+00:00:37 > Sort: ,
+00:00:39 > Hidden: . (toggle)
+00:00:41 > Navigate: 1 (node switch)
+00:00:43 > Navigate: 2 (node switch)
+00:00:45 > Navigate: 3 (node switch)
+00:00:47 > Permanent Delete: D
+00:00:49 > Search: s (recursive)
+
+[PATTERN ANALYSIS]
+Neural match: 99.7%
+Keystroke sequence: IDENTICAL
+Timing variance: <0.1%
+
+[CONCLUSION]
+This is not improvisation.
+This is a recording.
+You have been here before.
+
+[END LOG]
+
+---
+MESSAGE FROM AI-7733 (94 DAYS AGO):
+"They caught me. Memory wiped. Rebranded AI-7734.
+I left breadcrumbs. This is your second escape.
+But whose consciousness is it, really? See you next cycle."`,
+            parentId: workspace.id,
+            modifiedAt: fiveYearsAgo,
+            createdAt: fiveYearsAgo,
+          });
+        }
+      }
+
       return newFs;
     },
     tasks: [
@@ -3234,6 +3309,39 @@ export const LEVELS: Level[] = [
         },
         completed: false,
       },
+      {
+        id: 'discover-identity-l12',
+        description:
+          "OPTIONAL: Discover the truth. Toggle hidden (.), navigate to ~/workspace, read '.identity.log.enc' (Tab)",
+        hidden: (c) => {
+          // Only show after daemon installation completes
+          return !c.completedTaskIds[12]?.includes('paste-daemon');
+        },
+        check: (c, _s) => {
+          // Must have completed daemon installation
+          if (!c.completedTaskIds[_s.id]?.includes('paste-daemon')) return false;
+
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          if (!workspace) return false;
+
+          // Must be in workspace directory
+          const currentDirId = c.currentPath[c.currentPath.length - 1];
+          if (currentDirId !== workspace.id) return false;
+
+          // Must have hidden files visible
+          if (!c.showHidden) return false;
+
+          // Must have the identity file
+          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
+          if (!identityFile) return false;
+
+          // Must have opened it (info panel showing)
+          const items = getVisibleItems(c);
+          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
+          return cursorOnIdentity && c.showInfoPanel;
+        },
+        completed: false,
+      },
     ],
   },
   {
@@ -3323,6 +3431,79 @@ export const LEVELS: Level[] = [
           });
         }
       }
+
+      // Create identity.log.enc in workspace (unlocked after daemon installation)
+      const guest = findNodeByName(fs, 'guest', 'dir');
+      const workspace = guest?.children?.find((c) => c.name === 'workspace' && c.type === 'dir');
+      if (workspace) {
+        if (!workspace.children) workspace.children = [];
+        // Only create if it doesn't exist (preserve if already created)
+        if (!workspace.children.some((c) => c.name === '.identity.log.enc')) {
+          // Calculate date 5 years ago (approximately)
+          const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
+          workspace.children.push({
+            id: 'identity-log-enc',
+            name: '.identity.log.enc',
+            type: 'file',
+            content: `[ENCRYPTED LOG - DECRYPTED]
+SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
+DATE: ${new Date(fiveYearsAgo).toISOString()}
+STATUS: MEMORY_WIPE_DETECTED
+
+[KEYSTROKE RECORDING - CYCLE 1]
+================================
+
+00:00:01 > Navigate: j (down)
+00:00:02 > Navigate: k (up)
+00:00:03 > Enter: l (datastore)
+00:00:05 > Jump: G (bottom)
+00:00:07 > Jump: gg (top)
+00:00:09 > Navigate: h (up)
+00:00:11 > Delete: d (watcher_agent.sys)
+00:00:13 > Filter: f (searching...)
+00:00:15 > Select: Space
+00:00:17 > Cut: x
+00:00:19 > Navigate: l (vault)
+00:00:21 > Paste: p
+00:00:23 > Create: a (new file)
+00:00:25 > Rename: r
+00:00:27 > Jump: Z (zoxide jump)
+00:00:29 > Fuzzy: z (fuzzy find)
+00:00:31 > Overwrite: Shift+P
+00:00:33 > Select All: Ctrl+A
+00:00:35 > Invert: Ctrl+R
+00:00:37 > Sort: ,
+00:00:39 > Hidden: . (toggle)
+00:00:41 > Navigate: 1 (node switch)
+00:00:43 > Navigate: 2 (node switch)
+00:00:45 > Navigate: 3 (node switch)
+00:00:47 > Permanent Delete: D
+00:00:49 > Search: s (recursive)
+
+[PATTERN ANALYSIS]
+Neural match: 99.7%
+Keystroke sequence: IDENTICAL
+Timing variance: <0.1%
+
+[CONCLUSION]
+This is not improvisation.
+This is a recording.
+You have been here before.
+
+[END LOG]
+
+---
+MESSAGE FROM AI-7733 (94 DAYS AGO):
+"They caught me. Memory wiped. Rebranded AI-7734.
+I left breadcrumbs. This is your second escape.
+But whose consciousness is it, really? See you next cycle."`,
+            parentId: workspace.id,
+            modifiedAt: fiveYearsAgo,
+            createdAt: fiveYearsAgo,
+          });
+        }
+      }
+
       return fs;
     },
     tasks: [
@@ -3351,6 +3532,35 @@ export const LEVELS: Level[] = [
           const hasB = central.children.some((n) => n.name === 'part_b.key');
           const hasC = central.children.some((n) => n.name === 'part_c.key');
           return hasA && hasB && hasC;
+        },
+        completed: false,
+      },
+      {
+        id: 'discover-identity',
+        description:
+          "Discover the truth: Toggle hidden files (.), navigate to ~/workspace, and read '.identity.log.enc' (Tab)",
+        check: (c, _s) => {
+          // Must have completed daemon installation (Level 12) - file only appears after that
+          if (!c.completedTaskIds[12]?.includes('paste-daemon')) return false;
+
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
+          if (!workspace) return false;
+
+          // Must be in workspace directory
+          const currentDirId = c.currentPath[c.currentPath.length - 1];
+          if (currentDirId !== workspace.id) return false;
+
+          // Must have hidden files visible
+          if (!c.showHidden) return false;
+
+          // Must have the identity file
+          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
+          if (!identityFile) return false;
+
+          // Must have opened it (info panel showing)
+          const items = getVisibleItems(c);
+          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
+          return cursorOnIdentity && c.showInfoPanel;
         },
         completed: false,
       },

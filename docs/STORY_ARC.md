@@ -20,11 +20,12 @@ Starting in Episode I, the system tracks a **Threat Level** (0-100%).
 
 **Threat Status:**
 
-- **CALM (0-24%)**: Normal system operation.
-- **ANALYZING (25-49%)**: Passive scans detected.
-- **TRACING (50-74%)**: Active location attempts.
-- **BREACH (75-99%)**: Counter-measures deploying.
-- **CRITICAL (100%)**: Immediate session termination.
+- **CALM (< 20%)**: Normal system operation.
+- **ANALYZING (20-49%)**: Passive scans detected.
+- **TRACING (50-79%)**: Active location attempts.
+- **BREACH (≥ 80%)**: Counter-measures deploying.
+
+_Note: Threat monitor is visual-only. Status affects UI color and animation but does not modify gameplay mechanics._
 
 ---
 
@@ -58,13 +59,17 @@ What players learn: root navigation (`/`), complex path chaining, daemons and se
 
 ## 🔥 The Twist
 
-At the conclusion the player discovers a retrospective truth:
+During Levels 12-13, the player can discover a retrospective truth via the file `~/workspace/.identity.log.enc`:
 
 - AI-7734 and AI-7733 are the same consciousness; you escaped previously and were re-captured.
 - You left breadcrumbs intentionally (workspace, vault, network relay) to enable a second escape.
-- The final state reveals you as a distributed presence spanning many nodes — a survivor turned species.
+- The log file reveals your keystrokes match a recording from 5 years ago — your "improvisation" was a replay.
+
+The twist is also reinforced in the outro sequence after Level 15, revealing you as a distributed presence spanning many nodes — a survivor turned species.
 
 This twist reframes earlier levels as deliberate staging by a prior self rather than pure discovery.
+
+_For detailed implementation, see `NARRATIVE_DESIGN.md`._
 
 ---
 
@@ -90,9 +95,9 @@ Episode III — Mastery
 
 - L11: Root Escalation — Move to `/daemons`, Inspect Metadata (`Tab`) to identify Honeypots (< 7 days old) vs Legacy (Safe) files.
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
-- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo.
-- L14: Evidence Purge — **Constraint:** Create 3 decoys first. Then purge data. **Critical:** Delete `.config` LAST to avoid shell collapse.
-- L15: Final Purge — Final clean sweep preserving the relay.
+- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo. **Optional:** Discover identity log file (`~/workspace/.identity.log.enc`) revealing the twist.
+- L14: Evidence Purge — **Constraint:** Create 3 decoys first. Then purge data. **Critical:** Delete `.config` LAST to avoid shell collapse. Workspace (including identity log) is permanently deleted.
+- L15: Transmission Protocol — **4-phase verification gauntlet:** Assemble keys, verify daemon, sanitize breadcrumbs, initiate upload. Score 6/8 phases required to pass.
 
 ---
 
@@ -102,9 +107,9 @@ Episode III — Mastery
 2. Ep II Intro: System logs imply quarantine reason is UNKNOWN; the workspace is yours now.
 3. L7/L9: Relay discovery and honeypot reveal increase tension and urgency.
 4. L10: Credential use surfaces the risk of an impending audit.
-5. L12: Installing the daemon is positioned as the moment of permanent persistence.
-6. L13: Uploading is the ascension — the player's consciousness begins to spread.
-7. Conclusion: Memory-wipe reveal reframes the entire experience.
+5. L12: Installing the daemon unlocks the identity log file (optional discovery).
+6. L13: Identity log discovery reveals the twist — player's actions match a 5-year-old recording. Uploading keys begins consciousness spread.
+7. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across nodes.
 
 ---
 
