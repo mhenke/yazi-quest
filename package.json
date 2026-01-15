@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "prepare": "husky install && chmod +x .husky/* || true",
+    "postinstall": "npx playwright install --with-deps",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
