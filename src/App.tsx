@@ -244,7 +244,12 @@ export default function App() {
         try {
           const isFresh = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
           if (!level.seedMode || level.seedMode !== 'fresh' || isFresh) {
-            fs = level.onEnter(fs);
+            // Construct minimal gameState for onEnter hooks that need it (e.g., Level 12)
+            const partialGameState: Partial<GameState> = {
+              completedTaskIds,
+              level11Flags: undefined, // Will be undefined until Level 11 completes
+            };
+            fs = level.onEnter(fs, partialGameState as GameState);
           }
         } catch (err) {
           try {

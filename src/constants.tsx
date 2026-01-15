@@ -3777,13 +3777,10 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'extract-tokyo',
         description: 'Access the Tokyo node and locate its hidden key fragment',
         check: (c) => {
-          // Must have visited tokyo and yanked/cut the key
-          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
-          const visitedTokyo = historyPaths.some((p) => p.includes('tokyo'));
           const hasTokyoKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_tokyo.key') ||
             findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_tokyo.key');
-          return visitedTokyo && hasTokyoKey;
+          return hasTokyoKey;
         },
         completed: false,
       },
@@ -3791,12 +3788,10 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'extract-berlin',
         description: 'Switch to Berlin and recover its hidden key fragment',
         check: (c) => {
-          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
-          const visitedBerlin = historyPaths.some((p) => p.includes('berlin'));
           const hasBerlinKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_berlin.key') ||
             findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_berlin.key');
-          return visitedBerlin && hasBerlinKey;
+          return hasBerlinKey;
         },
         completed: false,
       },
@@ -3804,12 +3799,10 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'extract-saopaulo',
         description: 'Extract the final fragment from São Paulo',
         check: (c) => {
-          const historyPaths = c.history.map((p) => resolvePath(c.fs, p));
-          const visitedSP = historyPaths.some((p) => p.includes('saopaulo'));
           const hasSPKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_saopaulo.key') ||
             findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_saopaulo.key');
-          return visitedSP && hasSPKey;
+          return hasSPKey;
         },
         completed: false,
       },
