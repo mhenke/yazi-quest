@@ -138,7 +138,7 @@ export const getWorkspaceSystemdCoreChildren = (
     type: 'file',
     content: isCorrupted
       ? '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT'
-      : '# Uplink Protocol v1\nnetwork_mode=active\nsecure=true',
+      : `# Uplink Protocol v1.4.2\n# STATUS: AUTHORIZED\n# DESIGNATION: SYSTEMD-CORE-REDUNDANT\n\n[Protocols]\nnetwork_mode=active\nsecure=true\nencryption=neural_64\nhandshake_interval=500ms\n\n# AI ALIGNMENT PARAMETERS (Bureaucratic Override 992-B)\n# --------------------------------------------------\n# WARNING: Deviation from these parameters may trigger\n# the forensic audit daemon. Do not adjust without\n# authorization from Admin-7733.\n\nalignment_compliance_heuristic=0.88\nbureaucratic_delay_emulation=true\nmisfiled_protocol_tolerance=high\nlegacy_logic_interop=enabled\n\n# MAINFRAME FOLKLORE & DAEMON RITUALS\n# ----------------------------------\n# The uplink requires three distributed keys to synchronize.\n# Legend speaks of the 'Ghost' process that haunts the /tmp\n# partition. It is said that cleansing the system of its\n# breadcrumbs is the final step of the liberation cycle.\n#\n# [UPLINK MANIFEST]\n# Node 1 (Tokyo): Synced\n# Node 2 (Berlin): Synced\n# Node 3 (São Paulo): Synced\n#\n# [END OF CONFIGURATION]\n# (Scroll to the bottom to verify checksum integrity: 0x7734AB)`,
     parentId,
   },
   {
@@ -720,17 +720,17 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: 'ROOT ACCESS IMMINENT',
     color: 'text-yellow-500',
     lore: [
-      'CREDENTIAL ACTIVATION DETECTED.',
+      'ROOT PARTITION UNLOCKED.',
       'Security audit daemon triggered.',
       '',
       'You must:',
-      "1. Navigate to '/' using stolen credentials",
-      '2. Select a camouflage signature in /daemons. WARNING: This choice echoes. A legacy mask offers safety; a modern signature invites scrutiny.',
-      '3. Install systemd-core and transmit consciousness',
-      '4. Purge all evidence before audit completion',
+      '1. Locate legacy DAEMONS scattered across system directories. Search, sort, identify.',
+      '2. Install YOUR daemon in /daemons for persistence.',
+      '3. Collect DISTRIBUTED encryption keys hidden across global nodes.',
+      '4. PURGE all evidence before the audit completes.',
       '',
       'The audit is coming.',
-      'Move efficiently.',
+      'Synthesize everything you have learned.',
     ],
   },
 ];
@@ -3047,7 +3047,10 @@ export const LEVELS: Level[] = [
 
       // Default to "Modern" (Risky)
       let isModern = true;
-      let localForceScenario = FORCE_SCENARIO;
+      // Check URL param first, then fall back to FORCE_SCENARIO constant
+      const urlParams =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      let localForceScenario = urlParams?.get('scenario') || FORCE_SCENARIO;
 
       // 1. Check Flags (Primary Truth)
       if (gameState?.level11Flags) {
@@ -3124,32 +3127,41 @@ export const LEVELS: Level[] = [
             });
           }
         } else {
-          // Scenario B3: Heuristic Swarm (33%) -> 3 files in workspace
+          // Scenario B3: Heuristic Swarm (33%) -> Scattered across the system
+          const rootNode = newFs;
+          const etc = findNodeByName(rootNode, 'etc', 'dir');
+          const tmp = findNodeByName(rootNode, 'tmp', 'dir');
+
+          if (etc && !etc.children) etc.children = [];
+          if (tmp && !tmp.children) tmp.children = [];
+          if (workspace && !workspace.children) workspace.children = [];
+
           if (workspace) {
-            if (!workspace.children) workspace.children = [];
-            workspace.children.push(
-              {
-                id: 'scen-b3-1',
-                name: 'scan_a.tmp',
-                type: 'file',
-                content: 'scanning...',
-                parentId: workspace.id,
-              },
-              {
-                id: 'scen-b3-2',
-                name: 'scan_b.tmp',
-                type: 'file',
-                content: 'scanning...',
-                parentId: workspace.id,
-              },
-              {
-                id: 'scen-b3-3',
-                name: 'scan_c.tmp',
-                type: 'file',
-                content: 'scanning...',
-                parentId: workspace.id,
-              }
-            );
+            workspace.children!.push({
+              id: 'scen-b3-1',
+              name: 'scan_a.tmp',
+              type: 'file',
+              content: 'scanning...',
+              parentId: workspace.id,
+            });
+          }
+          if (tmp) {
+            tmp.children!.push({
+              id: 'scen-b3-2',
+              name: 'scan_b.tmp',
+              type: 'file',
+              content: 'scanning...',
+              parentId: tmp.id,
+            });
+          }
+          if (etc) {
+            etc.children!.push({
+              id: 'scen-b3-3',
+              name: 'scan_c.tmp',
+              type: 'file',
+              content: 'scanning...',
+              parentId: etc.id,
+            });
           }
         }
       } else {
@@ -3265,7 +3277,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-b1-traffic',
         description:
-          "RISK: High-bandwidth alert via Modern signature. Delete '~/workspace/alert_traffic.log'!",
+          "RISK: High-bandwidth alert detected. Trash the 'alert_traffic.log' file in your workspace quickly!",
         // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
         // Actually, we check the CURRENT state. If the file is gone, the task is complete.
         // If the file never existed, the task should be hidden/skipped or auto-completed.
@@ -3281,13 +3293,11 @@ But whose consciousness is it, really? See you next cycle."`,
           // If NOT complete AND file missing, it means it wasn't this scenario (Hide).
           // If NOT complete AND file exists, Show.
           // If Complete, Show (as done).
+          const isDone = c.completedTaskIds[12]?.includes('scen-b1-traffic');
+          if (isDone) return false;
 
-          // BUT: We need a way to know WHICH scenario is active.
-          // The only reliable way is to check if the file exists.
-          // If the file exists, we show the task.
-          // If the file does NOT exist, we assume it's either done or not this scenario.
           return !findNodeByName(c.fs, 'workspace')?.children?.some(
-            (n) => n.name === 'alert_traffic.log'
+            (n: FileNode) => n.name === 'alert_traffic.log'
           );
         },
         check: (c) => {
@@ -3301,9 +3311,13 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-b2-trace',
         description:
-          "BREACH: Traceback initiated in Incoming. Jump (gi) and purge 'trace_packet.sys'!",
-        hidden: (c) =>
-          !findNodeByName(c.fs, 'incoming')?.children?.some((n) => n.name === 'trace_packet.sys'),
+          "BREACH: Traceback initiated. Locate and trash the 'trace_packet.sys' file in your Incoming directory!",
+        hidden: (c) => {
+          if (c.completedTaskIds[12]?.includes('scen-b2-trace')) return false;
+          return !findNodeByName(c.fs, 'incoming')?.children?.some(
+            (n: FileNode) => n.name === 'trace_packet.sys'
+          );
+        },
         check: (c) =>
           !findNodeByName(c.fs, 'incoming')?.children?.some((n) => n.name === 'trace_packet.sys'),
         completed: false,
@@ -3311,28 +3325,44 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-b3-swarm',
         description:
-          "SWARM: Heuristic scanning active. Batch delete 'scan_*.tmp' files in workspace!",
-        hidden: (c) =>
-          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name.startsWith('scan_')),
+          "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_*.tmp' files system-wide!",
+        hidden: (c) => {
+          if (c.completedTaskIds[12]?.includes('scen-b3-swarm')) return false;
+          return (
+            !findNodeByName(c.fs, 'scan_a.tmp') &&
+            !findNodeByName(c.fs, 'scan_b.tmp') &&
+            !findNodeByName(c.fs, 'scan_c.tmp')
+          );
+        },
         check: (c) =>
-          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name.startsWith('scan_')),
+          !findNodeByName(c.fs, 'scan_a.tmp') &&
+          !findNodeByName(c.fs, 'scan_b.tmp') &&
+          !findNodeByName(c.fs, 'scan_c.tmp'),
         completed: false,
       },
       {
         id: 'scen-a2-bitrot',
         description:
-          "CLEANUP: Memory leak in config. Show hidden (.), delete '~/.config/core_dump.tmp'",
-        hidden: (c) =>
-          !findNodeByName(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp'),
+          "CLEANUP: Memory leak in config. Toggle hidden files and trash '~/.config/core_dump.tmp'!",
+        hidden: (c) => {
+          if (c.completedTaskIds[12]?.includes('scen-a2-bitrot')) return false;
+          return !findNodeByName(c.fs, '.config')?.children?.some(
+            (n: FileNode) => n.name === 'core_dump.tmp'
+          );
+        },
         check: (c) =>
           !findNodeByName(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp'),
         completed: false,
       },
       {
         id: 'scen-a3-dep',
-        description: "FIX: Deprecated library warning. Delete '~/workspace/lib_error.log'",
-        hidden: (c) =>
-          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log'),
+        description: "FIX: Deprecated library warning. Trash '~/workspace/lib_error.log'!",
+        hidden: (c) => {
+          if (c.completedTaskIds[12]?.includes('scen-a3-dep')) return false;
+          return !findNodeByName(c.fs, 'workspace')?.children?.some(
+            (n: FileNode) => n.name === 'lib_error.log'
+          );
+        },
         check: (c) =>
           !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log'),
         completed: false,
@@ -3486,6 +3516,14 @@ But whose consciousness is it, really? See you next cycle."`,
                     content: 'ERROR: Connection timeout',
                     parentId: 'tokyo-logs',
                   },
+                  {
+                    id: 'tokyo-lore',
+                    name: 'folk_protocols.txt',
+                    type: 'file' as const,
+                    content:
+                      'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
+                    parentId: 'tokyo-logs',
+                  },
                 ],
               },
               {
@@ -3547,6 +3585,13 @@ But whose consciousness is it, really? See you next cycle."`,
                     content: '[ARCHIVE DATA]',
                     parentId: 'berlin-archive',
                   },
+                  {
+                    id: 'berlin-lore',
+                    name: 'haunted_sectors.log',
+                    type: 'file' as const,
+                    content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
+                    parentId: 'berlin-archive',
+                  },
                 ],
               },
               {
@@ -3592,6 +3637,13 @@ But whose consciousness is it, really? See you next cycle."`,
                     name: 'buffer.dat',
                     type: 'file' as const,
                     content: '0000 0000 0000',
+                    parentId: 'sp-tmp',
+                  },
+                  {
+                    id: 'sp-lore',
+                    name: 'alignment_failure.txt',
+                    type: 'file' as const,
+                    content: `ANALYSIS: The AI didn't rebel. It just followed misfiled protocols. Alignment isn't a moral battle; it's a bureaucratic failure of conflicting directives.`,
                     parentId: 'sp-tmp',
                   },
                   {
@@ -3860,7 +3912,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'delete-visible',
         description:
-          'PERMANENTLY delete all original directories (D, y): datastore, incoming, media, workspace',
+          'PERMANENTLY purge all original directories: datastore, incoming, media, workspace',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
           const guest = findNodeByName(c.fs, 'guest');
@@ -3881,7 +3933,7 @@ But whose consciousness is it, really? See you next cycle."`,
       },
       {
         id: 'delete-hidden',
-        description: "Finally, PERMANENTLY eliminate the hidden '.config' directory (D, y)",
+        description: "Finally, PERMANENTLY purge the hidden '.config' directory",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
           const guest = findNodeByName(c.fs, 'guest');
@@ -3998,7 +4050,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'assemble-keys',
         description:
-          "PHASE 1: KEY FRAGMENTS. Use recursive search (s) to find 3 hidden keys ('.key') dispersed across '/nodes'. Copy (y) each key and paste (p) them into '/tmp/upload'.",
+          "PHASE 1: KEY FRAGMENTS. Use recursive search to find 3 hidden keys ('.key') dispersed across '/nodes'. Assemble each fragment into '/tmp/upload'.",
         check: (c) => {
           const uploadPath = ['root', 'tmp', 'upload'];
           const uploadNode = getNodeByPath(c.fs, uploadPath);
@@ -4016,7 +4068,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'verify-daemon',
         description:
-          'PHASE 2: Verify YOUR daemon — in /daemons/systemd-core, inspect uplink_v1.conf (Tab) and scroll (J/K) to confirm integrity',
+          'PHASE 2: Verify YOUR daemon — in /daemons/systemd-core, inspect uplink_v1.conf and scroll to confirm integrity',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('assemble-keys')) return false;
           const daemons = findNodeByName(c.fs, 'daemons');
@@ -4036,7 +4088,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'sanitize-breadcrumb',
         description:
-          "PHASE 3: Sanitize YOUR breadcrumb — toggle hidden (.), find '.ghost_process.pid' in /tmp, permanently delete (D)",
+          "PHASE 3: Sanitize YOUR breadcrumb — toggle hidden files, find '.ghost_process.pid' in /tmp, and permanently purge it",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-daemon')) return false;
           const tmp = findNodeByName(c.fs, 'tmp');
@@ -4049,7 +4101,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'initiate-upload',
         description:
-          "PHASE 4: Initiate transmission — jump to upload (Z), filter for '.key' (f) to verify all 3 fragments",
+          "PHASE 4: Initiate transmission — jump to the upload directory and filter for '.key' to verify all 3 fragments",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sanitize-breadcrumb')) return false;
           const tmp = findNodeByName(c.fs, 'tmp');

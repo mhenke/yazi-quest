@@ -15,6 +15,7 @@ export interface FileNode {
   path?: string[];
   display?: string;
   displayPath?: string; // Full relative path for search results display
+  actualParentPath?: string[]; // Original parent path for clipboard operations from search
 }
 
 export interface FileSystemState {

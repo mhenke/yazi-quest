@@ -23,7 +23,7 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
 
 export const activeFilterMatches = (
   state: GameState,
-  predicate: (n: FileNode) => boolean,
+  predicate: (n: FileNode) => boolean
 ): boolean => {
   const currentDir = getNodeByPath(state.fs, state.currentPath);
   if (!currentDir || !currentDir.children) return false;
@@ -46,13 +46,14 @@ export const getRecursiveSearchResults = (
   rootNode: FileNode,
   query: string,
   showHidden: boolean = false,
+  fullRootPath: string[] = ['root']
 ): FileNode[] => {
   if (!query || !rootNode) return [];
 
   const results: FileNode[] = [];
   const lowerQuery = query.toLowerCase();
 
-  const searchRecursive = (node: FileNode, pathPrefix: string) => {
+  const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
     if (!node.children) return;
 
     for (const child of node.children) {
@@ -61,24 +62,25 @@ export const getRecursiveSearchResults = (
 
       // Build relative path for display
       const relativePath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+      const currentIdPath = [...idPath, child.id];
 
       // Check if file matches query
       if (child.type === 'file' && child.name.toLowerCase().includes(lowerQuery)) {
         // Clone node and add displayPath for showing full relative path
-        results.push({ ...child, displayPath: relativePath });
+        results.push({ ...child, displayPath: relativePath, path: currentIdPath });
       }
 
       // Recurse into directories and archives
       if (child.type === 'dir' || child.type === 'archive') {
         // Also check if directory name matches
         if (child.name.toLowerCase().includes(lowerQuery)) {
-          results.push({ ...child, displayPath: relativePath });
+          results.push({ ...child, displayPath: relativePath, path: currentIdPath });
         }
-        searchRecursive(child, relativePath);
+        searchRecursive(child, relativePath, currentIdPath);
       }
     }
   };
 
-  searchRecursive(rootNode, '');
+  searchRecursive(rootNode, '', fullRootPath);
   return results;
 };

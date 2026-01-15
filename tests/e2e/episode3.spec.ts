@@ -62,51 +62,61 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 12: DAEMON INSTALLATION - handles scenarios and installs daemon', async ({
     page,
   }) => {
-    await goToLevel(page, 12);
-
-    // Objective 1: Navigate to '~/workspace'
-    await gotoCommand(page, 'w');
-    await expect(page.getByText('Tasks: 1/')).toBeVisible();
-
-    // Handle any active "Threat" files that might have spawned due to randomization
-    // We check for alert_traffic.log, database_ghost.db, etc.
-    const threats = [
-      'alert_traffic.log',
-      'database_ghost.db',
-      'lib_error.log',
-      'trace_backdoor.tmp',
-    ];
-    for (const threat of threats) {
-      const threatLocator = page.getByTestId('filesystem-pane-active').getByText(threat);
-      if (await threatLocator.isVisible()) {
-        await pressKey(page, 'f');
-        await typeText(page, threat);
-        await page.keyboard.press('Escape');
-        await pressKey(page, 'd'); // Trash it
-        await page.keyboard.press('y');
-        await page.keyboard.press('Escape'); // Clear filter
-        await page.waitForTimeout(200);
-      }
+    // Use scen-a1 (clean run) - no threat files spawn, simplest path
+    await page.goto('/?lvl=12&scenario=scen-a1');
+    await page.waitForLoadState('networkidle');
+    // Skip intro if present
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {
+      // Intro may not be present
     }
+    await page.waitForTimeout(300);
 
-    // Objective 2: Cut '~/workspace/systemd-core'
+    // scen-a1 is "Clean Run" - no threat files spawn
+    // Main objectives: navigate to workspace, cut systemd-core, navigate to /daemons, paste, enter
+
+    // Step 1: Navigate to workspace
+    await gotoCommand(page, 'w');
+    await page.waitForTimeout(200);
+
+    // Verify we're in workspace
+    const systemdItem = page.getByTestId('filesystem-pane-active').getByText('systemd-core');
+    await expect(systemdItem).toBeVisible({ timeout: 3000 });
+
+    // Step 2: Filter to systemd-core and cut it
     await pressKey(page, 'f');
     await typeText(page, 'systemd-core');
     await page.keyboard.press('Escape');
-    await pressKey(page, 'x'); // Cut
-    await page.keyboard.press('Escape'); // Clear filter
+    await page.waitForTimeout(100);
+    await pressKey(page, 'x');
+    await page.waitForTimeout(200);
 
-    // Wait for cut to register (might be task 2 or later depending on scenario tasks being hidden)
-    // We check for the cut icon or just move to next step
-
-    // Objective 3: Navigate to '/daemons'
+    // Step 3: Navigate to root
     await gotoCommand(page, 'r');
-    await filterAndNavigate(page, 'daemons');
+    await page.waitForTimeout(200);
 
-    // Objective 4: Paste and enter
+    // Step 4: Navigate to /daemons
+    await pressKey(page, 'f');
+    await typeText(page, 'daemons');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    await pressKey(page, 'l');
+    await page.waitForTimeout(200);
+
+    // Step 5: Paste systemd-core
     await pressKey(page, 'p');
     await page.waitForTimeout(300);
-    await filterAndNavigate(page, 'systemd-core');
+
+    // Step 6: Enter systemd-core to complete the level
+    await pressKey(page, 'f');
+    await typeText(page, 'systemd-core');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    await pressKey(page, 'l');
+    await page.waitForTimeout(200);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();

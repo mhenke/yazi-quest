@@ -500,6 +500,11 @@ export function isProtected(
     }
   }
 
+  // Allow Level 12 to cut systemd-core from workspace (game objective)
+  if (level.id === 12 && action === 'cut' && node.name === 'systemd-core') {
+    return null;
+  }
+
   // General node protection
   if (node.protected) {
     if (action === 'rename') {

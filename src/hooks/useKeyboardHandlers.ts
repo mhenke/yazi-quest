@@ -189,9 +189,14 @@ export const useKeyboardHandlers = (
         for (const id of prev.pendingDeleteIds) {
           const node = visibleItems.find((n) => n.id === id);
           if (node) {
+            // Determine the target directory path for this node.
+            // Search results include their full path from root; normal items use the currentPath.
+            const targetDirPath =
+              node.path && node.path.length > 0 ? node.path.slice(0, -1) : prev.currentPath;
+
             const protection = isProtected(
-              prev.fs,
-              prev.currentPath,
+              newFs,
+              targetDirPath,
               node,
               currentLevelParam,
               'delete',
@@ -201,12 +206,15 @@ export const useKeyboardHandlers = (
               errorMsg = protection;
               break;
             }
-            const res = deleteNode(newFs, prev.currentPath, id, prev.levelIndex);
+            const res = deleteNode(newFs, targetDirPath, id, prev.levelIndex);
             if (!res.ok) {
-              errorMsg = (res as { ok: false; error: FsError }).error;
-              break;
+              if ((res as { ok: false; error: FsError }).error !== 'NotFound') {
+                errorMsg = (res as { ok: false; error: FsError }).error;
+                break;
+              }
+            } else {
+              newFs = res.value;
             }
-            newFs = res.value;
           }
         }
 
@@ -804,18 +812,32 @@ export const useKeyboardHandlers = (
                 return;
               }
             }
-            setGameState((prev) => ({
-              ...prev,
-              clipboard: {
-                nodes,
-                action: e.key === 'x' ? 'cut' : 'yank',
-                originalPath: prev.currentPath,
-              },
-              selectedIds: [],
-              notification:
-                getNarrativeAction(e.key) ||
-                `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
-            }));
+            setGameState((prev) => {
+              // When in search mode, each node may come from a different directory
+              // Attach actualParentPath so paste knows where to delete from
+              const nodesWithPaths = gameState.searchQuery
+                ? nodes.map((n) => {
+                    const fullPath = findPathById(prev.fs, n.id);
+                    return {
+                      ...n,
+                      actualParentPath: fullPath ? fullPath.slice(0, -1) : prev.currentPath,
+                    };
+                  })
+                : nodes;
+
+              return {
+                ...prev,
+                clipboard: {
+                  nodes: nodesWithPaths,
+                  action: e.key === 'x' ? 'cut' : 'yank',
+                  originalPath: prev.currentPath,
+                },
+                selectedIds: [],
+                notification:
+                  getNarrativeAction(e.key) ||
+                  `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
+              };
+            });
           } else if (currentItem) {
             if (e.key === 'x') {
               const protection = isProtected(
@@ -830,17 +852,30 @@ export const useKeyboardHandlers = (
                 return;
               }
             }
-            setGameState((prev) => ({
-              ...prev,
-              clipboard: {
-                nodes: [currentItem],
-                action: e.key === 'x' ? 'cut' : 'yank',
-                originalPath: prev.currentPath,
-              },
-              notification:
-                getNarrativeAction(e.key) ||
-                `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
-            }));
+            setGameState((prev) => {
+              // When in search mode, attach actualParentPath for correct paste behavior
+              const nodeWithPath = gameState.searchQuery
+                ? (() => {
+                    const fullPath = findPathById(prev.fs, currentItem.id);
+                    return {
+                      ...currentItem,
+                      actualParentPath: fullPath ? fullPath.slice(0, -1) : prev.currentPath,
+                    };
+                  })()
+                : currentItem;
+
+              return {
+                ...prev,
+                clipboard: {
+                  nodes: [nodeWithPath],
+                  action: e.key === 'x' ? 'cut' : 'yank',
+                  originalPath: prev.currentPath,
+                },
+                notification:
+                  getNarrativeAction(e.key) ||
+                  `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
+              };
+            });
           }
           break;
         case 'D':
@@ -885,9 +920,11 @@ export const useKeyboardHandlers = (
 
                 for (const node of gameState.clipboard.nodes) {
                   if (gameState.clipboard.action === 'cut') {
+                    // Use node's actualParentPath if available (from search), otherwise use clipboard.originalPath
+                    const sourcePath = node.actualParentPath || gameState.clipboard.originalPath;
                     const deleteResult: Result<FileNode, FsError> = deleteNode(
                       newFs,
-                      gameState.clipboard.originalPath,
+                      sourcePath,
                       node.id,
                       gameState.levelIndex
                     );
@@ -902,10 +939,13 @@ export const useKeyboardHandlers = (
                     }
                   }
 
+                  // Strip search-related metadata before adding to filesystem
+                  const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
+
                   const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
                     newFs,
                     gameState.currentPath,
-                    node
+                    cleanNode
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -974,10 +1014,13 @@ export const useKeyboardHandlers = (
                     newFs = deleteResult.value;
                   }
 
+                  // Strip search-related metadata before adding to filesystem
+                  const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
+
                   const addResult: Result<FileNode, FsError> = addNode(
                     newFs,
                     gameState.currentPath,
-                    node
+                    cleanNode
                   );
                   if (!addResult.ok) {
                     error = (addResult as { ok: false; error: FsError }).error;
@@ -987,9 +1030,11 @@ export const useKeyboardHandlers = (
                   newFs = addResult.value;
 
                   if (gameState.clipboard?.action === 'cut') {
+                    // Use node's actualParentPath if available (from search), otherwise use clipboard.originalPath
+                    const sourcePath = node.actualParentPath || gameState.clipboard.originalPath;
                     const deleteResult: Result<FileNode, FsError> = deleteNode(
                       newFs,
-                      gameState.clipboard.originalPath,
+                      sourcePath,
                       node.id,
                       gameState.levelIndex
                     );
