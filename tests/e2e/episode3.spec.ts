@@ -135,55 +135,90 @@ test.describe('Episode 3: MASTERY', () => {
     await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
   });
 
-  // Level 13: DISTRIBUTED CONSCIOUSNESS - Nested Hidden Keys
-  test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys', async ({ page }) => {
+  // Level 13: DISTRIBUTED CONSCIOUSNESS - Node Switching + Key Assembly
+  // Level 13: DISTRIBUTED CONSCIOUSNESS - One-Swoop Strategy
+  test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys via search', async ({
+    page,
+  }) => {
     await goToLevel(page, 13);
 
-    // One-Swoop Strategy:
-    // 1. Navigate to root
-    await gotoCommand(page, 'r');
-    await page.waitForTimeout(300);
-
-    // 2. Toggle hidden files visibility (leaves them on for protocol violation test)
+    // 1. Toggle hidden files to see the .key files
     await pressKey(page, '.');
-    await page.waitForTimeout(300);
-
-    // 3. Search for all .key fragments
-    await pressKey(page, 's');
-    await typeText(page, '.key');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(1000); // Give time for search results to populate
-
-    // 4. Select all results and yank
-    await pressKey(page, 'Control+A');
     await page.waitForTimeout(200);
-    await pressKey(page, 'y');
+
+    // 2. Go to nodes directory to avoid root honeypots
+    await gotoCommand(page, 'r');
+    await page.waitForTimeout(200);
+    await filterAndNavigate(page, 'nodes');
+    await page.waitForTimeout(200);
+
+    // 3. Search for Keys (One-Swoop)
+    await pressKey(page, 's');
+    await page.waitForTimeout(200);
+    await page.keyboard.type('.key');
     await page.waitForTimeout(500);
-    await page.keyboard.press('Escape'); // Exit search view (returns to root)
-    await page.waitForTimeout(300);
+    await pressKey(page, 'Enter'); // Confirm search
 
-    // 5. Navigate to the central relay (/tmp/central)
-    await gotoCommand(page, 't');
-    await filterAndNavigate(page, 'central');
-    await page.waitForTimeout(300);
+    // 4. Select All and Yank
+    await pressKey(page, 'Control+a'); // Select all 3 keys
+    await page.waitForTimeout(200);
+    await pressKey(page, 'y'); // Yank them
 
-    // 6. Paste fragments
-    await pressKey(page, 'p');
-    await page.waitForTimeout(1000); // Wait for paste and task updates
+    // VERIFY: notification says "3 item(s) yanked"
+    await expect(page.getByText('3 item(s) yanked')).toBeVisible({ timeout: 2000 });
 
-    // 7. Verify task progress (4 main tasks complete, 1 optional remaining)
-    await expect(page.getByText(/Tasks: 4\/5/)).toBeVisible();
+    await page.waitForTimeout(200);
 
-    // 8. Resolve Protocol Violation (Shift+Enter to auto-fix hidden files warning)
+    // 4. Escape search filter/results (Critical step)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    // 5. Navigate to central_relay and Paste
+    await gotoCommand(page, 'w'); // Go to ~/workspace
+    await page.waitForTimeout(200);
+    await filterAndNavigate(page, 'central_relay');
+    await page.waitForTimeout(200);
+    await pressKey(page, 'p'); // Paste all 3 keys
+    await page.waitForTimeout(500);
+
+    // 6. Verify keys assembled (3 extract + 1 assemble = 4/5)
+    await expect(page.getByText(/Tasks: 4\/5/)).toBeVisible({ timeout: 3000 });
+
+    // 7. Discover Identity: Go up to workspace, find file, scroll
+    await pressKey(page, 'h'); // Go up to ~/workspace
+    await page.waitForTimeout(200);
+
+    // Select .identity.log.enc (triggers optional task check when selected + info panel + J/K)
+    await filterAndSelect(page, '.identity.log.enc');
+    await page.waitForTimeout(200);
+
+    // Open Info Panel (Tab)
+    await pressKey(page, 'Tab');
+    await page.waitForTimeout(200);
+
+    // Scroll down preview (J)
+    await pressKey(page, 'J');
+    await page.waitForTimeout(500);
+
+    // 8. Verify all 5 tasks complete
+    await expect(page.getByText(/Tasks: 5\/5/)).toBeVisible({ timeout: 3000 });
+
+    // 9. Resolve Protocol Violation (Shift+Enter to bypass)
+    const protocolViolation = page.getByText(/PROTOCOL VIOLATION/i);
+    // Explicitly check and press if visible, or just press blindly if safe?
+    // User instruction: "shift_enter to bypass protocol dialog"
+    if (await protocolViolation.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await pressKey(page, 'Shift+Enter');
+      await page.waitForTimeout(500);
+    }
+
+    // 10. Final Shift+Enter to advance level
     await pressKey(page, 'Shift+Enter');
     await page.waitForTimeout(500);
 
-    // 9. Final Shift+Enter to advance level (mission complete dialog now visible)
-    await pressKey(page, 'Shift+Enter');
-    await page.waitForTimeout(500);
-
-    await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('DISTRIBUTED CONSCIOUSNESS')).toBeVisible();
+    await expect(page.getByRole('alert').getByText('EVIDENCE PURGE')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   // Level 14: EVIDENCE PURGE

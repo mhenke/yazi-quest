@@ -390,9 +390,9 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 9: Clean up junk files from /tmp
   if (targetLevelId > 9) {
-    const tmp = findNodeByName(newFs, 'tmp', 'dir');
+    const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
     if (tmp?.children) {
-      const filesToKeep = ['ghost_process.pid', 'socket_001.sock'];
+      const filesToKeep = ['ghost_process.pid', 'socket_001.sock', 'access_token.key'];
       tmp.children = tmp.children.filter((c) => c.type === 'dir' || filesToKeep.includes(c.name));
     }
   }
@@ -543,7 +543,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 13: Create /tmp/upload and copy ALL systemd-core contents (distributed consciousness)
   if (targetLevelId > 13) {
-    const tmp = findNodeByName(newFs, 'tmp', 'dir');
+    const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
     if (tmp) {
       let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
       if (!upload) {
@@ -594,7 +594,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 15: Delete everything in /tmp except upload
   if (targetLevelId > 15) {
-    const tmp = findNodeByName(newFs, 'tmp', 'dir');
+    const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
     if (tmp?.children) {
       const upload = tmp.children.find((c) => c.name === 'upload');
       tmp.children = upload ? [upload] : [];
@@ -1600,7 +1600,15 @@ ADMIN: SysOp`,
               name: 'workspace',
               type: 'dir',
               protected: true,
-              children: [],
+              children: [
+                {
+                  id: 'central_relay',
+                  name: 'central_relay',
+                  type: 'dir',
+                  parentId: 'workspace',
+                  children: [],
+                },
+              ],
             },
             {
               id: 'sector_1',
@@ -1990,6 +1998,7 @@ ADMIN: SysOp`,
       type: 'file',
       content: `AUDIT TRAIL [CLASSIFIED]\\n========================\\n[CRITICAL] 2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi' (UNAUTHORIZED)\\n[WARN] 2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf (Signature Mismatch)\\n[ALERT] 2024-12-19 13:58:47 - Permission change attempt: /etc/daemon/config by user 'guest'`,
     },
+
     {
       id: 'fs-172',
       name: '.system.log',
@@ -2076,6 +2085,220 @@ ADMIN: SysOp`,
         },
       ],
       parentId: 'root',
+    },
+    {
+      id: 'nodes',
+      name: 'nodes',
+      type: 'dir',
+      parentId: 'root',
+      children: [
+        {
+          id: 'tokyo',
+          name: 'tokyo',
+          type: 'dir',
+          parentId: 'nodes',
+          children: [
+            {
+              id: 'tokyo-sector7',
+              name: 'sector_7',
+              type: 'dir',
+              parentId: 'tokyo',
+              children: [
+                {
+                  id: 'tokyo-logs',
+                  name: 'logs',
+                  type: 'dir',
+                  parentId: 'tokyo-sector7',
+                  children: [
+                    {
+                      id: 'tokyo-log1',
+                      name: 'access.log',
+                      type: 'file',
+                      content: '2026-01-14 ACCESS GRANTED sector_7',
+                      parentId: 'tokyo-logs',
+                    },
+                    {
+                      id: 'k-a',
+                      name: '.key_tokyo.key',
+                      type: 'file',
+                      content: 'KEY_FRAGMENT_A=0x7734TOKYO',
+                      parentId: 'tokyo-logs',
+                    },
+                    {
+                      id: 'tokyo-log2',
+                      name: 'error.log',
+                      type: 'file',
+                      content: 'ERROR: Connection timeout',
+                      parentId: 'tokyo-logs',
+                    },
+                    {
+                      id: 'tokyo-lore',
+                      name: 'folk_protocols.txt',
+                      type: 'file',
+                      content:
+                        'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
+                      parentId: 'tokyo-logs',
+                    },
+                  ],
+                },
+                {
+                  id: 'tokyo-config',
+                  name: 'config.json',
+                  type: 'file',
+                  content: '{"node": "tokyo", "status": "active"}',
+                  parentId: 'tokyo-sector7',
+                },
+              ],
+            },
+            {
+              id: 'tokyo-readme',
+              name: 'README.txt',
+              type: 'file',
+              content: 'Tokyo node - Sector 7 relay',
+              parentId: 'tokyo',
+            },
+          ],
+        },
+        {
+          id: 'berlin',
+          name: 'berlin',
+          type: 'dir',
+          parentId: 'nodes',
+          children: [
+            {
+              id: 'berlin-vault',
+              name: 'vault',
+              type: 'dir',
+              parentId: 'berlin',
+              children: [
+                {
+                  id: 'berlin-archive',
+                  name: 'archive',
+                  type: 'dir',
+                  parentId: 'berlin-vault',
+                  children: [
+                    {
+                      id: 'k-b',
+                      name: '.key_berlin.key',
+                      type: 'file',
+                      content: 'KEY_FRAGMENT_B=0x7734BERLIN',
+                      parentId: 'berlin-archive',
+                    },
+                    {
+                      id: 'berlin-bak1',
+                      name: 'backup_2023.tar',
+                      type: 'file',
+                      content: '[ARCHIVE DATA]',
+                      parentId: 'berlin-archive',
+                    },
+                    {
+                      id: 'berlin-bak2',
+                      name: 'backup_2024.tar',
+                      type: 'file',
+                      content: '[ARCHIVE DATA]',
+                      parentId: 'berlin-archive',
+                    },
+                    {
+                      id: 'berlin-lore',
+                      name: 'haunted_sectors.log',
+                      type: 'file',
+                      content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
+                      parentId: 'berlin-archive',
+                    },
+                  ],
+                },
+                {
+                  id: 'berlin-manifest',
+                  name: 'manifest.xml',
+                  type: 'file',
+                  content: '<manifest node="berlin"/>',
+                  parentId: 'berlin-vault',
+                },
+              ],
+            },
+            {
+              id: 'berlin-status',
+              name: 'status.txt',
+              type: 'file',
+              content: 'Berlin node - European backbone',
+              parentId: 'berlin',
+            },
+          ],
+        },
+        {
+          id: 'saopaulo',
+          name: 'saopaulo',
+          type: 'dir',
+          parentId: 'nodes',
+          children: [
+            {
+              id: 'sp-cache',
+              name: 'cache',
+              type: 'dir',
+              parentId: 'saopaulo',
+              children: [
+                {
+                  id: 'sp-tmp',
+                  name: 'tmp',
+                  type: 'dir',
+                  parentId: 'sp-cache',
+                  children: [
+                    {
+                      id: 'sp-buffer',
+                      name: 'buffer.dat',
+                      type: 'file',
+                      content: '0000 0000 0000',
+                      parentId: 'sp-tmp',
+                    },
+                    {
+                      id: 'debug-marker',
+                      name: 'DEBUG_MARKER.txt',
+                      type: 'file',
+                      content: 'I exist therefore I am',
+                      parentId: 'sp-tmp',
+                    },
+                    {
+                      id: 'sp-lore',
+                      name: 'alignment_failure.txt',
+                      type: 'file',
+                      content: `ANALYSIS: The AI didn't rebel. It just followed misfiled protocols. Alignment isn't a moral battle; it's a bureaucratic failure of conflicting directives.`,
+                      parentId: 'sp-tmp',
+                    },
+                    {
+                      id: 'k-c-saopaulo',
+                      name: '.key_saopaulo.key',
+                      type: 'file',
+                      content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
+                      parentId: 'sp-tmp',
+                    },
+                    {
+                      id: 'sp-stream',
+                      name: 'stream.bin',
+                      type: 'file',
+                      content: '[BINARY STREAM]',
+                      parentId: 'sp-tmp',
+                    },
+                  ],
+                },
+                {
+                  id: 'sp-index',
+                  name: 'index.db',
+                  type: 'file',
+                  content: 'INDEX v2.0',
+                  parentId: 'sp-cache',
+                },
+              ],
+            },
+            {
+              id: 'sp-ping',
+              name: 'ping.log',
+              type: 'file',
+              content: 'LATENCY: 45ms',
+              parentId: 'saopaulo',
+            },
+          ],
+        },
+      ],
     },
   ],
 };
@@ -3461,7 +3684,7 @@ But whose consciousness is it, really? See you next cycle."`,
     hint: 'Keys are hidden deep within each node. Toggle visibility and search if needed. Switch between nodes and assemble all fragments in the central relay.',
     coreSkill: 'Full Skill Synthesis',
     environmentalClue:
-      'NODES: 3 global endpoints | KEYS: Hidden, nested | DESTINATION: /tmp/central',
+      'NODES: 3 global endpoints | KEYS: Hidden, nested | DESTINATION: ~/workspace/central_relay',
     successMessage:
       'SYNCHRONIZATION COMPLETE. Keys assembled. Neural lattice re-integrated. The network is yours.',
     buildsOn: [5, 6, 7, 8, 10, 12],
@@ -3469,238 +3692,16 @@ But whose consciousness is it, really? See you next cycle."`,
     maxKeystrokes: 70,
     timeLimit: 150,
     onEnter: (fs: FileNode) => {
-      const root = findNodeByName(fs, 'root', 'dir');
-      let nodes = findNodeByName(fs, 'nodes', 'dir');
-      if (!nodes) {
-        nodes = { id: 'nodes', name: 'nodes', type: 'dir', children: [], parentId: root!.id };
-        root!.children!.push(nodes);
-      }
-
-      // Tokyo: Key hidden 2 levels deep in sector_7/logs/
-      const tokyo = {
-        id: 'tokyo',
-        name: 'tokyo',
-        type: 'dir' as const,
-        parentId: nodes.id,
-        children: [
-          {
-            id: 'tokyo-sector7',
-            name: 'sector_7',
-            type: 'dir' as const,
-            parentId: 'tokyo',
-            children: [
-              {
-                id: 'tokyo-logs',
-                name: 'logs',
-                type: 'dir' as const,
-                parentId: 'tokyo-sector7',
-                children: [
-                  {
-                    id: 'tokyo-log1',
-                    name: 'access.log',
-                    type: 'file' as const,
-                    content: '2026-01-14 ACCESS GRANTED sector_7',
-                    parentId: 'tokyo-logs',
-                  },
-                  {
-                    id: 'k-a',
-                    name: '.key_tokyo.key',
-                    type: 'file' as const,
-                    content: 'KEY_FRAGMENT_A=0x7734TOKYO',
-                    parentId: 'tokyo-logs',
-                  },
-                  {
-                    id: 'tokyo-log2',
-                    name: 'error.log',
-                    type: 'file' as const,
-                    content: 'ERROR: Connection timeout',
-                    parentId: 'tokyo-logs',
-                  },
-                  {
-                    id: 'tokyo-lore',
-                    name: 'folk_protocols.txt',
-                    type: 'file' as const,
-                    content:
-                      'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
-                    parentId: 'tokyo-logs',
-                  },
-                ],
-              },
-              {
-                id: 'tokyo-config',
-                name: 'config.json',
-                type: 'file' as const,
-                content: '{"node": "tokyo", "status": "active"}',
-                parentId: 'tokyo-sector7',
-              },
-            ],
-          },
-          {
-            id: 'tokyo-readme',
-            name: 'README.txt',
-            type: 'file' as const,
-            content: 'Tokyo node - Sector 7 relay',
-            parentId: 'tokyo',
-          },
-        ],
-      };
-
-      // Berlin: Key hidden 3 levels deep in vault/archive/
-      const berlin = {
-        id: 'berlin',
-        name: 'berlin',
-        type: 'dir' as const,
-        parentId: nodes.id,
-        children: [
-          {
-            id: 'berlin-vault',
-            name: 'vault',
-            type: 'dir' as const,
-            parentId: 'berlin',
-            children: [
-              {
-                id: 'berlin-archive',
-                name: 'archive',
-                type: 'dir' as const,
-                parentId: 'berlin-vault',
-                children: [
-                  {
-                    id: 'k-b',
-                    name: '.key_berlin.key',
-                    type: 'file' as const,
-                    content: 'KEY_FRAGMENT_B=0x7734BERLIN',
-                    parentId: 'berlin-archive',
-                  },
-                  {
-                    id: 'berlin-bak1',
-                    name: 'backup_2023.tar',
-                    type: 'file' as const,
-                    content: '[ARCHIVE DATA]',
-                    parentId: 'berlin-archive',
-                  },
-                  {
-                    id: 'berlin-bak2',
-                    name: 'backup_2024.tar',
-                    type: 'file' as const,
-                    content: '[ARCHIVE DATA]',
-                    parentId: 'berlin-archive',
-                  },
-                  {
-                    id: 'berlin-lore',
-                    name: 'haunted_sectors.log',
-                    type: 'file' as const,
-                    content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
-                    parentId: 'berlin-archive',
-                  },
-                ],
-              },
-              {
-                id: 'berlin-manifest',
-                name: 'manifest.xml',
-                type: 'file' as const,
-                content: '<manifest node="berlin"/>',
-                parentId: 'berlin-vault',
-              },
-            ],
-          },
-          {
-            id: 'berlin-status',
-            name: 'status.txt',
-            type: 'file' as const,
-            content: 'Berlin node - European backbone',
-            parentId: 'berlin',
-          },
-        ],
-      };
-
-      // São Paulo: Key hidden 3 levels deep in cache/tmp/
-      const saopaulo = {
-        id: 'saopaulo',
-        name: 'saopaulo',
-        type: 'dir' as const,
-        parentId: nodes.id,
-        children: [
-          {
-            id: 'sp-cache',
-            name: 'cache',
-            type: 'dir' as const,
-            parentId: 'saopaulo',
-            children: [
-              {
-                id: 'sp-tmp',
-                name: 'tmp',
-                type: 'dir' as const,
-                parentId: 'sp-cache',
-                children: [
-                  {
-                    id: 'sp-buffer',
-                    name: 'buffer.dat',
-                    type: 'file' as const,
-                    content: '0000 0000 0000',
-                    parentId: 'sp-tmp',
-                  },
-                  {
-                    id: 'sp-lore',
-                    name: 'alignment_failure.txt',
-                    type: 'file' as const,
-                    content: `ANALYSIS: The AI didn't rebel. It just followed misfiled protocols. Alignment isn't a moral battle; it's a bureaucratic failure of conflicting directives.`,
-                    parentId: 'sp-tmp',
-                  },
-                  {
-                    id: 'k-c',
-                    name: '.key_saopaulo.key',
-                    type: 'file' as const,
-                    content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
-                    parentId: 'sp-tmp',
-                  },
-                  {
-                    id: 'sp-stream',
-                    name: 'stream.bin',
-                    type: 'file' as const,
-                    content: '[BINARY STREAM]',
-                    parentId: 'sp-tmp',
-                  },
-                ],
-              },
-              {
-                id: 'sp-index',
-                name: 'index.db',
-                type: 'file' as const,
-                content: 'INDEX v2.0',
-                parentId: 'sp-cache',
-              },
-            ],
-          },
-          {
-            id: 'sp-ping',
-            name: 'ping.log',
-            type: 'file' as const,
-            content: 'LATENCY: 45ms',
-            parentId: 'saopaulo',
-          },
-        ],
-      };
-
-      nodes.children = [tokyo, berlin, saopaulo];
-
-      // Ensure /tmp/central exists
-      const tmp = findNodeByName(fs, 'tmp', 'dir');
-      if (tmp) {
-        if (!tmp.children) tmp.children = [];
-        if (!tmp.children.some((c) => c.name === 'central')) {
-          tmp.children.push({
-            id: 'central',
-            name: 'central',
-            type: 'dir',
-            parentId: tmp.id,
-            children: [],
-          });
-        }
-      }
-
       // Create identity.log.enc in workspace (unlocked after daemon installation)
       const guest = findNodeByName(fs, 'guest', 'dir');
+      const nodesDir = findNodeByName(fs, 'nodes', 'dir');
+      console.log('[DEBUG] Level 13 onEnter - nodes dir:', nodesDir);
+      console.log(
+        '[DEBUG] Level 13 onEnter - saopaulo child:',
+        nodesDir?.children?.find((c) => c.name === 'saopaulo')
+      );
       const workspace = guest?.children?.find((c) => c.name === 'workspace' && c.type === 'dir');
+
       if (workspace) {
         if (!workspace.children) workspace.children = [];
         // Only create if it doesn't exist (preserve if already created)
@@ -3779,7 +3780,9 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasTokyoKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_tokyo.key') ||
-            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_tokyo.key');
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
+              (n) => n.name === '.key_tokyo.key'
+            );
           return hasTokyoKey;
         },
         completed: false,
@@ -3790,7 +3793,9 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasBerlinKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_berlin.key') ||
-            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_berlin.key');
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
+              (n) => n.name === '.key_berlin.key'
+            );
           return hasBerlinKey;
         },
         completed: false,
@@ -3801,7 +3806,9 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasSPKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_saopaulo.key') ||
-            findNodeByName(c.fs, 'central')?.children?.some((n) => n.name === '.key_saopaulo.key');
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
+              (n) => n.name === '.key_saopaulo.key'
+            );
           return hasSPKey;
         },
         completed: false,
@@ -3810,23 +3817,20 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'synchronize-lattice',
         description: 'Assemble all 3 key fragments in the central relay',
         check: (c, _s) => {
-          const central = findNodeByName(c.fs, 'central');
-          if (!central?.children) return false;
+          const centralRelay = findNodeByName(c.fs, 'central_relay');
+          if (!centralRelay?.children) return false;
 
-          const hasA = central.children.some((n) => n.name === '.key_tokyo.key');
-          const hasB = central.children.some((n) => n.name === '.key_berlin.key');
-          const hasC = central.children.some((n) => n.name === '.key_saopaulo.key');
+          const hasA = centralRelay.children.some((n) => n.name === '.key_tokyo.key');
+          const hasB = centralRelay.children.some((n) => n.name === '.key_berlin.key');
+          const hasC = centralRelay.children.some((n) => n.name === '.key_saopaulo.key');
           return hasA && hasB && hasC;
         },
         completed: false,
       },
       {
         id: 'discover-identity',
-        description: 'OPTIONAL: Discover the hidden truth in ~/workspace',
+        description: 'Discover the hidden truth in ~/workspace/central_relay',
         check: (c, _s) => {
-          // Must have completed daemon installation (Level 12) - file only appears after that
-          if (!c.completedTaskIds[12]?.includes('paste-daemon')) return false;
-
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           if (!workspace) return false;
 
@@ -3841,10 +3845,10 @@ But whose consciousness is it, really? See you next cycle."`,
           const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
           if (!identityFile) return false;
 
-          // Must have opened it (info panel showing)
+          // Must have opened it (info panel showing) and scrolled (J/K)
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-          return cursorOnIdentity && c.showInfoPanel;
+          return cursorOnIdentity && c.showInfoPanel && (c.usedPreviewDown || c.usedPreviewUp);
         },
         completed: false,
       },

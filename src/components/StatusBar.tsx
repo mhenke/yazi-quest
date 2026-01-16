@@ -194,7 +194,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         )}
 
         {/* Show Timer if active */}
-        {state.timeLeft !== null && !showKeystrokes && !allTasksComplete && (
+        {state.timeLeft !== null && !allTasksComplete && (
           <div
             className={`px-4 py-0.5 font-bold border-l border-zinc-700 flex items-center gap-2 transition-colors ${
               isLowTime

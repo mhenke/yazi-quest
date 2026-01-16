@@ -57,7 +57,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   // Render level description with runtime tokens replaced (e.g., <current_datetime>)
   const renderedDescription = (level.description || '').replace(
     /<current_datetime>/g,
-    new Date().toISOString(),
+    new Date().toISOString()
   );
 
   // Treat archives as having children if they are dirs or zip files with children populated
@@ -104,7 +104,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                   gameState.currentPath,
                   node,
                   level,
-                  'enter',
+                  'enter'
                 );
 
                 if (protectionMessage) {
@@ -126,9 +126,17 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                 }
 
                 const sorted = sortNodes(node.children || [], 'natural', 'asc');
+                const filtered = sorted.filter(
+                  (child) => gameState.showHidden || !child.name.startsWith('.')
+                );
+
+                if (filtered.length === 0) {
+                  return <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>;
+                }
+
                 return (
                   <div className="flex flex-col gap-0.5">
-                    {sorted.map((child) => {
+                    {filtered.map((child) => {
                       const { icon: Icon, color } = getPreviewIcon(child);
                       return (
                         <div
