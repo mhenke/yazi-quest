@@ -4,7 +4,7 @@ import { goToLevel, pressKey, typeText, gotoCommand } from './utils';
 test.describe('Level 12: Scattered Search Multi-Delete', () => {
   test('should find and delete scattered scan files via search + select all', async ({ page }) => {
     // 1. Jump to Level 12 (Heuristic Swarm scenario)
-    await page.goto('http://localhost:3002/?lvl=12&scenario=scen-b3');
+    await page.goto('/?lvl=12&scenario=scen-b3');
     await page.waitForLoadState('networkidle');
 
     // Skip intro if visible

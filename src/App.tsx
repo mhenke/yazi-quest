@@ -958,6 +958,11 @@ export default function App() {
         clipboard: null,
         mode: 'normal',
         filters: {},
+        showHidden: false, // Reset hidden files
+        searchQuery: null, // Reset search
+        searchResults: [], // Reset search results
+        sortBy: 'natural', // Reset sort
+        sortDirection: 'asc', // Reset sort direction
         notification: 'System Reinitialized',
         selectedIds: [],
         pendingDeleteIds: [],
@@ -988,16 +993,9 @@ export default function App() {
         future: [],
         previewScroll: 0,
         completedTaskIds: newCompletedTaskIds,
-        // Ensure restarting a level also resets the global sort
-        sortBy: 'natural',
-        sortDirection: 'asc',
         gauntletPhase: 0,
         gauntletScore: 0,
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
-        // Reset Search & View State
-        showHidden: false,
-        searchQuery: null,
-        searchResults: [],
         usedSearch: false,
       };
     });
@@ -2111,6 +2109,12 @@ export default function App() {
               fs,
               currentPath: lvl.initialPath || ['root', 'home', 'guest'],
               showEpisodeIntro: false,
+              filters: {},
+              showHidden: false, // Reset hidden files
+              searchQuery: null, // Reset search
+              searchResults: [], // Reset search results
+              sortBy: 'natural', // Reset sort
+              sortDirection: 'asc', // Reset sort direction
               future: [],
               previewScroll: 0,
               usedPreviewDown: false,

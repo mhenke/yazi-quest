@@ -172,6 +172,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 1: Navigate to '/tmp'
     await gotoCommand(page, 't');
+    await page.keyboard.press('.'); // Toggle hidden files to ensure all junk (including hidden) is visible for deletion
 
     // Task 2: Select files to KEEP
     // ghost_process.pid
