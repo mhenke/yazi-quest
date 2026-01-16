@@ -104,3 +104,13 @@ Key principles:
 - Maximizes screen space for the file manager simulation
 - Keeps mission details accessible but not intrusive
 - Quest Map provides comprehensive overview when needed
+
+## Testing & Debugging Protocols (Level 13 Lessons)
+
+1. **Literal Execution:** If a user provides specific key sequences (e.g., "press j 4 times"), EXECUTE LITERALLY. Do not substitute with "smarter" logic like filters.
+2. **Key Input Precision:** `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase commands. Verify inputs.
+3. **Deterministic Environment:** Check `src/constants.tsx` for `Math.random` before testing. Flakiness is often hidden randomness (e.g. `alert_traffic.log`).
+4. **Visual Evidence:** If a test fails, capture a screenshot IMMEDIATELY. Do not guess the state.
+5. **Check "Lazy Expert" Bias:** Do not substitute user instructions with "better" logic. Using filters when asked for navigation is a failure of obedience, not an optimization.
+6. **Codebase Precedent:** Check existing tests for successful patterns before inventing new interaction logic.
+7. **Source vs. Symptom:** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable.

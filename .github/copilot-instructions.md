@@ -131,3 +131,13 @@ Key principles:
 3. **No left sidebar** - Mission info belongs in the Quest Map modal only
 4. **Follow existing patterns** - The codebase has established conventions; maintain consistency
 5. **Test with debug parameters** - Use URL parameters to verify changes across different game states
+
+## Anti-Failure Protocols
+
+6. **Literal Execution:** If a user provides specific key sequences (e.g., "press j 4 times"), EXECUTE LITERALLY. Do not substitute with "smarter" logic (e.g., filters) unless explicitly asked.
+7. **Tool Verification:** Never assume `pressKey('char')` handles modifiers. `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase. Verify low-level mechanics.
+8. **Deterministic Sandbox:** Before E2E testing, grep `src/constants.tsx` for `Math.random` or dynamic dates. Remove/mock sources of non-determinism that alter state.
+9. **Visual-First Debugging:** If a UI test fails, the IMMEDIATELY NEXT step is capturing a screenshot. Do not iterate on code without visual evidence.
+10. **Avoid "Lazy Expert" Bias:** Do not assume your preferred method is superior to the user's manual instructions. Follow user workflows exactly unless proven impossible.
+11. **Codebase Precedent:** Before implementing a complex interaction, grep existing tests for successful patterns. Do not reinvent methods that are already solved in the codebase.
+12. **Source vs. Symptom:** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable rather than writing complex, brittle test logic.

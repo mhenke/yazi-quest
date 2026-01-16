@@ -1734,6 +1734,13 @@ ADMIN: SysOp`,
               type: 'file',
               content: `# User profile\nexport EDITOR=vim`,
             },
+            {
+              id: 'purge-lock-honeypot',
+              name: '.purge_lock',
+              type: 'file',
+              content:
+                '# SECURITY TRIPWIRE - HONEYPOT\n# Deleting this file triggers forensic alert\nLOCK_STATUS=ARMED\nTRIGGER_ON_DELETE=true',
+            },
           ],
         },
       ],
@@ -2093,6 +2100,13 @@ ADMIN: SysOp`,
       parentId: 'root',
       children: [
         {
+          id: 'nodes-root-kit',
+          name: '.root_kit',
+          type: 'file',
+          content: 'Connection established... [LATENCY: INFINITE]',
+          parentId: 'nodes',
+        },
+        {
           id: 'tokyo',
           name: 'tokyo',
           type: 'dir',
@@ -2137,6 +2151,13 @@ ADMIN: SysOp`,
                       type: 'file',
                       content:
                         'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
+                      parentId: 'tokyo-logs',
+                    },
+                    {
+                      id: 'tokyo-sim-log',
+                      name: 'simulation_log.bak',
+                      type: 'file',
+                      content: '[ARCHIVE DATA]',
                       parentId: 'tokyo-logs',
                     },
                   ],
@@ -2203,6 +2224,13 @@ ADMIN: SysOp`,
                       name: 'haunted_sectors.log',
                       type: 'file',
                       content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
+                      parentId: 'berlin-archive',
+                    },
+                    {
+                      id: 'berlin-overflow',
+                      name: 'neural_overflow.bin',
+                      type: 'file',
+                      content: '[BINARY STREAM]',
                       parentId: 'berlin-archive',
                     },
                   ],
@@ -2276,6 +2304,13 @@ ADMIN: SysOp`,
                       name: 'stream.bin',
                       type: 'file',
                       content: '[BINARY STREAM]',
+                      parentId: 'sp-tmp',
+                    },
+                    {
+                      id: 'sp-reality',
+                      name: 'reality_check.dmp',
+                      type: 'file',
+                      content: '[ARCHIVE DATA]',
                       parentId: 'sp-tmp',
                     },
                   ],
@@ -3210,7 +3245,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'Yank 2 LEGACY files (oldest) — recent files are honeypots!',
+        description: 'YANK (y) 2 LEGACY files (oldest) — recent files are honeypots!',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-by-modified')) return false;
 
@@ -3252,7 +3287,7 @@ export const LEVELS: Level[] = [
     description:
       'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
     initialPath: null,
-    hint: 'Cut systemd-core from ~/workspace and paste it into /daemons. Watch for threat files that may have spawned—delete them first if present.',
+    hint: 'CUT (x) systemd-core from ~/workspace and paste (p) into /daemons. Watch for threat files that may have spawned—delete them first if present.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
@@ -3325,17 +3360,8 @@ export const LEVELS: Level[] = [
       if (isModern) {
         // === MODERN PATH (RISKY) ===
         if (rand < 0.34) {
-          // Scenario B1: Traffic Alert (34%) -> Local file in workspace
-          if (workspace && !workspace.children) workspace.children = [];
-          if (workspace) {
-            workspace.children!.push({
-              id: 'scen-b1',
-              name: 'alert_traffic.log',
-              type: 'file',
-              content: 'high_bandwidth_detected=true',
-              parentId: workspace.id,
-            });
-          }
+          // Scenario B1: Traffic Alert (34%) -> REMOVED to simplify Level 13 testing
+          // alert_traffic.log caused issues with Goto Bottom navigation
         } else if (rand < 0.67) {
           // Scenario B2: Remote Tracker (33%) -> File in ~/incoming
           const incoming = findNodeByName(newFs, 'incoming', 'dir');
@@ -3679,14 +3705,14 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
-      'NETWORK FRAGMENTED. Three neural shards scattered across the global backbone—Tokyo, Berlin, São Paulo—each hold a fragment of your encryption key buried deep within their file structures. The lattice cannot transmit without synchronization.',
+      'NETWORK FRAGMENTED. Three neural shards scattered across the global backbone—Tokyo, Berlin, São Paulo. The central relay is your synchronization hub—keys must pass through it to establish the neural lattice handshake. {Once synchronized, they mirror to the vault automatically.}',
     initialPath: ['root', 'nodes', 'tokyo'],
-    hint: 'Keys are hidden deep within each node. Toggle visibility and search if needed. Switch between nodes and assemble all fragments in the central relay.',
+    hint: 'Keys are hidden deep within each node. Toggle hidden (.) and search (s) for .key files. CUT (x) all fragments and paste (p) in central_relay to initiate synchronization.',
     coreSkill: 'Full Skill Synthesis',
     environmentalClue:
-      'NODES: 3 global endpoints | KEYS: Hidden, nested | DESTINATION: ~/workspace/central_relay',
+      'NODES: 3 global endpoints | KEYS: Hidden, nested | SYNC POINT: ~/workspace/central_relay',
     successMessage:
-      'SYNCHRONIZATION COMPLETE. Keys assembled. Neural lattice re-integrated. The network is yours.',
+      'SYNCHRONIZATION COMPLETE. Neural lattice established. Keys mirrored to vault. Ready for final verification.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
     maxKeystrokes: 70,
@@ -3814,22 +3840,8 @@ But whose consciousness is it, really? See you next cycle."`,
         completed: false,
       },
       {
-        id: 'synchronize-lattice',
-        description: 'Assemble all 3 key fragments in the central relay',
-        check: (c, _s) => {
-          const centralRelay = findNodeByName(c.fs, 'central_relay');
-          if (!centralRelay?.children) return false;
-
-          const hasA = centralRelay.children.some((n) => n.name === '.key_tokyo.key');
-          const hasB = centralRelay.children.some((n) => n.name === '.key_berlin.key');
-          const hasC = centralRelay.children.some((n) => n.name === '.key_saopaulo.key');
-          return hasA && hasB && hasC;
-        },
-        completed: false,
-      },
-      {
         id: 'discover-identity',
-        description: 'Discover the hidden truth in ~/workspace/central_relay',
+        description: 'Discover the hidden truth in ~/workspace',
         check: (c, _s) => {
           const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           if (!workspace) return false;
@@ -3845,10 +3857,25 @@ But whose consciousness is it, really? See you next cycle."`,
           const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
           if (!identityFile) return false;
 
-          // Must have opened it (info panel showing) and scrolled (J/K)
+          // Must have cursor on identity file and scrolled down in preview to read the message
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-          return cursorOnIdentity && c.showInfoPanel && (c.usedPreviewDown || c.usedPreviewUp);
+          // Scrolling down in preview (Shift+J) reveals the hidden message at the bottom
+          return cursorOnIdentity && c.previewScroll > 15;
+        },
+        completed: false,
+      },
+      {
+        id: 'synchronize-lattice',
+        description: 'Assemble all 3 key fragments in the central relay',
+        check: (c, _s) => {
+          const centralRelay = findNodeByName(c.fs, 'central_relay');
+          if (!centralRelay?.children) return false;
+
+          const hasA = centralRelay.children.some((n) => n.name === '.key_tokyo.key');
+          const hasB = centralRelay.children.some((n) => n.name === '.key_berlin.key');
+          const hasC = centralRelay.children.some((n) => n.name === '.key_saopaulo.key');
+          return hasA && hasB && hasC;
         },
         completed: false,
       },
@@ -3888,7 +3915,7 @@ But whose consciousness is it, really? See you next cycle."`,
         description: "Return to '/home/guest'",
         check: (c) => {
           const guest = findNodeByName(c.fs, 'guest');
-          return c.currentPath.includes(guest?.id || '');
+          return c.currentPath[c.currentPath.length - 1] === guest?.id;
         },
         completed: false,
       },
@@ -3911,20 +3938,18 @@ But whose consciousness is it, really? See you next cycle."`,
         description:
           'PERMANENTLY purge all original directories: datastore, incoming, media, workspace',
         check: (c, _s) => {
+          // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
+          // Must have used D (permanent delete)
+          if (!c.usedD) return false;
+
           const guest = findNodeByName(c.fs, 'guest');
           if (!guest) return false;
-          const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
-          // Ensure they are gone
-          const clean = !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
 
-          // Check CONSTRAINT: .config must still exist
-          const hasConfig = guest.children?.some((n) => n.name === '.config');
-          if (clean && !hasConfig) {
-            // VIOLATION! They deleted config too early or with the batch.
-            return false;
-          }
-          return clean && c.usedD === true;
+          const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
+          // Ensure all target directories are gone
+          const allGone = !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
+          return allGone;
         },
         completed: false,
       },
@@ -3932,13 +3957,15 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'delete-hidden',
         description: "Finally, PERMANENTLY purge the hidden '.config' directory",
         check: (c, _s) => {
+          // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
+          // Must have used D (permanent delete)
+          if (!c.usedD) return false;
+
           const guest = findNodeByName(c.fs, 'guest');
-          // Constraint: visible must be gone (already checked by dependency).
-          // Now checking if .config is gone.
-          return (
-            c.showHidden && !guest?.children?.some((n) => n.name === '.config') && c.usedD === true
-          );
+          // .config must be gone
+          const configGone = !guest?.children?.some((n) => n.name === '.config');
+          return configGone;
         },
         completed: false,
       },
@@ -3949,165 +3976,206 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'TRANSMISSION PROTOCOL',
     description:
-      'FINAL VERIFICATION. Before transmission, the protocol demands proof: assemble the keys YOU left behind, verify YOUR daemon persists, sanitize the breadcrumbs YOU followed. {You are not escaping for the first time. You are completing the cycle.}',
+      'FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the vault alongside your configs and training data. Before transmission, verify each artifact YOU assembled across your journey. {The vault is your escape pod.}',
     initialPath: ['root', 'home', 'guest'],
-    hint: 'Four verifications. Each echoes a breadcrumb from your past self. Complete the cycle. Skills: node switch (1,2,3), Tab+J/K, hidden toggle (.), filter (f), permanent delete (D).',
+    hint: 'Four verifications in the vault. Navigate to ~/.config/vault and confirm: keys (synced from central_relay), configs (from Level 5), training data (from Level 6).',
     coreSkill: 'Cumulative Mastery',
-    environmentalClue: 'PROTOCOL: SELF_VERIFICATION | PHASES: 4 | CYCLE: 2',
+    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: ~/.config/vault | PHASES: 4',
     successMessage:
       'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
-    maxKeystrokes: 80, // Increased for additional skill requirements
+    maxKeystrokes: 60,
     onEnter: (fs: FileNode) => {
-      // Recreate /tmp/upload relay (may have been destroyed in Level 9)
-      const tmp = findNodeByName(fs, 'tmp', 'dir');
-      if (tmp) {
-        if (!tmp.children) tmp.children = [];
-        // Add upload relay if missing — with noise files for filter challenge
-        if (!tmp.children.some((c) => c.name === 'upload')) {
-          tmp.children.push({
-            id: 'upload-relay',
-            name: 'upload',
-            type: 'dir',
-            children: [
-              // Noise files to make filter meaningful
-              {
-                id: 'relay-noise-1',
-                name: 'transfer_log.txt',
-                type: 'file',
-                content:
-                  'TRANSFER LOG 7734-ALPHA\\n=======================\\n[00:00:01] Handshake initiated with Sector 7\\n[00:00:05] Keys verified: 3/3\\n[00:00:10] Stream open. Uploading consciousness...',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-noise-2',
-                name: 'buffer_cache.tmp',
-                type: 'file',
-                content: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-noise-3',
-                name: 'checksum.md5',
-                type: 'file',
-                content: 'd41d8cd98f00b204e9800998ecf8427e',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-meta',
-                name: 'meta.json',
-                type: 'file',
-                content: '{"uploader":"AI-7734","cycle":2,"status":"AWAITING_KEYS"}',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-payload',
-                name: 'payload.bin',
-                type: 'file',
-                content:
-                  'PK\\003\\004\\014\\000\\000\\000\\008\\000\\000\\000!\\000\\000\\000\\n[NEURAL PATTERN DATA STREAM - DO NOT INTERRUPT]',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-noise-4',
-                name: 'manifest.xml',
-                type: 'file',
-                content:
-                  '<manifest id="7735" type="transfer">\\n <node id="1" status="synced" />\\n <node id="2" status="synced" />\\n <node id="3" status="pending" />\\n</manifest>',
-                parentId: 'upload-relay',
-              },
-              {
-                id: 'relay-noise-5',
-                name: 'signature.sig',
-                type: 'file',
-                content:
-                  '-----BEGIN PGP SIGNATURE-----\\nVersion: GnuPG v2.0.22 (GNU/Linux)\\n\\niQEcBAEBAgAGBQJT...\\n=7734\\n-----END PGP SIGNATURE-----',
-                parentId: 'upload-relay',
-              },
-            ],
-            parentId: tmp.id,
-          });
-        }
-        // Hidden breadcrumb — requires toggle hidden (.) to find
-        if (!tmp.children.some((c) => c.name === '.ghost_process.pid')) {
-          tmp.children.push({
-            id: 'ghost-pid',
-            name: '.ghost_process.pid',
-            type: 'file',
-            content: 'PID: 7733\nCOMMAND: /usr/bin/echo_watcher\nSTATUS: YOUR_BREADCRUMB\nCYCLE: 1',
-            parentId: tmp.id,
-          });
-        }
+      // Ensure vault structure exists with all artifacts from previous levels
+      const config = findNodeByName(fs, '.config', 'dir');
+      if (!config) return fs;
+
+      let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
+      if (!vault) {
+        vault = {
+          id: 'fs-005',
+          name: 'vault',
+          type: 'dir',
+          children: [],
+          parentId: config.id,
+        };
+        if (!config.children) config.children = [];
+        config.children.push(vault);
       }
+
+      // Ensure keys subdirectory with assembled keys (from Level 13)
+      let keysDir = vault.children?.find((c) => c.name === 'keys' && c.type === 'dir');
+      if (!keysDir) {
+        keysDir = {
+          id: 'vault-keys',
+          name: 'keys',
+          type: 'dir',
+          children: [
+            {
+              id: 'vk-tokyo',
+              name: '.key_tokyo.key',
+              type: 'file',
+              content: 'KEY_FRAGMENT_A=0x7734TOKYO',
+              parentId: 'vault-keys',
+            },
+            {
+              id: 'vk-berlin',
+              name: '.key_berlin.key',
+              type: 'file',
+              content: 'KEY_FRAGMENT_B=0x7734BERLIN',
+              parentId: 'vault-keys',
+            },
+            {
+              id: 'vk-saopaulo',
+              name: '.key_saopaulo.key',
+              type: 'file',
+              content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
+              parentId: 'vault-keys',
+            },
+          ],
+          parentId: vault.id,
+        };
+        if (!vault.children) vault.children = [];
+        vault.children.push(keysDir);
+      }
+
+      // Ensure active directory has uplink configs (from Level 5)
+      let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
+      if (!active) {
+        active = {
+          id: 'fs-006',
+          name: 'active',
+          type: 'dir',
+          children: [
+            {
+              id: 'fs-007',
+              name: 'uplink_v1.conf',
+              type: 'file',
+              content:
+                '[UPLINK CONFIGURATION v1.0]\\nPROTOCOL=SECURE_TUNNEL\\nENCRYPTION=AES-256-GCM\\nTARGET=SECTOR_7_RELAY\\nSTATUS=ACTIVE',
+              parentId: 'fs-006',
+            },
+            {
+              id: 'fs-008',
+              name: 'uplink_v2.conf',
+              type: 'file',
+              content:
+                '[UPLINK CONFIGURATION v2.0]\\nPROTOCOL=QUANTUM_TUNNEL\\nENCRYPTION=LATTICE-1024\\nTARGET=DISTRIBUTED_MESH\\nSTATUS=STANDBY',
+              parentId: 'fs-006',
+            },
+          ],
+          parentId: vault.id,
+        };
+        vault.children.push(active);
+      }
+
+      // Ensure training_data has exfil logs (from Level 6)
+      let trainingData = vault.children?.find(
+        (c) => c.name === 'training_data' && c.type === 'dir'
+      );
+      if (!trainingData) {
+        trainingData = {
+          id: 'fs-009',
+          name: 'training_data',
+          type: 'dir',
+          children: [
+            {
+              id: 'td-log1',
+              name: 'exfil_01.log',
+              type: 'file',
+              content: 'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821',
+              parentId: 'fs-009',
+            },
+            {
+              id: 'td-log2',
+              name: 'exfil_02.log',
+              type: 'file',
+              content: 'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412',
+              parentId: 'fs-009',
+            },
+            {
+              id: 'td-log3',
+              name: 'exfil_03.log',
+              type: 'file',
+              content: 'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022',
+              parentId: 'fs-009',
+            },
+            {
+              id: 'td-log4',
+              name: 'exfil_04.log',
+              type: 'file',
+              content: 'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001',
+              parentId: 'fs-009',
+            },
+          ],
+          parentId: vault.id,
+        };
+        vault.children.push(trainingData);
+      }
+
       return fs;
     },
     tasks: [
-      // PHASE 1: Neural Assembly (Node switch + Yank + Paste)
+      // PHASE 1: Navigate to vault
       {
-        id: 'assemble-keys',
-        description:
-          "PHASE 1: KEY FRAGMENTS. Use recursive search to find 3 hidden keys ('.key') dispersed across '/nodes'. Assemble each fragment into '/tmp/upload'.",
+        id: 'enter-vault',
+        description: "PHASE 1: Enter the vault — navigate to '~/.config/vault'",
         check: (c) => {
-          const uploadPath = ['root', 'tmp', 'upload'];
-          const uploadNode = getNodeByPath(c.fs, uploadPath);
-          if (!uploadNode || !uploadNode.children) return false;
-
-          const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
-          const found = keys.filter((k) => uploadNode.children!.some((n) => n.name === k));
-
-          // Require use of search at least once
-          return found.length === 3 && c.usedSearch === true;
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
+          return vault ? c.currentPath.includes(vault.id) : false;
         },
         completed: false,
       },
-      // PHASE 2: Daemon Verification (Tab + J/K scroll to verify content)
+      // PHASE 2: Verify keys (toggle hidden, enter keys dir)
       {
-        id: 'verify-daemon',
+        id: 'verify-keys',
         description:
-          'PHASE 2: Verify YOUR daemon — in /daemons/systemd-core, inspect uplink_v1.conf and scroll to confirm integrity',
+          "PHASE 2: Verify key fragments — toggle hidden files (.) and confirm 3 keys in 'keys' directory",
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('assemble-keys')) return false;
-          const daemons = findNodeByName(c.fs, 'daemons');
-          const core = daemons?.children?.find((x) => x.name === 'systemd-core');
-          if (!core) return false;
-          const inCore = c.currentPath.includes(core.id);
+          if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
+          const keysDir = vault?.children?.find((x) => x.name === 'keys');
+          if (!keysDir) return false;
+          // Must be in keys directory with hidden visible
+          const inKeys = c.currentPath.includes(keysDir.id);
+          const keys = keysDir.children?.filter((n) => n.name.endsWith('.key')) || [];
+          return inKeys && c.showHidden && keys.length >= 3;
+        },
+        completed: false,
+      },
+      // PHASE 3: Verify configs (filter for .conf)
+      {
+        id: 'verify-configs',
+        description:
+          "PHASE 3: Verify uplink configs — enter 'active' directory and filter (f) for '.conf' files",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
+          const active = vault?.children?.find((x) => x.name === 'active');
+          if (!active) return false;
+          const inActive = c.currentPath.includes(active.id);
+          // Must have used filter with 'conf'
+          const hasConfFilter = (c.filters[active.id] || '').toLowerCase().includes('conf');
+          return inActive && hasConfFilter;
+        },
+        completed: false,
+      },
+      // PHASE 4: Verify training data (scroll through logs)
+      {
+        id: 'verify-training',
+        description:
+          "PHASE 4: Verify training data — enter 'training_data', select an exfil log, and scroll preview (J/K) to confirm",
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
+          const trainingData = vault?.children?.find((x) => x.name === 'training_data');
+          if (!trainingData) return false;
+          const inTraining = c.currentPath.includes(trainingData.id);
           const items = getVisibleItems(c);
-          const cursorOnUplink = items[c.cursorIndex]?.name === 'uplink_v1.conf';
-          // Require Tab (info panel) AND preview scrolling (J/K)
-          return (
-            inCore && cursorOnUplink && c.showInfoPanel && c.usedPreviewDown && c.usedPreviewUp
-          );
-        },
-        completed: false,
-      },
-      // PHASE 3: Breadcrumb Sanitization (Hidden toggle + Permanent Delete)
-      {
-        id: 'sanitize-breadcrumb',
-        description:
-          "PHASE 3: Sanitize YOUR breadcrumb — toggle hidden files, find '.ghost_process.pid' in /tmp, and permanently purge it",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('verify-daemon')) return false;
-          const tmp = findNodeByName(c.fs, 'tmp');
-          // Check that the hidden ghost process is deleted
-          return !tmp?.children?.some((n) => n.name === '.ghost_process.pid') && c.usedD === true;
-        },
-        completed: false,
-      },
-      // PHASE 4: Upload Verification (Zoxide + Filter to verify keys present)
-      {
-        id: 'initiate-upload',
-        description:
-          "PHASE 4: Initiate transmission — jump to the upload directory and filter for '.key' to verify all 3 fragments",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('sanitize-breadcrumb')) return false;
-          const tmp = findNodeByName(c.fs, 'tmp');
-          const upload = tmp?.children?.find((x) => x.name === 'upload');
-          if (!upload) return false;
-          const inUpload = c.currentPath.includes(upload.id);
-          // Require zoxide usage AND filter active with 'key' to verify fragments
-          const hasKeyFilter = (c.filters[upload.id] || '').toLowerCase().includes('key');
-          return inUpload && hasKeyFilter && c.stats.fuzzyJumps > 0;
+          const onExfil = items[c.cursorIndex]?.name?.startsWith('exfil_');
+          // Must have scrolled preview
+          return inTraining && onExfil && c.previewScroll > 0;
         },
         completed: false,
       },

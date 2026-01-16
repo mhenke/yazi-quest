@@ -186,6 +186,24 @@ export const useKeyboardHandlers = (
         let newFs = prev.fs;
         let errorMsg: string | null | undefined = null;
 
+        // Level 14 honeypot check: if deleting .purge_lock before decoys are created, trigger alert
+        if (currentLevelParam.id === 14) {
+          const decoysCreated = prev.completedTaskIds[14]?.includes('create-decoys');
+          const deletingHoneypot = prev.pendingDeleteIds.some((id) => {
+            const node = visibleItems.find((n) => n.id === id);
+            return node?.name === '.purge_lock' || node?.id === 'purge-lock-honeypot';
+          });
+          if (deletingHoneypot && !decoysCreated) {
+            return {
+              ...prev,
+              mode: 'normal',
+              pendingDeleteIds: [],
+              notification:
+                '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
+            };
+          }
+        }
+
         for (const id of prev.pendingDeleteIds) {
           const node = visibleItems.find((n) => n.id === id);
           if (node) {
@@ -788,16 +806,27 @@ export const useKeyboardHandlers = (
           }
           break;
         case 'x':
-        case 'y':
-          if (gameState.clipboard) {
-            const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
+        case 'y': {
+          // Check if nodes being yanked/cut contain honeypots
+          const nodesToGrab =
+            gameState.selectedIds.length > 0
+              ? items.filter((n) => gameState.selectedIds.includes(n.id))
+              : currentItem
+                ? [currentItem]
+                : [];
+
+          const grabbingHoneypot = nodesToGrab.some(
+            (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
+          );
+
+          if (grabbingHoneypot) {
+            showNotification(
+              '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
+              5000
             );
-            if (isHoneypot) {
-              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
-              break;
-            }
+            // Still allow the operation so player can learn to abort with Y
           }
+
           if (gameState.selectedIds.length > 0) {
             // Use items (passed from caller - already handles search mode)
             const nodes = items.filter((n) => gameState.selectedIds.includes(n.id));
@@ -878,10 +907,21 @@ export const useKeyboardHandlers = (
             });
           }
           break;
+        }
         case 'D':
         case 'd': {
           // Enter confirm-delete mode for selected items or current item
           e.preventDefault();
+
+          // Level 14: Block trash delete - only permanent delete allowed
+          if (currentLevel.id === 14 && e.key === 'd') {
+            showNotification(
+              '🚫 TRASH DELETE BLOCKED! Forensic recovery is trivial. Use D (Shift+D) for permanent erasure.',
+              4000
+            );
+            break;
+          }
+
           const toDelete =
             gameState.selectedIds.length > 0
               ? gameState.selectedIds.slice()
