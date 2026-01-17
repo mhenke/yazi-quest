@@ -607,6 +607,25 @@ export default function App() {
         }));
       }
     }
+    // Level 12: Honeypot Detection (New Audit Protocol)
+    if (currentLevel.id === 12) {
+      const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
+      const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
+
+      // In Level 12, we want to warn them BEFORE they delete if possible,
+      // but 'selectedIds' implies they just selected it.
+      // If they select it, we give a warning or just penalize?
+      // Level 11 logic sets a flag.
+      // For Level 12, let's trigger an immediate alert if they hold selection on it,
+      // OR maybe just if they try to delete it?
+      // The current logic checks selection. Let's stick to that for immediate feedback.
+      if (hasHoneypot && !showThreatAlert) {
+        setAlertMessage(
+          '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.'
+        );
+        setShowThreatAlert(true);
+      }
+    }
   }, [gameState, currentLevel, isLastLevel, showNotification, visibleItems, currentItem]);
 
   // NOTE: Do NOT auto-reset sort when the modal opens — reset should happen

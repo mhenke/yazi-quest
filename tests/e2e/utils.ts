@@ -27,6 +27,16 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
 }
 
 /**
+ * Asserts that the level starts with 0 completed tasks.
+ * This prevents regressions where a level might start in a pre-completed state.
+ */
+export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
+  // Wait for the Task counter to appear and assert it starts at 0
+  const taskCounter = page.getByText(/Tasks: 0\/\d+/);
+  await expect(taskCounter).toBeVisible({ timeout: 5000 });
+}
+
+/**
  * Press a key in the game using window.dispatchEvent
  * This matches the browser subagent's successful approach
  */

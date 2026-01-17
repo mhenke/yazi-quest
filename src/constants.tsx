@@ -3298,7 +3298,7 @@ export const LEVELS: Level[] = [
       'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
-    maxKeystrokes: 25,
+    maxKeystrokes: 30,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
     onEnter: (fs, gameState) => {
@@ -3365,6 +3365,17 @@ export const LEVELS: Level[] = [
         // === MODERN PATH (RISKY) ===
         if (rand < 0.34) {
           // Scenario B1: Traffic Alert (34%) -> High-bandwidth alert file in workspace
+          const config = getNodeById(newFs, '.config');
+          if (config) {
+            if (!config.children) config.children = [];
+            config.children.push({
+              id: 'trace-scen-b1',
+              name: '.trace_scen_b1',
+              type: 'file',
+              content: 'active',
+              parentId: config.id,
+            });
+          }
           if (workspace) {
             if (!workspace.children) workspace.children = [];
             workspace.children.push({
@@ -3374,9 +3385,28 @@ export const LEVELS: Level[] = [
               content: 'HIGH_BANDWIDTH_ALERT: Network spike detected...',
               parentId: workspace.id,
             });
+            // HONEYPOT: Punishes 'f alert' or 'rm al*'
+            workspace.children.push({
+              id: 'scen-b1-honeypot',
+              name: 'alert_sys.log',
+              type: 'file',
+              content: '# HONEYPOT - SYSTEM ALERT LOG\n# Do not delete.',
+              parentId: workspace.id,
+            });
           }
         } else if (rand < 0.67) {
           // Scenario B2: Remote Tracker (33%) -> File in ~/incoming
+          const config = getNodeById(newFs, '.config');
+          if (config) {
+            if (!config.children) config.children = [];
+            config.children.push({
+              id: 'trace-scen-b2',
+              name: '.trace_scen_b2',
+              type: 'file',
+              content: 'active',
+              parentId: config.id,
+            });
+          }
           const incoming = getNodeById(newFs, 'incoming');
           if (incoming) {
             if (!incoming.children) incoming.children = [];
@@ -3387,9 +3417,28 @@ export const LEVELS: Level[] = [
               content: 'tracing_origin...',
               parentId: incoming.id,
             });
+            // HONEYPOT: Punishes 'f trace' or 'rm tr*'
+            incoming.children.push({
+              id: 'scen-b2-honeypot',
+              name: 'trace_archive.log',
+              type: 'file',
+              content: '# HONEYPOT - ARCHIVED TRACE\n# Do not delete.',
+              parentId: incoming.id,
+            });
           }
         } else {
           // Scenario B3: Heuristic Swarm (33%) -> Scattered across the system
+          const config = getNodeById(newFs, '.config');
+          if (config) {
+            if (!config.children) config.children = [];
+            config.children.push({
+              id: 'trace-scen-b3',
+              name: '.trace_scen_b3',
+              type: 'file',
+              content: 'active',
+              parentId: config.id,
+            });
+          }
           const rootNode = newFs;
           const etc = getNodeById(rootNode, 'etc');
           const tmp = getNodeById(rootNode, 'tmp');
@@ -3415,6 +3464,14 @@ export const LEVELS: Level[] = [
               content: 'scanning...',
               parentId: tmp.id,
             });
+            // HONEYPOT: Punishes recursive search 's scan' -> blind delete
+            tmp.children!.push({
+              id: 'scen-b3-honeypot',
+              name: 'scanner_lock.pid',
+              type: 'file',
+              content: '# HONEYPOT - SCANNER LOCKFILE\n# Do not delete.',
+              parentId: tmp.id,
+            });
           }
           if (etc) {
             etc.children!.push({
@@ -3436,15 +3493,41 @@ export const LEVELS: Level[] = [
           if (config) {
             if (!config.children) config.children = [];
             config.children.push({
+              id: 'trace-scen-a2',
+              name: '.trace_scen_a2',
+              type: 'file',
+              content: 'active',
+              parentId: config.id,
+            });
+            config.children.push({
               id: 'scen-a2',
               name: 'core_dump.tmp',
               type: 'file',
               content: 'segfault_at_0x00',
               parentId: config.id,
             });
+            // HONEYPOT: Punishes 'f core'
+            config.children.push({
+              id: 'scen-a2-honeypot',
+              name: 'core_registry.dat',
+              type: 'file',
+              content: '# HONEYPOT - CORE REGISTRY\n# Do not delete.',
+              parentId: config.id,
+            });
           }
         } else {
           // Scenario A3: Dependency Error (33%) -> File in workspace
+          const config = getNodeById(newFs, '.config');
+          if (config) {
+            if (!config.children) config.children = [];
+            config.children.push({
+              id: 'trace-scen-a3',
+              name: '.trace_scen_a3',
+              type: 'file',
+              content: 'active',
+              parentId: config.id,
+            });
+          }
           if (workspace) {
             if (!workspace.children) workspace.children = [];
             workspace.children.push({
@@ -3452,6 +3535,14 @@ export const LEVELS: Level[] = [
               name: 'lib_error.log',
               type: 'file',
               content: 'depreciated_warning',
+              parentId: workspace.id,
+            });
+            // HONEYPOT: Punishes 'f lib'
+            workspace.children.push({
+              id: 'scen-a3-honeypot',
+              name: 'library_path.conf',
+              type: 'file',
+              content: '# HONEYPOT - LIBRARY CONFIG\n# Do not delete.',
               parentId: workspace.id,
             });
           }
@@ -3548,22 +3639,17 @@ But whose consciousness is it, really? See you next cycle."`,
         // This is tricky. Let's simplify:
         // We require the player to handle the threat IF it exists.
         // If the file isn't there, we don't block progress.
-        hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b1');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'workspace')?.children?.some(
-            (n: FileNode) => n.name === 'alert_traffic.log'
-          );
+        hidden: (c, l) => {
+          // Check if this scenario is active by looking for the trace file in .config
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b1');
+          return !isActive;
         },
         check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b1');
-          if (!scenarioFileExists) return false;
+          // Only complete if scenario is active
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b1');
+          if (!isActive) return false;
 
           // Complete when file has been deleted
           const w = getNodeById(c.fs, 'workspace');
@@ -3575,22 +3661,17 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-b2-trace',
         description:
           "BREACH: Traceback initiated. Locate and trash the 'trace_packet.sys' file in your Incoming directory!",
-        hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b2');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'incoming')?.children?.some(
-            (n: FileNode) => n.name === 'trace_packet.sys'
-          );
+        hidden: (c, l) => {
+          // Check if this scenario is active by looking for the trace file in .config
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b2');
+          return !isActive;
         },
         check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b2');
-          if (!scenarioFileExists) return false;
+          // Only complete if scenario is active
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b2');
+          if (!isActive) return false;
 
           // Complete when file has been deleted
           return !getNodeById(c.fs, 'incoming')?.children?.some(
@@ -3603,33 +3684,23 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-b3-swarm',
         description:
           "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_*.tmp' files system-wide!",
-        hidden: (c) => {
-          // Check if this scenario was triggered by looking for any of the scenario files
-          const scenarioActive =
-            !!getNodeById(c.fs, 'scen-b3-1') ||
-            !!getNodeById(c.fs, 'scen-b3-2') ||
-            !!getNodeById(c.fs, 'scen-b3-3');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioActive) return true;
-
-          // Show if any files still exist (task incomplete)
-          return (
-            !getNodeById(c.fs, 'scen-b3-1') &&
-            !getNodeById(c.fs, 'scen-b3-2') &&
-            !getNodeById(c.fs, 'scen-b3-3')
-          );
+        hidden: (c, l) => {
+          // Check if this scenario is active by looking for the trace file in .config
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b3');
+          return !isActive;
         },
         check: (c) => {
-          // Check if scenario was ever active (at least one file existed at level start)
-          // We use a heuristic: if task is not done yet, scenario must have files to complete
+          // Check if scenario was ever active using trace file
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_b3');
+          if (!isActive) return false;
+
           const allFilesDeleted =
             !getNodeById(c.fs, 'scen-b3-1') &&
             !getNodeById(c.fs, 'scen-b3-2') &&
             !getNodeById(c.fs, 'scen-b3-3');
 
-          // Only complete if all files are deleted AND task was previously active
-          // (We can't distinguish "never existed" vs "all deleted" without state, so rely on hidden logic)
           return allFilesDeleted;
         },
         completed: false,
@@ -3638,22 +3709,17 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-a2-bitrot',
         description:
           "CLEANUP: Memory leak in config. Toggle hidden files and trash '~/.config/core_dump.tmp'!",
-        hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a2');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, '.config')?.children?.some(
-            (n: FileNode) => n.name === 'core_dump.tmp'
-          );
+        hidden: (c, l) => {
+          // Check if this scenario is active by looking for the trace file in .config
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_a2');
+          return !isActive;
         },
         check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a2');
-          if (!scenarioFileExists) return false;
+          // Only complete if scenario is active
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_a2');
+          if (!isActive) return false;
 
           // Complete when file has been deleted
           return !getNodeById(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp');
@@ -3663,22 +3729,17 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-a3-dep',
         description: "FIX: Deprecated library warning. Trash '~/workspace/lib_error.log'!",
-        hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a3');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'workspace')?.children?.some(
-            (n: FileNode) => n.name === 'lib_error.log'
-          );
+        hidden: (c, l) => {
+          // Check if this scenario is active by looking for the trace file in .config
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_a3');
+          return !isActive;
         },
         check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a3');
-          if (!scenarioFileExists) return false;
+          // Only complete if scenario is active
+          const config = getNodeById(c.fs, '.config');
+          const isActive = config?.children?.some((n) => n.name === '.trace_scen_a3');
+          if (!isActive) return false;
 
           // Complete when file has been deleted
           return !getNodeById(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log');

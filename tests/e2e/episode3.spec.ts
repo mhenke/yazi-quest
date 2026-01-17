@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   goToLevel,
   pressKey,
@@ -9,14 +9,72 @@ import {
   filterAndSelect,
   ensureCleanState,
   getSelectedFileName,
+  assertLevelStartedIncomplete,
 } from './utils';
 
 import * as fs from 'fs';
+
+// Helper for common Level 12 mission steps (DRY)
+async function runLevel12Mission(page: Page) {
+  // 1) gw (g then w, to jump to ~/workspace)
+  await gotoCommand(page, 'w');
+  await page.waitForTimeout(500);
+
+  // 2) . to show hidden files
+  await pressKey(page, '.');
+  await page.waitForTimeout(200);
+
+  // 3) f, type ".i" then enter key
+  await pressKey(page, 'f');
+  await typeText(page, '.i');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+
+  // 4) J (shift+j) multiple times to get to bottom
+  // Scroll enough to read the log (requires > 15 lines usually)
+  for (let i = 0; i < 3; i++) {
+    await pressKey(page, 'Shift+J');
+    await page.waitForTimeout(50);
+  }
+
+  // 5) ESC to clear filter
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(100);
+
+  // 6) j then x (Select systemd-core? Assumes order: .identity, central_relay, systemd-core)
+  // If .identity was selected (by filter), Escape keeps selection?
+  // j moves to next.
+  await pressKey(page, 'j');
+  await page.waitForTimeout(100);
+  await pressKey(page, 'x'); // Cut
+  await page.waitForTimeout(200);
+
+  // 7) . to reset hidden flag
+  await pressKey(page, '.');
+  await page.waitForTimeout(200);
+
+  // Navigate Daemons: Z ae Enter (Keys 18, 19, 20, 21)
+  // 'ae' uniquely marks 'dAE-mons' vs 'datastore' in history.
+  // Z ae Enter = 4 keys.
+  await pressKey(page, 'Z');
+  await page.waitForTimeout(200);
+  await typeText(page, 'ae'); // 'daemons'
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(200);
+
+  await pressKey(page, 'p'); // Paste
+  await page.waitForTimeout(300);
+
+  await pressKey(page, 'l'); // Enter systemd-core
+  await page.waitForTimeout(200);
+}
 
 test.describe('Episode 3: MASTERY', () => {
   // Level 11: DAEMON RECONNAISSANCE - Search + Tab + Clipboard
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }) => {
     await goToLevel(page, 11);
+    await assertLevelStartedIncomplete(page);
 
     // 1. If a "REINITIALIZE" button is visible, click it first.
     const reinitButton = page.getByRole('button', { name: 'REINITIALIZE' });
@@ -74,8 +132,8 @@ test.describe('Episode 3: MASTERY', () => {
     await expect(page.getByRole('alert').getByText('DAEMON RECONNAISSANCE')).toBeVisible();
   });
 
-  // Level 12: DAEMON INSTALLATION - Branching Scenarios
-  test.skip('Level 12: DAEMON INSTALLATION - handles scenarios and installs daemon', async ({
+  // Level 12: DAEMON INSTALLATION - Scenario A1 (Clean Run)
+  test('Level 12: scen-a1 (Clean Run) - installs daemon with identity discovery', async ({
     page,
   }) => {
     // Use scen-a1 (clean run) - no threat files spawn, simplest path
@@ -90,49 +148,278 @@ test.describe('Episode 3: MASTERY', () => {
       // Intro may not be present
     }
     await page.waitForTimeout(300);
+    await assertLevelStartedIncomplete(page);
 
     // scen-a1 is "Clean Run" - no threat files spawn
-    // Main objectives: navigate to workspace, cut systemd-core, navigate to /daemons, paste, enter
+    // Main objectives: navigate to workspace, discover identity, cut systemd-core, navigate to /daemons, paste, enter
 
-    // Step 1: Navigate to workspace
+    // Use common helper
+    await runLevel12Mission(page);
+
+    await waitForMissionComplete(page);
+    await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
+  });
+
+  // Level 12: Scenario A3 (Dependency Error - lib_error.log in workspace)
+  test('Level 12: scen-a3 (Dependency Error) - deletes lib_error.log and installs daemon', async ({
+    page,
+  }) => {
+    await page.goto('/?lvl=12&scenario=scen-a3');
+    await page.waitForLoadState('networkidle');
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(500);
+    await assertLevelStartedIncomplete(page);
+
+    // Wait for and dismiss scenario alert
+    const threatAlert = page.getByRole('alert');
+    try {
+      await threatAlert.waitFor({ state: 'visible', timeout: 2000 });
+      await pressKey(page, 'Shift+Enter');
+      await threatAlert.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {
+      // Alert may not appear in some scenarios
+    }
+    await page.waitForTimeout(300);
+
+    // Navigate to workspace
     await gotoCommand(page, 'w');
     await page.waitForTimeout(200);
 
-    // Verify we're in workspace
-    const systemdItem = page.getByTestId('filesystem-pane-active').getByText('systemd-core');
-    await expect(systemdItem).toBeVisible({ timeout: 3000 });
-
-    // Step 2: Filter to systemd-core and cut it
+    // Delete lib_error.log (scenario threat)
     await pressKey(page, 'f');
-    await typeText(page, 'systemd-core');
+    await typeText(page, 'lib_error');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
-    await pressKey(page, 'x');
+    await pressKey(page, 'd');
+    await page.waitForTimeout(200);
+    await pressKey(page, 'Enter'); // Confirm delete
     await page.waitForTimeout(200);
 
-    // Step 3: Navigate to root
+    // Use common helper
+    await runLevel12Mission(page);
+
+    await waitForMissionComplete(page);
+    await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
+  });
+
+  // Level 12: Scenario A2 (Bitrot - hidden core_dump.tmp in .config)
+  test('Level 12: scen-a2 (Bitrot) - deletes hidden core_dump.tmp and installs daemon', async ({
+    page,
+  }) => {
+    await page.goto('/?lvl=12&scenario=scen-a2');
+    await page.waitForLoadState('networkidle');
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(500);
+    await assertLevelStartedIncomplete(page);
+
+    // 1) Shift+Enter (Dismiss Alert)
+    const threatAlert = page.getByRole('alert');
+    try {
+      await threatAlert.waitFor({ state: 'visible', timeout: 3000 });
+      await pressKey(page, 'Shift+Enter');
+      await threatAlert.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(300);
+
+    // 2) gc (Jump to ~/.config)
+    await gotoCommand(page, 'c');
+    await page.waitForTimeout(500);
+
+    // 3) j then d then y (Select, Delete, Confirm)
+    await pressKey(page, 'j');
+    await page.waitForTimeout(100);
+    await pressKey(page, 'd');
+    await page.waitForTimeout(200);
+    await pressKey(page, 'y'); // Confirm delete
+    await page.waitForTimeout(200);
+
+    // Reset: gw (Jump to workspace)
+    // Use common helper which starts with gw
+    await runLevel12Mission(page);
+
+    // Check for violations (Robust)
+    try {
+      if (
+        await page.getByRole('heading', { name: 'Protocol Violation' }).isVisible({ timeout: 1000 })
+      ) {
+        const text = await page.getByRole('dialog').textContent();
+        if (text?.includes('filter')) {
+          await page.keyboard.press('Escape');
+          await page.keyboard.press('Escape');
+        } else {
+          await pressKey(page, '.');
+        }
+      }
+    } catch {}
+
+    await waitForMissionComplete(page);
+    await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
+  });
+
+  // Level 12: Scenario B1 (Traffic Alert - alert_traffic.log in workspace)
+  test('Level 12: scen-b1 (Traffic Alert) - deletes alert_traffic.log and installs daemon', async ({
+    page,
+  }) => {
+    await page.goto('/?lvl=12&scenario=scen-b1');
+    await page.waitForLoadState('networkidle');
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(300);
+    await assertLevelStartedIncomplete(page);
+
+    // Wait for and dismiss scenario alert
+    const threatAlert = page.getByRole('alert');
+    try {
+      await threatAlert.waitFor({ state: 'visible', timeout: 2000 });
+      await pressKey(page, 'Shift+Enter');
+      await threatAlert.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(300);
+
+    // Navigate to workspace
+    await gotoCommand(page, 'w');
+    await page.waitForTimeout(200);
+
+    // Delete alert_traffic.log (scenario threat)
+    // Use filter 'alert' (5 chars) or 'al' (2 chars)?
+    // alert_traffic.log. Unique starting with a?
+    // In workspace: central_relay, systemd-core.
+    // alert... starts with a. First item?
+    // If sorted natural asc: alert_traffic, central_relay.
+    // So 'gg' works?
+    // Let's use 'f al' to be safe.
+    await pressKey(page, 'f');
+    await typeText(page, 'alert');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    await pressKey(page, 'd');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Enter'); // Confirm delete
+    await page.waitForTimeout(200);
+
+    // Clear filter
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+
+    // Use common helper
+    await runLevel12Mission(page);
+
+    await waitForMissionComplete(page);
+    await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
+  });
+
+  // Level 12: Scenario B2 (Remote Tracker - trace_packet.sys in incoming)
+  test('Level 12: scen-b2 (Remote Tracker) - deletes trace_packet.sys and installs daemon', async ({
+    page,
+  }) => {
+    await page.goto('/?lvl=12&scenario=scen-b2');
+    await page.waitForLoadState('networkidle');
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(500);
+
+    // Initial Alert
+    const threatAlert = page.getByRole('alert');
+    try {
+      await threatAlert.waitFor({ state: 'visible', timeout: 3000 });
+      await pressKey(page, 'Shift+Enter'); // Key 1
+      await threatAlert.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(300);
+
+    // 2) gi (g then i to jump to ~/incoming)
+    await gotoCommand(page, 'i');
+    await page.waitForTimeout(200);
+
+    // 3) f, type "pac" then press enter key (Filter 'pac' matches trace_packet, implies strict target)
+    // 'pac' (3 chars) + f + Enter = 5 keys.
+    // Unique enough to avoid 'trace_archive' (honeypot) and others.
+    await pressKey(page, 'f');
+    await typeText(page, 'pac');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(100);
+
+    // 4) d then y
+    await pressKey(page, 'd');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('y'); // Confirm delete
+    await page.waitForTimeout(200);
+
+    // 5) OPTIMIZATION: Do NOT Escape. gw switches context anyway.
+    // await page.keyboard.press('Escape');
+    // await page.waitForTimeout(100);
+
+    await runLevel12Mission(page);
+
+    await waitForMissionComplete(page);
+    await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
+  });
+
+  // Level 12: Scenario B3 (Heuristic Swarm - scattered scan_*.tmp files)
+  test('Level 12: scen-b3 (Heuristic Swarm) - deletes scattered scan files and installs daemon', async ({
+    page,
+  }) => {
+    await page.goto('/?lvl=12&scenario=scen-b3');
+    await page.waitForLoadState('networkidle');
+    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+    try {
+      await skipButton.click({ timeout: 2000 });
+      await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {}
+    await page.waitForTimeout(300);
+    await assertLevelStartedIncomplete(page);
+
+    // Wait for and dismiss scenario alert
+    const threatAlert = page.getByRole('alert');
+    try {
+      await threatAlert.waitFor({ state: 'visible', timeout: 2000 });
+      await pressKey(page, 'Shift+Enter');
+      await threatAlert.waitFor({ state: 'hidden', timeout: 3000 });
+    } catch {
+      // Alert may not appear in some scenarios
+    }
+    await page.waitForTimeout(300);
+
+    // Navigate to root for recursive search
     await gotoCommand(page, 'r');
     await page.waitForTimeout(200);
 
-    // Step 4: Navigate to /daemons
-    await pressKey(page, 'f');
-    await typeText(page, 'daemons');
-    await page.keyboard.press('Escape');
+    // Use recursive search to find all scan_*.tmp files
+    await pressKey(page, 's');
+    await page.waitForTimeout(200);
+    await typeText(page, 'scan_');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+
+    // Select all and delete
+    await pressKey(page, 'Control+A');
     await page.waitForTimeout(100);
-    await pressKey(page, 'l');
+    await pressKey(page, 'd');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Enter'); // Confirm delete (if specialized dialog appears)
     await page.waitForTimeout(200);
 
-    // Step 5: Paste systemd-core
-    await pressKey(page, 'p');
-    await page.waitForTimeout(300);
-
-    // Step 6: Enter systemd-core to complete the level
-    await pressKey(page, 'f');
-    await typeText(page, 'systemd-core');
+    // Exit search mode
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(100);
-    await pressKey(page, 'l');
     await page.waitForTimeout(200);
+
+    // Navigate to workspace
+    // Use common helper which starts with gw
+    await runLevel12Mission(page);
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
@@ -162,6 +449,7 @@ test.describe('Episode 3: MASTERY', () => {
 
     try {
       await goToLevel(page, 13);
+      await assertLevelStartedIncomplete(page);
 
       // 1) gr to root, then navigate to nodes
       await gotoCommand(page, 'r');
@@ -265,6 +553,7 @@ test.describe('Episode 3: MASTERY', () => {
   // Level 15: TRANSMISSION PROTOCOL
   test.skip('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }) => {
     await goToLevel(page, 15);
+    await assertLevelStartedIncomplete(page);
 
     // Phase 1: Assemble keys in /tmp/upload using search
     await gotoCommand(page, 'r');

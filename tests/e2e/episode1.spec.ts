@@ -17,12 +17,14 @@ import {
   typeText,
   gotoCommand,
   waitForMissionComplete,
+  assertLevelStartedIncomplete,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 1: SYSTEM AWAKENING', () => {
     test('completes all navigation tasks', async ({ page }) => {
       await goToLevel(page, 1);
+      await assertLevelStartedIncomplete(page);
 
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
       await pressKey(page, 'j');
@@ -64,6 +66,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
     test('locates and deletes watcher_agent.sys', async ({ page }) => {
       await goToLevel(page, 2);
+      await assertLevelStartedIncomplete(page);
 
       // Task 1: Open goto dialog (g) and navigate to ~/incoming (i)
       await gotoCommand(page, 'i');
@@ -90,6 +93,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 3: DATA HARVEST', () => {
     test('filters, cuts and pastes sector_map.png', async ({ page }) => {
       await goToLevel(page, 3);
+      await assertLevelStartedIncomplete(page);
 
       // Task 1: Preview abandoned_script.py (gd then navigate with j)
       await gotoCommand(page, 'd'); // go to datastore
@@ -125,6 +129,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 4: UPLINK ESTABLISHMENT', () => {
     test('creates directory structures and duplicates files', async ({ page }) => {
       await goToLevel(page, 4);
+      await assertLevelStartedIncomplete(page);
 
       // Task 1: Go to ~/datastore (gd) and create protocols/ directory
       await gotoCommand(page, 'd');
@@ -161,6 +166,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 5: CONTAINMENT BREACH', () => {
     test('selects, cuts, creates vault structure and hides files', async ({ page }) => {
       await goToLevel(page, 5);
+      await assertLevelStartedIncomplete(page);
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
       await page.keyboard.press('Shift+Enter');

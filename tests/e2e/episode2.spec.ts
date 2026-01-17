@@ -11,6 +11,7 @@ import {
   ensureCleanState,
   cleanupBeforeComplete,
   isTaskCompleted,
+  assertLevelStartedIncomplete,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -19,6 +20,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }) => {
     await goToLevel(page, 6);
+    await assertLevelStartedIncomplete(page);
 
     // Task 1: Jump to '~/incoming/batch_logs' (gi → l to enter)
     await gotoCommand(page, 'i'); // gi -> ~/incoming
@@ -75,6 +77,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
   test('Level 7: QUANTUM BYPASS - finds honeypot and aborts', async ({ page }) => {
     await goToLevel(page, 7);
+    await assertLevelStartedIncomplete(page);
 
     // Task 1: Jump to Root (gr)
     await gotoCommand(page, 'r');
@@ -108,6 +111,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
   // Level 8: DAEMON DISGUISE CONSTRUCTION - Force Overwrite (Shift+P)
   test('Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite', async ({ page }) => {
     await goToLevel(page, 8);
+    await assertLevelStartedIncomplete(page);
 
     // Objective 1: Navigate to '~/workspace/systemd-core'
     await gotoCommand(page, 'w');
@@ -170,6 +174,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test('Level 9: TRACE CLEANUP - uses invert selection to clean up', async ({ page }) => {
     try {
       await goToLevel(page, 9);
+      await assertLevelStartedIncomplete(page);
 
       // Task 1: Navigate to '/tmp'
       await gotoCommand(page, 't');
@@ -215,6 +220,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }) => {
     await goToLevel(page, 10);
+    await assertLevelStartedIncomplete(page);
 
     // Objective 1: Navigate into '~/incoming/backup_logs.zip/credentials'
     await gotoCommand(page, 'i');

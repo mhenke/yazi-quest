@@ -36,7 +36,11 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
                 Corrective Action
               </p>
               <p className="text-zinc-300 text-xs font-mono">
-                Press <span className="text-yellow-400 font-bold">.</span> to conceal hidden files.
+                Press{' '}
+                <span className="text-yellow-400 font-bold">
+                  {allowAutoFix ? 'Shift+Enter' : '.'}
+                </span>{' '}
+                to {allowAutoFix ? 'autofix' : 'conceal hidden files'}.
               </p>
             </div>
           </div>
