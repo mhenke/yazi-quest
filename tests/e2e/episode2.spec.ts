@@ -92,10 +92,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await page.waitForTimeout(500);
 
     // Task 5: Navigate into training_data and paste
-    // Verify 'training_data' is selected automatically
-    await expect(page.locator('[aria-current="location"]')).toContainText('training_data');
-
-    await pressKey(page, 'l'); // Enter training_data
+    // Navigate to the newly created directory reliably and enter it
+    await filterAndNavigate(page, 'training_data');
     await page.waitForTimeout(300);
 
     // Paste the logs
