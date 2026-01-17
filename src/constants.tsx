@@ -3793,8 +3793,8 @@ But whose consciousness is it, really? See you next cycle."`,
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
 
-          // Check if scrolled (preview scroll > 0 means they've scrolled down through the file)
-          return cursorOnIdentity && c.previewScroll > 0;
+          // Check if scrolled (preview scroll >= 30 means they've scrolled down through the file, approx 6 Shift+J)
+          return cursorOnIdentity && c.previewScroll >= 30;
         },
         completed: false,
       },
@@ -3998,7 +3998,7 @@ But whose consciousness is it, really? See you next cycle."`,
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
           // Scrolling down in preview (Shift+J) reveals the hidden message at the bottom
-          return cursorOnIdentity && c.previewScroll > 15;
+          return cursorOnIdentity && c.previewScroll >= 30;
         },
         completed: false,
       },

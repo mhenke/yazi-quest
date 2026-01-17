@@ -15,58 +15,60 @@ import {
 import * as fs from 'fs';
 
 // Helper for common Level 12 mission steps (DRY)
+// Uses short filters for robust navigation (27 keys total)
 async function runLevel12Mission(page: Page) {
-  // 1) gw (g then w, to jump to ~/workspace)
+  // 1) gw to workspace (2 keys)
   await gotoCommand(page, 'w');
   await page.waitForTimeout(500);
 
-  // 2) . to show hidden files
+  // 2) . to show hidden files (1 key)
   await pressKey(page, '.');
   await page.waitForTimeout(200);
 
-  // 3) f, type ".i" then enter key
+  // 3) Filter to identity (f .i Enter = 4 keys)
   await pressKey(page, 'f');
   await typeText(page, '.i');
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(200);
 
-  // 4) J (shift+j) multiple times to get to bottom
-  // Scroll enough to read the log (requires > 15 lines usually)
-  for (let i = 0; i < 3; i++) {
+  // 4) Scroll 6 times to read (6 keys)
+  for (let i = 0; i < 6; i++) {
     await pressKey(page, 'Shift+J');
     await page.waitForTimeout(50);
   }
 
-  // 5) ESC to clear filter
+  // 5) Clear filter (Esc = 1 key)
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(100);
-
-  // 6) j then x (Select systemd-core? Assumes order: .identity, central_relay, systemd-core)
-  // If .identity was selected (by filter), Escape keeps selection?
-  // j moves to next.
-  await pressKey(page, 'j');
-  await page.waitForTimeout(100);
-  await pressKey(page, 'x'); // Cut
   await page.waitForTimeout(200);
 
-  // 7) . to reset hidden flag
-  await pressKey(page, '.');
-  await page.waitForTimeout(200);
-
-  // Navigate Daemons: Z ae Enter (Keys 18, 19, 20, 21)
-  // 'ae' uniquely marks 'dAE-mons' vs 'datastore' in history.
-  // Z ae Enter = 4 keys.
-  await pressKey(page, 'Z');
-  await page.waitForTimeout(200);
-  await typeText(page, 'ae'); // 'daemons'
-  await page.waitForTimeout(200);
+  // 6) Filter to systemd-core (f sy Enter = 4 keys)
+  await pressKey(page, 'f');
+  await typeText(page, 'sy');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(200);
 
-  await pressKey(page, 'p'); // Paste
-  await page.waitForTimeout(300);
+  // 7) x (Cut = 1 key)
+  await pressKey(page, 'x');
+  await page.waitForTimeout(200);
 
-  await pressKey(page, 'l'); // Enter systemd-core
+  // Clear the filter after cutting (Esc = 1 key)
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  // 8) . to hide files (1 key)
+  await pressKey(page, '.');
+  await page.waitForTimeout(200);
+
+  // 9) Navigate to daemons and install (gr j l p l = 6 keys)
+  await gotoCommand(page, 'r');
+  await page.waitForTimeout(300);
+  await pressKey(page, 'j');
+  await page.waitForTimeout(100);
+  await pressKey(page, 'l');
+  await page.waitForTimeout(200);
+  await pressKey(page, 'p');
+  await page.waitForTimeout(500);
+  await pressKey(page, 'l');
   await page.waitForTimeout(200);
 }
 
@@ -190,13 +192,20 @@ test.describe('Episode 3: MASTERY', () => {
     await page.waitForTimeout(200);
 
     // Delete lib_error.log (scenario threat)
+    // Use filter 'lib_error' to be exact and avoid honeypot library_path.conf
     await pressKey(page, 'f');
     await typeText(page, 'lib_error');
-    await page.keyboard.press('Escape');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
+
     await pressKey(page, 'd');
     await page.waitForTimeout(200);
-    await pressKey(page, 'Enter'); // Confirm delete
+    await page.keyboard.press('y'); // Confirm delete
+    await page.waitForTimeout(200);
+
+    // Clear filter robustly
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
     // Use common helper
@@ -233,32 +242,27 @@ test.describe('Episode 3: MASTERY', () => {
     await gotoCommand(page, 'c');
     await page.waitForTimeout(500);
 
-    // 3) j then d then y (Select, Delete, Confirm)
-    await pressKey(page, 'j');
+    // Delete core_dump.tmp (hidden).
+    // Use filter 'dump' to select reliably
+    await pressKey(page, 'f');
+    await typeText(page, 'dump');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
+
+    // 3) d then y
     await pressKey(page, 'd');
     await page.waitForTimeout(200);
-    await pressKey(page, 'y'); // Confirm delete
+    await page.keyboard.press('y');
+    await page.waitForTimeout(200);
+
+    // Clear filter robustly
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
     // Reset: gw (Jump to workspace)
     // Use common helper which starts with gw
     await runLevel12Mission(page);
-
-    // Check for violations (Robust)
-    try {
-      if (
-        await page.getByRole('heading', { name: 'Protocol Violation' }).isVisible({ timeout: 1000 })
-      ) {
-        const text = await page.getByRole('dialog').textContent();
-        if (text?.includes('filter')) {
-          await page.keyboard.press('Escape');
-          await page.keyboard.press('Escape');
-        } else {
-          await pressKey(page, '.');
-        }
-      }
-    } catch {}
 
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('DAEMON INSTALLATION')).toBeVisible();
@@ -292,25 +296,21 @@ test.describe('Episode 3: MASTERY', () => {
     await page.waitForTimeout(200);
 
     // Delete alert_traffic.log (scenario threat)
-    // Use filter 'alert' (5 chars) or 'al' (2 chars)?
-    // alert_traffic.log. Unique starting with a?
-    // In workspace: central_relay, systemd-core.
-    // alert... starts with a. First item?
-    // If sorted natural asc: alert_traffic, central_relay.
-    // So 'gg' works?
-    // Let's use 'f al' to be safe.
+    // Use filter 'traffic'
     await pressKey(page, 'f');
-    await typeText(page, 'alert');
-    await page.keyboard.press('Escape');
+    await typeText(page, 'traffic');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
+
     await pressKey(page, 'd');
     await page.waitForTimeout(200);
-    await page.keyboard.press('Enter'); // Confirm delete
+    await page.keyboard.press('y'); // Confirm delete
     await page.waitForTimeout(200);
 
-    // Clear filter
+    // Clear filter robustly
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(100);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
 
     // Use common helper
     await runLevel12Mission(page);
@@ -341,27 +341,25 @@ test.describe('Episode 3: MASTERY', () => {
     } catch {}
     await page.waitForTimeout(300);
 
-    // 2) gi (g then i to jump to ~/incoming)
+    // 2) gi
     await gotoCommand(page, 'i');
     await page.waitForTimeout(200);
 
-    // 3) f, type "pac" then press enter key (Filter 'pac' matches trace_packet, implies strict target)
-    // 'pac' (3 chars) + f + Enter = 5 keys.
-    // Unique enough to avoid 'trace_archive' (honeypot) and others.
+    // 3) Delete trace_packet.sys using filter
     await pressKey(page, 'f');
-    await typeText(page, 'pac');
+    await typeText(page, 'packet');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
 
-    // 4) d then y
     await pressKey(page, 'd');
     await page.waitForTimeout(200);
-    await page.keyboard.press('y'); // Confirm delete
+    await page.keyboard.press('y');
     await page.waitForTimeout(200);
 
-    // 5) OPTIMIZATION: Do NOT Escape. gw switches context anyway.
-    // await page.keyboard.press('Escape');
-    // await page.waitForTimeout(100);
+    // Clear filter robustly
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
 
     await runLevel12Mission(page);
 
@@ -410,14 +408,14 @@ test.describe('Episode 3: MASTERY', () => {
     await page.waitForTimeout(100);
     await pressKey(page, 'd');
     await page.waitForTimeout(200);
-    await page.keyboard.press('Enter'); // Confirm delete (if specialized dialog appears)
+    await page.keyboard.press('Enter'); // Confirm delete
     await page.waitForTimeout(200);
 
-    // Exit search mode
+    // Exit search mode robustly
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
-    // Navigate to workspace
     // Use common helper which starts with gw
     await runLevel12Mission(page);
 

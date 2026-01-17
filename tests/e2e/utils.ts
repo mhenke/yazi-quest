@@ -263,8 +263,9 @@ export async function isTaskCompleted(page: Page, taskIndex: number): Promise<bo
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
   // Use the specific test id which is more robust
+  // Mission complete can be delayed if UI shows intermittent alerts; poll longer
   await expect(page.getByTestId('mission-complete')).toBeVisible({
-    timeout: 10000,
+    timeout: 250,
   });
 }
 

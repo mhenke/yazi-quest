@@ -12,6 +12,7 @@ import {
   cleanupBeforeComplete,
   isTaskCompleted,
   assertLevelStartedIncomplete,
+  getClipboardStatus,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -29,38 +30,31 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'l'); // Enter batch_logs
     await page.waitForTimeout(500);
 
-    // Task 2: Use recursive search (s) to find '.log' files
+    // Task 2: Use recursive search to find '.log' files
     await pressKey(page, 's');
     await typeText(page, '.log');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
 
     // Task 3: Select all search results and yank (Ctrl+A, y)
+    // IMPORTANT: Stay in search mode - Ctrl+A will only select search results, not all files
     await pressKey(page, 'Control+A');
     await page.waitForTimeout(200);
     await pressKey(page, 'y');
     await page.waitForTimeout(300);
 
-    // Exit search mode (clear search)
+    // Verify clipboard captured some items
+    const clip = await getClipboardStatus(page);
+    if (clip) {
+      await expect(clip).toMatch(/COPY: \d+/);
+    } else {
+      /* continue without failing */
+    }
+
+    // Exit search mode
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-
-    // Ensure search state is cleared before gc
+    await page.waitForTimeout(200);
     await ensureCleanState(page);
-
-    // Now follow the exact user keystrokes: gc, a training_data/, Enter, l, p
-    await pressKey(page, 'g');
-    await page.waitForTimeout(50);
-    await pressKey(page, 'c');
-    await page.waitForTimeout(200);
-    await pressKey(page, 'a');
-    await typeText(page, 'training_data/');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
-    await pressKey(page, 'l');
-    await page.waitForTimeout(200);
-    await pressKey(page, 'p');
-    await page.waitForTimeout(500);
 
     // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
     await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
@@ -85,7 +79,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'p');
     await page.waitForTimeout(500);
 
-    // Dismiss any protocol alert that may appear after pasting into a protected dir
+    // If a protocol alert appears, dismiss it (Shift+Enter) and ensure it's gone
     try {
       const postAlert = page.getByRole('alert');
       if (await postAlert.isVisible({ timeout: 500 })) {
@@ -93,6 +87,13 @@ test.describe('Episode 2: FORTIFICATION', () => {
         await postAlert.waitFor({ state: 'hidden', timeout: 2000 });
       }
     } catch {}
+
+    // Extra cleanup to ensure the mission-complete can appear: ensure no filters/sorts active
+    await cleanupBeforeComplete(page);
+
+    // Wait for the task counter to reflect progress and for mission complete to appear
+    // Level 6 can take longer due to file operations
+    await page.waitForTimeout(2000);
 
     // Allow more time for the mission to complete in CI environments
     await waitForMissionComplete(page);

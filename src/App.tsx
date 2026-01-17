@@ -608,19 +608,23 @@ export default function App() {
       }
     }
     // Level 6 & 12: Honeypot Detection
-    // Level 6: 'active_sync.lock' in batch_logs (Teaches select all -> deselect)
-    // Level 12: Various honeypots (Teaches precise filtering)
-    if (currentLevel.id === 6 || currentLevel.id === 12) {
+    // Level 6: 'active_sync.lock' in batch_logs (Teaches select all -> deselect) -> Check CLIPBOARD (trap on Move)
+    // Level 12: Various honeypots (Teaches precise filtering) -> Check SELECTION (trap on Touch)
+    if (currentLevel.id === 6) {
+      const hasClipboardHoneypot = gameState.clipboard?.nodes?.some((n) =>
+        n.content?.includes('HONEYPOT')
+      );
+
+      if (hasClipboardHoneypot && !showThreatAlert) {
+        setAlertMessage(
+          'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.'
+        );
+        setShowThreatAlert(true);
+      }
+    } else if (currentLevel.id === 12) {
       const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
       const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
 
-      // In Level 12, we want to warn them BEFORE they delete if possible,
-      // but 'selectedIds' implies they just selected it.
-      // If they select it, we give a warning or just penalize?
-      // Level 11 logic sets a flag.
-      // For Level 12, let's trigger an immediate alert if they hold selection on it,
-      // OR maybe just if they try to delete it?
-      // The current logic checks selection. Let's stick to that for immediate feedback.
       if (hasHoneypot && !showThreatAlert) {
         setAlertMessage(
           '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.'
