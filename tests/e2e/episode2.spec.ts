@@ -100,64 +100,69 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 1: Navigate to '~/workspace/systemd-core'
     await gotoCommand(page, 'w');
-    await pressKey(page, 'l'); // Enter workspace
-    await navigateDown(page, 3); // to systemd-core
-    await pressKey(page, 'l'); // Enter systemd-core
+    await filterAndNavigate(page, 'systemd-core');
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_systemd');
 
     // Task 2: Preview the corrupted 'uplink_v1.conf'
-    await navigateDown(page, 2); // to uplink_v1.conf
+    await pressKey(page, 'f');
+    await typeText(page, 'uplink_v1.conf');
+    await pressKey(page, 'Escape');
     await assertTask(page, '2/4', testInfo.outputDir, 'preview_corrupted');
 
     // Task 3: Jump to '~/.config/vault/active' and yank the clean 'uplink_v1.conf'
     await ensureCleanState(page);
     await gotoCommand(page, 'c');
-    await pressKey(page, 'l'); // into vault
-    await navigateDown(page, 1); // to active
-    await pressKey(page, 'l'); // into active
-    await navigateDown(page, 2); // to uplink_v1.conf
+    await filterAndNavigate(page, 'vault');
+    await filterAndNavigate(page, 'active');
+    await pressKey(page, 'f');
+    await typeText(page, 'uplink_v1.conf');
+    await pressKey(page, 'Escape');
     await pressKey(page, 'y');
     await assertTask(page, '3/4', testInfo.outputDir, 'yank_clean_file');
 
     // Task 4: Return to '~/workspace/systemd-core' and force-overwrite the corrupted file
+    await ensureCleanState(page);
     await gotoCommand(page, 'w');
-    await pressKey(page, 'l');
-    await navigateDown(page, 3);
-    await pressKey(page, 'l');
-    await navigateDown(page, 2); // to the corrupted uplink_v1.conf
+    await filterAndNavigate(page, 'systemd-core');
+    await pressKey(page, 'f');
+    await typeText(page, 'uplink_v1.conf');
+    await pressKey(page, 'Escape');
     await pressKey(page, 'Shift+p');
     await assertTask(page, '4/4', testInfo.outputDir, 'force_overwrite');
 
     await waitForMissionComplete(page);
   });
 
-  // Level 9: SPECTRAL ANALYSIS - Sorting and Multiple Selection
-  test('Level 9: SPECTRAL ANALYSIS - sorts and selects multiple files', async ({
+  // Level 9: TRACE CLEANUP - Invert Selection (Ctrl+R) and Permanent Delete (D)
+  test('Level 9: TRACE CLEANUP - uses invert selection to clean up /tmp', async ({
     page,
   }, testInfo) => {
     await goToLevel(page, 9);
-    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+    await assertTask(page, '0/3', testInfo.outputDir, 'start');
 
-    // Task 1: Navigate into '~/incoming/anomaly_data'
-    await gotoCommand(page, 'i');
-    await navigateDown(page, 1);
-    await pressKey(page, 'l');
-    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_anomaly');
+    // Task 1: Select the files to keep. The `initialPath` already places us in /tmp.
+    await pressKey(page, 'f');
+    await page.keyboard.type('ghost_process.pid', { delay: 50 });
+    await page.keyboard.press('Escape'); // Exit filter input, keeping selection
+    await pressKey(page, ' '); // Select the filtered item
+    await pressKey(page, 'Escape'); // Clear the filter
 
-    // Task 2: Sort files by size
-    await pressKey(page, ',');
-    await pressKey(page, 's');
-    await assertTask(page, '2/4', testInfo.outputDir, 'sort_by_size');
+    await pressKey(page, 'f');
+    await page.keyboard.type('socket_001.sock', { delay: 50 });
+    await page.keyboard.press('Escape'); // Exit filter input
+    await pressKey(page, ' '); // Select the filtered item
+    await pressKey(page, 'Escape'); // Clear the filter
 
-    // Task 3: Select all 'segment_*.dat' files
-    await pressKey(page, 'v'); // Enter visual mode
-    await navigateDown(page, 3); // Select the 4 segment files
-    await assertTask(page, '3/4', testInfo.outputDir, 'visual_select');
+    await assertTask(page, '1/3', testInfo.outputDir, 'select_critical_files');
 
-    // Task 4: Delete the selected files
-    await pressKey(page, 'd');
-    await pressKey(page, 'y'); // Confirm deletion
-    await assertTask(page, '4/4', testInfo.outputDir, 'delete_selected');
+    // Task 2: Invert the selection to target all the junk files
+    await pressKey(page, 'Control+r');
+    await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
+
+    // Task 3: Permanently delete the selected junk files
+    await pressKey(page, 'Shift+d');
+    await pressKey(page, 'y'); // Confirm permanent delete
+    await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
 
     await waitForMissionComplete(page);
   });
@@ -171,10 +176,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 1: Navigate to '~/media/archives'
     await gotoCommand(page, 'h');
-    await navigateDown(page, 1); // to media
-    await pressKey(page, 'l');
-    await navigateDown(page, 1); // to archives
-    await pressKey(page, 'l');
+    await filterAndNavigate(page, 'media');
+    await filterAndNavigate(page, 'archives');
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_archives');
 
     // Task 2: Filter for '.zip' files and select them
@@ -190,8 +193,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'y');
     await ensureCleanState(page);
     await gotoCommand(page, 'd');
-    await navigateDown(page, 1); // to backups
-    await pressKey(page, 'l');
+    await filterAndNavigate(page, 'backups');
     await assertTask(page, '3/4', testInfo.outputDir, 'nav_to_backups');
 
     // Task 4: Paste the archives

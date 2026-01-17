@@ -294,7 +294,8 @@ test.describe('Episode 3: MASTERY', () => {
     await page.keyboard.press('Enter');
     await pressKey(page, 'Control+A');
     await pressKey(page, 'd');
-    await page.keyboard.press('Enter');
+    await pressKey(page, 'y'); // Confirm deletion
+    await page.waitForTimeout(500); // Wait for UI to stabilize
     await assertTask(page, '0/5', testInfo.outputDir, 'delete_swarm');
 
     await page.keyboard.press('Escape');
@@ -350,6 +351,93 @@ test.describe('Episode 3: MASTERY', () => {
     await assertTask(page, '5/5', testInfo.outputDir, 'paste_keys');
 
     await pressKey(page, 'Shift+Enter');
+    await waitForMissionComplete(page);
+  });
+
+  // Level 14: EVIDENCE PURGE
+  test('Level 14: EVIDENCE PURGE - permanently deletes all user data', async ({
+    page,
+  }, testInfo) => {
+    // WORKAROUND: Go to Lvl 13 first to set up state, then proceed to 14
+    // This avoids the ensurePrerequisiteState(14) bug.
+    await goToLevel(page, 13);
+    await test.step('Complete Level 13 to proceed', async () => {
+      await gotoCommand(page, 'r');
+      for (let i = 0; i < 4; i++) await pressKey(page, 'j');
+      await pressKey(page, 'l');
+      await pressKey(page, '.');
+      await pressKey(page, 's');
+      await typeText(page, '.key');
+      await pressKey(page, 'Enter');
+      await pressKey(page, 'Control+a');
+      await pressKey(page, 'x');
+      await pressKey(page, 'Escape');
+      await gotoCommand(page, 'w');
+      await pressKey(page, 'l');
+      await pressKey(page, 'p');
+      await waitForMissionComplete(page);
+    });
+
+    await test.step('Start and verify Level 14', async () => {
+      await pressKey(page, 'Enter'); // Proceed to next level (14)
+      await assertLevelStartedIncomplete(page);
+    });
+
+    await test.step('Task 1: Create 3 decoy directories', async () => {
+      await pressKey(page, 'a');
+      await typeText(page, 'decoy_1/');
+      await pressKey(page, 'Enter');
+      await pressKey(page, 'a');
+      await typeText(page, 'decoy_2/');
+      await pressKey(page, 'Enter');
+      await pressKey(page, 'a');
+      await typeText(page, 'decoy_3/');
+      await pressKey(page, 'Enter');
+      await assertTask(page, '1/3', testInfo.outputDir, 'task1_create_decoys');
+    });
+
+    await test.step('Task 2: Purge all visible directories', async () => {
+      // Select only the original directories to avoid the honeypot
+      await pressKey(page, 'f');
+      await typeText(page, 'datastore');
+      await pressKey(page, 'Escape');
+      await pressKey(page, ' ');
+      await pressKey(page, 'Escape');
+
+      await pressKey(page, 'f');
+      await typeText(page, 'incoming');
+      await pressKey(page, 'Escape');
+      await pressKey(page, ' ');
+      await pressKey(page, 'Escape');
+
+      await pressKey(page, 'f');
+      await typeText(page, 'media');
+      await pressKey(page, 'Escape');
+      await pressKey(page, ' ');
+      await pressKey(page, 'Escape');
+
+      await pressKey(page, 'f');
+      await typeText(page, 'workspace');
+      await pressKey(page, 'Escape');
+      await pressKey(page, ' ');
+      await pressKey(page, 'Escape');
+
+      await pressKey(page, 'Shift+d'); // Permanent delete
+      await pressKey(page, 'y'); // Confirm
+      await assertTask(page, '2/3', testInfo.outputDir, 'task2_delete_visible');
+    });
+
+    await test.step('Task 3: Purge .config directory', async () => {
+      await pressKey(page, '.'); // Show hidden
+      await pressKey(page, 'f');
+      await typeText(page, '.config');
+      await pressKey(page, 'Escape');
+      await pressKey(page, 'Shift+d'); // Permanent delete
+      await pressKey(page, 'y'); // Confirm
+      await assertTask(page, '3/3', testInfo.outputDir, 'task3_delete_hidden');
+    });
+
+    await ensureCleanState(page);
     await waitForMissionComplete(page);
   });
 
