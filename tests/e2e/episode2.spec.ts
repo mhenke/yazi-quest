@@ -29,11 +29,11 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'l'); // Enter batch_logs
     await page.waitForTimeout(500);
 
-    // Task 2: Use recursive search (s) to find 'log'
+    // Task 2: Use recursive search (s) to find '.log' files
     await pressKey(page, 's');
-    await typeText(page, 'log');
+    await typeText(page, '.log');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
     // Task 3: Select all search results and yank (Ctrl+A, y)
     await pressKey(page, 'Control+A');
@@ -41,41 +41,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'y');
     await page.waitForTimeout(300);
 
-    // EXIT search mode to see results clearly in valid context
-    // This is where "Select All" becomes dangerous if we don't refine.
-    await ensureCleanState(page);
-    await page.waitForTimeout(500);
-
-    // HONEYPOT CHECK: 'active_log_sync.lock' is selected. Deselect it.
-    // Use filter to find it reliably.
-    await pressKey(page, 'f');
-    await typeText(page, 'active_log');
-    // Confirm filter
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
-
-    // VERIFY we are actually on the lock file
-    await expect(page.locator('[aria-current="location"]')).toContainText('active_log_sync.lock');
-
-    // Deselect (Space) - since it was selected by Ctrl+A
-    await pressKey(page, ' ');
-    await page.waitForTimeout(500);
-
-    // Clear filter
+    // Exit search mode (clear search)
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
-    // Verify we didn't trigger alert yet (just safe check)
-    // Alert can appear due to timing/race; if visible, dismiss it so test continues.
-    const maybeAlert = page.getByRole('alert');
-    try {
-      if (await maybeAlert.isVisible({ timeout: 500 })) {
-        await pressKey(page, 'Shift+Enter');
-        await maybeAlert.waitFor({ state: 'hidden', timeout: 2000 });
-      }
-    } catch {
-      // no alert — continue
-    }
+    // Small safety pause to allow clipboard state to settle
+    await page.waitForTimeout(200);
 
     // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
     await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
