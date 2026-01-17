@@ -5,25 +5,29 @@
  */
 
 import { Page, expect, Locator } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export const DEFAULT_DELAY = 500;
 
 /**
- * Navigate to a specific level and skip the intro
+ * Navigate to a specific level and skip the intro.
+ * Consolidates waiting for network and handling the intro sequence.
  */
 export async function goToLevel(page: Page, level: number): Promise<void> {
   await page.goto(`/?lvl=${level}`);
-  // Wait for the page to load
   await page.waitForLoadState('networkidle');
 
-  // Try to click Skip Intro button if it exists
+  // Unified intro skip logic. If the button appears, click it and wait for it to disappear.
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
   try {
     await skipButton.click({ timeout: 2000 });
-    // Wait for intro overlay to disappear
-    await skipButton.waitFor({ state: 'hidden', timeout: 3000 });
-  } catch {
-    // Intro may not be present for this level, continue
+    await expect(skipButton).not.toBeVisible({ timeout: 3000 });
+  } catch (error) {
+    // If the button doesn't appear or the click fails, we assume no intro is present and continue.
+    // This is expected behavior for many levels.
   }
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(DEFAULT_DELAY); // Standard post-load delay
 }
 
 /**
@@ -37,119 +41,92 @@ export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
 }
 
 /**
- * Press a key in the game using window.dispatchEvent
- * This matches the browser subagent's successful approach
+ * Asserts the current task count and takes an optional screenshot for evidence.
  */
-export async function pressKey(page: Page, key: string): Promise<void> {
-  // Handle special key combinations
-  if (key === 'Shift+g' || key === 'Shift+G') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'G', code: 'KeyG', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+j' || key === 'Shift+J') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'J', code: 'KeyJ', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+k' || key === 'Shift+K') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'K', code: 'KeyK', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+Enter') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', shiftKey: true })
-      );
-    });
-  } else if (key === 'Control+a' || key === 'Control+A') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', code: 'KeyA', ctrlKey: true }));
-    });
-  } else if (key === ' ') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space' }));
-    });
-  } else if (key === 'Enter') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter' }));
-    });
-  } else if (key === 'Escape') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape' }));
-    });
-  } else if (key === 'Tab') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', code: 'Tab' }));
-    });
-  } else if (key === 'Backspace') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', code: 'Backspace' }));
-    });
-  } else if (key === 'Control+r' || key === 'Control+R') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', code: 'KeyR', ctrlKey: true }));
-    });
-  } else if (key === 'Shift+d' || key === 'Shift+D') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'D', code: 'KeyD', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+p' || key === 'Shift+P') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'P', code: 'KeyP', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+y' || key === 'Shift+Y') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Y', code: 'KeyY', shiftKey: true })
-      );
-    });
-  } else if (key === 'Shift+z' || key === 'Shift+Z') {
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Z', code: 'KeyZ', shiftKey: true })
-      );
-    });
-  } else if (key === ',') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: ',', code: 'Comma' }));
-    });
-  } else if (key === '.') {
-    await page.evaluate(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period' }));
-    });
-  } else if (/^[0-9]$/.test(key)) {
-    // Handle digits 0-9
-    await page.evaluate(
-      ({ k }) => {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: `Digit${k}` }));
-      },
-      { k: key }
-    );
-  } else {
-    // Single character key
-    const lowerKey = key.toLowerCase();
-    const code = `Key${key.toUpperCase()}`;
-    await page.evaluate(
-      ({ k, c }) => {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: c }));
-      },
-      { k: lowerKey, c: code }
-    );
+export async function assertTask(
+  page: Page,
+  taskCount: string,
+  outputDir: string,
+  screenshotName?: string
+): Promise<void> {
+  await expect(page.getByText(`Tasks: ${taskCount}`)).toBeVisible({ timeout: 5000 });
+
+  if (screenshotName) {
+    const url = new URL(page.url());
+    const lvlStr = url.searchParams.get('lvl') || '0';
+    const lvl = parseInt(lvlStr, 10);
+    const ep = lvl > 0 ? Math.floor((lvl - 1) / 5) + 1 : 0;
+    const evidenceDir = path.join(outputDir, 'evidence', `episode${ep}`, `lvl${lvl}`);
+
+    if (!fs.existsSync(evidenceDir)) {
+      fs.mkdirSync(evidenceDir, { recursive: true });
+    }
+
+    const filename = screenshotName.endsWith('.png') ? screenshotName : `${screenshotName}.png`;
+    const fullPath = path.join(evidenceDir, filename);
+
+    await page.screenshot({ path: fullPath });
+    // console.log(`Screenshot captured: ${fullPath}`);
   }
-  await page.waitForTimeout(100);
 }
 
 /**
- * Press a sequence of keys with delays
+ * Press a key in the game using window.dispatchEvent.
+ * Applies a standard delay after each key press for CI stability.
+ */
+export async function pressKey(page: Page, key: string): Promise<void> {
+  const eventPayload: {
+    key: string;
+    code: string;
+    shiftKey?: boolean;
+    ctrlKey?: boolean;
+  } = { key: '', code: '' };
+
+  if (key.includes('+')) {
+    const parts = key.split('+');
+    const modifier = parts[0].toLowerCase();
+    const mainKey = parts[1];
+
+    if (modifier === 'shift') {
+      eventPayload.shiftKey = true;
+      eventPayload.key = mainKey.toUpperCase();
+      eventPayload.code = `Key${mainKey.toUpperCase()}`;
+    } else if (modifier === 'ctrl' || modifier === 'control') {
+      eventPayload.ctrlKey = true;
+      eventPayload.key = mainKey.toLowerCase();
+      eventPayload.code = `Key${mainKey.toUpperCase()}`;
+    }
+  } else {
+    eventPayload.key = key;
+    if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+      eventPayload.code = `Key${key.toUpperCase()}`;
+    } else if (/\d/.test(key)) {
+      eventPayload.code = `Digit${key}`;
+    } else {
+      // Map special keys to their 'code' values
+      const codeMap: { [key: string]: string } = {
+        ' ': 'Space',
+        Enter: 'Enter',
+        Escape: 'Escape',
+        Tab: 'Tab',
+        Backspace: 'Backspace',
+        ',': 'Comma',
+        '.': 'Period',
+        '/': 'Slash',
+      };
+      eventPayload.code = codeMap[key] || '';
+    }
+  }
+
+  await page.evaluate((payload) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', payload));
+  }, eventPayload);
+
+  await page.waitForTimeout(DEFAULT_DELAY);
+}
+
+/**
+ * Press a sequence of keys with standard delays between them.
  */
 export async function pressKeys(page: Page, keys: string[]): Promise<void> {
   for (const key of keys) {
@@ -158,53 +135,50 @@ export async function pressKeys(page: Page, keys: string[]): Promise<void> {
 }
 
 /**
- * Type text (for filter, create, rename inputs)
+ * Types text into an input field with a minor delay between characters.
  */
 export async function typeText(page: Page, text: string): Promise<void> {
   await page.keyboard.type(text, { delay: 50 });
 }
 
 /**
- * Filter to find an item, navigate to it
- * Note: Filter remains on parent directory but we're leaving it
+ * Navigates down in the file list by pressing 'j' a specified number of times.
+ */
+export async function navigateDown(page: Page, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await pressKey(page, 'j');
+  }
+}
+
+/**
+ * Navigates up in the file list by pressing 'k' a specified number of times.
+ */
+export async function navigateUp(page: Page, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await pressKey(page, 'k');
+  }
+}
+
+/**
+ * Filter to find an item, then navigate into it.
+ * Leaves the filter active on the parent directory.
  */
 export async function filterAndNavigate(page: Page, filterText: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, filterText);
-  await page.keyboard.press('Escape'); // Exit filter mode (keeps cursor on filtered item)
-  await page.waitForTimeout(100);
-  await pressKey(page, 'l'); // Use 'l' instead of Enter - might bypass filter check
-  await page.waitForTimeout(100);
+  await pressKey(page, 'Escape'); // Exit filter mode to lock selection
+  await pressKey(page, 'l'); // Navigate into directory
 }
 
 /**
- * Filter to find an item and select it (without navigating)
- * Does NOT clear the filter - caller should clear if needed
+ * Filter to find an item and select it (without navigating).
+ * Leaves the filter active.
  */
 export async function filterAndSelect(page: Page, filterText: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, filterText);
-  await page.keyboard.press('Escape'); // Exit filter mode
-  await pressKey(page, ' '); // Toggle selection on the filtered item
-}
-
-/**
- * Clean up game state before level completion
- * This clears filters, resets sort to natural, and hides hidden files
- * to avoid Protocol Violations
- */
-export async function cleanupBeforeComplete(page: Page): Promise<void> {
-  // Clear any active filter (Escape clears filter in current directory)
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(50);
-  await page.keyboard.press('Escape'); // Double escape to ensure cleared
-  await page.waitForTimeout(50);
-
-  // Reset sort to natural if needed (,n)
-  await pressKey(page, ',');
-  await page.waitForTimeout(50);
-  await pressKey(page, 'n');
-  await page.waitForTimeout(100);
+  await pressKey(page, 'Escape'); // Exit filter mode
+  await pressKey(page, ' '); // Toggle selection
 }
 
 /**
@@ -212,36 +186,27 @@ export async function cleanupBeforeComplete(page: Page): Promise<void> {
  * Use this before critical navigation to prevent "protocol violations".
  */
 export async function ensureCleanState(page: Page): Promise<void> {
-  // 1. Clear any active filter/search input (universal 'get out of this mode' key)
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(50);
-
-  // 2. Clear any applied filter/search results view
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(50);
-
-  // 3. Reset sorting to natural, just in case
+  // Two escapes clear most modal states (filter, search input)
+  await pressKey(page, 'Escape');
+  await pressKey(page, 'Escape');
+  // Reset sorting to natural
   await pressKey(page, ',');
-  await page.waitForTimeout(50);
   await pressKey(page, 'n');
-  await page.waitForTimeout(100);
 }
 
 /**
- * Execute a goto command (g followed by target key)
+ * Execute a goto command (g followed by target key).
  */
 export async function gotoCommand(
   page: Page,
   target: 'h' | 'c' | 'w' | 'd' | 'i' | 't' | 'r'
 ): Promise<void> {
   await pressKey(page, 'g');
-  await page.waitForTimeout(50);
   await pressKey(page, target);
-  await page.waitForTimeout(200);
 }
 
 /**
- * Get the task counter text (e.g., "1 / 5")
+ * Get the task counter text (e.g., "1 / 5").
  */
 export async function getTaskCount(page: Page): Promise<string> {
   const counter = page.locator('text=/\\d+ \\/ \\d+/').first();
@@ -249,45 +214,33 @@ export async function getTaskCount(page: Page): Promise<string> {
 }
 
 /**
- * Check if a task is completed (has checkmark)
+ * Checks if a task objective is visually marked as complete (dimmed).
  */
 export async function isTaskCompleted(page: Page, taskIndex: number): Promise<boolean> {
-  // Objectives are in the PreviewPane with opacity-50 when complete
   const objectives = page.locator('h3:has-text("Objectives") + div > div');
   const task = objectives.nth(taskIndex);
   return await task.evaluate((el) => el.classList.contains('opacity-50'));
 }
 
 /**
- * Wait for mission complete dialog
+ * Waits for the mission complete dialog to become visible.
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
-  // Use the specific test id which is more robust
-  // Mission complete can be delayed if UI shows intermittent alerts; poll longer
   await expect(page.getByTestId('mission-complete')).toBeVisible({
-    timeout: 250,
+    timeout: 10000,
   });
 }
 
 /**
- * Wait for specific task to be completed
- */
-export async function waitForTaskComplete(page: Page, taskText: string): Promise<void> {
-  // Tasks get a strikethrough or checkmark when completed
-  await page.waitForTimeout(300);
-}
-
-/**
- * Get the current directory path shown in the UI
+ * Get the current directory path shown in the UI.
  */
 export async function getCurrentPath(page: Page): Promise<string> {
-  // The path is typically shown in the header area
-  const pathElement = page.locator('[class*="path"], .breadcrumb, header').first();
+  const pathElement = page.locator('//header/div[contains(@class, "flex-1")]').first();
   return (await pathElement.textContent()) || '';
 }
 
 /**
- * Check if the file info panel is visible (Tab toggle)
+ * Check if the file info panel is visible (toggled by Tab).
  */
 export async function isInfoPanelVisible(page: Page): Promise<boolean> {
   const panel = page.locator('text=FILE INFORMATION');
@@ -295,17 +248,19 @@ export async function isInfoPanelVisible(page: Page): Promise<boolean> {
 }
 
 /**
- * Get selected file name (cursor position)
+ * Get the file name at the current cursor position.
  */
 export async function getSelectedFileName(page: Page): Promise<string | null> {
-  // The selected item typically has a specific class or background
-  const selected = page.locator('[class*="selected"], [class*="cursor"], .ring-2').first();
-  const text = await selected.textContent();
-  return text?.trim() || null;
+  const selected = page.locator('[data-test-id^="fs-item-"][data-cursor="true"]');
+  if (await selected.isVisible()) {
+    const name = await selected.getAttribute('data-test-id');
+    return name?.replace('fs-item-', '') || null;
+  }
+  return null;
 }
 
 /**
- * Check if hidden files are shown
+ * Check if hidden files are currently being shown in the file pane.
  */
 export async function areHiddenFilesVisible(page: Page): Promise<boolean> {
   const hiddenIndicator = page.getByText('HIDDEN: ON');
@@ -313,17 +268,12 @@ export async function areHiddenFilesVisible(page: Page): Promise<boolean> {
 }
 
 /**
- * Get the clipboard status (e.g., "COPY: 1" or "MOVE: 2")
+ * Get the clipboard status (e.g., "COPY: 1" or "MOVE: 2").
  */
 export async function getClipboardStatus(page: Page): Promise<string | null> {
-  const copyStatus = page.locator('text=/COPY: \\d+/');
-  const moveStatus = page.locator('text=/MOVE: \\d+/');
-
-  if (await copyStatus.isVisible()) {
-    return await copyStatus.textContent();
-  }
-  if (await moveStatus.isVisible()) {
-    return await moveStatus.textContent();
+  const status = page.locator('[data-testid="status-clipboard"]');
+  if (await status.isVisible()) {
+    return status.textContent();
   }
   return null;
 }

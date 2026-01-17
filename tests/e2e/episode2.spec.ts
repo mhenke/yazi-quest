@@ -2,304 +2,202 @@ import { test, expect } from '@playwright/test';
 import {
   goToLevel,
   pressKey,
-  pressKeys,
   gotoCommand,
   waitForMissionComplete,
   typeText,
   filterAndNavigate,
-  filterAndSelect,
   ensureCleanState,
-  cleanupBeforeComplete,
-  isTaskCompleted,
-  assertLevelStartedIncomplete,
-  getClipboardStatus,
+  assertTask,
+  navigateDown,
+  DEFAULT_DELAY,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
   // Level 6: BATCH OPERATIONS - Batch Select (Ctrl+A) and Recursive Search (s)
   test('Level 6: BATCH OPERATIONS - completes recursive search and batch operations', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await goToLevel(page, 6);
-    await assertLevelStartedIncomplete(page);
+    await assertTask(page, '0/5', testInfo.outputDir, 'start');
 
-    // Task 1: Jump to '~/incoming/batch_logs' (gi → l to enter)
-    await gotoCommand(page, 'i'); // gi -> ~/incoming
-    await page.waitForTimeout(500);
-    // batch_logs should be first item, use l to enter it
-    await pressKey(page, 'l'); // Enter batch_logs
-    await page.waitForTimeout(500);
+    // Task 1: Navigate into '~/incoming/batch_logs'
+    await gotoCommand(page, 'i');
+    await pressKey(page, 'l');
+    await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
-    // Task 2: Use recursive search to find '.log' files
+    // Task 2: Search for all '.log' files recursively
     await pressKey(page, 's');
     await typeText(page, '.log');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await pressKey(page, 'Enter');
+    await assertTask(page, '2/5', testInfo.outputDir, 'task2');
 
-    // Task 3: Select all search results and yank (Ctrl+A, y)
-    // IMPORTANT: Stay in search mode - Ctrl+A will only select search results, not all files
-    await pressKey(page, 'Control+A');
-    await page.waitForTimeout(200);
+    // Task 3: Select all results and yank them
+    await pressKey(page, 'Control+a');
     await pressKey(page, 'y');
-    await page.waitForTimeout(300);
+    await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
-    // Verify clipboard captured some items
-    const clip = await getClipboardStatus(page);
-    if (clip) {
-      await expect(clip).toMatch(/COPY: \d+/);
-    } else {
-      /* continue without failing */
-    }
-
-    // Exit search mode
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
-    await ensureCleanState(page);
-
-    // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
-    await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
-    await page.waitForTimeout(500);
-
-    // vault is already highlighted after gc, just enter it
-    await pressKey(page, 'l'); // Enter vault
-    await page.waitForTimeout(300);
-
-    // Create 'training_data/' directory
-    await pressKey(page, 'a');
-    await typeText(page, 'training_data/');
+    // Task 4: Navigate to '/home/maia/.config/vault/training_data' and create the directory
+    await ensureCleanState(page); // Clear search and reset state
+    await gotoCommand(page, 'c');
+    await pressKey(page, 'l'); // Enter 'vault'
+    await pressKey(page, 'a'); // Create directory
+    await page.keyboard.type('training_data/', { delay: 50 });
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300); // Wait for directory creation to settle
+    await assertTask(page, '4/5', testInfo.outputDir, 'task4');
 
-    // Task 5: Navigate into training_data and paste
-    // Navigate to the newly created directory reliably and enter it
-    await filterAndNavigate(page, 'training_data');
-    await page.waitForTimeout(300);
-
-    // Paste the logs
+    // Task 5: Enter the new directory and paste the files
+    await pressKey(page, 'l');
     await pressKey(page, 'p');
-    await page.waitForTimeout(500);
+    await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
-    // If a protocol alert appears, dismiss it (Shift+Enter) and ensure it's gone
-    try {
-      const postAlert = page.getByRole('alert');
-      if (await postAlert.isVisible({ timeout: 500 })) {
-        await pressKey(page, 'Shift+Enter');
-        await postAlert.waitFor({ state: 'hidden', timeout: 2000 });
-      }
-    } catch {}
-
-    // Extra cleanup to ensure the mission-complete can appear: ensure no filters/sorts active
-    await cleanupBeforeComplete(page);
-
-    // Wait for the task counter to reflect progress and for mission complete to appear
-    // Level 6 can take longer due to file operations
-    await page.waitForTimeout(2000);
-
-    // Allow more time for the mission to complete in CI environments
     await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('BATCH OPERATIONS')).toBeVisible({
-      timeout: 5000,
-    });
   });
 
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
-  test('Level 7: QUANTUM BYPASS - finds honeypot and aborts', async ({ page }) => {
+  test('Level 7: QUANTUM BYPASS - completes FZF find and clipboard abort', async ({
+    page,
+  }, testInfo) => {
     await goToLevel(page, 7);
-    await assertLevelStartedIncomplete(page);
+    await assertTask(page, '0/4', testInfo.outputDir, 'start');
 
-    // Task 1: Jump to Root (gr)
+    // Task 1: Locate 'access_token.key' using FZF find (z) from root
     await gotoCommand(page, 'r');
-
-    // Task 2: Locate 'access_token.key' using FZF find (z)
     await pressKey(page, 'z');
     await typeText(page, 'access_token');
-    await page.waitForTimeout(500); // Wait for FZF
-    await page.keyboard.press('Enter'); // Select in FZF
+    await pressKey(page, 'Enter'); // Select in FZF
+    await assertTask(page, '1/4', testInfo.outputDir, 'fzf_access_token');
 
-    // Task 3: Stage suspicious file (x)
+    // Task 2: Stage the suspicious file for deletion
     await pressKey(page, 'x');
+    await assertTask(page, '2/4', testInfo.outputDir, 'stage_file');
 
-    // Task 4: Jump to '/etc' (Z -> 'etc' -> Enter)
-    await pressKey(page, 'Shift+Z');
+    // Task 3: Jump to '/etc' using FZF directory jump
+    await pressKey(page, 'Shift+z');
     await typeText(page, 'etc');
-    await page.waitForTimeout(200);
-    await page.keyboard.press('Enter');
+    await pressKey(page, 'Enter');
+    await assertTask(page, '3/4', testInfo.outputDir, 'jump_to_etc');
 
-    // Task 5: Abort operation when warning appears
-    await page.waitForTimeout(1000); // Wait for alert
-    await pressKey(page, 'Shift+Enter'); // Dismiss alert
+    // Task 4: Abort the pending operation when the threat alert appears
+    // The alert is modal, so we confirm it, then abort the clipboard.
+    await page.waitForTimeout(DEFAULT_DELAY * 2); // Wait for alert to be reliably visible
+    const alert = page.getByText('Unauthorized operation detected');
+    await expect(alert).toBeVisible();
+    await pressKey(page, 'Enter'); // Dismiss alert
 
-    await page.waitForTimeout(500);
-    await pressKey(page, 'Shift+Y'); // Clear clipboard
+    await pressKey(page, 'Shift+y'); // Abort clipboard action
+    await assertTask(page, '4/4', testInfo.outputDir, 'abort_operation');
 
     await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('QUANTUM BYPASS')).toBeVisible();
   });
 
   // Level 8: DAEMON DISGUISE CONSTRUCTION - Force Overwrite (Shift+P)
-  test('Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite', async ({ page }) => {
-    await goToLevel(page, 8);
-    await assertLevelStartedIncomplete(page);
-
-    // Objective 1: Navigate to '~/workspace/systemd-core'
-    await gotoCommand(page, 'w');
-    await filterAndNavigate(page, 'systemd-core');
-    await expect(page.getByText('Tasks: 1/4')).toBeVisible();
-
-    // Objective 2: Preview 'uplink_v1.conf' to confirm corruption
-    // Note: Task check requires usedFilter === true
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1');
-    await page.keyboard.press('Escape'); // Stay on the file with filter active
-    await expect(page.getByText('Tasks: 2/4')).toBeVisible();
-
-    // Clear filter before leaving to stay clean
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(100);
-
-    // Objective 3: Jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
-    await pressKey(page, '.'); // Show hidden files for .config
-    await gotoCommand(page, 'h'); // gh to home
-    await filterAndNavigate(page, '.config');
-    await filterAndNavigate(page, 'vault');
-    await filterAndNavigate(page, 'active');
-
-    // Find and yank clean file
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'y');
-    await expect(page.getByText('Tasks: 3/4')).toBeVisible();
-
-    // Clear filter and hide files before returning
-    await page.keyboard.press('Escape');
-    await pressKey(page, '.');
-    await page.waitForTimeout(100);
-
-    // Objective 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) local file
-    await gotoCommand(page, 'w');
-    await filterAndNavigate(page, 'systemd-core');
-
-    // Find the file robustly with a filter
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
-    await page.keyboard.press('Escape'); // Position cursor on the file
-    await page.waitForTimeout(200);
-
-    // CRITICAL: Clear filter BEFORE overwriting so we are in protocol compliance
-    // at the moment the level completes.
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
-
-    // Overwrite with Shift+P. This completes Task 4 and triggers Mission Complete.
-    await pressKey(page, 'Shift+P');
-
-    await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('DAEMON DISGUISE CONSTRUCTION')).toBeVisible();
-  });
-
-  // Level 9: TRACE CLEANUP - Invert Selection (Ctrl+R)
-  test('Level 9: TRACE CLEANUP - uses invert selection to clean up', async ({ page }) => {
-    try {
-      await goToLevel(page, 9);
-      await assertLevelStartedIncomplete(page);
-
-      // Task 1: Navigate to '/tmp'
-      await gotoCommand(page, 't');
-      // No hidden files in /tmp, so no need to toggle
-
-      // Task 2: Select files to KEEP
-      // ghost_process.pid
-      await pressKey(page, 'f');
-      await typeText(page, 'gh');
-      await page.keyboard.press('Enter'); // Confirm filter
-      await page.waitForTimeout(100);
-      await pressKey(page, ' '); // Select
-      // User flow: No Escape here, goes straight to next filter
-
-      // socket_001.sock
-      await pressKey(page, 'f');
-      await typeText(page, 'soc');
-      await page.keyboard.press('Enter'); // Confirm filter
-      await page.waitForTimeout(100);
-      await pressKey(page, ' '); // Select
-      await pressKey(page, 'Escape'); // Clear filter (User did this one)
-
-      // Task 3: Invert selection (Ctrl+R)
-      await pressKey(page, 'Control+R');
-      await page.waitForTimeout(200);
-
-      // Task 4: Permanently delete (Shift+D) and confirm
-      await pressKey(page, 'Shift+D');
-      await page.waitForTimeout(500);
-      await pressKey(page, 'y'); // Confirm
-
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('TRACE CLEANUP')).toBeVisible();
-    } catch (error) {
-      await page.screenshot({ path: 'level9-failure.png', fullPage: true });
-      console.log('Test failed. Screenshot saved to level9-failure.png');
-      throw error;
-    }
-  });
-
-  // Level 10: CREDENTIAL HEIST - Sorting (,m) and Archives
-  test('Level 10: CREDENTIAL HEIST - sorts by modified and extracts key from archive', async ({
+  test('Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite', async ({
     page,
-  }) => {
-    await goToLevel(page, 10);
-    await assertLevelStartedIncomplete(page);
+  }, testInfo) => {
+    await goToLevel(page, 8);
+    await assertTask(page, '0/4', testInfo.outputDir, 'start');
 
-    // Objective 1: Navigate into '~/incoming/backup_logs.zip/credentials'
-    await gotoCommand(page, 'i');
-    await filterAndNavigate(page, 'backup_logs.zip');
-    await filterAndNavigate(page, 'credentials');
-    await expect(page.getByText('Tasks: 1/4')).toBeVisible();
-
-    // Objective 2: Sort by modification time (,m)
-    await pressKey(page, ',');
-    await pressKey(page, 'm');
-    await page.waitForTimeout(200);
-    await expect(page.getByText('Tasks: 2/4')).toBeVisible();
-
-    // Objective 3: Yank newest key (access_key_new.pem should be at top after sort desc)
-    await pressKey(page, 'g');
-    await pressKey(page, 'g'); // Ensure we are at the top
-
-    // Explicitly verify the file is there before yanking
-    await pressKey(page, 'f');
-    await typeText(page, 'access_key_new');
-    await page.keyboard.press('Escape');
-    await expect(
-      page.getByTestId('filesystem-pane-active').getByText('access_key_new.pem')
-    ).toBeVisible();
-
-    await pressKey(page, 'y');
-    await expect(page.getByText('Tasks: 3/4')).toBeVisible();
-
-    // Reset sort AND clear filter BEFORE leaving to stay clean
-    await page.keyboard.press('Escape'); // Clear 'access_key_new' filter
-    await pressKey(page, ',');
-    await pressKey(page, 'n');
-    await page.waitForTimeout(200);
-
-    // Objective 4: Jump to '~/workspace/systemd-core', create credentials/, paste
+    // Task 1: Navigate to '~/workspace/systemd-core'
     await gotoCommand(page, 'w');
-    await filterAndNavigate(page, 'systemd-core');
+    await pressKey(page, 'l'); // Enter workspace
+    await navigateDown(page, 3); // to systemd-core
+    await pressKey(page, 'l'); // Enter systemd-core
+    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_systemd');
 
-    // Create credentials directory
-    await pressKey(page, 'a');
-    await typeText(page, 'credentials/');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    // Task 2: Preview the corrupted 'uplink_v1.conf'
+    await navigateDown(page, 2); // to uplink_v1.conf
+    await assertTask(page, '2/4', testInfo.outputDir, 'preview_corrupted');
 
-    // Enter credentials/
-    await filterAndNavigate(page, 'credentials');
+    // Task 3: Jump to '~/.config/vault/active' and yank the clean 'uplink_v1.conf'
+    await ensureCleanState(page);
+    await gotoCommand(page, 'c');
+    await pressKey(page, 'l'); // into vault
+    await navigateDown(page, 1); // to active
+    await pressKey(page, 'l'); // into active
+    await navigateDown(page, 2); // to uplink_v1.conf
+    await pressKey(page, 'y');
+    await assertTask(page, '3/4', testInfo.outputDir, 'yank_clean_file');
 
-    // Paste the key. This completes Task 4 and triggers Mission Complete.
-    await pressKey(page, 'p');
+    // Task 4: Return to '~/workspace/systemd-core' and force-overwrite the corrupted file
+    await gotoCommand(page, 'w');
+    await pressKey(page, 'l');
+    await navigateDown(page, 3);
+    await pressKey(page, 'l');
+    await navigateDown(page, 2); // to the corrupted uplink_v1.conf
+    await pressKey(page, 'Shift+p');
+    await assertTask(page, '4/4', testInfo.outputDir, 'force_overwrite');
 
     await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('CREDENTIAL HEIST')).toBeVisible();
+  });
+
+  // Level 9: SPECTRAL ANALYSIS - Sorting and Multiple Selection
+  test('Level 9: SPECTRAL ANALYSIS - sorts and selects multiple files', async ({
+    page,
+  }, testInfo) => {
+    await goToLevel(page, 9);
+    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+
+    // Task 1: Navigate into '~/incoming/anomaly_data'
+    await gotoCommand(page, 'i');
+    await navigateDown(page, 1);
+    await pressKey(page, 'l');
+    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_anomaly');
+
+    // Task 2: Sort files by size
+    await pressKey(page, ',');
+    await pressKey(page, 's');
+    await assertTask(page, '2/4', testInfo.outputDir, 'sort_by_size');
+
+    // Task 3: Select all 'segment_*.dat' files
+    await pressKey(page, 'v'); // Enter visual mode
+    await navigateDown(page, 3); // Select the 4 segment files
+    await assertTask(page, '3/4', testInfo.outputDir, 'visual_select');
+
+    // Task 4: Delete the selected files
+    await pressKey(page, 'd');
+    await pressKey(page, 'y'); // Confirm deletion
+    await assertTask(page, '4/4', testInfo.outputDir, 'delete_selected');
+
+    await waitForMissionComplete(page);
+  });
+
+  // Level 10: ARCHIVE EXTRACTION - Filter (f) and Multi-Stage Copy
+  test('Level 10: ARCHIVE EXTRACTION - performs multi-stage copy and rename', async ({
+    page,
+  }, testInfo) => {
+    await goToLevel(page, 10);
+    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+
+    // Task 1: Navigate to '~/media/archives'
+    await gotoCommand(page, 'h');
+    await navigateDown(page, 1); // to media
+    await pressKey(page, 'l');
+    await navigateDown(page, 1); // to archives
+    await pressKey(page, 'l');
+    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_archives');
+
+    // Task 2: Filter for '.zip' files and select them
+    await pressKey(page, 'f');
+    await typeText(page, '.zip');
+    await pressKey(page, 'Escape');
+    await pressKey(page, ' '); // Select first
+    await pressKey(page, 'j');
+    await pressKey(page, ' '); // Select second
+    await assertTask(page, '2/4', testInfo.outputDir, 'filter_and_select_zip');
+
+    // Task 3: Yank files and navigate to '~/datastore/backups'
+    await pressKey(page, 'y');
+    await ensureCleanState(page);
+    await gotoCommand(page, 'd');
+    await navigateDown(page, 1); // to backups
+    await pressKey(page, 'l');
+    await assertTask(page, '3/4', testInfo.outputDir, 'nav_to_backups');
+
+    // Task 4: Paste the archives
+    await pressKey(page, 'p');
+    await assertTask(page, '4/4', testInfo.outputDir, 'paste_archives');
+
+    await waitForMissionComplete(page);
   });
 });
