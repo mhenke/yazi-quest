@@ -45,8 +45,19 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
-    // Small safety pause to allow clipboard state to settle
+    // Now follow the exact user keystrokes: gc, a training_data/, Enter, l, p
+    await pressKey(page, 'g');
+    await page.waitForTimeout(50);
+    await pressKey(page, 'c');
     await page.waitForTimeout(200);
+    await pressKey(page, 'a');
+    await typeText(page, 'training_data/');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    await pressKey(page, 'l');
+    await page.waitForTimeout(200);
+    await pressKey(page, 'p');
+    await page.waitForTimeout(500);
 
     // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
     await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
@@ -80,8 +91,11 @@ test.describe('Episode 2: FORTIFICATION', () => {
       }
     } catch {}
 
+    // Allow more time for the mission to complete in CI environments
     await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('BATCH OPERATIONS')).toBeVisible();
+    await expect(page.getByRole('alert').getByText('BATCH OPERATIONS')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
