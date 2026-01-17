@@ -61,6 +61,10 @@ export function getParentNode(root: FileNode, path: string[] | undefined): FileN
   return getNodeByPath(root, path.slice(0, -1)) || null;
 }
 
+/**
+ * Find a node by its name starting from the root of a (sub)tree.
+ * @deprecated Use getNodeById for system-critical nodes (workspace, incoming, etc.) to avoid ambiguity.
+ */
 export function findNodeByName(
   root: FileNode,
   name: string,
@@ -306,9 +310,9 @@ export function resolveAndCreatePath(
 
   if (inputPath.startsWith('~/')) {
     // Resolve "~" to //home/guest node IDs
-    const rootNode = findNodeByName(newRoot, 'root', 'dir');
-    const homeNode = rootNode?.children?.find((n) => n.name === 'home');
-    const guestNode = homeNode?.children?.find((n) => n.name === 'guest');
+    const rootNode = getNodeById(newRoot, 'root');
+    const homeNode = getNodeById(newRoot, 'home');
+    const guestNode = getNodeById(newRoot, 'guest');
 
     if (!rootNode || !homeNode || !guestNode) {
       return {

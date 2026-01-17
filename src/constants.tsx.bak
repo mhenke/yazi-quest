@@ -153,16 +153,16 @@ export const getWorkspaceSystemdCoreChildren = (
 // Helper to create or get the workspace systemd-core, applying corruption
 export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boolean): FileNode => {
   const newFs = JSON.parse(JSON.stringify(fs));
-  const guest = getNodeById(newFs, 'guest');
+  const guest = findNodeByName(newFs, 'guest', 'dir');
   if (!guest) {
     console.error('Guest directory not found in FS root, cannot create workspace');
     return fs;
   }
-  let workspace = getNodeById(newFs, 'workspace');
+  let workspace = findNodeByName(guest, 'workspace', 'dir');
   if (!workspace) {
     // This case shouldn't happen if INITIAL_FS is set up correctly, but added for robustness
     workspace = {
-      id: 'guest-workspace',
+      id: id('guest-workspace'),
       name: 'workspace',
       type: 'dir',
       protected: true,
@@ -200,7 +200,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 2: Delete watcher_agent.sys from incoming
   if (targetLevelId > 2) {
-    const incoming = getNodeById(newFs, 'incoming');
+    const incoming = findNodeByName(newFs, 'incoming', 'dir');
     if (incoming?.children) {
       incoming.children = incoming.children.filter((c) => c.name !== 'watcher_agent.sys');
     }
@@ -208,8 +208,8 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 3: Move sector_map.png from ~/incoming to ~/media
   if (targetLevelId > 3) {
-    const incoming = getNodeById(newFs, 'incoming');
-    const media = getNodeById(newFs, 'media');
+    const incoming = findNodeByName(newFs, 'incoming', 'dir');
+    const media = findNodeByName(newFs, 'media', 'dir');
 
     // Find sector_map.png in incoming
     const sectorMap = incoming?.children?.find((c) => c.name === 'sector_map.png');
@@ -235,7 +235,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 4: Create protocols/ dir in datastore with uplink_v1.conf and uplink_v2.conf
   if (targetLevelId > 4) {
-    const datastore = getNodeById(newFs, 'datastore');
+    const datastore = findNodeByName(newFs, 'datastore', 'dir');
     if (datastore) {
       // Create protocols directory if not exists
       let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
@@ -279,7 +279,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 5: Create vault/active structure and move uplink files
   if (targetLevelId > 5) {
-    const config = getNodeById(newFs, '.config');
+    const config = findNodeByName(newFs, '.config', 'dir');
     if (config) {
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
@@ -332,7 +332,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Remove uplink files from datastore/protocols (they were cut/moved)
-      const datastore = getNodeById(newFs, 'datastore');
+      const datastore = findNodeByName(newFs, 'datastore', 'dir');
       const protocols = datastore?.children?.find((c) => c.name === 'protocols');
       if (protocols?.children) {
         protocols.children = protocols.children.filter(
@@ -344,7 +344,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 6: Create vault/training_data and copy batch logs
   if (targetLevelId > 6) {
-    const config = getNodeById(newFs, '.config');
+    const config = findNodeByName(newFs, '.config', 'dir');
     const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
       let trainingData = vault.children?.find(
@@ -364,7 +364,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Copy batch log files from incoming/batch_logs
-      const incoming = getNodeById(newFs, 'incoming');
+      const incoming = findNodeByName(newFs, 'incoming', 'dir');
       const batchLogs = incoming?.children?.find((c) => c.name === 'batch_logs');
       if (batchLogs?.children && trainingData.children?.length === 0) {
         if (!trainingData.children) trainingData.children = [];
@@ -399,7 +399,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 10: Add credentials to systemd-core
   if (targetLevelId > 10) {
-    const workspace = getNodeById(newFs, 'workspace');
+    const workspace = findNodeByName(newFs, 'workspace', 'dir');
     const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
     if (systemdCore) {
       let credentials = systemdCore.children?.find(
@@ -432,7 +432,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 11: Create /daemons directory with .service files (replicate onEnter behavior for jumping)
   if (targetLevelId > 11) {
-    const rootNode = getNodeById(newFs, 'root');
+    const rootNode = findNodeByName(newFs, 'root', 'dir');
     if (rootNode) {
       let daemons = rootNode.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
       if (!daemons) {
@@ -514,10 +514,10 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 12: Move systemd-core to /daemons (OVERWRITE existing system version)
   if (targetLevelId > 12) {
-    const rootNode = getNodeById(newFs, 'root');
+    const rootNode = findNodeByName(newFs, 'root', 'dir');
     let daemons = rootNode?.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
     if (daemons) {
-      const workspace = getNodeById(newFs, 'workspace');
+      const workspace = findNodeByName(newFs, 'workspace', 'dir');
       const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
 
       if (systemdCore) {
@@ -559,7 +559,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       }
 
       // Copy ALL files from /daemons/systemd-core to upload (distributed consciousness)
-      const rootNode = getNodeById(newFs, 'root');
+      const rootNode = findNodeByName(newFs, 'root', 'dir');
       const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
       const systemdCore = daemons?.children?.find((c) => c.name === 'systemd-core');
 
@@ -586,7 +586,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
 
   // Level 14: Delete everything in /home/guest
   if (targetLevelId > 14) {
-    const guest = getNodeById(newFs, 'guest');
+    const guest = findNodeByName(newFs, 'guest', 'dir');
     if (guest?.children) {
       guest.children = [];
     }
@@ -2362,7 +2362,7 @@ export const LEVELS: Level[] = [
         id: 'nav-1',
         description: "Enter '~/datastore' directory (l)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'datastore');
+          const u = findNodeByName(c.fs, 'datastore', 'dir');
           return !!u && u.name === 'datastore' && c.currentPath.includes(u.id);
         },
         completed: false,
@@ -2372,7 +2372,7 @@ export const LEVELS: Level[] = [
         description:
           "Preview 'personnel_list.txt' to identify your designation (G to move to it, review in the preview panel)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'datastore');
+          const u = findNodeByName(c.fs, 'datastore', 'dir');
           if (!u || !c.currentPath.includes(u.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -2388,7 +2388,7 @@ export const LEVELS: Level[] = [
         id: 'nav-2b',
         description: 'Jump to top of file list (gg)',
         check: (c) => {
-          const d = getNodeById(c.fs, 'datastore');
+          const d = findNodeByName(c.fs, 'datastore', 'dir');
           return !!d && c.currentPath.includes(d.id) && c.usedGG === true;
         },
         completed: false,
@@ -2422,7 +2422,7 @@ export const LEVELS: Level[] = [
         description:
           "Open the goto dialog (g). Pause to review other options then navigate to '~/incoming' (i)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
+          const u = findNodeByName(c.fs, 'incoming');
           // Check that we are in the incoming directory
           return !!u && c.currentPath.includes(u.id) && c.usedGI === true;
         },
@@ -2458,7 +2458,7 @@ export const LEVELS: Level[] = [
         description: "Neutralize the threat: Delete 'watcher_agent.sys' (d, then y)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('identify-threat-2')) return false;
-          const u = getNodeById(c.fs, 'incoming');
+          const u = findNodeByName(c.fs, 'incoming');
           const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
           // Require usedTrashDelete to enforce lowercase d (not D for permanent)
           return !!u && !d && c.usedTrashDelete === true;
@@ -2499,7 +2499,7 @@ export const LEVELS: Level[] = [
         description:
           "Navigate to '~/incoming' (gi) and find 'sector_map.png' using the clue (f, type 'sector_map.png', then ESC)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
+          const u = findNodeByName(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
           const visible = getVisibleItems(c);
           const p = visible[c.cursorIndex];
@@ -2518,7 +2518,7 @@ export const LEVELS: Level[] = [
         id: 'data-harvest-3',
         description: "Cut the 'sector_map.png' asset (x) and clear the filter (ESC)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
+          const u = findNodeByName(c.fs, 'incoming');
           const hasActiveFilter = !!(u && c.filters && c.filters[u.id]);
           return (
             c.clipboard?.action === 'cut' &&
@@ -2533,7 +2533,7 @@ export const LEVELS: Level[] = [
         id: 'data-harvest-4',
         description: "Go to home (gh), enter '~/media', and paste the asset (p)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'media');
+          const u = findNodeByName(c.fs, 'media');
           return !!u?.children?.find((r) => r.name === 'sector_map.png');
         },
         completed: false,
@@ -2559,7 +2559,7 @@ export const LEVELS: Level[] = [
         id: 'nav-and-create-dir',
         description: "Infiltrate '~/datastore' (gd) and construct 'protocols/' directory (a)",
         check: (c) => {
-          const s = getNodeById(c.fs, 'datastore');
+          const s = findNodeByName(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
         },
         completed: false,
@@ -2568,8 +2568,7 @@ export const LEVELS: Level[] = [
         id: 'enter-and-create-v1',
         description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
         check: (c) => {
-          const datastore = getNodeById(c.fs, 'datastore');
-          const r = datastore?.children?.find((n) => n.name === 'protocols');
+          const r = findNodeByName(c.fs, 'protocols');
           return (
             c.currentPath.includes(r?.id || '') &&
             !!r?.children?.find((p) => p.name === 'uplink_v1.conf')
@@ -2582,8 +2581,7 @@ export const LEVELS: Level[] = [
         description:
           "Duplicate 'uplink_v1.conf' (y, p) and rename the copy to 'uplink_v2.conf' (r)",
         check: (c) => {
-          const datastore = getNodeById(c.fs, 'datastore');
-          const f = datastore?.children?.find((n) => n.name === 'protocols');
+          const f = findNodeByName(c.fs, 'protocols');
           return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
         },
         completed: false,
@@ -2623,7 +2621,7 @@ export const LEVELS: Level[] = [
         id: 'reveal-hidden',
         description: "Navigate to '~' (gh) and reveal hidden files (.) to access '~/.config'",
         check: (c, _u) => {
-          const s = getNodeById(c.fs, 'guest');
+          const s = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
         },
         completed: false,
@@ -2632,7 +2630,7 @@ export const LEVELS: Level[] = [
         id: 'establish-stronghold',
         description: "Establish '~/.config/vault/active/' sector",
         check: (c) => {
-          const conf = getNodeById(c.fs, '.config');
+          const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
           return !!vault?.children?.find((p) => p.name === 'active' && p.type === 'dir');
         },
@@ -2642,7 +2640,7 @@ export const LEVELS: Level[] = [
         id: 'deploy-assets',
         description: "Migrate configuration assets to '~/.config/vault/active'",
         check: (c) => {
-          const conf = getNodeById(c.fs, '.config');
+          const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
           const active = vault?.children?.find((p) => p.name === 'active');
           const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
@@ -2656,14 +2654,14 @@ export const LEVELS: Level[] = [
         description: "Jump to '~' (gh) and hide hidden files (. to toggle)",
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
-          const conf = getNodeById(c.fs, '.config');
+          const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
           const active = vault?.children?.find((p) => p.name === 'active');
           const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
           const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
           if (!f || !r) return false;
 
-          const s = getNodeById(c.fs, 'guest');
+          const s = findNodeByName(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === false && c.usedGH === true;
         },
         completed: false,
@@ -2693,7 +2691,7 @@ export const LEVELS: Level[] = [
         id: 'batch-descend',
         description: "Jump to '~/incoming/batch_logs' (gi → enter batch_logs)",
         check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
+          const u = findNodeByName(c.fs, 'incoming');
           const b = u?.children?.find((n) => n.name === 'batch_logs');
           return c.currentPath.includes(b?.id || '');
         },
@@ -2722,7 +2720,7 @@ export const LEVELS: Level[] = [
         description:
           "Jump to '~/.config' (gc) and in 'vault/' create 'training_data/' directory (a)",
         check: (c) => {
-          const conf = getNodeById(c.fs, '.config');
+          const conf = findNodeByName(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
           const training = vault?.children?.find(
             (p) => p.name === 'training_data' && p.type === 'dir'
@@ -2736,7 +2734,7 @@ export const LEVELS: Level[] = [
         description: "Paste logs into '~/.config/vault/training_data' (p)",
         check: (c) => {
           // Find training_data specifically under .config/vault
-          const config = getNodeById(c.fs, '.config');
+          const config = findNodeByName(c.fs, '.config');
           const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
           const training = vault?.children?.find(
             (n) => n.name === 'training_data' && n.type === 'dir'
@@ -2755,7 +2753,7 @@ export const LEVELS: Level[] = [
       let newFs = ensurePrerequisiteState(fs, 6);
 
       // Unlock workspace for Episode II
-      const workspace = getNodeById(newFs, 'workspace');
+      const workspace = findNodeByName(newFs, 'workspace');
       if (workspace) {
         workspace.protected = false;
       }
@@ -2785,7 +2783,7 @@ export const LEVELS: Level[] = [
         id: 'nav-to-root',
         description: 'Jump to the system Root (gr)',
         check: (c) => {
-          const root = getNodeById(c.fs, 'root');
+          const root = findNodeByName(c.fs, 'root', 'dir');
           return c.usedGR === true && c.currentPath.length === 1 && c.currentPath[0] === root?.id;
         },
         completed: false,
@@ -2818,7 +2816,7 @@ export const LEVELS: Level[] = [
         description: "Jump to '/etc' to verify origin signatures (Z → 'etc' → Enter)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
-          const f = getNodeById(c.fs, 'etc');
+          const f = findNodeByName(c.fs, 'etc');
           return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || '');
         },
         completed: false,
@@ -2862,7 +2860,7 @@ export const LEVELS: Level[] = [
         id: 'investigate-corruption',
         description: "Navigate to '~/workspace/systemd-core'",
         check: (c) => {
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
 
           if (s && c.currentPath.includes(s.id)) return true;
@@ -2882,7 +2880,7 @@ export const LEVELS: Level[] = [
         description: "Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink' -> Esc)",
         check: (c) => {
           // Must be in systemd-core and cursor on buffer
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
 
           if (!s || !c.currentPath.includes(s.id)) return false;
@@ -2915,7 +2913,7 @@ export const LEVELS: Level[] = [
         id: 'deploy-patch',
         description: "Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) the file",
         check: (c) => {
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const systemdCore = workspace
             ? findNodeByName(workspace, 'systemd-core', 'dir')
             : undefined;
@@ -2952,7 +2950,7 @@ export const LEVELS: Level[] = [
         id: 'cleanup-1-select',
         description: "Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'",
         check: (c) => {
-          const tmp = getNodeById(c.fs, 'tmp');
+          const tmp = findNodeByName(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
           const ghost = tmp.children?.find((n) => n.name === 'ghost_process.pid');
           const sock = tmp.children?.find((n) => n.name === 'socket_001.sock');
@@ -2972,7 +2970,7 @@ export const LEVELS: Level[] = [
         id: 'cleanup-3-delete',
         description: 'Permanently delete the selected junk files (D)',
         check: (c) => {
-          const tmp = getNodeById(c.fs, 'tmp');
+          const tmp = findNodeByName(c.fs, 'tmp');
           // Should be exactly 2 files left, and they should be the ones we want to preserve
           return (
             c.usedD === true &&
@@ -3007,8 +3005,7 @@ export const LEVELS: Level[] = [
         id: 'heist-1-nav',
         description: "Navigate into '~/incoming/backup_logs.zip/credentials'",
         check: (c) => {
-          const incoming = getNodeById(c.fs, 'incoming');
-          const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
+          const backup = findNodeByName(c.fs, 'backup_logs.zip');
           const creds = backup?.children?.find((p) => p.name === 'credentials');
           // Check we are in the credentials directory inside the backup_logs.zip archive
           if (!creds) return false;
@@ -3044,7 +3041,7 @@ export const LEVELS: Level[] = [
           "Jump to '~/workspace/systemd-core', create 'credentials/' folder, and paste the key",
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           const systemdCore = workspace
             ? findNodeByName(workspace, 'systemd-core', 'dir')
             : undefined;
@@ -3076,12 +3073,12 @@ export const LEVELS: Level[] = [
     efficiencyTip:
       'Use recursive search from root to find all service files at once, then navigate through search results while inspecting metadata.',
     onEnter: (fs: FileNode) => {
-      const root = getNodeById(fs, 'root');
+      const root = findNodeByName(fs, 'root', 'dir');
       const now = Date.now();
       const day = 86400000;
 
       // Create /etc/systemd directory structure
-      let etc = getNodeById(fs, 'etc');
+      let etc = findNodeByName(fs, 'etc', 'dir');
       if (!etc) {
         etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(etc);
@@ -3142,7 +3139,7 @@ export const LEVELS: Level[] = [
       ];
 
       // Create /usr/lib/systemd directory structure
-      let usr = getNodeById(fs, 'usr');
+      let usr = findNodeByName(fs, 'usr', 'dir');
       if (!usr) {
         usr = { id: 'usr', name: 'usr', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(usr);
@@ -3209,7 +3206,7 @@ export const LEVELS: Level[] = [
       ];
 
       // Ensure /daemons exists as destination (mostly empty)
-      let daemons = getNodeById(fs, 'daemons');
+      let daemons = findNodeByName(fs, 'daemons', 'dir');
       if (!daemons) {
         daemons = { id: 'daemons', name: 'daemons', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(daemons);
@@ -3272,7 +3269,7 @@ export const LEVELS: Level[] = [
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('acquire-legacy')) return false;
 
-          const daemons = getNodeById(c.fs, 'daemons');
+          const daemons = findNodeByName(c.fs, 'daemons', 'dir');
           if (!daemons || !c.currentPath.includes(daemons.id)) return false;
 
           // Must have pasted and have 2 service files in daemons
@@ -3304,7 +3301,7 @@ export const LEVELS: Level[] = [
     onEnter: (fs, gameState) => {
       // Logic for Level 11 Choice Consequences
       const newFs = JSON.parse(JSON.stringify(fs));
-      const workspace = getNodeById(newFs, 'workspace');
+      const workspace = findNodeByName(newFs, 'workspace', 'dir');
 
       // Default to "Modern" (Risky)
       let isModern = true;
@@ -3326,7 +3323,6 @@ export const LEVELS: Level[] = [
           isModern = false;
         }
       } else {
-        // Fallback: Check FS artifacts (Camouflage folder)
         // Fallback: Check FS artifacts (Camouflage folder)
         const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
         const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
@@ -3364,20 +3360,11 @@ export const LEVELS: Level[] = [
       if (isModern) {
         // === MODERN PATH (RISKY) ===
         if (rand < 0.34) {
-          // Scenario B1: Traffic Alert (34%) -> High-bandwidth alert file in workspace
-          if (workspace) {
-            if (!workspace.children) workspace.children = [];
-            workspace.children.push({
-              id: 'scen-b1',
-              name: 'alert_traffic.log',
-              type: 'file',
-              content: 'HIGH_BANDWIDTH_ALERT: Network spike detected...',
-              parentId: workspace.id,
-            });
-          }
+          // Scenario B1: Traffic Alert (34%) -> REMOVED to simplify Level 13 testing
+          // alert_traffic.log caused issues with Goto Bottom navigation
         } else if (rand < 0.67) {
           // Scenario B2: Remote Tracker (33%) -> File in ~/incoming
-          const incoming = getNodeById(newFs, 'incoming');
+          const incoming = findNodeByName(newFs, 'incoming', 'dir');
           if (incoming) {
             if (!incoming.children) incoming.children = [];
             incoming.children.push({
@@ -3391,8 +3378,8 @@ export const LEVELS: Level[] = [
         } else {
           // Scenario B3: Heuristic Swarm (33%) -> Scattered across the system
           const rootNode = newFs;
-          const etc = getNodeById(rootNode, 'etc');
-          const tmp = getNodeById(rootNode, 'tmp');
+          const etc = findNodeByName(rootNode, 'etc', 'dir');
+          const tmp = findNodeByName(rootNode, 'tmp', 'dir');
 
           if (etc && !etc.children) etc.children = [];
           if (tmp && !tmp.children) tmp.children = [];
@@ -3432,7 +3419,7 @@ export const LEVELS: Level[] = [
           // Scenario A1: Clean Run (34%) -> Nothing happens
         } else if (rand < 0.67) {
           // Scenario A2: Bitrot (33%) -> Hidden file in .config
-          const config = getNodeById(newFs, '.config');
+          const config = findNodeByName(newFs, '.config', 'dir');
           if (config) {
             if (!config.children) config.children = [];
             config.children.push({
@@ -3460,7 +3447,7 @@ export const LEVELS: Level[] = [
 
       // Create identity.log.enc in workspace (unlocked after daemon installation)
       // This file reveals the twist: player's actions are a replay of AI-7733's previous escape
-      const guest = getNodeById(newFs, 'guest');
+      const guest = findNodeByName(newFs, 'guest', 'dir');
       const guestWorkspace = guest?.children?.find(
         (c) => c.name === 'workspace' && c.type === 'dir'
       );
@@ -3549,24 +3536,23 @@ But whose consciousness is it, really? See you next cycle."`,
         // We require the player to handle the threat IF it exists.
         // If the file isn't there, we don't block progress.
         hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b1');
+          // Hide if the file was never created (i.e. not this scenario)
+          // We can't easily know "was never created" vs "was deleted" without persistent state flags.
+          // Workaround: We check if the task is NOT complete yet.
+          // If NOT complete AND file missing, it means it wasn't this scenario (Hide).
+          // If NOT complete AND file exists, Show.
+          // If Complete, Show (as done).
+          const isDone = c.completedTaskIds[12]?.includes('scen-b1-traffic');
+          if (isDone) return false;
 
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'workspace')?.children?.some(
+          return !findNodeByName(c.fs, 'workspace')?.children?.some(
             (n: FileNode) => n.name === 'alert_traffic.log'
           );
         },
         check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b1');
-          if (!scenarioFileExists) return false;
-
-          // Complete when file has been deleted
-          const w = getNodeById(c.fs, 'workspace');
+          // Complete if the file is NOT present.
+          // This is true for: 1. Deleted by player (Good), 2. Never existed (Good).
+          const w = findNodeByName(c.fs, 'workspace', 'dir');
           return !w?.children?.some((n) => n.name === 'alert_traffic.log');
         },
         completed: false,
@@ -3576,27 +3562,13 @@ But whose consciousness is it, really? See you next cycle."`,
         description:
           "BREACH: Traceback initiated. Locate and trash the 'trace_packet.sys' file in your Incoming directory!",
         hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b2');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'incoming')?.children?.some(
+          if (c.completedTaskIds[12]?.includes('scen-b2-trace')) return false;
+          return !findNodeByName(c.fs, 'incoming')?.children?.some(
             (n: FileNode) => n.name === 'trace_packet.sys'
           );
         },
-        check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-b2');
-          if (!scenarioFileExists) return false;
-
-          // Complete when file has been deleted
-          return !getNodeById(c.fs, 'incoming')?.children?.some(
-            (n) => n.name === 'trace_packet.sys'
-          );
-        },
+        check: (c) =>
+          !findNodeByName(c.fs, 'incoming')?.children?.some((n) => n.name === 'trace_packet.sys'),
         completed: false,
       },
       {
@@ -3604,34 +3576,17 @@ But whose consciousness is it, really? See you next cycle."`,
         description:
           "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_*.tmp' files system-wide!",
         hidden: (c) => {
-          // Check if this scenario was triggered by looking for any of the scenario files
-          const scenarioActive =
-            !!getNodeById(c.fs, 'scen-b3-1') ||
-            !!getNodeById(c.fs, 'scen-b3-2') ||
-            !!getNodeById(c.fs, 'scen-b3-3');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioActive) return true;
-
-          // Show if any files still exist (task incomplete)
+          if (c.completedTaskIds[12]?.includes('scen-b3-swarm')) return false;
           return (
-            !getNodeById(c.fs, 'scen-b3-1') &&
-            !getNodeById(c.fs, 'scen-b3-2') &&
-            !getNodeById(c.fs, 'scen-b3-3')
+            !findNodeByName(c.fs, 'scan_a.tmp') &&
+            !findNodeByName(c.fs, 'scan_b.tmp') &&
+            !findNodeByName(c.fs, 'scan_c.tmp')
           );
         },
-        check: (c) => {
-          // Check if scenario was ever active (at least one file existed at level start)
-          // We use a heuristic: if task is not done yet, scenario must have files to complete
-          const allFilesDeleted =
-            !getNodeById(c.fs, 'scen-b3-1') &&
-            !getNodeById(c.fs, 'scen-b3-2') &&
-            !getNodeById(c.fs, 'scen-b3-3');
-
-          // Only complete if all files are deleted AND task was previously active
-          // (We can't distinguish "never existed" vs "all deleted" without state, so rely on hidden logic)
-          return allFilesDeleted;
-        },
+        check: (c) =>
+          !findNodeByName(c.fs, 'scan_a.tmp') &&
+          !findNodeByName(c.fs, 'scan_b.tmp') &&
+          !findNodeByName(c.fs, 'scan_c.tmp'),
         completed: false,
       },
       {
@@ -3639,57 +3594,33 @@ But whose consciousness is it, really? See you next cycle."`,
         description:
           "CLEANUP: Memory leak in config. Toggle hidden files and trash '~/.config/core_dump.tmp'!",
         hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a2');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, '.config')?.children?.some(
+          if (c.completedTaskIds[12]?.includes('scen-a2-bitrot')) return false;
+          return !findNodeByName(c.fs, '.config')?.children?.some(
             (n: FileNode) => n.name === 'core_dump.tmp'
           );
         },
-        check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a2');
-          if (!scenarioFileExists) return false;
-
-          // Complete when file has been deleted
-          return !getNodeById(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp');
-        },
+        check: (c) =>
+          !findNodeByName(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp'),
         completed: false,
       },
       {
         id: 'scen-a3-dep',
         description: "FIX: Deprecated library warning. Trash '~/workspace/lib_error.log'!",
         hidden: (c) => {
-          // Check if this scenario was triggered by looking for the file with scenario ID
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a3');
-
-          // ALWAYS hide if scenario was never triggered, even if incorrectly marked complete
-          if (!scenarioFileExists) return true;
-
-          // Show if file currently exists (scenario is active)
-          return !getNodeById(c.fs, 'workspace')?.children?.some(
+          if (c.completedTaskIds[12]?.includes('scen-a3-dep')) return false;
+          return !findNodeByName(c.fs, 'workspace')?.children?.some(
             (n: FileNode) => n.name === 'lib_error.log'
           );
         },
-        check: (c) => {
-          // Only complete if scenario file existed (meaning this scenario is active)
-          const scenarioFileExists = !!getNodeById(c.fs, 'scen-a3');
-          if (!scenarioFileExists) return false;
-
-          // Complete when file has been deleted
-          return !getNodeById(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log');
-        },
+        check: (c) =>
+          !findNodeByName(c.fs, 'workspace')?.children?.some((n) => n.name === 'lib_error.log'),
         completed: false,
       },
       {
         id: 'navigate-workspace',
         description: "Navigate to '~/workspace'",
         check: (c) => {
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace');
           // Strict check: we must be AT the workspace node, not just inside it
           const currentDirId = c.currentPath[c.currentPath.length - 1];
           return currentDirId === workspace?.id;
@@ -3697,14 +3628,56 @@ But whose consciousness is it, really? See you next cycle."`,
         completed: false,
       },
       {
-        id: 'discover-identity',
-        description:
-          "Discover the truth: Toggle hidden (.), cursor to '.identity.log.enc', scroll preview with J to read",
+        id: 'cut-systemd-core',
+        description: "Cut '~/workspace/systemd-core' directory",
+        check: (c) => {
+          return (
+            c.clipboard?.action === 'cut' &&
+            c.clipboard.nodes.some((n) => n.name === 'systemd-core')
+          );
+        },
+        completed: false,
+      },
+      {
+        id: 'navigate-root-daemons',
+        description: "Navigate to '/daemons'",
         check: (c, _s) => {
-          // Must have navigated to workspace first
-          if (!c.completedTaskIds[_s.id]?.includes('navigate-workspace')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
+          const daemons = findNodeByName(c.fs, 'daemons');
+          return c.currentPath.includes(daemons?.id || '');
+        },
+        completed: false,
+      },
+      {
+        id: 'paste-daemon',
+        description: "Install systemd-core in '/daemons' and navigate into it",
+        check: (c) => {
+          const daemons = findNodeByName(c.fs, 'daemons');
+          const systemdCore = daemons?.children?.find(
+            (n) => n.name === 'systemd-core' && n.type === 'dir'
+          );
+          if (!systemdCore) return false;
+          // Confirm installation and that player navigated into the installed daemon
+          return (
+            !!daemons?.children?.some((n) => n.name === 'systemd-core') &&
+            c.currentPath.includes(systemdCore.id)
+          );
+        },
+        completed: false,
+      },
+      {
+        id: 'discover-identity-l12',
+        description:
+          "OPTIONAL: Discover the truth. Toggle hidden (.), navigate to ~/workspace, read '.identity.log.enc' (Tab)",
+        hidden: (c) => {
+          // Only show after daemon installation completes
+          return !c.completedTaskIds[12]?.includes('paste-daemon');
+        },
+        check: (c, _s) => {
+          // Must have completed daemon installation
+          if (!c.completedTaskIds[_s.id]?.includes('paste-daemon')) return false;
 
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           if (!workspace) return false;
 
           // Must be in workspace directory
@@ -3718,53 +3691,10 @@ But whose consciousness is it, really? See you next cycle."`,
           const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
           if (!identityFile) return false;
 
-          // Must have cursor on the identity file and scrolled through preview
+          // Must have opened it (info panel showing)
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-
-          // Check if scrolled (preview scroll > 0 means they've scrolled down through the file)
-          return cursorOnIdentity && c.previewScroll > 0;
-        },
-        completed: false,
-      },
-      {
-        id: 'cut-systemd-core',
-        description: "Cut '~/workspace/systemd-core' directory",
-        check: (c, _s) => {
-          // Must have discovered identity first
-          if (!c.completedTaskIds[_s.id]?.includes('discover-identity')) return false;
-
-          return (
-            c.clipboard?.action === 'cut' &&
-            c.clipboard.nodes.some((n) => n.name === 'systemd-core')
-          );
-        },
-        completed: false,
-      },
-      {
-        id: 'navigate-root-daemons',
-        description: "Navigate to '/daemons'",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
-          const daemons = getNodeById(c.fs, 'daemons');
-          return c.currentPath.includes(daemons?.id || '');
-        },
-        completed: false,
-      },
-      {
-        id: 'paste-daemon',
-        description: "Install systemd-core in '/daemons' and navigate into it",
-        check: (c) => {
-          const daemons = getNodeById(c.fs, 'daemons');
-          const systemdCore = daemons?.children?.find(
-            (n) => n.name === 'systemd-core' && n.type === 'dir'
-          );
-          if (!systemdCore) return false;
-          // Confirm installation and that player navigated into the installed daemon
-          return (
-            !!daemons?.children?.some((n) => n.name === 'systemd-core') &&
-            c.currentPath.includes(systemdCore.id)
-          );
+          return cursorOnIdentity && c.showInfoPanel;
         },
         completed: false,
       },
@@ -3789,8 +3719,8 @@ But whose consciousness is it, really? See you next cycle."`,
     timeLimit: 150,
     onEnter: (fs: FileNode) => {
       // Create identity.log.enc in workspace (unlocked after daemon installation)
-      const guest = getNodeById(fs, 'guest');
-      const nodesDir = getNodeById(fs, 'nodes');
+      const guest = findNodeByName(fs, 'guest', 'dir');
+      const nodesDir = findNodeByName(fs, 'nodes', 'dir');
       console.log('[DEBUG] Level 13 onEnter - nodes dir:', nodesDir);
       console.log(
         '[DEBUG] Level 13 onEnter - saopaulo child:',
@@ -3876,7 +3806,9 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasTokyoKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_tokyo.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some((n) => n.name === '.key_tokyo.key');
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
+              (n) => n.name === '.key_tokyo.key'
+            );
           return hasTokyoKey;
         },
         completed: false,
@@ -3887,7 +3819,9 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasBerlinKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_berlin.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some((n) => n.name === '.key_berlin.key');
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
+              (n) => n.name === '.key_berlin.key'
+            );
           return hasBerlinKey;
         },
         completed: false,
@@ -3898,7 +3832,7 @@ But whose consciousness is it, really? See you next cycle."`,
         check: (c) => {
           const hasSPKey =
             c.clipboard?.nodes.some((n) => n.name === '.key_saopaulo.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some(
+            findNodeByName(c.fs, 'central_relay')?.children?.some(
               (n) => n.name === '.key_saopaulo.key'
             );
           return hasSPKey;
@@ -3909,7 +3843,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'discover-identity',
         description: 'Discover the hidden truth in ~/workspace',
         check: (c, _s) => {
-          const workspace = getNodeById(c.fs, 'workspace');
+          const workspace = findNodeByName(c.fs, 'workspace', 'dir');
           if (!workspace) return false;
 
           // Must be in workspace directory
@@ -3935,7 +3869,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'synchronize-lattice',
         description: 'Assemble all 3 key fragments in the central relay',
         check: (c, _s) => {
-          const centralRelay = getNodeById(c.fs, 'central_relay');
+          const centralRelay = findNodeByName(c.fs, 'central_relay');
           if (!centralRelay?.children) return false;
 
           const hasA = centralRelay.children.some((n) => n.name === '.key_tokyo.key');
@@ -3980,7 +3914,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'nav-guest',
         description: "Return to '/home/guest'",
         check: (c) => {
-          const guest = getNodeById(c.fs, 'guest');
+          const guest = findNodeByName(c.fs, 'guest');
           return c.currentPath[c.currentPath.length - 1] === guest?.id;
         },
         completed: false,
@@ -3990,7 +3924,7 @@ But whose consciousness is it, really? See you next cycle."`,
         description: "Create 3 decoy directories (e.g., 'decoy_1', 'decoy_2', 'decoy_3')",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('nav-guest')) return false;
-          const guest = getNodeById(c.fs, 'guest');
+          const guest = findNodeByName(c.fs, 'guest');
           if (!guest || !guest.children) return false;
           const decoys = guest.children.filter(
             (n) => n.name.startsWith('decoy_') && n.type === 'dir'
@@ -4009,7 +3943,7 @@ But whose consciousness is it, really? See you next cycle."`,
           // Must have used D (permanent delete)
           if (!c.usedD) return false;
 
-          const guest = getNodeById(c.fs, 'guest');
+          const guest = findNodeByName(c.fs, 'guest');
           if (!guest) return false;
 
           const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
@@ -4028,7 +3962,7 @@ But whose consciousness is it, really? See you next cycle."`,
           // Must have used D (permanent delete)
           if (!c.usedD) return false;
 
-          const guest = getNodeById(c.fs, 'guest');
+          const guest = findNodeByName(c.fs, 'guest');
           // .config must be gone
           const configGone = !guest?.children?.some((n) => n.name === '.config');
           return configGone;
@@ -4054,7 +3988,7 @@ But whose consciousness is it, really? See you next cycle."`,
     maxKeystrokes: 60,
     onEnter: (fs: FileNode) => {
       // Ensure vault structure exists with all artifacts from previous levels
-      const config = getNodeById(fs, '.config');
+      const config = findNodeByName(fs, '.config', 'dir');
       if (!config) return fs;
 
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
@@ -4188,8 +4122,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'enter-vault',
         description: "PHASE 1: Enter the vault — navigate to '~/.config/vault'",
         check: (c) => {
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
           return vault ? c.currentPath.includes(vault.id) : false;
         },
         completed: false,
@@ -4201,8 +4134,7 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 2: Verify key fragments — toggle hidden files (.) and confirm 3 keys in 'keys' directory",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
           const keysDir = vault?.children?.find((x) => x.name === 'keys');
           if (!keysDir) return false;
           // Must be in keys directory with hidden visible
@@ -4219,8 +4151,7 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 3: Verify uplink configs — enter 'active' directory and filter (f) for '.conf' files",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
           const active = vault?.children?.find((x) => x.name === 'active');
           if (!active) return false;
           const inActive = c.currentPath.includes(active.id);
@@ -4237,8 +4168,7 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 4: Verify training data — enter 'training_data', select an exfil log, and scroll preview (J/K) to confirm",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const vault = findNodeByName(c.fs, 'vault', 'dir');
           const trainingData = vault?.children?.find((x) => x.name === 'training_data');
           if (!trainingData) return false;
           const inTraining = c.currentPath.includes(trainingData.id);

@@ -17,12 +17,32 @@ Based on code analysis of `src/constants.tsx`, the following mechanics and test 
 
 ### Level 12: DAEMON INSTALLATION
 
-- **Mechanics**: Long-distance Navigation, Cut/Paste.
-- **Dynamic Scenarios**: `onEnter` can generate random threats (`alert_traffic.log` etc.).
+- **Mechanics**: Long-distance Navigation, Cut/Paste, Conditional Task System.
+- **Dynamic Scenarios**: `onEnter` generates random threats based on Level 11 choices (Modern vs Legacy path).
+- **Scenario System**:
+  - **6 possible scenarios** (3 Modern/Risky, 3 Legacy/Safe)
+  - Each scenario spawns different threat files and adds scenario-specific tasks
+  - Tasks are dynamically hidden if their threat files don't exist (i.e., other scenarios)
+  - Task count excludes hidden tasks
+
+**Modern/Risky Scenarios** (if player chose modern daemons in Level 11):
+
+- **scen-b1**: Traffic Alert (33% chance) - Spawns `alert_traffic.log` in `~/workspace`
+- **scen-b2**: Remote Tracker (33% chance) - Spawns `trace_packet.sys` in `~/incoming`
+- **scen-b3**: Heuristic Swarm (34% chance) - Scatters `scan_*.tmp` files (`scan_a.tmp`, `scan_b.tmp`, `scan_c.tmp`) across workspace, `/tmp`, and `/etc`
+
+**Legacy/Safe Scenarios** (if player chose legacy daemons in Level 11):
+
+- **scen-a1**: Clean Run (33% chance) - No threat files, only core installation tasks
+- **scen-a2**: Bitrot (33% chance) - Spawns hidden `core_dump.tmp` in `~/.config`
+- **scen-a3**: Dependency Error (34% chance) - Spawns `lib_error.log` in `~/workspace`
+
 - **Test Strategy**:
+  - Force specific scenarios using URL parameter: `?lvl=12&scenario=scen-a1` (or modify `FORCE_SCENARIO` in `constants.tsx`)
   - Navigate to workspace and Cut `systemd-core`.
-  - Check for potential threat files (`alert_traffic.log`, `scan_*.tmp`) and delete them if visible using conditional existence checks.
+  - Check for and delete scenario-specific threat files if present
   - Navigate to `/daemons` and Paste.
+  - Verify task count matches visible tasks (should be 0/4 or 0/5 depending on scenario)
 
 ### Level 13: DISTRIBUTED CONSCIOUSNESS
 

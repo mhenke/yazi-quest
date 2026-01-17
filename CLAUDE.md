@@ -111,6 +111,7 @@ Key principles:
 2. **Key Input Precision:** `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase commands. Verify inputs.
 3. **Deterministic Environment:** Check `src/constants.tsx` for `Math.random` before testing. Flakiness is often hidden randomness (e.g. `alert_traffic.log`).
 4. **Visual Evidence:** If a test fails, capture a screenshot IMMEDIATELY. Do not guess the state.
-5. **Check "Lazy Expert" Bias:** Do not substitute user instructions with "better" logic. Using filters when asked for navigation is a failure of obedience, not an optimization.
+5. **Prioritize User Evidence (Anti-"Lazy Expert" Bias):** When a user claims "this works manually," the automated test MUST replicate their exact steps first. Do not optimize or "clean up" the workflow until baseline reproduction is achieved. Do not substitute user instructions with "better" logic.
 6. **Codebase Precedent:** Check existing tests for successful patterns before inventing new interaction logic.
 7. **Source vs. Symptom:** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable.
+8. **Audit Test Attributes:** Run a grep audit of all `data-testid` expectations in `tests/e2e` against the `src/components` source to proactively identify missing hooks.

@@ -914,9 +914,9 @@ export const useKeyboardHandlers = (
           e.preventDefault();
 
           // Level 14: Block trash delete - only permanent delete allowed
-          if (currentLevel.id === 14 && e.key === 'd') {
+          if ((currentLevel.id === 14 || currentLevel.id === 9) && e.key === 'd') {
             showNotification(
-              '🚫 TRASH DELETE BLOCKED! Forensic recovery is trivial. Use D (Shift+D) for permanent erasure.',
+              '🚫 TRASH DELETE BLOCKED! Trace requires permanent erasure. Use D (Shift+D).',
               4000
             );
             break;

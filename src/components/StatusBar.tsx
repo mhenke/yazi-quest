@@ -36,8 +36,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   const { bg: modeBg, text: modeText } = MODE_STYLES[modeKey] || MODE_STYLES.normal;
 
-  const completedTasks = level.tasks.filter((t) => t.completed).length;
-  const totalTasks = level.tasks.length;
+  // Filter out hidden tasks (matching PreviewPane.tsx logic)
+  const visibleTasks = level.tasks.filter((task) => !task.hidden || !task.hidden(state, level));
+  const completedTasks = visibleTasks.filter((t) => t.completed).length;
+  const totalTasks = visibleTasks.length;
 
   // Calculate items for stats (these are visible items in middle pane)
   const currentDir = getNodeByPath(state.fs, state.currentPath);

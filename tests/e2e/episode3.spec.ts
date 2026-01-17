@@ -208,9 +208,12 @@ test.describe('Episode 3: MASTERY', () => {
         await page.waitForTimeout(500);
       }
 
-      // User Instruction: "shift+g will get you to the bottom... to the identity file"
-      // IMPORTANT: pressKey('G') sends lowercase 'g'. We must use 'Shift+G' to send 'G'.
-      await pressKey(page, 'Shift+G');
+      // Harden: Use filter to select .identity.log.enc reliably
+      await pressKey(page, 'f');
+      await page.waitForTimeout(200);
+      await typeText(page, 'identity');
+      await page.waitForTimeout(200);
+      await page.keyboard.press('Enter');
       await page.waitForTimeout(500);
 
       // Scroll preview to reveal truth
@@ -218,6 +221,12 @@ test.describe('Episode 3: MASTERY', () => {
         await pressKey(page, 'Shift+J');
         await page.waitForTimeout(50);
       }
+
+      // Clear the filter to avoid Protocol Violation later
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(200);
 
       // Explicitly verify task completion for 'discover-identity' before moving on
       await expect(page.getByText('Tasks: 4/5')).toBeVisible({ timeout: 5000 });

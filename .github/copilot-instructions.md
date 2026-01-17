@@ -138,6 +138,7 @@ Key principles:
 7. **Tool Verification:** Never assume `pressKey('char')` handles modifiers. `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase. Verify low-level mechanics.
 8. **Deterministic Sandbox:** Before E2E testing, grep `src/constants.tsx` for `Math.random` or dynamic dates. Remove/mock sources of non-determinism that alter state.
 9. **Visual-First Debugging:** If a UI test fails, the IMMEDIATELY NEXT step is capturing a screenshot. Do not iterate on code without visual evidence.
-10. **Avoid "Lazy Expert" Bias:** Do not assume your preferred method is superior to the user's manual instructions. Follow user workflows exactly unless proven impossible.
+10. **Prioritize User Evidence (Anti-"Lazy Expert" Bias):** When a user claims "this works manually," the automated test MUST replicate their exact steps first. Do not optimize or "clean up" the workflow until baseline reproduction is achieved. Do not assume your preferred method is superior to the user's manual instructions.
 11. **Codebase Precedent:** Before implementing a complex interaction, grep existing tests for successful patterns. Do not reinvent methods that are already solved in the codebase.
 12. **Source vs. Symptom:** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable rather than writing complex, brittle test logic.
+13. **Audit Test Attributes:** Run a grep audit of all `data-testid` expectations in `tests/e2e` against the `src/components` source to proactively identify missing hooks.

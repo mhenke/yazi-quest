@@ -168,38 +168,46 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
   // Level 9: TRACE CLEANUP - Invert Selection (Ctrl+R)
   test('Level 9: TRACE CLEANUP - uses invert selection to clean up', async ({ page }) => {
-    await goToLevel(page, 9);
+    try {
+      await goToLevel(page, 9);
 
-    // Task 1: Navigate to '/tmp'
-    await gotoCommand(page, 't');
-    await page.keyboard.press('.'); // Toggle hidden files to ensure all junk (including hidden) is visible for deletion
+      // Task 1: Navigate to '/tmp'
+      await gotoCommand(page, 't');
+      // No hidden files in /tmp, so no need to toggle
 
-    // Task 2: Select files to KEEP
-    // ghost_process.pid
-    await pressKey(page, 'f');
-    await typeText(page, 'ghost');
-    await page.keyboard.press('Escape');
-    await pressKey(page, ' '); // Select
-    await pressKey(page, 'Escape'); // Clear filter
+      // Task 2: Select files to KEEP
+      // ghost_process.pid
+      await pressKey(page, 'f');
+      await typeText(page, 'gh');
+      await page.keyboard.press('Enter'); // Confirm filter
+      await page.waitForTimeout(100);
+      await pressKey(page, ' '); // Select
+      // User flow: No Escape here, goes straight to next filter
 
-    // socket_001.sock
-    await pressKey(page, 'f');
-    await typeText(page, 'socket');
-    await page.keyboard.press('Escape');
-    await pressKey(page, ' '); // Select
-    await pressKey(page, 'Escape'); // Clear filter
+      // socket_001.sock
+      await pressKey(page, 'f');
+      await typeText(page, 'soc');
+      await page.keyboard.press('Enter'); // Confirm filter
+      await page.waitForTimeout(100);
+      await pressKey(page, ' '); // Select
+      await pressKey(page, 'Escape'); // Clear filter (User did this one)
 
-    // Task 3: Invert selection (Ctrl+R)
-    await pressKey(page, 'Control+R');
-    await page.waitForTimeout(200);
+      // Task 3: Invert selection (Ctrl+R)
+      await pressKey(page, 'Control+R');
+      await page.waitForTimeout(200);
 
-    // Task 4: Permanently delete (Shift+D) and confirm
-    await pressKey(page, 'Shift+D');
-    await page.waitForTimeout(500);
-    await pressKey(page, 'y'); // Confirm
+      // Task 4: Permanently delete (Shift+D) and confirm
+      await pressKey(page, 'Shift+D');
+      await page.waitForTimeout(500);
+      await pressKey(page, 'y'); // Confirm
 
-    await waitForMissionComplete(page);
-    await expect(page.getByRole('alert').getByText('TRACE CLEANUP')).toBeVisible();
+      await waitForMissionComplete(page);
+      await expect(page.getByRole('alert').getByText('TRACE CLEANUP')).toBeVisible();
+    } catch (error) {
+      await page.screenshot({ path: 'level9-failure.png', fullPage: true });
+      console.log('Test failed. Screenshot saved to level9-failure.png');
+      throw error;
+    }
   });
 
   // Level 10: CREDENTIAL HEIST - Sorting (,m) and Archives

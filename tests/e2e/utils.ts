@@ -252,8 +252,8 @@ export async function isTaskCompleted(page: Page, taskIndex: number): Promise<bo
  * Wait for mission complete dialog
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
-  // Use a case-insensitive regex to be safe and wait for the alert role
-  await expect(page.getByRole('alert').getByText(/Mission Complete/i)).toBeVisible({
+  // Use the specific test id which is more robust
+  await expect(page.getByTestId('mission-complete')).toBeVisible({
     timeout: 10000,
   });
 }

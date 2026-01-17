@@ -221,11 +221,11 @@ export default function App() {
 
     // Inject Ghost File for Echo Cycle (Level 1 only)
     if (cycleCount > 1 && effectiveIndex === 0) {
-      const workspace = findNodeByName(fs, 'workspace', 'dir');
+      const workspace = getNodeById(fs, 'workspace');
       if (
         workspace &&
         workspace.children &&
-        !workspace.children.find((c) => c.name === '.previous_cycle.log')
+        !workspace.children.find((c) => c.id === 'ghost-log-01')
       ) {
         workspace.children.push({
           id: 'ghost-log-01',
@@ -502,9 +502,24 @@ export default function App() {
     }
 
     // Check if everything is complete (including just finished ones)
-    const tasksComplete = currentLevel.tasks.every(
-      (t) => t.completed || newlyCompleted.includes(t.id)
-    );
+    const projectedCompletedIds = [
+      ...(gameState.completedTaskIds[currentLevel.id] || []),
+      ...newlyCompleted,
+    ];
+
+    const tasksComplete = currentLevel.tasks.every((t) => {
+      // Create a projected state for the hidden check
+      const projectedGameState: GameState = {
+        ...gameState,
+        completedTaskIds: {
+          ...gameState.completedTaskIds,
+          [currentLevel.id]: projectedCompletedIds,
+        },
+      };
+
+      const isHidden = t.hidden && t.hidden(projectedGameState, currentLevel);
+      return t.completed || newlyCompleted.includes(t.id) || isHidden;
+    });
 
     // Check for Protocol Violations - ONLY on final task completion
     // For intermediate tasks, warnings are handled by navigation handlers (checkFilterAndBlockNavigation)
@@ -600,7 +615,11 @@ export default function App() {
 
   // --- Timer & Game Over Logic ---
   useEffect(() => {
-    const allTasksComplete = currentLevel.tasks.every((t) => t.completed);
+    // Filter out hidden tasks before checking completion (allows truly optional tasks)
+    const visibleTasks = currentLevel.tasks.filter(
+      (task) => !task.hidden || !task.hidden(gameState, currentLevel)
+    );
+    const allTasksComplete = visibleTasks.every((t) => t.completed);
     if (allTasksComplete && !gameState.showHidden) return; // Pause timer only if completely finished
 
     if (
@@ -718,33 +737,32 @@ export default function App() {
 
     // Level 12: Scenario-specific Anomaly Alerts
     if (levelId === 12) {
-      const workspace = findNodeByName(gameState.fs, 'workspace', 'dir');
-      const incoming = findNodeByName(gameState.fs, 'incoming', 'dir');
-      const config = findNodeByName(gameState.fs, '.config', 'dir');
+      const workspace = getNodeById(gameState.fs, 'workspace');
+      const incoming = getNodeById(gameState.fs, 'incoming');
+      const config = getNodeById(gameState.fs, '.config');
 
-      if (workspace && findNodeByName(workspace, 'alert_traffic.log', 'file')) {
+      if (workspace && workspace.children?.some((n) => n.name === 'alert_traffic.log')) {
         setAlertMessage(
           'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.'
         );
         setShowThreatAlert(true);
-      } else if (incoming && findNodeByName(incoming, 'trace_packet.sys', 'file')) {
+      } else if (incoming && incoming.children?.some((n) => n.id === 'scen-b2')) {
         setAlertMessage(
           'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.'
         );
         setShowThreatAlert(true);
       } else if (
         workspace &&
-        (findNodeByName(workspace, 'scan_a.tmp', 'file') ||
-          findNodeByName(workspace, 'scan_b.tmp', 'file'))
+        workspace.children?.some((n) => n.id === 'scen-b3-1' || n.id === 'scen-b3-2')
       ) {
         setAlertMessage(
           'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.'
         );
         setShowThreatAlert(true);
-      } else if (config && findNodeByName(config, 'core_dump.tmp', 'file')) {
+      } else if (config && config.children?.some((n) => n.id === 'scen-a2')) {
         setAlertMessage('WARNING: Process instability detected. Core dump written to .config.');
         setShowThreatAlert(true);
-      } else if (workspace && findNodeByName(workspace, 'lib_error.log', 'file')) {
+      } else if (workspace && workspace.children?.some((n) => n.id === 'scen-a3')) {
         setAlertMessage('WARNING: Dependency failure. Error log generated.');
         setShowThreatAlert(true);
       }
@@ -2065,7 +2083,6 @@ export default function App() {
             message={currentLevel.successMessage || 'Sector Cleared'}
             levelTitle={currentLevel.title}
             onDismiss={advanceLevel}
-            onClose={() => setShowSuccessToast(false)}
           />
         </>
       )}
@@ -2125,8 +2142,8 @@ export default function App() {
           }}
         />
 
-        <div
-          className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200"
+        <header
+          className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 breadcrumb"
           style={{
             opacity:
               gameState.mode === 'zoxide-jump' ||
@@ -2147,7 +2164,7 @@ export default function App() {
               return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
             })()}
           </div>
-        </div>
+        </header>
 
         <div className="flex flex-1 min-h-0 relative">
           {/* Search Input - centered overlay popup matching Yazi style */}
@@ -2183,7 +2200,12 @@ export default function App() {
           <FileSystemPane
             items={(() => {
               const parent = getParentNode(gameState.fs, gameState.currentPath);
-              return parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+              let items =
+                parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+              if (!gameState.showHidden) {
+                items = items.filter((c) => !c.name.startsWith('.'));
+              }
+              return items;
             })()}
             isActive={false}
             isParent={true}

@@ -56,12 +56,30 @@ To test the game state, use URL parameters:
 - `?intro=false` - Skip intro cinematics.
 - `?debug=outro` - Jump directly to end sequence.
 
-To test specific random events in Level 12 (Daemon Installation), you can force a scenario by modifying `src/constants.tsx`:
+To test specific random events in Level 12 (Daemon Installation), you can force a scenario using URL parameters or by modifying `src/constants.tsx`:
+
+**URL Parameter Method (Recommended):**
+
+- Add `?lvl=12&scenario=scen-a1` to the URL (replace `scen-a1` with desired scenario ID)
+
+**Code Modification Method:**
 
 1.  Locate `export const FORCE_SCENARIO: string | null = null;` near the top of the file.
-2.  Set it to one of the following IDs:
-    - `'scen-b1'`: Traffic Alert (Modern/Risky)
-    - `'scen-b2'`: Remote Tracker (Modern/Risky)
-    - `'scen-b3'`: Heuristic Swarm (Modern/Risky)
-    - `'scen-a1'`, `'scen-a2'`, `'scen-a3'`: Legacy variants.
+2.  Set it to one of the scenario IDs below.
 3.  Set back to `null` to restore normal behavior.
+
+**Scenario Variants:**
+
+**Modern/Risky Scenarios** (if player chose modern daemons in Level 11):
+
+- **scen-b1**: Traffic Alert (33% chance) - Spawns `alert_traffic.log` in `~/workspace`, adds "RISK: High-bandwidth alert detected..." task
+- **scen-b2**: Remote Tracker (33% chance) - Spawns `trace_packet.sys` in `~/incoming`, adds "BREACH: Traceback initiated..." task
+- **scen-b3**: Heuristic Swarm (34% chance) - Scatters `scan_a.tmp`, `scan_b.tmp`, `scan_c.tmp` across system, adds "SWARM: Heuristic scanning active..." task
+
+**Legacy/Safe Path** (player chose legacy daemons in Level 11):
+
+- **`scen-a1`**: Clean Run - No threat files spawn, no extra tasks (baseline scenario)
+- **`scen-a2`**: Bitrot - Spawns hidden `core_dump.tmp` in `~/.config`, adds "CLEANUP: Memory leak in config..." task
+- **`scen-a3`**: Dependency Error - Spawns `lib_error.log` in `~/workspace`, adds "FIX: Deprecated library warning..." task
+
+All scenarios include the 4-5 core installation tasks (navigate, cut, paste systemd-core). Scenario-specific tasks are automatically hidden if their threat files don't exist.
