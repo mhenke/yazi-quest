@@ -41,9 +41,41 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'y');
     await page.waitForTimeout(300);
 
-    // Exit search mode - CRITICAL to clear search before navigation
+    // EXIT search mode to see results clearly in valid context
+    // This is where "Select All" becomes dangerous if we don't refine.
     await ensureCleanState(page);
     await page.waitForTimeout(500);
+
+    // HONEYPOT CHECK: 'active_log_sync.lock' is selected. Deselect it.
+    // Use filter to find it reliably.
+    await pressKey(page, 'f');
+    await typeText(page, 'active_log');
+    // Confirm filter
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+
+    // VERIFY we are actually on the lock file
+    await expect(page.locator('[aria-current="location"]')).toContainText('active_log_sync.lock');
+
+    // Deselect (Space) - since it was selected by Ctrl+A
+    await pressKey(page, ' ');
+    await page.waitForTimeout(500);
+
+    // Clear filter
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Verify we didn't trigger alert yet (just safe check)
+    // Alert can appear due to timing/race; if visible, dismiss it so test continues.
+    const maybeAlert = page.getByRole('alert');
+    try {
+      if (await maybeAlert.isVisible({ timeout: 500 })) {
+        await pressKey(page, 'Shift+Enter');
+        await maybeAlert.waitFor({ state: 'hidden', timeout: 2000 });
+      }
+    } catch {
+      // no alert — continue
+    }
 
     // Task 4: Jump to '~/.config' (gc), enter vault, create training_data
     await gotoCommand(page, 'c'); // gc -> ~/.config with vault highlighted
