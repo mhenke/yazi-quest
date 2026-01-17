@@ -45,6 +45,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
+    // Ensure search state is cleared before gc
+    await ensureCleanState(page);
+
     // Now follow the exact user keystrokes: gc, a training_data/, Enter, l, p
     await pressKey(page, 'g');
     await page.waitForTimeout(50);
