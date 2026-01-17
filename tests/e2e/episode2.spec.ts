@@ -100,6 +100,15 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'p');
     await page.waitForTimeout(500);
 
+    // Dismiss any protocol alert that may appear after pasting into a protected dir
+    try {
+      const postAlert = page.getByRole('alert');
+      if (await postAlert.isVisible({ timeout: 500 })) {
+        await pressKey(page, 'Shift+Enter');
+        await postAlert.waitFor({ state: 'hidden', timeout: 2000 });
+      }
+    } catch {}
+
     await waitForMissionComplete(page);
     await expect(page.getByRole('alert').getByText('BATCH OPERATIONS')).toBeVisible();
   });
