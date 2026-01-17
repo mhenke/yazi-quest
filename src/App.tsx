@@ -607,8 +607,10 @@ export default function App() {
         }));
       }
     }
-    // Level 12: Honeypot Detection (New Audit Protocol)
-    if (currentLevel.id === 12) {
+    // Level 6 & 12: Honeypot Detection
+    // Level 6: 'active_sync.lock' in batch_logs (Teaches select all -> deselect)
+    // Level 12: Various honeypots (Teaches precise filtering)
+    if (currentLevel.id === 6 || currentLevel.id === 12) {
       const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
       const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
 

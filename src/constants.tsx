@@ -1487,6 +1487,16 @@ ADMIN: SysOp`,
                   type: 'dir',
                   protected: true,
                   children: [
+                    // HONEYPOT: active_sync.lock
+                    // Teaches: "Select All (Ctrl+A) -> Deselect (Space)"
+                    // If moved, triggers a "Process Locked" violation.
+                    {
+                      id: 'fs-000-honeypot',
+                      name: 'active_log_sync.lock',
+                      type: 'file',
+                      content: '# HONEYPOT - ACTIVE SYNC LOCK\n# Do not move while active.',
+                      protected: true,
+                    },
                     {
                       id: 'fs-bl-s1',
                       name: 'server_1',
