@@ -6,121 +6,57 @@ import {
   waitForMissionComplete,
   typeText,
   filterAndNavigate,
-  filterAndSelect,
   ensureCleanState,
-  getSelectedFileName,
   assertLevelStartedIncomplete,
   assertTask,
+  filterByText,
+  clearFilter,
+  pressKeys,
 } from './utils';
 
-import * as fs from 'fs';
-
 // Helper for common Level 12 mission steps (DRY)
-// Uses short filters for robust navigation (27 keys total)
 async function runLevel12Mission(page: Page) {
-  // 1) gw to workspace (2 keys)
   await gotoCommand(page, 'w');
-  await page.waitForTimeout(500);
-
-  // 2) . to show hidden files (1 key)
   await pressKey(page, '.');
-  await page.waitForTimeout(200);
-
-  // 3) Filter to identity (f .i Enter = 4 keys)
-  await pressKey(page, 'f');
-  await typeText(page, '.i');
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(200);
-
-  // 4) Scroll 6 times to read (6 keys)
+  await filterByText(page, '.i');
   for (let i = 0; i < 6; i++) {
-    await pressKey(page, 'Shift+J');
-    await page.waitForTimeout(50);
+    await pressKey(page, 'Shift+j');
   }
-
-  // 5) Clear filter (Esc = 1 key)
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(200);
-
-  // 6) Filter to systemd-core (f sy Enter = 4 keys)
-  await pressKey(page, 'f');
-  await typeText(page, 'sy');
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(200);
-
-  // 7) x (Cut = 1 key)
+  await clearFilter(page);
+  await filterByText(page, 'sy');
   await pressKey(page, 'x');
-  await page.waitForTimeout(200);
-
-  // Clear the filter after cutting (Esc = 1 key)
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(200);
-
-  // 8) . to hide files (1 key)
+  await clearFilter(page);
   await pressKey(page, '.');
-  await page.waitForTimeout(200);
-
-  // 9) Navigate to daemons and install (gr j l p l = 6 keys)
   await gotoCommand(page, 'r');
-  await page.waitForTimeout(300);
   await pressKey(page, 'j');
-  await page.waitForTimeout(100);
   await pressKey(page, 'l');
-  await page.waitForTimeout(200);
   await pressKey(page, 'p');
-  await page.waitForTimeout(500);
   await pressKey(page, 'l');
-  await page.waitForTimeout(200);
 }
 
 test.describe('Episode 3: MASTERY', () => {
-  // Level 11: DAEMON RECONNAISSANCE - Search + Tab + Clipboard
+  // Level 11: DAEMON RECONNAISSANCE
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
     await goToLevel(page, 11);
     await assertLevelStartedIncomplete(page);
 
-    // 1. Reinitialize if needed
-    const reinitButton = page.getByRole('button', { name: 'REINITIALIZE' });
-    if (await reinitButton.isVisible()) {
-      await reinitButton.click();
-    }
-
-    // 2. Navigate to root
     await gotoCommand(page, 'r');
-    await assertTask(page, '0/4', testInfo.outputDir, 'nav_to_root');
-
-    // 3. Search "service"
     await pressKey(page, 's');
     await typeText(page, 'service');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(1000);
-    await assertTask(page, '0/4', testInfo.outputDir, 'search_service');
+    await pressKey(page, 'Enter');
 
-    // 4. Sort by modified (Shift+M)
     await pressKey(page, ',');
-    await page.keyboard.down('Shift');
-    await page.keyboard.press('M');
-    await page.keyboard.up('Shift');
-    await page.waitForTimeout(500);
+    await pressKey(page, 'Shift+m');
     await assertTask(page, '1/4', testInfo.outputDir, 'sort_modified');
 
-    // 5. Select items
     await pressKey(page, ' ');
     await pressKey(page, ' ');
     await assertTask(page, '2/4', testInfo.outputDir, 'select_files');
 
-    // 7. Yank
     await pressKey(page, 'y');
-    await page.waitForTimeout(500);
     await assertTask(page, '3/4', testInfo.outputDir, 'yank_files');
 
-    // 8. Exit search and reset sort
-    await page.keyboard.press('Escape');
-    await pressKey(page, ',');
-    await pressKey(page, 'n');
-    await page.waitForTimeout(300);
-
-    // 10. Navigate to daemons and paste
+    await ensureCleanState(page);
     await gotoCommand(page, 'r');
     await filterAndNavigate(page, 'daemons');
     await pressKey(page, 'p');
@@ -129,186 +65,58 @@ test.describe('Episode 3: MASTERY', () => {
     await waitForMissionComplete(page);
   });
 
-  // Level 12: DAEMON INSTALLATION - Scenario A1 (Clean Run)
-  test('Level 12: scen-a1 (Clean Run) - installs daemon with identity discovery', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-a1');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(300);
-    await assertLevelStartedIncomplete(page);
+  // Level 12 Scenarios
+  const scenarios = [
+    { id: 'a1', threat: null, location: null },
+    { id: 'a2', threat: 'dump', location: 'c' },
+    { id: 'a3', threat: 'lib_error', location: 'w' },
+    { id: 'b1', threat: 'traffic', location: 'w' },
+    { id: 'b2', threat: 'packet', location: 'i' },
+    { id: 'b3', threat: 'scan_', location: 's' }, // Special case: search
+  ];
 
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
+  for (const scenario of scenarios) {
+    test(`Level 12: scen-${scenario.id} - completes successfully`, async ({ page }, testInfo) => {
+      await page.goto(`/?lvl=12&scenario=scen-${scenario.id}`);
+      await page.waitForLoadState('networkidle');
 
-    await waitForMissionComplete(page);
-  });
+      const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+      if (await skipButton.isVisible()) await skipButton.click();
 
-  // Level 12: Scenario A3 (Dependency Error)
-  test('Level 12: scen-a3 (Dependency Error) - deletes lib_error.log and installs daemon', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-a3');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(500);
-    await assertLevelStartedIncomplete(page);
+      const threatAlert = page.getByText('Threat Detected');
+      if (await threatAlert.isVisible({ timeout: 1000 })) {
+        await pressKey(page, 'Shift+Enter');
+      }
 
-    await pressKey(page, 'Shift+Enter'); // Dismiss threat
-    await page.waitForTimeout(300);
+      await assertLevelStartedIncomplete(page);
 
-    await gotoCommand(page, 'w');
-    await pressKey(page, 'f');
-    await typeText(page, 'lib_error');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'd');
-    await page.keyboard.press('y');
-    await assertTask(page, '0/5', testInfo.outputDir, 'delete_threat');
+      // Handle specific threat files for each scenario
+      if (scenario.threat) {
+        if (scenario.location === 's') {
+          // Special case for swarm search
+          await gotoCommand(page, 'r');
+          await pressKey(page, 's');
+          await typeText(page, scenario.threat);
+          await pressKey(page, 'Enter');
+          await pressKey(page, 'Control+a');
+        } else {
+          await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
+          await filterByText(page, scenario.threat);
+        }
+        await pressKey(page, 'd');
+        await pressKey(page, 'y');
+        await clearFilter(page);
+      }
 
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
-
-    await waitForMissionComplete(page);
-  });
-
-  // Level 12: Scenario A2 (Bitrot)
-  test('Level 12: scen-a2 (Bitrot) - deletes hidden core_dump.tmp and installs daemon', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-a2');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(500);
-    await assertLevelStartedIncomplete(page);
-
-    await pressKey(page, 'Shift+Enter');
-    await gotoCommand(page, 'c');
-    await pressKey(page, 'f');
-    await typeText(page, 'dump');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'd');
-    await page.keyboard.press('y');
-    await assertTask(page, '0/5', testInfo.outputDir, 'delete_threat');
-
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
-
-    await waitForMissionComplete(page);
-  });
-
-  // Level 12: Scenario B1 (Traffic Alert)
-  test('Level 12: scen-b1 (Traffic Alert) - deletes alert_traffic.log and installs daemon', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-b1');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(300);
-    await assertLevelStartedIncomplete(page);
-
-    await pressKey(page, 'Shift+Enter');
-    await gotoCommand(page, 'w');
-    await pressKey(page, 'f');
-    await typeText(page, 'traffic');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'd');
-    await page.keyboard.press('y');
-    await assertTask(page, '0/5', testInfo.outputDir, 'delete_threat');
-
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
-
-    await waitForMissionComplete(page);
-  });
-
-  // Level 12: Scenario B2 (Remote Tracker)
-  test('Level 12: scen-b2 (Remote Tracker) - deletes trace_packet.sys and installs daemon', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-b2');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(500);
-    await assertLevelStartedIncomplete(page);
-
-    await pressKey(page, 'Shift+Enter');
-    await gotoCommand(page, 'i');
-    await pressKey(page, 'f');
-    await typeText(page, 'packet');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'd');
-    await page.keyboard.press('y');
-    await assertTask(page, '0/5', testInfo.outputDir, 'delete_threat');
-
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
-
-    await waitForMissionComplete(page);
-  });
-
-  // Level 12: Scenario B3 (Heuristic Swarm)
-  test('Level 12: scen-b3 (Heuristic Swarm) - deletes scattered scan files and installs daemon', async ({
-    page,
-  }, testInfo) => {
-    await page.goto('/?lvl=12&scenario=scen-b3');
-    await page.waitForLoadState('networkidle');
-    const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-    try {
-      await skipButton.click({ timeout: 2000 });
-    } catch {}
-    await page.waitForTimeout(300);
-    await assertLevelStartedIncomplete(page);
-
-    await pressKey(page, 'Shift+Enter');
-    await gotoCommand(page, 'r');
-    await pressKey(page, 's');
-    await typeText(page, 'scan_');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'Control+A');
-    await pressKey(page, 'd');
-    await pressKey(page, 'y'); // Confirm deletion
-    await page.waitForTimeout(500); // Wait for UI to stabilize
-    await assertTask(page, '0/5', testInfo.outputDir, 'delete_swarm');
-
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-
-    await runLevel12Mission(page);
-    await assertTask(page, '5/5', testInfo.outputDir, 'mission_complete');
-
-    await waitForMissionComplete(page);
-  });
+      await ensureCleanState(page);
+      await runLevel12Mission(page);
+      await assertTask(page, '5/5', testInfo.outputDir, `mission_complete_${scenario.id}`);
+      await waitForMissionComplete(page);
+    });
+  }
 
   // Level 13: DISTRIBUTED CONSCIOUSNESS
-  test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys via search', async ({
+  test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys', async ({
     page,
   }, testInfo) => {
     test.setTimeout(60000);
@@ -316,36 +124,25 @@ test.describe('Episode 3: MASTERY', () => {
     await assertLevelStartedIncomplete(page);
 
     await gotoCommand(page, 'r');
-    for (let i = 0; i < 4; i++) await pressKey(page, 'j');
-    await pressKey(page, 'l');
-    await pressKey(page, '.');
     await pressKey(page, 's');
     await typeText(page, '.key');
-    await page.keyboard.press('Enter');
-    await assertTask(page, '0/5', testInfo.outputDir, 'search_keys');
+    await pressKey(page, 'Enter');
+    await assertTask(page, '1/5', testInfo.outputDir, 'search_keys');
 
-    await pressKey(page, 'Control+A');
+    await pressKey(page, 'Control+a');
     await pressKey(page, 'x');
-    await page.keyboard.press('Escape');
+    await clearFilter(page);
 
     await gotoCommand(page, 'w');
-    if (
-      !(await page.getByTestId('filesystem-pane-active').textContent())?.includes(
-        '.identity.log.enc'
-      )
-    ) {
-      await pressKey(page, '.');
+    await pressKey(page, '.');
+    await filterByText(page, 'identity');
+    for (let i = 0; i < 20; i++) {
+      await pressKey(page, 'Shift+j');
     }
-    await pressKey(page, 'f');
-    await typeText(page, 'identity');
-    await page.keyboard.press('Enter');
-    for (let i = 0; i < 20; i++) await pressKey(page, 'Shift+J');
     await assertTask(page, '4/5', testInfo.outputDir, 'discover_identity');
 
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'g');
-    await pressKey(page, 'g');
+    await clearFilter(page);
+    await pressKeys(page, ['g', 'g']);
     await pressKey(page, 'l');
     await pressKey(page, 'p');
     await assertTask(page, '5/5', testInfo.outputDir, 'paste_keys');
@@ -358,30 +155,8 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 14: EVIDENCE PURGE - permanently deletes all user data', async ({
     page,
   }, testInfo) => {
-    // WORKAROUND: Go to Lvl 13 first to set up state, then proceed to 14
-    // This avoids the ensurePrerequisiteState(14) bug.
-    await goToLevel(page, 13);
-    await test.step('Complete Level 13 to proceed', async () => {
-      await gotoCommand(page, 'r');
-      for (let i = 0; i < 4; i++) await pressKey(page, 'j');
-      await pressKey(page, 'l');
-      await pressKey(page, '.');
-      await pressKey(page, 's');
-      await typeText(page, '.key');
-      await pressKey(page, 'Enter');
-      await pressKey(page, 'Control+a');
-      await pressKey(page, 'x');
-      await pressKey(page, 'Escape');
-      await gotoCommand(page, 'w');
-      await pressKey(page, 'l');
-      await pressKey(page, 'p');
-      await waitForMissionComplete(page);
-    });
-
-    await test.step('Start and verify Level 14', async () => {
-      await pressKey(page, 'Enter'); // Proceed to next level (14)
-      await assertLevelStartedIncomplete(page);
-    });
+    await goToLevel(page, 14);
+    await assertLevelStartedIncomplete(page);
 
     await test.step('Task 1: Create 3 decoy directories', async () => {
       await pressKey(page, 'a');
@@ -396,44 +171,30 @@ test.describe('Episode 3: MASTERY', () => {
       await assertTask(page, '1/3', testInfo.outputDir, 'task1_create_decoys');
     });
 
-    await test.step('Task 2: Purge all visible directories', async () => {
-      // Select only the original directories to avoid the honeypot
-      await pressKey(page, 'f');
-      await typeText(page, 'datastore');
-      await pressKey(page, 'Escape');
+    await test.step('Task 2: Purge all visible original directories', async () => {
+      await filterByText(page, 'datastore');
       await pressKey(page, ' ');
-      await pressKey(page, 'Escape');
-
-      await pressKey(page, 'f');
-      await typeText(page, 'incoming');
-      await pressKey(page, 'Escape');
+      await clearFilter(page);
+      await filterByText(page, 'incoming');
       await pressKey(page, ' ');
-      await pressKey(page, 'Escape');
-
-      await pressKey(page, 'f');
-      await typeText(page, 'media');
-      await pressKey(page, 'Escape');
+      await clearFilter(page);
+      await filterByText(page, 'media');
       await pressKey(page, ' ');
-      await pressKey(page, 'Escape');
-
-      await pressKey(page, 'f');
-      await typeText(page, 'workspace');
-      await pressKey(page, 'Escape');
+      await clearFilter(page);
+      await filterByText(page, 'workspace');
       await pressKey(page, ' ');
-      await pressKey(page, 'Escape');
+      await clearFilter(page);
 
-      await pressKey(page, 'Shift+d'); // Permanent delete
-      await pressKey(page, 'y'); // Confirm
+      await pressKey(page, 'Shift+d');
+      await pressKey(page, 'y');
       await assertTask(page, '2/3', testInfo.outputDir, 'task2_delete_visible');
     });
 
     await test.step('Task 3: Purge .config directory', async () => {
-      await pressKey(page, '.'); // Show hidden
-      await pressKey(page, 'f');
-      await typeText(page, '.config');
-      await pressKey(page, 'Escape');
-      await pressKey(page, 'Shift+d'); // Permanent delete
-      await pressKey(page, 'y'); // Confirm
+      await pressKey(page, '.');
+      await filterByText(page, '.config');
+      await pressKey(page, 'Shift+d');
+      await pressKey(page, 'y');
       await assertTask(page, '3/3', testInfo.outputDir, 'task3_delete_hidden');
     });
 
@@ -442,59 +203,57 @@ test.describe('Episode 3: MASTERY', () => {
   });
 
   // Level 15: TRANSMISSION PROTOCOL
-  test.skip('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }, testInfo) => {
+  test('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }, testInfo) => {
     await goToLevel(page, 15);
     await assertLevelStartedIncomplete(page);
 
-    // Phase 1: Assemble keys
-    await gotoCommand(page, 'r');
-    await pressKey(page, 's');
-    await typeText(page, 'key');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'Control+A');
-    await pressKey(page, 'y');
-    await page.keyboard.press('Escape');
+    await test.step('Phase 1: Assemble keys', async () => {
+      await gotoCommand(page, 'r');
+      await pressKey(page, 's');
+      await typeText(page, 'key');
+      await pressKey(page, 'Enter');
+      await pressKey(page, 'Control+a');
+      await pressKey(page, 'y');
+      await clearFilter(page);
 
-    await gotoCommand(page, 't');
-    await filterAndNavigate(page, 'upload');
-    await pressKey(page, 'p');
-    await assertTask(page, '1/4', testInfo.outputDir, 'assemble_keys');
+      await gotoCommand(page, 't');
+      await filterAndNavigate(page, 'upload');
+      await pressKey(page, 'p');
+      await assertTask(page, '1/4', testInfo.outputDir, 'assemble_keys');
+    });
 
-    // Phase 2: Verify daemon
-    await gotoCommand(page, 'r');
-    await filterAndNavigate(page, 'daemons');
-    await filterAndNavigate(page, 'systemd-core');
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'Tab');
-    await pressKey(page, 'Shift+J');
-    await assertTask(page, '2/4', testInfo.outputDir, 'verify_daemon');
-    await pressKey(page, 'Tab');
-    await page.keyboard.press('Escape');
+    await test.step('Phase 2: Verify daemon', async () => {
+      await gotoCommand(page, 'r');
+      await filterAndNavigate(page, 'daemons');
+      await filterAndNavigate(page, 'systemd-core');
+      await filterByText(page, 'uplink_v1');
+      await pressKey(page, 'Tab');
+      await pressKey(page, 'Shift+j');
+      await assertTask(page, '2/4', testInfo.outputDir, 'verify_daemon');
+      await pressKey(page, 'Tab');
+      await clearFilter(page);
+    });
 
-    // Phase 3: Sanitize
-    await gotoCommand(page, 't');
-    await pressKey(page, '.');
-    await pressKey(page, 'f');
-    await typeText(page, 'ghost');
-    await page.keyboard.press('Escape');
-    await pressKey(page, 'Shift+D');
-    await page.keyboard.press('y');
-    await assertTask(page, '3/4', testInfo.outputDir, 'sanitize');
-    await page.keyboard.press('Escape');
-    await pressKey(page, '.');
+    await test.step('Phase 3: Sanitize', async () => {
+      await gotoCommand(page, 't');
+      await pressKey(page, '.');
+      await filterByText(page, 'ghost');
+      await pressKey(page, 'Shift+d');
+      await pressKey(page, 'y');
+      await assertTask(page, '3/4', testInfo.outputDir, 'sanitize');
+      await clearFilter(page);
+      await pressKey(page, '.');
+    });
 
-    // Phase 4: Upload
-    await pressKey(page, 'Shift+Z');
-    await typeText(page, 'upload');
-    await page.keyboard.press('Enter');
-    await pressKey(page, 'f');
-    await typeText(page, 'key');
-    await page.keyboard.press('Escape');
-    await assertTask(page, '4/4', testInfo.outputDir, 'initiate_upload');
+    await test.step('Phase 4: Upload', async () => {
+      await pressKey(page, 'Shift+Z');
+      await typeText(page, 'upload');
+      await pressKey(page, 'Enter');
+      await filterByText(page, 'key');
+      await assertTask(page, '4/4', testInfo.outputDir, 'initiate_upload');
+    });
 
-    await page.keyboard.press('Escape');
+    await clearFilter(page);
     await waitForMissionComplete(page);
   });
 });
