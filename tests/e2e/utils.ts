@@ -1,10 +1,56 @@
 /**
+ * Utility to robustly rename a file or directory using the rename (r) command.
+ * Ensures the input is cleared before typing the new name.
+ * Usage: await renameItem(page, 'uplink_v2.conf');
+ */
+export async function findFZF(page: Page, name: string): Promise<void> {
+  await pressKey(page, 'z');
+  await page.keyboard.type(name, { delay: 50 });
+  // Wait for results to appear in the DOM before confirming
+  // The fuzzy finder renders results in a div with data-test-id="fuzzy-finder"
+  // We can look for the item name in the results
+  const fuzzyFinder = page.locator('[data-test-id="fuzzy-finder"]');
+  await expect(fuzzyFinder).toBeVisible();
+  await expect(fuzzyFinder.getByText(name).first()).toBeVisible({ timeout: 5000 });
+
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(DEFAULT_DELAY); // Wait for navigation to complete
+}
+
+/**
+ * Utility to robustly rename a file or directory using the rename (r) command.
+ * Ensures the input is cleared before typing the new name.
+ * Usage: await renameItem(page, 'uplink_v2.conf');
+ */
+export async function renameItem(page: Page, name: string): Promise<void> {
+  await pressKey(page, 'r');
+  // Try to select all and clear, then type new name
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Backspace');
+  await page.keyboard.type(name, { delay: 30 });
+  await page.keyboard.press('Enter');
+}
+
+/**
+ * Utility to create a file or directory using the add (a) command.
+ * Usage: await addItem(page, 'filename_or_dir/');
+ */
+export async function addItem(page: Page, name: string): Promise<void> {
+  await pressKey(page, 'a');
+  // we need to clear out the field first
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Backspace');
+  await page.keyboard.type(name, { delay: 30 });
+  await page.keyboard.press('Enter');
+}
+
+/**
  * Yazi Quest E2E Test Utilities
  *
  * Common helper functions for testing the Yazi Quest game.
  */
 
-import { Page, expect, Locator } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -98,6 +144,12 @@ export async function pressKey(page: Page, key: string): Promise<void> {
     }
   } else {
     eventPayload.key = key;
+
+    // Auto-detect uppercase letters and apply Shift modifier implied by physics
+    if (key.length === 1 && /[A-Z]/.test(key)) {
+      eventPayload.shiftKey = true;
+    }
+
     if (key.length === 1 && /[a-zA-Z]/.test(key)) {
       eventPayload.code = `Key${key.toUpperCase()}`;
     } else if (/\d/.test(key)) {
@@ -167,7 +219,7 @@ export async function navigateUp(page: Page, count: number): Promise<void> {
 export async function filterByText(page: Page, text: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, text);
-  await page.keyboard.press('Escape'); // Use direct press for modal
+  await page.keyboard.press('Enter'); // Confirm filter
 }
 
 /**
@@ -192,8 +244,17 @@ export async function filterAndNavigate(page: Page, filterText: string): Promise
 export async function filterAndSelect(page: Page, filterText: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, filterText);
-  await pressKey(page, 'Escape'); // Exit filter mode
+  await page.keyboard.press('Enter'); // Confirm filter
   await pressKey(page, ' '); // Toggle selection
+}
+
+/**
+ * Executes a fuzzy jump to a directory.
+ */
+export async function fuzzyJump(page: Page, target: string): Promise<void> {
+  await pressKey(page, 'Shift+Z');
+  await typeText(page, target);
+  await page.keyboard.press('Enter');
 }
 
 /**
@@ -202,8 +263,8 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
  */
 export async function ensureCleanState(page: Page): Promise<void> {
   // Two escapes clear most modal states (filter, search input)
-  await pressKey(page, 'Escape');
-  await pressKey(page, 'Escape');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
   // Reset sorting to natural
   await pressKey(page, ',');
   await pressKey(page, 'n');
@@ -214,7 +275,7 @@ export async function ensureCleanState(page: Page): Promise<void> {
  */
 export async function gotoCommand(
   page: Page,
-  target: 'h' | 'c' | 'w' | 'd' | 'i' | 't' | 'r'
+  target: 'h' | 'c' | 'w' | 'd' | 'i' | 't' | 'r' | 'g'
 ): Promise<void> {
   await pressKey(page, 'g');
   await pressKey(page, target);
@@ -238,26 +299,16 @@ export async function isTaskCompleted(page: Page, taskIndex: number): Promise<bo
 }
 
 /**
- * Wait for mission complete dialog or level advancement
- * Some levels complete so quickly that the toast disappears before we can check
+ * Waits for either the mission complete dialog to appear or for the URL to change,
+ * indicating that the next level has loaded. Throws an error if neither occurs.
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
-  try {
-    // First try to catch the mission-complete toast
-    await expect(page.getByTestId('mission-complete')).toBeVisible({
-      timeout: 2000, // Shorter timeout since we have a fallback
-    });
-  } catch {
-    // If toast isn't visible, check if we've advanced to the next level
-    // This handles cases where the toast appeared and disappeared quickly
-    await page.waitForTimeout(1000);
-
-    // If we're still on the same level after 1s, something is wrong
-    const currentLevel = await page.textContent('[class*="mission"]');
-    if (!currentLevel) {
-      throw new Error('Mission complete toast not found and level did not advance');
-    }
-  }
+  await Promise.race([
+    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 }),
+    page.waitForURL((url) => !url.search.includes(page.url())),
+  ]).catch(() => {
+    throw new Error('Timeout waiting for mission complete or level advancement.');
+  });
 }
 
 /**

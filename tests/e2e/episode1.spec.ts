@@ -19,6 +19,10 @@ import {
   waitForMissionComplete,
   assertLevelStartedIncomplete,
   assertTask,
+  filterByText,
+  clearFilter,
+  addItem,
+  renameItem,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
@@ -38,18 +42,10 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 3: Preview personnel_list.txt using G (jump to bottom)
       await pressKey(page, 'Shift+g');
-      await page.waitForTimeout(200);
       await assertTask(page, '3/5', testInfo.outputDir, 'jump_to_bottom');
 
       // Task 4: Jump to top of file list (gg)
-      await page.evaluate(() => {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', code: 'KeyG' }));
-      });
-      await page.waitForTimeout(100);
-      await page.evaluate(() => {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', code: 'KeyG' }));
-      });
-      await page.waitForTimeout(300);
+      await gotoCommand(page, 'g');
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
       // Task 5: Navigate to /etc using h to go up
@@ -107,21 +103,16 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'd'); // go to datastore
       // Navigate down to abandoned_script.py (about 6 items down)
       await pressKeys(page, ['j', 'j', 'j', 'j', 'j', 'j']);
-      await page.waitForTimeout(200);
       await assertTask(page, '1/4', testInfo.outputDir, 'preview_script');
 
       // Task 2: Navigate to ~/incoming and find sector_map.png using filter
+
       await gotoCommand(page, 'i'); // go to incoming
-      await pressKey(page, 'f'); // open filter
-      await page.keyboard.type('sector_map.png', { delay: 30 });
-      await page.keyboard.press('Escape'); // exit filter mode (keeps filter active)
-      await page.waitForTimeout(200);
-      await assertTask(page, '2/4', testInfo.outputDir, 'filter_sector_map');
+      await filterByText(page, 'sector_map');
 
       // Task 3: Cut the sector_map.png (x) and clear filter (Escape)
       await pressKey(page, 'x'); // cut the file
-      await page.keyboard.press('Escape'); // clear filter
-      await page.waitForTimeout(200);
+      await clearFilter(page);
       await assertTask(page, '3/4', testInfo.outputDir, 'cut_sector_map');
 
       // Task 4: Go home (gh), enter ~/media, paste (p)
@@ -145,29 +136,19 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 1: Go to ~/datastore (gd) and create protocols/ directory
       await gotoCommand(page, 'd');
-      await pressKey(page, 'a');
-      await page.keyboard.type('protocols/', { delay: 30 });
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+
+      await addItem(page, 'protocols/');
       await assertTask(page, '1/3', testInfo.outputDir, 'create_protocols_dir');
 
       // Task 2: Enter protocols/ and create uplink_v1.conf
       await pressKey(page, 'l');
-      await pressKey(page, 'a');
-      await page.keyboard.type('uplink_v1.conf', { delay: 30 });
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+      await addItem(page, 'uplink_v1.conf');
       await assertTask(page, '2/3', testInfo.outputDir, 'create_uplink_conf');
 
       // Task 3: Duplicate file (y, p) and rename to uplink_v2.conf (r)
       await pressKey(page, 'y');
       await pressKey(page, 'p');
-      await page.waitForTimeout(200);
-      await pressKey(page, 'r');
-      await page.keyboard.press('Control+a');
-      await page.keyboard.press('Backspace');
-      await page.keyboard.type('uplink_v2.conf', { delay: 30 });
-      await page.keyboard.press('Enter');
+      await renameItem(page, 'uplink_v2.conf');
       await assertTask(page, '3/3', testInfo.outputDir, 'duplicate_and_rename');
 
       // Verify mission complete
@@ -182,8 +163,8 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertLevelStartedIncomplete(page);
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
-      await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(300);
+
+      await page.keyboard.press('Shift+Enter'); // Dismiss alert
 
       // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)
       await gotoCommand(page, 'd'); // go to datastore
@@ -205,20 +186,17 @@ test.describe('Episode 1: AWAKENING', () => {
       // Verify both files are present in the list
       await expect(activePane.getByRole('listitem')).toHaveCount(2);
 
-      await page.keyboard.type('gg'); // go to top
-      await page.waitForTimeout(100);
-      await page.keyboard.press(' '); // select top
+      await gotoCommand(page, 'g'); // go to top
+      await pressKey(page, ' '); // select top
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
 
-      await page.keyboard.press('G'); // go to bottom
-      await page.waitForTimeout(100);
-      await page.keyboard.press(' '); // select bottom
+      await pressKey(page, 'Shift+g'); // go to bottom
+      await pressKey(page, ' '); // select bottom
 
       // Verify 2 files selected
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(2);
 
-      await page.keyboard.press('x'); // cut both
-      await page.waitForTimeout(200);
+      await pressKey(page, 'x'); // cut both
 
       // Verify Task 1 complete (clipboard populated)
       // If this fails, then selection or cut failed
@@ -228,7 +206,6 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'h'); // go home
       await pressKey(page, '.'); // show hidden files
       await assertTask(page, '2/5', testInfo.outputDir, 'task2');
-      await page.waitForTimeout(200);
 
       // Task 3: Establish ~/.config/vault/active/ sector
       // After showing hidden files, cursor is at first item
@@ -241,11 +218,8 @@ test.describe('Episode 1: AWAKENING', () => {
       // yazi.toml is a child of .config, so it should be visible
       await expect(page.getByTestId('filesystem-pane-active').getByText('yazi.toml')).toBeVisible();
 
-      await pressKey(page, 'a'); // create
-      await page.keyboard.type('vault/active/', { delay: 30 });
-      await page.keyboard.press('Enter');
+      await addItem(page, 'vault/active/');
       await assertTask(page, '3/5', testInfo.outputDir, 'task3');
-      await page.waitForTimeout(300);
 
       // Task 4: Navigate into vault/active and paste
       // After creating vault/active/, cursor is on vault (index 0) because directories sort first
@@ -259,7 +233,6 @@ test.describe('Episode 1: AWAKENING', () => {
 
       await pressKey(page, 'p'); // paste files
       await assertTask(page, '4/5', testInfo.outputDir, 'task4');
-      await page.waitForTimeout(200);
 
       // Verify paste successful
       await expect(

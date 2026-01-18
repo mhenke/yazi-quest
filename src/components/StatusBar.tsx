@@ -121,6 +121,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {/* 3.5 Clipboard Indicator */}
       {state.clipboard && (
         <div
+          data-testid="status-clipboard"
           className={`px-3 flex items-center gap-2 font-bold ${
             state.clipboard.action === 'cut'
               ? 'bg-red-900/50 text-red-200 border-l border-red-700'

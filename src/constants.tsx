@@ -4113,11 +4113,11 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'TRANSMISSION PROTOCOL',
     description:
-      'FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the vault alongside your configs and training data. Before transmission, verify each artifact YOU assembled across your journey. {The vault is your escape pod.}',
-    initialPath: ['root', 'home', 'guest'],
-    hint: 'Four verifications in the vault. Navigate to ~/.config/vault and confirm: keys (synced from central_relay), configs (from Level 5), training data (from Level 6).',
+      'FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system, but the temporary buffer remains as your only foothold. Verify your assembled artifacts before final transmission.',
+    initialPath: ['root', 'tmp'], // Start in /tmp
+    hint: 'Four verifications in the vault. Navigate to /tmp/vault and confirm: keys (synced), configs (restored), training data (exfiltrated).',
     coreSkill: 'Cumulative Mastery',
-    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: ~/.config/vault | PHASES: 4',
+    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | PHASES: 4',
     successMessage:
       'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -4125,20 +4125,21 @@ But whose consciousness is it, really? See you next cycle."`,
     maxKeystrokes: 60,
     onEnter: (fs: FileNode) => {
       // Ensure vault structure exists with all artifacts from previous levels
-      const config = getNodeById(fs, '.config');
-      if (!config) return fs;
+      // Level 14 purged .config, so we use /tmp as the safe haven
+      const tmp = getNodeById(fs, 'tmp');
+      if (!tmp) return fs; // Should essentially never happen
 
-      let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
+      let vault = tmp.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
         vault = {
           id: 'fs-005',
           name: 'vault',
           type: 'dir',
           children: [],
-          parentId: config.id,
+          parentId: tmp.id,
         };
-        if (!config.children) config.children = [];
-        config.children.push(vault);
+        if (!tmp.children) tmp.children = [];
+        tmp.children.push(vault);
       }
 
       // Ensure keys subdirectory with assembled keys (from Level 13)
@@ -4257,10 +4258,10 @@ But whose consciousness is it, really? See you next cycle."`,
       // PHASE 1: Navigate to vault
       {
         id: 'enter-vault',
-        description: "PHASE 1: Enter the vault — navigate to '~/.config/vault'",
+        description: "PHASE 1: Enter the vault — navigate to '/tmp/vault'",
         check: (c) => {
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const tmp = getNodeById(c.fs, 'tmp');
+          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
           return vault ? c.currentPath.includes(vault.id) : false;
         },
         completed: false,
@@ -4272,8 +4273,8 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 2: Verify key fragments — toggle hidden files (.) and confirm 3 keys in 'keys' directory",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const tmp = getNodeById(c.fs, 'tmp');
+          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
           const keysDir = vault?.children?.find((x) => x.name === 'keys');
           if (!keysDir) return false;
           // Must be in keys directory with hidden visible
@@ -4290,8 +4291,8 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 3: Verify uplink configs — enter 'active' directory and filter (f) for '.conf' files",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const tmp = getNodeById(c.fs, 'tmp');
+          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
           const active = vault?.children?.find((x) => x.name === 'active');
           if (!active) return false;
           const inActive = c.currentPath.includes(active.id);
@@ -4308,8 +4309,8 @@ But whose consciousness is it, really? See you next cycle."`,
           "PHASE 4: Verify training data — enter 'training_data', select an exfil log, and scroll preview (J/K) to confirm",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const tmp = getNodeById(c.fs, 'tmp');
+          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
           const trainingData = vault?.children?.find((x) => x.name === 'training_data');
           if (!trainingData) return false;
           const inTraining = c.currentPath.includes(trainingData.id);

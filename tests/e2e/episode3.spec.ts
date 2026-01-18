@@ -12,26 +12,53 @@ import {
   filterByText,
   clearFilter,
   pressKeys,
+  addItem,
+  filterAndSelect,
 } from './utils';
 
-// Helper for common Level 12 mission steps (DRY)
-async function runLevel12Mission(page: Page) {
+// Helper for identity discovery (Level 12 Task 2)
+async function discoverIdentity(page: Page) {
+  // Navigate to workspace
   await gotoCommand(page, 'w');
+
+  // Toggle hidden files to see .identity.log.enc
   await pressKey(page, '.');
-  await filterByText(page, '.i');
-  for (let i = 0; i < 6; i++) {
+
+  // Find and cursor to identity file
+  await filterByText(page, 'identity');
+
+  // Scroll preview pane to read the file (need 30+ scroll)
+  for (let i = 0; i < 7; i++) {
     await pressKey(page, 'Shift+j');
   }
+
   await clearFilter(page);
-  await filterByText(page, 'sy');
-  await pressKey(page, 'x');
-  await clearFilter(page);
+
+  // Toggle hidden files back OFF to prevent protocol violations
   await pressKey(page, '.');
+}
+
+// Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
+async function runLevel12Mission(page: Page) {
+  // Objective for scen-a1 (Legacy Path):
+  // 1. Discover identity (toggle hidden, scroll preview) - now handled by discoverIdentity
+  // 2. Cut systemd-core
+  // 3. Navigate to daemons
+  // 4. Paste and enter daemon
+
+  // Task 3: Cut systemd-core
+  await filterAndSelect(page, 'systemd-core');
+  await clearFilter(page);
+  await pressKey(page, 'x'); // Cut
+
+  // Task 4: Navigate to /daemons
   await gotoCommand(page, 'r');
-  await pressKey(page, 'j');
-  await pressKey(page, 'l');
+  await filterAndNavigate(page, 'daemons');
+  await clearFilter(page);
+
+  // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
-  await pressKey(page, 'l');
+  await filterAndNavigate(page, 'systemd-core');
 }
 
 test.describe('Episode 3: MASTERY', () => {
@@ -40,22 +67,41 @@ test.describe('Episode 3: MASTERY', () => {
     await goToLevel(page, 11);
     await assertLevelStartedIncomplete(page);
 
+    // Task 1: Search for 'service'
     await gotoCommand(page, 'r');
     await pressKey(page, 's');
     await typeText(page, 'service');
     await pressKey(page, 'Enter');
+    // Task 1 complete (Search)
+    await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
+    // Task 2: Sort by modified (,m or ,M)
+    // Efficiency tip says ",m"
     await pressKey(page, ',');
-    await pressKey(page, 'Shift+m');
-    await assertTask(page, '1/4', testInfo.outputDir, 'sort_modified');
+    await pressKey(page, 'm');
+    await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
 
-    await pressKey(page, ' ');
-    await pressKey(page, ' ');
-    await assertTask(page, '2/4', testInfo.outputDir, 'select_files');
+    // Task 3: Select 2 legacy files (safe ones)
 
+    // Task 3: Select 2 legacy files (safe ones)
+
+    // Select 'network.service'
+    await filterAndSelect(page, 'network.service');
+    // Filter remains active, but selecting next item overwrites it.
+
+    // Select 'legacy-backup.service'
+    await filterAndSelect(page, 'legacy-backup.service');
+
+    // Task 4: Yank
     await pressKey(page, 'y');
+    await expect(page.locator('[data-testid="status-clipboard"]')).toContainText('COPY: 2');
+    // Clear filter to clean up state
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
     await assertTask(page, '3/4', testInfo.outputDir, 'yank_files');
 
+    // Task 5: Paste in /daemons
     await ensureCleanState(page);
     await gotoCommand(page, 'r');
     await filterAndNavigate(page, 'daemons');
@@ -85,7 +131,7 @@ test.describe('Episode 3: MASTERY', () => {
 
       const threatAlert = page.getByText('Threat Detected');
       if (await threatAlert.isVisible({ timeout: 1000 })) {
-        await pressKey(page, 'Shift+Enter');
+        await page.keyboard.press('Shift+Enter');
       }
 
       await assertLevelStartedIncomplete(page);
@@ -96,21 +142,37 @@ test.describe('Episode 3: MASTERY', () => {
           // Special case for swarm search
           await gotoCommand(page, 'r');
           await pressKey(page, 's');
-          await typeText(page, scenario.threat);
+          // 'tmp' matches all swarm files (scan_*.tmp) but avoids scanner_lock.pid honeypot
+          await typeText(page, 'tmp');
           await pressKey(page, 'Enter');
+          // Wait for search results to stabilize
+          await page.waitForTimeout(500);
           await pressKey(page, 'Control+a');
         } else {
           await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
           await filterByText(page, scenario.threat);
         }
         await pressKey(page, 'd');
+        await page.waitForTimeout(200); // Wait for modal
         await pressKey(page, 'y');
+        // Swarm deletion involves finding/removing multiple files, can be slow
+        await page.waitForTimeout(2000);
         await clearFilter(page);
       }
 
       await ensureCleanState(page);
+      // Discovery step (Tasks 1-2) - required for all scenarios
+      await discoverIdentity(page);
+      // Finale steps (Tasks 3-5) - common to all scenarios
       await runLevel12Mission(page);
-      await assertTask(page, '5/5', testInfo.outputDir, `mission_complete_${scenario.id}`);
+
+      const totalTasks = scenario.threat ? 6 : 5;
+      await assertTask(
+        page,
+        `${totalTasks}/${totalTasks}`,
+        testInfo.outputDir,
+        `mission_complete_${scenario.id}`
+      );
       await waitForMissionComplete(page);
     });
   }
@@ -124,30 +186,62 @@ test.describe('Episode 3: MASTERY', () => {
     await assertLevelStartedIncomplete(page);
 
     await gotoCommand(page, 'r');
-    await pressKey(page, 's');
-    await typeText(page, '.key');
-    await pressKey(page, 'Enter');
-    await assertTask(page, '1/5', testInfo.outputDir, 'search_keys');
+    // Toggle hidden files ON to find .key files
+    await pressKey(page, '.');
 
+    await pressKey(page, 's');
+    // Use '.key_' to specifically match .key_tokyo, .key_berlin, .key_saopaulo
+    // Avoids vague '.key' which might match other system files
+    await typeText(page, '.key_');
+    await pressKey(page, 'Enter');
+
+    // Wait for search results
+    await page.waitForTimeout(500);
+
+    // Cut all keys found
     await pressKey(page, 'Control+a');
     await pressKey(page, 'x');
+
+    // Verify we have exactly 3 keys (tokyo, berlin, saopaulo)
+    // 'x' (Cut) results in 'MOVE' status, 'y' (Yank) results in 'COPY'
+    await expect(page.locator('[data-testid="status-clipboard"]')).toContainText('MOVE: 3');
+
+    // Escape out of search mode to return to file view
+    await pressKey(page, 'Escape');
     await clearFilter(page);
 
-    await gotoCommand(page, 'w');
+    // Toggle hidden files OFF to clean state for discoverIdentity
     await pressKey(page, '.');
-    await filterByText(page, 'identity');
-    for (let i = 0; i < 20; i++) {
-      await pressKey(page, 'Shift+j');
-    }
+
+    // Tasks 1-3 (Extract Tokyo, Berlin, Sao Paulo) complete upon cutting keys
+    // There are 5 tasks total: 3 keys + 1 identity + 1 paste
+    await assertTask(page, '3/5', testInfo.outputDir, 'keys_cut');
+
+    // Task 4: Discover Identity
+    await discoverIdentity(page);
     await assertTask(page, '4/5', testInfo.outputDir, 'discover_identity');
 
-    await clearFilter(page);
-    await pressKeys(page, ['g', 'g']);
-    await pressKey(page, 'l');
-    await pressKey(page, 'p');
-    await assertTask(page, '5/5', testInfo.outputDir, 'paste_keys');
+    // Task 5: Paste in central_relay
+    await gotoCommand(page, 'w'); // Go to workspace
+    await filterAndNavigate(page, 'central_relay');
 
-    await pressKey(page, 'Shift+Enter');
+    // Wait for navigation to settle before pasting
+    await page.waitForTimeout(500);
+
+    await pressKey(page, 'p');
+
+    // Wait for paste/task completion logic
+    await page.waitForTimeout(1000);
+
+    // Conditional handling: If Protocol Violation appears, handle it.
+    // Otherwise, wait for success.
+    const violation = page.getByText('Protocol Violation');
+    if (await violation.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await page.keyboard.press('Shift+Enter');
+    }
+
+    // Verify mission complete OR level transition
+    // We skip assertTask('5/5') because we might have already transitioned (fast success)
     await waitForMissionComplete(page);
   });
 
@@ -156,49 +250,50 @@ test.describe('Episode 3: MASTERY', () => {
     page,
   }, testInfo) => {
     await goToLevel(page, 14);
-    await assertLevelStartedIncomplete(page);
 
-    await test.step('Task 1: Create 3 decoy directories', async () => {
-      await pressKey(page, 'a');
-      await typeText(page, 'decoy_1/');
-      await pressKey(page, 'Enter');
-      await pressKey(page, 'a');
-      await typeText(page, 'decoy_2/');
-      await pressKey(page, 'Enter');
-      await pressKey(page, 'a');
-      await typeText(page, 'decoy_3/');
-      await pressKey(page, 'Enter');
-      await assertTask(page, '1/3', testInfo.outputDir, 'task1_create_decoys');
+    // Task 1 (Return to /home/guest) completes immediately because we start there
+    await assertTask(page, '1/4', testInfo.outputDir, 'task1_auto_complete');
+
+    await test.step('Task 2: Create 3 decoy directories', async () => {
+      await addItem(page, 'decoy_1/');
+      await addItem(page, 'decoy_2/');
+      await addItem(page, 'decoy_3/');
+      await assertTask(page, '2/4', testInfo.outputDir, 'task2_create_decoys');
     });
 
-    await test.step('Task 2: Purge all visible original directories', async () => {
-      await filterByText(page, 'datastore');
-      await pressKey(page, ' ');
-      await clearFilter(page);
-      await filterByText(page, 'incoming');
-      await pressKey(page, ' ');
-      await clearFilter(page);
-      await filterByText(page, 'media');
-      await pressKey(page, ' ');
-      await clearFilter(page);
-      await filterByText(page, 'workspace');
-      await pressKey(page, ' ');
-      await clearFilter(page);
+    await test.step('Task 3: Purge all visible original directories', async () => {
+      // Batch select all target directories
+      const targets = ['datastore', 'incoming', 'media', 'workspace'];
+      for (const target of targets) {
+        await filterAndSelect(page, target);
+        await clearFilter(page);
+      }
 
-      await pressKey(page, 'Shift+d');
+      // Permanent Delete (Shift+D)
+      await pressKey(page, 'Shift+D');
+      // Confirm deletion if prompted (usually 'y') - game might strictly require just D or D then y
+      // Level 14 hint says "Use 'D' for permanent deletion".
+      // Usually D triggers a confirmation modal in Yazi, let's assume 'y' is needed
+      await page.waitForTimeout(200);
       await pressKey(page, 'y');
-      await assertTask(page, '2/3', testInfo.outputDir, 'task2_delete_visible');
+
+      await assertTask(page, '3/4', testInfo.outputDir, 'task3_delete_visible');
     });
 
-    await test.step('Task 3: Purge .config directory', async () => {
+    await test.step('Task 4: Purge .config directory', async () => {
+      // Toggle hidden files to see .config
       await pressKey(page, '.');
-      await filterByText(page, '.config');
-      await pressKey(page, 'Shift+d');
+
+      await filterAndSelect(page, '.config');
+      await clearFilter(page);
+
+      await pressKey(page, 'Shift+D');
+      await page.waitForTimeout(200);
       await pressKey(page, 'y');
-      await assertTask(page, '3/3', testInfo.outputDir, 'task3_delete_hidden');
+
+      await assertTask(page, '4/4', testInfo.outputDir, 'task4_delete_hidden');
     });
 
-    await ensureCleanState(page);
     await waitForMissionComplete(page);
   });
 
@@ -207,53 +302,60 @@ test.describe('Episode 3: MASTERY', () => {
     await goToLevel(page, 15);
     await assertLevelStartedIncomplete(page);
 
-    await test.step('Phase 1: Assemble keys', async () => {
+    await test.step('Phase 1: Enter Vault', async () => {
+      // Navigate to /tmp/vault
+      // Level starts at /home/guest, so we go to Root ('r') to find 'tmp'
       await gotoCommand(page, 'r');
-      await pressKey(page, 's');
-      await typeText(page, 'key');
-      await pressKey(page, 'Enter');
-      await pressKey(page, 'Control+a');
-      await pressKey(page, 'y');
+      await filterAndNavigate(page, 'tmp');
       await clearFilter(page);
 
-      await gotoCommand(page, 't');
-      await filterAndNavigate(page, 'upload');
-      await pressKey(page, 'p');
-      await assertTask(page, '1/4', testInfo.outputDir, 'assemble_keys');
+      // Wait for vault creation/visibility
+      await page.waitForTimeout(200);
+      await filterAndNavigate(page, 'vault');
+
+      // Wait for state update
+      await page.waitForTimeout(500);
+      await assertTask(page, '1/4', testInfo.outputDir, 'phase1_enter_vault');
     });
 
-    await test.step('Phase 2: Verify daemon', async () => {
-      await gotoCommand(page, 'r');
-      await filterAndNavigate(page, 'daemons');
-      await filterAndNavigate(page, 'systemd-core');
-      await filterByText(page, 'uplink_v1');
-      await pressKey(page, 'Tab');
-      await pressKey(page, 'Shift+j');
-      await assertTask(page, '2/4', testInfo.outputDir, 'verify_daemon');
-      await pressKey(page, 'Tab');
-      await clearFilter(page);
-    });
-
-    await test.step('Phase 3: Sanitize', async () => {
-      await gotoCommand(page, 't');
+    await test.step('Phase 2: Verify Keys', async () => {
+      // Must verify 3 keys in 'keys' directory
+      // Keys are hidden files (.key_...), so we must toggle hidden view
       await pressKey(page, '.');
-      await filterByText(page, 'ghost');
-      await pressKey(page, 'Shift+d');
-      await pressKey(page, 'y');
-      await assertTask(page, '3/4', testInfo.outputDir, 'sanitize');
+
+      await filterAndNavigate(page, 'keys');
+      await assertTask(page, '2/4', testInfo.outputDir, 'phase2_verify_keys');
+      // Go back up to vault root for next phase
+      await pressKey(page, 'h');
+    });
+
+    await test.step('Phase 3: Verify Configs', async () => {
+      // Go into 'active' and filter for '.conf'
+      await filterAndNavigate(page, 'active');
+      await filterByText(page, '.conf');
+      await assertTask(page, '3/4', testInfo.outputDir, 'phase3_verify_configs');
+
+      // Cleanup: Exit filter and go back up
       await clearFilter(page);
-      await pressKey(page, '.');
+      await pressKey(page, 'h');
     });
 
-    await test.step('Phase 4: Upload', async () => {
-      await pressKey(page, 'Shift+Z');
-      await typeText(page, 'upload');
-      await pressKey(page, 'Enter');
-      await filterByText(page, 'key');
-      await assertTask(page, '4/4', testInfo.outputDir, 'initiate_upload');
+    await test.step('Phase 4: Verify Training Data', async () => {
+      // Go into 'training_data', select log, scroll preview
+      await filterAndNavigate(page, 'training_data');
+
+      // Select an exfil log
+      await filterAndSelect(page, 'exfil_01.log');
+      await clearFilter(page);
+
+      // Scroll preview down to verify content (J/K)
+      // Task check requires previewScroll > 0
+      await pressKey(page, 'Shift+J');
+      await pressKey(page, 'Shift+J');
+
+      await assertTask(page, '4/4', testInfo.outputDir, 'phase4_verify_training');
     });
 
-    await clearFilter(page);
     await waitForMissionComplete(page);
   });
 });

@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 
 import { GameState, FileNode, Level, FsError, Result } from '../types';
 import {
+  getNodeById,
+  getParentNode,
   getNodeByPath,
   deleteNode,
   addNode,
@@ -808,12 +810,17 @@ export const useKeyboardHandlers = (
         case 'x':
         case 'y': {
           // Check if nodes being yanked/cut contain honeypots
-          const nodesToGrab =
-            gameState.selectedIds.length > 0
-              ? items.filter((n) => gameState.selectedIds.includes(n.id))
-              : currentItem
-                ? [currentItem]
-                : [];
+          // FIX: Resolve nodes from FS instead of using visible 'items', because selection might include hidden/filtered items
+          const resolveSelectedNodes = () => {
+            if (gameState.selectedIds.length > 0) {
+              return gameState.selectedIds
+                .map((id) => getNodeById(gameState.fs, id))
+                .filter((n): n is FileNode => !!n);
+            }
+            return currentItem ? [currentItem] : [];
+          };
+
+          const nodesToGrab = resolveSelectedNodes();
 
           const grabbingHoneypot = nodesToGrab.some(
             (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
@@ -828,8 +835,8 @@ export const useKeyboardHandlers = (
           }
 
           if (gameState.selectedIds.length > 0) {
-            // Use items (passed from caller - already handles search mode)
-            const nodes = items.filter((n) => gameState.selectedIds.includes(n.id));
+            // Use resolved nodes
+            const nodes = nodesToGrab;
             if (e.key === 'x') {
               const protectedItem = nodes
                 .map((node) =>

@@ -2,18 +2,23 @@ import { test, expect } from '@playwright/test';
 import {
   goToLevel,
   pressKey,
+  pressKeys,
   gotoCommand,
   waitForMissionComplete,
   typeText,
   filterAndNavigate,
+  filterAndSelect,
   ensureCleanState,
+  isTaskCompleted,
+  assertLevelStartedIncomplete,
+  getClipboardStatus,
   assertTask,
-  navigateDown,
-  DEFAULT_DELAY,
   filterByText,
   clearFilter,
+  addItem,
+  findFZF,
+  fuzzyJump,
 } from './utils';
-import { clear } from 'console';
 
 test.describe('Episode 2: FORTIFICATION', () => {
   // Level 6: BATCH OPERATIONS - Batch Select (Ctrl+A) and Recursive Search (s)
@@ -21,78 +26,77 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }, testInfo) => {
     await goToLevel(page, 6);
-    await assertTask(page, '0/5', testInfo.outputDir, 'start');
+    await assertLevelStartedIncomplete(page);
 
-    // Task 1: Navigate into '~/incoming/batch_logs'
+    // 1) skip Intro already handled by goToLevel
+
+    // 2) gi (g then i), then l (enter batch_logs)
     await gotoCommand(page, 'i');
     await pressKey(page, 'l');
     await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
-    // Task 2: Search for all '.log' files recursively
+    // 3) s, then type ".log" and press enter key
     await pressKey(page, 's');
     await typeText(page, '.log');
     await pressKey(page, 'Enter');
     await assertTask(page, '2/5', testInfo.outputDir, 'task2');
 
-    // Task 3: Select all results and yank them
+    // 4) ctrl+a, then y
     await pressKey(page, 'Control+a');
     await pressKey(page, 'y');
     await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
-    // Task 4: Navigate to '/home/maia/.config/vault/training_data' and create the directory
-    await ensureCleanState(page); // Clear search and reset state
+    // 5) ESC to clear search then gc (g then c)
+    await pressKey(page, 'Escape');
     await gotoCommand(page, 'c');
-    await pressKey(page, 'l'); // Enter 'vault'
-    await pressKey(page, 'a'); // Create directory
-    await page.keyboard.type('training_data/', { delay: 50 });
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300); // Wait for directory creation to settle
+    await assertTask(page, '3/5', testInfo.outputDir, 'after_gc');
+
+    // 6) l (enter vault) then a and type "training_data/"
+    await pressKey(page, 'l');
+    await addItem(page, 'training_data/');
     await assertTask(page, '4/5', testInfo.outputDir, 'task4');
 
-    // Task 5: Enter the new directory and paste the files
+    // 7) l (enter training_data) then p
     await pressKey(page, 'l');
     await pressKey(page, 'p');
     await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
+    // Wait for mission complete dialog to appear
     await waitForMissionComplete(page);
   });
 
+  // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
   test('Level 7: QUANTUM BYPASS - completes FZF find and clipboard abort', async ({
     page,
   }, testInfo) => {
     await goToLevel(page, 7);
-    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+    await assertLevelStartedIncomplete(page);
 
     // Task 1: Jump to Root (gr)
     await gotoCommand(page, 'r');
+    // Verify Task 1 completion
     await assertTask(page, '1/4', testInfo.outputDir, 'jump_to_root');
 
     // Task 2: Locate 'access_token.key' using FZF find (z)
-    await pressKey(page, 'z');
-    await typeText(page, 'access_token');
-    await pressKey(page, 'Enter'); // Select in FZF
-    await assertTask(page, '2/4', testInfo.outputDir, 'fzf_access_token');
+    await findFZF(page, 'access_token');
+    // Verify Task 2 completion (Locate Token)
+    await assertTask(page, '2/4', testInfo.outputDir, 'locate_token');
 
-    // Task 3: Stage the suspicious file (x)
-    await pressKey(page, 'x');
-    await assertTask(page, '3/4', testInfo.outputDir, 'stage_file');
+    await pressKey(page, 'x'); // cut the file
+    // Verify Task 3 completion (Stage Token)
+    await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
 
-    // Task 4: Jump to '/etc' using FZF directory jump (Z -> etc -> Enter)
-    await pressKey(page, 'Shift+Z');
-    await typeText(page, 'etc');
-    await pressKey(page, 'Enter');
+    // Task 4: Jump to '/etc' (Z -> 'etc' -> Enter)
+    await fuzzyJump(page, 'etc');
+    // Task 4 complete -> hidden Task 5 appears -> Total becomes 5
+    // So logic: 4 tasks done out of 5 total => 4/5
+    await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_etc_and_reveal_trap');
 
-    // Wait for threat alert to appear
-    await page.waitForTimeout(DEFAULT_DELAY * 2);
+    await page.keyboard.press('Shift+Enter'); // Dismiss alert
+    await page.keyboard.press('Shift+Y'); // Abort operation (Y)
 
-    // Dismiss the threat dialog
-    await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(300);
-
-    // Abort clipboard with Y
-    await page.keyboard.press('Shift+Y');
-    await page.waitForTimeout(300);
+    await assertTask(page, '5/5', testInfo.outputDir, 'abort_operation');
 
     await waitForMissionComplete(page);
   });
@@ -102,98 +106,154 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }, testInfo) => {
     await goToLevel(page, 8);
-    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+    await assertLevelStartedIncomplete(page);
 
-    // Task 1: Navigate to '~/workspace/systemd-core'
+    // Objective 1: Navigate to '~/workspace/systemd-core'
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_systemd');
 
-    // Task 2: Preview 'uplink_v1.conf' to confirm corruption
-    await filterByText(page, 'uplink_v1.conf');
-    await assertTask(page, '2/4', testInfo.outputDir, 'verify_damage');
+    // Objective 2: Preview 'uplink_v1.conf' to confirm corruption
+    await filterByText(page, 'uplink_v1');
+    await pressKey(page, 'Escape');
+    await assertTask(page, '2/4', testInfo.outputDir, 'preview_corrupted');
 
-    // Task 3: Jump to '~/.config/vault/active' and yank 'uplink_v1.conf'
-    await clearFilter(page);
-    await gotoCommand(page, 'c');
+    await pressKey(page, 'Escape');
+
+    // Objective 3: Jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
+    await pressKey(page, '.');
+    await gotoCommand(page, 'h');
+    await filterAndNavigate(page, '.config');
     await filterAndNavigate(page, 'vault');
     await filterAndNavigate(page, 'active');
-    await filterByText(page, 'uplink_v1.conf');
-    await pressKey(page, 'y');
-    await assertTask(page, '3/4', testInfo.outputDir, 'acquire_patch');
 
-    // Task 4: Return to '~/workspace/systemd-core' and force overwrite (Shift+P)
-    await clearFilter(page);
+    await filterByText(page, 'uplink_v1');
+    await pressKey(page, 'Escape');
+    await pressKey(page, 'y');
+    await assertTask(page, '3/4', testInfo.outputDir, 'yank_clean_file');
+
+    await pressKey(page, 'Escape');
+    await pressKey(page, '.');
+
+    // Objective 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) local file
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
 
-    await pressKey(page, 'Shift+p');
-
-    await assertTask(page, '4/4', testInfo.outputDir, 'deploy_patch');
+    await filterByText(page, 'uplink_v1');
+    await pressKey(page, 'Escape');
+    await page.keyboard.press('Shift+P');
+    await assertTask(page, '4/4', testInfo.outputDir, 'force_overwrite');
 
     await waitForMissionComplete(page);
   });
 
-  // Level 9: TRACE CLEANUP - Invert Selection (Ctrl+R) and Permanent Delete (D)
-  test('Level 9: TRACE CLEANUP - uses invert selection to clean up /tmp', async ({
+  // Level 9: SPECTRAL ANALYSIS - Sorting and Multiple Selection
+  // Level 9: TRACE CLEANUP - Invert Selection (Ctrl+R)
+  test('Level 9: TRACE CLEANUP - selects, inverts, and deletes junk', async ({
     page,
   }, testInfo) => {
     await goToLevel(page, 9);
-    await assertTask(page, '0/3', testInfo.outputDir, 'start');
+    await assertLevelStartedIncomplete(page);
 
-    // Task 1: Select the files to keep.
+    // Task 1: Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'
+    await gotoCommand(page, 't');
+
+    // Verify we are in /tmp (Task 1 won't complete until selection is done, so we check breadcrumb/path)
+    // Looking for the breadcrumb or current path indicator
+    await expect(page.locator('.breadcrumb')).toContainText('tmp'); // Select ghost_process.pid
+    // Pattern: Filter -> Select -> Clear Filter
     await filterByText(page, 'ghost_process.pid');
-    await pressKey(page, ' '); // Select it
+    await pressKey(page, ' ');
     await clearFilter(page);
 
+    // Select socket_001.sock
     await filterByText(page, 'socket_001.sock');
-    await pressKey(page, ' '); // Select it
+    await pressKey(page, ' ');
     await clearFilter(page);
 
-    await assertTask(page, '1/3', testInfo.outputDir, 'select_critical_files');
+    await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
-    // Task 2: Invert the selection to target all the junk files
+    // Task 2: Invert the selection (Ctrl+R)
     await pressKey(page, 'Control+r');
     await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
 
-    // Task 3: Permanently delete the selected junk files
-    await pressKey(page, 'Shift+d');
-    await pressKey(page, 'y'); // Confirm permanent delete
+    // Task 3: Permanently delete the selected junk files (D)
+    await pressKey(page, 'Shift+D');
+    // Confirm delete
+    await pressKey(page, 'Enter');
+
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
 
     await waitForMissionComplete(page);
   });
 
-  // Level 10: ARCHIVE EXTRACTION - Filter (f) and Multi-Stage Copy
-  test('Level 10: ARCHIVE EXTRACTION - performs multi-stage copy and rename', async ({
+  // Level 10: CREDENTIAL HEIST - Archive Nav & Sort by Modified
+  test('Level 10: CREDENTIAL HEIST - identifies and secures active key', async ({
     page,
   }, testInfo) => {
     await goToLevel(page, 10);
-    await assertTask(page, '0/4', testInfo.outputDir, 'start');
+    await assertLevelStartedIncomplete(page);
 
-    // Task 1: Navigate to '~/media/archives'
-    await gotoCommand(page, 'h');
-    await filterAndNavigate(page, 'media');
-    await filterAndNavigate(page, 'archives');
-    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_archives');
+    // Task 1: Navigate into '~/incoming/backup_logs.zip/credentials'
+    // This requires navigating into a zip file (virtual directory)
+    // Path: incoming -> backup_logs.zip -> credentials
+    await gotoCommand(page, 'i');
 
-    // Task 2: Filter for '.zip' files and select them
-    await filterByText(page, '.zip');
-    await pressKey(page, ' '); // Select first
-    await pressKey(page, 'j');
-    await pressKey(page, ' '); // Select second
-    await assertTask(page, '2/4', testInfo.outputDir, 'filter_and_select_zip');
+    // Use filter to find zip
+    await filterByText(page, 'backup_logs.zip');
+    await pressKey(page, 'l'); // Enter zip
+    await clearFilter(page); // Always clear filter after navigation if not needed
 
-    // Task 3: Yank files and navigate to '~/datastore/backups'
-    await pressKey(page, 'y');
-    await ensureCleanState(page);
-    await gotoCommand(page, 'd');
-    await filterAndNavigate(page, 'backups');
-    await assertTask(page, '3/4', testInfo.outputDir, 'nav_to_backups');
+    // Now in zip root, find credentials folder
+    await filterByText(page, 'credentials');
+    await pressKey(page, 'l'); // Enter credentials
+    await clearFilter(page);
 
-    // Task 4: Paste the archives
+    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_creds');
+
+    // Task 2: Sort by modification time to identify the most recent key (,m)
+    await pressKey(page, ',');
+    await pressKey(page, 'm');
+    await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
+
+    // Task 3: Yank the newest key ('access_key_new.pem')
+    // After sorting by modified (descending or ascending?), usually 'm' is Modified (newest first? or via sort direction?)
+    // In App.tsx sortNodes(..., 'modified', 'desc') -> newest first by default or 'asc'?
+    // Usually 'modified' means newest first? Let's check visual cue.
+    // The mission hint says: "Recover the newest access key... from sorted list"
+    // Assuming newest is at top or we need to find it.
+    // Let's filter for it just to be safe and robust, or assume sort works.
+    // The task check explicitly validates 'access_key_new.pem' is yanked.
+    // Let's filter for it to ensure we select the right one regardless of sort direction nuances in test environment.
+    // Wait, the task requires "nodes.some(n => n.name === 'access_key_new.pem')".
+
+    await filterByText(page, 'access_key_new.pem');
+    // Ensure we select/cursor is on it. Filter generally reduces list.
+    // If we filtered, cursor should be on it.
+    await pressKey(page, 'y'); // Yank
+    await assertTask(page, '3/4', testInfo.outputDir, 'yank_key');
+    await clearFilter(page);
+
+    // Task 4: Jump to '~/workspace/systemd-core', create 'credentials/' folder, and paste the key
+    await gotoCommand(page, 'w'); // go to workspace
+
+    // Nav to systemd-core
+    await filterByText(page, 'systemd-core');
+    await pressKey(page, 'l');
+    await clearFilter(page);
+
+    // Create credentials/ folder
+    await addItem(page, 'credentials/');
+
+    // Enter credentials/
+    // It should be selected after creation, or we filter for it
+    await filterByText(page, 'credentials');
+    await pressKey(page, 'l');
+    await clearFilter(page);
+
+    // Paste
     await pressKey(page, 'p');
-    await assertTask(page, '4/4', testInfo.outputDir, 'paste_archives');
+    await assertTask(page, '4/4', testInfo.outputDir, 'paste_key');
 
     await waitForMissionComplete(page);
   });
