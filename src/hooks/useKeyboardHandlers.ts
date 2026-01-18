@@ -756,7 +756,7 @@ export const useKeyboardHandlers = (
             setGameState((prev) => ({ ...prev, selectedIds: allIds, usedCtrlA: true }));
             showNotification(
               getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
-              2000
+              500
             );
           } else {
             e.preventDefault();
@@ -784,7 +784,7 @@ export const useKeyboardHandlers = (
             setGameState((prev) => ({ ...prev, selectedIds: inverted, usedCtrlR: true }));
             showNotification(
               getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
-              2000
+              500
             );
           } else if (gameState.selectedIds.length > 1) {
             setGameState((prev) => ({
@@ -809,109 +809,54 @@ export const useKeyboardHandlers = (
           break;
         case 'x':
         case 'y': {
-          // Check if nodes being yanked/cut contain honeypots
-          // FIX: Resolve nodes from FS instead of using visible 'items', because selection might include hidden/filtered items
-          const resolveSelectedNodes = () => {
-            if (gameState.selectedIds.length > 0) {
-              return gameState.selectedIds
-                .map((id) => getNodeById(gameState.fs, id))
-                .filter((n): n is FileNode => !!n);
-            }
-            return currentItem ? [currentItem] : [];
-          };
+          // Always resolve selected nodes from FS, including hidden and filtered items
+          let nodesToGrab: FileNode[] = [];
+          if (gameState.selectedIds.length > 0) {
+            nodesToGrab = gameState.selectedIds
+              .map((id) => getNodeById(gameState.fs, id))
+              .filter((n): n is FileNode => !!n);
+          } else if (currentItem) {
+            nodesToGrab = [currentItem];
+          }
 
-          const nodesToGrab = resolveSelectedNodes();
+          // Defensive: Remove duplicates (by id)
+          const uniqueNodes = Array.from(new Map(nodesToGrab.map((n) => [n.id, n])).values());
 
-          const grabbingHoneypot = nodesToGrab.some(
+          const grabbingHoneypot = uniqueNodes.some(
             (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
           );
-
           if (grabbingHoneypot) {
             showNotification(
               '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
-              5000
+              500
             );
             // Still allow the operation so player can learn to abort with Y
           }
 
-          if (gameState.selectedIds.length > 0) {
-            // Use resolved nodes
-            const nodes = nodesToGrab;
-            if (e.key === 'x') {
-              const protectedItem = nodes
-                .map((node) =>
-                  isProtected(gameState.fs, gameState.currentPath, node, currentLevel, 'cut')
-                )
-                .find((res) => res !== null);
-              if (protectedItem) {
-                showNotification(`🔒 PROTECTED: ${protectedItem}`, 4000);
-                return;
-              }
-            }
-            setGameState((prev) => {
-              // When in search mode, each node may come from a different directory
-              // Attach actualParentPath so paste knows where to delete from
-              const nodesWithPaths = gameState.searchQuery
-                ? nodes.map((n) => {
-                    const fullPath = findPathById(prev.fs, n.id);
-                    return {
-                      ...n,
-                      actualParentPath: fullPath ? fullPath.slice(0, -1) : prev.currentPath,
-                    };
-                  })
-                : nodes;
+          if (uniqueNodes.length > 0) {
+            // Attach actualParentPath for search mode
+            const nodesWithPaths = gameState.searchQuery
+              ? uniqueNodes.map((n) => {
+                  const fullPath = findPathById(gameState.fs, n.id);
+                  return {
+                    ...n,
+                    actualParentPath: fullPath ? fullPath.slice(0, -1) : gameState.currentPath,
+                  };
+                })
+              : uniqueNodes;
 
-              return {
-                ...prev,
-                clipboard: {
-                  nodes: nodesWithPaths,
-                  action: e.key === 'x' ? 'cut' : 'yank',
-                  originalPath: prev.currentPath,
-                },
-                selectedIds: [],
-                notification:
-                  getNarrativeAction(e.key) ||
-                  `${nodes.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
-              };
-            });
-          } else if (currentItem) {
-            if (e.key === 'x') {
-              const protection = isProtected(
-                gameState.fs,
-                gameState.currentPath,
-                currentItem,
-                currentLevel,
-                'cut'
-              );
-              if (protection) {
-                showNotification(`🔒 PROTECTED: ${protection}`, 4000);
-                return;
-              }
-            }
-            setGameState((prev) => {
-              // When in search mode, attach actualParentPath for correct paste behavior
-              const nodeWithPath = gameState.searchQuery
-                ? (() => {
-                    const fullPath = findPathById(prev.fs, currentItem.id);
-                    return {
-                      ...currentItem,
-                      actualParentPath: fullPath ? fullPath.slice(0, -1) : prev.currentPath,
-                    };
-                  })()
-                : currentItem;
-
-              return {
-                ...prev,
-                clipboard: {
-                  nodes: [nodeWithPath],
-                  action: e.key === 'x' ? 'cut' : 'yank',
-                  originalPath: prev.currentPath,
-                },
-                notification:
-                  getNarrativeAction(e.key) ||
-                  `"${currentItem.name}" ${e.key === 'x' ? 'cut' : 'yanked'}`,
-              };
-            });
+            setGameState((prev) => ({
+              ...prev,
+              clipboard: {
+                nodes: nodesWithPaths,
+                action: e.key === 'x' ? 'cut' : 'yank',
+                originalPath: prev.currentPath,
+              },
+              selectedIds: [],
+              notification:
+                getNarrativeAction(e.key) ||
+                `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
+            }));
           }
           break;
         }
@@ -936,7 +881,7 @@ export const useKeyboardHandlers = (
                 ? [currentItem.id]
                 : [];
           if (toDelete.length === 0) {
-            showNotification('Nothing to delete', 2000);
+            showNotification('Nothing to delete', 500);
             break;
           }
           setGameState((prev) => ({
@@ -1306,7 +1251,7 @@ export const useKeyboardHandlers = (
       if (e.key === 'Y' || e.key === 'X') {
         e.preventDefault();
         setGameState((prev) => ({ ...prev, clipboard: null }));
-        showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 2000);
+        showNotification(getNarrativeAction('Y') || 'CLIPBOARD CLEARED', 500);
       }
     },
     [showNotification]

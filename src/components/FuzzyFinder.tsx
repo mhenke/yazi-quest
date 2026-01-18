@@ -87,7 +87,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
       const zKeys = Object.keys(gameState.zoxideData);
       const currentLevel = LEVELS[gameState.levelIndex];
       const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel).map((d) =>
-        resolvePath(gameState.fs, d.path),
+        resolvePath(gameState.fs, d.path)
       );
       return dirs
         .filter((path) => zKeys.includes(path))
@@ -179,7 +179,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
 
   return (
     <div
-      data-test-id="fuzzy-finder"
+      data-testid="fuzzy-finder"
       className={`absolute inset-0 z-[100] flex flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? 'border-2 border-purple-500/30' : 'border border-zinc-900'}`}
     >
       <div className="px-4 py-2 text-[11px] text-zinc-500 flex items-center gap-3 border-b border-zinc-900">
@@ -215,24 +215,27 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
                 return (
                   <div
                     key={String(item.path) + idx}
+                    data-testid={`file-${item.path}`}
                     onClick={() =>
                       _onSelect(
                         String(item.path),
                         isZoxide,
-                        (item as unknown as { pathIds?: string[] }).pathIds,
+                        (item as unknown as { pathIds?: string[] }).pathIds
                       )
                     }
-                    className={`px-4 py-2 flex items-center gap-3 text-sm transition-colors duration-75 cursor-pointer ${isSelected ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-200'
-                      }`}
+                    className={`px-4 py-2 flex items-center gap-3 text-sm transition-colors duration-75 cursor-pointer ${
+                      isSelected ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-200'
+                    }`}
                   >
                     {isZoxide && (
                       <span
-                        className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded tabular-nums min-w-[36px] text-center ${isSelected
+                        className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded tabular-nums min-w-[36px] text-center ${
+                          isSelected
                             ? isQuantumLevel
                               ? 'bg-purple-900/40 text-purple-200'
                               : 'bg-orange-900/40 text-orange-200'
                             : 'text-zinc-600'
-                          }`}
+                        }`}
                       >
                         {item.score?.toFixed(1)}
                       </span>

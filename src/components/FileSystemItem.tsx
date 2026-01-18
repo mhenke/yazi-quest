@@ -83,7 +83,7 @@ const getFakeDate = (node: FileNode) => {
     hash |= 0;
   }
   // Use a fixed base time (Jan 1, 2024) instead of Date.now() for stability
-  const baseTime = 1704067200000;
+  const baseTime = 17040675000;
   const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
   const date = new Date(baseTime - offset);
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -148,7 +148,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
     <React.Fragment>
       <div
         role="listitem"
-        data-test-id={`file-${item.name}`}
+        data-testid={`file-${item.name}`}
         aria-current={isCursor ? 'location' : undefined}
         aria-label={`${item.name}, ${item.type}`}
         className={getListItemRowClasses(

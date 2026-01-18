@@ -9,9 +9,9 @@ export async function findFZF(page: Page, name: string): Promise<void> {
   // Wait for results to appear in the DOM before confirming
   // The fuzzy finder renders results in a div with data-test-id="fuzzy-finder"
   // We can look for the item name in the results
-  const fuzzyFinder = page.locator('[data-test-id="fuzzy-finder"]');
+  const fuzzyFinder = page.locator('[data-testid="fuzzy-finder"]');
   await expect(fuzzyFinder).toBeVisible();
-  await expect(fuzzyFinder.getByText(name).first()).toBeVisible({ timeout: 5000 });
+  await expect(fuzzyFinder.getByText(name).first()).toBeVisible({ timeout: 500 });
 
   await page.keyboard.press('Enter');
   await page.waitForTimeout(DEFAULT_DELAY); // Wait for navigation to complete
@@ -23,12 +23,14 @@ export async function findFZF(page: Page, name: string): Promise<void> {
  * Usage: await renameItem(page, 'uplink_v2.conf');
  */
 export async function renameItem(page: Page, name: string): Promise<void> {
-  await pressKey(page, 'r');
-  // Try to select all and clear, then type new name
+  await page.keyboard.press('r');
+  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
+  await page.waitForTimeout(200); // Wait for modal animation/focus
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
+  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -36,12 +38,14 @@ export async function renameItem(page: Page, name: string): Promise<void> {
  * Usage: await addItem(page, 'filename_or_dir/');
  */
 export async function addItem(page: Page, name: string): Promise<void> {
-  await pressKey(page, 'a');
-  // we need to clear out the field first
+  await page.keyboard.press('a');
+  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
+  await page.waitForTimeout(200); // Wait for modal animation/focus
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
+  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -67,13 +71,21 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
   // Unified intro skip logic.
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
   try {
-    await skipButton.click({ timeout: 2000 });
-    await expect(skipButton).not.toBeVisible({ timeout: 3000 });
+    await skipButton.click({ timeout: 500 });
+    await expect(skipButton).not.toBeVisible({ timeout: 1000 });
   } catch (error) {
     // This is expected behavior for many levels.
   }
 
   await page.waitForTimeout(DEFAULT_DELAY); // Standard post-load delay
+}
+
+/**
+ * Combines goToLevel and assertLevelStartedIncomplete for a cleaner test start.
+ */
+export async function startLevel(page: Page, level: number): Promise<void> {
+  await goToLevel(page, level);
+  await assertLevelStartedIncomplete(page);
 }
 
 /**
@@ -83,7 +95,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
 export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
   // Wait for the Task counter to appear and assert it starts at 0
   const taskCounter = page.getByText(/Tasks: 0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 5000 });
+  await expect(taskCounter).toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -95,7 +107,7 @@ export async function assertTask(
   outputDir: string,
   screenshotName?: string
 ): Promise<void> {
-  await expect(page.getByText(`Tasks: ${taskCount}`)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(`Tasks: ${taskCount}`)).toBeVisible({ timeout: 500 });
 
   if (screenshotName) {
     const url = new URL(page.url());
@@ -194,6 +206,72 @@ export async function typeText(page: Page, text: string): Promise<void> {
 }
 
 /**
+ * Dismisses a game alert (like Protocol Violation or Threat Detected) using Shift+Enter.
+ */
+export async function dismissAlert(page: Page): Promise<void> {
+  await page.keyboard.press('Shift+Enter');
+}
+
+/**
+ * Standardizes mission completion verification.
+ * Waits for mission complete state and asserts the success toast title.
+ */
+export async function confirmMission(page: Page, title: string): Promise<void> {
+  await waitForMissionComplete(page);
+  await expect(page.getByRole('alert').getByText(title)).toBeVisible();
+}
+
+/**
+ * Utility to delete the currently selected item(s).
+ * Handles both normal (d) and permanent (D) deletion flows.
+ */
+export async function deleteItem(
+  page: Page,
+  options: { permanent?: boolean; confirm?: boolean } = { confirm: true }
+): Promise<void> {
+  if (options.permanent) {
+    await page.keyboard.press('Shift+D');
+  } else {
+    await pressKey(page, 'd');
+  }
+
+  if (options.confirm) {
+    await page.waitForTimeout(200);
+    await pressKey(page, 'y'); // Confirm deletion
+  }
+}
+
+/**
+ * Asserts the content of the status clipboard.
+ */
+export async function expectClipboard(page: Page, text: string): Promise<void> {
+  await expect(page.locator('[data-testid="status-clipboard"]')).toContainText(text);
+}
+
+/**
+ * Asserts the current directory name in the breadcrumbs.
+ */
+export async function expectCurrentDir(page: Page, dirName: string): Promise<void> {
+  await expect(page.locator('.breadcrumb')).toContainText(dirName);
+}
+
+/**
+ * Navigates to the parent directory by pressing 'h'.
+ */
+export async function goParent(page: Page): Promise<void> {
+  await pressKey(page, 'h');
+}
+
+/**
+ * Navigates up parent directories multiple times.
+ */
+export async function goParentCount(page: Page, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await goParent(page);
+  }
+}
+
+/**
  * Navigates down in the file list by pressing 'j' a specified number of times.
  */
 export async function navigateDown(page: Page, count: number): Promise<void> {
@@ -246,6 +324,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   await typeText(page, filterText);
   await page.keyboard.press('Enter'); // Confirm filter
   await pressKey(page, ' '); // Toggle selection
+  await clearFilter(page); // Clear filter for next action
 }
 
 /**
@@ -331,10 +410,12 @@ export async function isInfoPanelVisible(page: Page): Promise<boolean> {
  * Get the file name at the current cursor position.
  */
 export async function getSelectedFileName(page: Page): Promise<string | null> {
-  const selected = page.locator('[data-test-id^="fs-item-"][data-cursor="true"]');
+  const selected = page
+    .locator('[data-testid^="file-"]')
+    .filter({ has: page.locator('[aria-current="location"]') });
   if (await selected.isVisible()) {
-    const name = await selected.getAttribute('data-test-id');
-    return name?.replace('fs-item-', '') || null;
+    const testid = await selected.getAttribute('data-testid');
+    return testid?.replace('file-', '') || null;
   }
   return null;
 }

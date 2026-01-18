@@ -36,6 +36,7 @@ export const InputModal: React.FC<InputModalProps> = ({
         className={`pointer-events-auto bg-zinc-900/95 border ${borderColorClass} shadow-2xl p-4 min-w-[400px] backdrop-blur-sm rounded-sm`}
         role="dialog"
         aria-modal="true"
+        data-testid="input-modal"
       >
         <div
           className={`text-sm font-mono mb-2 font-bold uppercase tracking-widest ${borderColorClass.replace('border-', 'text-')}`}
@@ -44,6 +45,7 @@ export const InputModal: React.FC<InputModalProps> = ({
         </div>
         <input
           ref={inputRef}
+          data-testid={testid || 'input-modal-input'}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -63,7 +65,6 @@ export const InputModal: React.FC<InputModalProps> = ({
             // Keep focus unless we are unmounting or user explicitly tabbed away (which shouldn't happen much in this game)
             e.target.focus();
           }}
-          data-testid={testid}
           placeholder={placeholder}
         />
       </div>

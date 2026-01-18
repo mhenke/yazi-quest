@@ -97,7 +97,7 @@ Episode III — Mastery
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
 - L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo. **Optional:** Discover identity log file (`~/workspace/.identity.log.enc`) revealing the twist.
 - L14: Evidence Purge — **Constraint:** Create 3 decoys first. Then purge data. **Critical:** Delete `.config` LAST to avoid shell collapse. Workspace (including identity log) is permanently deleted.
-- L15: Transmission Protocol — **4-phase verification gauntlet:** Assemble keys, verify daemon, sanitize breadcrumbs, initiate upload. Score 6/8 phases required to pass.
+- L15: Transmission Protocol — **4-phase verification gauntlet:** Enter Vault, Verify Keys, Verify Configs, and Verify Training Data. 4/4 phases required to pass.
 
 ---
 

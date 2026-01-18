@@ -84,7 +84,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const isCustomSort = state.sortBy !== 'natural';
 
   return (
-    <div className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30">
+    <div
+      data-testid="status-bar"
+      className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
+    >
       {/* 1. Mode Block (Pill Style) */}
       <div className="flex items-center px-2 bg-zinc-900">
         <div

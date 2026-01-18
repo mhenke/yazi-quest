@@ -103,7 +103,7 @@ export const OutroSequence: React.FC = () => {
       parts.push(
         <span key={offset} className={cls}>
           {match}
-        </span>,
+        </span>
       );
       lastIndex = (offset as number) + match.length;
       return match;
@@ -229,7 +229,7 @@ export const OutroSequence: React.FC = () => {
       parts.push(
         <span key={offset} className={cls}>
           {match}
-        </span>,
+        </span>
       );
       lastIndex = (offset as number) + match.length;
       return match;
@@ -396,7 +396,7 @@ export const OutroSequence: React.FC = () => {
       <div className={`absolute inset-0 z-10 flex items-center justify-center`}>
         {/* Background Video Container - Fades in */}
         <div
-          className={`absolute inset-0 transition-opacity duration-3000 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+          className={`absolute inset-0 transition-opacity duration-500 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
         >
           <video
             ref={videoRef}

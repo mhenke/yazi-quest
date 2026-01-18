@@ -3308,7 +3308,7 @@ export const LEVELS: Level[] = [
       'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
-    maxKeystrokes: 30,
+    maxKeystrokes: 60,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
     onEnter: (fs, gameState) => {

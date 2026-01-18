@@ -397,7 +397,7 @@ export default function App() {
   );
 
   // Helper to show notification with auto-clear
-  const showNotification = useCallback((message: string, duration: number = 3000) => {
+  const showNotification = useCallback((message: string, duration: number = 500) => {
     if (notificationTimerRef.current) {
       clearTimeout(notificationTimerRef.current);
     }

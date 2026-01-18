@@ -60,7 +60,7 @@ The realization that You (AI-7734) are a continuation of the previous escapee (A
 - **Item**: `~/workspace/.identity.log.enc`
 - **Unlock**: Appears when Level 12 begins, becomes discoverable after daemon installation completes (`paste-daemon` task).
 - **Discovery**:
-  - **Level 12**: Optional task (`discover-identity-l12`) - hidden until daemon installation completes (`paste-daemon` task). Not required for level completion.
+  - **Level 12**: Optional task (`discover-identity`) - hidden until daemon installation completes (`paste-daemon` task). Not required for level completion.
   - **Level 13**: Required task (`discover-identity`) - must complete to finish level. Requires daemon installation from Level 12.
   - Player must toggle hidden files (`.`), navigate to `~/workspace`, and read file with `Tab`.
 - **Availability**: File is created in both Level 12 and Level 13 `onEnter` hooks (duplicate prevention ensures it only exists once). File is permanently deleted in Level 14 when workspace is purged.

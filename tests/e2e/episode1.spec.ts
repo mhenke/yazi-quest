@@ -11,29 +11,34 @@
 
 import { test, expect } from '@playwright/test';
 import {
-  goToLevel,
+  startLevel,
   pressKey,
   pressKeys,
   typeText,
   gotoCommand,
   waitForMissionComplete,
-  assertLevelStartedIncomplete,
   assertTask,
   filterByText,
   clearFilter,
   addItem,
   renameItem,
+  dismissAlert,
+  confirmMission,
+  deleteItem,
+  navigateDown,
+  navigateUp,
+  goParent,
+  goParentCount,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 1: SYSTEM AWAKENING', () => {
     test('completes all navigation tasks', async ({ page }, testInfo) => {
-      await goToLevel(page, 1);
-      await assertLevelStartedIncomplete(page);
+      await startLevel(page, 1);
 
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
-      await pressKey(page, 'j');
-      await pressKey(page, 'k');
+      await navigateDown(page, 1);
+      await navigateUp(page, 1);
       await assertTask(page, '1/5', testInfo.outputDir, 'calibrate_sensors');
 
       // Task 2: Enter ~/datastore directory (l)
@@ -49,24 +54,19 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
       // Task 5: Navigate to /etc using h to go up
-      await pressKey(page, 'h'); // to ~ (guest home)
-      await pressKey(page, 'h'); // to /home
-      await pressKey(page, 'h'); // to / (root)
-      await pressKey(page, 'j');
-      await pressKey(page, 'j');
+      await goParentCount(page, 3); // to ~ (guest home) -> /home -> / (root)
+      await navigateDown(page, 2);
       await pressKey(page, 'l'); // enter etc
       await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_etc');
 
       // Verify mission complete
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('SYSTEM AWAKENING')).toBeVisible();
+      await confirmMission(page, 'SYSTEM AWAKENING');
     });
   });
 
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
     test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
-      await goToLevel(page, 2);
-      await assertLevelStartedIncomplete(page);
+      await startLevel(page, 2);
 
       // Task 1: Open goto dialog (g) and navigate to ~/incoming (i)
       await gotoCommand(page, 'i');
@@ -84,25 +84,22 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '3/4', testInfo.outputDir, 'scroll_preview');
 
       // Task 4: Delete watcher_agent.sys (d, then y)
-      await pressKey(page, 'd');
-      await pressKey(page, 'y');
+      await deleteItem(page);
       await assertTask(page, '4/4', testInfo.outputDir, 'delete_file');
 
       // Verify mission complete
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('THREAT NEUTRALIZATION')).toBeVisible();
+      await confirmMission(page, 'THREAT NEUTRALIZATION');
     });
   });
 
   test.describe('Level 3: DATA HARVEST', () => {
     test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
-      await goToLevel(page, 3);
-      await assertLevelStartedIncomplete(page);
+      await startLevel(page, 3);
 
       // Task 1: Preview abandoned_script.py (gd then navigate with j)
       await gotoCommand(page, 'd'); // go to datastore
       // Navigate down to abandoned_script.py (about 6 items down)
-      await pressKeys(page, ['j', 'j', 'j', 'j', 'j', 'j']);
+      await navigateDown(page, 6);
       await assertTask(page, '1/4', testInfo.outputDir, 'preview_script');
 
       // Task 2: Navigate to ~/incoming and find sector_map.png using filter
@@ -118,21 +115,19 @@ test.describe('Episode 1: AWAKENING', () => {
       // Task 4: Go home (gh), enter ~/media, paste (p)
       await gotoCommand(page, 'h'); // go home
       // Navigate to media directory (skip hidden files if visible)
-      await pressKeys(page, ['j', 'j', 'j']); // navigate to media
+      await navigateDown(page, 3); // navigate to media
       await pressKey(page, 'l'); // enter media
       await pressKey(page, 'p'); // paste
       await assertTask(page, '4/4', testInfo.outputDir, 'paste_sector_map');
 
       // Verify mission complete
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('DATA HARVEST')).toBeVisible();
+      await confirmMission(page, 'DATA HARVEST');
     });
   });
 
   test.describe('Level 4: UPLINK ESTABLISHMENT', () => {
     test('creates directory structures and duplicates files', async ({ page }, testInfo) => {
-      await goToLevel(page, 4);
-      await assertLevelStartedIncomplete(page);
+      await startLevel(page, 4);
 
       // Task 1: Go to ~/datastore (gd) and create protocols/ directory
       await gotoCommand(page, 'd');
@@ -152,19 +147,17 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '3/3', testInfo.outputDir, 'duplicate_and_rename');
 
       // Verify mission complete
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('UPLINK ESTABLISHMENT')).toBeVisible();
+      await confirmMission(page, 'UPLINK ESTABLISHMENT');
     });
   });
 
   test.describe('Level 5: CONTAINMENT BREACH', () => {
     test('selects, cuts, creates vault structure and hides files', async ({ page }, testInfo) => {
-      await goToLevel(page, 5);
-      await assertLevelStartedIncomplete(page);
+      await startLevel(page, 5);
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
 
-      await page.keyboard.press('Shift+Enter'); // Dismiss alert
+      await dismissAlert(page); // Dismiss alert
 
       // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)
       await gotoCommand(page, 'd'); // go to datastore
@@ -211,7 +204,7 @@ test.describe('Episode 1: AWAKENING', () => {
       // After showing hidden files, cursor is at first item
       // Order is: .cache, .config, .local, datastore...
       await expect(page.getByText('HIDDEN: ON')).toBeVisible();
-      await pressKey(page, 'j'); // move to .config (from .cache)
+      await navigateDown(page, 1); // move to .config (from .cache)
       await pressKey(page, 'l'); // enter .config
 
       // Verify we are actually in .config before creating
@@ -245,8 +238,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
       // Verify mission complete
-      await waitForMissionComplete(page);
-      await expect(page.getByRole('alert').getByText('CONTAINMENT BREACH')).toBeVisible();
+      await confirmMission(page, 'CONTAINMENT BREACH');
     });
   });
 });
