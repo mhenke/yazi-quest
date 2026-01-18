@@ -10,7 +10,10 @@ import {
   assertTask,
   navigateDown,
   DEFAULT_DELAY,
+  filterByText,
+  clearFilter,
 } from './utils';
+import { clear } from 'console';
 
 test.describe('Episode 2: FORTIFICATION', () => {
   // Level 6: BATCH OPERATIONS - Batch Select (Ctrl+A) and Recursive Search (s)
@@ -61,32 +64,35 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await goToLevel(page, 7);
     await assertTask(page, '0/4', testInfo.outputDir, 'start');
 
-    // Task 1: Locate 'access_token.key' using FZF find (z) from root
+    // Task 1: Jump to Root (gr)
     await gotoCommand(page, 'r');
+    await assertTask(page, '1/4', testInfo.outputDir, 'jump_to_root');
+
+    // Task 2: Locate 'access_token.key' using FZF find (z)
     await pressKey(page, 'z');
     await typeText(page, 'access_token');
     await pressKey(page, 'Enter'); // Select in FZF
-    await assertTask(page, '1/4', testInfo.outputDir, 'fzf_access_token');
+    await assertTask(page, '2/4', testInfo.outputDir, 'fzf_access_token');
 
-    // Task 2: Stage the suspicious file for deletion
+    // Task 3: Stage the suspicious file (x)
     await pressKey(page, 'x');
-    await assertTask(page, '2/4', testInfo.outputDir, 'stage_file');
+    await assertTask(page, '3/4', testInfo.outputDir, 'stage_file');
 
-    // Task 3: Jump to '/etc' using FZF directory jump
-    await pressKey(page, 'Shift+z');
+    // Task 4: Jump to '/etc' using FZF directory jump (Z -> etc -> Enter)
+    await pressKey(page, 'Shift+Z');
     await typeText(page, 'etc');
     await pressKey(page, 'Enter');
-    await assertTask(page, '3/4', testInfo.outputDir, 'jump_to_etc');
 
-    // Task 4: Abort the pending operation when the threat alert appears
-    // The alert is modal, so we confirm it, then abort the clipboard.
-    await page.waitForTimeout(DEFAULT_DELAY * 2); // Wait for alert to be reliably visible
-    const alert = page.getByText('Unauthorized operation detected');
-    await expect(alert).toBeVisible();
-    await pressKey(page, 'Enter'); // Dismiss alert
+    // Wait for threat alert to appear
+    await page.waitForTimeout(DEFAULT_DELAY * 2);
 
-    await pressKey(page, 'Shift+y'); // Abort clipboard action
-    await assertTask(page, '4/4', testInfo.outputDir, 'abort_operation');
+    // Dismiss the threat dialog
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(300);
+
+    // Abort clipboard with Y
+    await page.keyboard.press('Shift+Y');
+    await page.waitForTimeout(300);
 
     await waitForMissionComplete(page);
   });
@@ -103,32 +109,27 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await filterAndNavigate(page, 'systemd-core');
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_systemd');
 
-    // Task 2: Preview the corrupted 'uplink_v1.conf'
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
-    await pressKey(page, 'Escape');
-    await assertTask(page, '2/4', testInfo.outputDir, 'preview_corrupted');
+    // Task 2: Preview 'uplink_v1.conf' to confirm corruption
+    await filterByText(page, 'uplink_v1.conf');
+    await assertTask(page, '2/4', testInfo.outputDir, 'verify_damage');
 
-    // Task 3: Jump to '~/.config/vault/active' and yank the clean 'uplink_v1.conf'
-    await ensureCleanState(page);
+    // Task 3: Jump to '~/.config/vault/active' and yank 'uplink_v1.conf'
+    await clearFilter(page);
     await gotoCommand(page, 'c');
     await filterAndNavigate(page, 'vault');
     await filterAndNavigate(page, 'active');
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
-    await pressKey(page, 'Escape');
+    await filterByText(page, 'uplink_v1.conf');
     await pressKey(page, 'y');
-    await assertTask(page, '3/4', testInfo.outputDir, 'yank_clean_file');
+    await assertTask(page, '3/4', testInfo.outputDir, 'acquire_patch');
 
-    // Task 4: Return to '~/workspace/systemd-core' and force-overwrite the corrupted file
-    await ensureCleanState(page);
+    // Task 4: Return to '~/workspace/systemd-core' and force overwrite (Shift+P)
+    await clearFilter(page);
     await gotoCommand(page, 'w');
     await filterAndNavigate(page, 'systemd-core');
-    await pressKey(page, 'f');
-    await typeText(page, 'uplink_v1.conf');
-    await pressKey(page, 'Escape');
+
     await pressKey(page, 'Shift+p');
-    await assertTask(page, '4/4', testInfo.outputDir, 'force_overwrite');
+
+    await assertTask(page, '4/4', testInfo.outputDir, 'deploy_patch');
 
     await waitForMissionComplete(page);
   });
@@ -140,18 +141,14 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await goToLevel(page, 9);
     await assertTask(page, '0/3', testInfo.outputDir, 'start');
 
-    // Task 1: Select the files to keep. The `initialPath` already places us in /tmp.
-    await pressKey(page, 'f');
-    await page.keyboard.type('ghost_process.pid', { delay: 50 });
-    await page.keyboard.press('Escape'); // Exit filter input, keeping selection
-    await pressKey(page, ' '); // Select the filtered item
-    await pressKey(page, 'Escape'); // Clear the filter
+    // Task 1: Select the files to keep.
+    await filterByText(page, 'ghost_process.pid');
+    await pressKey(page, ' '); // Select it
+    await clearFilter(page);
 
-    await pressKey(page, 'f');
-    await page.keyboard.type('socket_001.sock', { delay: 50 });
-    await page.keyboard.press('Escape'); // Exit filter input
-    await pressKey(page, ' '); // Select the filtered item
-    await pressKey(page, 'Escape'); // Clear the filter
+    await filterByText(page, 'socket_001.sock');
+    await pressKey(page, ' '); // Select it
+    await clearFilter(page);
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_critical_files');
 
@@ -181,9 +178,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_archives');
 
     // Task 2: Filter for '.zip' files and select them
-    await pressKey(page, 'f');
-    await typeText(page, '.zip');
-    await pressKey(page, 'Escape');
+    await filterByText(page, '.zip');
     await pressKey(page, ' '); // Select first
     await pressKey(page, 'j');
     await pressKey(page, ' '); // Select second

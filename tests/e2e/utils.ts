@@ -160,13 +160,28 @@ export async function navigateUp(page: Page, count: number): Promise<void> {
 }
 
 /**
+ * Filters the file list by text and then exits the filter input, keeping the
+ * file selection active. This uses a direct keyboard event for 'Escape'
+ * as it's more reliable for modal inputs.
+ */
+export async function filterByText(page: Page, text: string): Promise<void> {
+  await pressKey(page, 'f');
+  await typeText(page, text);
+  await page.keyboard.press('Escape'); // Use direct press for modal
+}
+
+/**
+ * Clears an active filter by pressing Escape.
+ */
+export async function clearFilter(page: Page): Promise<void> {
+  await page.keyboard.press('Escape'); // Use direct press for modal
+}
+
+/**
  * Filter to find an item, then navigate into it.
- * Leaves the filter active on the parent directory.
  */
 export async function filterAndNavigate(page: Page, filterText: string): Promise<void> {
-  await pressKey(page, 'f');
-  await typeText(page, filterText);
-  await pressKey(page, 'Escape'); // Exit filter mode to lock selection
+  await filterByText(page, filterText);
   await pressKey(page, 'l'); // Navigate into directory
 }
 
