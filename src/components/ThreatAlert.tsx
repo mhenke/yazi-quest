@@ -3,10 +3,11 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ThreatAlertProps {
   message: string;
+  author?: string;
   onDismiss: () => void;
 }
 
-export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) => {
+export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, author, onDismiss }) => {
   // Keyboard handling is managed globally in App.tsx to coordinate with game state
   // (e.g. blocking dismissal for Honeypot traps until clipboard is cleared)
 
@@ -31,6 +32,12 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, onDismiss }) 
         <div className="w-full border-t border-orange-800/50 pt-4 mb-2">
           <p className="text-white text-md font-mono font-medium leading-relaxed">{message}</p>
         </div>
+
+        {author && (
+          <div className="w-full text-right mt-2 mr-2">
+            <span className="text-orange-500/80 font-mono text-xs italic">- {author}</span>
+          </div>
+        )}
 
         <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
           Press Shift+Enter to dismiss

@@ -5,7 +5,11 @@ import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE } from '../constants';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 
-export const OutroSequence: React.FC = () => {
+interface OutroSequenceProps {
+  onRestartCycle?: () => void;
+}
+
+export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) => {
   // Part navigation (like EpisodeIntro but across multiple parts)
   const [partIndex, setPartIndex] = useState(0);
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -261,6 +265,16 @@ export const OutroSequence: React.FC = () => {
       }
     };
   }, [showTeaser]);
+
+  // Pillar I: Trigger restart cycle after teaser is shown for a few seconds
+  useEffect(() => {
+    if (showTeaser && onRestartCycle) {
+      const timer = setTimeout(() => {
+        onRestartCycle();
+      }, 5000); // Give user 5s to digest the teaser before "crashing"
+      return () => clearTimeout(timer);
+    }
+  }, [showTeaser, onRestartCycle]);
 
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">

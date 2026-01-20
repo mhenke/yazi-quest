@@ -4,18 +4,18 @@ import {
   pressKey,
   gotoCommand,
   typeText,
-  filterAndNavigate,
-  ensureCleanState,
   assertTask,
   filterByText,
   clearFilter,
   addItem,
+  ensureCleanState,
   findFZF,
   fuzzyJump,
   dismissAlert,
   confirmMission,
   deleteItem,
   expectCurrentDir,
+  search,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -39,10 +39,11 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // 4) ctrl+a, then y
     await pressKey(page, 'Control+a');
     await pressKey(page, 'y');
+    // Task 3 requires clearing the search (Escape) to be marked complete
+    await pressKey(page, 'Escape');
     await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
-    // 5) ESC to clear search then gc (g then c)
-    await pressKey(page, 'Escape');
+    // 5) gc (g then c) -- Escape is already pressed
     await gotoCommand(page, 'c');
     await assertTask(page, '3/5', testInfo.outputDir, 'after_gc');
 
@@ -100,41 +101,43 @@ test.describe('Episode 2: FORTIFICATION', () => {
   }, testInfo) => {
     await startLevel(page, 8);
 
-    // Objective 1: Navigate to '~/workspace/systemd-core'
-    await gotoCommand(page, 'w');
-    await filterAndNavigate(page, 'systemd-core');
-    await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_systemd');
+    // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
+    await pressKey(page, 'g');
+    await pressKey(page, 'w');
+    await pressKey(page, 'l');
+    await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
-    // Objective 2: Preview 'uplink_v1.conf' to confirm corruption
+    // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
     await filterByText(page, 'uplink_v1');
-    await pressKey(page, 'Escape');
-    await assertTask(page, '2/4', testInfo.outputDir, 'preview_corrupted');
+    await assertTask(page, '2/5', testInfo.outputDir, 'preview_corrupted');
 
+    // Objective 3: Clear the filter (Esc x2: once for input, once for filter)
     await pressKey(page, 'Escape');
-
-    // Objective 3: Jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
-    await pressKey(page, '.');
-    await gotoCommand(page, 'h');
-    await filterAndNavigate(page, '.config');
-    await filterAndNavigate(page, 'vault');
-    await filterAndNavigate(page, 'active');
-
-    await filterByText(page, 'uplink_v1');
     await pressKey(page, 'Escape');
+    await assertTask(page, '3/5', testInfo.outputDir, 'clear_filter');
+
+    // Objective 4: Jump to '~/.config/vault/active' (Shift+Z -> "active" -> Enter) and yank (y)
+    await pressKey(page, 'Shift+Z');
+    await page.waitForTimeout(500); // Wait for input field
+    await page.keyboard.type('active', { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500); // Wait for jump animation
+
+    // Ensure we are in active directory
+    await expect(page.locator('header')).toContainText('active');
+
+    // Select uplink_v1.conf and yank
     await pressKey(page, 'y');
-    await assertTask(page, '3/4', testInfo.outputDir, 'yank_clean_file');
+    await assertTask(page, '4/5', testInfo.outputDir, 'yank_clean_file');
 
-    await pressKey(page, 'Escape');
-    await pressKey(page, '.');
+    // Objective 5: Return to '~/workspace/systemd-core' (Shift+H) and OVERWRITE (Shift+P)
+    await pressKey(page, 'Shift+H');
+    await page.waitForTimeout(500);
+    await expect(page.locator('header')).toContainText('systemd-core');
 
-    // Objective 4: Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) local file
-    await gotoCommand(page, 'w');
-    await filterAndNavigate(page, 'systemd-core');
-
-    await filterByText(page, 'uplink_v1');
-    await pressKey(page, 'Escape');
-    await page.keyboard.press('Shift+P');
-    await assertTask(page, '4/4', testInfo.outputDir, 'force_overwrite');
+    await pressKey(page, 'Shift+P');
+    await assertTask(page, '5/5', testInfo.outputDir, 'force_overwrite');
 
     await confirmMission(page, 'DAEMON DISGUISE CONSTRUCTION');
   });
@@ -157,6 +160,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Select socket_001.sock
     await filterByText(page, 'socket_001.sock');
+    await pressKey(page, ' ');
+    await clearFilter(page);
+
+    // FIX: Also select system_monitor.pid so it gets deselected on invert (preserving it)
+    // This is the solution to the Honeypot puzzle
+    await filterByText(page, 'system_monitor.pid');
     await pressKey(page, ' ');
     await clearFilter(page);
 
@@ -211,15 +220,19 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 'w'); // go to workspace
 
     // Nav to systemd-core
-    await filterAndNavigate(page, 'systemd-core');
-    await clearFilter(page);
+    await search(page, 'systemd-core');
+    await page.waitForTimeout(500);
+    await pressKey(page, 'l');
+    await pressKey(page, 'Escape');
 
     // Create credentials/ folder
     await addItem(page, 'credentials/');
 
     // Enter credentials/
-    await filterAndNavigate(page, 'credentials');
-    await clearFilter(page);
+    await search(page, 'credentials');
+    await page.waitForTimeout(500);
+    await pressKey(page, 'l');
+    await pressKey(page, 'Escape');
 
     // Paste
     await pressKey(page, 'p');

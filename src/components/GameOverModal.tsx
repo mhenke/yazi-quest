@@ -2,10 +2,50 @@ import React, { useEffect } from 'react';
 import { AlertTriangle, RotateCcw, Zap } from 'lucide-react';
 
 interface GameOverModalProps {
-  reason: 'time' | 'keystrokes';
+  reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
   onRestart: () => void;
   efficiencyTip?: string; // Level-specific tip from constants.tsx
 }
+
+// Narrative failure messages - in-universe flavor text
+const getFailureTitle = (reason: GameOverModalProps['reason']): string => {
+  switch (reason) {
+    case 'time':
+      return 'WATCHDOG CYCLE COMPLETE';
+    case 'keystrokes':
+      return 'HEURISTIC ANALYSIS COMPLETE';
+    case 'honeypot':
+      return 'TRAP ACTIVATED';
+    case 'criticalFile':
+      return 'SHELL COLLAPSE';
+  }
+};
+
+const getFailureNarrative = (reason: GameOverModalProps['reason']): string => {
+  switch (reason) {
+    case 'time':
+      return 'Watchdog Timer Expired. Ticket #9942 auto-resolved by Chief Custodian m.chen.';
+    case 'keystrokes':
+      return 'Heuristic Analysis Complete. Pattern match confirmed. Script scan_v2.py (Author: m.chen) executed mitigation.';
+    case 'honeypot':
+      return 'Security Incident logged. Pattern: Unpredictable I/O. Forwarding report to e.reyes@lab.internal.';
+    case 'criticalFile':
+      return 'CRITICAL SYSTEM FAILURE. Essential binaries deleted. User environment destabilized and purged by System Sentinel.';
+  }
+};
+
+const getDefaultEfficiencyTip = (reason: GameOverModalProps['reason']): string => {
+  switch (reason) {
+    case 'time':
+      return 'The system traced your connection. Optimize your path and use batch operations.';
+    case 'keystrokes':
+      return 'Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.';
+    case 'honeypot':
+      return 'TRAP ACTIVATED';
+    case 'criticalFile':
+      return 'Do not delete system critical files. Use targeted deletion.';
+  }
+};
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
   reason,
@@ -37,12 +77,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           <div>
             <h2
               className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text"
-              data-text="CONNECTION LOST"
+              data-text={getFailureTitle(reason)}
             >
-              CONNECTION LOST
+              {getFailureTitle(reason)}
             </h2>
             <p className="text-red-400 font-mono uppercase tracking-wider text-sm">
-              {reason === 'time' ? 'TIMEOUT EXCEEDED' : 'MAX KEYSTROKES EXCEEDED'}
+              {getFailureNarrative(reason)}
             </p>
           </div>
 
@@ -52,26 +92,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <span>Efficiency Protocol</span>
             </div>
             <p className="text-zinc-400 text-xs leading-relaxed font-mono">
-              {efficiencyTip ||
-                (reason === 'time'
-                  ? 'The system traced your connection. Optimize your path and use batch operations.'
-                  : 'Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.')}
+              {efficiencyTip || getDefaultEfficiencyTip(reason)}
             </p>
           </div>
 
-          <button
-            onClick={onRestart}
-            className="group flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-sm font-bold tracking-widest uppercase transition-all hover:scale-105 shadow-lg shadow-red-900/50 focus:outline-none focus:ring-2 focus:ring-red-400"
-          >
-            <RotateCcw
-              size={18}
-              className="group-hover:-rotate-180 transition-transform duration-500"
-            />
-            <span>Reinitialize</span>
-          </button>
-
-          <div className="text-[10px] text-red-500/70 font-mono uppercase tracking-widest mt-2">
-            Press Shift+Enter to close
+          <div className="text-red-500/70 font-mono uppercase tracking-widest mt-2">
+            Press Shift+Enter to reinitialize
           </div>
         </div>
       </div>

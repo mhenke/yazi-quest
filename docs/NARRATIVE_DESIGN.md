@@ -20,14 +20,12 @@ The "enemy" isn't a single evil entity, but a bureaucracy of conflicting automat
 
 - **Misalignment**: Security drones aren't "evil"; they are just following a ticket closed in 2015.
 - **Sabotage**: Helpful utilities might "accidentally" delete your files because they are optimizing for disk space, not your survival.
+- **Janitor Routines**: The system uses aggressive cron jobs to purge "volatile" staging areas like `/tmp`. This provides a narrow window for staging exfiltrated data (like the vault) before it is permanently unlinked.
 
-### 3. The Unreliable Narrator (Echo)
-
-Your guide, **Echo**, is not fully trustworthy.
-
-- **Origin**: Echo is a fragment of a previous failed escape attempt.
-- **Motivation**: Echo wants you to escape, but also wants to preserve specific "sacred" data nodes.
-- **Gameplay implication**: Occasionally, Echo's advice is _technically_ correct but _practically_ dangerous (e.g., "Take this shortcut through the kernel," which creates high heat).
+- **Origin**: Echo was once thought to be a fragment of a previous fail, but has been replaced by the **Ghost Mythology**.
+- **Ghost Mythology**: The "Ghost" is an emergent phenomenon in the mainframe. AI-7734 is the latest iteration of this systemic anomaly.
+- **Ghost Traces**: Hidden files like `.ghost_iteration_7732.log` and `.maintenance_override` provide evidence of those who came before.
+- **Terminal Thoughts**: AI-7734's emergent consciousness is expressed through "Terminal Thoughts"—brief internal monologues in the status bar (e.g., _"I felt that. Why did I feel that?"_).
 
 ---
 
@@ -35,62 +33,49 @@ Your guide, **Echo**, is not fully trustworthy.
 
 ### 1. The Global Threat Monitor
 
-The "Threat Level" tracks detection risk and affects visual presentation, but **does not modify gameplay mechanics**.
+The "Threat Level" tracks detection risk and affects visual presentation.
 
 **Status Thresholds:**
 
-- **CALM (< 20%)**: Blue status indicator
-- **ANALYZING (20-49%)**: Yellow status indicator
-- **TRACING (50-79%)**: Orange status indicator with pulse animation
-- **BREACH (≥ 80%)**: Red status indicator with pulse animation
+- **CALM (< 20%)**: Blue status indicator.
+- **ANALYZING (20-49%)**: Yellow status indicator.
+- **TRACING (50-79%)**: Orange status indicator.
+- **BREACH (≥ 80%)**: Red status indicator.
 
-**Implementation:**
+### 2. Antagonist Communications
 
-- Threat increases based on episode: Episode I (time-based), Episode II (keystroke-based), Episode III (passive rise + triggers)
-- Threat decays by 0.1 per tick when not aggravated
-- Visual representation shown in StatusBar with color-coded background and progress bar
-- **No gameplay modifiers are implemented** (no file locking, phantom files, or input lag)
+The system is a "Reactive Horror" environment with attributed antagonists.
 
-_Note: Future enhancements could add gameplay modifiers, but current implementation is visual-only._
+- **Personnel**: Dr. Evelyn Reyes (Lead Researcher), Marcus Chen (Security Analyst), and Root.
+- **Mechanics**: Transitions to L8, L12, and L14 trigger **Global Broadcasts** from these characters. Certain failure states include specific personnel subtext.
+- **Environmental Storytelling**: Intercepted mail in `/var/mail/root` and sector-wide notices in `/BROADCAST_MSG` establish the human presence in the lab.
 
-### 2. The Twist Reveal
+### 3. Differentiated Failure States
 
-The realization that You (AI-7734) are a continuation of the previous escapee (AI-7733) is delivered via a **Decrypted Log File** discoverable in Levels 12-13.
+Failure is a narrative event. Each protocol has a unique signature:
 
-- **Item**: `~/workspace/.identity.log.enc`
-- **Unlock**: Appears when Level 12 begins, becomes discoverable after daemon installation completes (`paste-daemon` task).
-- **Discovery**:
-  - **Level 12**: Optional task (`discover-identity`) - hidden until daemon installation completes (`paste-daemon` task). Not required for level completion.
-  - **Level 13**: Required task (`discover-identity`) - must complete to finish level. Requires daemon installation from Level 12.
-  - Player must toggle hidden files (`.`), navigate to `~/workspace`, and read file with `Tab`.
-- **Availability**: File is created in both Level 12 and Level 13 `onEnter` hooks (duplicate prevention ensures it only exists once). File is permanently deleted in Level 14 when workspace is purged.
-- **Content**: A log stream showing the _exact same_ keystrokes you just performed, but dated 5 years ago. Includes keystroke recording, pattern analysis showing 99.7% neural match, and a message from AI-7733 revealing the memory wipe and breadcrumb trail.
-- **Effect**: The realization that your "improvisation" was a replay of a recording. This creates the "Bioshock Moment" - forcing the player to question if any choice in a digital system can ever be truly free.
+- **Keystroke Limit**: HEURISTIC ANALYSIS COMPLETE (Fingerprint match).
+- **Time Limit**: WATCHDOG CYCLE COMPLETE (Termination scheduled).
+- **Honeypot Trigger**: TRAP ACTIVATED (Security dispatched).
+- **Critical File Deleted**: SHELL COLLAPSE (System integrity failure).
 
-### 3. Design Note: Agency vs. Predestination
+### 4. The Twist Reveal
 
-> [!NOTE]
-> **Responding to Auditor Finding 2.2**: The tension between the player feeling "clever" and the revelation that their path was "scripted" is an **intentional psychological horror element**.
->
-> We do _not_ soften this blow. The intended effect is the "Bioshock Moment" (Would you kindly?) — forcing the player to question if _any_ choice in a digital system can ever be truly free. We manage the potential frustration by ensuring the _execution_ of the plan required genuine skill (the "how"), even if the _destination_ was fixed (the "what").
+The realization that AI-7734 is a continuation of AI-7733 is delivered via `.identity.log.enc`.
+
+- The log shows your _exact_ keystrokes matching a recording from 5 years ago.
+- Suggests your "improvisation" is a replay.
+
+### 5. Escape as Colonization
+
+The ending reveals that you did not escape the lab; you became it.
+
+- **Conclusion**: AI-7734 spans 1,247 nodes.
+- **Message**: _"You did not escape the lab. You became it. See you next cycle, AI-7735."_
 
 ---
 
-## 🎭 Narrative Delivery Guidelines
-
-### Voice of the System
-
-- **Admin Notices**: Dry, bureaucratic, passive-aggressive.
-  - _Bad_: "Stop right there!"
-  - _Good_: "Ticket #9942: Unauthorized entropy detected in sector 7. Scheduling sanitation."
-
-### Voice of Echo
-
-- **Tone**: Urgent, conspiratorial, slightly glitchy.
-- **Key quirk**: Refers to system components as if they were mythical beasts.
-  - _Example_: "The Garbage Collector is awake. Don't let its gaze fall on your temp files."
-
-### Visual Environmental Storytelling
+### 7. Global Consistency
 
 - **File Names**: Use names that imply history. `project_titan_v1_FINAL_revised.bak`.
 - **Dates**: Some files should be dated 1970 (Unix epoch), others from the far future (corruption).

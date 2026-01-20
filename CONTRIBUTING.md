@@ -83,3 +83,26 @@ To test specific random events in Level 12 (Daemon Installation), you can force 
 - **`scen-a3`**: Dependency Error - Spawns `lib_error.log` in `~/workspace`, adds "FIX: Deprecated library warning..." task
 
 All scenarios include the 4-5 core installation tasks (navigate, cut, paste systemd-core). Scenario-specific tasks are automatically hidden if their threat files don't exist.
+
+## Testing & E2E Requirements
+
+All interactive components must include `data-testid` attributes to support the Playwright E2E suite.
+
+### Required Test IDs:
+
+| Component         | `data-testid`            | Notes                                              |
+| :---------------- | :----------------------- | :------------------------------------------------- |
+| **File/Dir Item** | `file-${item.name}`      | Applied to the container in `FileSystemItem.tsx`   |
+| **Mission Toast** | `mission-complete`       | Applied to the success notification                |
+| **Input Modals**  | `input-modal`            | General ID for create/rename/filter modals         |
+| **Input Field**   | `input-modal-input`      | Specific ID for the input element itself           |
+| **Status Bar**    | `status-bar`             | Container for the fixed status area                |
+| **Clipboard**     | `status-clipboard`       | Specifically for the `[YANK]` or `[CUT]` indicator |
+| **Panes**         | `filesystem-pane-active` | Also supports `-inactive` variant                  |
+| **Search**        | `search-input`           | Specifically for the recursive search input        |
+| **Fuzzy Finder**  | `fuzzy-finder`           | Specifically for the `z` shortcut UI               |
+
+### Best Practices:
+
+- **No Manual State**: If a level requires a specific state (e.g. 10 files in `/tmp`), implement it in `onEnter` rather than assuming existing state.
+- **Wait for Modals**: E2E tests should always wait for transitions (`Enter`, `Escape`) to resolve before checking tasks.

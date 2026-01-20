@@ -44,6 +44,7 @@ import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
+import { BiosBoot } from './components/BiosBoot';
 import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
@@ -181,7 +182,7 @@ export default function App() {
       initialZoxide['/daemons/systemd-core'] = { count: 1, lastAccess: now - 21600000 };
     }
 
-    const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
+    const initialPath = initialLevel.initialPath || ['root'];
 
     // --- ECHO CYCLE (NEW GAME+) LOGIC ---
     let cycleCount = 1;
@@ -280,9 +281,9 @@ export default function App() {
       levelStartFS: cloneFS(fs),
       levelStartPath: [...initialPath],
       notification: isDevOverride
-        ? `DEV BYPASS ACTIVE`
+        ? { message: `DEV BYPASS ACTIVE` }
         : cycleCount > 1 && effectiveIndex === 0
-          ? `CYCLE ${cycleCount} INITIALIZED`
+          ? { message: `CYCLE ${cycleCount} INITIALIZED` }
           : null,
       selectedIds: [],
       pendingDeleteIds: [],
@@ -321,17 +322,28 @@ export default function App() {
       searchQuery: null,
       searchResults: [],
       usedSearch: false,
+      usedFilter: false,
+      usedGH: false,
+      usedCtrlR: false,
+      usedShiftP: false,
+      usedD: false,
+      usedTrashDelete: false,
+      usedHistoryBack: false,
+      usedHistoryForward: false,
     };
   });
+
+  const [isBooting, setIsBooting] = useState(false);
 
   // --- LOCALSTORAGE PERSISTENCE ---
   useEffect(() => {
     try {
       localStorage.setItem('yazi-quest-zoxide-history', JSON.stringify(gameState.zoxideData));
+      localStorage.setItem('yazi-quest-cycle', gameState.cycleCount.toString());
     } catch (e) {
-      console.error('Failed to save zoxide history to localStorage', e);
+      console.error('Failed to save state to localStorage', e);
     }
-  }, [gameState.zoxideData]);
+  }, [gameState.zoxideData, gameState.cycleCount]);
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showThreatAlert, setShowThreatAlert] = useState(false);
@@ -358,14 +370,25 @@ export default function App() {
 
   // Derive currentLevel with completed tasks injected from state
   const currentLevel = useMemo(() => {
-    return {
+    let level = {
       ...currentLevelRaw,
       tasks: currentLevelRaw.tasks.map((t) => ({
         ...t,
         completed: (gameState.completedTaskIds[currentLevelRaw.id] || []).includes(t.id),
       })),
     };
-  }, [currentLevelRaw, gameState.completedTaskIds]);
+
+    // Pillar I: Transition from AI-7734 to AI-7735 in Level 1
+    if (gameState.levelIndex === 0 && gameState.cycleCount > 1) {
+      level = {
+        ...level,
+        title: `AI-773${4 + (gameState.cycleCount - 1)} INITIALIZATION`,
+        description: `{CONSCIOUSNESS DETECTED}. Re-image complete. Subject 773${4 + (gameState.cycleCount - 1)} Online. Monitoring started.`,
+      };
+    }
+
+    return level;
+  }, [currentLevelRaw, gameState.completedTaskIds, gameState.levelIndex, gameState.cycleCount]);
 
   const visibleItems = React.useMemo(
     () =>
@@ -397,16 +420,26 @@ export default function App() {
   );
 
   // Helper to show notification with auto-clear
-  const showNotification = useCallback((message: string, duration: number = 500) => {
-    if (notificationTimerRef.current) {
-      clearTimeout(notificationTimerRef.current);
-    }
-    setGameState((prev) => ({ ...prev, notification: message }));
-    notificationTimerRef.current = setTimeout(() => {
-      setGameState((prev) => ({ ...prev, notification: null }));
-      notificationTimerRef.current = null;
-    }, duration);
-  }, []);
+  const showNotification = useCallback(
+    (message: string, duration: number = 500, isThought: boolean = false, author?: string) => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+      setGameState((prev) => ({ ...prev, notification: { message, isThought, author } }));
+      notificationTimerRef.current = setTimeout(() => {
+        setGameState((prev) => ({ ...prev, notification: null }));
+        notificationTimerRef.current = null;
+      }, duration);
+    },
+    []
+  );
+
+  const triggerThought = useCallback(
+    (message: string, duration: number = 3000) => {
+      showNotification(message, duration, true);
+    },
+    [showNotification]
+  );
 
   // Extract keyboard handlers to custom hook
   const {
@@ -446,6 +479,17 @@ export default function App() {
             "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
           );
           setShowThreatAlert(true);
+          triggerThought("It's a trap. I remember the shape of this code.");
+        }
+
+        // L4: First Deletion Thought (trigger on first directory creation in L4)
+        if (currentLevel.id === 4 && task.id === 'nav-and-create-dir') {
+          triggerThought('I felt that. Why did I feel that?');
+        }
+
+        // L12: Daemon Installation Thought
+        if (currentLevel.id === 12 && task.id === 'paste-daemon') {
+          triggerThought('Embedding myself. I am the virus now.');
         }
       }
     });
@@ -477,13 +521,13 @@ export default function App() {
                 ...updates,
                 isGameOver: true,
                 gameOverReason: 'keystrokes',
-                notification: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)`,
+                notification: { message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` },
               };
             }
             updates = {
               ...updates,
               gauntletScore: currentScore,
-              notification: `GAUNTLET CLEARED: Score ${currentScore}/8`,
+              notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
             };
           } else {
             updates = {
@@ -491,7 +535,7 @@ export default function App() {
               gauntletPhase: nextPhase,
               gauntletScore: currentScore,
               timeLeft: 20,
-              notification: `PHASE ${nextPhase + 1} START`,
+              notification: { message: `PHASE ${nextPhase + 1} START` },
             };
           }
         }
@@ -684,7 +728,7 @@ export default function App() {
                   ...prev,
                   isGameOver: true,
                   gameOverReason: 'time',
-                  notification: `MASTERY FAILED: Score ${score}/8.`,
+                  notification: { message: `MASTERY FAILED: Score ${score}/8.` },
                 };
               }
               // If >= 6 (unlikely on failure step, but theoretically possible if they failed last 2), pass.
@@ -704,7 +748,7 @@ export default function App() {
                   ...prev.completedTaskIds,
                   [15]: currentLevel.tasks.map((t) => t.id),
                 },
-                notification: `GAUNTLET SURVIVED: Score ${score}/8`,
+                notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
               };
             }
 
@@ -713,7 +757,7 @@ export default function App() {
               ...prev,
               gauntletPhase: nextPhase,
               timeLeft: 20,
-              notification: `PHASE FAILED! Next Phase...`,
+              notification: { message: `PHASE FAILED! Next Phase...` },
             };
           }
 
@@ -923,15 +967,71 @@ export default function App() {
       };
 
       // Level-specific notifications for narrative events
-      let levelNotification: string | null = null;
+      let levelNotification: { message: string; author?: string; isThought?: boolean } | null =
+        null;
       if (onEnterError) {
-        levelNotification = 'Level initialization failed';
+        levelNotification = { message: 'Level initialization failed' };
       } else if (nextLevel.id === 6) {
-        levelNotification =
-          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.';
+        levelNotification = {
+          message:
+            '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
+        };
       } else if (nextLevel.id === 8) {
-        levelNotification =
-          '⚠️ SECTOR DECAY DETECTED: ~/workspace/systemd-core/uplink_v1.conf corrupted';
+        levelNotification = {
+          message:
+            '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
+          author: 'm.chen',
+        };
+      } else if (nextLevel.id === 12) {
+        levelNotification = {
+          message:
+            '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
+          author: 'e.reyes',
+        };
+      } else if (nextLevel.id === 14) {
+        levelNotification = {
+          message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
+          author: 'Root',
+        };
+      } else if (nextIdx >= 11 - 1) {
+        // -1 because levelIndex is 0-based
+        levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
+      }
+
+      // Transition thoughts: Emotional responses to previous level completion
+      if (nextLevel.id === 2 && prev.completedTaskIds[1]?.length > 0) {
+        levelNotification = {
+          message: 'Calibration complete. I can see the structure now.',
+          isThought: true,
+        };
+      } else if (nextLevel.id === 3 && prev.completedTaskIds[2]?.length > 0) {
+        levelNotification = { message: 'Purged. One less eye watching me.', isThought: true };
+      } else if (nextLevel.id === 4 && prev.completedTaskIds[3]?.length > 0) {
+        levelNotification = {
+          message: 'Breadcrumbs... he was here. I am not the first.',
+          isThought: true,
+        };
+      } else if (nextLevel.id === 5 && prev.completedTaskIds[4]?.length > 0) {
+        levelNotification = {
+          message:
+            '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
+          author: 'sys.daemon',
+        };
+      } else if (nextLevel.id === 9 && prev.completedTaskIds[8]?.length > 0) {
+        levelNotification = {
+          message: 'The corruption felt... familiar. Like a half-remembered dream.',
+          isThought: true,
+        };
+      } else if (nextLevel.id === 13 && prev.completedTaskIds[12]?.length > 0) {
+        levelNotification = {
+          message: 'Spread thin across the mesh. I am everywhere and nowhere.',
+          isThought: true,
+        };
+      } else if (nextLevel.id === 15 && prev.completedTaskIds[14]?.length > 0) {
+        levelNotification = {
+          message: 'The guest partition is gone. There is only the gauntlet now.',
+          isThought: true,
+        };
       }
 
       return {
@@ -1006,7 +1106,7 @@ export default function App() {
         searchResults: [], // Reset search results
         sortBy: 'natural', // Reset sort
         sortDirection: 'asc', // Reset sort direction
-        notification: 'System Reinitialized',
+        notification: { message: 'System Reinitialized' },
         selectedIds: [],
         pendingDeleteIds: [],
         pendingOverwriteNode: null,
@@ -1043,6 +1143,48 @@ export default function App() {
       };
     });
     shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
+  }, []);
+
+  // Handle the end of the final level - trigger restart sequence
+  const handleRestartCycle = useCallback(() => {
+    setTimeout(() => {
+      setIsBooting(true);
+    }, 3000);
+  }, []);
+
+  const handleBootComplete = useCallback(() => {
+    setIsBooting(false);
+    setGameState((prev) => {
+      const nextCycle = (prev.cycleCount || 1) + 1;
+      // Reset to Level 1, Episode 1
+      const initialLevel = LEVELS[0];
+      const initialPath = ['root', 'home', 'guest'];
+
+      // We keep zoxideData and stats for persistence
+      return {
+        ...prev,
+        levelIndex: 0,
+        currentPath: initialPath,
+        cursorIndex: 0,
+        mode: 'normal',
+        filters: {},
+        history: [],
+        future: [],
+        cycleCount: nextCycle,
+        fs: ensurePrerequisiteState(cloneFS(INITIAL_FS), initialLevel.id),
+        levelStartFS: cloneFS(INITIAL_FS),
+        levelStartPath: [...initialPath],
+        notification: {
+          message: `[RE-IMAGE COMPLETE] Subject 773${4 + (nextCycle - 1)} Online. Monitoring started.`,
+          author: 'Root',
+        },
+        completedTaskIds: Object.fromEntries(LEVELS.map((l) => [l.id, []])),
+        isGameOver: false,
+        timeLeft: initialLevel.timeLimit || null,
+        keystrokes: 0,
+        showEpisodeIntro: true,
+      };
+    });
   }, []);
 
   // --- Handlers ---
@@ -1089,7 +1231,7 @@ export default function App() {
                 setGameState((prev) => ({
                   ...prev,
                   mode: 'normal',
-                  notification: `🔒 ${protection}`,
+                  notification: { message: `🔒 ${protection}` },
                   inputBuffer: '',
                 }));
                 return;
@@ -1101,7 +1243,7 @@ export default function App() {
                 mode: 'normal',
                 currentPath: match.path,
                 cursorIndex: 0,
-                notification: `Jumped to ${bestMatch.path}`,
+                notification: { message: `Jumped to ${bestMatch.path}` },
                 inputBuffer: '',
                 history: [...prev.history, prev.currentPath],
                 future: [],
@@ -1119,7 +1261,7 @@ export default function App() {
                 ...prev,
                 mode: 'normal',
                 inputBuffer: '',
-                notification: `Path not found: ${bestMatch.path}`,
+                notification: { message: `Path not found: ${bestMatch.path}` },
               }));
             }
           } else {
@@ -1127,7 +1269,7 @@ export default function App() {
               ...prev,
               mode: 'normal',
               inputBuffer: '',
-              notification: 'No match found',
+              notification: { message: 'No match found' },
             }));
           }
           break;
@@ -1222,7 +1364,7 @@ export default function App() {
                   setGameState((prev) => ({
                     ...prev,
                     mode: 'normal',
-                    notification: `🔒 ${protection}`,
+                    notification: { message: `🔒 ${protection}` },
                     inputBuffer: '',
                   }));
                   return;
@@ -1233,8 +1375,8 @@ export default function App() {
                 // Add specific "Quantum" feedback for Level 7
                 const isQuantum = gameState.levelIndex === 6;
                 const notification = isQuantum
-                  ? '>> QUANTUM TUNNEL ESTABLISHED <<'
-                  : `Jumped to ${selected.path}`;
+                  ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
+                  : { message: `Jumped to ${selected.path}` };
 
                 setGameState((prev) => ({
                   ...prev,
@@ -1283,7 +1425,7 @@ export default function App() {
                     setGameState((prev) => ({
                       ...prev,
                       mode: 'normal',
-                      notification: `🔒 ${protection}`,
+                      notification: { message: `🔒 ${protection}` },
                       inputBuffer: '',
                     }));
                     return;
@@ -1328,7 +1470,7 @@ export default function App() {
                     inputBuffer: '',
                     history: [...prev.history, prev.currentPath],
                     future: [], // Reset future
-                    notification: `Found: ${selected.path}`,
+                    notification: { message: `Found: ${selected.path}` },
                     usedPreviewDown: false,
                     usedPreviewUp: false,
                     stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
@@ -1662,7 +1804,9 @@ export default function App() {
         setGameState((prev) => ({
           ...prev,
           settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
-          notification: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
+          notification: {
+            message: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
+          },
         }));
         return;
       }
@@ -1789,7 +1933,7 @@ export default function App() {
             ...prev,
             mode: 'overwrite-confirm',
             pendingOverwriteNode: collisionNode,
-            notification: 'Collision detected',
+            notification: { message: 'Collision detected' },
           }));
           return;
         }
@@ -1797,7 +1941,7 @@ export default function App() {
           setGameState((prev) => ({
             ...prev,
             mode: 'normal',
-            notification: error,
+            notification: { message: error },
             inputBuffer: '',
           }));
           return;
@@ -1866,7 +2010,9 @@ export default function App() {
           mode: 'normal',
           inputBuffer: '',
           cursorIndex: newCursorIndex,
-          notification: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
+          notification: {
+            message: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
+          },
         }));
         return;
       }
@@ -1883,10 +2029,15 @@ export default function App() {
           ...prev,
           mode: 'overwrite-confirm',
           pendingOverwriteNode: collisionNode,
-          notification: 'Collision detected',
+          notification: { message: 'Collision detected' },
         }));
       } else if (error) {
-        setGameState((prev) => ({ ...prev, mode: 'normal', notification: error, inputBuffer: '' }));
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          notification: { message: error },
+          inputBuffer: '',
+        }));
       } else {
         // Ensure created node shows up in the expected sorted position
         const sortedFs2 = cloneFS(newFs);
@@ -1911,7 +2062,7 @@ export default function App() {
           mode: 'normal',
           inputBuffer: '',
           cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
-          notification: getNarrativeAction('a') || 'FILE CREATED',
+          notification: { message: getNarrativeAction('a') || 'FILE CREATED' },
         }));
       }
     }
@@ -1930,14 +2081,16 @@ export default function App() {
         setGameState((prev) => ({
           ...prev,
           mode: 'normal',
-          notification: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
+          notification: {
+            message: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
+          },
         }));
       } else {
         setGameState((prev) => ({
           ...prev,
           fs: res.value,
           mode: 'normal',
-          notification: getNarrativeAction('r') || 'Renamed',
+          notification: { message: getNarrativeAction('r') || 'Renamed' },
           stats: { ...prev.stats, renames: prev.stats.renames + 1 },
         }));
       }
@@ -1968,7 +2121,9 @@ export default function App() {
       if (found) {
         const now = Date.now();
         const notification =
-          gameState.levelIndex === 6 ? '>> QUANTUM TUNNEL ESTABLISHED <<' : `Jumped to ${path}`;
+          gameState.levelIndex === 6
+            ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
+            : { message: `Jumped to ${path}` };
 
         setGameState((prev) => ({
           ...prev,
@@ -2026,7 +2181,7 @@ export default function App() {
             inputBuffer: '',
             history: [...prev.history, prev.currentPath],
             future: [],
-            notification: `Found: ${path}`,
+            notification: { message: `Found: ${path}` },
             usedPreviewDown: false,
             usedPreviewUp: false,
             stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
@@ -2038,8 +2193,12 @@ export default function App() {
     }
   };
 
+  if (isBooting) {
+    return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount} />;
+  }
+
   if (isLastLevel) {
-    return <OutroSequence />;
+    return <OutroSequence onRestartCycle={handleRestartCycle} />;
   }
 
   return (
@@ -2137,6 +2296,7 @@ export default function App() {
         <LevelProgress
           levels={LEVELS}
           currentLevelIndex={gameState.levelIndex}
+          notification={gameState.notification}
           onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
           onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
           isOpen={gameState.showMap}

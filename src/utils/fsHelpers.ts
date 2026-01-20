@@ -309,19 +309,17 @@ export function resolveAndCreatePath(
   let pathSegmentsToCreate: string[] = [];
 
   if (inputPath.startsWith('~/')) {
-    // Resolve "~" to //home/guest node IDs
+    // Resolve "~" to root node ID (Flattened FS)
     const rootNode = getNodeById(newRoot, 'root');
-    const homeNode = getNodeById(newRoot, 'home');
-    const guestNode = getNodeById(newRoot, 'guest');
 
-    if (!rootNode || !homeNode || !guestNode) {
+    if (!rootNode) {
       return {
         fs: newRoot,
-        error: 'Home directory nodes (root, home, guest) not found',
+        error: 'Root node not found',
         targetNode: undefined,
       };
     }
-    effectiveParentPath = [rootNode.id, homeNode.id, guestNode.id];
+    effectiveParentPath = [rootNode.id];
     pathSegmentsToCreate = inputPath.substring(2).split('/').filter(Boolean);
   } else if (inputPath.startsWith('/')) {
     // Start from the actual root of the game's filesystem

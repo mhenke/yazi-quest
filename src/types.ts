@@ -159,7 +159,7 @@ export interface GameState {
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   levelStartPath: string[]; // Path at start of level (for reset)
-  notification: string | null;
+  notification: { message: string; author?: string; isThought?: boolean } | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   deleteType: 'trash' | 'permanent' | null; // Type of delete for confirmation modal
@@ -174,7 +174,7 @@ export interface GameState {
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Track user inputs for mastery levels
   isGameOver: boolean; // Flag for game over state
-  gameOverReason?: 'time' | 'keystrokes'; // Reason for failure
+  gameOverReason?: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile'; // Reason for failure
   stats: GameStats;
   settings: GameSettings;
   fuzzySelectedIndex?: number; // For FZF navigation
@@ -194,6 +194,8 @@ export interface GameState {
   usedShiftP?: boolean; // Tracks if player used 'Shift+P' (overwrite paste)
   usedD?: boolean; // Tracks if player used 'D' for permanent delete
   usedTrashDelete?: boolean; // Tracks if player used 'd' for trash delete
+  usedHistoryBack?: boolean;
+  usedHistoryForward?: boolean;
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level

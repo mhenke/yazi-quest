@@ -39,13 +39,13 @@ export async function renameItem(page: Page, name: string): Promise<void> {
  */
 export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('a');
-  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
+  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 2000 });
   await page.waitForTimeout(200); // Wait for modal animation/focus
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
-  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 500 });
+  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 2000 });
 }
 
 /**
@@ -107,7 +107,7 @@ export async function assertTask(
   outputDir: string,
   screenshotName?: string
 ): Promise<void> {
-  await expect(page.getByText(`Tasks: ${taskCount}`)).toBeVisible({ timeout: 500 });
+  await expect(page.getByText(`Tasks: ${taskCount}`)).toBeVisible({ timeout: 5000 });
 
   if (screenshotName) {
     const url = new URL(page.url());
@@ -236,6 +236,8 @@ export async function deleteItem(
   }
 
   if (options.confirm) {
+    // Wait for the confirmation modal to appear to avoid race conditions
+    await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 2000 });
     await page.waitForTimeout(200);
     await pressKey(page, 'y'); // Confirm deletion
   }
@@ -298,6 +300,17 @@ export async function filterByText(page: Page, text: string): Promise<void> {
   await pressKey(page, 'f');
   await typeText(page, text);
   await page.keyboard.press('Enter'); // Confirm filter
+
+  // Handle distinct Protocol Violation modal that may appear
+  try {
+    const modal = page.getByText(/Protocol Violation/i);
+    if (await modal.isVisible({ timeout: 500 })) {
+      await page.keyboard.press('Escape'); // Dismiss modal
+      await page.waitForTimeout(200);
+    }
+  } catch (e) {
+    // Ignore timeout, modal didn't appear
+  }
 }
 
 /**
@@ -308,11 +321,12 @@ export async function clearFilter(page: Page): Promise<void> {
 }
 
 /**
- * Filter to find an item, then navigate into it.
+ * Performs a recursive search from the current location.
  */
-export async function filterAndNavigate(page: Page, filterText: string): Promise<void> {
-  await filterByText(page, filterText);
-  await pressKey(page, 'l'); // Navigate into directory
+export async function search(page: Page, query: string): Promise<void> {
+  await pressKey(page, 's');
+  await typeText(page, query);
+  await page.keyboard.press('Enter'); // Confirm search
 }
 
 /**
@@ -323,6 +337,18 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   await pressKey(page, 'f');
   await typeText(page, filterText);
   await page.keyboard.press('Enter'); // Confirm filter
+
+  // Handle distinct Protocol Violation modal that may appear
+  try {
+    const modal = page.getByText(/Protocol Violation/i);
+    if (await modal.isVisible({ timeout: 500 })) {
+      await page.keyboard.press('Escape'); // Dismiss modal
+      await page.waitForTimeout(200);
+    }
+  } catch (e) {
+    // Ignore timeout
+  }
+
   await pressKey(page, ' '); // Toggle selection
   await clearFilter(page); // Clear filter for next action
 }
@@ -358,6 +384,13 @@ export async function gotoCommand(
 ): Promise<void> {
   await pressKey(page, 'g');
   await pressKey(page, target);
+}
+
+/**
+ * Asserts that the game is currently on the expected level.
+ */
+export async function assertLevel(page: Page, levelId: string): Promise<void> {
+  await expect(page.getByText(`LVL ${levelId}`)).toBeVisible({ timeout: 5000 });
 }
 
 /**

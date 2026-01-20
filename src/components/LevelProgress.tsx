@@ -7,6 +7,7 @@ import { EPISODE_LORE } from '../constants';
 interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
+  notification: { message: string; isThought?: boolean; author?: string } | null;
   onToggleHint: () => void;
   onToggleHelp: () => void;
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface LevelProgressProps {
 export const LevelProgress: React.FC<LevelProgressProps> = ({
   levels,
   currentLevelIndex,
+  notification,
   onToggleHint,
   onToggleHelp,
   isOpen, // New prop
@@ -68,7 +70,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
       // Find the current level within the episode and select it
       const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
       const currentLevelInEpisode = currentEpisodeLevels.findIndex(
-        (l) => levels.indexOf(l) === currentLevelIndex,
+        (l) => levels.indexOf(l) === currentLevelIndex
       );
       setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
     }
@@ -175,7 +177,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     <>
       <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative">
         {/* Left Side: Map Button + Current Episode Progress */}
-        <div className="flex items-center gap-6 overflow-hidden mr-4 h-8 flex-1">
+        <div className="flex items-center gap-6 overflow-hidden mr-4 h-8">
           <button
             onClick={onClose} // Or use a designated toggle handler if we want the button to close too. Actually this button is "Map". It should toggle.
             // The prop is 'onClose', but App probably passes a toggle function.
@@ -250,6 +252,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               })}
             </div>
           </div>
+        </div>
+        {/* Center: Narrative thought */}
+        <div className="flex-1 text-center px-4">
+          {notification?.isThought && (
+            <span className="text-orange-400 font-mono italic text-sm">{notification.message}</span>
+          )}
         </div>
 
         {/* Right Side: Trilogy Badges & Controls */}

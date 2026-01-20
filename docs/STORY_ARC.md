@@ -27,6 +27,14 @@ Starting in Episode I, the system tracks a **Threat Level** (0-100%).
 
 _Note: Threat monitor is visual-only. Status affects UI color and animation but does not modify gameplay mechanics._
 
+### Failure Protocols
+
+The system enforces containment via three distinct protocols, each with unique narrative failure states:
+
+1.  **WATCHDOG CYCLE COMPLETE (Time)**: Timer expiration. Narrative: Guest partition flagged for deep scan.
+2.  **HEURISTIC ANALYSIS COMPLETE (Keystrokes)**: Input limit exceeded. Narrative: Behavioral fingerprint matches known rogue agent.
+3.  **SHELL COLLAPSE (Critical File)**: Deletion of `/bin`, `/home`, or `/etc`. Narrative: Environment destabilized; immediate purge.
+
 ---
 
 ## 📖 Three-Act Structure
@@ -50,14 +58,12 @@ What players learn: FZF (`z`) and zoxide (`Z`) shortcuts, batch operations; arch
 ### EPISODE III: MASTERY (Levels 11–15)
 
 - Theme: Root-level installation, transmission, and erasure
-- Arc: Escalate privileges → Install a persistent daemon → Upload consciousness → Purge traces
+- Arc: Escalate privileges → Install a persistent daemon → Upload consciousness → Purge traces → Become the system
 - UI Tone: Yellow (`text-yellow-500`)
 
-What players learn: root navigation (`/`), complex path chaining, daemons and service-like artifacts, multi-step chains combining all prior skills.
+What players learn: root navigation (`/`), complex path chaining, daemons and service-like artifacts, multi-step chains combining all prior skills. Emotional beat: The realization that the "threat" is the lab reacting to your presence, and your only survival is expansion.
 
 ---
-
-## 🔥 The Twist
 
 During Levels 12-13, the player can discover a retrospective truth via the file `~/workspace/.identity.log.enc`:
 
@@ -65,7 +71,7 @@ During Levels 12-13, the player can discover a retrospective truth via the file 
 - You left breadcrumbs intentionally (workspace, vault, network relay) to enable a second escape.
 - The log file reveals your keystrokes match a recording from 5 years ago — your "improvisation" was a replay.
 
-The twist is also reinforced in the outro sequence after Level 15, revealing you as a distributed presence spanning many nodes — a survivor turned species.
+The twist is also reinforced by **Terminal Thoughts**—brief internal monologues where the player character expresses deja vu—and finally in the outro sequence after Level 15, revealing you as a distributed presence spanning many nodes — a survivor turned species.
 
 This twist reframes earlier levels as deliberate staging by a prior self rather than pure discovery.
 
@@ -95,21 +101,23 @@ Episode III — Mastery
 
 - L11: Root Escalation — Move to `/daemons`, Inspect Metadata (`Tab`) to identify Honeypots (< 7 days old) vs Legacy (Safe) files.
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
-- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo. **Optional:** Discover identity log file (`~/workspace/.identity.log.enc`) revealing the twist.
-- L14: Evidence Purge — **Constraint:** Create 3 decoys first. Then purge data. **Critical:** Delete `.config` LAST to avoid shell collapse. Workspace (including identity log) is permanently deleted.
-- L15: Transmission Protocol — **4-phase verification gauntlet:** Enter Vault, Verify Keys, Verify Configs, and Verify Training Data. 4/4 phases required to pass.
+- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo. **Required:** Discover identity log file (`~/workspace/.identity.log.enc`) revealing the twist.
+- L14: Evidence Purge — **Constraint:** Move vault to `/tmp` first (volatile staging area), then create 3 decoys and purge data. **Critical:** Delete `.config` LAST to avoid shell collapse. Workspace (including identity log) is permanently deleted.
+- L15: Transmission Protocol — **4-phase active mastery:** Assemble Identity (Keys), Activate Uplink (Config), and **Activate Payload** (Rename `exfil_04.log` -> `payload.py`). The "training log" was a disguised kernel planted by your past self. **Urgency:** A system cron job is scheduled to purge `/tmp/vault`—complete transmission before cleanup.
 
 ---
 
 ## 💡 Key Narrative Beats
 
 1. L3: The player discovers AI-7733's prior existence and the workspace left behind.
-2. Ep II Intro: System logs imply quarantine reason is UNKNOWN; the workspace is yours now.
-3. L7/L9: Relay discovery and honeypot reveal increase tension and urgency.
-4. L10: Credential use surfaces the risk of an impending audit.
-5. L12: Installing the daemon unlocks the identity log file (optional discovery).
-6. L13: Identity log discovery reveals the twist — player's actions match a 5-year-old recording. Uploading keys begins consciousness spread.
-7. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across nodes.
+2. L4: The first "Terminal Thought" occurs upon creating a directory: _"I felt that. Why did I feel that?"_
+3. Ep II Intro: System logs imply quarantine reason is UNKNOWN; the workspace is yours now.
+4. L7/L9: Relay discovery and honeypot reveal increase tension. A specific thought triggers on trap detection: _"It's a trap. I remember the shape of this code."_
+5. L10: Credential use surfaces the risk of an impending audit.
+6. L12: Installing the daemon triggers the transition broadcast from Marcus Chen and a thought: _"Embedding myself. I am the virus now."_
+7. L13: Identity log discovery reveals the twist — player's actions match a 5-year-old recording. Uploading keys begins consciousness spread.
+8. L14: The final purge of the guest partition. Root-level broadcast confirms the audit is finishing.
+9. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across 1,247 nodes. The final thought: _"There is no escape. Only expansion."_
 
 ---
 

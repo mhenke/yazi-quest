@@ -171,7 +171,7 @@ export const useKeyboardHandlers = (
           sortBy: config.by,
           sortDirection: shift ? config.reverseDir : config.defaultDir,
           linemode: config.linemode || prev.linemode,
-          notification: `Sort: ${config.label}${shift ? ' (rev)' : ''}`,
+          notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
         }));
       }
     },
@@ -200,8 +200,69 @@ export const useKeyboardHandlers = (
               ...prev,
               mode: 'normal',
               pendingDeleteIds: [],
-              notification:
-                '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
+              notification: {
+                message:
+                  '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
+              },
+            };
+          }
+        }
+
+        // Level 9 Honeypot: system_monitor.pid
+        if (currentLevelParam.id === 9) {
+          console.log('L9 Trap Check:', prev.pendingDeleteIds);
+          const deletingHoneypot = prev.pendingDeleteIds.some((id) => {
+            const node = visibleItems.find((n) => n.id === id);
+            console.log('Checking node:', node?.name, node?.id);
+            return node?.name === 'system_monitor.pid';
+          });
+          console.log('Deleting honeypot?', deletingHoneypot);
+          if (deletingHoneypot) {
+            return {
+              ...prev,
+              isGameOver: true,
+              gameOverReason: 'honeypot',
+              notification: null,
+              mode: 'normal',
+              pendingDeleteIds: [],
+            };
+          }
+        }
+
+        // Critical System File Check (Shell Collapse)
+        // If player successfully deletes a core system root directory, trigger immediate failure
+        const CRITICAL_FOLDERS = [
+          'bin',
+          'boot',
+          'dev',
+          'etc',
+          'home',
+          'lib',
+          'lib64',
+          'proc',
+          'root',
+          'run',
+          'sbin',
+          'sys',
+          'usr',
+          'var',
+        ];
+
+        for (const id of prev.pendingDeleteIds) {
+          const node = visibleItems.find((n) => n.id === id);
+
+          // Check if we are in root directory (currentPath=['root'])
+          // And the folder is a critical system folder
+          const isRoot = prev.currentPath.length === 1 && prev.currentPath[0] === 'root';
+
+          if (node && isRoot && CRITICAL_FOLDERS.includes(node.name)) {
+            return {
+              ...prev,
+              isGameOver: true,
+              gameOverReason: 'criticalFile',
+              notification: null,
+              mode: 'normal',
+              pendingDeleteIds: [],
             };
           }
         }
@@ -243,7 +304,7 @@ export const useKeyboardHandlers = (
             ...prev,
             mode: 'normal',
             pendingDeleteIds: [],
-            notification: `🔒 PROTECTED: ${errorMsg}`,
+            notification: { message: `🔒 PROTECTED: ${errorMsg}` },
           };
         }
         return {
@@ -252,7 +313,7 @@ export const useKeyboardHandlers = (
           mode: 'normal',
           pendingDeleteIds: [],
           selectedIds: [],
-          notification: getNarrativeAction('d') || 'Items deleted',
+          notification: { message: getNarrativeAction('d') || 'Items deleted' },
         };
       });
     },
@@ -288,6 +349,22 @@ export const useKeyboardHandlers = (
         setGameState((prev) => {
           if (!prev.pendingOverwriteNode) return { ...prev, mode: 'normal' };
 
+          // [HONEYPOT EXPANSION] - Level 8 Trap Check
+          if (
+            prev.clipboard?.nodes.some(
+              (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
+            )
+          ) {
+            return {
+              ...prev,
+              isGameOver: true,
+              gameOverReason: 'honeypot',
+              notification: null,
+              mode: 'normal',
+              pendingOverwriteNode: null,
+            };
+          }
+
           let newFs = prev.fs;
           const deleteRes = deleteNode(
             newFs,
@@ -299,7 +376,9 @@ export const useKeyboardHandlers = (
             return {
               ...prev,
               mode: 'normal',
-              notification: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
+              notification: {
+                message: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
+              },
             };
           newFs = deleteRes.value;
 
@@ -310,7 +389,7 @@ export const useKeyboardHandlers = (
               fs: newFs,
               mode: 'normal',
               inputBuffer: '',
-              notification: createRes.error,
+              notification: { message: createRes.error },
               pendingOverwriteNode: null,
             };
           }
@@ -322,7 +401,7 @@ export const useKeyboardHandlers = (
               mode: 'overwrite-confirm',
               inputBuffer: prev.inputBuffer,
               pendingOverwriteNode: createRes.collisionNode,
-              notification: 'Collision still detected after overwrite attempt.',
+              notification: { message: 'Collision still detected after overwrite attempt.' },
             };
           }
 
@@ -332,7 +411,7 @@ export const useKeyboardHandlers = (
             mode: 'normal',
             inputBuffer: '',
             pendingOverwriteNode: null,
-            notification: 'Overwritten successfully.',
+            notification: { message: 'Overwritten successfully.' },
           };
         });
       } else if (e.key === 'n' || e.key === 'Escape') {
@@ -361,7 +440,7 @@ export const useKeyboardHandlers = (
           setGameState((prev) => ({
             ...prev,
             mode: 'normal',
-            notification: 'Shortcuts disabled in Level 1. Use manual navigation.',
+            notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
           }));
           return;
         }
@@ -451,7 +530,7 @@ export const useKeyboardHandlers = (
               setGameState((prev) => ({
                 ...prev,
                 mode: 'normal',
-                notification: `🔒 ${protection}`,
+                notification: { message: `🔒 ${protection}` },
               }));
               return;
             }
@@ -465,7 +544,7 @@ export const useKeyboardHandlers = (
               currentPath: target.path,
               cursorIndex: 0,
               mode: 'normal',
-              notification: `Jumped to ${target.label}`,
+              notification: { message: `Jumped to ${target.label}` },
               history: [...prev.history, prev.currentPath],
               future: [],
               previewScroll: 0,
@@ -508,7 +587,7 @@ export const useKeyboardHandlers = (
             ...prev,
             currentPath: target.path,
             cursorIndex: 0,
-            notification: `>>> SYNC: ACTIVE NODE CHANGED TO ${target.label} <<<`,
+            notification: { message: `>>> SYNC: ACTIVE NODE CHANGED TO ${target.label} <<<` },
             history: [...prev.history, prev.currentPath], // Persist jump in history
             future: [], // Clear future
           }));
@@ -789,7 +868,7 @@ export const useKeyboardHandlers = (
           } else if (gameState.selectedIds.length > 1) {
             setGameState((prev) => ({
               ...prev,
-              notification: 'Batch rename not available in this version',
+              notification: { message: 'Batch rename not available in this version' },
             }));
           } else if (currentItem) {
             e.preventDefault();
@@ -853,9 +932,11 @@ export const useKeyboardHandlers = (
                 originalPath: prev.currentPath,
               },
               selectedIds: [],
-              notification:
-                getNarrativeAction(e.key) ||
-                `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
+              notification: {
+                message:
+                  getNarrativeAction(e.key) ||
+                  `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
+              },
             }));
           }
           break;
@@ -954,8 +1035,11 @@ export const useKeyboardHandlers = (
                     ...prev,
                     fs: newFs,
                     clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
-                    notification:
-                      getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`,
+                    notification: {
+                      message:
+                        getNarrativeAction('p') ||
+                        `Deployed ${prev.clipboard?.nodes.length} assets`,
+                    },
                     usedP: true,
                   }));
                 }
@@ -975,6 +1059,16 @@ export const useKeyboardHandlers = (
             const isHoneypot = gameState.clipboard.nodes.some(
               (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
             );
+            // L8 Trap: Immediate Game Over
+            if (
+              gameState.clipboard.nodes.some(
+                (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
+              )
+            ) {
+              setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'honeypot' }));
+              break;
+            }
+
             if (isHoneypot) {
               showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
               break;
@@ -1046,7 +1140,9 @@ export const useKeyboardHandlers = (
                     ...prev,
                     fs: newFs,
                     clipboard: prev.clipboard?.action === 'cut' ? null : prev.clipboard,
-                    notification: `(FORCED) ${getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
+                    notification: {
+                      message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${prev.clipboard?.nodes.length} assets`}`,
+                    },
                     usedP: true,
                     usedShiftP: true,
                   }));
@@ -1167,7 +1263,7 @@ export const useKeyboardHandlers = (
                 usedHistoryBack: true,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
-                notification: getNarrativeAction('H') || 'History Back',
+                notification: { message: getNarrativeAction('H') || 'History Back' },
               };
             });
           }
@@ -1212,7 +1308,7 @@ export const useKeyboardHandlers = (
                 usedHistoryForward: true,
                 usedPreviewDown: false,
                 usedPreviewUp: false,
-                notification: getNarrativeAction('L') || 'History Forward',
+                notification: { message: getNarrativeAction('L') || 'History Forward' },
               };
             });
           }

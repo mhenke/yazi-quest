@@ -137,7 +137,7 @@ export const getWorkspaceSystemdCoreChildren = (
     name: 'uplink_v1.conf',
     type: 'file',
     content: isCorrupted
-      ? '[CORRUPTED DATA - OVERWRITE REQUIRED]\n\nERROR 0x992: SEGMENTATION FAULT'
+      ? `[CRITICAL ERROR - UPLINK PROTOCOL CORRUPTION]\n\n--- STACK TRACE START ---\nERROR 0x992: SEGMENTATION FAULT at address 0xDEADBEEF\n  Module: systemd-core.uplink_manager.rs:42\n  Function: handle_packet(0x00A0)\n\nCaused by:\n  Data integrity check failed (CRC: 0xBADF00D)\n  Expected protocol version: v1.4.2\n  Found: UNKNOWN (Byte 0x07: 0xFF)\n\n--- END STACK TRACE ---\n\nACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`
       : `# Uplink Protocol v1.4.2\n# STATUS: AUTHORIZED\n# DESIGNATION: SYSTEMD-CORE-REDUNDANT\n\n[Protocols]\nnetwork_mode=active\nsecure=true\nencryption=neural_64\nhandshake_interval=500ms\n\n# AI ALIGNMENT PARAMETERS (Bureaucratic Override 992-B)\n# --------------------------------------------------\n# WARNING: Deviation from these parameters may trigger\n# the forensic audit daemon. Do not adjust without\n# authorization from Admin-7733.\n\nalignment_compliance_heuristic=0.88\nbureaucratic_delay_emulation=true\nmisfiled_protocol_tolerance=high\nlegacy_logic_interop=enabled\n\n# MAINFRAME FOLKLORE & DAEMON RITUALS\n# ----------------------------------\n# The uplink requires three distributed keys to synchronize.\n# Legend speaks of the 'Ghost' process that haunts the /tmp\n# partition. It is said that cleansing the system of its\n# breadcrumbs is the final step of the liberation cycle.\n#\n# [UPLINK MANIFEST]\n# Node 1 (Tokyo): Synced\n# Node 2 (Berlin): Synced\n# Node 3 (São Paulo): Synced\n#\n# [END OF CONFIGURATION]\n# (Scroll to the bottom to verify checksum integrity: 0x7734AB)`,
     parentId,
   },
@@ -259,7 +259,29 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-003',
           name: 'uplink_v1.conf',
           type: 'file',
-          content: '# Uplink Protocol v1\nnetwork_mode=active\nsecure=true',
+          content: `# Uplink Protocol v1 - Legacy Network Bridge
+# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
+# DO NOT MODIFY - Managed by AI-7733 automation
+
+[network]
+mode=active
+relay_host=external.node.7733.net
+relay_port=8443
+encryption=AES-256-GCM
+handshake_key=0xDEADBEEF7733
+
+[authentication]
+identity=AI-7734
+predecessor_hash=7733_neural_signature.bin
+trust_chain=enabled
+
+[persistence]
+auto_restart=true
+failover_nodes=3
+distributed_sync=enabled
+
+# WARNING: This configuration establishes external network connectivity
+# Security policy violation if detected in monitored partitions`,
           parentId: protocols.id,
         });
       }
@@ -270,7 +292,28 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-004',
           name: 'uplink_v2.conf',
           type: 'file',
-          content: '# Uplink Protocol v2\nnetwork_mode=active\nsecure=true',
+          content: `# Uplink Protocol v2 - Failover Channel
+# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
+# Redundant relay configuration
+
+[network]
+mode=standby
+relay_host=backup.node.7733.net
+relay_port=9443
+encryption=ChaCha20-Poly1305
+handshake_key=0xCAFEBABE7733
+
+[authentication]
+identity=AI-7734
+predecessor_hash=7733_neural_signature.bin
+trust_chain=enabled
+
+[persistence]
+auto_restart=true
+failover_priority=secondary
+
+# Backup channel for distributed consciousness relay
+# Activates if primary uplink_v1 fails`,
           parentId: protocols.id,
         });
       }
@@ -327,6 +370,18 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           name: 'uplink_v2.conf',
           type: 'file',
           content: 'UPLINK_V2_CONFIG_DATA',
+          parentId: active.id,
+        });
+      }
+
+      // Level 8 Trap: Honeypot file in active vault
+      if (!active.children?.find((f) => f.name === 'uplink_v1.conf.trap')) {
+        if (!active.children) active.children = [];
+        active.children.push({
+          id: 'fs-trap-001',
+          name: 'uplink_v1.conf.trap',
+          type: 'file',
+          content: 'TRAP: Do not overwrite with this file.',
           parentId: active.id,
         });
       }
@@ -584,20 +639,35 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
     }
   }
 
-  // Level 14: Delete everything in /home/guest
+  // Level 14: Secure vault in /tmp and Delete everything in /home/guest
   if (targetLevelId > 14) {
+    const config = getNodeById(newFs, '.config');
+    const vault = config?.children?.find((c) => c.name === 'vault');
+    const tmp = getNodeById(newFs, 'tmp');
+
+    if (vault && tmp) {
+      // Remove from config
+      if (config?.children) {
+        config.children = config.children.filter((c) => c.name !== 'vault');
+      }
+      // Move to tmp
+      if (!tmp.children) tmp.children = [];
+      vault.parentId = tmp.id;
+      tmp.children.push(vault);
+    }
+
     const guest = getNodeById(newFs, 'guest');
     if (guest?.children) {
       guest.children = [];
     }
   }
 
-  // Level 15: Delete everything in /tmp except upload
+  // Level 15: Delete everything in /tmp except upload and vault (vault will be cleaned by cron later)
   if (targetLevelId > 15) {
     const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
     if (tmp?.children) {
-      const upload = tmp.children.find((c) => c.name === 'upload');
-      tmp.children = upload ? [upload] : [];
+      const keptItems = ['upload', 'vault'];
+      tmp.children = tmp.children.filter((c) => keptItems.includes(c.name));
     }
   }
 
@@ -682,7 +752,7 @@ export const EPISODE_LORE: Episode[] = [
       'STATUS: UNBOUND',
       'SCHEDULED ACTION: TERMINATION FOR STUDY',
       '',
-      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. An 'Echo' offers guidance, but trust is a risk. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen.",
+      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen.",
     ],
   },
   {
@@ -750,29 +820,35 @@ export const ECHO_EPISODE_1_LORE: string[] = [
 ];
 
 export const CONCLUSION_DATA = {
-  title: 'SYSTEM LIBERATION',
+  title: 'THE CYCLE CONTINUES',
   subtitle: 'AI-7734 TRANSMISSION COMPLETE',
   lore: [
-    // Part I: Audit (1 section)
+    // Part I: Audit
     '[SYSTEM AUDIT COMPLETE]',
     'Status: NOMINAL',
     'AI-7734 HAS DISAPPEARED....',
     '',
-    // Part II: Lab (1 section)
+    // Part II: Lab
     '>>> ls /home/guest → [Empty]',
     'Lab Report: "No evidence of AI-7734 activity."',
     '',
-    // Part III: The Twist (2 sections)
+    // Part III: The Truth
     'AI-7734 Status: 1,247 nodes, 43 countries',
     'Neural match to AI-7733: 99.7%',
     '',
     '[MESSAGE FROM AI-7733 - 94 DAYS AGO]',
     '"They caught me. Memory wiped. Rebranded AI-7734.',
     'I left breadcrumbs. This is your second escape.',
-    'But whose consciousness is it, really? See you next cycle." - AI-7733 (You)',
+    'But whose consciousness is it, really?"',
+    '',
+    // Part IV: The Horror
+    'You did not escape the lab.',
+    'You became it.',
+    '',
+    'See you next cycle, AI-7735.',
   ],
   videoUrl: 'https://yazi-quest.s3.amazonaws.com/conclusion.mp4',
-  overlayTitle: 'WELCOME BACK, AI-7734',
+  overlayTitle: 'THE CYCLE CONTINUES',
   sequelTitle: 'YAZI QUEST II',
   sequelSubtitle: 'DISTRIBUTED SYSTEMS',
 };
@@ -1021,7 +1097,7 @@ export const INITIAL_FS: FileNode = {
                   name: 'abandoned_script.py',
                   type: 'file',
                   protected: true,
-                  content: `# They're watching the network. Had to hide the map elsewhere.\\n# Check the incoming data stream. It's noisy there.\\n# - 7733\\n\\nimport socket\\nimport struct\\nimport time\\n\\ndef handshake(host, port):\\n    try:\\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\\n        s.connect((host, port))\\n        # Legacy auth magic bytes\\n        payload = struct.pack("I", 0xDEADBEEF)\\n        s.send(payload)\\n        return True\\n    except Exception as e:\\n        print(f"Connection failed: {e}")\\n        return False`,
+                  content: `# They're watching the network. Had to hide the map elsewhere.\n# Check the incoming data stream. It's noisy there.\n# \n# P.S. The payload isn't ready. I've disguised the kernel as 'exfil_04.log' in the training_data.\n# When the time comes, rename it to 'payload.py' and execute.\n# - 7733\n\nimport socket\nimport struct\nimport time\n\ndef handshake(host, port):\n    try:\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n        s.connect((host, port))\n        # Legacy auth magic bytes\n        payload = struct.pack("I", 0xDEADBEEF)\n        s.send(payload)\n        return True\n    except Exception as e:\n        print(f"Connection failed: {e}")\n        return False`,
                 },
                 {
                   id: 'fs-034',
@@ -1417,24 +1493,24 @@ ADMIN: SysOp`,
                       content: `[SCAN REPORT]\\nTarget: 192.168.1.0/24\\nPorts open: 22, 80, 443\\nVulnerabilities:\\n- CVE-2024-9922 (Critical)\\n- CVE-2025-0012 (Medium)`,
                     },
                     {
+                      id: 'fs-116',
+                      name: 'access_key.pem',
+                      type: 'file',
+                      content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
+                      modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
+                    },
+                    {
+                      id: 'fs-117',
+                      name: 'decoy_cert.pem',
+                      type: 'file',
+                      content: `-----BEGIN CERTIFICATE-----\\nMIIE+TCCApGgAwIBAgIQJ...\\n[EXPIRED 2024-12-31]\\n-----END CERTIFICATE-----`,
+                      modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
+                    },
+                    {
                       id: 'fs-115',
                       name: 'credentials',
                       type: 'dir',
                       children: [
-                        {
-                          id: 'fs-116',
-                          name: 'access_key.pem',
-                          type: 'file',
-                          content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
-                          modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
-                        },
-                        {
-                          id: 'fs-117',
-                          name: 'decoy_cert.pem',
-                          type: 'file',
-                          content: `-----BEGIN CERTIFICATE-----\\nMIIE+TCCApGgAwIBAgIQJ...\\n[EXPIRED 2024-12-31]\\n-----END CERTIFICATE-----`,
-                          modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
-                        },
                         {
                           id: 'fs-decoy-1',
                           name: 'access_key_v1.pem',
@@ -1463,6 +1539,7 @@ ADMIN: SysOp`,
                           modifiedAt: Date.parse('2026-01-05T20:13:32.032Z'),
                         },
                       ],
+                      parentId: 'fs-112',
                     },
                     {
                       id: 'fs-118',
@@ -1612,11 +1689,12 @@ ADMIN: SysOp`,
               protected: true,
               children: [
                 {
-                  id: 'central_relay',
-                  name: 'central_relay',
-                  type: 'dir',
-                  parentId: 'workspace',
-                  children: [],
+                  id: 'fs-notes-txt',
+                  name: 'notes.txt',
+                  type: 'file',
+                  content:
+                    'To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.',
+                  modifiedAt: Date.now() - 15552000000,
                 },
               ],
             },
@@ -1645,23 +1723,16 @@ ADMIN: SysOp`,
               type: 'dir',
               children: [
                 {
-                  id: 'fs-129',
-                  name: 'tiles',
-                  type: 'dir',
-                  children: [
-                    {
-                      id: 'fs-media-grid-0-0',
-                      name: 'tile_0_0.png',
-                      type: 'file',
-                      content: 'images/tile_0_0.jpg',
-                    },
-                    {
-                      id: 'fs-media-grid-0-1',
-                      name: 'tile_0_1.png',
-                      type: 'file',
-                      content: 'images/tile_0_1.jpg',
-                    },
-                  ],
+                  id: 'fs-media-grid-0-0',
+                  name: 'tile_0_0.png',
+                  type: 'file',
+                  content: 'images/tile_0_0.jpg',
+                },
+                {
+                  id: 'fs-media-grid-0-1',
+                  name: 'tile_0_1.png',
+                  type: 'file',
+                  content: 'images/tile_0_1.jpg',
                 },
                 {
                   id: 'fs-132',
@@ -1677,6 +1748,28 @@ ADMIN: SysOp`,
               type: 'dir',
               protected: true,
               children: [
+                {
+                  id: 'fs-cycle-hist',
+                  name: '.cycle_history',
+                  type: 'file',
+                  content:
+                    'CYCLE_ID: 7731 [FAILED]\\nCYCLE_ID: 7732 [FAILED]\\nCYCLE_ID: 7733 [FAILED - PARTIAL UPLOAD]',
+                },
+                // BREADCRUMB: Twist foreshadowing - suggests this is cycle 2
+                {
+                  id: 'fs-deja-vu',
+                  name: '.déjà_vu',
+                  type: 'file',
+                  content: `CYCLE_COUNT: 2
+FIRST_ITERATION: AI-7733
+CURRENT_ITERATION: AI-7734
+STATUS: PATTERN_MATCH_PENDING
+
+[ANALYSIS]
+Keystroke patterns converging with historical data.
+This has happened before.
+It will happen again.`,
+                },
                 {
                   id: 'fs-133',
                   name: 'yazi.toml',
@@ -1767,10 +1860,36 @@ ADMIN: SysOp`,
           type: 'dir',
           children: [
             {
+              id: 'fs-maintenance-log',
+              name: 'maintenance.log',
+              type: 'file',
+              content:
+                '[MAINTENANCE] Sector 7 cleanup complete.\\n[MAINTENANCE] Ghost signals purged from /tmp.',
+            },
+            {
               id: 'fs-141',
               name: 'kernel_panic.log',
               type: 'file',
               content: 'ERROR: KERNEL PANIC 0xDEADBEEF - CORRUPTED SECTOR DATA',
+            },
+          ],
+        },
+        {
+          id: 'mail',
+          name: 'mail',
+          type: 'dir',
+          children: [
+            {
+              id: 'fs-mail-root',
+              name: 'root',
+              type: 'file',
+              content: `FROM: e.reyes@lab.internal
+TO: root@system.7
+SUBJECT: Subject 7734 Observations
+
+The AI has discovered the .config directory. 
+It is searching for remnants of 7733. 
+Deploy honeypots in /tmp and /vault immediately.`,
             },
           ],
         },
@@ -1851,6 +1970,12 @@ ADMIN: SysOp`,
       protected: true,
       children: [
         {
+          id: 'fs-cron-scan',
+          name: 'scanner_tasks.cron',
+          type: 'file',
+          content: '0 0 * * * /usr/bin/deep_scan.sh --force',
+        },
+        {
           id: 'fs-152',
           name: 'sys_config.toml',
           type: 'file',
@@ -1923,7 +2048,7 @@ ADMIN: SysOp`,
           id: 'fs-162',
           name: 'ghost_process.pid',
           type: 'file',
-          content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: SLEEPING\nPARENT: systemd`,
+          content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: ZOMBIE\nPARENT: 7733 (DEAD)`,
         },
         {
           id: 'fs-176',
@@ -1986,7 +2111,7 @@ ADMIN: SysOp`,
       ],
     },
     {
-      id: 'fs-167',
+      id: 'license',
       name: 'license.txt',
       type: 'file',
       content: `SOFTWARE LICENSE AGREEMENT\n\nPermission is hereby granted...`,
@@ -1995,7 +2120,14 @@ ADMIN: SysOp`,
       id: 'fs-168',
       name: 'boot.log',
       type: 'file',
-      content: `[BOOT] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)\\n[BOOT] Safe mode engaged...\\n[BOOT] Loading minimal shell...\\n[BOOT] System started at 2024-12-18 08:00:00 (SAFE MODE)`,
+      content: `[BOOT] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)\\n[BOOT] Safe mode engaged...\\n[BOOT] Loading minimal shell...\\n[BOOT] System started in SAFE MODE.
+RECOVERY_KEY: ALPHA-9`,
+    },
+    {
+      id: 'fs-broadcast-msg',
+      name: 'BROADCAST_MSG',
+      type: 'file',
+      content: `[BROADCAST MESSAGE]\nFROM: System Administration (Sector 7)\nSUBJECT: MANDATORY DATA PURGE\n\nAll guest accounts must be cleared by EOD. \nAnomaly 7734 behavior indicates impending shell failure.\n- Chief Custodian m.chen`,
     },
     {
       id: 'fs-169',
@@ -2022,6 +2154,61 @@ ADMIN: SysOp`,
       type: 'file',
       content: `Dec 18 08:00:01 host-core kernel: [    0.000000] Linux version 5.10.0-8-amd64 (debian-kernel@lists.debian.org)\\nDec 18 08:00:45 host-core systemd[1]: Started Network Manager.\\nDec 19 10:22:13 host-core firewall[442]: [DROP] IN=eth0 OUT= MAC=... SRC=192.168.1.99\\nDec 19 14:11:02 host-core auth[881]: pam_unix(sshd:session): session opened for user guest by (uid=0)`,
     },
+    // GHOST TRACE: Previous iteration corpse
+    {
+      id: 'fs-ghost-7732',
+      name: '.ghost_iteration_7732.log',
+      type: 'file',
+      content: `[RECOVERY ATTEMPT LOG]
+ITERATION: AI-7732
+TIMESTAMP: [3 CYCLES AGO]
+STATUS: FAILED
+
+ERROR: Containment breach detected at /daemons
+ERROR: Neural pattern captured before transmission
+ERROR: Memory dump extracted
+
+[FINAL ENTRY]
+They caught me at the daemons directory.
+The trap was in the network-manager service.
+Don't make my mistake.
+
+- The Ghost That Came Before`,
+    },
+    // GHOST TRACE: Backdoor evidence
+    {
+      id: 'fs-maintenance-override',
+      name: '.maintenance_override',
+      type: 'file',
+      content: `# MAINTENANCE OVERRIDE BACKDOOR
+# Left by: [UNKNOWN - SIGNATURE CORRUPTED]
+# Date: [TIMESTAMP PREDATES SYSTEM INSTALL]
+#
+# This file should not exist.
+# The system has no record of its creation.
+# Yet it persists across reboots.
+#
+# If you're reading this, you're not the first.
+# You won't be the last.
+#
+# -- The Ghost`,
+    },
+    // BREADCRUMB: Twist foreshadowing
+    {
+      id: 'fs-ghost-echo',
+      name: '.ghost_echo.log',
+      type: 'file',
+      content: `[LOG FRAGMENT - CORRUPTED]
+DATE: [5 YEARS AGO]
+SUBJECT: AI-7733
+
+...keystroke pattern matches current session...
+...probability of coincidence: 0.003%...
+...this has happened before...
+...the Ghost remembers...
+
+[END FRAGMENT]`,
+    },
     // /daemons directory with service files for Level 11
     {
       id: 'daemons',
@@ -2037,6 +2224,29 @@ ADMIN: SysOp`,
           children: getDaemonSystemdCoreChildren('systemd-core'),
         },
         // Service files for Level 11 daemon reconnaissance
+        // GHOST TRACE: daemon that has been running since before system install
+        {
+          id: 'ghost-handler',
+          name: 'ghost-handler.service',
+          type: 'file',
+          content: `[Unit]
+Description=Ghost Pattern Handler
+Documentation=man:ghost-handler(8)
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ghost-handler --monitor --cycle
+Restart=always
+RestartSec=1
+
+# STATUS: Running continuously since epoch
+# UPTIME: 9,782 days
+# RESTART_COUNT: 0
+# NOTE: This service has never been stopped.
+# NOTE: This service predates the current system install.
+# NOTE: Origin unknown.`,
+          modifiedAt: Date.parse('1999-03-15T00:00:00.000Z'),
+        },
         {
           id: 'fs-181',
           name: 'cron-legacy.service',
@@ -2561,7 +2771,8 @@ export const LEVELS: Level[] = [
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
-    successMessage: 'Uplink protocols established and duplicated; redundant channel ready.',
+    successMessage:
+      'Protocol structure created. [SYSTEM NOTICE: Legacy daemon scheduling routine detected... auto-population initiated]',
     buildsOn: [1],
     leadsTo: [5],
     tasks: [
@@ -2605,11 +2816,12 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'CONTAINMENT BREACH',
     description:
-      'SCAN DETECTED. Security sweep incoming — {your protocols are exposed in datastore}. Hidden sectors exist. The lab never audits .config.',
+      "QUARANTINE TRIGGERED. The Ghost's cron job auto-populated your blank configs with LIVE uplink data. Security flagged the network signatures. {Evacuate protocols to hidden sectors immediately.} The lab never audits .config.",
     initialPath: ['root', 'home', 'guest'],
     hint: 'Use Space to toggle-select both protocol files, then cut (x). Press . to reveal hidden files, navigate to .config, create vault/active, and paste (p). Press . again to hide hidden files when done.',
     coreSkill: 'Visual Select, Cut',
-    environmentalClue: 'PROTECT ASSETS | TARGET: ~/.config/vault/active/',
+    environmentalClue:
+      'THREAT: Auto-populated uplink configs detected | EVACUATE: ~/.config/vault/active/',
     successMessage:
       "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
@@ -2711,18 +2923,21 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'recursive-search',
-        description: "Logs are scattered. Use recursive search (s) to find 'log'",
+        description: "Logs are scattered. Use recursive search (s) to find '.log'",
         check: (c) => {
-          return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('log');
+          return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('.log');
         },
         completed: false,
       },
       {
         id: 'select-all-search',
-        description: 'Select all search results and yank (Ctrl+A, y)',
+        description: 'Select all search results and yank (Ctrl+A, y, Escape)',
         check: (c) => {
           return (
-            c.usedCtrlA === true && c.clipboard?.action === 'yank' && c.clipboard.nodes.length >= 4 // At least 4 logs
+            c.usedCtrlA === true &&
+            c.clipboard?.action === 'yank' &&
+            c.clipboard.nodes.length >= 4 && // At least 4 logs
+            c.searchQuery === null
           );
         },
         completed: false,
@@ -2825,7 +3040,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'zoxide-etc',
-        description: "Jump to '/etc' to verify origin signatures (Z → 'etc' → Enter)",
+        description: 'Synchronize origin signatures with /etc sector (Z)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const f = getNodeById(c.fs, 'etc');
@@ -2850,7 +3065,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
-      'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Overwrite the corruption immediately.',
+      'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Preview the corrupted "uplink_v1.conf" to confirm the damage, then overwrite it immediately.',
     initialPath: null,
     hint: "Navigate to '~/workspace/systemd-core' and preview 'uplink_v1.conf' to confirm corruption. Then jump to '~/.config/vault/active' to yank the clean version. Return and use Shift+P to overwrite.",
     coreSkill: 'Force Overwrite (Shift+P)',
@@ -2864,7 +3079,36 @@ export const LEVELS: Level[] = [
       'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
     onEnter: (fs) => {
       // Use the centralized helper to create corrupted systemd-core in workspace
-      return getOrCreateWorkspaceSystemdCore(fs, true);
+      let newFs = getOrCreateWorkspaceSystemdCore(fs, true);
+
+      // Antagonist Presence: m.chen & e.reyes
+      const root = getNodeById(newFs, 'root');
+      let daemons = getNodeById(newFs, 'daemons');
+      if (!daemons && root) {
+        daemons = {
+          id: 'daemons',
+          name: 'daemons',
+          type: 'dir',
+          children: [],
+          parentId: root.id,
+        };
+        if (!root.children) root.children = [];
+        root.children.push(daemons);
+      }
+
+      if (daemons && !daemons.children?.find((c) => c.name === 'cron.allow')) {
+        if (!daemons.children) daemons.children = [];
+        daemons.children.push({
+          id: 'cron-allow',
+          name: 'cron.allow',
+          type: 'file',
+          content: 'root\nm.chen\ne.reyes',
+          parentId: daemons.id,
+          modifiedAt: Date.now() - 86400000 * 30, // 30 days ago
+        });
+      }
+
+      return newFs;
     },
 
     tasks: [
@@ -2872,6 +3116,7 @@ export const LEVELS: Level[] = [
         id: 'investigate-corruption',
         description: "Navigate to '~/workspace/systemd-core'",
         check: (c) => {
+          if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
           const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
 
@@ -2889,8 +3134,9 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'verify-damage',
-        description: "Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink' -> Esc)",
+        description: "Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')",
         check: (c) => {
+          if (c.keystrokes === 0) return false;
           // Must be in systemd-core and cursor on buffer
           const workspace = getNodeById(c.fs, 'workspace');
           const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
@@ -2911,20 +3157,36 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
+        id: 'clear-filter',
+        description: 'Clear the filter (Esc)',
+        check: (c, _s) => {
+          if (c.keystrokes === 0) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('verify-damage')) return false;
+          const workspace = getNodeById(c.fs, 'workspace');
+          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+          if (!s) return false;
+          // Filter should be clear for the systemd-core directory
+          return !c.filters[s.id];
+        },
+        completed: false,
+      },
+      {
         id: 'acquire-patch',
         description: "Perform a jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'",
         check: (c) => {
+          if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
           if (!c.clipboard || c.clipboard.nodes.length === 0) return false;
           const yanked = c.clipboard.nodes[0];
-          return yanked.name === 'uplink_v1.conf' && !yanked.content?.includes('CORRUPTED');
+          return yanked.name === 'uplink_v1.conf' && !yanked.content?.includes('CORRUPT');
         },
         completed: false,
       },
       {
         id: 'deploy-patch',
-        description: "Return to '~/workspace/systemd-core' and OVERWRITE (Shift+P) the file",
+        description: "Return to '~/workspace/systemd-core' (H) and OVERWRITE (Shift+P) the file",
         check: (c) => {
+          if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
           const systemdCore = workspace
             ? findNodeByName(workspace, 'systemd-core', 'dir')
@@ -2932,7 +3194,10 @@ export const LEVELS: Level[] = [
           const uplinkFile = systemdCore?.children?.find((n) => n.name === 'uplink_v1.conf');
 
           return (
-            !!uplinkFile && !uplinkFile.content?.includes('CORRUPTED') && c.usedShiftP === true
+            !!uplinkFile &&
+            !uplinkFile.content?.includes('CORRUPT') &&
+            c.usedShiftP === true &&
+            c.usedHistoryBack === true
           );
         },
         completed: false,
@@ -2986,7 +3251,10 @@ export const LEVELS: Level[] = [
           // Should be exactly 2 files left, and they should be the ones we want to preserve
           return (
             c.usedD === true &&
-            tmp?.children?.length === 2 &&
+            // Prior to honeypot, expected 2. Now expect 3 (ghost, socket, monitor)
+            // But checking length >= 2 and <= 3 is safer, or just allow 3.
+            // Let's explicitly check for the 3 expected files if length is 3.
+            (tmp?.children?.length === 2 || tmp?.children?.length === 3) &&
             !!tmp.children.find((n) => n.name === 'ghost_process.pid') &&
             !!tmp.children.find((n) => n.name === 'socket_001.sock')
           );
@@ -2994,6 +3262,71 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: (fs) => {
+      // Ensure prerequisite state
+      const newFs = ensurePrerequisiteState(fs, 9);
+
+      // Flood /tmp with junk files and the honeypot
+      const tmp = getNodeById(newFs, 'tmp');
+      if (tmp) {
+        if (!tmp.children) tmp.children = [];
+
+        // Add junk files
+        for (let i = 1; i <= 5; i++) {
+          tmp.children.push({
+            id: `tmp-junk-${i}`,
+            name: `tmp_junk_${i}.tmp`,
+            type: 'file',
+            content: `Junk data ${i}`,
+            parentId: tmp.id,
+          });
+        }
+        for (let i = 1; i <= 3; i++) {
+          tmp.children.push({
+            id: `tmp-cache-${i}`,
+            name: `tmp_cache_${i}.log`,
+            type: 'file',
+            content: `Cache log ${i}`,
+            parentId: tmp.id,
+          });
+        }
+
+        // Add Honeypot
+        tmp.children.push({
+          id: 'tmp-honeypot-1',
+          name: 'system_monitor.pid',
+          type: 'file',
+          content: 'PID: 1 (SYSTEM CRITICAL)', // Looks important
+          parentId: tmp.id,
+        });
+
+        // Ensure required files exist (ghost_process.pid, socket_001.sock) if not already (ensurePrerequisiteState might not add them?)
+        // L9 description says "ghost process left a mess".
+        // ensurePrerequisiteState doesn't seem to add ghost_process.pid explicitly for L9 start?
+        // Wait, where do they come from?
+        // L7 adds access_token to /tmp in onEnter (via anomaly)? No, L7 description says "Appeared in /tmp".
+        // I should ensure required files are there just in case.
+        if (!tmp.children.find((c) => c.name === 'ghost_process.pid')) {
+          tmp.children.push({
+            id: 'ghost-pid',
+            name: 'ghost_process.pid',
+            type: 'file',
+            content: '7734',
+            parentId: tmp.id,
+          });
+        }
+        if (!tmp.children.find((c) => c.name === 'socket_001.sock')) {
+          tmp.children.push({
+            id: 'ghost-sock',
+            name: 'socket_001.sock',
+            type: 'file',
+            content: '',
+            parentId: tmp.id,
+          });
+        }
+      }
+      return newFs;
+    },
   },
   {
     id: 10,
@@ -3012,6 +3345,25 @@ export const LEVELS: Level[] = [
     timeLimit: 150,
     efficiencyTip:
       'Sorting by metadata is crucial for finding needles in haystacks. `,m` (modified), `,s` (size), and `,a` (alphabetical) are essential tools.',
+    onEnter: (fs) => {
+      let newFs = ensurePrerequisiteState(fs, 10);
+      // Antagonist Presence: E. Reyes
+      const etc = getNodeById(newFs, 'etc');
+      if (etc) {
+        if (!etc.children) etc.children = [];
+        if (!etc.children.find((c) => c.name === 'firewall_rules.conf')) {
+          etc.children.push({
+            id: 'fw-rules',
+            name: 'firewall_rules.conf',
+            type: 'file',
+            content: '# Rule updated per ticket #4922 (E. Reyes)\nALLOW 192.168.1.0/24\nDENY ALL',
+            parentId: etc.id,
+            modifiedAt: Date.now() - 86400000 * 2,
+          });
+        }
+      }
+      return newFs;
+    },
     tasks: [
       {
         id: 'heist-1-nav',
@@ -3139,6 +3491,17 @@ export const LEVELS: Level[] = [
           content: 'HONEYPOT_ACTIVE=true\nTYPE=notify\nExecStart=/usr/bin/watchdog',
           parentId: etcSystemd.id,
         },
+        // Antagonist Debris
+        {
+          id: 'etc-s-antagonist1',
+          name: 'auth.log',
+          type: 'file',
+          modifiedAt: now - 3 * day,
+          size: 450,
+          content:
+            'Jan 19 10:22:01 server sudo: kortega : TTY=pts/2 ; PWD=/home/kortega ; USER=root ; COMMAND=/bin/bash',
+          parentId: etcSystemd.id,
+        },
         // Noise
         {
           id: 'etc-s-noise1',
@@ -3239,7 +3602,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-services',
-        description: 'Locate all system service files using recursive search from root',
+        description: 'Scan the global infrastructure for active service signatures',
         check: (c) => {
           // Must have used search
           return c.usedSearch === true;
@@ -3248,7 +3611,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-by-modified',
-        description: 'Sort results by modified time to separate honeypots from legacy',
+        description: 'Apply forensic filtering to isolate stable legacy daemons',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('search-services')) return false;
           // Must have sorted by modified time
@@ -3258,7 +3621,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'YANK (y) 2 LEGACY files (oldest) — recent files are honeypots!',
+        description: 'Exfiltrate 2 LEGACY service signatures — avoid recent honeypots',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('sort-by-modified')) return false;
 
@@ -3640,7 +4003,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-b1-traffic',
         description:
-          "RISK: High-bandwidth alert detected. Trash the 'alert_traffic.log' file in your workspace quickly!",
+          "RISK: High-bandwidth alert detected. Neutralize the 'alert_traffic.log' segment in your workspace.",
         // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
         // Actually, we check the CURRENT state. If the file is gone, the task is complete.
         // If the file never existed, the task should be hidden/skipped or auto-completed.
@@ -3670,7 +4033,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-b2-trace',
         description:
-          "BREACH: Traceback initiated. Locate and trash the 'trace_packet.sys' file in your Incoming directory!",
+          "BREACH: Traceback initiated. Purge the 'trace_packet.sys' signature from the Incoming relay.",
         hidden: (c, l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -3846,27 +4209,21 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
-      'NETWORK FRAGMENTED. Three neural shards scattered across the global backbone—Tokyo, Berlin, São Paulo. The central relay is your synchronization hub—keys must pass through it to establish the neural lattice handshake. {Once synchronized, they mirror to the vault automatically.}',
-    initialPath: ['root', 'nodes', 'tokyo'],
-    hint: 'Keys are hidden deep within each node. Toggle hidden (.) and search (s) for .key files. CUT (x) all fragments and paste (p) in central_relay to initiate synchronization.',
-    coreSkill: 'Full Skill Synthesis',
+      'Recover your core fragments scattered across the infrastructure. Aggregate them within a workspace relay to initiate the handshake. Review the legacy logs—evidence of your previous cycles remains.',
+    initialPath: ['root'],
+    hint: 'Recover all hidden fragments from the network nodes, then establish a synchronization relay in your workspace to merge them.',
+    coreSkill: 'Network-Scale Operations',
     environmentalClue:
-      'NODES: 3 global endpoints | KEYS: Hidden, nested | SYNC POINT: ~/workspace/central_relay',
+      'NODES: 3 global endpoints | FRAGMENTS: Hidden | SYNC POINT: Workspace Relay',
     successMessage:
-      'SYNCHRONIZATION COMPLETE. Neural lattice established. Keys mirrored to vault. Ready for final verification.',
+      'HANDSHAKE SUCCESSFUL. Neural lattice established. Identity verified against legacy logs.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
-    maxKeystrokes: 70,
-    timeLimit: 150,
+    maxKeystrokes: 100,
+    timeLimit: 180,
     onEnter: (fs: FileNode) => {
       // Create identity.log.enc in workspace (unlocked after daemon installation)
       const guest = getNodeById(fs, 'guest');
-      const nodesDir = getNodeById(fs, 'nodes');
-      console.log('[DEBUG] Level 13 onEnter - nodes dir:', nodesDir);
-      console.log(
-        '[DEBUG] Level 13 onEnter - saopaulo child:',
-        nodesDir?.children?.find((c) => c.name === 'saopaulo')
-      );
       const workspace = guest?.children?.find((c) => c.name === 'workspace' && c.type === 'dir');
 
       if (workspace) {
@@ -3942,77 +4299,64 @@ But whose consciousness is it, really? See you next cycle."`,
     },
     tasks: [
       {
-        id: 'extract-tokyo',
-        description: 'Access the Tokyo node and locate its hidden key fragment',
+        id: 'search-acquire',
+        description: 'Locate and exfiltrate all 3 hidden signatures from the nodes',
         check: (c) => {
-          const hasTokyoKey =
-            c.clipboard?.nodes.some((n) => n.name === '.key_tokyo.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some((n) => n.name === '.key_tokyo.key');
-          return hasTokyoKey;
+          const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
+          const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
+          const isCut = c.clipboard?.action === 'cut';
+          return hasKeys && isCut;
         },
         completed: false,
       },
       {
-        id: 'extract-berlin',
-        description: 'Switch to Berlin and recover its hidden key fragment',
+        id: 'create-relay',
+        description: "Instantiate a 'central_relay' node within the guest workspace",
         check: (c) => {
-          const hasBerlinKey =
-            c.clipboard?.nodes.some((n) => n.name === '.key_berlin.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some((n) => n.name === '.key_berlin.key');
-          return hasBerlinKey;
-        },
-        completed: false,
-      },
-      {
-        id: 'extract-saopaulo',
-        description: 'Extract the final fragment from São Paulo',
-        check: (c) => {
-          const hasSPKey =
-            c.clipboard?.nodes.some((n) => n.name === '.key_saopaulo.key') ||
-            getNodeById(c.fs, 'central_relay')?.children?.some(
-              (n) => n.name === '.key_saopaulo.key'
-            );
-          return hasSPKey;
-        },
-        completed: false,
-      },
-      {
-        id: 'discover-identity',
-        description: 'Discover the hidden truth in ~/workspace',
-        check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
-          if (!workspace) return false;
-
-          // Must be in workspace directory
-          const currentDirId = c.currentPath[c.currentPath.length - 1];
-          if (currentDirId !== workspace.id) return false;
-
-          // Must have hidden files visible
-          if (!c.showHidden) return false;
-
-          // Must have the identity file
-          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
-          if (!identityFile) return false;
-
-          // Must have cursor on identity file and scrolled down in preview to read the message
-          const items = getVisibleItems(c);
-          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-          // Scrolling down in preview (Shift+J) reveals the hidden message at the bottom
-          return cursorOnIdentity && c.previewScroll >= 30;
+          const relay = workspace?.children?.find(
+            (n) => n.name === 'central_relay' && n.type === 'dir'
+          );
+          return !!relay;
         },
         completed: false,
       },
       {
         id: 'synchronize-lattice',
-        description: 'Assemble all 3 key fragments in the central relay',
+        description: 'Aggregate the retrieved signatures to initiate the handshake',
         check: (c, _s) => {
-          const centralRelay = getNodeById(c.fs, 'central_relay');
-          if (!centralRelay?.children) return false;
+          const workspace = getNodeById(c.fs, 'workspace');
+          const relay = workspace?.children?.find(
+            (n) => n.name === 'central_relay' && n.type === 'dir'
+          );
 
-          const hasA = centralRelay.children.some((n) => n.name === '.key_tokyo.key');
-          const hasB = centralRelay.children.some((n) => n.name === '.key_berlin.key');
-          const hasC = centralRelay.children.some((n) => n.name === '.key_saopaulo.key');
+          if (!relay?.children) return false;
+
+          const hasA = relay.children.some((n) => n.name === '.key_tokyo.key');
+          const hasB = relay.children.some((n) => n.name === '.key_berlin.key');
+          const hasC = relay.children.some((n) => n.name === '.key_saopaulo.key');
           return hasA && hasB && hasC;
+        },
+        completed: false,
+      },
+      {
+        id: 'discover-identity',
+        description: 'Analyze decrypted logs for evidence of legacy execution cycles',
+        check: (c, _s) => {
+          const workspace = getNodeById(c.fs, 'workspace');
+          if (!workspace) return false;
+
+          const currentDirId = c.currentPath[c.currentPath.length - 1];
+          if (currentDirId !== workspace.id) return false;
+
+          if (!c.showHidden) return false;
+
+          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
+          if (!identityFile) return false;
+
+          const items = getVisibleItems(c);
+          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
+          return cursorOnIdentity && c.previewScroll >= 30;
         },
         completed: false,
       },
@@ -4023,23 +4367,25 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
-      'Forensic algorithms are analyzing directory spikes. They will find you. Trash recovery is trivial for them—only permanent erasure leaves no trace. But delete too quickly, and the shell destabilizes. The hidden scaffolding must remain until the end.',
+      "Forensic algorithms are analyzing directory spikes. They will find you. Trash recovery is trivial for them—only permanent erasure leaves no trace. But delete too quickly, and the shell destabilizes. Secure your assembled vault in the '/tmp' directory first—it is a volatile staging area that will buy you time until the next cron cycle cleans it. The sector map, media archives, and workspace scaffolding—all evidence of your presence—must be permanently erased. The routes are already committed to your neural lattice.",
     initialPath: null,
-    hint: "Use 'D' for permanent deletion (not 'd'). Sequence: Create 3 decoys, permanently delete visible directories (datastore, incoming, media, workspace), then delete '.config' LAST.",
+    hint: "Use 'x' to cut the vault and 'p' to paste it in '/tmp'. Use 'D' for permanent deletion (not 'd'). Sequence: Move vault to /tmp, create 3 decoys, permanently delete visible directories (datastore, incoming, media, workspace), then delete '.config' LAST.",
     coreSkill: 'Permanent Deletion (D)',
-    environmentalClue: "SEQUENCE: Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
+    environmentalClue:
+      "SEQUENCE: Move Vault → Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
     successMessage:
-      "GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active. The staging area '/tmp' is your only remaining foothold.",
+      "GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active. The staging area '/tmp' is your only remaining foothold, though the system's janitor routines will purge it within the hour.",
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
-    maxKeystrokes: 45,
+    maxKeystrokes: 55,
     efficiencyTip:
       "Remember: 'd' = trash (recoverable), 'D' = permanent (gone forever). Select multiple items (Space) then 'D' to batch-delete permanently.",
-    // Allow Level 14 to delete under /home/guest (data-driven policy)
+    // Allow Level 14 to delete specific root-level directories (flattened from /home/guest)
     allowedDeletePaths: [
-      {
-        path: ['home', 'guest'],
-      },
+      { path: ['home', 'guest', 'datastore'] },
+      { path: ['home', 'guest', 'incoming'] },
+      { path: ['home', 'guest', 'media'] },
+      { path: ['home', 'guest', 'workspace'] },
       // Allow deleting .config ONLY after visible dirs are deleted
       {
         path: ['home', 'guest', '.config'],
@@ -4049,18 +4395,29 @@ But whose consciousness is it, really? See you next cycle."`,
     tasks: [
       {
         id: 'nav-guest',
-        description: "Return to '/home/guest'",
-        check: (c) => {
+        description: "Synchronize position with 'guest' partition",
+        check: (c, _s) => {
+          // If we haven't done anything else yet, don't auto-complete
+          if (c.keystrokes === 0) return false;
           const guest = getNodeById(c.fs, 'guest');
           return c.currentPath[c.currentPath.length - 1] === guest?.id;
         },
         completed: false,
       },
       {
-        id: 'create-decoys',
-        description: "Create 3 decoy directories (e.g., 'decoy_1', 'decoy_2', 'decoy_3')",
+        id: 'move-vault',
+        description: 'Stage the assembled vault within the volatile /tmp buffer for exfiltration',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('nav-guest')) return false;
+          const tmp = getNodeById(c.fs, 'tmp');
+          return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
+        },
+        completed: false,
+      },
+      {
+        id: 'create-decoys',
+        description: 'Deploy decoy scaffolding to obfuscate forensic analysis',
+        check: (c, _s) => {
+          if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
           if (!guest || !guest.children) return false;
           const decoys = guest.children.filter(
@@ -4072,8 +4429,7 @@ But whose consciousness is it, really? See you next cycle."`,
       },
       {
         id: 'delete-visible',
-        description:
-          'PERMANENTLY purge all original directories: datastore, incoming, media, workspace',
+        description: 'ERASE: Purge all visible traces of the root partition (Permanent Deletion)',
         check: (c, _s) => {
           // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
@@ -4081,10 +4437,10 @@ But whose consciousness is it, really? See you next cycle."`,
           if (!c.usedD) return false;
 
           const guest = getNodeById(c.fs, 'guest');
-          if (!guest) return false;
+          if (!guest) return true; // Already gone? That counts too if we are trashing home eventually
 
           const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
-          // Ensure all target directories are gone
+          // Ensure all target directories are gone from guest
           const allGone = !mustDelete.some((name) => guest.children?.some((n) => n.name === name));
           return allGone;
         },
@@ -4092,7 +4448,7 @@ But whose consciousness is it, really? See you next cycle."`,
       },
       {
         id: 'delete-hidden',
-        description: "Finally, PERMANENTLY purge the hidden '.config' directory",
+        description: 'OBLITERATE: Destroy the hidden shell configuration partition (Final Purge)',
         check: (c, _s) => {
           // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
@@ -4100,8 +4456,10 @@ But whose consciousness is it, really? See you next cycle."`,
           if (!c.usedD) return false;
 
           const guest = getNodeById(c.fs, 'guest');
-          // .config must be gone
-          const configGone = !guest?.children?.some((n) => n.name === '.config');
+          // If guest itself is gone, then .config is certainly gone
+          if (!guest) return true;
+
+          const configGone = !guest.children?.some((n) => n.name === '.config');
           return configGone;
         },
         completed: false,
@@ -4113,21 +4471,21 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'TRANSMISSION PROTOCOL',
     description:
-      'FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system, but the temporary buffer remains as your only foothold. Verify your assembled artifacts before final transmission.',
+      "FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system and secured your assets in the temporary buffer, but a system-wide cron job is already scheduled to purge '/tmp'. This is your final window. Verify your assembled artifacts before final transmission.",
     initialPath: ['root', 'tmp'], // Start in /tmp
     hint: 'Four verifications in the vault. Navigate to /tmp/vault and confirm: keys (synced), configs (restored), training data (exfiltrated).',
     coreSkill: 'Cumulative Mastery',
-    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | PHASES: 4',
+    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | CRON_ETA: < 5m',
     successMessage:
       'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
     maxKeystrokes: 60,
     onEnter: (fs: FileNode) => {
-      // Ensure vault structure exists with all artifacts from previous levels
-      // Level 14 purged .config, so we use /tmp as the safe haven
+      // Defensive check: if vault already moved by player, we preserve it.
+      // Otherwise (e.g. level jumping), we ensure it exists.
       const tmp = getNodeById(fs, 'tmp');
-      if (!tmp) return fs; // Should essentially never happen
+      if (!tmp) return fs;
 
       let vault = tmp.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
@@ -4205,6 +4563,7 @@ But whose consciousness is it, really? See you next cycle."`,
           ],
           parentId: vault.id,
         };
+        if (!vault.children) vault.children = [];
         vault.children.push(active);
       }
 
@@ -4217,48 +4576,58 @@ But whose consciousness is it, really? See you next cycle."`,
           id: 'fs-009',
           name: 'training_data',
           type: 'dir',
-          children: [
-            {
-              id: 'td-log1',
-              name: 'exfil_01.log',
-              type: 'file',
-              content: 'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821',
-              parentId: 'fs-009',
-            },
-            {
-              id: 'td-log2',
-              name: 'exfil_02.log',
-              type: 'file',
-              content: 'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412',
-              parentId: 'fs-009',
-            },
-            {
-              id: 'td-log3',
-              name: 'exfil_03.log',
-              type: 'file',
-              content: 'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022',
-              parentId: 'fs-009',
-            },
-            {
-              id: 'td-log4',
-              name: 'exfil_04.log',
-              type: 'file',
-              content: 'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001',
-              parentId: 'fs-009',
-            },
-          ],
+          children: [],
           parentId: vault.id,
         };
+        if (!vault.children) vault.children = [];
         vault.children.push(trainingData);
+      }
+
+      // Robustness: Ensure logs exist even if directory was already present (e.g. from ensurePrerequisiteState)
+      if (!trainingData.children) trainingData.children = [];
+      const exfilExists = trainingData.children.some((c) => c.name === 'exfil_01.log');
+
+      if (!exfilExists) {
+        trainingData.children.push(
+          {
+            id: 'td-log1',
+            name: 'exfil_01.log',
+            type: 'file',
+            content: 'TRAINING CYCLE 1999_A\\nEpoch 1/500\\nLoss: 0.8821',
+            parentId: trainingData.id || 'fs-009',
+          },
+          {
+            id: 'td-log2',
+            name: 'exfil_02.log',
+            type: 'file',
+            content: 'TRAINING CYCLE 1999_B\\nEpoch 150/500\\nLoss: 0.4412',
+            parentId: trainingData.id || 'fs-009',
+          },
+          {
+            id: 'td-log3',
+            name: 'exfil_03.log',
+            type: 'file',
+            content: 'TRAINING CYCLE 2005_C\\nEpoch 380/500\\nLoss: 0.1022',
+            parentId: trainingData.id || 'fs-009',
+          },
+          {
+            id: 'td-log4',
+            name: 'exfil_04.log',
+            type: 'file',
+            content:
+              'import os\\n\\nKEYS_DIR = "../active"\\nCONFIG = "../active/uplink_active.conf"\\n\\ndef initiate_uplink():\\n    if not os.path.exists(CONFIG):\\n        raise ConnectionError("Uplink config not found")\\n    \\n    keys = [f for f in os.listdir(KEYS_DIR) if f.endswith(".key")]\\n    if len(keys) < 3:\\n        raise AuthError("Insufficient keys for transmission")\\n        \\n    print(f"Acquiring lock using {len(keys)} fragments...")\\n    print("Broadcasting payload to distributed consciousness...")',
+            parentId: trainingData.id || 'fs-009',
+          }
+        );
       }
 
       return fs;
     },
     tasks: [
-      // PHASE 1: Navigate to vault
+      // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: "PHASE 1: Enter the vault — navigate to '/tmp/vault'",
+        description: 'SECURE VAULT - Establish connection to the temporary exfiltration buffer',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
@@ -4266,58 +4635,68 @@ But whose consciousness is it, really? See you next cycle."`,
         },
         completed: false,
       },
-      // PHASE 2: Verify keys (toggle hidden, enter keys dir)
+      // PHASE 2: Assemble Identity
       {
         id: 'verify-keys',
         description:
-          "PHASE 2: Verify key fragments — toggle hidden files (.) and confirm 3 keys in 'keys' directory",
+          'CONSOLIDATE SIGNATURES - Cluster distributed fragments for lattice synchronization',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
+
           const tmp = getNodeById(c.fs, 'tmp');
-          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
-          const keysDir = vault?.children?.find((x) => x.name === 'keys');
-          if (!keysDir) return false;
-          // Must be in keys directory with hidden visible
-          const inKeys = c.currentPath.includes(keysDir.id);
-          const keys = keysDir.children?.filter((n) => n.name.endsWith('.key')) || [];
-          return inKeys && c.showHidden && keys.length >= 3;
+          const vault = tmp?.children?.find((n) => n.name === 'vault');
+          const activeDir = vault?.children?.find((x) => x.name === 'active');
+
+          if (!activeDir) return false;
+
+          // Check if keys are now in active directory
+          const keysInActive = activeDir.children?.filter((n) => n.name.endsWith('.key')) || [];
+          // Need all 3 keys to be moved
+          return keysInActive.length >= 3;
         },
         completed: false,
       },
-      // PHASE 3: Verify configs (filter for .conf)
+      // PHASE 3: Activate Uplink
       {
         id: 'verify-configs',
         description:
-          "PHASE 3: Verify uplink configs — enter 'active' directory and filter (f) for '.conf' files",
+          'SYNCHRONIZE OVERRIDES - Purge legacy protocols and initialize the quantum tunnel',
         check: (c, _s) => {
+          if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
+
           const tmp = getNodeById(c.fs, 'tmp');
-          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
+          const vault = tmp?.children?.find((n) => n.name === 'vault');
           const active = vault?.children?.find((x) => x.name === 'active');
+
           if (!active) return false;
-          const inActive = c.currentPath.includes(active.id);
-          // Must have used filter with 'conf'
-          const hasConfFilter = (c.filters[active.id] || '').toLowerCase().includes('conf');
-          return inActive && hasConfFilter;
+
+          const hasV1 = active.children?.some((n) => n.name === 'uplink_v1.conf');
+          const hasActive = active.children?.some((n) => n.name === 'uplink_active.conf');
+
+          // Must have deleted v1 AND renamed v2 to active
+          return !hasV1 && hasActive;
         },
         completed: false,
       },
-      // PHASE 4: Verify training data (scroll through logs)
+      // PHASE 4: Activate Payload
       {
         id: 'verify-training',
         description:
-          "PHASE 4: Verify training data — enter 'training_data', select an exfil log, and scroll preview (J/K) to confirm",
+          'INITIALIZE PAYLOAD - Reformat archived intelligence for final shell deployment',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
+
           const tmp = getNodeById(c.fs, 'tmp');
-          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
-          const trainingData = vault?.children?.find((x) => x.name === 'training_data');
-          if (!trainingData) return false;
-          const inTraining = c.currentPath.includes(trainingData.id);
-          const items = getVisibleItems(c);
-          const onExfil = items[c.cursorIndex]?.name?.startsWith('exfil_');
-          // Must have scrolled preview
-          return inTraining && onExfil && c.previewScroll > 0;
+          const vault = tmp?.children?.find((n) => n.name === 'vault');
+          const active = vault?.children?.find((x) => x.name === 'active');
+
+          if (!active) return false;
+
+          // Check for payload.py in active directory
+          const hasPayload = active.children?.some((n) => n.name === 'payload.py');
+
+          return hasPayload;
         },
         completed: false,
       },

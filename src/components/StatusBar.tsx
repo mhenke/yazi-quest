@@ -185,19 +185,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </span>
             </button>
           </>
-        ) : (
-          state.notification && (
-            <div
-              className={`px-3 font-bold border-l border-zinc-700 flex items-center italic max-w-[500px] truncate ${
-                state.notification.startsWith('🔒') || state.notification.startsWith('⚠️')
-                  ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
-                  : 'bg-zinc-800 text-yellow-400'
-              }`}
-            >
-              {state.notification}
-            </div>
-          )
-        )}
+        ) : null}
 
         {/* Show Timer if active */}
         {state.timeLeft !== null && !allTasksComplete && (
