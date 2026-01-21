@@ -3,81 +3,80 @@ import zipfile
 import fnmatch
 from datetime import datetime
 
-def create_zip_with_exclusions(source_dir, zip_filepath):
+def create_zip(source_dir, zip_filepath):
     """
-    Creates a zip file from a source directory, respecting .gitignore patterns and
-    excluding specified files and directories.
+    Creates a zip archive of the source directory, respecting .gitignore patterns and
+    excluding specific files and directories.
     """
-    print(f"Creating optimized zip for AI Studio from: {source_dir}")
+    print(f"Creating zip for AI Studio from: {source_dir}")
 
+    # File patterns to exclude
     exclude_patterns = [
-        'yazi-quest-ai-studio*.zip', # Exclude any existing zip files
-        '.git/',
+        'yazi-quest-ai-studio*.zip',
         'create_zip.py',
         '*.pyc',
-        '__pycache__/',
-        '.DS_Store',
+        '__pycache__',
         '*.swp',
+        '*.swo',
+        '*.log',
+        'npm-debug.log*',
+        'yarn-debug.log*',
+        'yarn-error.log*',
+        'pnpm-debug.log*',
+        'lerna-debug.log*',
+        '*.local',
+        '.DS_Store',
+        '*.suo',
+        '*.ntvs*',
+        '*.njsproj',
+        '*.sln',
+        'swappy-*.png',
+        'Screenshot*.png',
     ]
 
-    # Process .gitignore
-    gitignore_path = os.path.join(source_dir, '.gitignore')
-    if os.path.exists(gitignore_path):
-        with open(gitignore_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    exclude_patterns.append(line)
-
-    # Prepare patterns for matching
-    # We will have two lists: one for files and one for directories
-    dir_patterns = []
-    file_patterns = []
-
-    for p in list(set(exclude_patterns)):
-        if p.endswith('/'):
-            dir_patterns.append(p.rstrip('/'))
-        else:
-            # Patterns without a slash can match a file or a directory
-            dir_patterns.append(p)
-            file_patterns.append(p)
-    
-    print(f"Directory exclusion patterns: {dir_patterns}")
-    print(f"File exclusion patterns: {file_patterns}")
-
-    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zf:
         for root, dirs, files in os.walk(source_dir, topdown=True):
-            rel_root = os.path.relpath(root, source_dir)
-            if rel_root == '.':
-                rel_root = ''
+            # Per user instruction, hardcode exclusion of these directories
+            if root == source_dir:
+                dirs[:] = [
+                    d for d in dirs
+                    if d not in ['.git', 'node_modules', '.husky', 'dist', 'dist-ssr', 'playwright-report', 'test-results', '.idea', '.playwright', 'videos', 'screenshots', 'traces']
+                ]
 
-            # Filter directories
-            # We iterate over a copy [:] because we are modifying it
-            dirs[:] = [d for d in dirs if not is_path_excluded(os.path.join(rel_root, d), dir_patterns)]
+            # Special handling for .vscode
+            if '.vscode' in dirs:
+                vscode_path = os.path.join(root, '.vscode')
+                for vscode_root, _, vscode_files in os.walk(vscode_path):
+                    for file in vscode_files:
+                        if file != 'extensions.json':
+                            # just add extensions.json
+                            pass
+                # remove .vscode from dirs so we don't traverse it further
+                dirs.remove('.vscode')
+                # manually add the one file we want
+                extensions_json_path = os.path.join(vscode_path, 'extensions.json')
+                if os.path.exists(extensions_json_path):
+                     rel_path = os.path.relpath(extensions_json_path, source_dir)
+                     print(f"Adding: {rel_path}")
+                     zf.write(extensions_json_path, rel_path)
 
-            # Filter files
+
             for file in files:
-                rel_path = os.path.join(rel_root, file)
-                if not is_path_excluded(rel_path, file_patterns):
-                    print(f"Adding: {rel_path}")
-                    zipf.write(os.path.join(root, file), rel_path)
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, source_dir)
 
+                if any(fnmatch.fnmatch(file, pattern) for pattern in exclude_patterns):
+                    continue
 
-def is_path_excluded(path, patterns):
-    """Checks if a path matches any of the glob patterns."""
-    # Normalize path to use forward slashes for matching
-    path_to_check = path.replace(os.sep, '/')
-    for pattern in patterns:
-        if fnmatch.fnmatch(path_to_check, pattern):
-            return True
-        if fnmatch.fnmatch(path_to_check, f"*/{pattern}"):
-             return True
-    return False
+                if any(fnmatch.fnmatch(rel_path, pattern) for pattern in exclude_patterns):
+                    continue
+                
+                print(f"Adding: {rel_path}")
+                zf.write(file_path, rel_path)
 
 if __name__ == "__main__":
     current_directory = os.getcwd()
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     output_zip = f"yazi-quest-ai-studio-{timestamp}.zip"
-    
-    create_zip_with_exclusions(current_directory, output_zip)
+    create_zip(current_directory, output_zip)
     print(f"\nSuccessfully created {output_zip}")
