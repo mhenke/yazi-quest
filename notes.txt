@@ -1,0 +1,51 @@
+
+level 1
+Jump to top of file list (gg) should we explain g goToCommands here? instead of
+
+level 2
+Open the goto dialog (g). Pause to review other options then navigate to '~/incoming' (i)
+
+should add a couple more K to the reviewing of the file?
+
+====
+
+
+
+
+=================== DONE ======================
+we stil lmention ECHO "an echo offers guidance, but trust is a risk" even though we  **Echo Guide System** | ❌ Removed | Replaced by Ghost mythology |
+
+do we use the map after we move to media? it should probably get to the vault eventually
+
+after we have reforced commands a couple times in episode i and ii, the suquent onces don't need the keybindings
+
+
+http://localhost:3000/?lvl=5&tasks=all ==== all tasks=all should close any alerts except the mission complete
+
+http://localhost:3000/?lvl=4&tasks=all then go to level 5 with shift+enter and the file structure isn't up to date. is hould have all the changes up to level 4 and include level 4 done
+
+
+level 8
+
+Navigate to '~/workspace/systemd-core'
+Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink') ---- remove  -> Esc)
+Clear filter (Esc) ---- NEW OBJECTIVE
+Perform a jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'
+Return to '~/workspace/systemd-core' (H) and OVERWRITE (Shift+P) the file
+
+
+
+
+
+We need to continue fixing navigation notification UI. We attempted to add showNotification call but failed due to target content not found. Need to view file around where to insert. The target block is lines 540-560 we saw earlier. The code after setGameState block ends at line 554. We need to insert showNotification after setGameState call. The target line numbers may have shifted after previous edits. Let's view more context around lines 540-560 again to ensure correct insertion point.
+
+We want it to look like this 
+
+
+
+It's a trap. I remember the shape of this code.
+I felt that. Why did I feel that?
+To self: The system feels loops
+
+wait expect(page.getByText('TRAP ACTIVATED')).toBeVisible();
+    > 63 |     await expect(page.getByText('Security team dispatched')).toBeVisible();
