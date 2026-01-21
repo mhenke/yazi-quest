@@ -4094,10 +4094,15 @@ But whose consciousness is it, really? See you next cycle."`,
           // Only complete if scenario is active
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_a2');
+
           if (!isActive) return false;
 
+          const coreDump = getNodeById(c.fs, '.config')?.children?.some(
+            (n) => n.name === 'core_dump.tmp'
+          );
+
           // Complete when file has been deleted
-          return !getNodeById(c.fs, '.config')?.children?.some((n) => n.name === 'core_dump.tmp');
+          return !coreDump;
         },
         completed: false,
       },

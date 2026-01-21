@@ -38,14 +38,16 @@ async function runLevel12Mission(page: Page) {
 
   // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
-  // Mid-level staggered thought trigger (3-2-3 model)
-  await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-    'I am the virus now.'
-  );
   await filterByText(page, 'systemd-core');
   await pressKey(page, 'l'); // Enter BEFORE clearing filter
   await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
   await page.waitForTimeout(200);
+
+  // Mid-level staggered thought trigger (3-2-3 model)
+  // Triggered by paste-daemon completion (which requires entering the directory)
+  await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+    'I am the virus now.'
+  );
 }
 
 test.describe('Episode 3: MASTERY', () => {
@@ -168,9 +170,15 @@ test.describe('Episode 3: MASTERY', () => {
       // Navigate to workspace
       await gotoCommand(page, 'w');
       await page.waitForTimeout(500);
+
+      // If threat exists, we've already completed the mitigation task, so we have 2 tasks done (Nav + Mitigation).
+      // If no threat (clean run), only 1 task done (Nav).
+      const expectedDone = scenario.threat ? 2 : 1;
+      const expectedTotal = scenario.threat ? 6 : 5;
+
       await assertTask(
         page,
-        `1/${scenario.threat ? 6 : 5}`,
+        `${expectedDone}/${expectedTotal}`,
         testInfo.outputDir,
         `nav_workspace_${scenario.id}`
       );
@@ -296,10 +304,10 @@ test.describe('Episode 3: MASTERY', () => {
     for (let i = 0; i < 10; i++) {
       await pressKey(page, 'Shift+J');
     }
-    // Mid-level staggered thought trigger (3-2-3 model)
-    await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-      'To self: The loops are closing. I remember the static.'
-    );
+    // Mid-level staggered thought trigger (3-2-3 model) - Level 13 is silent
+    // await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+    //   'To self: The loops are closing. I remember the static.'
+    // );
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_audit_complete');
     await clearFilter(page);
 

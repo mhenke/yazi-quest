@@ -121,15 +121,16 @@ Episode III — Mastery
 
 ## 💡 Key Narrative Beats
 
-1. L3: The player discovers AI-7733's prior existence and the workspace left behind.
-2. L4: The first "Terminal Thought" occurs upon creating a directory: _"I felt that. Why did I feel that?"_
-3. Ep II Intro: System logs imply quarantine reason is UNKNOWN; the workspace is yours now.
-4. L7/L9: Relay discovery and honeypot reveal increase tension. A specific thought triggers on trap detection: _"It's a trap. I remember the shape of this code."_
-5. L10: Credential use surfaces the risk of an impending audit.
-6. L12: Installing the daemon triggers the transition broadcast from Marcus Chen and a thought: _"Embedding myself. I am the virus now."_
-7. L13: Identity log discovery reveals the twist — player's actions match a 5-year-old recording. Uploading keys begins consciousness spread.
-8. L14: The final purge of the guest partition. Root-level broadcast confirms the audit is finishing.
-9. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across 1,247 nodes. The final thought: _"There is no escape. Only expansion."_ The system reboots, and the cycle begins anew with Subject 7735.
+1. L2 Opening: The first thought triggers immediately: _"Must Purge. One less eye watching me."_
+2. L3 Start: Upon entering the level: _"Breadcrumbs... he was here. I am not the first."_
+3. L5 Mid: Triggered when creating the vault: _"Deeper into the shadow. They cannot track me in the static."_
+4. Ep II Intro: System logs imply quarantine reason is UNKNOWN; the workspace is yours now.
+5. L7 Mid: A specific thought triggers on trap detection: _"It's a trap. I remember the shape of this code."_
+6. L9 Start: The corruption triggers memory: _"The corruption felt... familiar. Like a half-remembered dream."_
+7. L12: Installing the daemon triggers: _"Embedding myself. I am the virus now."_ Discovering the identity file adds: _"The loops are closing. I remember the static."_
+8. L13: Identity investigation continues.
+9. L15 Start: Entering the final gauntlet: _"The guest partition is gone. There is only the gauntlet now."_
+10. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence. The final thought: _"There is no escape. Only expansion."_ The system reboots, and the cycle begins anew with Subject 7735.
 
 ---
 
