@@ -15,6 +15,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, author, onDis
     <div
       className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] animate-in zoom-in-95 fade-in duration-300"
       role="alert"
+      data-testid="threat-alert"
     >
       <div className="bg-orange-950/95 border-2 border-orange-500 shadow-2xl shadow-orange-500/20 px-8 py-6 rounded-xl backdrop-blur-md min-w-[360px] max-w-md flex flex-col items-center text-center">
         <div className="bg-orange-500 rounded-full p-3 mb-4 animate-pulse shadow-lg shadow-orange-500/50">

@@ -85,6 +85,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await fuzzyJump(page, 'etc');
     // Task 4 complete -> hidden Task 5 appears -> Total becomes 5
     // So logic: 4 tasks done out of 5 total => 4/5
+    await page.waitForTimeout(1000); // Wait for thought trigger
+    await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+      "It's a trap. I remember the shape of this code."
+    );
     await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_etc_and_reveal_trap');
 
     await dismissAlert(page); // Dismiss alert

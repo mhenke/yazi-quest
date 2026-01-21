@@ -133,6 +133,10 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'd');
 
       await addItem(page, 'protocols/');
+      // Verify thought trigger
+      await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+        'I felt that. Why did I feel that?'
+      );
       await assertTask(page, '1/3', testInfo.outputDir, 'create_protocols_dir');
 
       // Task 2: Enter protocols/ and create uplink_v1.conf
@@ -157,6 +161,10 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
 
+      // Level 5 has a "QUARANTINE ALERT" overlay - verify and dismiss it
+      const alert = page.locator('[data-testid="threat-alert"]');
+      await expect(alert).toBeVisible();
+      await expect(alert).toContainText('QUARANTINE ALERT');
       await dismissAlert(page); // Dismiss alert
 
       // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)

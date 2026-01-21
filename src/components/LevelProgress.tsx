@@ -175,7 +175,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   return (
     <>
-      <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative">
+      <div
+        data-testid="level-progress-bar"
+        className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative"
+      >
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-6 overflow-hidden mr-4 h-8">
           <button
@@ -256,7 +259,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         {/* Center: Narrative thought */}
         <div className="flex-1 text-center px-4">
           {notification?.isThought && (
-            <span className="text-orange-400 font-mono italic text-sm">{notification.message}</span>
+            <span
+              data-testid="narrative-thought"
+              className="text-orange-400 font-mono italic text-sm"
+            >
+              {notification.message}
+            </span>
           )}
         </div>
 

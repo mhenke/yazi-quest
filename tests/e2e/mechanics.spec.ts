@@ -60,7 +60,7 @@ test.describe('Game Mechanics & Failures', () => {
 
     // 4. Expect Game Over
     await expect(page.getByText('TRAP ACTIVATED')).toBeVisible();
-    await expect(page.getByText('Security team dispatched')).toBeVisible();
+    await expect(page.getByText('Security Incident logged')).toBeVisible();
   });
 
   test('L9 Trap: Deleting system_monitor.pid triggers Game Over', async ({ page }) => {
