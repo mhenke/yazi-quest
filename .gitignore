@@ -30,7 +30,7 @@ yazi-quest-ai-studio-*.zip
 swappy-*.png
 Screenshot*.png
 # Playwright artifacts
-index.html
+
 playwright-report/
 playwright-report/**/data/
 test-results/

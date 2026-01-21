@@ -447,6 +447,9 @@ export default function App() {
         if (gameState.searchQuery) {
           // Apply sorting to search results
           let results = gameState.searchResults;
+          console.log(
+            `[DEBUG] visibleItems: searchQuery='${gameState.searchQuery}' results=${results.length} first=${results[0]?.name}`
+          );
 
           // Apply filter on search results if active (search -> filter chaining)
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);

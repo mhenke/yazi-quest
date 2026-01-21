@@ -4,6 +4,12 @@ import { getNodeByPath } from './fsHelpers';
 import { sortNodes } from './sortHelpers';
 
 export const getVisibleItems = (state: GameState): FileNode[] => {
+  if (state.searchQuery) {
+    // If a search is active, return the sorted search results
+    // We must apply sorting here to match what the user sees in the UI
+    return sortNodes(state.searchResults, state.sortBy, state.sortDirection);
+  }
+
   const currentDir = getNodeByPath(state.fs, state.currentPath);
   if (!currentDir || !currentDir.children) return [];
 
@@ -65,7 +71,9 @@ export const getRecursiveSearchResults = (
       const currentIdPath = [...idPath, child.id];
 
       // Check if file matches query
-      if (child.type === 'file' && child.name.toLowerCase().includes(lowerQuery)) {
+      const nameMatch = child.name.toLowerCase().includes(lowerQuery);
+      if (child.type === 'file' && nameMatch) {
+        console.log(`[DEBUG] SEARCH MATCH FILE: ${child.name} query=${lowerQuery}`);
         // Clone node and add displayPath for showing full relative path
         results.push({ ...child, displayPath: relativePath, path: currentIdPath });
       }

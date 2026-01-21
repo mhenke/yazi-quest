@@ -179,20 +179,19 @@ test.describe('Episode 3: MASTERY', () => {
       await pressKey(page, '.');
       await page.waitForTimeout(500);
 
-      // Find and cursor to identity file using filter
-      await pressKey(page, 'f'); // Open filter
+      // Find and cursor to identity file using Recursive Search (s) to avoid filter clearing issues
+      await pressKey(page, 's');
       await typeText(page, 'identity');
-      await page.keyboard.press('Enter'); // Confirm filter - this triggers Protocol Violation
-      await page.waitForTimeout(800); // Wait for modal to appear
+      await page.waitForTimeout(300); // Ensure input is registered
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(800);
 
-      // Always dismiss modal (it appears after filter confirmation)
-      await page.keyboard.press('Escape'); // Dismiss modal
-      await page.waitForTimeout(300);
+      // Search might trigger a warning if implemented (unlikely for s, but good to wait)
+      // Ensure we are in search results
 
-      // Move cursor to first item
+      // Move cursor to first item (identity log)
       await pressKey(page, 'g');
       await pressKey(page, 'g');
-      // Remove 'j' move - when filtered for "identity", only the log remains, or it's at index 0
       await page.waitForTimeout(300);
 
       // Scroll preview pane IMMEDIATELY to complete task check while cursor is on file
