@@ -88,7 +88,7 @@ export default function App() {
     const epParam = params.get('ep') || params.get('episode');
     const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
-    const skipIntro = params.get('intro') === 'false';
+    const skipIntro = params.get('intro') === 'false' || params.get('skipIntro') === 'true';
 
     // 3. Determine Target Level
     let targetIndex = 0;
