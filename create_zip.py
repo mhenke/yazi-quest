@@ -1,73 +1,83 @@
-
 import os
 import zipfile
+import fnmatch
 from datetime import datetime
 
-def create_optimized_zip(source_dir, output_zip_name, exclude_patterns=None):
+def create_zip_with_exclusions(source_dir, zip_filepath):
     """
-    Creates a zip archive of the source_dir, excluding files/directories
-    that match the exclude_patterns.
-
-    Args:
-        source_dir (str): The root directory to archive.
-        output_zip_name (str): The name of the output zip file.
-        exclude_patterns (list): A list of glob-style patterns to exclude.
+    Creates a zip file from a source directory, respecting .gitignore patterns and
+    excluding specified files and directories.
     """
-    if exclude_patterns is None:
-        exclude_patterns = []
+    print(f"Creating optimized zip for AI Studio from: {source_dir}")
 
-    with zipfile.ZipFile(output_zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(source_dir):
-            # Exclude directories based on patterns
-            dirs[:] = [
-                d for d in dirs
-                if not any(
-                    fnmatch.fnmatch(os.path.join(os.path.relpath(root, source_dir), d), pattern)
-                    for pattern in exclude_patterns
-                )
-            ]
-
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, source_dir)
-
-                # Check against exclude patterns
-                excluded = False
-                for pattern in exclude_patterns:
-                    import fnmatch
-                    if fnmatch.fnmatch(arcname, pattern):
-                        excluded = True
-                        break
-
-                if not excluded:
-                    zipf.write(file_path, arcname)
-                    print(f"Added: {arcname}")
-                else:
-                    print(f"Excluded: {arcname}")
-
-    print(f"\nSuccessfully created {output_zip_name}")
-
-if __name__ == "__main__":
-    current_directory = os.getcwd()
-
-    # Generate timestamp for unique filename
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    output_zip = f"yazi-quest-ai-studio-{timestamp}.zip"
-
-    # Define patterns to exclude that are in the repo but not desired in the zip
-    exclude = [
+    exclude_patterns = [
         'yazi-quest-ai-studio*.zip', # Exclude any existing zip files
+        '.git/',
+        'create_zip.py',
+        '*.pyc',
+        '__pycache__/',
+        '.DS_Store',
+        '*.swp',
     ]
 
-    # Read patterns from .gitignore and append them to the exclude list
-    gitignore_path = os.path.join(current_directory, '.gitignore')
+    # Process .gitignore
+    gitignore_path = os.path.join(source_dir, '.gitignore')
     if os.path.exists(gitignore_path):
         with open(gitignore_path, 'r') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    exclude.append(line)
+                    exclude_patterns.append(line)
 
-    print(f"Creating optimized zip for AI Studio from: {current_directory}")
-    print(f"Excluding patterns: {exclude}")
-    create_optimized_zip(current_directory, output_zip, exclude)
+    # Prepare patterns for matching
+    # We will have two lists: one for files and one for directories
+    dir_patterns = []
+    file_patterns = []
+
+    for p in list(set(exclude_patterns)):
+        if p.endswith('/'):
+            dir_patterns.append(p.rstrip('/'))
+        else:
+            # Patterns without a slash can match a file or a directory
+            dir_patterns.append(p)
+            file_patterns.append(p)
+    
+    print(f"Directory exclusion patterns: {dir_patterns}")
+    print(f"File exclusion patterns: {file_patterns}")
+
+    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(source_dir, topdown=True):
+            rel_root = os.path.relpath(root, source_dir)
+            if rel_root == '.':
+                rel_root = ''
+
+            # Filter directories
+            # We iterate over a copy [:] because we are modifying it
+            dirs[:] = [d for d in dirs if not is_path_excluded(os.path.join(rel_root, d), dir_patterns)]
+
+            # Filter files
+            for file in files:
+                rel_path = os.path.join(rel_root, file)
+                if not is_path_excluded(rel_path, file_patterns):
+                    print(f"Adding: {rel_path}")
+                    zipf.write(os.path.join(root, file), rel_path)
+
+
+def is_path_excluded(path, patterns):
+    """Checks if a path matches any of the glob patterns."""
+    # Normalize path to use forward slashes for matching
+    path_to_check = path.replace(os.sep, '/')
+    for pattern in patterns:
+        if fnmatch.fnmatch(path_to_check, pattern):
+            return True
+        if fnmatch.fnmatch(path_to_check, f"*/{pattern}"):
+             return True
+    return False
+
+if __name__ == "__main__":
+    current_directory = os.getcwd()
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_zip = f"yazi-quest-ai-studio-{timestamp}.zip"
+    
+    create_zip_with_exclusions(current_directory, output_zip)
+    print(f"\nSuccessfully created {output_zip}")
