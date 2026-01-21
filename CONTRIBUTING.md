@@ -106,3 +106,26 @@ All interactive components must include `data-testid` attributes to support the 
 
 - **No Manual State**: If a level requires a specific state (e.g. 10 files in `/tmp`), implement it in `onEnter` rather than assuming existing state.
 - **Wait for Modals**: E2E tests should always wait for transitions (`Enter`, `Escape`) to resolve before checking tasks.
+
+### Automated Testing Guidelines
+
+#### 1. Key Event Handling
+
+The game uses a global keyboard event listener on `window`. Standard Playwright `page.keyboard.press()` may not behave as expected for game inputs.
+**Use `window.dispatchEvent`:**
+
+```typescript
+await page.evaluate(() => {
+  window.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'g',
+      code: 'KeyG',
+    })
+  );
+});
+```
+
+#### 2. Intro Screen Handling
+
+- **Levels 1-4**: Press `Shift+Enter` to dismiss the standard intro or use `?intro=false`.
+- **Level 5**: Has a unique "QUARANTINE ALERT". Must be dismissed with `Shift+Enter` before interactions can begin.

@@ -63,13 +63,13 @@
 | Item                             | Estimate | Trigger                                  |
 | :------------------------------- | :------- | :--------------------------------------- |
 | **Additional Twist Breadcrumbs** | 1 week   | Playtest confirms twist needs more setup |
-| **Audit & Document Sync**        | 1 week   | Ongoing synchronization of documentation |
+| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts  |
 
 ### Low Priority (Backlog)
 
-| Item                      | Estimate | Notes                                                                      |
-| :------------------------ | :------- | :------------------------------------------------------------------------- |
-| **Audit & Document Sync** | 1 week   | Maintenance: Align documentation with implementation after major features. |
+| Item                   | Estimate | Notes                                                                                                            |
+| :--------------------- | :------- | :--------------------------------------------------------------------------------------------------------------- |
+| **Filesystem Pruning** | 2 weeks  | Improve realism by removing depth-for-depth's sake and unnecessary files/folders, but keeping narrative clutter. |
 
 ---
 
@@ -79,6 +79,7 @@
 - Multiplayer/leaderboards
 - Mobile support
 - Procedural content
+- Filesystem Flattening (Unrealistic for simulation)
 
 ---
 

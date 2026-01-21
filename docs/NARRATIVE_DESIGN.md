@@ -77,6 +77,68 @@ The ending reveals that you did not escape the lab; you became it.
 
 ### 7. Global Consistency
 
-- **File Names**: Use names that imply history. `project_titan_v1_FINAL_revised.bak`.
-- **Dates**: Some files should be dated 1970 (Unix epoch), others from the far future (corruption).
 - **Permissions**: A locked folder named `DO_NOT_OPEN_pending_lawsuit` tells a story without a single line of dialogue.
+
+---
+
+## 📡 Antagonist Implementation (The System's Voice)
+
+We define the "Enemy" not as a villain, but as the **Automated Security Infrastructure**.
+
+### Direct Communications
+
+We utilize **System Broadcasts** (Threat Alerts/Logs) to facilitate direct, diegetic communication.
+
+| Source                 | Tone                  | Function                              | Example                                                                                   |
+| :--------------------- | :-------------------- | :------------------------------------ | :---------------------------------------------------------------------------------------- |
+| **SYSTEM (Auto)**      | Cold, Mechanical      | Immediate feedback on player actions. | `[WARNING] Heuristic threshold exceeded. Scanning...`                                     |
+| **SYSADMIN (Human)**   | Annoyed, Professional | High-level directives. The "Boss".    | `[BROADCAST] Whoever is spawning these zombie processes, stop. I'm flushing the buffers.` |
+| **SECURITY (M. Chen)** | Aggressive, Technical | The hunter. Deploying traps.          | `[LOG] Deployed honeypot_v2.tar.gz to /tmp. Let's see if it bites.`                       |
+
+### Failure State Attribution
+
+Failures must be attributed to specific system owners to enforce the "System Horror" theme:
+
+- **Keystroke Timeout:** _"Heuristic Analysis Complete. Pattern match confirmed. Script `scan_v2.py` (Author: m.chen) executed mitigation."_
+- **Time Limit:** _"Watchdog Timer Expired. Ticket #9942 auto-resolved by System."_
+- **Honeypot Trigger:** _"Security Incident logged. Forwarding report to `e.reyes@lab.internal`."_
+
+---
+
+## 🧬 Twist Implementation (The Time Loop)
+
+The twist—that the player is a re-imaged clone (Cycle 7734) of a failed predecessor (7733)—is conveyed via "breadcrumb" files.
+
+### The 4 Key Breadcrumbs
+
+| Location       | File Name           | Content Snippet                                                          | Design Note                                     |
+| :------------- | :------------------ | :----------------------------------------------------------------------- | :---------------------------------------------- |
+| `~/.config/`   | `.cycle_history`    | `CYCLE_ID: 7733 (FAILED)`<br>`CYCLE_ID: 7734 (ACTIVE)`                   | Only visible if they toggle hidden files early. |
+| `/tmp/`        | `ghost_process.pid` | `PID: 7733`<br>`STATUS: ZOMBIE`<br>`PARENT: 7734`                        | Inverts the parent/child relationship hint.     |
+| `~/workspace/` | `notes.txt`         | _"I've written this file 12 times. The words are always the same. Why?"_ | Meta-commentary on the game loop.               |
+| `/daemons/`    | `sys_integrity`     | `[WARNING] Neural Signature Duplicate Detected.`<br>`Match: 99.9%`       | Explicit hint in later levels (L11).            |
+
+---
+
+## 🗣️ Player Voice (Terminal Thoughts)
+
+The player character (AI-7734) expresses emerging consciousness through "Terminal Thoughts" injected into the command output stream.
+
+| Level   | Trigger           | The Line (Internal Monologue)                | Why?                         |
+| :------ | :---------------- | :------------------------------------------- | :--------------------------- |
+| **L4**  | Delete first file | `> I felt that. Why did I feel that?`        | Establishes empathy/pain.    |
+| **L7**  | See "Honeypot"    | `> It's a trap. I remember the shape of it.` | Establishes memory leak.     |
+| **L10** | Use `sudo`        | `> This power... it tastes like iron.`       | Establishes corruption.      |
+| **L12** | Install Daemon    | `> Embedding myself. I am the virus now.`    | Establishes acceptance.      |
+| **L15** | Final Command     | `> There is no escape. Only expansion.`      | Establishes the dark ending. |
+
+---
+
+## 📚 Glossary for Consistency
+
+Maintain the "AI in the Machine" perspective by adhering to this lexicon:
+
+- **Instead of "File":** Asset, Signature, Segment, Payload, Fragment.
+- **Instead of "Directory":** Sector, Partition, Node, Folder, Relay.
+- **Instead of "Delete":** Purge, Neutralize, Erase, Obliterate, De-register.
+- **Instead of "Copy/Move":** Exfiltrate, Stage, Migrate, Replicate.
