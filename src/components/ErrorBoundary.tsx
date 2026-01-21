@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { Component, ReactNode } from 'react';
 
 import { reportError } from '../utils/error';
 
-type Props = { children: React.ReactNode };
+type Props = { children: ReactNode };
 
-export default class ErrorBoundary extends React.Component<
+export default class ErrorBoundary extends Component<
   Props,
   { hasError: boolean; error: Error | null }
 > {

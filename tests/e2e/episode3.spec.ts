@@ -2,7 +2,6 @@ import { test, expect, type Page } from '@playwright/test';
 import {
   startLevel,
   assertLevel,
-  goToLevel,
   pressKey,
   gotoCommand,
   waitForMissionComplete,
@@ -12,47 +11,16 @@ import {
   filterByText,
   clearFilter,
   search,
-  pressKeys,
   addItem,
   filterAndSelect,
   dismissAlert,
   confirmMission,
   deleteItem,
   renameItem,
-  goParent,
   expectClipboard,
   expectCurrentDir,
   areHiddenFilesVisible,
-  findFZF,
 } from './utils';
-
-// Helper for identity discovery (Level 12 Task 2)
-// NOTE: Does NOT clear filter at end - caller must clear after verifying task completion
-async function discoverIdentity(page: Page) {
-  // Navigate to workspace
-  await gotoCommand(page, 'w');
-  await page.waitForTimeout(500);
-
-  // Toggle hidden files to see .identity.log.enc
-  await pressKey(page, '.');
-  await page.waitForTimeout(500);
-
-  // Find and cursor to identity file
-  await filterByText(page, 'identity');
-  await page.waitForTimeout(300);
-
-  // Move cursor to first item (should be .identity.log.enc after filter)
-  await pressKey(page, 'g');
-  await pressKey(page, 'g');
-  await page.waitForTimeout(300);
-
-  // Scroll preview pane to read the file (need 30+ scroll)
-  for (let i = 0; i < 7; i++) {
-    await pressKey(page, 'Shift+j');
-  }
-  await page.waitForTimeout(500);
-  // Task check happens while we're still on identity file with scroll >= 30
-}
 
 // Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
 async function runLevel12Mission(page: Page) {
@@ -70,6 +38,10 @@ async function runLevel12Mission(page: Page) {
 
   // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
+  // Mid-level staggered thought trigger (3-2-3 model)
+  await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+    'I am the virus now.'
+  );
   await filterByText(page, 'systemd-core');
   await pressKey(page, 'l'); // Enter BEFORE clearing filter
   await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
@@ -196,6 +168,12 @@ test.describe('Episode 3: MASTERY', () => {
       // Navigate to workspace
       await gotoCommand(page, 'w');
       await page.waitForTimeout(500);
+      await assertTask(
+        page,
+        `1/${scenario.threat ? 6 : 5}`,
+        testInfo.outputDir,
+        `nav_workspace_${scenario.id}`
+      );
 
       // Toggle hidden files to see .identity.log.enc
       await pressKey(page, '.');
@@ -211,17 +189,17 @@ test.describe('Episode 3: MASTERY', () => {
       await page.keyboard.press('Escape'); // Dismiss modal
       await page.waitForTimeout(300);
 
-      // Move cursor to first item, then down to .identity.log.enc (systemd-core is above it)
+      // Move cursor to first item
       await pressKey(page, 'g');
       await pressKey(page, 'g');
-      await pressKey(page, 'j'); // Move down from systemd-core to .identity.log.enc
+      // Remove 'j' move - when filtered for "identity", only the log remains, or it's at index 0
       await page.waitForTimeout(300);
 
       // Scroll preview pane IMMEDIATELY to complete task check while cursor is on file
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 12; i++) {
         await pressKey(page, 'Shift+j');
       }
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(800);
 
       // Task should be complete now - assert BEFORE clearing filter
       // For no-threat: Task 1 = navigate-workspace, Task 2 = discover-identity
@@ -319,6 +297,10 @@ test.describe('Episode 3: MASTERY', () => {
     for (let i = 0; i < 10; i++) {
       await pressKey(page, 'Shift+J');
     }
+    // Mid-level staggered thought trigger (3-2-3 model)
+    await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+      'To self: The loops are closing. I remember the static.'
+    );
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_audit_complete');
     await clearFilter(page);
 
@@ -406,6 +388,10 @@ test.describe('Episode 3: MASTERY', () => {
     });
 
     await startLevel(page, 15);
+    const narrative = page.locator('[data-testid="narrative-thought"]');
+    await expect(narrative).toContainText(
+      'The guest partition is gone. There is only the gauntlet now.'
+    );
 
     // PHASE 1: Enter Vault
     // ----------------------------------------------------------------

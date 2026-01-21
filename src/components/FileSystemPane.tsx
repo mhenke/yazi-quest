@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, memo, useMemo } from 'react';
 import { FileNode, ClipboardItem, Linemode } from '../types';
 import { MemoizedFileSystemItem } from './FileSystemItem';
 
@@ -94,4 +94,4 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   );
 };
 
-export const MemoizedFileSystemPane = React.memo(FileSystemPane);
+export const MemoizedFileSystemPane = memo(FileSystemPane);

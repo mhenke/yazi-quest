@@ -118,7 +118,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({
           } as Candidate;
         });
     }
-  }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath]);
+  }, [isZoxide, gameState.zoxideData, gameState.fs, gameState.currentPath, gameState.levelIndex]);
 
   const totalCount = baseItems.length;
 

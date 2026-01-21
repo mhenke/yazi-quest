@@ -56,6 +56,7 @@ export default [
       'jsx-a11y/no-autofocus': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
       'jsx-a11y/no-static-element-interactions': 'off', // Disable due to false positives with React 19 and ESM
+      'security/detect-object-injection': 'off',
     },
     settings: {
       'import/parsers': {

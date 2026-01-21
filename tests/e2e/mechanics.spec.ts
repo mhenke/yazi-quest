@@ -11,7 +11,7 @@ import {
 test.describe('Game Mechanics & Failures', () => {
   test('Shell Collapse: Deleting critical system directory triggers Game Over', async ({
     page,
-  }, testInfo) => {
+  }, _testInfo) => {
     // Start Level 2 (allows shortcuts like gr)
     await startLevel(page, 2);
 

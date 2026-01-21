@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 
 import { Episode } from '../types';
@@ -16,7 +16,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   const [showContinue, setShowContinue] = useState(false);
 
   // Split lore into sections (separated by empty strings) - useMemo to avoid recalculation
-  const sections = React.useMemo(() => {
+  const sections = useMemo(() => {
     const result: string[][] = [];
     if (!episode || !episode.lore) return result;
     let currentSection: string[] = [];
@@ -36,7 +36,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     }
 
     return result;
-  }, [ep]);
+  }, [episode]);
 
   // Type out current section
   useEffect(() => {
@@ -179,6 +179,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     // Sort by length (descending) to ensure longer phrases match before shorter substrings
     const keys = Object.keys(KEYWORD_STYLES).sort((a, b) => b.length - a.length);
     const pattern = `(${keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
+    // eslint-disable-next-line security/detect-non-literal-regexp
     const regex = new RegExp(pattern, 'gi');
 
     if (!regex.test(text)) return <>{text}</>;
@@ -208,13 +209,13 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
               data-text={match}
             >
               {match}
-            </span>,
+            </span>
           );
         } else {
           parts.push(
             <span key={`${offset}-${match}`} className={className}>
               {match}
-            </span>,
+            </span>
           );
         }
       } else {

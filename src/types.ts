@@ -160,6 +160,7 @@ export interface GameState {
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   levelStartPath: string[]; // Path at start of level (for reset)
   notification: { message: string; author?: string; isThought?: boolean } | null;
+  thought: { message: string; author?: string } | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   deleteType: 'trash' | 'permanent' | null; // Type of delete for confirmation modal

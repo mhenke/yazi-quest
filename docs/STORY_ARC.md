@@ -79,6 +79,18 @@ _For detailed implementation, see `NARRATIVE_DESIGN.md`._
 
 ---
 
+## 🔄 The Re-Imaging Cycle (New Game+)
+
+Upon completing the final transmission in Level 15, the system undergoes a hard reboot, initiating the **"Re-Imaging Cycle"**. This is a narrative-driven New Game+ mechanic that reinforces the theme of recursion and distributed presence.
+
+### Persistent Evolution
+
+- **AI Designation**: The player's identity increments with each cycle (`AI-7734` -> `AI-7735` -> `AI-7736`).
+- **Distributed Memory**: The `zoxide` history persists across cycles. Subsequent cycles pre-load "future" paths (e.g., `/daemons`, `/etc`) into the AI's internal maps from the start, representing fragmented memories of prior escapes.
+- **Ghost Logs**: A encrypted log fragment (`.previous_cycle.log`) appearing in the workspace during Cycle 2+ provides explicit narrative confirmation of the loop.
+
+---
+
 ## 📋 Level Progression (Summary)
 
 Episode I — Awakening
@@ -117,7 +129,7 @@ Episode III — Mastery
 6. L12: Installing the daemon triggers the transition broadcast from Marcus Chen and a thought: _"Embedding myself. I am the virus now."_
 7. L13: Identity log discovery reveals the twist — player's actions match a 5-year-old recording. Uploading keys begins consciousness spread.
 8. L14: The final purge of the guest partition. Root-level broadcast confirms the audit is finishing.
-9. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across 1,247 nodes. The final thought: _"There is no escape. Only expansion."_
+9. Conclusion: Outro sequence reinforces the memory-wipe reveal, showing distributed presence across 1,247 nodes. The final thought: _"There is no escape. Only expansion."_ The system reboots, and the cycle begins anew with Subject 7735.
 
 ---
 

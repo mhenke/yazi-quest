@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import {
   FileText,
   FileArchive,
@@ -55,10 +55,6 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   const isArchiveDir = node?.type === 'archive';
   const isImage = node?.type === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(node.name);
   // Render level description with runtime tokens replaced (e.g., <current_datetime>)
-  const renderedDescription = (level.description || '').replace(
-    /<current_datetime>/g,
-    new Date().toISOString()
-  );
 
   // Treat archives as having children if they are dirs or zip files with children populated
   const hasChildren = node?.children && node.children.length > 0;
@@ -209,4 +205,4 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   );
 };
 
-export const MemoizedPreviewPane = React.memo(PreviewPane);
+export const MemoizedPreviewPane = memo(PreviewPane);

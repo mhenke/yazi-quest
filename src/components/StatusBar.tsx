@@ -101,8 +101,24 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
         <span className="truncate mr-4 font-bold text-white">{itemName}</span>
 
+        {/* Notification Area for Technical Feedback - Moved to left of task count */}
+        {state.notification && (
+          <div
+            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full ${
+              state.notification.message.startsWith('🔒')
+                ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
+                : 'bg-zinc-900/40 text-zinc-300'
+            }`}
+            data-testid="system-notification"
+          >
+            {state.notification.message}
+          </div>
+        )}
+
         {/* Quest Info with Task Progress */}
-        <span className="text-zinc-500 hidden sm:inline-block whitespace-nowrap ml-auto flex items-center gap-2">
+        <span
+          className={`text-zinc-500 hidden sm:inline-block whitespace-nowrap flex items-center gap-2 ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
+        >
           <span
             className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
           >
@@ -140,6 +156,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* 4. Timer / Metrics (Right Aligned) */}
       <div className="flex bg-zinc-800">
+        {/* Threat Level Display */}
         {/* Threat Monitor (Audit 2.1) - Replaces basic notification area when high threat, or sits alongside? 
             Let's put it to the left of the timer/notification area. 
         */}
@@ -169,22 +186,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         {/* Level Complete Trigger notification logic... */}
         {allTasksComplete ? (
-          <>
-            {level.successMessage && (
-              <div className="px-3 bg-green-950/50 text-green-400 font-bold border-l border-green-700 flex items-center text-[10px] uppercase tracking-wide">
-                {level.successMessage}
-              </div>
-            )}
-            <button
-              onClick={onNextLevel}
-              className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
-            >
-              <span className="hidden sm:inline">NEXT</span>
-              <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-                SHIFT <ArrowRight size={8} /> ENTER
-              </span>
-            </button>
-          </>
+          <button
+            onClick={onNextLevel}
+            className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
+          >
+            <span className="hidden sm:inline">NEXT</span>
+            <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              SHIFT <ArrowRight size={8} /> ENTER
+            </span>
+          </button>
         ) : null}
 
         {/* Show Timer if active */}

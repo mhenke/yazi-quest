@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Binary,
   Code,
@@ -56,7 +56,7 @@ const ICONS = [
 ];
 
 export const CelebrationConfetti: React.FC = () => {
-  const [particles, setParticles] = useState<Particle[]>(() => {
+  const [particles] = useState<Particle[]>(() => {
     // Generate particles
     const particleCount = 50;
     const newParticles: Particle[] = [];

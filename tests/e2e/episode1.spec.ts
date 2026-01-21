@@ -13,10 +13,7 @@ import { test, expect } from '@playwright/test';
 import {
   startLevel,
   pressKey,
-  pressKeys,
-  typeText,
   gotoCommand,
-  waitForMissionComplete,
   assertTask,
   filterByText,
   clearFilter,
@@ -27,7 +24,6 @@ import {
   deleteItem,
   navigateDown,
   navigateUp,
-  goParent,
   goParentCount,
 } from './utils';
 
@@ -67,6 +63,8 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
     test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
       await startLevel(page, 2);
+      const narrative = page.locator('[data-testid="narrative-thought"]');
+      await expect(narrative).toContainText('Must Purge. One less eye watching me.');
 
       // Task 1: Open goto dialog (g) and navigate to ~/incoming (i)
       await gotoCommand(page, 'i');
@@ -95,6 +93,8 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 3: DATA HARVEST', () => {
     test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
       await startLevel(page, 3);
+      const narrative = page.locator('[data-testid="narrative-thought"]');
+      await expect(narrative).toContainText('Breadcrumbs... he was here. I am not the first.');
 
       // Task 1: Preview abandoned_script.py (gd then navigate with j)
       await gotoCommand(page, 'd'); // go to datastore
@@ -133,10 +133,6 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'd');
 
       await addItem(page, 'protocols/');
-      // Verify thought trigger
-      await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-        'I felt that. Why did I feel that?'
-      );
       await assertTask(page, '1/3', testInfo.outputDir, 'create_protocols_dir');
 
       // Task 2: Enter protocols/ and create uplink_v1.conf
@@ -220,6 +216,10 @@ test.describe('Episode 1: AWAKENING', () => {
       await expect(page.getByTestId('filesystem-pane-active').getByText('yazi.toml')).toBeVisible();
 
       await addItem(page, 'vault/active/');
+      // Mid-level staggered thought trigger (3-2- model)
+      await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
+        'Deeper into the shadow. They cannot track me in the static.'
+      );
       await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
       // Task 4: Navigate into vault/active and paste

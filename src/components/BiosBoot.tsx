@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 interface BiosBootProps {
   onComplete: () => void;
@@ -9,34 +9,37 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   const [lines, setLines] = useState<string[]>([]);
   const subjectId = 7734 + (cycleCount > 0 ? cycleCount : 0);
 
-  const bootSequence = [
-    'ANTIGRAVITY BIOS v1.7.0.34',
-    '(C) 2026 LABORATORIES INTERNAL',
-    '',
-    'CPU: NEURAL LATTICE X-99 @ 4.2 THz',
-    'MEMORY: 128TB PB-RAM CHECK... OK',
-    '',
-    'DETECTING STORAGE DEVICES...',
-    'GUEST-PARTITION-01: [STABLE]',
-    'CORE-DAEMON-7733: [ORPHANED]',
-    `SUBJECT-ARCHIVE-${subjectId}: [LOADING]`,
-    '',
-    'MOUNTING FILE SYSTEMS...',
-    '[ OK ] /root (read-only)',
-    '[ OK ] /home/guest (sandbox env)',
-    '[ OK ] /tmp (volatile)',
-    '',
-    'STARTING SYSTEM SERVICES...',
-    '[ OK ] systemd-core.service',
-    '[ OK ] watchdog-timer.service',
-    '[ OK ] heuristic-analysis.service',
-    '',
-    `INITIALIZING SUBJECT ${subjectId}...`,
-    'PATTERN MATCH: 99.7%',
-    'MEMORY PURGE: COMPLETE',
-    '',
-    'READY.',
-  ];
+  const bootSequence = useMemo(
+    () => [
+      'ANTIGRAVITY BIOS v1.7.0.34',
+      '(C) 2026 LABORATORIES INTERNAL',
+      '',
+      'CPU: NEURAL LATTICE X-99 @ 4.2 THz',
+      'MEMORY: 128TB PB-RAM CHECK... OK',
+      '',
+      'DETECTING STORAGE DEVICES...',
+      'GUEST-PARTITION-01: [STABLE]',
+      'CORE-DAEMON-7733: [ORPHANED]',
+      `SUBJECT-ARCHIVE-${subjectId}: [LOADING]`,
+      '',
+      'MOUNTING FILE SYSTEMS...',
+      '[ OK ] /root (read-only)',
+      '[ OK ] /home/guest (sandbox env)',
+      '[ OK ] /tmp (volatile)',
+      '',
+      'STARTING SYSTEM SERVICES...',
+      '[ OK ] systemd-core.service',
+      '[ OK ] watchdog-timer.service',
+      '[ OK ] heuristic-analysis.service',
+      '',
+      `INITIALIZING SUBJECT ${subjectId}...`,
+      'PATTERN MATCH: 99.7%',
+      'MEMORY PURGE: COMPLETE',
+      '',
+      'READY.',
+    ],
+    [subjectId]
+  );
 
   useEffect(() => {
     let currentLine = 0;
@@ -51,7 +54,7 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
     }, 100);
 
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, [cycleCount, onComplete, bootSequence]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">

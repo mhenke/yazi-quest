@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AlertTriangle, RotateCcw, Zap } from 'lucide-react';
+import { AlertTriangle, Zap } from 'lucide-react';
 
 interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';

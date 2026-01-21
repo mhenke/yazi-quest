@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { GameState, FileNode, Level, FsError, Result } from '../types';
 import {
   getNodeById,
-  getParentNode,
   getNodeByPath,
   deleteNode,
   addNode,
@@ -100,6 +99,7 @@ export const useKeyboardHandlers = (
             ...prev,
             mode: 'normal',
             acceptNextKeyForSort: false,
+
             linemode: modes[nextIndex],
           };
         });
@@ -466,7 +466,7 @@ export const useKeyboardHandlers = (
             usedPreviewDown: false,
             usedPreviewUp: false,
           }));
-        } catch (err) {
+        } catch {
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
         }
         return;
@@ -600,6 +600,7 @@ export const useKeyboardHandlers = (
         case 'ArrowDown':
           setGameState((prev) => {
             const newCursorIndex = prev.cursorIndex >= items.length - 1 ? 0 : prev.cursorIndex + 1;
+
             const newItem = items[newCursorIndex];
 
             // Level 11 scouting: track file if info panel is open
@@ -679,7 +680,7 @@ export const useKeyboardHandlers = (
               usedPreviewDown: false,
               usedPreviewUp: false,
             }));
-          } catch (err) {
+          } catch {
             // ignore
           }
           break;
@@ -1013,6 +1014,7 @@ export const useKeyboardHandlers = (
                   }
 
                   // Strip search-related metadata before adding to filesystem
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
 
                   const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
@@ -1101,6 +1103,7 @@ export const useKeyboardHandlers = (
                   }
 
                   // Strip search-related metadata before adding to filesystem
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
 
                   const addResult: Result<FileNode, FsError> = addNode(

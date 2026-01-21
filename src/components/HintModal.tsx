@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Lightbulb } from 'lucide-react';
 
 interface HintModalProps {
@@ -26,7 +26,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
   }
 
   // Handle close shortcut locally
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         // Shift+Enter to close

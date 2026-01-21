@@ -73,7 +73,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
   try {
     await skipButton.click({ timeout: 500 });
     await expect(skipButton).not.toBeVisible({ timeout: 1000 });
-  } catch (error) {
+  } catch {
     // This is expected behavior for many levels.
   }
 
@@ -116,7 +116,9 @@ export async function assertTask(
     const ep = lvl > 0 ? Math.floor((lvl - 1) / 5) + 1 : 0;
     const evidenceDir = path.join(outputDir, 'evidence', `episode${ep}`, `lvl${lvl}`);
 
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     if (!fs.existsSync(evidenceDir)) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       fs.mkdirSync(evidenceDir, { recursive: true });
     }
 
@@ -308,7 +310,7 @@ export async function filterByText(page: Page, text: string): Promise<void> {
       await page.keyboard.press('Escape'); // Dismiss modal
       await page.waitForTimeout(200);
     }
-  } catch (e) {
+  } catch {
     // Ignore timeout, modal didn't appear
   }
 }
@@ -345,7 +347,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
       await page.keyboard.press('Escape'); // Dismiss modal
       await page.waitForTimeout(200);
     }
-  } catch (e) {
+  } catch {
     // Ignore timeout
   }
 

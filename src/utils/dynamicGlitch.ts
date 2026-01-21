@@ -1,6 +1,7 @@
 export function applyDynamicGlitch(el: HTMLElement) {
   if (!el) return;
   // If already applied, skip
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((el as any).__dynamicGlitchApplied) return;
 
   const uid = Math.random().toString(36).slice(2, 9);
@@ -19,7 +20,7 @@ export function applyDynamicGlitch(el: HTMLElement) {
       const ty = Math.floor(Math.random() * 3) - 1; // -1..1 px
       const skew = (Math.random() * 2 - 1).toFixed(2); // -1..1 deg
       arr.push(
-        `${pct}% { clip: rect(${top}px, 9999px, ${bottom}px, 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`,
+        `${pct}% { clip: rect(${top}px, 9999px, ${bottom}px, 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`
       );
     }
     return arr.join('\n');
@@ -41,5 +42,15 @@ export function applyDynamicGlitch(el: HTMLElement) {
   el.style.setProperty('--glitch-dur-before', `${(1.2 + Math.random() * 1.2).toFixed(2)}s`);
   el.style.setProperty('--glitch-dur-after', `${(0.9 + Math.random() * 0.9).toFixed(2)}s`);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (el as any).__dynamicGlitchApplied = true;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const triggerScreenShake = (element: any) => {
+  if (!element) return;
+  // Reset animation
+  element.style.animation = 'none';
+  void element.offsetWidth; // trigger reflow
+  element.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both';
+};

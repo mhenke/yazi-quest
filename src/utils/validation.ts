@@ -14,8 +14,7 @@ export function isValidZoxideData(data: unknown): data is Record<string, ZoxideE
     return false;
   }
 
-  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-    // Keys must be strings (implicitly true for Object.entries on non-symbol keys)
+  return Object.values(data as Record<string, unknown>).every((value) => {
     // Values must be objects matching ZoxideEntry
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -25,7 +24,7 @@ export function isValidZoxideData(data: unknown): data is Record<string, ZoxideE
     if (typeof entry.count !== 'number' || typeof entry.lastAccess !== 'number') {
       return false;
     }
-  }
 
-  return true;
+    return true;
+  });
 }

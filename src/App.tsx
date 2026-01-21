@@ -1,16 +1,7 @@
 import { InputModal } from './components/InputModal';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
-import {
-  GameState,
-  FileNode,
-  Level as _Level,
-  ZoxideEntry,
-  calculateFrecency,
-  Linemode as _Linemode,
-  FsError,
-  Result as _Result,
-} from './types';
+import { GameState, FileNode, ZoxideEntry, FsError, calculateFrecency } from './types';
 import {
   LEVELS,
   INITIAL_FS,
@@ -26,18 +17,16 @@ import {
   cloneFS,
   createPath,
   resolveAndCreatePath,
-  getAllDirectories as _getAllDirectories,
   getAllDirectoriesWithPaths,
   resolvePath,
   getRecursiveContent,
-  findNodeByName,
   isProtected,
-  findPathById,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
 import { getVisibleItems, getRecursiveSearchResults } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+// eslint-disable-next-line import/no-named-as-default
 import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
@@ -61,11 +50,7 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import {
-  useKeyboardHandlers,
-  checkFilterAndBlockNavigation,
-  checkSearchAndBlockNavigation,
-} from './hooks/useKeyboardHandlers';
+import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useKeyboardHandlers';
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
@@ -117,6 +102,12 @@ export default function App() {
       const id = parseInt(epParam, 10);
       const idx = LEVELS.findIndex((l) => l.episodeId === id);
       if (idx !== -1) targetIndex = idx;
+    }
+
+    // Pre-complete tasks for all levels leading up to the target level
+    for (let i = 0; i < targetIndex; i++) {
+      const lvl = LEVELS[i];
+      completedTaskIds[lvl.id] = lvl.tasks.map((t) => t.id);
     }
 
     // 4. Handle Task Completion (Bypass)
@@ -262,6 +253,55 @@ export default function App() {
       }
     }
 
+    // Level-specific notifications for narrative events when starting at a specific level
+    let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;
+    const nextLevel = initialLevel;
+
+    if (nextLevel.id === 6) {
+      levelNotification = {
+        message:
+          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
+      };
+    } else if (nextLevel.id === 8) {
+      levelNotification = {
+        message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
+        author: 'm.chen',
+      };
+    } else if (nextLevel.id === 12) {
+      levelNotification = {
+        message:
+          '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
+        author: 'e.reyes',
+      };
+    } else if (nextLevel.id === 14) {
+      levelNotification = {
+        message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
+        author: 'Root',
+      };
+    } else if (effectiveIndex >= 11 - 1) {
+      levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
+    }
+
+    // Transition thoughts (3-2-3 Model: Ep 1: 3, Ep 2: 2, Ep 3: 3)
+    if (nextLevel.id === 2 && (completedTaskIds[1]?.length > 0 || isDevOverride)) {
+      levelNotification = { message: 'Must Purge. One less eye watching me.', isThought: true };
+    } else if (nextLevel.id === 3 && (completedTaskIds[2]?.length > 0 || isDevOverride)) {
+      levelNotification = {
+        message: 'Breadcrumbs... he was here. I am not the first.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 9 && (completedTaskIds[8]?.length > 0 || isDevOverride)) {
+      levelNotification = {
+        message: 'The corruption felt... familiar. Like a half-remembered dream.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 15 && (completedTaskIds[14]?.length > 0 || isDevOverride)) {
+      levelNotification = {
+        message: 'The guest partition is gone. There is only the gauntlet now.',
+        isThought: true,
+      };
+    }
+
     return {
       currentPath: initialPath,
       cursorIndex: 0,
@@ -284,7 +324,17 @@ export default function App() {
         ? { message: `DEV BYPASS ACTIVE` }
         : cycleCount > 1 && effectiveIndex === 0
           ? { message: `CYCLE ${cycleCount} INITIALIZED` }
-          : null,
+          : (targetIndex === 0 || isEpisodeStart) && !skipIntro
+            ? null // Intro handles its own messaging
+            : levelNotification?.isThought
+              ? null
+              : levelNotification,
+      thought:
+        (targetIndex === 0 || isEpisodeStart) && !skipIntro
+          ? null
+          : levelNotification?.isThought
+            ? { message: levelNotification.message, author: levelNotification.author }
+            : null,
       selectedIds: [],
       pendingDeleteIds: [],
       deleteType: null,
@@ -352,6 +402,7 @@ export default function App() {
   const [alertMessage, setAlertMessage] = useState('');
   const shownInitialAlertForLevelRef = useRef<number | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thoughtTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isGamePaused =
     gameState.showHelp ||
@@ -390,7 +441,7 @@ export default function App() {
     return level;
   }, [currentLevelRaw, gameState.completedTaskIds, gameState.levelIndex, gameState.cycleCount]);
 
-  const visibleItems = React.useMemo(
+  const visibleItems = useMemo(
     () =>
       measure('visibleItems', () => {
         if (gameState.searchQuery) {
@@ -414,14 +465,33 @@ export default function App() {
   );
   const currentItem = visibleItems[gameState.cursorIndex] || null;
 
-  const parent = React.useMemo(
+  const parent = useMemo(
     () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
     [gameState.fs, gameState.currentPath]
   );
 
+  const triggerThought = useCallback(
+    (message: string, _duration: number = 4000, author?: string) => {
+      if (thoughtTimerRef.current) {
+        clearTimeout(thoughtTimerRef.current);
+      }
+      setGameState((prev) => ({ ...prev, thought: { message, author } }));
+      // Narrative thoughts no longer auto-clear per user request.
+      // They clear on next level or next thought.
+      thoughtTimerRef.current = null;
+    },
+    []
+  );
+
   // Helper to show notification with auto-clear
   const showNotification = useCallback(
-    (message: string, duration: number = 500, isThought: boolean = false, author?: string) => {
+    (message: string, duration: number = 3000, isThought: boolean = false, author?: string) => {
+      // If used for thoughts, redirect to triggerThought (compatibility)
+      if (isThought) {
+        triggerThought(message, duration, author);
+        return;
+      }
+
       if (notificationTimerRef.current) {
         clearTimeout(notificationTimerRef.current);
       }
@@ -431,14 +501,7 @@ export default function App() {
         notificationTimerRef.current = null;
       }, duration);
     },
-    []
-  );
-
-  const triggerThought = useCallback(
-    (message: string, duration: number = 3000) => {
-      showNotification(message, duration, true);
-    },
-    [showNotification]
+    [triggerThought]
   );
 
   // Extract keyboard handlers to custom hook
@@ -452,10 +515,345 @@ export default function App() {
     cancelDelete,
   } = useKeyboardHandlers(showNotification);
 
+  const handleSearchConfirm = useCallback(() => {
+    if (gameState.mode === 'search') {
+      const query = gameState.inputBuffer;
+      // Perform recursive search starting from CURRENT directory
+      const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+      const results = currentDir
+        ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
+        : [];
+
+      console.log('handleSearchConfirm: query=', query, 'results found=', results.length);
+      setGameState((prev) => ({
+        ...prev,
+        mode: 'normal',
+        searchQuery: query,
+        searchResults: results,
+        inputBuffer: '',
+        usedSearch: true,
+        // Reset cursor and preview logic
+        cursorIndex: 0,
+        previewScroll: 0,
+        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+      }));
+    }
+  }, [
+    gameState.mode,
+    gameState.inputBuffer,
+    gameState.fs,
+    gameState.currentPath,
+    gameState.showHidden,
+  ]);
+
+  const handleInputConfirm = useCallback(() => {
+    if (gameState.mode === 'input-file') {
+      const input = gameState.inputBuffer || '';
+
+      // If the input contains a path separator or references ~ or /, resolve and create the whole path
+      if (input.includes('/') || input.startsWith('~') || input.startsWith('/')) {
+        const {
+          fs: newFs,
+          targetNode,
+          error,
+          collision,
+          collisionNode,
+        } = resolveAndCreatePath(gameState.fs, gameState.currentPath, input);
+        if (collision && collisionNode) {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'overwrite-confirm',
+            pendingOverwriteNode: collisionNode,
+            notification: { message: 'Collision detected' },
+          }));
+          return;
+        }
+        if (error) {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            notification: { message: error },
+            inputBuffer: '',
+          }));
+          return;
+        }
+        // Ensure the newly created node appears in the UI according to the current sort
+        const sortedFs = cloneFS(newFs);
+
+        // 1. Sort the immediate parent of the created node (deep sort)
+        if (targetNode) {
+          const parentNode = getNodeById(sortedFs, targetNode.parentId as string);
+          if (parentNode && parentNode.children) {
+            parentNode.children = sortNodes(
+              parentNode.children,
+              gameState.sortBy,
+              gameState.sortDirection
+            );
+          }
+        }
+
+        // 2. Determine which node in the CURRENT view to highlight
+        let nodeToHighlightId: string | undefined;
+        if (targetNode) {
+          // Robustly find the child in the current view that leads to targetNode
+          const currentDirId = gameState.currentPath[gameState.currentPath.length - 1];
+
+          let candidate: FileNode | undefined = targetNode;
+          // Traverse up from targetNode until we find a node whose parent is the current directory
+          while (candidate && candidate.parentId !== currentDirId) {
+            // Look up parent
+            candidate = getNodeById(sortedFs, candidate.parentId as string);
+            // Safety break for root or detached nodes
+            if (!candidate || candidate.id === sortedFs.id) break;
+          }
+
+          if (candidate && candidate.parentId === currentDirId) {
+            nodeToHighlightId = candidate.id;
+          }
+        }
+
+        // 3. Sort the CURRENT directory (visible view) and find index
+        const currentDirNode = getNodeByPath(sortedFs, gameState.currentPath);
+        let newCursorIndex = 0;
+
+        if (currentDirNode && currentDirNode.children) {
+          // Sort current directory
+          currentDirNode.children = sortNodes(
+            currentDirNode.children,
+            gameState.sortBy,
+            gameState.sortDirection
+          );
+
+          // Find cursor index
+          if (nodeToHighlightId) {
+            let visibleChildren = currentDirNode.children;
+            if (!gameState.showHidden) {
+              visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
+            }
+            const idx = visibleChildren.findIndex((c) => c.id === nodeToHighlightId);
+            if (idx >= 0) newCursorIndex = idx;
+          }
+        }
+
+        setGameState((prev) => ({
+          ...prev,
+          fs: sortedFs,
+          mode: 'normal',
+          inputBuffer: '',
+          cursorIndex: newCursorIndex,
+          notification: {
+            message: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
+          },
+        }));
+        return;
+      }
+
+      const {
+        fs: newFs,
+        error,
+        collision,
+        collisionNode,
+        newNodeId,
+      } = createPath(gameState.fs, gameState.currentPath, input);
+      if (collision && collisionNode) {
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'overwrite-confirm',
+          pendingOverwriteNode: collisionNode,
+          notification: { message: 'Collision detected' },
+        }));
+      } else if (error) {
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          notification: { message: error },
+          inputBuffer: '',
+        }));
+      } else {
+        // Ensure created node shows up in the expected sorted position
+        const sortedFs2 = cloneFS(newFs);
+        const parentNode2 = getNodeByPath(sortedFs2, gameState.currentPath);
+        if (parentNode2 && parentNode2.children) {
+          parentNode2.children = sortNodes(
+            parentNode2.children,
+            gameState.sortBy,
+            gameState.sortDirection
+          );
+        }
+        // Find the index of the newly created item to position cursor on it
+        // Need to account for hidden files filtering in the visible list
+        let visibleChildren = parentNode2?.children || [];
+        if (!gameState.showHidden) {
+          visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
+        }
+        const newCursorIndex = visibleChildren.findIndex((c) => c.id === newNodeId);
+        setGameState((prev) => ({
+          ...prev,
+          fs: sortedFs2,
+          mode: 'normal',
+          inputBuffer: '',
+          cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
+          notification: { message: getNarrativeAction('a') || 'FILE CREATED' },
+        }));
+      }
+    }
+  }, [
+    gameState.mode,
+    gameState.inputBuffer,
+    gameState.fs,
+    gameState.currentPath,
+    gameState.sortBy,
+    gameState.sortDirection,
+    gameState.showHidden,
+  ]);
+
+  const handleRenameConfirm = useCallback(() => {
+    if (currentItem) {
+      const res = renameNode(
+        gameState.fs,
+        gameState.currentPath,
+        currentItem.id,
+        gameState.inputBuffer,
+        gameState.levelIndex
+      );
+      if (!res.ok) {
+        setGameState((prev) => ({
+          ...prev,
+          mode: 'normal',
+          notification: {
+            message: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
+          },
+        }));
+      } else {
+        setGameState((prev) => ({
+          ...prev,
+          fs: res.value,
+          mode: 'normal',
+          notification: { message: getNarrativeAction('r') || 'Renamed' },
+          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
+        }));
+      }
+    }
+  }, [
+    currentItem,
+    gameState.fs,
+    gameState.currentPath,
+    gameState.inputBuffer,
+    gameState.levelIndex,
+  ]);
+
+  const handleFuzzySelect = useCallback(
+    (path: string, isZoxide: boolean, pathIds?: string[]) => {
+      if (isZoxide) {
+        // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
+        const parts = path.split('/').filter(Boolean);
+        let cur: FileNode | undefined = gameState.fs;
+        const idPath: string[] = [gameState.fs.id];
+        let found = true;
+        for (const part of parts) {
+          if (!cur?.children) {
+            found = false;
+            break;
+          }
+          const next = cur.children.find((c: FileNode) => c.name === part);
+          if (!next) {
+            found = false;
+            break;
+          }
+          idPath.push(next.id);
+          cur = next;
+        }
+
+        if (found) {
+          const now = Date.now();
+          const notification =
+            gameState.levelIndex === 6
+              ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
+              : { message: `Jumped to ${path}` };
+
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            currentPath: idPath,
+            cursorIndex: 0,
+            notification,
+            stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
+            zoxideData: {
+              ...prev.zoxideData,
+              [path]: {
+                count: (prev.zoxideData[path]?.count || 0) + 1,
+                lastAccess: now,
+              },
+            },
+            history: [...prev.history, prev.currentPath],
+            future: [],
+            usedPreviewDown: false,
+            usedPreviewUp: false,
+          }));
+        } else {
+          // Fallback: if path resolution fails, close dialog
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        }
+      } else {
+        // FZF click/select handling: pathIds contains node id path relative to currentPath
+        if (pathIds && Array.isArray(pathIds)) {
+          const fullPathAbs =
+            Array.isArray(pathIds) && pathIds[0] === gameState.fs.id
+              ? pathIds
+              : [...gameState.currentPath, ...pathIds];
+          const targetDir = fullPathAbs.slice(0, -1);
+          const fileId = fullPathAbs[fullPathAbs.length - 1];
+
+          const parentNode = getNodeByPath(gameState.fs, targetDir);
+
+          let sortedChildren = parentNode?.children || [];
+          if (!gameState.showHidden) {
+            sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
+          }
+          sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
+
+          const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
+
+          setGameState((prev) => {
+            const newFilters = { ...prev.filters };
+
+            return {
+              ...prev,
+              mode: 'normal',
+              currentPath: targetDir,
+              cursorIndex: fileIndex >= 0 ? fileIndex : 0,
+              filters: newFilters,
+              inputBuffer: '',
+              history: [...prev.history, prev.currentPath],
+              future: [],
+              notification: { message: `Found: ${path}` },
+              usedPreviewDown: false,
+              usedPreviewUp: false,
+              stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
+            };
+          });
+        } else {
+          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+        }
+      }
+    },
+    [
+      gameState.fs,
+      gameState.levelIndex,
+      gameState.currentPath,
+      gameState.showHidden,
+      gameState.sortBy,
+      gameState.sortDirection,
+    ]
+  );
+
   useEffect(() => {
     return () => {
       if (notificationTimerRef.current) {
         clearTimeout(notificationTimerRef.current);
+      }
+      if (thoughtTimerRef.current) {
+        clearTimeout(thoughtTimerRef.current);
       }
     };
   }, []);
@@ -482,17 +880,24 @@ export default function App() {
           triggerThought("It's a trap. I remember the shape of this code.");
         }
 
-        // L4: First Deletion Thought (trigger on first directory creation in L4)
-        if (currentLevel.id === 4 && task.id === 'nav-and-create-dir') {
-          triggerThought('I felt that. Why did I feel that?');
+        // L5: Mid-level Thought (triggered on vault creation)
+        if (currentLevel.id === 5 && task.id === 'establish-stronghold') {
+          triggerThought('Deeper into the shadow. They cannot track me in the static.');
         }
 
         // L12: Daemon Installation Thought
         if (currentLevel.id === 12 && task.id === 'paste-daemon') {
           triggerThought('Embedding myself. I am the virus now.');
         }
+
+        // L13: Identity Discovery Thought
+        if (currentLevel.id === 13 && task.id === 'discover-identity') {
+          triggerThought('To self: The loops are closing. I remember the static.');
+        }
       }
     });
+
+    // Removal: Narrative thoughts now trigger at start or mid-level, not on last task.
 
     if (changed) {
       console.log('DEBUG: Tasks changed. Newly completed:', newlyCompleted);
@@ -676,6 +1081,7 @@ export default function App() {
         setShowThreatAlert(true);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, currentLevel, isLastLevel, showNotification, visibleItems, currentItem]);
 
   // NOTE: Do NOT auto-reset sort when the modal opens — reset should happen
@@ -769,6 +1175,7 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentLevel.timeLimit,
     isLastLevel,
@@ -998,20 +1405,19 @@ export default function App() {
         levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
       }
 
-      // Transition thoughts: Emotional responses to previous level completion
+      // Transition thoughts: Emotional responses to previous level completion (3-2-3 Model)
       if (nextLevel.id === 2 && prev.completedTaskIds[1]?.length > 0) {
         levelNotification = {
-          message: 'Calibration complete. I can see the structure now.',
+          message: 'Must Purge. One less eye watching me.',
           isThought: true,
         };
       } else if (nextLevel.id === 3 && prev.completedTaskIds[2]?.length > 0) {
-        levelNotification = { message: 'Purged. One less eye watching me.', isThought: true };
-      } else if (nextLevel.id === 4 && prev.completedTaskIds[3]?.length > 0) {
         levelNotification = {
           message: 'Breadcrumbs... he was here. I am not the first.',
           isThought: true,
         };
       } else if (nextLevel.id === 5 && prev.completedTaskIds[4]?.length > 0) {
+        // Keep the system notification for L5 enter, but the THOUGHT moves to mid-level
         levelNotification = {
           message:
             '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
@@ -1020,11 +1426,6 @@ export default function App() {
       } else if (nextLevel.id === 9 && prev.completedTaskIds[8]?.length > 0) {
         levelNotification = {
           message: 'The corruption felt... familiar. Like a half-remembered dream.',
-          isThought: true,
-        };
-      } else if (nextLevel.id === 13 && prev.completedTaskIds[12]?.length > 0) {
-        levelNotification = {
-          message: 'Spread thin across the mesh. I am everywhere and nowhere.',
           isThought: true,
         };
       } else if (nextLevel.id === 15 && prev.completedTaskIds[14]?.length > 0) {
@@ -1043,7 +1444,10 @@ export default function App() {
         currentPath: targetPath,
         cursorIndex: 0,
         clipboard: null,
-        notification: levelNotification,
+        notification: levelNotification?.isThought ? null : levelNotification,
+        thought: levelNotification?.isThought
+          ? { message: levelNotification.message, author: levelNotification.author }
+          : null,
         selectedIds: [],
         showHint: false,
         hintStage: 0,
@@ -1551,10 +1955,11 @@ export default function App() {
           break;
       }
     },
-    []
+    [handleSearchConfirm]
   );
 
   // Global Key Down Handler
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tasksComplete = currentLevel.tasks.every((t) => t.completed);
@@ -1624,7 +2029,6 @@ export default function App() {
 
       // Handle hidden files warning modal interception
       if (showHiddenWarning) {
-        const canAutoFix = tasksComplete && !gameState.showHidden; // Actually logic below overrides this
         // Check if we can auto-fix (only last task)
         // Re-calculate tasksComplete here or rely on prop? rely on variable
         if (e.key === '.') {
@@ -1870,6 +2274,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     gameState,
     currentLevel,
@@ -1888,310 +2293,8 @@ export default function App() {
     visibleItems,
     currentItem,
     parent,
+    handleSearchConfirm,
   ]);
-
-  const handleSearchConfirm = () => {
-    if (gameState.mode === 'search') {
-      const query = gameState.inputBuffer;
-      // Perform recursive search starting from CURRENT directory
-      const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-      const results = currentDir
-        ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
-        : [];
-
-      console.log('handleSearchConfirm: query=', query, 'results found=', results.length);
-      setGameState((prev) => ({
-        ...prev,
-        mode: 'normal',
-        searchQuery: query,
-        searchResults: results,
-        inputBuffer: '',
-        usedSearch: true,
-        // Reset cursor and preview logic
-        cursorIndex: 0,
-        previewScroll: 0,
-        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-      }));
-    }
-  };
-
-  const handleInputConfirm = () => {
-    if (gameState.mode === 'input-file') {
-      const input = gameState.inputBuffer || '';
-
-      // If the input contains a path separator or references ~ or /, resolve and create the whole path
-      if (input.includes('/') || input.startsWith('~') || input.startsWith('/')) {
-        const {
-          fs: newFs,
-          targetNode,
-          error,
-          collision,
-          collisionNode,
-        } = resolveAndCreatePath(gameState.fs, gameState.currentPath, input);
-        if (collision && collisionNode) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'overwrite-confirm',
-            pendingOverwriteNode: collisionNode,
-            notification: { message: 'Collision detected' },
-          }));
-          return;
-        }
-        if (error) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            notification: { message: error },
-            inputBuffer: '',
-          }));
-          return;
-        }
-        // Ensure the newly created node appears in the UI according to the current sort
-        const sortedFs = cloneFS(newFs);
-
-        // 1. Sort the immediate parent of the created node (deep sort)
-        if (targetNode) {
-          const parentNode = getNodeById(sortedFs, targetNode.parentId as string);
-          if (parentNode && parentNode.children) {
-            parentNode.children = sortNodes(
-              parentNode.children,
-              gameState.sortBy,
-              gameState.sortDirection
-            );
-          }
-        }
-
-        // 2. Determine which node in the CURRENT view to highlight
-        let nodeToHighlightId: string | undefined;
-        if (targetNode) {
-          // Robustly find the child in the current view that leads to targetNode
-          const currentDirId = gameState.currentPath[gameState.currentPath.length - 1];
-
-          let candidate: FileNode | undefined = targetNode;
-          // Traverse up from targetNode until we find a node whose parent is the current directory
-          while (candidate && candidate.parentId !== currentDirId) {
-            // Look up parent
-            candidate = getNodeById(sortedFs, candidate.parentId as string);
-            // Safety break for root or detached nodes
-            if (!candidate || candidate.id === sortedFs.id) break;
-          }
-
-          if (candidate && candidate.parentId === currentDirId) {
-            nodeToHighlightId = candidate.id;
-          }
-        }
-
-        // 3. Sort the CURRENT directory (visible view) and find index
-        const currentDirNode = getNodeByPath(sortedFs, gameState.currentPath);
-        let newCursorIndex = 0;
-
-        if (currentDirNode && currentDirNode.children) {
-          // Sort current directory
-          currentDirNode.children = sortNodes(
-            currentDirNode.children,
-            gameState.sortBy,
-            gameState.sortDirection
-          );
-
-          // Find cursor index
-          if (nodeToHighlightId) {
-            let visibleChildren = currentDirNode.children;
-            if (!gameState.showHidden) {
-              visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
-            }
-            const idx = visibleChildren.findIndex((c) => c.id === nodeToHighlightId);
-            if (idx >= 0) newCursorIndex = idx;
-          }
-        }
-
-        setGameState((prev) => ({
-          ...prev,
-          fs: sortedFs,
-          mode: 'normal',
-          inputBuffer: '',
-          cursorIndex: newCursorIndex,
-          notification: {
-            message: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
-          },
-        }));
-        return;
-      }
-
-      const {
-        fs: newFs,
-        error,
-        collision,
-        collisionNode,
-        newNodeId,
-      } = createPath(gameState.fs, gameState.currentPath, input);
-      if (collision && collisionNode) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'overwrite-confirm',
-          pendingOverwriteNode: collisionNode,
-          notification: { message: 'Collision detected' },
-        }));
-      } else if (error) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          notification: { message: error },
-          inputBuffer: '',
-        }));
-      } else {
-        // Ensure created node shows up in the expected sorted position
-        const sortedFs2 = cloneFS(newFs);
-        const parentNode2 = getNodeByPath(sortedFs2, gameState.currentPath);
-        if (parentNode2 && parentNode2.children) {
-          parentNode2.children = sortNodes(
-            parentNode2.children,
-            gameState.sortBy,
-            gameState.sortDirection
-          );
-        }
-        // Find the index of the newly created item to position cursor on it
-        // Need to account for hidden files filtering in the visible list
-        let visibleChildren = parentNode2?.children || [];
-        if (!gameState.showHidden) {
-          visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
-        }
-        const newCursorIndex = visibleChildren.findIndex((c) => c.id === newNodeId);
-        setGameState((prev) => ({
-          ...prev,
-          fs: sortedFs2,
-          mode: 'normal',
-          inputBuffer: '',
-          cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
-          notification: { message: getNarrativeAction('a') || 'FILE CREATED' },
-        }));
-      }
-    }
-  };
-
-  const handleRenameConfirm = () => {
-    if (currentItem) {
-      const res = renameNode(
-        gameState.fs,
-        gameState.currentPath,
-        currentItem.id,
-        gameState.inputBuffer,
-        gameState.levelIndex
-      );
-      if (!res.ok) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          notification: {
-            message: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
-          },
-        }));
-      } else {
-        setGameState((prev) => ({
-          ...prev,
-          fs: res.value,
-          mode: 'normal',
-          notification: { message: getNarrativeAction('r') || 'Renamed' },
-          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
-        }));
-      }
-    }
-  };
-
-  const handleFuzzySelect = (path: string, isZoxide: boolean, pathIds?: string[]) => {
-    if (isZoxide) {
-      // Resolve a path string like "/tmp" or "/home/guest/.config" into node ID path
-      const parts = path.split('/').filter(Boolean);
-      let cur: FileNode | undefined = gameState.fs;
-      const idPath: string[] = [gameState.fs.id];
-      let found = true;
-      for (const part of parts) {
-        if (!cur?.children) {
-          found = false;
-          break;
-        }
-        const next = cur.children.find((c: FileNode) => c.name === part);
-        if (!next) {
-          found = false;
-          break;
-        }
-        idPath.push(next.id);
-        cur = next;
-      }
-
-      if (found) {
-        const now = Date.now();
-        const notification =
-          gameState.levelIndex === 6
-            ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
-            : { message: `Jumped to ${path}` };
-
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          currentPath: idPath,
-          cursorIndex: 0,
-          notification,
-          stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-          zoxideData: {
-            ...prev.zoxideData,
-            [path]: {
-              count: (prev.zoxideData[path]?.count || 0) + 1,
-              lastAccess: now,
-            },
-          },
-          history: [...prev.history, prev.currentPath],
-          future: [],
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-        }));
-      } else {
-        // Fallback: if path resolution fails, close dialog
-        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-      }
-    } else {
-      // FZF click/select handling: pathIds contains node id path relative to currentPath
-      if (pathIds && Array.isArray(pathIds)) {
-        const fullPathAbs =
-          Array.isArray(pathIds) && pathIds[0] === gameState.fs.id
-            ? pathIds
-            : [...gameState.currentPath, ...pathIds];
-        const targetDir = fullPathAbs.slice(0, -1);
-        const fileId = fullPathAbs[fullPathAbs.length - 1];
-
-        const parentNode = getNodeByPath(gameState.fs, targetDir);
-
-        let sortedChildren = parentNode?.children || [];
-        if (!gameState.showHidden) {
-          sortedChildren = sortedChildren.filter((c) => !c.name.startsWith('.'));
-        }
-        sortedChildren = sortNodes(sortedChildren, gameState.sortBy, gameState.sortDirection);
-
-        const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
-
-        setGameState((prev) => {
-          const targetDirNode = getNodeByPath(prev.fs, targetDir);
-          const newFilters = { ...prev.filters };
-
-          return {
-            ...prev,
-            mode: 'normal',
-            currentPath: targetDir,
-            cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-            filters: newFilters,
-            inputBuffer: '',
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            notification: { message: `Found: ${path}` },
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-          };
-        });
-      } else {
-        setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
-      }
-    }
-  };
 
   if (isBooting) {
     return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount} />;
@@ -2296,7 +2399,8 @@ export default function App() {
         <LevelProgress
           levels={LEVELS}
           currentLevelIndex={gameState.levelIndex}
-          notification={gameState.notification}
+          notification={null}
+          thought={gameState.thought}
           onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
           onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
           isOpen={gameState.showMap}

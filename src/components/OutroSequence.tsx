@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Terminal, Signal, UploadCloud, ArrowRight, Zap, Shield, Crown } from 'lucide-react';
 
-import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE } from '../constants';
+import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE, CREDITS_DATA } from '../constants';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 
@@ -23,6 +23,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
   const isAnimatingRef = useRef(false);
 
   // Current part data
+
   const currentPart = CONCLUSION_PARTS[partIndex] || CONCLUSION_PARTS[0];
 
   // Split current part's lore into sections (separated by empty strings)
@@ -49,6 +50,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
   }, [currentPart]);
 
   // Current section lines
+
   const currentSection = sections[sectionIndex] || [];
   const currentText = currentSection.join('\n');
 
@@ -88,35 +90,6 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
     };
   }, [partIndex, sectionIndex, currentText, showTeaser]);
 
-  // Render a line with colored AI identifiers: AI-7734 (orange), AI-7733 (blue), AI-7735 (yellow)
-  const renderLine = (text: string) => {
-    const regex = /(AI-7734|AI-7733|AI-7735)/g;
-    if (!regex.test(text)) return <>{text}</>;
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    text.replace(regex, (match, p1, offset) => {
-      const before = text.slice(lastIndex, offset as number);
-      if (before) parts.push(before);
-      const cls =
-        match === 'AI-7734'
-          ? 'text-orange-400 font-bold'
-          : match === 'AI-7733'
-            ? 'text-blue-400 font-bold'
-            : 'text-yellow-400 font-bold';
-      parts.push(
-        <span key={offset} className={cls}>
-          {match}
-        </span>
-      );
-      lastIndex = (offset as number) + match.length;
-      return match;
-    });
-    const rest = text.slice(lastIndex);
-    if (rest) parts.push(rest);
-    return <>{parts}</>;
-  };
-
   // Skip animation or advance to next section/part
   const handleAdvance = useCallback(() => {
     if (showTeaser) return;
@@ -151,7 +124,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
       // Advance to next section
       setSectionIndex((prev) => prev + 1);
     }
-  }, [showTeaser, currentText, sectionIndex, sections.length, partIndex]);
+  }, [showTeaser, currentText, sectionIndex, sections.length, partIndex, isComplete]);
 
   // Keyboard handler for Enter/Space to advance
   useEffect(() => {
@@ -181,7 +154,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleAdvance, showTeaser]);
+  }, [handleAdvance, showTeaser, currentText]);
 
   // Play video only when teaser is shown and manage teaser music
   useEffect(() => {
@@ -448,6 +421,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
             <div className="grid grid-cols-3 gap-6 my-6 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
               {EPISODE_LORE.map((ep, idx) => {
                 const episodeIcons = [Zap, Shield, Crown];
+
                 const Icon = episodeIcons[idx] || Shield;
                 const colorClass = ep.color.split(' ')[0]; // Extract base color class
                 return (
@@ -480,6 +454,25 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
                   Establishing Remote Uplink...
                 </a>
               </div>
+            </div>
+
+            {/* ROLLING CREDITS SECTION */}
+            <div className="pt-12 w-full max-w-md overflow-hidden h-40 relative">
+              <div className="animate-scroll-y flex flex-col gap-8 py-4">
+                {CREDITS_DATA.map((credit, i) => (
+                  <div key={i} className="flex flex-col gap-1 items-center">
+                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">
+                      {credit.role}
+                    </span>
+                    <span className="text-lg text-white font-bold tracking-tight">
+                      {credit.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Fade masks */}
+              <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
             </div>
           </div>
         )}

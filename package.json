@@ -14,11 +14,11 @@
     "format": "prettier --write .",
     "test": "echo \"No unit tests specified\"",
     "test:e2e": "playwright test",
-    "prepush": "npm run type-check && npm run build && npm run test:e2e"
+    "prepush": "npm run lint && npm run type-check && npm run build && npm run test:e2e"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
+      "eslint --fix --max-warnings=0",
       "prettier --write"
     ],
     "*.{json,md,css}": [

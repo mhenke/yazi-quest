@@ -8,6 +8,7 @@ interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
   notification: { message: string; isThought?: boolean; author?: string } | null;
+  thought: { message: string; author?: string } | null;
   onToggleHint: () => void;
   onToggleHelp: () => void;
   isOpen: boolean;
@@ -18,7 +19,7 @@ interface LevelProgressProps {
 export const LevelProgress: React.FC<LevelProgressProps> = ({
   levels,
   currentLevelIndex,
-  notification,
+  thought,
   onToggleHint,
   onToggleHelp,
   isOpen, // New prop
@@ -177,10 +178,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     <>
       <div
         data-testid="level-progress-bar"
-        className="w-full bg-black/50 border-b border-zinc-800 py-3 px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative"
+        className="w-full bg-black/50 border-b border-zinc-800 py-3 px-4 sm:px-6 flex items-center justify-between backdrop-blur-sm z-[70] relative"
       >
         {/* Left Side: Map Button + Current Episode Progress */}
-        <div className="flex items-center gap-6 overflow-hidden mr-4 h-8">
+        <div className="flex items-center gap-3 sm:gap-6 overflow-hidden mr-4 h-8">
           <button
             onClick={onClose} // Or use a designated toggle handler if we want the button to close too. Actually this button is "Map". It should toggle.
             // The prop is 'onClose', but App probably passes a toggle function.
@@ -256,28 +257,28 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             </div>
           </div>
         </div>
-        {/* Center: Narrative thought */}
-        <div className="flex-1 text-center px-4">
-          {notification?.isThought && (
+        {/* Center: Notification Area (Thoughts only) */}
+        <div className="flex-1 text-center px-4 flex items-center justify-center">
+          {thought && (
             <span
               data-testid="narrative-thought"
-              className="text-orange-400 font-mono italic text-sm"
+              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 text-orange-400 italic"
             >
-              {notification.message}
+              {thought.message}
             </span>
           )}
         </div>
 
         {/* Right Side: Trilogy Badges & Controls */}
-        <div className="flex items-center gap-6 shrink-0 h-8">
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0 h-8">
           {/* Prominent User Label (keeps AI identity visible) */}
-          <div className="mr-4 text-right">
+          <div className="mr-2 sm:mr-4 text-right hidden lg:block">
             <span className="text-orange-400 font-mono font-bold uppercase tracking-wider text-sm">
               User: AI-7734
             </span>
           </div>
           {/* Badges */}
-          <div className="flex items-center gap-6 px-6 border-l border-r border-zinc-800">
+          <div className="flex items-center gap-3 sm:gap-6 px-3 sm:px-6 border-l border-r border-zinc-800">
             {episodes.map((ep, idx) => {
               const isComplete = completionStatus[idx];
               const Icon = ep.icon;
@@ -297,7 +298,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   style={isComplete ? { filter: `drop-shadow(0 0 8px ${shadowColor})` } : {}}
                 >
                   <Icon size={14} fill={isComplete ? 'currentColor' : 'none'} />
-                  <span className="text-[8px] uppercase font-bold tracking-wider hidden sm:inline-block leading-none mt-0.5">
+                  <span className="text-[8px] uppercase font-bold tracking-wider hidden xl:inline-block leading-none mt-0.5">
                     {ep.name}
                   </span>
                 </div>

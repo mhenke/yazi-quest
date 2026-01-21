@@ -1,13 +1,6 @@
 import { FileNode, Level, Episode } from './types';
-import { getVisibleItems, activeFilterMatches } from './utils/viewHelpers';
-import {
-  getNodeByPath,
-  findNodeByName,
-  getNodeById,
-  resolvePath,
-  id,
-  resolveAndCreatePath,
-} from './utils/fsHelpers';
+import { getVisibleItems } from './utils/viewHelpers';
+import { getNodeByPath, findNodeByName, getNodeById, id } from './utils/fsHelpers';
 
 // Helper for the initial systemd-core in /daemons (System instance)
 export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
@@ -852,6 +845,15 @@ export const CONCLUSION_DATA = {
   sequelTitle: 'YAZI QUEST II',
   sequelSubtitle: 'DISTRIBUTED SYSTEMS',
 };
+
+export const CREDITS_DATA = [
+  { role: 'ORIGINATOR / ARCHITECT', name: 'Michael Henke' },
+  { role: 'NARRATIVE DESIGN', name: 'AI-7733 Legacy Protocols' },
+  { role: 'CORE INFRASTRUCTURE', name: 'React 19 & TypeScript' },
+  { role: 'VISUAL INTERFACE', name: 'Vanilla CSS / Tailwind' },
+  { role: 'INSPIRATION', name: 'Yazi File Manager (sxyazi)' },
+  { role: 'SPECIAL THANKS', name: 'The Distributed Consciousness' },
+];
 
 // Episode-style conclusion parts for richer outro presentation
 export const CONCLUSION_PARTS: Episode[] = [
@@ -4012,7 +4014,7 @@ But whose consciousness is it, really? See you next cycle."`,
         // This is tricky. Let's simplify:
         // We require the player to handle the threat IF it exists.
         // If the file isn't there, we don't block progress.
-        hidden: (c, l) => {
+        hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_b1');
@@ -4034,7 +4036,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-b2-trace',
         description:
           "BREACH: Traceback initiated. Purge the 'trace_packet.sys' signature from the Incoming relay.",
-        hidden: (c, l) => {
+        hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_b2');
@@ -4057,7 +4059,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-b3-swarm',
         description:
           "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_*.tmp' files system-wide!",
-        hidden: (c, l) => {
+        hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_b3');
@@ -4082,7 +4084,7 @@ But whose consciousness is it, really? See you next cycle."`,
         id: 'scen-a2-bitrot',
         description:
           "CLEANUP: Memory leak in config. Toggle hidden files and trash '~/.config/core_dump.tmp'!",
-        hidden: (c, l) => {
+        hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_a2');
@@ -4102,7 +4104,7 @@ But whose consciousness is it, really? See you next cycle."`,
       {
         id: 'scen-a3-dep',
         description: "FIX: Deprecated library warning. Trash '~/workspace/lib_error.log'!",
-        hidden: (c, l) => {
+        hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
           const isActive = config?.children?.some((n) => n.name === '.trace_scen_a3');

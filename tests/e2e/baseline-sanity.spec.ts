@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { goToLevel, assertLevelStartedIncomplete, assertTask } from './utils';
 
 test.describe('Baseline Sanity Check', () => {

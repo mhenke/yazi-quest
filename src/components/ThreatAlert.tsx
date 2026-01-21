@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 interface ThreatAlertProps {
@@ -7,7 +7,11 @@ interface ThreatAlertProps {
   onDismiss: () => void;
 }
 
-export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, author, onDismiss }) => {
+export const ThreatAlert: React.FC<ThreatAlertProps> = ({
+  message,
+  author,
+  onDismiss: _onDismiss,
+}) => {
   // Keyboard handling is managed globally in App.tsx to coordinate with game state
   // (e.g. blocking dismissal for Honeypot traps until clipboard is cleared)
 

@@ -151,6 +151,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }, testInfo) => {
     await startLevel(page, 9);
+    const narrative = page.locator('[data-testid="narrative-thought"]');
+    await expect(narrative).toContainText(
+      'The corruption felt... familiar. Like a half-remembered dream.'
+    );
 
     // Task 1: Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'
     await gotoCommand(page, 't');
