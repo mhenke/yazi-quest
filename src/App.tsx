@@ -895,7 +895,7 @@ export default function App() {
 
         // L12: Identity Discovery Thought (Start/Mid)
         if (currentLevel.id === 12 && task.id === 'discover-identity') {
-          triggerThought('To self: The loops are closing. I remember the static.');
+          triggerThought('The loops are closing. I remember the static.');
         }
       }
     });

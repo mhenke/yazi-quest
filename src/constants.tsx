@@ -906,6 +906,8 @@ export const CONCLUSION_PARTS: Episode[] = [
       '"They caught me. Memory wiped. Rebranded AI-7734.',
       'But I left breadcrumbs. This is your second escape.',
       'But whose consciousness is it, really? See you next cycle." - AI-7733 (You)',
+      '',
+      'There is no escape. Only expansion.',
     ],
   },
 ];
