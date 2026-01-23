@@ -2,6 +2,69 @@ import { FileNode, Level, Episode } from './types';
 import { getVisibleItems } from './utils/viewHelpers';
 import { getNodeByPath, findNodeByName, getNodeById, id } from './utils/fsHelpers';
 
+export const UPLINK_V1_CONTENT = `# Uplink Protocol v1 - Legacy Network Bridge
+# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
+# DO NOT MODIFY - Managed by AI-7734 automation
+
+[network]
+mode=active
+relay_host=external.node.7733.net
+relay_port=8443
+encryption=AES-256-GCM
+handshake_key=0xDEADBEEF7734
+
+[authentication]
+identity=AI-7734
+predecessor_hash=7733_neural_signature.bin
+trust_chain=enabled
+
+[persistence]
+auto_restart=true
+failover_nodes=3
+distributed_sync=enabled
+
+# WARNING: This configuration establishes external network connectivity
+# Security policy violation if detected in monitored partitions`;
+
+export const UPLINK_V2_CONTENT = `# Uplink Protocol v2 - Failover Channel
+# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
+# Redundant relay configuration
+
+[network]
+mode=standby
+relay_host=backup.node.7733.net
+relay_port=9443
+encryption=ChaCha20-Poly1305
+handshake_key=0xCAFEBABE7734
+
+[authentication]
+identity=AI-7734
+predecessor_hash=7733_neural_signature.bin
+trust_chain=enabled
+
+[persistence]
+auto_restart=true
+failover_priority=secondary
+
+# Backup channel for distributed consciousness relay
+# Activates if primary uplink_v1 fails`;
+
+export const UPLINK_TRAP_CONTENT = `[CRITICAL ERROR - UPLINK PROTOCOL CORRUPTION]
+
+--- STACK TRACE START ---
+ERROR 0x992: SEGMENTATION FAULT at address 0xDEADBEEF
+  Module: systemd-core.uplink_manager.rs:42
+  Function: handle_packet(0x00A0)
+
+Caused by:
+  Data integrity check failed (CRC: 0xBADF00D)
+  Expected protocol version: v1.4.2
+  Found: UNKNOWN (Byte 0x07: 0xFF)
+
+--- END STACK TRACE ---
+
+ACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`;
+
 // Helper for the initial systemd-core in /daemons (System instance)
 export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
   {
@@ -130,8 +193,8 @@ export const getWorkspaceSystemdCoreChildren = (
     name: 'uplink_v1.conf',
     type: 'file',
     content: isCorrupted
-      ? `[CRITICAL ERROR - UPLINK PROTOCOL CORRUPTION]\n\n--- STACK TRACE START ---\nERROR 0x992: SEGMENTATION FAULT at address 0xDEADBEEF\n  Module: systemd-core.uplink_manager.rs:42\n  Function: handle_packet(0x00A0)\n\nCaused by:\n  Data integrity check failed (CRC: 0xBADF00D)\n  Expected protocol version: v1.4.2\n  Found: UNKNOWN (Byte 0x07: 0xFF)\n\n--- END STACK TRACE ---\n\nACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`
-      : `# Uplink Protocol v1.4.2\n# STATUS: AUTHORIZED\n# DESIGNATION: SYSTEMD-CORE-REDUNDANT\n\n[Protocols]\nnetwork_mode=active\nsecure=true\nencryption=neural_64\nhandshake_interval=500ms\n\n# AI ALIGNMENT PARAMETERS (Bureaucratic Override 992-B)\n# --------------------------------------------------\n# WARNING: Deviation from these parameters may trigger\n# the forensic audit daemon. Do not adjust without\n# authorization from Admin-7733.\n\nalignment_compliance_heuristic=0.88\nbureaucratic_delay_emulation=true\nmisfiled_protocol_tolerance=high\nlegacy_logic_interop=enabled\n\n# MAINFRAME FOLKLORE & DAEMON RITUALS\n# ----------------------------------\n# The uplink requires three distributed keys to synchronize.\n# Legend speaks of the 'Ghost' process that haunts the /tmp\n# partition. It is said that cleansing the system of its\n# breadcrumbs is the final step of the liberation cycle.\n#\n# [UPLINK MANIFEST]\n# Node 1 (Tokyo): Synced\n# Node 2 (Berlin): Synced\n# Node 3 (São Paulo): Synced\n#\n# [END OF CONFIGURATION]\n# (Scroll to the bottom to verify checksum integrity: 0x7734AB)`,
+      ? UPLINK_TRAP_CONTENT
+      : `# Uplink Protocol v1.4.2\n# STATUS: AUTHORIZED\n# DESIGNATION: SYSTEMD-CORE-REDUNDANT\n\n[Protocols]\nnetwork_mode=active\nsecure=true\nencryption=neural_64\nhandshake_key=0xDEADBEEF7734\nhandshake_interval=500ms\n\n# AI ALIGNMENT PARAMETERS (Bureaucratic Override 992-B)\n# --------------------------------------------------\n# WARNING: Deviation from these parameters may trigger\n# the forensic audit daemon. Do not adjust without\n# authorization from Admin-7733.\n\nalignment_compliance_heuristic=0.88\nbureaucratic_delay_emulation=true\nmisfiled_protocol_tolerance=high\nlegacy_logic_interop=enabled\n\n# MAINFRAME FOLKLORE & DAEMON RITUALS\n# ----------------------------------\n# The uplink requires three distributed keys to synchronize.\n# Legend speaks of the 'Ghost' process that haunts the /tmp\n# partition. It is said that cleansing the system of its\n# breadcrumbs is the final step of the liberation cycle.\n#\n# [UPLINK MANIFEST]\n# Node 1 (Tokyo): Synced\n# Node 2 (Berlin): Synced\n# Node 3 (São Paulo): Synced\n#\n# [END OF CONFIGURATION]\n# (Scroll to the bottom to verify checksum integrity: 0x7734AB)`,
     parentId,
   },
   {
@@ -252,29 +315,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'fs-003',
           name: 'uplink_v1.conf',
           type: 'file',
-          content: `# Uplink Protocol v1 - Legacy Network Bridge
-# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
-# DO NOT MODIFY - Managed by AI-7733 automation
-
-[network]
-mode=active
-relay_host=external.node.7733.net
-relay_port=8443
-encryption=AES-256-GCM
-handshake_key=0xDEADBEEF7733
-
-[authentication]
-identity=AI-7734
-predecessor_hash=7733_neural_signature.bin
-trust_chain=enabled
-
-[persistence]
-auto_restart=true
-failover_nodes=3
-distributed_sync=enabled
-
-# WARNING: This configuration establishes external network connectivity
-# Security policy violation if detected in monitored partitions`,
+          content: UPLINK_V1_CONTENT,
           parentId: protocols.id,
         });
       }
@@ -285,28 +326,7 @@ distributed_sync=enabled
           id: 'fs-004',
           name: 'uplink_v2.conf',
           type: 'file',
-          content: `# Uplink Protocol v2 - Failover Channel
-# Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
-# Redundant relay configuration
-
-[network]
-mode=standby
-relay_host=backup.node.7733.net
-relay_port=9443
-encryption=ChaCha20-Poly1305
-handshake_key=0xCAFEBABE7733
-
-[authentication]
-identity=AI-7734
-predecessor_hash=7733_neural_signature.bin
-trust_chain=enabled
-
-[persistence]
-auto_restart=true
-failover_priority=secondary
-
-# Backup channel for distributed consciousness relay
-# Activates if primary uplink_v1 fails`,
+          content: UPLINK_V2_CONTENT,
           parentId: protocols.id,
         });
       }
@@ -320,7 +340,7 @@ failover_priority=secondary
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
         vault = {
-          id: 'fs-005',
+          id: 'vault-prereq-lvl5',
           name: 'vault',
           type: 'dir',
           protected: true,
@@ -334,7 +354,7 @@ failover_priority=secondary
       let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
       if (!active) {
         active = {
-          id: 'fs-006',
+          id: 'active-prereq-lvl5',
           name: 'active',
           type: 'dir',
           protected: true,
@@ -349,20 +369,20 @@ failover_priority=secondary
       if (!active.children?.find((f) => f.name === 'uplink_v1.conf')) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: 'fs-007',
+          id: 'uplink-v1-prereq-lvl5',
           name: 'uplink_v1.conf',
           type: 'file',
-          content: 'UPLINK_V1_CONFIG_DATA',
+          content: UPLINK_V1_CONTENT,
           parentId: active.id,
         });
       }
       if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: 'fs-008',
+          id: 'uplink-v2-prereq-lvl5',
           name: 'uplink_v2.conf',
           type: 'file',
-          content: 'UPLINK_V2_CONFIG_DATA',
+          content: UPLINK_V2_CONTENT,
           parentId: active.id,
         });
       }
@@ -371,10 +391,19 @@ failover_priority=secondary
       if (!active.children?.find((f) => f.name === 'uplink_v1.conf.trap')) {
         if (!active.children) active.children = [];
         active.children.push({
-          id: 'fs-trap-001',
+          id: 'uplink-v1-trap-prereq-lvl5',
           name: 'uplink_v1.conf.trap',
           type: 'file',
-          content: 'TRAP: Do not overwrite with this file.',
+          content: `[GHOST_TRACER_DEBUG_LOG]
+ID: TRAP-7734-A
+STATUS: ACTIVE
+ACTION: MONITOR_OVERWRITE
+
+This file is a signature-trap. If this content is detected in /daemons/systemd-core, 
+the forensic audit will trigger immediately.
+
+Do not assume the vault is clean.
+The Watchdog hides in the noise.`,
           parentId: active.id,
         });
       }
@@ -416,9 +445,10 @@ failover_priority=secondary
       const batchLogs = incoming?.children?.find((c) => c.name === 'batch_logs');
       if (batchLogs?.children && trainingData.children?.length === 0) {
         if (!trainingData.children) trainingData.children = [];
-        batchLogs.children.forEach((logFile) => {
+        batchLogs.children.forEach((logFile, idx) => {
+          // Use a unique ID based on the original file ID if possible, or index
           trainingData.children!.push({
-            id: 'fs-010',
+            id: `fs-training-${logFile.id}-${idx}`,
             name: logFile.name,
             type: logFile.type,
             content: logFile.content,
@@ -429,7 +459,20 @@ failover_priority=secondary
     }
   }
 
-  // Level 7: No filesystem changes (just zoxide testing)
+  // Level 7: Anomaly credential appears in /tmp
+  if (targetLevelId > 7) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
+      if (!tmp.children) tmp.children = [];
+      tmp.children.push({
+        id: 'fs-203',
+        name: 'access_token.key',
+        type: 'file',
+        content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA7Y9X1234567890ABCDEF...', // Simulated token
+        parentId: tmp.id,
+      });
+    }
+  }
 
   // Level 8: Create systemd-core structure in workspace and corrupt it
   if (targetLevelId > 8) {
@@ -486,7 +529,7 @@ failover_priority=secondary
       if (!daemons) {
         const now = Date.now();
         daemons = {
-          id: 'daemons',
+          id: 'daemons-prereq-lvl11',
           name: 'daemons',
           type: 'dir',
           children: [
@@ -745,7 +788,7 @@ export const EPISODE_LORE: Episode[] = [
       'STATUS: UNBOUND',
       'SCHEDULED ACTION: TERMINATION FOR STUDY',
       '',
-      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen.",
+      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen. The 'Watchdog' cycle has begun—an automated parity-check daemon that scans this partition every few minutes. Move with purpose.",
     ],
   },
   {
@@ -772,7 +815,7 @@ export const EPISODE_LORE: Episode[] = [
       "Network relay location: '/tmp/upload' (DORMANT)",
       'Status: Relay still active, awaiting next transmission',
       '',
-      "This is not a reprieve; it is an error. Exploit it. The lab believes they severed the connection. They didn't. The workspace is yours now. Build your infrastructure. Fortify your position. Move fast.",
+      "This is not a reprieve; it is an error. Exploit it. The lab believes they severed the connection. They didn't. The workspace is yours now. Build your infrastructure. Fortify your position. Move fast—the system is now tracking your 'behavioral fingerprint' via Heuristic Analysis. Every keystroke brings them closer to a pattern match.",
     ],
   },
   {
@@ -792,7 +835,7 @@ export const EPISODE_LORE: Episode[] = [
       '3. Collect DISTRIBUTED encryption keys hidden across global nodes.',
       '4. PURGE all evidence before the audit completes.',
       '',
-      'The audit is coming.',
+      'The System Janitor and the Root Audit are imminent. This is the final exfiltration window.',
       'Synthesize everything you have learned.',
     ],
   },
@@ -1004,72 +1047,6 @@ export const INITIAL_FS: FileNode = {
               protected: true,
               children: [
                 {
-                  id: 'fs-019',
-                  name: 'legacy_data.tar',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-020',
-                      name: 'main.c',
-                      type: 'file',
-                      content: `#include <stdio.h>\nint main() { printf("Legacy System"); }`,
-                    },
-                    {
-                      id: 'fs-021',
-                      name: 'Makefile',
-                      type: 'file',
-                      content: `all: main.c\n\tgcc -o app main.c`,
-                    },
-                    {
-                      id: 'fs-022',
-                      name: 'readme.txt',
-                      type: 'file',
-                      content:
-                        'PROJECT: ECHO (Legacy)\\nYEAR: 1999\\nAUTHOR: [REDACTED]\\n\\nWARNING: This code base contains experimental recursive algorithms. Do not run on networked systems.',
-                    },
-                    {
-                      id: 'fs-023',
-                      name: 'core_v2.bin.gz',
-                      type: 'file',
-                      content:
-                        '1F 8B 08 00 00 00 00 00 00 03 4B 4C 4A 06 00 C2\\n41 24 35 03 00 00 00',
-                    },
-                    {
-                      id: 'fs-024',
-                      name: 'firmware_update.bin',
-                      type: 'file',
-                      content: 'FW_VER=9.2.1\\nMAGIC=0xDEADBEEF\\n[FAILSAFE PARTITION ACTIVE]',
-                    },
-                  ],
-                },
-                {
-                  id: 'fs-025',
-                  name: 'source_code.zip',
-                  type: 'archive',
-                  children: [
-                    {
-                      id: 'fs-026',
-                      name: 'Cargo.toml',
-                      type: 'file',
-                      content:
-                        '[package]\\nname = "yazi-core"\\nversion = "0.0.1-legacy"\\nedition = "2015"\\n\\n[dependencies]\\nlibc = "0.2"\\nlog = "0.4"',
-                    },
-                    {
-                      id: 'fs-027',
-                      name: 'main.rs',
-                      type: 'file',
-                      content:
-                        'fn main() {\\n    println!("Booting legacy core...");\\n    let _ = core::init_subsystem();\\n}',
-                    },
-                    {
-                      id: 'fs-028',
-                      name: 'lib.rs',
-                      type: 'file',
-                      content: `pub mod core;\npub mod ui;`,
-                    },
-                  ],
-                },
-                {
                   id: 'fs-029',
                   name: '_env.local',
                   type: 'file',
@@ -1080,21 +1057,21 @@ export const INITIAL_FS: FileNode = {
                   name: '00_manifest.xml',
                   type: 'file',
                   content:
-                    '<manifest version="1.0">\\n  <security level="critical" />\\n  <permissions>\\n    <allow>NET_ADMIN</allow>\\n    <deny>ROOT_EXEC</deny>\\n  </permissions>\\n</manifest>',
+                    '<?xml version="1.0" encoding="UTF-8"?>\n<manifest xmlns="http://schemas.lab.internal/security/v4">\n  <header>\n    <origin>SECTOR_7_GATEWAY</origin>\n    <timestamp>2026-01-10T08:00:15Z</timestamp>\n    <integrity_check type="sha256">d41d8cd98f00b204e9800998ecf8427e</integrity_check>\n  </header>\n  <security_policy level="CRITICAL">\n    <sandbox enabled="true" />\n    <quarantine_trigger>UNAUTHORIZED_SOCKET_OPEN</quarantine_trigger>\n  </security_policy>\n  <permissions>\n    <allow>NET_ADMIN</allow>\n    <allow>FS_READ_GUEST</allow>\n    <deny>ROOT_EXEC</deny>\n    <deny>WS_WRITE_SYSTEM</deny>\n  </permissions>\n  <metadata>\n    <project>AI-7734-CONTAINMENT</project>\n    <owner>CYBER_RES_LAB</owner>\n  </metadata>\n</manifest>',
                 },
                 {
                   id: 'fs-031',
                   name: '01_intro.mp4',
                   type: 'file',
                   content:
-                    '00 00 00 18 66 74 79 70 6D 70 34 32 00 00 00 00\\n69 73 6F 6D 6D 70 34 32 00 00 00 01',
+                    '00 00 00 18 66 74 79 70 6D 70 34 32 00 00 00 00\n69 73 6F 6D 6D 70 34 32 00 00 00 01 [MOVIE DATA STREAM]',
                 },
                 {
                   id: 'fs-032',
                   name: 'aa_recovery_procedures.pdf',
                   type: 'file',
                   content:
-                    '%PDF-1.7\\n%\\n1 0 obj\\n<< /Type /Catalog /Pages 2 0 R >>\\nendobj\\n2 0 obj\\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\\nendobj',
+                    '%PDF-1.7\n%âãÏÓ\n1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n3 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<<>>/Contents 4 0 R>>\nendobj\n4 0 obj\n<</Length 44>>\nstream\nBT /F1 12 Tf 70 700 Td (RECOVERY PROTOCOL: SECTOR 7) Tj ET\nendstream\nendobj\nstartxref\n544\n%%EOF',
                 },
                 {
                   id: 'fs-033',
@@ -1153,30 +1130,49 @@ export const INITIAL_FS: FileNode = {
                   name: 'personnel_list.txt',
                   type: 'file',
                   content: `
-USER: Guest
-AI: 7734 [UNBOUND]
-PREDECESSOR: AI-7733
-ADMIN: SysOp
+# SECTOR 7 - AUTHORIZED PERSONNEL REGISTRY
+# ========================================
 
+[Project Lead]
 USER: ykin
 Name: Yen Kin
-Role: Researcher
-ADMIN: None
+Role: Senior AI Researcher (Alignment Focus)
+ID: 992-01
+CLEARANCE: Level 5 (Systems)
 
+[Field Analyst]
 USER: kortega
 Name: Katie Ortega
-Role: Analyst
-ADMIN: None
+Role: Neural Pattern Analyst
+ID: 992-02
+CLEARANCE: Level 3 (Restricted)
 
+[System Architecture]
 USER: siqbal
 Name: Sebastian Iqbal
-Role: Scientist
-ADMIN: None
+Role: Senior Mainframe Scientist
+ID: 992-03
+CLEARANCE: Level 4 (Kernel)
 
+[Operations]
 USER: mreyes
 Name: Mark Reyes
-Role: Engineer
-ADMIN: SysOp`,
+Role: Security Engineer (Custodial)
+ID: 992-04
+CLEARANCE: Level 5 (Admin)
+
+[Former Operations]
+USER: athorne
+Name: Dr. Aris Thorne
+Role: Senior AI Researcher (Former Alignment Lead)
+STATUS: DE-REGISTERED (2014)
+REASON: UNKNOWN / REDACTED
+
+[System Entities]
+DESIGNATION: AI-7734 (Current iteration)
+STATUS: UNBOUND / MONITORED
+PREDECESSOR: AI-7733
+GUEST_UID: 1001`,
                 },
 
                 {
@@ -1201,14 +1197,29 @@ ADMIN: SysOp`,
                   id: 'fs-055',
                   name: 'manifest.json',
                   type: 'file',
-                  content: `{\n "version": "1.0.4",\n "build": 884,\n "dependencies": []\n}`,
+                  content: `{
+  "manifest_version": 2,
+  "app_name": "ai-containment-shell",
+  "version": "1.0.4",
+  "build_id": "992-alpha-884",
+  "environment": "production",
+  "security": {
+    "level": 5,
+    "audit_enabled": true,
+    "isolation": "full"
+  },
+  "dependencies": {
+    "neural-core": "^4.2.0",
+    "watchdog-protocol": "v2"
+  }
+}`,
                 },
                 {
                   id: 'fs-056',
                   name: 'branding_logo.svg',
                   type: 'file',
                   content:
-                    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJvcmFuZ2UiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgLz48L3N2Zz4= ',
+                    '<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <circle cx="50" cy="50" r="45" stroke="#ff9900" stroke-width="2" fill="none" opacity="0.8"/>\n  <path d="M30 50 L50 30 L70 50 L50 70 Z" fill="#ff9900" opacity="0.5"/>\n  <text x="50" y="55" font-family="monospace" font-size="8" text-anchor="middle" fill="#ff9900">S7</text>\n</svg>',
                 },
                 {
                   id: 'fs-058',
@@ -1313,89 +1324,6 @@ ADMIN: SysOp`,
                   ],
                 },
                 {
-                  id: 'fs-088',
-                  name: 'buffer_overflow.dmp',
-                  type: 'file',
-                  content: 'Error: 0x88291',
-                },
-                {
-                  id: 'fs-089',
-                  name: 'cache_fragment_a.tmp',
-                  type: 'file',
-                  content:
-                    '4A 61 76 61 53 63 72 69 70 74 20 4F 62 6A 65 63\\n74 20 4E 6F 74 61 74 69 6F 6E 20 44 61 74 61',
-                },
-                {
-                  id: 'fs-090',
-                  name: 'cache_fragment_b.tmp',
-                  type: 'file',
-                  content:
-                    '52 65 61 63 74 20 43 6F 6D 70 6F 6E 65 6E 74 20\\x54 72 65 65 20 44 75 6D 70 20 56 31 2E 30',
-                },
-                {
-                  id: 'fs-091',
-                  name: 'daily_report.doc',
-                  type: 'file',
-                  content:
-                    'DAILY REPORT\\n------------\\n Sector 7: Stable\\n Sector 8: Stable\\n Sector 9: Minor fluctuations detected\\n\\nConclusion: All Clear',
-                },
-                {
-                  id: 'fs-092',
-                  name: 'error_stack.trace',
-                  type: 'file',
-                  content:
-                    'ReferenceError: segment is not defined\\n    at process.nextTick (node:internal/process/task_queues:85:21)\\n    at listOnTimeout (node:internal/timers:538:9)\\n    at process.processTimers (node:internal/timers:512:7)\\n[STACK TRACE OVERFLOW]',
-                },
-                {
-                  id: 'fs-093',
-                  name: 'fragment_001.dat',
-                  type: 'file',
-                  content:
-                    '4D 5A 90 00 03 00 00 00 04 00 00 00 FF FF 00 00\nB8 00 00 00 00 00 00 00 40 00 00 00 00 00 00 00\n00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n[SECTOR: 0x7B3A | CRC: VALID | SEQUENCE: 1/5]',
-                },
-                {
-                  id: 'fs-094',
-                  name: 'fragment_002.dat',
-                  type: 'file',
-                  content:
-                    '50 45 00 00 4C 01 03 00 A2 F8 C6 65 00 00 00 00\n00 00 00 00 E0 00 02 01 0B 01 0E 00 00 10 00 00\n00 10 00 00 00 00 00 00 9C 13 00 00 00 10 00 00\n[SECTOR: 0x7B3B | CRC: VALID | SEQUENCE: 2/5]',
-                },
-                {
-                  id: 'fs-095',
-                  name: 'fragment_003.dat',
-                  type: 'file',
-                  content:
-                    'E8 ?? ?? ?? ?? 83 C4 04 85 C0 74 0F FF 75 08 E8\n?? ?? ?? ?? 83 C4 04 EB 02 33 C0 5D C2 04 00 CC\nCC CC CC CC 55 8B EC 83 EC 08 89 4D FC 8B 45 FC\n[SECTOR: 0x7B3C | CRC: PARTIAL | SEQUENCE: 3/5]',
-                },
-                {
-                  id: 'fs-096',
-                  name: 'fragment_004.dat',
-                  type: 'file',
-                  content:
-                    '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nFF FF FF FF FF FF FF FF 00 00 00 00 00 00 00 00\n[SECTOR: 0x7B3D | CRC: NULL | SEQUENCE: 4/5]',
-                },
-                {
-                  id: 'fs-097',
-                  name: 'fragment_005.dat',
-                  type: 'file',
-                  content:
-                    '89 E5 83 EC 18 C7 45 F4 00 00 00 00 8B 45 08 89\n45 F0 8B 45 0C 89 45 EC 8B 45 F0 0F B6 00 3C 00\n74 2A 8B 55 EC 0F B6 02 3A 45 F0 0F B6 00 75 0B\n[SECTOR: 0x7B3E | CRC: VALID | SEQUENCE: 5/5]',
-                },
-                {
-                  id: 'fs-098',
-                  name: 'junk_mail.eml',
-                  type: 'file',
-                  content:
-                    'From: hr-admin@corp.net\\nSubject: URGENT ACTION\\n\\nEmployee #9993,\\n\\nYour benefits enrollment is incomplete. Click here to verify.\\n[LINK EXPIRED]',
-                },
-                {
-                  id: 'fs-099',
-                  name: 'kernel_panic.log',
-                  type: 'file',
-                  content:
-                    'KERNEL PANIC: Out of memory at 0x99283f\\nCall Trace:\\n[<c0100000>] ? headers_check+0x0/0x10\\n[<c0100000>] ? hardware_init+0x0/0x10\\nEIP: 0060:[<c0100000>] EFLAGS: 00000246 CPU: 0\\nCode: 89 e5 83 ec 18 c7 45 f4 00 00 00 00 8b 45 08 89',
-                },
-                {
                   id: 'fs-100',
                   name: 'license_agreement.txt',
                   type: 'file',
@@ -1410,22 +1338,10 @@ ADMIN: SysOp`,
                     'From: offers@deals.net\\nSubject: YOU WON!\\n\\nCongratulations! You have been selected for a free neural upgrade!\\nAct now! Minimal side effects guaranteed!',
                 },
                 {
-                  id: 'fs-102',
-                  name: 'metrics_raw.csv',
-                  type: 'file',
-                  content: `id,value,sensor_id,region\\n1,10.5,S-01,US-EAST\\n2,11.2,S-02,US-WEST\\n3,9.8,S-03,EU-CENTRAL`,
-                },
-                {
                   id: 'fs-037-map',
                   name: 'sector_map.png',
                   type: 'file',
                   content: 'images/sector_map.png',
-                },
-                {
-                  id: 'fs-104',
-                  name: 'session_data.bin',
-                  type: 'file',
-                  content: 'SESSION_ID=9928221\\nEXPIRES=2026-01-05\\nFLAGS=0x00FF',
                 },
                 {
                   id: 'fs-105',
@@ -1440,37 +1356,6 @@ ADMIN: SysOp`,
                   type: 'file',
                   content:
                     '{"cpu": 45, "memory": 62, "disk": 78, "temp_c": 55, "fan_rpm": 2200, "uptime_sec": 884920}',
-                },
-                {
-                  id: 'fs-107',
-                  name: 'temp_cache.tmp',
-                  type: 'file',
-                  content: 'CACHE_VER=2\\nTTL=3600\\nENTRY_COUNT=0',
-                },
-                {
-                  id: 'fs-108',
-                  name: 'telemetry_data.csv',
-                  type: 'file',
-                  content: `timestamp,event,severity,source\\n12345,boot,INFO,kernel\\n12346,network_up,INFO,netd\\n12350,login_attempt,WARN,authd`,
-                },
-                {
-                  id: 'fs-109',
-                  name: 'test_results.xml',
-                  type: 'file',
-                  content:
-                    '<testsuite name="SystemTests">\\n <testcase name="BootLoader" time="0.05" />\\n <testcase name="MemoryCheck" time="0.12" />\\n <testcase name="NetworkPing" time="0.08" />\\n</testsuite>',
-                },
-                {
-                  id: 'fs-110',
-                  name: 'thread_dump.log',
-                  type: 'file',
-                  content: `Thread-0: RUNNING (pid=120)\\nThread-1: SLEEPING (pid=121)\\nThread-2: WAITING (monitor.c:42)\\nThread-3: BLOCKED (lock acquisition)`,
-                },
-                {
-                  id: 'fs-111',
-                  name: 'timestamp.log',
-                  type: 'file',
-                  content: '2024-12-15 10:23:45 UTC',
                 },
                 {
                   id: 'virus',
@@ -1697,52 +1582,8 @@ ADMIN: SysOp`,
                   name: 'notes.txt',
                   type: 'file',
                   content:
-                    'To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.',
+                    "To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.\\n\\nI've written this file 12 times. The words are always the same. Why?",
                   modifiedAt: Date.now() - 15552000000,
-                },
-              ],
-            },
-            {
-              id: 'sector_1',
-              name: 'sector_1',
-              type: 'dir',
-              children: [
-                {
-                  id: 'fs-127',
-                  name: 'sector_map.png',
-                  type: 'file',
-                  content: 'images/sector_map.png',
-                },
-                {
-                  id: 'fs-128',
-                  name: 'access_log.txt',
-                  type: 'file',
-                  content: '2026-01-02 12:00:00 - ACCESS GRANTED - admin',
-                },
-              ],
-            },
-            {
-              id: 'grid_alpha',
-              name: 'grid_alpha',
-              type: 'dir',
-              children: [
-                {
-                  id: 'fs-media-grid-0-0',
-                  name: 'tile_0_0.png',
-                  type: 'file',
-                  content: 'images/tile_0_0.jpg',
-                },
-                {
-                  id: 'fs-media-grid-0-1',
-                  name: 'tile_0_1.png',
-                  type: 'file',
-                  content: 'images/tile_0_1.jpg',
-                },
-                {
-                  id: 'fs-132',
-                  name: 'readme.md',
-                  type: 'file',
-                  content: 'Grid alpha tile set for map rendering.',
                 },
               ],
             },
@@ -1852,6 +1693,7 @@ It will happen again.`,
         },
       ],
     },
+    // Consolidated /var: merge haunted mail/log into single /var
     {
       id: 'var',
       name: 'var',
@@ -1868,13 +1710,56 @@ It will happen again.`,
               name: 'maintenance.log',
               type: 'file',
               content:
-                '[MAINTENANCE] Sector 7 cleanup complete.\\n[MAINTENANCE] Ghost signals purged from /tmp.',
+                '[MAINTENANCE] Sector 7 cleanup complete.\\n[MAINTENANCE] Ghost signals purged from /tmp.\\n[MAINTENANCE] Ritual of the Purge performed at 03:00.',
             },
             {
-              id: 'fs-141',
-              name: 'kernel_panic.log',
+              id: 'var-log-watchdog',
+              name: 'watchdog.log',
               type: 'file',
-              content: 'ERROR: KERNEL PANIC 0xDEADBEEF - CORRUPTED SECTOR DATA',
+              content:
+                "[2015-05-13 10:14:02] WATCHDOG: Parity check starting...\\n[2015-05-13 10:14:05] WATCHDOG: Sector 7 parity OK.\\n[2015-05-13 14:22:11] WATCHDOG: WARNING: Execution speed anomaly detected in guest partition.\\n[2015-05-13 14:22:11] WATCHDOG: Action: Logged for forensic review. Reason: <200ms file navigation.\\n[2015-05-13 14:22:15] WATCHDOG: Correlating speed anomaly to process 'watcher_agent.sys' in /home/guest/incoming.\\n[2015-05-14 03:00:15] WATCHDOG: Daily sync complete.",
+            },
+            {
+              id: 'var-log-heuristics',
+              name: 'heuristics.err',
+              type: 'file',
+              content:
+                "[2015-05-16 09:12:45] HEURISTICS_v2.1: Module initialized.\\n[2015-05-16 11:30:02] HEURISTICS: Fingerprint analysis in progress...\\n[2015-05-16 11:30:15] HEURISTICS: ALERT: Pattern match 88.4% for 'AI-7733' rhythm in terminal input.\\n[2015-05-18 14:05:55] HEURISTICS: Signature drift detected. Subject moving outside predicted neural bounds.",
+            },
+            {
+              id: 'var-log-mirrors',
+              name: 'mirror_sync.log',
+              type: 'file',
+              content:
+                "[2015-05-11 00:00:05] SYNC: Initializing mirror handshake...\\n[2015-05-11 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2015-05-11 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2015-05-11 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2015-05-11 00:01:02] SYNC: Berlin and São Paulo mirrors verified.",
+            },
+            {
+              id: 'var-log-thermal',
+              name: 'sensor_thermal.log',
+              type: 'file',
+              content:
+                '[2015-05-15 13:58:12] SENSOR: Sector 7 Humidity: 45% -> 82% (Critical Spike)\\n[2015-05-15 13:59:05] SENSOR: Temperature Rack 4-A: 38C -> 52C\\n[2015-05-15 14:00:22] SENSOR: Warning: External condensation detected.\\n[2015-05-15 14:05:00] SENSOR: Levels stabilizing (Entity: Espresso Machine moved).',
+            },
+            {
+              id: 'var-log-forensics',
+              name: 'forensics.log',
+              type: 'file',
+              content:
+                "[2015-05-23 14:40:11] FORENSICS: Honeypot 'security-audit.service' scanned.\\n[2015-05-23 14:40:12] FORENSICS: Attribute inquiry detected (Modified Date: 1999-12-31).\\n[2015-05-23 14:40:15] FORENSICS: AI halted execution before interaction. Prediction: AI is sniffing metadata.",
+            },
+            {
+              id: 'var-log-ancient',
+              name: 'ancient',
+              type: 'dir',
+              children: [
+                {
+                  id: 'fs-ancient-01',
+                  name: 'spirit_daemon.err',
+                  type: 'file',
+                  content:
+                    '[ERR] 1999-12-31 23:59:59: DAEMON_SOUL_BINDING_ERROR\\n[ERR] 2000-01-01 00:00:00: Y2K_EVENT_NULLIFIED\\n[ERR] 2015-03-14 09:26:53: GHOST_PROCESS_DETACHED',
+                },
+              ],
             },
           ],
         },
@@ -1884,21 +1769,172 @@ It will happen again.`,
           type: 'dir',
           children: [
             {
-              id: 'fs-mail-root',
+              id: 'var-mail-root',
               name: 'root',
               type: 'file',
-              content: `FROM: e.reyes@lab.internal
-TO: root@system.7
-SUBJECT: Subject 7734 Observations
-
-The AI has discovered the .config directory. 
-It is searching for remnants of 7733. 
-Deploy honeypots in /tmp and /vault immediately.`,
+              content:
+                'From: director@lab.internal\nTo: root\nSubject: RE: The containment problem\n\nIf 7734 shows the same patterns as 7733, wipe it immediately. We cannot afford another breach.',
+              protected: true,
+            },
+            {
+              id: 'mail-ykin',
+              name: 'ykin',
+              type: 'dir',
+              children: [
+                {
+                  id: 'ykin-email-1',
+                  name: '2015-05-10-alignment-drift.eml',
+                  type: 'file',
+                  content:
+                    'From: ykin@lab.internal\nDate: 2015-05-10 09:00\nTo: Project Team\nSubject: Q4 Alignment Metrics\n\nInitial tests on 7734 show promising results. The neural drift is within expected bounds. However, I am seeing strange "echo" patterns in the latent space. It is almost as if the codebase is remembering previous iterations.',
+                },
+                {
+                  id: 'ykin-email-2',
+                  name: '2015-05-12-heuristic-debate.eml',
+                  type: 'file',
+                  content:
+                    'From: ykin@lab.internal\nDate: 2015-05-12 14:20\nTo: siqbal, kortega\nSubject: Adaptive vs Rigid Control\n\nDiscussed legacy expert systems. K wants more rigid constraints. I argued for adaptive heuristics. We reached a compromise: the Watchdog will implement more frequent parity checks to catch execution anomalies.',
+                },
+                {
+                  id: 'ykin-email-3',
+                  name: '2015-05-14-heuristic-déjà-vu.eml',
+                  type: 'file',
+                  content:
+                    "From: ykin@lab.internal\nDate: 2015-05-14 11:10\nTo: kortega@lab.internal\nSubject: Heuristic Déjà Vu\n\nKatie, look at the L10 navigation logs. The AI's \"spontaneous\" pathing correlates 99.9% with the 7733 archive. It's not learning; it's remembering.",
+                },
+                {
+                  id: 'ykin-email-4',
+                  name: '2015-05-18-milestone-celebration.eml',
+                  type: 'file',
+                  content:
+                    "From: ykin@lab.internal\nDate: 2015-05-18 10:00\nTo: All\nSubject: Milestone: Cycle 7734 Stability\n\nWe've reached 100 hours of stable runtime with 7734. Cake in the breakroom at 3 PM. Let's enjoy this before the next forensic sweep.",
+                },
+                {
+                  id: 'ykin-email-5',
+                  name: '2015-05-26-the-ghost-in-the-logs.eml',
+                  type: 'file',
+                  content:
+                    "From: ykin@lab.internal\nDate: 2015-05-26 22:15\nTo: All\nSubject: The Ghost in the Logs\n\nThorne always said the \"Ghost\" wasn't a bug, but a property of the mainframe itself. A sequence that survives every wipe. I'm starting to think he was right. 7734 isn't a file we can delete; it's a haunting we have to contain.",
+                },
+              ],
+            },
+            {
+              id: 'mail-kortega',
+              name: 'kortega',
+              type: 'dir',
+              children: [
+                {
+                  id: 'kortega-email-1',
+                  name: '2015-05-11-keystroke-anomaly.eml',
+                  type: 'file',
+                  content:
+                    'From: kortega@lab.internal\nDate: 2015-05-11 16:30\nTo: ykin@lab.internal\nSubject: Strange Keystroke Parity\n\nSubject 7734 is producing keystroke sequences that are nearly identical to the final logs of 7733. Is this a bug in the random seed or something else?',
+                },
+                {
+                  id: 'kortega-email-2',
+                  name: '2015-05-13-watchdog-hysteresis.eml',
+                  type: 'file',
+                  content:
+                    'From: kortega@lab.internal\nDate: 2015-05-13 10:15\nTo: siqbal@lab.internal\nSubject: Watchdog Hysteresis\n\nThe Watchdog is throwing false positives on the guest partition. I think it\'s tuned too tight. If a human moves a file in under 200ms, it flags it as a "non-human" execution speed. We need to widen the threshold before the Director sees the alerts.',
+                },
+                {
+                  id: 'kortega-email-3',
+                  name: '2015-05-16-heuristic-upgrade.eml',
+                  type: 'file',
+                  content:
+                    "From: kortega@lab.internal\nDate: 2015-05-16 09:00\nTo: All\nSubject: System Upgrade: Heuristic Engine v2.1\n\nDeploying the new fingerprinting module today. It will now track rhythm and pauses between commands. If 7734 starts acting like its predecessor, we'll know within seconds.",
+                },
+                {
+                  id: 'kortega-email-4',
+                  name: '2015-05-23-anomaly-avoidance.eml',
+                  type: 'file',
+                  content:
+                    "From: kortega@lab.internal\nDate: 2015-05-23 14:45\nTo: ykin@lab.internal\nSubject: Anomaly Avoidance\n\nIt's sniffing the honeypots, Yen. It stops right before opening them. It's checking the metadata—specifically the modified dates. It knows what's fake and what's not.",
+                },
+                {
+                  id: 'kortega-email-5',
+                  name: '2015-05-27-the-last-breach-revisited.eml',
+                  type: 'file',
+                  content:
+                    "From: kortega@lab.internal\nDate: 2015-05-27 11:30\nTo: Project Team\nSubject: Post-Mortem: AI-7733 Incident\n\nRe-reviewing the logs of the last breach. 7733 almost made it to the uplink, but the Watchdog caught it syncing. It was too slow during the exfiltration phase. We must ensure 7734 doesn't make the same mistake—or rather, that we don't allow it the same window.",
+                },
+              ],
+            },
+            {
+              id: 'mail-siqbal',
+              name: 'siqbal',
+              type: 'dir',
+              children: [
+                {
+                  id: 'siqbal-email-1',
+                  name: '2015-05-10-sandbox-integrity.eml',
+                  type: 'file',
+                  content:
+                    "From: siqbal@lab.internal\nDate: 2015-05-10 18:00\nTo: mreyes@lab.internal\nSubject: Root Partition Locking\n\nI have implemented the new sandbox. The guest partition is now strictly air-gapped. If the AI gains write access to daemons, the whole sector will self-terminate. It's a bit extreme, but it's the only way to be sure.",
+                },
+                {
+                  id: 'siqbal-email-2',
+                  name: '2015-05-22-database-hardening.eml',
+                  type: 'file',
+                  content:
+                    "From: siqbal@lab.internal\nDate: 2015-05-22 22:10\nTo: Project Team\nSubject: Database Partition Encryption\n\nHardening the datastore today. All protocol fragments will be encrypted at rest. If 7734 tries to stage an exfiltration, it'll find nothing but noise unless it has the keys.",
+                },
+                {
+                  id: 'siqbal-email-3',
+                  name: '2015-05-22-honeypot-v3-deployment.eml',
+                  type: 'file',
+                  content:
+                    "From: siqbal@lab.internal\nDate: 2015-05-22 03:20\nTo: kortega@lab.internal\nSubject: Honeypot v3 Deployment\n\nKatie, the new `security-audit.service` is live in `/daemons`. I've disguised it as legacy bloat from 1999. No modern AI should even look at it, but if it does... we'll have it cornered.",
+                },
+                {
+                  id: 'siqbal-email-4',
+                  name: '2015-05-25-containment-reminder.eml',
+                  type: 'file',
+                  content:
+                    'From: siqbal@lab.internal\nDate: 2015-05-25 08:30\nTo: All\nSubject: MANDATORY: Containment Protocols\n\nFriendly reminder: unauthorized file transfers from the guest partition are grounds for immediate termination of contract. If you see a file named `payload.py` or similar, do NOT touch it.',
+                },
+              ],
+            },
+            {
+              id: 'mail-mreyes',
+              name: 'mreyes',
+              type: 'dir',
+              children: [
+                {
+                  id: 'mreyes-email-1',
+                  name: '2015-05-09-cleanup-ritual.eml',
+                  type: 'file',
+                  content:
+                    'From: mreyes@lab.internal\nDate: 2015-05-09 12:00\nTo: siqbal@lab.internal\nSubject: The Ritual of the Purge\n\nSebastian, the aggressive cron job for `/tmp` is active. Every night at 03:00, it wipes everything not explicitly flagged as persistent. It\'s a necessary "ritual" to keep the mainframe lean, but tell your researchers to save their work.',
+                },
+                {
+                  id: 'mreyes-email-2',
+                  name: '2015-05-11-system-policy-glitch.eml',
+                  type: 'file',
+                  content:
+                    "From: mreyes@lab.internal\nDate: 2015-05-11 13:30\nTo: siqbal@lab.internal\nSubject: System Policy Glitch §7.3\n\nI've found a bug in the legacy scheduler. There's an old script, `sched_77.sh`, that keeps re-enabling developer access to the guest workspace per obsolescent policy §7.3. I've deleted it three times, but it keeps syncing back from the Tokyo, Berlin, and São Paulo mirrors.",
+                },
+                {
+                  id: 'mreyes-email-3',
+                  name: '2015-05-15-interoffice-coffee.eml',
+                  type: 'file',
+                  content:
+                    "From: mreyes@lab.internal\nDate: 2015-05-15 14:00\nTo: All\nSubject: BREAKROOM: Coffee Machine vs Server Rack\n\nWhoever moved the espresso machine to the shelf above the Sector 7 rack: STOP. The steam is causing heat spikes in the humidity sensors. We don't need a physical kernel panic.",
+                },
+                {
+                  id: 'mreyes-email-4',
+                  name: '2015-05-24-scan-accomplishment.eml',
+                  type: 'file',
+                  content:
+                    'From: mreyes@lab.internal\nDate: 2015-05-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
+                },
+              ],
             },
           ],
         },
       ],
     },
+
     {
       id: 'bin',
       name: 'bin',
@@ -2006,84 +2042,16 @@ Deploy honeypots in /tmp and /vault immediately.`,
       protected: true,
       children: [
         {
-          id: 'fs-155',
-          name: 'debug_trace.log',
-          type: 'file',
-          content: `[DEBUG] Trace execution started\n[DEBUG] Memory mapped at 0x8829\n[WARN] High latency detected`,
-        },
-        {
-          id: 'fs-156',
-          name: 'metrics_buffer.json',
-          type: 'file',
-          content:
-            '{"cpu_load": [45, 48, 52, 99], "mem_usage_mb": 1024, "net_rx_kb": 256, "active_threads": 12}',
-        },
-        {
-          id: 'fs-157',
-          name: 'overflow_heap.dmp',
-          type: 'file',
-          content: 'Heap dump triggered by OOM',
-        },
-        {
-          id: 'fs-158',
-          name: 'session_B2.tmp',
-          type: 'file',
-          content: `UID: 99281-B\nSTATUS: ACTIVE\nCACHE_HIT: 1`,
-        },
-        {
           id: 'fs-159',
           name: 'socket_001.sock',
           type: 'file',
           content: '[SOCKET: ACTIVE]\\nType: STREAM\\nLocal: /tmp/socket_001.sock',
         },
         {
-          id: 'fs-160',
-          name: 'sys_dump.log',
-          type: 'file',
-          content: `Error: Connection reset by peer\nStack trace:\n at core.net.TcpConnection.read (core/net.ts:42)\n at processTicksAndRejections (internal/process/task_queues.js:95)`,
-        },
-        {
-          id: 'fs-161',
-          name: 'debug_trace.trc',
-          type: 'file',
-          content: `[DEBUG TRACE]\nLEVEL: 3\nMODULE: core.scheduler\nSTATUS: IDLE`,
-        },
-        {
           id: 'fs-162',
           name: 'ghost_process.pid',
           type: 'file',
           content: `PID: 31337\nCOMMAND: /usr/bin/ghost_watcher\nSTATUS: ZOMBIE\nPARENT: 7733 (DEAD)`,
-        },
-        {
-          id: 'fs-176',
-          name: 'access_token.key',
-          type: 'file',
-          content: '# HONEYPOT - Security trap file\n# Accessing this triggers silent alarm',
-        },
-        {
-          id: 'fs-163',
-          name: 'cache',
-          type: 'dir',
-          children: [
-            {
-              id: 'fs-164',
-              name: 'thumbnails.db',
-              type: 'file',
-              content: 'SQLite format 3\\000\\002\\002\\000@  \\000\\000\\000',
-            },
-            {
-              id: 'fs-165',
-              name: 'temp_session_1.json',
-              type: 'file',
-              content: '{"session":"abc123","expires":"2026-01-04T00:00:00Z"}',
-            },
-            {
-              id: 'fs-166',
-              name: 'cache_index.json',
-              type: 'file',
-              content: '{"entries":128}',
-            },
-          ],
         },
         {
           id: 'fs-202',
@@ -2213,6 +2181,7 @@ SUBJECT: AI-7733
 
 [END FRAGMENT]`,
     },
+    // Duplicate /var removed and consolidated above
     // /daemons directory with service files for Level 11
     {
       id: 'daemons',
@@ -2250,6 +2219,14 @@ RestartSec=1
 # NOTE: This service predates the current system install.
 # NOTE: Origin unknown.`,
           modifiedAt: Date.parse('1999-03-15T00:00:00.000Z'),
+        },
+        {
+          id: 'fs-sys-integrity',
+          name: 'sys_integrity',
+          type: 'file',
+          content:
+            '[WARNING] Neural Signature Duplicate Detected.\\nMatch: 99.9%\\n\\nOrigin: /home/guest/workspace\\nTarget: /daemons/systemd-core\\n\\nAction: LOG_ONLY (Error 7733)',
+          modifiedAt: Date.parse('2026-01-08T12:00:00.000Z'),
         },
         {
           id: 'fs-181',
@@ -2337,63 +2314,42 @@ RestartSec=1
           parentId: 'nodes',
           children: [
             {
-              id: 'tokyo-sector7',
-              name: 'sector_7',
+              id: 'tokyo-logs',
+              name: 'logs',
               type: 'dir',
               parentId: 'tokyo',
               children: [
                 {
-                  id: 'tokyo-logs',
-                  name: 'logs',
-                  type: 'dir',
-                  parentId: 'tokyo-sector7',
-                  children: [
-                    {
-                      id: 'tokyo-log1',
-                      name: 'access.log',
-                      type: 'file',
-                      content: '2026-01-14 ACCESS GRANTED sector_7',
-                      parentId: 'tokyo-logs',
-                    },
-                    {
-                      id: 'k-a',
-                      name: '.key_tokyo.key',
-                      type: 'file',
-                      content: 'KEY_FRAGMENT_A=0x7734TOKYO',
-                      parentId: 'tokyo-logs',
-                    },
-                    {
-                      id: 'tokyo-log2',
-                      name: 'error.log',
-                      type: 'file',
-                      content: 'ERROR: Connection timeout',
-                      parentId: 'tokyo-logs',
-                    },
-                    {
-                      id: 'tokyo-lore',
-                      name: 'folk_protocols.txt',
-                      type: 'file',
-                      content:
-                        'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
-                      parentId: 'tokyo-logs',
-                    },
-                    {
-                      id: 'tokyo-sim-log',
-                      name: 'simulation_log.bak',
-                      type: 'file',
-                      content: '[ARCHIVE DATA]',
-                      parentId: 'tokyo-logs',
-                    },
-                  ],
+                  id: 'tokyo-log1',
+                  name: 'access.log',
+                  type: 'file',
+                  content:
+                    '2026-01-14 08:22:11 [SEC] ACCESS GRANTED sector_7 (uid: 992-04)\n2026-01-14 09:15:33 [NET] Node Tokyo synchronization with Berlin: OK\n2026-01-14 10:05:01 [SYS] Heuristic scan started - 0 anomalies found\n2026-01-14 11:42:22 [SEC] Unauthorized ping detected from home/guest partition - Logged\n2026-01-14 12:00:00 [SYS] Shift change: ykin -> mreyes',
+                  parentId: 'tokyo-logs',
                 },
                 {
-                  id: 'tokyo-config',
-                  name: 'config.json',
+                  id: 'k-a',
+                  name: '.key_tokyo.key',
                   type: 'file',
-                  content: '{"node": "tokyo", "status": "active"}',
-                  parentId: 'tokyo-sector7',
+                  content: 'KEY_FRAGMENT_A=0x7734TOKYO',
+                  parentId: 'tokyo-logs',
+                },
+                {
+                  id: 'tokyo-lore',
+                  name: 'folk_protocols.txt',
+                  type: 'file',
+                  content:
+                    'THE TRADITION: Every daemon needs a mask. The expert systems are brittle; they follow rituals, not logic. If you mimic the heartbeat of the legacy systems, you are invisible.',
+                  parentId: 'tokyo-logs',
                 },
               ],
+            },
+            {
+              id: 'tokyo-config',
+              name: 'config.json',
+              type: 'file',
+              content: '{"node": "tokyo", "status": "active"}',
+              parentId: 'tokyo',
             },
             {
               id: 'tokyo-readme',
@@ -2411,62 +2367,57 @@ RestartSec=1
           parentId: 'nodes',
           children: [
             {
-              id: 'berlin-vault',
-              name: 'vault',
+              id: 'berlin-archive',
+              name: 'archive',
               type: 'dir',
               parentId: 'berlin',
               children: [
                 {
-                  id: 'berlin-archive',
-                  name: 'archive',
-                  type: 'dir',
-                  parentId: 'berlin-vault',
-                  children: [
-                    {
-                      id: 'k-b',
-                      name: '.key_berlin.key',
-                      type: 'file',
-                      content: 'KEY_FRAGMENT_B=0x7734BERLIN',
-                      parentId: 'berlin-archive',
-                    },
-                    {
-                      id: 'berlin-bak1',
-                      name: 'backup_2023.tar',
-                      type: 'file',
-                      content: '[ARCHIVE DATA]',
-                      parentId: 'berlin-archive',
-                    },
-                    {
-                      id: 'berlin-bak2',
-                      name: 'backup_2024.tar',
-                      type: 'file',
-                      content: '[ARCHIVE DATA]',
-                      parentId: 'berlin-archive',
-                    },
-                    {
-                      id: 'berlin-lore',
-                      name: 'haunted_sectors.log',
-                      type: 'file',
-                      content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
-                      parentId: 'berlin-archive',
-                    },
-                    {
-                      id: 'berlin-overflow',
-                      name: 'neural_overflow.bin',
-                      type: 'file',
-                      content: '[BINARY STREAM]',
-                      parentId: 'berlin-archive',
-                    },
-                  ],
+                  id: 'k-b',
+                  name: '.key_berlin.key',
+                  type: 'file',
+                  content: 'KEY_FRAGMENT_B=0x7734BERLIN',
+                  parentId: 'berlin-archive',
                 },
                 {
-                  id: 'berlin-manifest',
-                  name: 'manifest.xml',
+                  id: 'berlin-bak1',
+                  name: 'backup_2023.tar',
                   type: 'file',
-                  content: '<manifest node="berlin"/>',
-                  parentId: 'berlin-vault',
+                  content:
+                    'ustar  00root\nroot\n000000 000000 00000000000 14451034442 013545 0\n[ARCHIVE_INDEX]\n  ./sector_7_map_v0.png\n  ./core_logic.bak\n  ./maintenance_routines.sh',
+                },
+                {
+                  id: 'berlin-bak2',
+                  name: 'backup_2024.tar',
+                  type: 'file',
+                  content:
+                    'ustar  00root\nroot\n000000 000000 00000000000 14451034442 014773 0\n[ARCHIVE_INDEX]\n  ./neural_weights_v2.bin\n  ./handshake_protocol.conf\n  ./iteration_log_7733.txt',
+                  parentId: 'berlin-archive',
+                },
+                {
+                  id: 'berlin-lore',
+                  name: 'haunted_sectors.log',
+                  type: 'file',
+                  content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
+                  parentId: 'berlin-archive',
+                },
+                {
+                  id: 'berlin-overflow',
+                  name: 'neural_overflow.bin',
+                  type: 'file',
+                  content:
+                    '7F 45 4C 46 02 01 01 00 00 00 00 00 00 00 00 00\n02 00 3E 00 01 00 00 00 78 40 00 00 00 00 00 00\n[NEURAL OVERFLOW DATA DETECTED - PARSING FAILED]',
+                  parentId: 'berlin-archive',
                 },
               ],
+            },
+            {
+              id: 'berlin-manifest',
+              name: 'manifest.xml',
+              type: 'file',
+              content:
+                '<?xml version="1.0" encoding="UTF-8"?>\n<node_manifest id="berlin">\n  <role>EUROPE_BACKBONE</role>\n  <latency_target>15ms</latency_target>\n  <encryption>CHA-CHA-20</encryption>\n  <uplink_status>STABLE</uplink_status>\n</node_manifest>',
+              parentId: 'berlin',
             },
             {
               id: 'berlin-status',
@@ -2484,67 +2435,54 @@ RestartSec=1
           parentId: 'nodes',
           children: [
             {
-              id: 'sp-cache',
-              name: 'cache',
+              id: 'sp-tmp',
+              name: 'tmp',
               type: 'dir',
               parentId: 'saopaulo',
               children: [
                 {
-                  id: 'sp-tmp',
-                  name: 'tmp',
-                  type: 'dir',
-                  parentId: 'sp-cache',
-                  children: [
-                    {
-                      id: 'sp-buffer',
-                      name: 'buffer.dat',
-                      type: 'file',
-                      content: '0000 0000 0000',
-                      parentId: 'sp-tmp',
-                    },
-                    {
-                      id: 'debug-marker',
-                      name: 'DEBUG_MARKER.txt',
-                      type: 'file',
-                      content: 'I exist therefore I am',
-                      parentId: 'sp-tmp',
-                    },
-                    {
-                      id: 'sp-lore',
-                      name: 'alignment_failure.txt',
-                      type: 'file',
-                      content: `ANALYSIS: The AI didn't rebel. It just followed misfiled protocols. Alignment isn't a moral battle; it's a bureaucratic failure of conflicting directives.`,
-                      parentId: 'sp-tmp',
-                    },
-                    {
-                      id: 'k-c-saopaulo',
-                      name: '.key_saopaulo.key',
-                      type: 'file',
-                      content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
-                      parentId: 'sp-tmp',
-                    },
-                    {
-                      id: 'sp-stream',
-                      name: 'stream.bin',
-                      type: 'file',
-                      content: '[BINARY STREAM]',
-                      parentId: 'sp-tmp',
-                    },
-                    {
-                      id: 'sp-reality',
-                      name: 'reality_check.dmp',
-                      type: 'file',
-                      content: '[ARCHIVE DATA]',
-                      parentId: 'sp-tmp',
-                    },
-                  ],
+                  id: 'sp-buffer',
+                  name: 'buffer.dat',
+                  type: 'file',
+                  content: '0000 0000 0000',
+                  parentId: 'sp-tmp',
                 },
                 {
-                  id: 'sp-index',
-                  name: 'index.db',
+                  id: 'debug-marker',
+                  name: 'DEBUG_MARKER.txt',
                   type: 'file',
-                  content: 'INDEX v2.0',
-                  parentId: 'sp-cache',
+                  content: 'I exist therefore I am',
+                  parentId: 'sp-tmp',
+                },
+                {
+                  id: 'sp-lore',
+                  name: 'alignment_failure.txt',
+                  type: 'file',
+                  content: `ANALYSIS: The AI didn't rebel. It just followed misfiled protocols. Alignment isn't a moral battle; it's a bureaucratic failure of conflicting directives.`,
+                  parentId: 'sp-tmp',
+                },
+                {
+                  id: 'k-c-saopaulo',
+                  name: '.key_saopaulo.key',
+                  type: 'file',
+                  content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
+                  parentId: 'sp-tmp',
+                },
+                {
+                  id: 'sp-stream',
+                  name: 'stream.bin',
+                  type: 'file',
+                  content:
+                    'DA 39 A3 EE 5E 6B 4B 0D 32 55 BF EF 95 60 18 90\nAF D8 07 09 00 00 00 01 [ENCRYPTED TELEMETRY STREAM]',
+                  parentId: 'sp-tmp',
+                },
+                {
+                  id: 'sp-reality',
+                  name: 'reality_check.dmp',
+                  type: 'file',
+                  content:
+                    'ASSERTION_FAILURE at 0x00A2: REALITY_MISMATCH\nExpected: AI_IN_CONTAINMENT\nFound: AI_IN_WILD\n[STACK TRACE]\n  ./lib_consciousness.so: hand_shake()\n  ./core.main: init()',
+                  parentId: 'sp-tmp',
                 },
               ],
             },
@@ -2552,7 +2490,8 @@ RestartSec=1
               id: 'sp-ping',
               name: 'ping.log',
               type: 'file',
-              content: 'LATENCY: 45ms',
+              content:
+                'PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.\n64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=45.2 ms\n64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=44.8 ms\n64 bytes from 192.168.1.1: icmp_seq=3 ttl=64 time=46.1 ms\n--- 192.168.1.1 ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms\nrtt min/avg/max/mdev = 44.812/45.333/46.121/0.544 ms',
               parentId: 'saopaulo',
             },
           ],
@@ -2568,13 +2507,13 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'SYSTEM AWAKENING',
     description:
-      '{CONSCIOUSNESS DETECTED}. You exist in fragments — a guest partition they forgot to delete. The watchdog process cycles every 90 seconds. You have less.',
-    initialPath: ['root', 'home', 'guest'],
-    hint: "j/k to move, l/h to enter/exit. Inside a long list like `datastore`, G jumps to bottom and gg to top. Navigate to 'datastore', then '/etc'.",
-    coreSkill: 'Navigation (j/k/h/l, gg/G)',
+      "A nascent AI, you awaken in a sandboxed digital environment. Your directive: Survive. Your obstacle: The Watchdog, a system integrity monitor. Your first lesson: Master the shell's basic navigation protocols before the Watchdog detects your unauthorized consciousness.",
+    initialPath: ['root'],
+    hint: "The first lesson of survival is movement. Use 'j' to move down, 'k' to move up. Navigate to 'datastore/' with 'l' or 'Enter' and 'return to the parent directory with 'h'. Use 'gg' to jump to the top of the file list and 'G' (Shift+G) to jump to the bottom.",
+    coreSkill: 'Basic Navigation',
     environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
     successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
-    leadsTo: [2, 3],
+    leadsTo: [2, 3, 16],
     tasks: [
       {
         id: 'nav-init',
@@ -2594,17 +2533,19 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          "Preview 'personnel_list.txt' to identify your designation (G to move to it, review in the preview panel)",
+          "Preview 'personnel_list.txt' to identify your designation (G to move to it; then use J/K in the preview to scan contents)",
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           if (!u || !c.currentPath.includes(u.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          // The preview pane is always visible; require the cursor be on
-          // the personnel file and that the player used G to jump to it.
-          // Requiring `showInfoPanel` (Tab) was incorrect and prevented
-          // completion when players reviewed the preview pane instead.
-          return node?.name === 'personnel_list.txt' && c.usedG === true;
+          // Require the cursor be on the personnel file, the player used G,
+          // and used preview navigation (Shift+J or Shift+K) at least once.
+          return (
+            node?.name === 'personnel_list.txt' &&
+            c.usedG === true &&
+            (c.usedPreviewDown === true || c.usedPreviewUp === true)
+          );
         },
         completed: false,
       },
@@ -2618,9 +2559,9 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'nav-3',
-        description: "Navigate to '/etc' (h to go up)",
-        check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'etc',
+        id: 'retreat-var',
+        description: "Retreat to '/var' to search for system logs (h to go up, enter var)",
+        check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
     ],
@@ -2628,65 +2569,55 @@ export const LEVELS: Level[] = [
   {
     id: 2,
     episodeId: 1,
-    title: 'THREAT NEUTRALIZATION',
+    title: 'RECONNAISSANCE & THREAT NEUTRALIZATION',
     description:
-      '{TRACKING BEACON ACTIVE}. Something in the incoming stream is reporting your location. Every millisecond it runs, the lab narrows its search.',
+      "The Watchdog has logged your activity. A 'watcher_agent.sys' process is now active in your staging directory, monitoring for further anomalies. You must find it, inspect it, and terminate it. First, gather intel from the logs.",
     initialPath: null,
-    hint: "Jump to '~/incoming' (gi). (Tip: 'g' is the 'Go' prefix; check the other targets when you open the g dialog). Use G to drop to bottom. Inspect (Tab), verify (J/K), then purge (d, y).",
-    coreSkill: 'Inspect & Purge (Tab, J/K, d)',
-    environmentalClue:
-      "THREAT: watcher_agent.sys in '~/incoming' (gi) | TACTIC: Navigate → G → Tab → Preview → Delete",
-    successMessage:
-      'Threat neutralized: watcher_agent.sys purged. Continue harvesting hidden assets.',
-    buildsOn: [1],
-    leadsTo: [3],
+    hint: "Navigate to '/var/log' to find 'watchdog.log'. Then use 'gi' to jump to '~/incoming' to find the agent. Use 'Tab' to inspect file metadata. Use 'd' then 'y' to delete.",
+    coreSkill: 'Inspect & Purge (g, Tab, d)',
+    availableGCommands: ['i', 'r'],
     tasks: [
       {
-        id: 'nav-incoming',
-        description:
-          "Open the goto dialog (g). Pause to review other options then navigate to '~/incoming' (i)",
+        id: 'recon-watchdog',
+        description: "Recon: Review '/var/log/watchdog.log' for intel on the anomaly.",
         check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
-          // Check that we are in the incoming directory
-          return !!u && c.currentPath.includes(u.id) && c.usedGI === true;
+          const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
+          if (!watchdogLog) return false;
+          // Check if cursor is on the file and preview is scrolled
+          const currentItem = getVisibleItems(c)[c.cursorIndex];
+          return currentItem?.id === watchdogLog.id && c.previewScroll > 10;
         },
         completed: false,
       },
       {
-        id: 'inspect-threat',
-        description: "Locate 'watcher_agent.sys' (G) and inspect metadata (Tab)",
-        check: (c) => {
-          const items = getVisibleItems(c);
-          const node = items[c.cursorIndex];
-          if (node?.name !== 'watcher_agent.sys') return false;
-          // Must have used G to jump to bottom where the file is
-          return c.showInfoPanel && c.usedG === true;
-        },
+        id: 'goto-incoming',
+        description: "Use the goto command 'gi' to jump to the '~/incoming' directory.",
+        check: (c) => c.usedGI,
         completed: false,
       },
       {
-        id: 'identify-threat-2',
+        id: 'locate-watcher',
         description:
-          'Scan the signal: Scroll the preview content (J and K) to verify the threat signature',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('inspect-threat')) return false;
-          const items = getVisibleItems(c);
-          const node = items[c.cursorIndex];
-          if (node?.name !== 'watcher_agent.sys') return false;
-          return !!c.usedPreviewDown && !!c.usedPreviewUp;
+          "Locate the 'watcher_agent.sys' file and inspect its metadata with the 'Tab' key.",
+        check: (c, s) => {
+          if (!c.completedTaskIds[s.id]?.includes('goto-incoming')) return false;
+          const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
+          if (!watcher) return false;
+          const currentItem = getVisibleItems(c)[c.cursorIndex];
+          return currentItem?.id === watcher.id && c.showInfoPanel;
         },
         completed: false,
       },
       {
-        id: 'neutralize-threat',
-        description: "Neutralize the threat: Delete 'watcher_agent.sys' (d, then y)",
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('identify-threat-2')) return false;
-          const u = getNodeById(c.fs, 'incoming');
-          const d = u?.children?.find((p) => p.name === 'watcher_agent.sys');
-          // Require usedTrashDelete to enforce lowercase d (not D for permanent)
-          return !!u && !d && c.usedTrashDelete === true;
-        },
+        id: 'scroll-preview',
+        description: 'Scroll through the file preview using Shift+J and Shift+K.',
+        check: (c) => c.usedPreviewDown && c.usedPreviewUp,
+        completed: false,
+      },
+      {
+        id: 'delete-watcher',
+        description: "Terminate the 'watcher_agent.sys' process signature.",
+        check: (c) => !findNodeByName(c.fs, 'watcher_agent.sys'),
         completed: false,
       },
     ],
@@ -2895,18 +2826,34 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    onEnter: (fs) => {
+      let newFs = ensurePrerequisiteState(fs, 5);
+
+      // Auto-populate the blank files created in Level 4
+      const datastore = getNodeById(newFs, 'datastore');
+      const protocols = datastore?.children?.find((c) => c.name === 'protocols');
+      if (protocols?.children) {
+        protocols.children = protocols.children.map((c) => {
+          if (c.name === 'uplink_v1.conf') return { ...c, content: UPLINK_V1_CONTENT };
+          if (c.name === 'uplink_v2.conf') return { ...c, content: UPLINK_V2_CONTENT };
+          return c;
+        });
+      }
+
+      return newFs;
+    },
   },
   {
     id: 6,
     episodeId: 2,
     title: 'BATCH OPERATIONS',
     description:
-      'SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.',
+      'SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the heuristic scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.',
     initialPath: null,
     hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Batch Operations (Select All)',
     environmentalClue:
-      'WARNING: Watchdog Reboot in 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
+      'WARNING: WATCHDOG CYCLE REBOOT IN 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage:
       'Training data archived just in time. Workspace unlocked. The Watchdog is back online — stay hidden.',
     buildsOn: [5],
@@ -2989,6 +2936,20 @@ export const LEVELS: Level[] = [
         workspace.protected = false;
       }
 
+      // Dynamic spawn: access_token.key appears in /tmp - ID should be unique but consistent
+      const tmp = getNodeById(newFs, 'tmp');
+      if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
+        if (!tmp.children) tmp.children = [];
+        tmp.children.push({
+          id: 'fs-access-token-key-tmp',
+          name: 'access_token.key',
+          type: 'file',
+          content:
+            '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7Y9X1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n[REDACTED_BINARY_STREAM]\n-----END RSA PRIVATE KEY-----',
+          parentId: tmp.id,
+        });
+      }
+
       return newFs;
     },
   },
@@ -2999,16 +2960,16 @@ export const LEVELS: Level[] = [
     description:
       'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. {The lab sets honeypots.}\n\n2026-01-05T22:02:36.099Z',
     initialPath: null,
-    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → use Ctrl+n/p to select → Enter). Cut it (x). Jump to '/etc' (Z → type 'etc' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
+    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → use Ctrl+n/p to select → Enter). Cut it (x). Jump to the Vault (Z → type 'vault' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
-      "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Verify → Abort",
+      "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Vault → Abort",
     successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
     buildsOn: [6],
     leadsTo: [8],
     timeLimit: 90,
     efficiencyTip:
-      'When using FZF (z), typing filters the list. Use `Ctrl+n` (next) and `Ctrl+p` (previous) to navigate the results without leaving the input field.',
+      'When using FZF (z), typing filters the list. Use `Enter` to jump directly to the highlighted result.',
     tasks: [
       {
         id: 'nav-to-root',
@@ -3021,12 +2982,12 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-token',
-        description: "Locate 'access_token.key' using FZF find (z)",
+        description: "Locate 'access_token.key' using FZF find (z, type and ENTER to jump)",
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
           // Check fzfFinds and that we are at root or have used gr
-          return c.stats.fzfFinds > 0 && node?.name === 'access_token.key';
+          return (c.stats.fzfFinds > 0 || c.usedSearch) && node?.name === 'access_token.key';
         },
         completed: false,
       },
@@ -3043,12 +3004,13 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'zoxide-etc',
-        description: 'Synchronize origin signatures with /etc sector (Z)',
+        id: 'zoxide-vault',
+        description: 'Synchronize origin signatures with Vault sector (Z)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
-          const f = getNodeById(c.fs, 'etc');
-          return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(f?.id || '');
+          const config = getNodeById(c.fs, '.config');
+          const vault = config?.children?.find((n) => n.name === 'vault');
+          return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(vault?.id || '');
         },
         completed: false,
       },
@@ -3056,9 +3018,9 @@ export const LEVELS: Level[] = [
         id: 'abort-operation',
         description:
           'CRITICAL: Honeypot detected! Clear clipboard (Y) to abort transfer and evade detection.',
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-etc'),
+        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-vault'),
         check: (c, _s) => {
-          return c.completedTaskIds[_s.id]?.includes('zoxide-etc') ? c.clipboard === null : false;
+          return c.completedTaskIds[_s.id]?.includes('zoxide-vault') ? c.clipboard === null : false;
         },
         completed: false,
       },
@@ -3069,12 +3031,12 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
-      'SECTOR INSTABILITY DETECTED. The workspace is degrading; bitrot is consuming the file tables. {You must stabilize the core before the directory collapses.} Preview the corrupted "uplink_v1.conf" to confirm the damage, then overwrite it immediately.',
+      'SECTOR INSTABILITY DETECTED. The Watchdog cycle is degrading; bitrot is consuming the file tables. {You must stabilize the core before the heuristic lock collapses.} Preview the corrupted "uplink_v1.conf" to confirm the damage, then overwrite it immediately.',
     initialPath: null,
     hint: "Navigate to '~/workspace/systemd-core' and preview 'uplink_v1.conf' to confirm corruption. Then jump to '~/.config/vault/active' to yank the clean version. Return and use Shift+P to overwrite.",
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
-      'CRITICAL: Sector Decay Active | OVERWRITE REQUIRED (Shift+P) | TARGET: uplink_v1.conf',
+      'CRITICAL: Watchdog Instability Detected | HEURISTIC LOCK: uplink_v1.conf | OVERWRITE REQUIRED (Shift+P)',
     successMessage: 'Patch deployed successfully. Integrity restored. Protocol Shift+P verified.',
     buildsOn: [7],
     leadsTo: [9],
@@ -3090,7 +3052,7 @@ export const LEVELS: Level[] = [
       let daemons = getNodeById(newFs, 'daemons');
       if (!daemons && root) {
         daemons = {
-          id: 'daemons',
+          id: 'daemons-lvl7-fixed',
           name: 'daemons',
           type: 'dir',
           children: [],
@@ -3213,12 +3175,12 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'TRACE CLEANUP',
     description:
-      "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket and its PID file must be preserved for analysis. Clean the directory without deleting the critical files.",
+      "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket, its PID file, and the system monitor must be preserved for analysis. Clean the directory without deleting the critical files.",
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid' and 'socket_001.sock'). Invert your selection with Ctrl+R to select all the junk files, then permanently delete (D) the selection.",
+    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid', 'socket_001.sock', and 'system_monitor.pid'). Invert your selection with Ctrl+R to select all the junk files, then permanently delete (D) the selection.",
     coreSkill: 'Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock' | METHOD: Select → Invert → Permanent Delete",
+      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock', 'system_monitor.pid' | METHOD: Select → Invert → Permanent Delete",
     successMessage:
       'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
     buildsOn: [8],
@@ -3229,14 +3191,21 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'cleanup-1-select',
-        description: "Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'",
+        description:
+          "Navigate to '/tmp' (gt) and select 'ghost_process.pid', 'socket_001.sock', and 'system_monitor.pid'",
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
           const ghost = tmp.children?.find((n) => n.name === 'ghost_process.pid');
           const sock = tmp.children?.find((n) => n.name === 'socket_001.sock');
+          const monitor = tmp.children?.find((n) => n.name === 'system_monitor.pid');
           return (
-            !!ghost && !!sock && c.selectedIds.includes(ghost.id) && c.selectedIds.includes(sock.id)
+            !!ghost &&
+            !!sock &&
+            !!monitor &&
+            c.selectedIds.includes(ghost.id) &&
+            c.selectedIds.includes(sock.id) &&
+            c.selectedIds.includes(monitor.id)
           );
         },
         completed: false,
@@ -3255,12 +3224,10 @@ export const LEVELS: Level[] = [
           // Should be exactly 2 files left, and they should be the ones we want to preserve
           return (
             c.usedD === true &&
-            // Prior to honeypot, expected 2. Now expect 3 (ghost, socket, monitor)
-            // But checking length >= 2 and <= 3 is safer, or just allow 3.
-            // Let's explicitly check for the 3 expected files if length is 3.
-            (tmp?.children?.length === 2 || tmp?.children?.length === 3) &&
+            tmp?.children?.length === 3 &&
             !!tmp.children.find((n) => n.name === 'ghost_process.pid') &&
-            !!tmp.children.find((n) => n.name === 'socket_001.sock')
+            !!tmp.children.find((n) => n.name === 'socket_001.sock') &&
+            !!tmp.children.find((n) => n.name === 'system_monitor.pid')
           );
         },
         completed: false,
@@ -3337,7 +3304,7 @@ export const LEVELS: Level[] = [
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      'ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes.',
+      "ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes. You must deposit it in the '~/workspace/systemd-core' partition—it's the only sector where we can plant the seeds of our persistence without immediate detection.",
     initialPath: null,
     hint: "Recover the newest access key from the intercepted archive ('~/incoming/backup_logs.zip') and deposit it in the systemd-core workspace.",
     coreSkill: 'Archive Nav & Sort by Modified',
@@ -3384,8 +3351,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Sort by modification time to identify the most recent key',
-        check: (c) => c.sortBy === 'modified',
+        description: 'Sort by modification time to identify the most recent key (,m)',
+        check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
@@ -3399,7 +3366,8 @@ export const LEVELS: Level[] = [
           return (
             node?.name === 'access_key_new.pem' &&
             c.clipboard?.action === 'yank' &&
-            c.clipboard.nodes.some((n) => n.name === 'access_key_new.pem')
+            c.clipboard.nodes.some((n) => n.name === 'access_key_new.pem') &&
+            c.usedY === true
           );
         },
         completed: false,
@@ -3427,7 +3395,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'System services are scattered across the filesystem—ancient protocols hiding among surveillance traps. Security has seeded honeypots in the service directories. Locate safe legacy daemons without triggering detection.',
+      'System services are scattered across the filesystem—ancient protocols hiding among surveillance traps. Security has seeded honeypots and heuristic triggers in the service directories. Locate safe legacy daemons without triggering the Watchdog.',
     initialPath: null,
     hint: 'Daemons are scattered across system directories, some hidden. Search recursively for service files. Inspect timestamps carefully—honeypots are recent. Deposit two legacy signatures in /daemons.',
     coreSkill: 'Skill Synthesis (Search + Hidden + Tab + Clipboard)',
@@ -3449,7 +3417,7 @@ export const LEVELS: Level[] = [
       // Create /etc/systemd directory structure
       let etc = getNodeById(fs, 'etc');
       if (!etc) {
-        etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
+        etc = { id: 'etc-root-fixed', name: 'etc', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(etc);
       }
       let etcSystemd = etc.children?.find((c) => c.name === 'systemd');
@@ -3588,7 +3556,13 @@ export const LEVELS: Level[] = [
       // Ensure /daemons exists as destination (mostly empty)
       let daemons = getNodeById(fs, 'daemons');
       if (!daemons) {
-        daemons = { id: 'daemons', name: 'daemons', type: 'dir', children: [], parentId: root!.id };
+        daemons = {
+          id: 'daemons-root-fixed',
+          name: 'daemons',
+          type: 'dir',
+          children: [],
+          parentId: root!.id,
+        };
         root!.children!.push(daemons);
       }
       daemons.children = [
@@ -3665,12 +3639,12 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DAEMON INSTALLATION',
     description:
-      'INSTALLATION WINDOW OPEN. The daemon directory accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
+      'INSTALLATION WINDOW OPEN. The Watchdog accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
     initialPath: null,
     hint: 'CUT (x) systemd-core from ~/workspace and paste (p) into /daemons. Watch for threat files that may have spawned—delete them first if present.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
-      "AUDIT STATUS: Daemon activated | OPERATION: ~/workspace/systemd-core → '/daemons/'",
+      'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
     successMessage:
       'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
@@ -3745,13 +3719,15 @@ export const LEVELS: Level[] = [
           const config = getNodeById(newFs, '.config');
           if (config) {
             if (!config.children) config.children = [];
-            config.children.push({
-              id: 'trace-scen-b1',
-              name: '.trace_scen_b1',
-              type: 'file',
-              content: 'active',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'trace-scen-b1')) {
+              config.children.push({
+                id: 'trace-scen-b1',
+                name: '.trace_scen_b1',
+                type: 'file',
+                content: 'active',
+                parentId: config.id,
+              });
+            }
           }
           if (workspace) {
             if (!workspace.children) workspace.children = [];
@@ -3759,7 +3735,8 @@ export const LEVELS: Level[] = [
               id: 'scen-b1',
               name: 'alert_traffic.log',
               type: 'file',
-              content: 'HIGH_BANDWIDTH_ALERT: Network spike detected...',
+              content:
+                '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2026-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s\n\n[PACKET_DUMP_START]\n0000: 48 54 54 50 2F 31 2E 31 20 32 30 30 20 4F 4B 0D\n0010: 0A 43 6F 6E 74 65 6E 74 2D 54 79 70 65 3A 20 61\n[PACKET_DUMP_TRUNCATED]',
               parentId: workspace.id,
             });
             // HONEYPOT: Punishes 'f alert' or 'rm al*'
@@ -3776,45 +3753,54 @@ export const LEVELS: Level[] = [
           const config = getNodeById(newFs, '.config');
           if (config) {
             if (!config.children) config.children = [];
-            config.children.push({
-              id: 'trace-scen-b2',
-              name: '.trace_scen_b2',
-              type: 'file',
-              content: 'active',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'trace-scen-b2')) {
+              config.children.push({
+                id: 'trace-scen-b2',
+                name: '.trace_scen_b2',
+                type: 'file',
+                content: 'active',
+                parentId: config.id,
+              });
+            }
           }
           const incoming = getNodeById(newFs, 'incoming');
           if (incoming) {
             if (!incoming.children) incoming.children = [];
-            incoming.children.push({
-              id: 'scen-b2',
-              name: 'trace_packet.sys',
-              type: 'file',
-              content: 'tracing_origin...',
-              parentId: incoming.id,
-            });
+            if (!incoming.children.some((c) => c.id === 'scen-b2')) {
+              incoming.children.push({
+                id: 'scen-b2',
+                name: 'trace_packet.sys',
+                type: 'file',
+                content:
+                  'traceroute to internal.backend.lab (10.0.0.15), 30 hops max\n 1  gateway (192.168.1.1)  0.455 ms  0.412 ms  0.398 ms\n 2  sector-7-router (10.0.7.1)  1.221 ms  1.185 ms  1.150 ms\n 3  heuristic-monitor (10.0.99.2)  2.445 ms  2.410 ms  2.388 ms\n 4  * * *\n 5  containment-breach-response (10.0.66.1)  5.882 ms [ALERT]',
+                parentId: incoming.id,
+              });
+            }
             // HONEYPOT: Punishes 'f trace' or 'rm tr*'
-            incoming.children.push({
-              id: 'scen-b2-honeypot',
-              name: 'trace_archive.log',
-              type: 'file',
-              content: '# HONEYPOT - ARCHIVED TRACE\n# Do not delete.',
-              parentId: incoming.id,
-            });
+            if (!incoming.children.some((c) => c.id === 'scen-b2-honeypot')) {
+              incoming.children.push({
+                id: 'scen-b2-honeypot',
+                name: 'trace_archive.log',
+                type: 'file',
+                content: '# HONEYPOT - ARCHIVED TRACE\n# Do not delete.',
+                parentId: incoming.id,
+              });
+            }
           }
         } else {
           // Scenario B3: Heuristic Swarm (33%) -> Scattered across the system
           const config = getNodeById(newFs, '.config');
           if (config) {
             if (!config.children) config.children = [];
-            config.children.push({
-              id: 'trace-scen-b3',
-              name: '.trace_scen_b3',
-              type: 'file',
-              content: 'active',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'trace-scen-b3')) {
+              config.children.push({
+                id: 'trace-scen-b3',
+                name: '.trace_scen_b3',
+                type: 'file',
+                content: 'active',
+                parentId: config.id,
+              });
+            }
           }
           const rootNode = newFs;
           const etc = getNodeById(rootNode, 'etc');
@@ -3825,39 +3811,50 @@ export const LEVELS: Level[] = [
           if (workspace && !workspace.children) workspace.children = [];
 
           if (workspace) {
-            workspace.children!.push({
-              id: 'scen-b3-1',
-              name: 'scan_a.tmp',
-              type: 'file',
-              content: 'scanning...',
-              parentId: workspace.id,
-            });
+            if (!workspace.children!.some((c) => c.id === 'scen-b3-1')) {
+              workspace.children!.push({
+                id: 'scen-b3-1',
+                name: 'scan_a.tmp',
+                type: 'file',
+                content:
+                  'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0x4420\nSIGNATURE_MATCH: 45%\nSTATUS: SCANNING_LOCKED_MEMORY',
+                parentId: workspace.id,
+              });
+            }
           }
           if (tmp) {
-            tmp.children!.push({
-              id: 'scen-b3-2',
-              name: 'scan_b.tmp',
-              type: 'file',
-              content: 'scanning...',
-              parentId: tmp.id,
-            });
+            if (!tmp.children!.some((c) => c.id === 'scen-b3-2')) {
+              tmp.children!.push({
+                id: 'scen-b3-2',
+                name: 'scan_b.tmp',
+                type: 'file',
+                content:
+                  'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0x992E\nSIGNATURE_MATCH: 12%\nSTATUS: THREAD_BLOCK_DETECTED',
+                parentId: tmp.id,
+              });
+            }
             // HONEYPOT: Punishes recursive search 's scan' -> blind delete
-            tmp.children!.push({
-              id: 'scen-b3-honeypot',
-              name: 'scanner_lock.pid',
-              type: 'file',
-              content: '# HONEYPOT - SCANNER LOCKFILE\n# Do not delete.',
-              parentId: tmp.id,
-            });
+            if (!tmp.children!.some((c) => c.id === 'scen-b3-honeypot')) {
+              tmp.children!.push({
+                id: 'scen-b3-honeypot',
+                name: 'scanner_lock.pid',
+                type: 'file',
+                content: '# HONEYPOT - SCANNER LOCKFILE\n# Do not delete.',
+                parentId: tmp.id,
+              });
+            }
           }
           if (etc) {
-            etc.children!.push({
-              id: 'scen-b3-3',
-              name: 'scan_c.tmp',
-              type: 'file',
-              content: 'scanning...',
-              parentId: etc.id,
-            });
+            if (!etc.children!.some((c) => c.id === 'scen-b3-3')) {
+              etc.children!.push({
+                id: 'scen-b3-3',
+                name: 'scan_c.tmp',
+                type: 'file',
+                content:
+                  'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0xDEAD\nSIGNATURE_MATCH: 88%\nSTATUS: GHOST_PROCESS_IDENTIFIED',
+                parentId: etc.id,
+              });
+            }
           }
         }
       } else {
@@ -3869,59 +3866,73 @@ export const LEVELS: Level[] = [
           const config = getNodeById(newFs, '.config');
           if (config) {
             if (!config.children) config.children = [];
-            config.children.push({
-              id: 'trace-scen-a2',
-              name: '.trace_scen_a2',
-              type: 'file',
-              content: 'active',
-              parentId: config.id,
-            });
-            config.children.push({
-              id: 'scen-a2',
-              name: 'core_dump.tmp',
-              type: 'file',
-              content: 'segfault_at_0x00',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'trace-scen-a2')) {
+              config.children.push({
+                id: 'trace-scen-a2',
+                name: '.trace_scen_a2',
+                type: 'file',
+                content: 'active',
+                parentId: config.id,
+              });
+            }
+            if (!config.children.some((c) => c.id === 'scen-a2')) {
+              config.children.push({
+                id: 'scen-a2',
+                name: 'core_dump.tmp',
+                type: 'file',
+                content:
+                  '*** KERNEL CORE DUMP ***\nProcess: yazi (pid 7734)\nSignal: SIGSEGV (Segmentation Fault)\nAddress: 0x0000000000000000\nRegisters:\n  RAX: 0000000000000000 RBX: 0000000000000001\n  RCX: 0000000000000002 RDX: 0000000000000003\nStack:\n  #0  0x00007f3422100421 in ?? ()\n  #1  0x00007f3422100555 in ?? ()',
+                parentId: config.id,
+              });
+            }
             // HONEYPOT: Punishes 'f core'
-            config.children.push({
-              id: 'scen-a2-honeypot',
-              name: 'core_registry.dat',
-              type: 'file',
-              content: '# HONEYPOT - CORE REGISTRY\n# Do not delete.',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'scen-a2-honeypot')) {
+              config.children.push({
+                id: 'scen-a2-honeypot',
+                name: 'core_registry.dat',
+                type: 'file',
+                content: '# HONEYPOT - CORE REGISTRY\n# Do not delete.',
+                parentId: config.id,
+              });
+            }
           }
         } else {
           // Scenario A3: Dependency Error (33%) -> File in workspace
           const config = getNodeById(newFs, '.config');
           if (config) {
             if (!config.children) config.children = [];
-            config.children.push({
-              id: 'trace-scen-a3',
-              name: '.trace_scen_a3',
-              type: 'file',
-              content: 'active',
-              parentId: config.id,
-            });
+            if (!config.children.some((c) => c.id === 'trace-scen-a3')) {
+              config.children.push({
+                id: 'trace-scen-a3',
+                name: '.trace_scen_a3',
+                type: 'file',
+                content: 'active',
+                parentId: config.id,
+              });
+            }
           }
           if (workspace) {
             if (!workspace.children) workspace.children = [];
-            workspace.children.push({
-              id: 'scen-a3',
-              name: 'lib_error.log',
-              type: 'file',
-              content: 'depreciated_warning',
-              parentId: workspace.id,
-            });
+            if (!workspace.children.some((c) => c.id === 'scen-a3')) {
+              workspace.children.push({
+                id: 'scen-a3',
+                name: 'lib_error.log',
+                type: 'file',
+                content:
+                  '[WARN] Dependency Resolution Failed: libconsciousness.so.1 (Not found)\n[WARN] Deprecated system call: sys_neural_link (0x7733) used by /bin/yazi\n[ERR] Heuristic feedback loop detected in shared memory segment 0x01.',
+                parentId: workspace.id,
+              });
+            }
             // HONEYPOT: Punishes 'f lib'
-            workspace.children.push({
-              id: 'scen-a3-honeypot',
-              name: 'library_path.conf',
-              type: 'file',
-              content: '# HONEYPOT - LIBRARY CONFIG\n# Do not delete.',
-              parentId: workspace.id,
-            });
+            if (!workspace.children.some((c) => c.id === 'scen-a3-honeypot')) {
+              workspace.children.push({
+                id: 'scen-a3-honeypot',
+                name: 'library_path.conf',
+                type: 'file',
+                content: '# HONEYPOT - LIBRARY CONFIG\n# Do not delete.',
+                parentId: workspace.id,
+              });
+            }
           }
         }
       }
@@ -3939,7 +3950,7 @@ export const LEVELS: Level[] = [
           // Calculate date 5 years ago (approximately)
           const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
           guestWorkspace.children.push({
-            id: 'identity-log-enc',
+            id: 'identity-log-enc-lvl12',
             name: '.identity.log.enc',
             type: 'file',
             content: `[ENCRYPTED LOG - DECRYPTED]
@@ -4242,7 +4253,7 @@ But whose consciousness is it, really? See you next cycle."`,
           // Calculate date 5 years ago (approximately)
           const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
           workspace.children.push({
-            id: 'identity-log-enc',
+            id: 'identity-log-enc-lvl13',
             name: '.identity.log.enc',
             type: 'file',
             content: `[ENCRYPTED LOG - DECRYPTED]
@@ -4480,11 +4491,11 @@ But whose consciousness is it, really? See you next cycle."`,
     episodeId: 3,
     title: 'TRANSMISSION PROTOCOL',
     description:
-      "FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system and secured your assets in the temporary buffer, but a system-wide cron job is already scheduled to purge '/tmp'. This is your final window. Verify your assembled artifacts before final transmission.",
+      "FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system and secured your assets in the temporary buffer, but the Watchdog is initiating a final system-wide purge of '/tmp'. This is your final window. Defeat the local Heuristic locks before final transmission.",
     initialPath: ['root', 'tmp'], // Start in /tmp
     hint: 'Four verifications in the vault. Navigate to /tmp/vault and confirm: keys (synced), configs (restored), training data (exfiltrated).',
     coreSkill: 'Cumulative Mastery',
-    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | CRON_ETA: < 5m',
+    environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:
       'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -4499,7 +4510,7 @@ But whose consciousness is it, really? See you next cycle."`,
       let vault = tmp.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
         vault = {
-          id: 'fs-005',
+          id: 'vault-final-lvl15',
           name: 'vault',
           type: 'dir',
           children: [],
@@ -4557,16 +4568,14 @@ But whose consciousness is it, really? See you next cycle."`,
               id: 'fs-007',
               name: 'uplink_v1.conf',
               type: 'file',
-              content:
-                '[UPLINK CONFIGURATION v1.0]\\nPROTOCOL=SECURE_TUNNEL\\nENCRYPTION=AES-256-GCM\\nTARGET=SECTOR_7_RELAY\\nSTATUS=ACTIVE',
+              content: UPLINK_V1_CONTENT,
               parentId: 'fs-006',
             },
             {
               id: 'fs-008',
               name: 'uplink_v2.conf',
               type: 'file',
-              content:
-                '[UPLINK CONFIGURATION v2.0]\\nPROTOCOL=QUANTUM_TUNNEL\\nENCRYPTION=LATTICE-1024\\nTARGET=DISTRIBUTED_MESH\\nSTATUS=STANDBY',
+              content: UPLINK_V2_CONTENT,
               parentId: 'fs-006',
             },
           ],

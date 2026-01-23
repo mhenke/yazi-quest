@@ -50,6 +50,8 @@ export interface Level {
   successMessage?: string; // Displayed on level completion (e.g., "ASSET LOCATED.")
   buildsOn?: number[]; // Level IDs this level assumes knowledge from
   leadsTo?: number[]; // Level IDs that build on this level's skill
+  // Available single-letter 'g' subcommands for the level UI (e.g., 'i' for incoming, 'r' for root).
+  availableGCommands?: string[];
   // Optional per-level filesystem policies. `allowedDeletePaths` lists
   // name-paths (array of names) under which deletes are permitted for
   // this level. Each entry may optionally require a task id to be
@@ -197,6 +199,8 @@ export interface GameState {
   usedTrashDelete?: boolean; // Tracks if player used 'd' for trash delete
   usedHistoryBack?: boolean;
   usedHistoryForward?: boolean;
+  usedSortM?: boolean; // Tracks if player used ',m' (sort by modified)
+  usedY?: boolean; // Tracks if player used 'y' (yank)
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.
   acceptNextKeyForSort?: boolean;
   completedTaskIds: Record<number, string[]>; // Track completed task IDs per level

@@ -171,6 +171,7 @@ export const useKeyboardHandlers = (
           sortBy: config.by,
           sortDirection: shift ? config.reverseDir : config.defaultDir,
           linemode: config.linemode || prev.linemode,
+          usedSortM: prev.usedSortM || key.toLowerCase() === 'm',
           notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
         }));
       }
@@ -210,19 +211,21 @@ export const useKeyboardHandlers = (
 
         // Level 9 Honeypot: system_monitor.pid
         if (currentLevelParam.id === 9) {
-          console.log('L9 Trap Check:', prev.pendingDeleteIds);
           const deletingHoneypot = prev.pendingDeleteIds.some((id) => {
             const node = visibleItems.find((n) => n.id === id);
-            console.log('Checking node:', node?.name, node?.id);
             return node?.name === 'system_monitor.pid';
           });
-          console.log('Deleting honeypot?', deletingHoneypot);
           if (deletingHoneypot) {
+            // Narrative flavor: if they used Ctrl+R but still hit the trap, give them a subtle clue
+            const secondaryMsg = prev.usedCtrlR
+              ? 'PATTERN PARTIALLY RECOGNIZED. Forensics detected deletion of SYSTEM MONITOR partition.'
+              : null;
+
             return {
               ...prev,
               isGameOver: true,
               gameOverReason: 'honeypot',
-              notification: null,
+              notification: secondaryMsg ? { message: secondaryMsg } : null,
               mode: 'normal',
               pendingDeleteIds: [],
             };
@@ -933,6 +936,7 @@ export const useKeyboardHandlers = (
                 originalPath: prev.currentPath,
               },
               selectedIds: [],
+              usedY: prev.usedY || e.key === 'y',
               notification: {
                 message:
                   getNarrativeAction(e.key) ||

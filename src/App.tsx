@@ -75,6 +75,7 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 export default function App() {
+  console.log('App component rendered');
   const [gameState, setGameState] = useState<GameState>(() => {
     // 1. Initialize Completed Tasks State
     const completedTaskIds: Record<number, string[]> = {};
@@ -293,6 +294,12 @@ export default function App() {
     } else if (nextLevel.id === 9 && (completedTaskIds[8]?.length > 0 || isDevOverride)) {
       levelNotification = {
         message: 'The corruption felt... familiar. Like a half-remembered dream.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 10 && (completedTaskIds[9]?.length > 0 || isDevOverride)) {
+      levelNotification = {
+        message:
+          "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
         isThought: true,
       };
     } else if (nextLevel.id === 15 && (completedTaskIds[14]?.length > 0 || isDevOverride)) {
@@ -874,12 +881,15 @@ export default function App() {
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
 
-        // Level 7: Trigger honeypot alert when player reaches /etc
-        if (currentLevel.id === 7 && task.id === 'zoxide-etc') {
+        // Level 7: Trigger honeypot alert when player reaches Vault
+        if (currentLevel.id === 7 && task.id === 'zoxide-vault') {
           setAlertMessage(
             "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
           );
           setShowThreatAlert(true);
+        }
+
+        if (currentLevel.id === 7 && task.id === 'locate-token') {
           triggerThought("It's a trap. I remember the shape of this code.");
         }
 
@@ -1431,6 +1441,12 @@ export default function App() {
           message: 'The corruption felt... familiar. Like a half-remembered dream.',
           isThought: true,
         };
+      } else if (nextLevel.id === 10 && prev.completedTaskIds[9]?.length > 0) {
+        levelNotification = {
+          message:
+            "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
+          isThought: true,
+        };
       } else if (nextLevel.id === 15 && prev.completedTaskIds[14]?.length > 0) {
         levelNotification = {
           message: 'The guest partition is gone. There is only the gauntlet now.',
@@ -1554,20 +1570,12 @@ export default function App() {
 
   // Handle the end of the final level - trigger restart sequence
   const handleRestartCycle = useCallback(() => {
-    setTimeout(() => {
-      setIsBooting(true);
-    }, 3000);
-  }, []);
-
-  const handleBootComplete = useCallback(() => {
-    setIsBooting(false);
+    // Increment cycle and reset state immediately to Episode I
     setGameState((prev) => {
       const nextCycle = (prev.cycleCount || 1) + 1;
-      // Reset to Level 1, Episode 1
       const initialLevel = LEVELS[0];
       const initialPath = ['root', 'home', 'guest'];
 
-      // We keep zoxideData and stats for persistence
       return {
         ...prev,
         levelIndex: 0,
@@ -1592,6 +1600,10 @@ export default function App() {
         showEpisodeIntro: true,
       };
     });
+  }, []);
+
+  const handleBootComplete = useCallback(() => {
+    setIsBooting(false);
   }, []);
 
   // --- Handlers ---
@@ -2319,7 +2331,12 @@ export default function App() {
             }
             return baseEpisode;
           })()}
-          onComplete={() => setGameState((prev) => ({ ...prev, showEpisodeIntro: false }))}
+          onComplete={() => {
+            if (currentLevel.episodeId === 1) {
+              setIsBooting(true);
+            }
+            setGameState((prev) => ({ ...prev, showEpisodeIntro: false }));
+          }}
         />
       )}
 
@@ -2428,6 +2445,23 @@ export default function App() {
               previewScroll: 0,
               usedPreviewDown: false,
               usedPreviewUp: false,
+              usedDown: false,
+              usedUp: false,
+              usedG: false,
+              usedGG: false,
+              usedGI: false,
+              usedGH: false,
+              usedGD: false,
+              usedGW: false,
+              usedGO: false,
+              usedTrashDelete: false,
+              usedFilter: false,
+              usedSearch: false,
+              usedShiftP: false,
+              usedHistoryBack: false,
+              usedVisual: false,
+              // Also reset completedTaskIds for the jumped level
+              completedTaskIds: {},
               // Also reset completedTaskIds for the jumped level if we treat it as a fresh start,
               // but usually jump preserves state. Let's keep it simple.
             }));

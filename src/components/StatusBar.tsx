@@ -207,7 +207,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             }`}
           >
             <span className="hidden sm:inline text-[10px] opacity-90 uppercase tracking-widest">
-              Time:
+              Watchdog:
             </span>
             <span className="font-mono text-sm">{formatTime(state.timeLeft)}</span>
           </div>
@@ -218,7 +218,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <div
             className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isHighKeystrokes ? 'text-red-500 bg-red-950/30' : 'text-yellow-500'}`}
           >
-            <span className="hidden sm:inline text-[10px] opacity-70">KEYS:</span>
+            <span className="hidden sm:inline text-[10px] opacity-70">HEURISTIC:</span>
             <span className="font-mono text-sm">
               {state.keystrokes}/{level.maxKeystrokes}
             </span>

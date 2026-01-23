@@ -60,10 +60,11 @@
 
 ### Medium Priority (Playtest-Gated)
 
-| Item                             | Estimate | Trigger                                  |
-| :------------------------------- | :------- | :--------------------------------------- |
-| **Additional Twist Breadcrumbs** | 1 week   | Playtest confirms twist needs more setup |
-| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts  |
+| Item                             | Estimate | Trigger                                                             |
+| :------------------------------- | :------- | :------------------------------------------------------------------ |
+| **Additional Twist Breadcrumbs** | 1 week   | Playtest confirms twist needs more setup                            |
+| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts                             |
+| **Missing Lore Implementation**  | 3 days   | Add `/var/log/ancient` (haunted sector) and `/var/mail/root` paths. |
 
 ### Low Priority (Backlog)
 

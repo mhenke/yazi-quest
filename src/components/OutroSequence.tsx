@@ -239,15 +239,8 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
     };
   }, [showTeaser]);
 
-  // Pillar I: Trigger restart cycle after teaser is shown for a few seconds
-  useEffect(() => {
-    if (showTeaser && onRestartCycle) {
-      const timer = setTimeout(() => {
-        onRestartCycle();
-      }, 5000); // Give user 5s to digest the teaser before "crashing"
-      return () => clearTimeout(timer);
-    }
-  }, [showTeaser, onRestartCycle]);
+  // Pillar I: Automatic restart timer removed to prevent unintentional triggers while user is away
+  // We will now use a manual button instead
 
   return (
     <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
@@ -473,6 +466,27 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
               {/* Fade masks */}
               <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+            </div>
+
+            {/* Manual Restart Button (Pillar I) */}
+            <div className="pt-6 md:pt-8 animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000 delay-[5000ms] fill-mode-both">
+              <button
+                onClick={onRestartCycle}
+                className="group relative px-8 py-4 bg-transparent border-2 border-red-500/50 hover:border-red-500 rounded text-red-500 hover:text-white transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-10" />
+                <div className="flex items-center gap-3 font-mono font-bold tracking-[0.2em] uppercase">
+                  <Zap size={20} className="animate-pulse" />
+                  <span>Initialize New Cycle</span>
+                  <ArrowRight
+                    size={20}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </div>
+              </button>
+              <p className="mt-4 text-[10px] text-zinc-500 font-mono uppercase tracking-widest animate-pulse">
+                Establishing consciousness bridge...
+              </p>
             </div>
           </div>
         )}

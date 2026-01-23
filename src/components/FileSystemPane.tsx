@@ -76,7 +76,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
 
           return (
             <MemoizedFileSystemItem
-              key={item.id}
+              key={`${item.id}-${isParent ? 'parent' : 'active'}`}
               item={item}
               isActive={isActive}
               isCursor={isCursor}

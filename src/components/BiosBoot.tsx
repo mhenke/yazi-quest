@@ -7,6 +7,7 @@ interface BiosBootProps {
 
 export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) => {
   const [lines, setLines] = useState<string[]>([]);
+  const [showContinue, setShowContinue] = useState(false);
   const subjectId = 7734 + (cycleCount > 0 ? cycleCount : 0);
 
   const bootSequence = useMemo(
@@ -42,26 +43,44 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   );
 
   useEffect(() => {
+    setLines([]); // Reset lines when effect starts
+    setShowContinue(false);
     let currentLine = 0;
     const interval = setInterval(() => {
       if (currentLine < bootSequence.length) {
-        setLines((prev) => [...prev, bootSequence[currentLine]]);
+        const lineToAdd = bootSequence[currentLine];
+        if (typeof lineToAdd === 'string') {
+          setLines((prev) => [...prev, lineToAdd]);
+        }
         currentLine++;
       } else {
         clearInterval(interval);
-        setTimeout(onComplete, 1000);
+        setShowContinue(true);
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [cycleCount, onComplete, bootSequence]);
+  }, [cycleCount, bootSequence]);
+
+  useEffect(() => {
+    if (!showContinue) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        onComplete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showContinue, onComplete]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
       <div className="w-full max-w-2xl">
         {lines.map((line, i) => (
           <div key={i} className="min-h-[1.2em]">
-            {line.startsWith('[ OK ]') ? (
+            {line && line.startsWith('[ OK ]') ? (
               <>
                 <span className="text-zinc-600">[</span>
                 <span className="text-green-500 font-bold"> OK </span>
@@ -69,12 +88,19 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
                 {line.substring(6)}
               </>
             ) : (
-              line
+              line || ''
             )}
           </div>
         ))}
         <div className="animate-pulse bg-zinc-400 w-2 h-4 inline-block ml-1 mt-1" />
       </div>
+
+      {showContinue && (
+        <div className="mt-8 text-zinc-500 font-mono text-sm animate-pulse flex items-center gap-2">
+          <span className="w-2 h-2 bg-zinc-500 rounded-full" />
+          Press Shift+Enter to continue...
+        </div>
+      )}
 
       {/* Screen flicker effect */}
       <div className="absolute inset-0 pointer-events-none bg-white/5 opacity-0 animate-[flicker_0.15s_infinite]" />

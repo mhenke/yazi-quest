@@ -149,4 +149,4 @@ Episode III — Mastery
 
 ## 📚 References & Next Steps
 
-- See `PEDAGOGY.md` for the learning theory and instructional design principles (Bloom's Taxonomy, Scaffolding) that drive this narrative.
+- See `LEARNING_DESIGN.md` for the learning theory and instructional design principles (Bloom's Taxonomy, Scaffolding) that drive this narrative.
