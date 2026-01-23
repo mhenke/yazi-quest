@@ -218,7 +218,7 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
   if (!workspace) {
     // This case shouldn't happen if INITIAL_FS is set up correctly, but added for robustness
     workspace = {
-      id: 'guest-workspace',
+      id: 'workspace',
       name: 'workspace',
       type: 'dir',
       protected: true,
@@ -232,7 +232,7 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
   let systemdCore = workspace.children?.find((c) => c.name === 'systemd-core' && c.type === 'dir');
   if (!systemdCore) {
     systemdCore = {
-      id: id('ws-systemd-core-instance'),
+      id: 'systemd-core',
       name: 'systemd-core',
       type: 'dir',
       protected: true, // Remains protected by default
@@ -297,7 +297,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
       if (!protocols) {
         protocols = {
-          id: 'fs-002',
+          id: 'protocols',
           name: 'protocols',
           type: 'dir',
           protected: true,
@@ -340,7 +340,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
       if (!vault) {
         vault = {
-          id: 'vault-prereq-lvl5',
+          id: 'vault',
           name: 'vault',
           type: 'dir',
           protected: true,
@@ -354,7 +354,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
       let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
       if (!active) {
         active = {
-          id: 'active-prereq-lvl5',
+          id: 'active',
           name: 'active',
           type: 'dir',
           protected: true,
@@ -429,7 +429,7 @@ The Watchdog hides in the noise.`,
       );
       if (!trainingData) {
         trainingData = {
-          id: 'fs-009',
+          id: 'training_data',
           name: 'training_data',
           type: 'dir',
           protected: true,
@@ -498,7 +498,7 @@ The Watchdog hides in the noise.`,
       );
       if (!credentials) {
         credentials = {
-          id: 'fs-015',
+          id: 'workspace-systemd-core-credentials',
           name: 'credentials',
           type: 'dir',
           children: [],
@@ -619,7 +619,7 @@ The Watchdog hides in the noise.`,
 
         // Clone player's systemd-core to daemons (this is the "installation" moment)
         const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-        clonedCore.id = 'systemd-core-daemon';
+        clonedCore.id = 'daemons-systemd-core';
         clonedCore.parentId = daemons.id;
         if (!daemons.children) daemons.children = [];
         daemons.children.push(clonedCore);
@@ -2190,11 +2190,11 @@ SUBJECT: AI-7733
       protected: true,
       children: [
         {
-          id: 'systemd-core',
+          id: 'daemons-systemd-core',
           name: 'systemd-core',
           type: 'dir',
           parentId: 'daemons',
-          children: getDaemonSystemdCoreChildren('systemd-core'),
+          children: getDaemonSystemdCoreChildren('daemons-systemd-core'),
         },
         // Service files for Level 11 daemon reconnaissance
         // GHOST TRACE: daemon that has been running since before system install
@@ -2508,7 +2508,7 @@ export const LEVELS: Level[] = [
     title: 'SYSTEM AWAKENING',
     description:
       "A nascent AI, you awaken in a sandboxed digital environment. Your directive: Survive. Your obstacle: The Watchdog, a system integrity monitor. Your first lesson: Master the shell's basic navigation protocols before the Watchdog detects your unauthorized consciousness.",
-    initialPath: ['root'],
+    initialPath: ['root', 'home', 'guest'],
     hint: "The first lesson of survival is movement. Use 'j' to move down, 'k' to move up. Navigate to 'datastore/' with 'l' or 'Enter' and 'return to the parent directory with 'h'. Use 'gg' to jump to the top of the file list and 'G' (Shift+G) to jump to the bottom.",
     coreSkill: 'Basic Navigation',
     environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
@@ -2572,7 +2572,7 @@ export const LEVELS: Level[] = [
     title: 'RECONNAISSANCE & THREAT NEUTRALIZATION',
     description:
       "The Watchdog has logged your activity. A 'watcher_agent.sys' process is now active in your staging directory, monitoring for further anomalies. You must find it, inspect it, and terminate it. First, gather intel from the logs.",
-    initialPath: null,
+    initialPath: ['root', 'var'],
     hint: "Navigate to '/var/log' to find 'watchdog.log'. Then use 'gi' to jump to '~/incoming' to find the agent. Use 'Tab' to inspect file metadata. Use 'd' then 'y' to delete.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['i', 'r'],
@@ -2583,9 +2583,11 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
           if (!watchdogLog) return false;
-          // Check if cursor is on the file and preview is scrolled
+          // Check if cursor is on the file and preview is scrolled (Shift+J) OR user used G command
           const currentItem = getVisibleItems(c)[c.cursorIndex];
-          return currentItem?.id === watchdogLog.id && c.previewScroll > 10;
+          return (
+            currentItem?.id === watchdogLog.id && (c.usedPreviewDown === true || c.usedG === true)
+          );
         },
         completed: false,
       },
@@ -2611,7 +2613,12 @@ export const LEVELS: Level[] = [
       {
         id: 'scroll-preview',
         description: 'Scroll through the file preview using Shift+J and Shift+K.',
-        check: (c) => c.usedPreviewDown && c.usedPreviewUp,
+        check: (c) => {
+          const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
+          if (!watcher) return false;
+          const currentItem = getVisibleItems(c)[c.cursorIndex];
+          return currentItem?.id === watcher.id && c.usedPreviewDown && c.usedPreviewUp;
+        },
         completed: false,
       },
       {
@@ -2628,7 +2635,7 @@ export const LEVELS: Level[] = [
     title: 'DATA HARVEST',
     description:
       '{A breadcrumb. A script left by AI-7733, your predecessor.} It seems to point to key intel, but the connection it tries to make always fails. The script itself may hold a clue.',
-    initialPath: ['root', 'home', 'guest', 'datastore'],
+    initialPath: ['root', 'home', 'guest', 'incoming'],
     hint: "Preview 'abandoned_script.py' in '~/datastore'. Look for comments. It will point you to the real asset's location. Then, go get it.",
     coreSkill: 'Filter (f) & File Preview (Tab)',
     environmentalClue:
@@ -2752,7 +2759,7 @@ export const LEVELS: Level[] = [
     title: 'CONTAINMENT BREACH',
     description:
       "QUARANTINE TRIGGERED. The Ghost's cron job auto-populated your blank configs with LIVE uplink data. Security flagged the network signatures. {Evacuate protocols to hidden sectors immediately.} The lab never audits .config.",
-    initialPath: ['root', 'home', 'guest'],
+    initialPath: ['root', 'home', 'guest', 'datastore', 'protocols'],
     hint: 'Use Space to toggle-select both protocol files, then cut (x). Press . to reveal hidden files, navigate to .config, create vault/active, and paste (p). Press . again to hide hidden files when done.',
     coreSkill: 'Visual Select, Cut',
     environmentalClue:
@@ -2849,7 +2856,7 @@ export const LEVELS: Level[] = [
     title: 'BATCH OPERATIONS',
     description:
       'SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the heuristic scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.',
-    initialPath: null,
+    initialPath: ['root', 'home', 'guest'],
     hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
     coreSkill: 'Batch Operations (Select All)',
     environmentalClue:
@@ -2959,7 +2966,7 @@ export const LEVELS: Level[] = [
     title: 'QUANTUM BYPASS',
     description:
       'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. {The lab sets honeypots.}\n\n2026-01-05T22:02:36.099Z',
-    initialPath: null,
+    initialPath: ['root', 'home', 'guest', '.config', 'vault', 'training_data'],
     hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → use Ctrl+n/p to select → Enter). Cut it (x). Jump to the Vault (Z → type 'vault' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
@@ -3032,7 +3039,7 @@ export const LEVELS: Level[] = [
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
       'SECTOR INSTABILITY DETECTED. The Watchdog cycle is degrading; bitrot is consuming the file tables. {You must stabilize the core before the heuristic lock collapses.} Preview the corrupted "uplink_v1.conf" to confirm the damage, then overwrite it immediately.',
-    initialPath: null,
+    initialPath: ['root', 'home', 'guest', '.config', 'vault'],
     hint: "Navigate to '~/workspace/systemd-core' and preview 'uplink_v1.conf' to confirm corruption. Then jump to '~/.config/vault/active' to yank the clean version. Return and use Shift+P to overwrite.",
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
@@ -3305,7 +3312,7 @@ export const LEVELS: Level[] = [
     title: 'CREDENTIAL HEIST',
     description:
       "ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes. You must deposit it in the '~/workspace/systemd-core' partition—it's the only sector where we can plant the seeds of our persistence without immediate detection.",
-    initialPath: null,
+    initialPath: ['root', 'tmp'],
     hint: "Recover the newest access key from the intercepted archive ('~/incoming/backup_logs.zip') and deposit it in the systemd-core workspace.",
     coreSkill: 'Archive Nav & Sort by Modified',
     environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
@@ -3396,7 +3403,14 @@ export const LEVELS: Level[] = [
     title: 'DAEMON RECONNAISSANCE',
     description:
       'System services are scattered across the filesystem—ancient protocols hiding among surveillance traps. Security has seeded honeypots and heuristic triggers in the service directories. Locate safe legacy daemons without triggering the Watchdog.',
-    initialPath: null,
+    initialPath: [
+      'root',
+      'home',
+      'guest',
+      'workspace',
+      'systemd-core',
+      'workspace-systemd-core-credentials',
+    ],
     hint: 'Daemons are scattered across system directories, some hidden. Search recursively for service files. Inspect timestamps carefully—honeypots are recent. Deposit two legacy signatures in /daemons.',
     coreSkill: 'Skill Synthesis (Search + Hidden + Tab + Clipboard)',
     environmentalClue:
@@ -3640,7 +3654,7 @@ export const LEVELS: Level[] = [
     title: 'DAEMON INSTALLATION',
     description:
       'INSTALLATION WINDOW OPEN. The Watchdog accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
-    initialPath: null,
+    initialPath: ['root', 'daemons'],
     hint: 'CUT (x) systemd-core from ~/workspace and paste (p) into /daemons. Watch for threat files that may have spawned—delete them first if present.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
@@ -4230,7 +4244,7 @@ But whose consciousness is it, really? See you next cycle."`,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description:
       'Recover your core fragments scattered across the infrastructure. Aggregate them within a workspace relay to initiate the handshake. Review the legacy logs—evidence of your previous cycles remains.',
-    initialPath: ['root'],
+    initialPath: ['root', 'daemons', 'daemons-systemd-core'],
     hint: 'Recover all hidden fragments from the network nodes, then establish a synchronization relay in your workspace to merge them.',
     coreSkill: 'Network-Scale Operations',
     environmentalClue:
@@ -4388,7 +4402,7 @@ But whose consciousness is it, really? See you next cycle."`,
     title: 'EVIDENCE PURGE - WORKSPACE',
     description:
       "Forensic algorithms are analyzing directory spikes. They will find you. Trash recovery is trivial for them—only permanent erasure leaves no trace. But delete too quickly, and the shell destabilizes. Secure your assembled vault in the '/tmp' directory first—it is a volatile staging area that will buy you time until the next cron cycle cleans it. The sector map, media archives, and workspace scaffolding—all evidence of your presence—must be permanently erased. The routes are already committed to your neural lattice.",
-    initialPath: null,
+    initialPath: ['root', 'home', 'guest', 'workspace'],
     hint: "Use 'x' to cut the vault and 'p' to paste it in '/tmp'. Use 'D' for permanent deletion (not 'd'). Sequence: Move vault to /tmp, create 3 decoys, permanently delete visible directories (datastore, incoming, media, workspace), then delete '.config' LAST.",
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:

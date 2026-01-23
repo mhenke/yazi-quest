@@ -45,6 +45,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const currentDir = getNodeByPath(state.fs, state.currentPath);
   let items = currentDir?.children || [];
 
+  // Consistent hidden file filtering (Audit 2.1)
+  if (!state.showHidden) {
+    items = items.filter((c) => !c.name.startsWith('.'));
+  }
+
   // Get active filter for current dir
   const activeFilter = currentDir ? state.filters[currentDir.id] || '' : '';
 
@@ -120,6 +125,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           className={`text-zinc-500 hidden sm:inline-block whitespace-nowrap flex items-center gap-2 ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
         >
           <span
+            data-testid="task-counter"
             className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
           >
             Tasks: {completedTasks}/{totalTasks}

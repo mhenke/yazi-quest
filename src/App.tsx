@@ -89,7 +89,10 @@ export default function App() {
     const epParam = params.get('ep') || params.get('episode');
     const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
     const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
-    const skipIntro = params.get('intro') === 'false' || params.get('skipIntro') === 'true';
+    const skipIntro =
+      params.get('intro') === 'false' ||
+      params.get('skipIntro') === 'true' ||
+      window.__yaziQuestSkipIntroRequested === true;
 
     // 3. Determine Target Level
     let targetIndex = 0;
@@ -174,7 +177,7 @@ export default function App() {
       initialZoxide['/daemons/systemd-core'] = { count: 1, lastAccess: now - 21600000 };
     }
 
-    const initialPath = initialLevel.initialPath || ['root'];
+    const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
 
     // --- ECHO CYCLE (NEW GAME+) LOGIC ---
     let cycleCount = 1;
@@ -391,6 +394,14 @@ export default function App() {
   });
 
   const [isBooting, setIsBooting] = useState(false);
+
+  // Honor a global test flag to skip all intro/boot overlays immediately if requested.
+  useEffect(() => {
+    if (window.__yaziQuestSkipIntroRequested) {
+      setGameState((prev) => ({ ...prev, showEpisodeIntro: false }));
+      setIsBooting(false);
+    }
+  }, []);
 
   // --- LOCALSTORAGE PERSISTENCE ---
   useEffect(() => {
@@ -2335,7 +2346,12 @@ export default function App() {
             if (currentLevel.episodeId === 1) {
               setIsBooting(true);
             }
-            setGameState((prev) => ({ ...prev, showEpisodeIntro: false }));
+            setGameState((prev) => ({
+              ...prev,
+              showEpisodeIntro: false,
+              currentPath: [...currentLevel.initialPath], // Reset to level's initial path
+              cursorIndex: 0, // Reset cursor to top
+            }));
           }}
         />
       )}
@@ -2696,6 +2712,7 @@ export default function App() {
             level={currentLevel}
             gameState={gameState}
             previewScroll={gameState.previewScroll}
+            setGameState={setGameState}
           />
         </div>
 

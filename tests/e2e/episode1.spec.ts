@@ -16,15 +16,15 @@ import {
   gotoCommand,
   assertTask,
   filterByText,
-  clearFilter,
   addItem,
   renameItem,
   dismissAlert,
   confirmMission,
-  deleteItem,
   navigateDown,
   navigateUp,
+  navigateRight,
   goParentCount,
+  expectCurrentDir,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
@@ -38,22 +38,30 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '1/5', testInfo.outputDir, 'calibrate_sensors');
 
       // Task 2: Enter ~/datastore directory (l)
-      await pressKey(page, 'l');
+      // datastore is at position 0 in the home directory, so no navigation needed
+      await navigateRight(page, 1);
+
       await assertTask(page, '2/5', testInfo.outputDir, 'enter_datastore');
 
       // Task 3: Preview personnel_list.txt using G (jump to bottom)
       await pressKey(page, 'Shift+g');
-      await assertTask(page, '3/5', testInfo.outputDir, 'jump_to_bottom');
+      await pressKey(page, 'Shift+j');
+      await pressKey(page, 'Shift+k'); // Also press K to satisfy scroll-preview task that requires both J and K
+      await assertTask(page, '3/5', testInfo.outputDir, 'preview_personnel_list');
 
       // Task 4: Jump to top of file list (gg)
       await gotoCommand(page, 'g');
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
-      // Task 5: Navigate to /etc using h to go up
-      await goParentCount(page, 3); // to ~ (guest home) -> /home -> / (root)
-      await navigateDown(page, 2);
-      await pressKey(page, 'l'); // enter etc
-      await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_etc');
+      // Task 5: Navigate to /var using h to go up
+      await page.waitForTimeout(1000); // Wait for state to settle
+      await goParentCount(page, 3); // Go up 3 levels to root
+      await expectCurrentDir(page, '/'); // Root is displayed as '/'
+
+      await filterByText(page, 'var'); // Use filter to find the var directory
+      await navigateRight(page, 1); // Enter the directory
+      await expectCurrentDir(page, 'var');
+      await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_var');
 
       // Verify mission complete
       await confirmMission(page, 'SYSTEM AWAKENING');
@@ -66,24 +74,32 @@ test.describe('Episode 1: AWAKENING', () => {
       const narrative = page.locator('[data-testid="narrative-thought"]');
       await expect(narrative).toContainText('Must Purge. One less eye watching me.');
 
-      // Task 1: Open goto dialog (g) and navigate to ~/incoming (i)
-      await gotoCommand(page, 'i');
-      await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_incoming');
+      // Task 1: l, G (shift+g) - navigate to log directory and use G
+      await navigateRight(page, 1); // Use 'l' to enter 'log' directory (we start in /var)
+      await pressKey(page, 'Shift+g'); // Use G (Shift+g) to view the file
+      await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
 
-      // Task 2: Locate watcher_agent.sys (G) and inspect metadata (Tab)
-      await pressKey(page, 'Shift+g');
-      await pressKey(page, 'Tab');
-      await assertTask(page, '2/4', testInfo.outputDir, 'locate_and_inspect');
+      // Task 2: gi - use goto command to jump to ~/incoming
+      await gotoCommand(page, 'i'); // Use gi to go to incoming
+      await assertTask(page, '2/5', testInfo.outputDir, 'nav_to_incoming');
 
-      // Task 3: Scroll preview content with J and K
-      await pressKey(page, 'Escape');
-      await pressKey(page, 'Shift+j');
-      await pressKey(page, 'Shift+k');
-      await assertTask(page, '3/4', testInfo.outputDir, 'scroll_preview');
+      // Task 3: G and Tab - use G to go to bottom and Tab to inspect
+      await pressKey(page, 'Shift+g'); // Use G (Shift+g) to go to bottom
+      await pressKey(page, 'Tab'); // Use Tab to inspect the file
+      await assertTask(page, '3/5', testInfo.outputDir, 'locate_and_inspect');
 
-      // Task 4: Delete watcher_agent.sys (d, then y)
-      await deleteItem(page);
-      await assertTask(page, '4/4', testInfo.outputDir, 'delete_file');
+      // Task 4: J and K - scroll preview using J and K
+      await pressKey(page, 'Escape'); // Close info panel if open
+      await pressKey(page, 'Shift+j'); // Scroll preview down with J
+      await pressKey(page, 'Shift+k'); // Scroll preview up with K
+      await assertTask(page, '4/5', testInfo.outputDir, 'scroll_preview');
+
+      // Task 5: d, y - delete the file
+      await pressKey(page, 'd'); // Mark for deletion with 'd'
+      await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 2000 }); // Wait for confirmation modal
+      await page.waitForTimeout(200);
+      await pressKey(page, 'y'); // Confirm deletion with 'y'
+      await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');
 
       // Verify mission complete
       await confirmMission(page, 'THREAT NEUTRALIZATION');
@@ -96,28 +112,26 @@ test.describe('Episode 1: AWAKENING', () => {
       const narrative = page.locator('[data-testid="narrative-thought"]');
       await expect(narrative).toContainText('Breadcrumbs... he was here. I am not the first.');
 
-      // Task 1: Preview abandoned_script.py (gd then navigate with j)
-      await gotoCommand(page, 'd'); // go to datastore
-      // Navigate down to abandoned_script.py (about 6 items down)
-      await navigateDown(page, 6);
+      // Task 1: gd, then 4*j - go to datastore and navigate down 4 times
+      await gotoCommand(page, 'd'); // go to datastore (gd)
+      await navigateDown(page, 4); // 4*j to reach abandoned_script.py
       await assertTask(page, '1/4', testInfo.outputDir, 'preview_script');
 
-      // Task 2: Navigate to ~/incoming and find sector_map.png using filter
+      // Task 2: gi, f, type 'sector_map.png' then Enter
+      await gotoCommand(page, 'i'); // go to incoming (gi)
+      await filterByText(page, 'sector_map.png'); // Use filter utility to find the file (cleaner approach)
+      await assertTask(page, '2/4', testInfo.outputDir, 'filter_sector_map');
 
-      await gotoCommand(page, 'i'); // go to incoming
-      await filterByText(page, 'sector_map');
-
-      // Task 3: Cut the sector_map.png (x) and clear filter (Escape)
-      await pressKey(page, 'x'); // cut the file
-      await clearFilter(page);
+      // Task 3: x, ESC - cut file and clear filter
+      await pressKey(page, 'x'); // cut the file (x)
+      await pressKey(page, 'Escape'); // ESC to clear filter
       await assertTask(page, '3/4', testInfo.outputDir, 'cut_sector_map');
 
-      // Task 4: Go home (gh), enter ~/media, paste (p)
-      await gotoCommand(page, 'h'); // go home
-      // Navigate to media directory (skip hidden files if visible)
-      await navigateDown(page, 3); // navigate to media
-      await pressKey(page, 'l'); // enter media
-      await pressKey(page, 'p'); // paste
+      // Task 4: gh, 2*j, l, p - go home, navigate to media, enter, paste
+      await gotoCommand(page, 'h'); // go home (gh)
+      await navigateDown(page, 2); // 2*j to navigate to media
+      await navigateRight(page, 1); // l (right arrow) to enter media directory
+      await pressKey(page, 'p'); // paste (p)
       await assertTask(page, '4/4', testInfo.outputDir, 'paste_sector_map');
 
       // Verify mission complete
@@ -136,7 +150,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '1/3', testInfo.outputDir, 'create_protocols_dir');
 
       // Task 2: Enter protocols/ and create uplink_v1.conf
-      await pressKey(page, 'l');
+      await navigateRight(page, 1);
       await addItem(page, 'uplink_v1.conf');
       await assertTask(page, '2/3', testInfo.outputDir, 'create_uplink_conf');
 
@@ -183,8 +197,7 @@ test.describe('Episode 1: AWAKENING', () => {
       // Verify both files are present in the list
       await expect(activePane.getByRole('listitem')).toHaveCount(2);
 
-      await gotoCommand(page, 'g'); // go to top
-      await pressKey(page, ' '); // select top
+      await pressKey(page, ' '); // select top (cursor should be at top by default)
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
 
       await pressKey(page, 'Shift+g'); // go to bottom
@@ -208,8 +221,8 @@ test.describe('Episode 1: AWAKENING', () => {
       // After showing hidden files, cursor is at first item
       // Order is: .cache, .config, .local, datastore...
       await expect(page.getByText('HIDDEN: ON')).toBeVisible();
-      await navigateDown(page, 1); // move to .config (from .cache)
-      await pressKey(page, 'l'); // enter .config
+      await navigateDown(page, 1); // move to .config
+      await navigateRight(page, 1); // enter .config
 
       // Verify we are actually in .config before creating
       // yazi.toml is a child of .config, so it should be visible
@@ -226,11 +239,11 @@ test.describe('Episode 1: AWAKENING', () => {
       // After creating vault/active/, cursor is on vault (index 0) because directories sort first
       // Verify vault exists
       await expect(page.getByTestId('filesystem-pane-active').getByText('vault')).toBeVisible();
-      await pressKey(page, 'l'); // enter vault
+      await navigateRight(page, 1); // enter vault
 
       // Verify active exists
       await expect(page.getByTestId('filesystem-pane-active').getByText('active')).toBeVisible();
-      await pressKey(page, 'l'); // enter active
+      await navigateRight(page, 1); // enter active
 
       await pressKey(page, 'p'); // paste files
       await assertTask(page, '4/5', testInfo.outputDir, 'task4');

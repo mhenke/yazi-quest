@@ -20,6 +20,8 @@ import {
   expectClipboard,
   expectCurrentDir,
   areHiddenFilesVisible,
+  navigateRight,
+  navigateLeft,
 } from './utils';
 
 // Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
@@ -32,14 +34,14 @@ async function runLevel12Mission(page: Page) {
   // Task 4: Navigate to /daemons
   await gotoCommand(page, 'r');
   await filterByText(page, 'daemons');
-  await pressKey(page, 'l'); // Enter BEFORE clearing filter (while cursor is on daemons)
+  await navigateRight(page, 1); // Enter BEFORE clearing filter (while cursor is on daemons)
   await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
   await page.waitForTimeout(200);
 
   // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
   await filterByText(page, 'systemd-core');
-  await pressKey(page, 'l'); // Enter BEFORE clearing filter
+  await navigateRight(page, 1); // Enter BEFORE clearing filter
   await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
   await page.waitForTimeout(200);
 
@@ -283,14 +285,14 @@ test.describe('Episode 3: MASTERY', () => {
     // PHASE 3: SYNC
     // ----------------------------------------------------------------
     await filterByText(page, 'central_relay');
-    await pressKey(page, 'l'); // Enter relay
+    await navigateRight(page, 1); // Enter relay
     await clearFilter(page);
     await pressKey(page, 'p'); // Paste
     await assertTask(page, '3/4', testInfo.outputDir, 'phase3_synchronized');
 
     // PHASE 4: AUDIT
     // ----------------------------------------------------------------
-    await pressKey(page, 'h'); // Go back to workspace
+    await navigateLeft(page, 1); // Go back to workspace
     await expectCurrentDir(page, 'workspace');
 
     // Ensure hidden visible
@@ -333,7 +335,7 @@ test.describe('Episode 3: MASTERY', () => {
 
       // 2. Navigate into .config
       await filterByText(page, '.config');
-      await pressKey(page, 'l'); // Enter BEFORE clearing filter
+      await navigateRight(page, 1); // Enter BEFORE clearing filter
       await clearFilter(page);
       await expectCurrentDir(page, '.config');
 
@@ -426,9 +428,9 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'x');
 
     // 5. Navigate to 'active'
-    await pressKey(page, 'h'); // Leave keys
+    await navigateLeft(page, 1); // Leave keys
     await filterByText(page, 'active');
-    await pressKey(page, 'l'); // Enter BEFORE clearing filter
+    await navigateRight(page, 1); // Enter BEFORE clearing filter
     await clearFilter(page);
 
     // 6. Paste (p)
@@ -456,9 +458,9 @@ test.describe('Episode 3: MASTERY', () => {
     // PHASE 4: Activate Payload (Rename & Move)
     // ----------------------------------------------------------------
     // 1. Go to training_data
-    await pressKey(page, 'h'); // Leave active
+    await navigateLeft(page, 1); // Leave active
     await filterByText(page, 'training_data');
-    await pressKey(page, 'l'); // Enter BEFORE clearing filter
+    await navigateRight(page, 1); // Enter BEFORE clearing filter
     await clearFilter(page);
 
     // 2. Rename exfil_04.log to payload.py
@@ -472,9 +474,9 @@ test.describe('Episode 3: MASTERY', () => {
     await clearFilter(page);
 
     // 4. Navigate to 'active'
-    await pressKey(page, 'h'); // Leave training_data
+    await navigateLeft(page, 1); // Leave training_data
     await filterByText(page, 'active');
-    await pressKey(page, 'l'); // Enter BEFORE clearing filter
+    await navigateRight(page, 1); // Enter BEFORE clearing filter
     await clearFilter(page);
 
     // 5. Paste (p)

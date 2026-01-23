@@ -531,9 +531,9 @@ export function isProtected(
 
   // Level 2 specific protection for 'watcher_agent.sys'
   if (level.id === 2 && node.name === 'watcher_agent.sys' && action === 'delete') {
-    const isIdentify2Complete = level.tasks.find((t) => t.id === 'identify-threat-2')?.completed;
+    const isLocateWatcherComplete = level.tasks.find((t) => t.id === 'locate-watcher')?.completed;
 
-    if (!isIdentify2Complete) {
+    if (!isLocateWatcherComplete) {
       return 'Complete threat analysis first (inspect metadata with Tab and scan content with J/K).';
     }
   }

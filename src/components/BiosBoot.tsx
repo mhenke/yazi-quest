@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 interface BiosBootProps {
   onComplete: () => void;
@@ -43,10 +44,13 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   );
 
   useEffect(() => {
-    setLines([]); // Reset lines when effect starts
+    let cancelled = false;
+    setLines([]);
     setShowContinue(false);
     let currentLine = 0;
+
     const interval = setInterval(() => {
+      if (cancelled) return;
       if (currentLine < bootSequence.length) {
         const lineToAdd = bootSequence[currentLine];
         if (typeof lineToAdd === 'string') {
@@ -59,41 +63,42 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
       }
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [cycleCount, bootSequence]);
 
+  // Always listen for a global skip event so tests can bypass the boot at any time.
   useEffect(() => {
-    if (!showContinue) return;
+    const handleSkipEvent = () => onComplete();
 
+    // If tests pre-requested a skip before this listener was attached, honor it now.
+    if (window.__yaziQuestSkipIntroRequested) {
+      onComplete();
+      return;
+    }
+
+    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+    return () =>
+      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+  }, [onComplete]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         onComplete();
       }
     };
 
-    // Allow the global skip-intro event to also dismiss the boot screen
-    const handleSkipEvent = () => onComplete();
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
     };
-  }, [showContinue, onComplete]);
+  }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
-      {/* Skip Intro Button for automated tests and quick continuation */}
-      <div className="absolute top-4 right-4">
-        <button
-          type="button"
-          className="bg-zinc-800 text-zinc-200 px-3 py-1 rounded hover:bg-zinc-700"
-          onClick={() => window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'))}
-        >
-          Skip Intro
-        </button>
-      </div>
-
+    <div className="fixed inset-0 z-[1000] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
       <div className="w-full max-w-2xl">
         {lines.map((line, i) => (
           <div key={i} className="min-h-[1.2em]">
@@ -118,6 +123,20 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
           Press Shift+Enter to continue...
         </div>
       )}
+
+      {/* Skip Intro Button */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => {
+            window.__yaziQuestSkipIntroRequested = true;
+            window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
+          }}
+          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-orange-500 rounded backdrop-blur-sm shadow-lg"
+        >
+          <span>Skip Intro</span>
+          <ArrowRight size={14} />
+        </button>
+      </div>
 
       {/* Screen flicker effect */}
       <div className="absolute inset-0 pointer-events-none bg-white/5 opacity-0 animate-[flicker_0.15s_infinite]" />

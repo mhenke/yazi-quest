@@ -23,6 +23,7 @@ interface PreviewPaneProps {
   level: Level;
   gameState: GameState;
   previewScroll?: number;
+  setGameState?: React.Dispatch<React.SetStateAction<GameState>>;
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -49,6 +50,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   level,
   gameState,
   previewScroll = 0,
+  setGameState,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
@@ -62,10 +64,30 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
 
   useEffect(() => {
     if (scrollRef.current) {
-      // Simple scroll based on line height approx 20px
-      scrollRef.current.scrollTop = previewScroll * 20;
+      // Calculate the actual maximum scrollable distance
+      const maxScrollValue = Math.max(
+        0,
+        scrollRef.current.scrollHeight - scrollRef.current.clientHeight
+      );
+      // Calculate the maximum possible previewScroll value based on actual content
+      const maxPreviewScroll = Math.ceil(maxScrollValue / 20);
+
+      // If the current previewScroll exceeds the maximum possible value, update the game state
+      if (previewScroll > maxPreviewScroll && setGameState) {
+        // Update the gameState to clamp the previewScroll value
+        setGameState((prev) => ({
+          ...prev,
+          previewScroll: maxPreviewScroll,
+        }));
+      }
+
+      // Ensure previewScroll doesn't exceed the maximum possible value
+      const boundedPreviewScroll = Math.min(previewScroll, maxPreviewScroll);
+
+      // Apply the scroll position
+      scrollRef.current.scrollTop = boundedPreviewScroll * 20;
     }
-  }, [previewScroll, node]);
+  }, [previewScroll, node, setGameState]);
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">

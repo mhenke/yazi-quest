@@ -6,6 +6,7 @@ import {
   expectCurrentDir,
   filterAndSelect,
   deleteItem,
+  navigateRight,
 } from './utils';
 
 test.describe('Game Mechanics & Failures', () => {
@@ -39,10 +40,10 @@ test.describe('Game Mechanics & Failures', () => {
     // 1. Get the TRAP file from vault/active
     await gotoCommand(page, 'c');
     await filterAndSelect(page, 'vault');
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
 
     await filterAndSelect(page, 'active');
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
 
     await filterAndSelect(page, 'uplink_v1.conf.trap');
     await pressKey(page, 'y'); // Yank trap
@@ -50,7 +51,7 @@ test.describe('Game Mechanics & Failures', () => {
     // 2. Go to target in workspace
     await gotoCommand(page, 'w');
     await filterAndSelect(page, 'systemd-core');
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
 
     await filterAndSelect(page, 'uplink_v1.conf');
 

@@ -16,6 +16,7 @@ import {
   deleteItem,
   expectCurrentDir,
   search,
+  navigateRight,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -27,7 +28,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // 2) gi (g then i), then l (enter batch_logs)
     await gotoCommand(page, 'i');
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
     // 3) s, then type ".log" and press enter key
@@ -48,12 +49,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '3/5', testInfo.outputDir, 'after_gc');
 
     // 6) l (enter vault) then a and type "training_data/"
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await addItem(page, 'training_data/');
     await assertTask(page, '4/5', testInfo.outputDir, 'task4');
 
     // 7) l (enter training_data) then p
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await pressKey(page, 'p');
     await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
@@ -70,26 +71,26 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Task 1: Jump to Root (gr)
     await gotoCommand(page, 'r');
     // Verify Task 1 completion
-    await assertTask(page, '1/4', testInfo.outputDir, 'jump_to_root');
+    await assertTask(page, '1/5', testInfo.outputDir, 'jump_to_root');
 
     // Task 2: Locate 'access_token.key' using FZF find (z)
     await findFZF(page, 'access_token');
     // Verify Task 2 completion (Locate Token)
-    await assertTask(page, '2/4', testInfo.outputDir, 'locate_token');
+    await assertTask(page, '2/5', testInfo.outputDir, 'locate_token');
 
     await pressKey(page, 'x'); // cut the file
     // Verify Task 3 completion (Stage Token)
-    await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
+    await assertTask(page, '3/5', testInfo.outputDir, 'stage_token');
 
-    // Task 4: Jump to '/etc' (Z -> 'etc' -> Enter)
-    await fuzzyJump(page, 'etc');
-    // Task 4 complete -> hidden Task 5 appears -> Total becomes 5
+    // Task 4: Jump to vault using Zoxide (Z -> 'vault' -> Enter)
+    await fuzzyJump(page, 'vault');
+    // Task 4 complete -> hidden Task 5 appears
     // So logic: 4 tasks done out of 5 total => 4/5
     await page.waitForTimeout(1000); // Wait for thought trigger
     await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
       "It's a trap. I remember the shape of this code."
     );
-    await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_etc_and_reveal_trap');
+    await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
 
     await dismissAlert(page); // Dismiss alert
     await page.keyboard.press('Shift+Y'); // Abort operation (Y)
@@ -108,7 +109,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
     await pressKey(page, 'g');
     await pressKey(page, 'w');
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
     // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
@@ -202,12 +203,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Use filter to find zip
     await filterByText(page, 'backup_logs.zip');
-    await pressKey(page, 'l'); // Enter zip
+    await navigateRight(page, 1); // Enter zip
     await clearFilter(page);
 
     // Now in zip root, find credentials folder
     await filterByText(page, 'credentials');
-    await pressKey(page, 'l'); // Enter credentials
+    await navigateRight(page, 1); // Enter credentials
     await clearFilter(page);
 
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_creds');
@@ -230,7 +231,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Nav to systemd-core
     await search(page, 'systemd-core');
     await page.waitForTimeout(500);
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await pressKey(page, 'Escape');
 
     // Create credentials/ folder
@@ -239,7 +240,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Enter credentials/
     await search(page, 'credentials');
     await page.waitForTimeout(500);
-    await pressKey(page, 'l');
+    await navigateRight(page, 1);
     await pressKey(page, 'Escape');
 
     // Paste
