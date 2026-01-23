@@ -99,8 +99,16 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       }
     };
 
+    // Allow external skip via custom event so other intro screens (like BiosBoot)
+    // can trigger the same completion behavior. Tests can also dispatch this event.
+    const handleSkipEvent = () => onComplete();
+    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+    };
   }, [showContinue, sectionIndex, sections, onComplete]);
 
   // Determine styling based on content
@@ -320,7 +328,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         {/* Skip Intro Button */}
         <div className="absolute top-4 right-4">
           <button
-            onClick={onComplete}
+            onClick={() => window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'))}
             className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-orange-500 rounded backdrop-blur-sm shadow-lg"
           >
             <span>Skip Intro</span>

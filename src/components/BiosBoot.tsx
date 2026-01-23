@@ -71,12 +71,29 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
       }
     };
 
+    // Allow the global skip-intro event to also dismiss the boot screen
+    const handleSkipEvent = () => onComplete();
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
+    };
   }, [showContinue, onComplete]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
+      {/* Skip Intro Button for automated tests and quick continuation */}
+      <div className="absolute top-4 right-4">
+        <button
+          type="button"
+          className="bg-zinc-800 text-zinc-200 px-3 py-1 rounded hover:bg-zinc-700"
+          onClick={() => window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'))}
+        >
+          Skip Intro
+        </button>
+      </div>
+
       <div className="w-full max-w-2xl">
         {lines.map((line, i) => (
           <div key={i} className="min-h-[1.2em]">
