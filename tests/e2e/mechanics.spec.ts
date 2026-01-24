@@ -4,6 +4,7 @@ import {
   pressKey,
   gotoCommand,
   expectCurrentDir,
+  assertTask,
   filterAndSelect,
   deleteItem,
   navigateRight,
@@ -83,5 +84,49 @@ test.describe('Game Mechanics & Failures', () => {
 
     // 4. Expect Game Over
     await expect(page.getByText('TRAP ACTIVATED')).toBeVisible();
+  });
+
+  test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {
+    await startLevel(page, 14);
+
+    // 1. Enter .config and find .purge_lock
+    await pressKey(page, '.');
+    await filterAndSelect(page, '.purge_lock');
+
+    // 2. Attempt to delete it before creating decoys
+    await pressKey(page, 'Shift+D');
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await pressKey(page, 'y');
+
+    // 3. Expect Game Over with HONEYPOT message
+    await expect(page.getByText('HONEYPOT TRIGGERED')).toBeVisible();
+    await expect(page.getByText('Security tripwire detected')).toBeVisible();
+  });
+
+  test('L11 Honeypot: Selecting recent service does not complete task', async ({
+    page,
+  }, testInfo) => {
+    await startLevel(page, 11);
+
+    // 1. Search for service files
+    await gotoCommand(page, 'r');
+    await pressKey(page, 's');
+    await page.keyboard.type('service');
+    await pressKey(page, 'Enter');
+
+    // 2. Sort by modified (,m)
+    await pressKey(page, ',');
+    await pressKey(page, 'm');
+
+    // 3. Select 'audit-daemon.service' (the honeypot - very recent)
+    // We'll find it by name for robustness
+    await filterAndSelect(page, 'audit-daemon.service');
+
+    // 4. Yank it
+    await pressKey(page, 'y');
+
+    // 5. Verify task '3/4' is NOT complete (still at 2/4 after sort)
+    // This is a soft failure check - the task check should return false
+    await assertTask(page, '2/4', testInfo.outputDir, 'l11_honeypot_select');
   });
 });
