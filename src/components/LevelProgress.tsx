@@ -260,12 +260,15 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         {/* Center: Notification Area (Thoughts only) */}
         <div className="flex-1 text-center px-4 flex items-center justify-center">
           {thought && (
-            <span
+            <div
               data-testid="narrative-thought"
-              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 text-orange-400 italic"
+              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
             >
-              {thought.message}
-            </span>
+              <span className="base-text">{thought.message}</span>
+              <span className="glitch-layer-1">{thought.message}</span>
+              <span className="glitch-layer-2">{thought.message}</span>
+              <span className="glitch-layer-3">{thought.message}</span>
+            </div>
           )}
         </div>
 

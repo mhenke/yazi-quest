@@ -54,6 +54,7 @@ import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useK
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
+import './glitch-thought.css';
 
 import { CelebrationConfetti } from './components/CelebrationConfetti';
 
