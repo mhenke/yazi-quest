@@ -89,16 +89,22 @@ test.describe('Game Mechanics & Failures', () => {
   test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {
     await startLevel(page, 14);
 
-    // 1. Enter .config and find .purge_lock
+    // 1. Return to home (starts in ~/workspace)
+    await gotoCommand(page, 'h');
+    await expectCurrentDir(page, '~');
+
+    // 2. Show hidden files to find .purge_lock
     await pressKey(page, '.');
+
+    // 3. Find and select .purge_lock in home
     await filterAndSelect(page, '.purge_lock');
 
-    // 2. Attempt to delete it before creating decoys
+    // 4. Attempt to delete it before creating decoys
     await pressKey(page, 'Shift+D');
     await expect(page.getByRole('alertdialog')).toBeVisible();
     await pressKey(page, 'y');
 
-    // 3. Expect Game Over with HONEYPOT message
+    // 5. Expect Game Over with HONEYPOT message
     await expect(page.getByText('HONEYPOT TRIGGERED')).toBeVisible();
     await expect(page.getByText('Security tripwire detected')).toBeVisible();
   });

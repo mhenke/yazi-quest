@@ -394,6 +394,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           id: 'uplink-v1-trap-prereq-lvl5',
           name: 'uplink_v1.conf.trap',
           type: 'file',
+          isHoneypot: true,
           content: `[GHOST_TRACER_DEBUG_LOG]
 ID: TRAP-7734-A
 STATUS: ACTIVE
@@ -1462,6 +1463,7 @@ GUEST_UID: 1001`,
                       type: 'file',
                       content: '# HONEYPOT - ACTIVE SYNC LOCK\n# Do not move while active.',
                       protected: true,
+                      isHoneypot: true,
                     },
                     {
                       id: 'fs-bl-s1',
@@ -1686,6 +1688,7 @@ It will happen again.`,
               id: 'purge-lock-honeypot',
               name: '.purge_lock',
               type: 'file',
+              isHoneypot: true,
               content:
                 '# SECURITY TRIPWIRE - HONEYPOT\n# Deleting this file triggers forensic alert\nLOCK_STATUS=ARMED\nTRIGGER_ON_DELETE=true',
             },
@@ -3275,6 +3278,7 @@ export const LEVELS: Level[] = [
           id: 'tmp-honeypot-1',
           name: 'system_monitor.pid',
           type: 'file',
+          isHoneypot: true,
           content: 'PID: 1 (SYSTEM CRITICAL)', // Looks important
           parentId: tmp.id,
         });
@@ -3475,6 +3479,7 @@ export const LEVELS: Level[] = [
           type: 'file',
           modifiedAt: now - 2 * day,
           size: 800,
+          isHoneypot: true,
           content: 'HONEYPOT_ACTIVE=true\nTYPE=notify\nExecStart=/usr/bin/watchdog',
           parentId: etcSystemd.id,
         },
@@ -3533,6 +3538,7 @@ export const LEVELS: Level[] = [
           type: 'file',
           modifiedAt: now - 1 * day,
           size: 900,
+          isHoneypot: true,
           content: 'HONEYPOT_ACTIVE=true\nTYPE=simple\nExecStart=/usr/bin/auditd',
           parentId: usrSystemd.id,
         },
@@ -3625,7 +3631,7 @@ export const LEVELS: Level[] = [
           // All yanked must be legacy (> 30 days) and not honeypots
           const thirtyDaysAgo = Date.now() - 30 * 86400000;
           const allLegacy = c.clipboard.nodes.every(
-            (n) => (n.modifiedAt || 0) < thirtyDaysAgo && !n.content?.includes('HONEYPOT')
+            (n) => (n.modifiedAt || 0) < thirtyDaysAgo && !n.isHoneypot
           );
 
           return allLegacy;
@@ -3759,6 +3765,7 @@ export const LEVELS: Level[] = [
               id: 'scen-b1-honeypot',
               name: 'alert_sys.log',
               type: 'file',
+              isHoneypot: true,
               content: '# HONEYPOT - SYSTEM ALERT LOG\n# Do not delete.',
               parentId: workspace.id,
             });
@@ -3797,6 +3804,7 @@ export const LEVELS: Level[] = [
                 id: 'scen-b2-honeypot',
                 name: 'trace_archive.log',
                 type: 'file',
+                isHoneypot: true,
                 content: '# HONEYPOT - ARCHIVED TRACE\n# Do not delete.',
                 parentId: incoming.id,
               });
@@ -3854,6 +3862,7 @@ export const LEVELS: Level[] = [
                 id: 'scen-b3-honeypot',
                 name: 'scanner_lock.pid',
                 type: 'file',
+                isHoneypot: true,
                 content: '# HONEYPOT - SCANNER LOCKFILE\n# Do not delete.',
                 parentId: tmp.id,
               });
@@ -3906,6 +3915,7 @@ export const LEVELS: Level[] = [
                 id: 'scen-a2-honeypot',
                 name: 'core_registry.dat',
                 type: 'file',
+                isHoneypot: true,
                 content: '# HONEYPOT - CORE REGISTRY\n# Do not delete.',
                 parentId: config.id,
               });
@@ -3944,6 +3954,7 @@ export const LEVELS: Level[] = [
                 id: 'scen-a3-honeypot',
                 name: 'library_path.conf',
                 type: 'file',
+                isHoneypot: true,
                 content: '# HONEYPOT - LIBRARY CONFIG\n# Do not delete.',
                 parentId: workspace.id,
               });

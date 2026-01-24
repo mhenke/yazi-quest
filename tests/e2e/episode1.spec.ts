@@ -18,12 +18,14 @@ import {
   filterByText,
   addItem,
   renameItem,
-  dismissAlert,
+  dismissAlertIfPresent,
+  expectNarrativeThought,
   confirmMission,
   navigateDown,
   navigateUp,
   navigateRight,
-  goParentCount,
+  enterDirectory,
+  goUp,
   expectCurrentDir,
 } from './utils';
 
@@ -55,11 +57,10 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 5: Navigate to /var using h to go up
       await page.waitForTimeout(1000); // Wait for state to settle
-      await goParentCount(page, 3); // Go up 3 levels to root
+      await goUp(page, 3); // Go up 3 levels to root
       await expectCurrentDir(page, '/'); // Root is displayed as '/'
 
-      await filterByText(page, 'var'); // Use filter to find the var directory
-      await navigateRight(page, 1); // Enter the directory
+      await enterDirectory(page, 'var');
       await expectCurrentDir(page, 'var');
       await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_var');
 
@@ -71,11 +72,10 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
     test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
       await startLevel(page, 2);
-      const narrative = page.locator('[data-testid="narrative-thought"]');
-      await expect(narrative).toContainText('Must Purge. One less eye watching me.');
+      await expectNarrativeThought(page, 'Must Purge. One less eye watching me.');
 
       // Task 1: l, G (shift+g) - navigate to log directory and use G
-      await navigateRight(page, 1); // Use 'l' to enter 'log' directory (we start in /var)
+      await enterDirectory(page, 'log'); // We start in /var
       await pressKey(page, 'Shift+g'); // Use G (Shift+g) to view the file
       await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
 
@@ -109,8 +109,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 3: DATA HARVEST', () => {
     test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
       await startLevel(page, 3);
-      const narrative = page.locator('[data-testid="narrative-thought"]');
-      await expect(narrative).toContainText('Breadcrumbs... he was here. I am not the first.');
+      await expectNarrativeThought(page, 'Breadcrumbs... he was here. I am not the first.');
 
       // Task 1: gd, then 4*j - go to datastore and navigate down 4 times
       await gotoCommand(page, 'd'); // go to datastore (gd)
@@ -170,12 +169,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await startLevel(page, 5);
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
-
-      // Level 5 has a "QUARANTINE ALERT" overlay - verify and dismiss it
-      const alert = page.locator('[data-testid="threat-alert"]');
-      await expect(alert).toBeVisible();
-      await expect(alert).toContainText('QUARANTINE ALERT');
-      await dismissAlert(page); // Dismiss alert
+      await dismissAlertIfPresent(page, /QUARANTINE ALERT/i);
 
       // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)
       await gotoCommand(page, 'd'); // go to datastore
@@ -236,14 +230,8 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
       // Task 4: Navigate into vault/active and paste
-      // After creating vault/active/, cursor is on vault (index 0) because directories sort first
-      // Verify vault exists
-      await expect(page.getByTestId('filesystem-pane-active').getByText('vault')).toBeVisible();
-      await navigateRight(page, 1); // enter vault
-
-      // Verify active exists
-      await expect(page.getByTestId('filesystem-pane-active').getByText('active')).toBeVisible();
-      await navigateRight(page, 1); // enter active
+      await enterDirectory(page, 'vault');
+      await enterDirectory(page, 'active');
 
       await pressKey(page, 'p'); // paste files
       await assertTask(page, '4/5', testInfo.outputDir, 'task4');

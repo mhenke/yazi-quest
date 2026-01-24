@@ -19,6 +19,22 @@ export async function navigateLeft(page: Page, count: number): Promise<void> {
 export async function navigateRight(page: Page, count: number): Promise<void> {
   await repeatKey(page, 'l', count);
 }
+
+/**
+ * Enters a directory by its name using filtering for robustness.
+ */
+export async function enterDirectory(page: Page, name: string): Promise<void> {
+  await filterByText(page, name);
+  await navigateRight(page, 1);
+  await clearFilter(page);
+}
+
+/**
+ * Navigates up to the parent directory.
+ */
+export async function goUp(page: Page, count: number = 1): Promise<void> {
+  await repeatKey(page, 'h', count);
+}
 /**
  * Utility to robustly rename a file or directory using the rename (r) command.
  * Ensures the input is cleared before typing the new name.
@@ -424,6 +440,39 @@ export async function typeText(page: Page, text: string): Promise<void> {
  */
 export async function dismissAlert(page: Page): Promise<void> {
   await page.keyboard.press('Shift+Enter');
+}
+
+/**
+ * Dismisses a game alert if it is currently visible.
+ * Useful for handling conditional threats or protocol violations.
+ */
+export async function dismissAlertIfPresent(
+  page: Page,
+  textRegex?: string | RegExp
+): Promise<boolean> {
+  const alert = textRegex
+    ? page.getByText(textRegex)
+    : page.locator('[role="alert"], [role="alertdialog"], [data-testid="threat-alert"]').first();
+
+  try {
+    if (await alert.isVisible({ timeout: 500 })) {
+      await dismissAlert(page);
+      await page.waitForTimeout(200);
+      return true;
+    }
+  } catch {
+    // Ignore timeout, alert didn't appear
+  }
+  return false;
+}
+
+/**
+ * Asserts that a specified narrative thought appears on screen.
+ */
+export async function expectNarrativeThought(page: Page, text: string | RegExp): Promise<void> {
+  const thought = page.locator('[data-testid="narrative-thought"]');
+  await expect(thought).toBeVisible({ timeout: 10000 });
+  await expect(thought).toContainText(text);
 }
 
 /**

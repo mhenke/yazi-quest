@@ -14,6 +14,13 @@ import {
 } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { reportError } from '../utils/error';
+import {
+  checkHoneypotTriggered,
+  checkCriticalFileDeletion,
+  validateDeletions,
+  checkGrabbingHoneypot,
+  checkPastingHoneypot,
+} from '../utils/gameUtils';
 import { KEYBINDINGS } from '../constants/keybindings';
 
 // Helper to get a random element from an array
@@ -189,85 +196,49 @@ export const useKeyboardHandlers = (
         let newFs = prev.fs;
         let errorMsg: string | null | undefined = null;
 
-        // Level 14 honeypot check: if deleting .purge_lock before decoys are created, trigger alert
-        if (currentLevelParam.id === 14) {
-          const decoysCreated = prev.completedTaskIds[14]?.includes('create-decoys');
-          const deletingHoneypot = prev.pendingDeleteIds.some((id) => {
-            const node = visibleItems.find((n) => n.id === id);
-            return node?.name === '.purge_lock' || node?.id === 'purge-lock-honeypot';
-          });
-          if (deletingHoneypot && !decoysCreated) {
-            return {
-              ...prev,
-              mode: 'normal',
-              pendingDeleteIds: [],
-              notification: {
-                message:
-                  '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
-              },
-            };
-          }
-        }
-
-        // Level 9 Honeypot: system_monitor.pid
-        if (currentLevelParam.id === 9) {
-          const deletingHoneypot = prev.pendingDeleteIds.some((id) => {
-            const node = visibleItems.find((n) => n.id === id);
-            return node?.name === 'system_monitor.pid';
-          });
-          if (deletingHoneypot) {
-            // Narrative flavor: if they used Ctrl+R but still hit the trap, give them a subtle clue
-            const secondaryMsg = prev.usedCtrlR
-              ? 'PATTERN PARTIALLY RECOGNIZED. Forensics detected deletion of SYSTEM MONITOR partition.'
-              : null;
-
+        // Honeypot check
+        const honeypot = checkHoneypotTriggered(prev, prev.pendingDeleteIds, currentLevelParam);
+        if (honeypot.triggered) {
+          if (honeypot.reason === 'honeypot') {
             return {
               ...prev,
               isGameOver: true,
               gameOverReason: 'honeypot',
-              notification: secondaryMsg ? { message: secondaryMsg } : null,
+              notification: honeypot.message ? { message: honeypot.message } : null,
               mode: 'normal',
               pendingDeleteIds: [],
+            };
+          } else {
+            return {
+              ...prev,
+              mode: 'normal',
+              pendingDeleteIds: [],
+              notification: { message: honeypot.message || 'Honeypot triggered.' },
             };
           }
         }
 
         // Critical System File Check (Shell Collapse)
-        // If player successfully deletes a core system root directory, trigger immediate failure
-        const CRITICAL_FOLDERS = [
-          'bin',
-          'boot',
-          'dev',
-          'etc',
-          'home',
-          'lib',
-          'lib64',
-          'proc',
-          'root',
-          'run',
-          'sbin',
-          'sys',
-          'usr',
-          'var',
-        ];
+        if (checkCriticalFileDeletion(prev, prev.pendingDeleteIds)) {
+          return {
+            ...prev,
+            isGameOver: true,
+            gameOverReason: 'criticalFile',
+            notification: null,
+            mode: 'normal',
+            pendingDeleteIds: [],
+          };
+        }
 
-        for (const id of prev.pendingDeleteIds) {
-          const node = visibleItems.find((n) => n.id === id);
-
-          // Check if we are in root directory (currentPath=['root'])
-          // And the folder is a critical system folder
-          const isRoot = prev.currentPath.length === 1 && prev.currentPath[0] === 'root';
-
-          if (node && isRoot && CRITICAL_FOLDERS.includes(node.name)) {
-            return {
-              ...prev,
-              isGameOver: true,
-              gameOverReason: 'criticalFile',
-              notification: null,
-              mode: 'normal',
-              pendingDeleteIds: [],
-            };
-          }
+        // Policy-based protection check
+        const validation = validateDeletions(prev, prev.pendingDeleteIds, currentLevelParam);
+        if (validation.ok === false) {
+          return {
+            ...prev,
+            mode: 'normal',
+            pendingDeleteIds: [],
+            notification: { message: `🔒 PROTECTED: ${validation.error}` },
+          };
         }
 
         for (const id of prev.pendingDeleteIds) {
@@ -905,13 +876,10 @@ export const useKeyboardHandlers = (
           // Defensive: Remove duplicates (by id)
           const uniqueNodes = Array.from(new Map(nodesToGrab.map((n) => [n.id, n])).values());
 
-          const grabbingHoneypot = uniqueNodes.some(
-            (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
-          );
-          if (grabbingHoneypot) {
+          if (checkGrabbingHoneypot(uniqueNodes)) {
             showNotification(
               '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
-              500
+              4000
             );
             // Still allow the operation so player can learn to abort with Y
           }
@@ -982,11 +950,13 @@ export const useKeyboardHandlers = (
         }
         case 'p':
           if (gameState.clipboard) {
-            const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
-            );
-            if (isHoneypot) {
-              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
+            const pasteCheck = checkPastingHoneypot(gameState.clipboard.nodes);
+            if (pasteCheck.triggered) {
+              if (pasteCheck.type === 'fatal') {
+                setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'honeypot' }));
+              } else {
+                showNotification(pasteCheck.message || '⚠️ SYSTEM TRAP ACTIVE!', 4000);
+              }
               break;
             }
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
@@ -1062,21 +1032,13 @@ export const useKeyboardHandlers = (
           break;
         case 'P':
           if (e.shiftKey && gameState.clipboard) {
-            const isHoneypot = gameState.clipboard.nodes.some(
-              (n) => n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
-            );
-            // L8 Trap: Immediate Game Over
-            if (
-              gameState.clipboard.nodes.some(
-                (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
-              )
-            ) {
-              setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'honeypot' }));
-              break;
-            }
-
-            if (isHoneypot) {
-              showNotification('⚠️ SYSTEM TRAP ACTIVE: Press Y to clear clipboard!', 4000);
+            const pasteCheck = checkPastingHoneypot(gameState.clipboard.nodes);
+            if (pasteCheck.triggered) {
+              if (pasteCheck.type === 'fatal') {
+                setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'honeypot' }));
+              } else {
+                showNotification(pasteCheck.message || '⚠️ SYSTEM TRAP ACTIVE!', 4000);
+              }
               break;
             }
             const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);

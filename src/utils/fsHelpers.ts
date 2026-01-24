@@ -293,6 +293,23 @@ export function createPath(
   return { fs: newRoot, error: null, collision: false, collisionNode: null, newNodeId: newId };
 }
 
+export function createHoneypot(
+  parentId: string,
+  name: string,
+  content: string = '# HONEYPOT - DO NOT TOUCH',
+  extraProps: Partial<FileNode> = {}
+): FileNode {
+  return {
+    id: id('honeypot-'),
+    name,
+    type: 'file',
+    content,
+    parentId,
+    isHoneypot: true,
+    ...extraProps,
+  };
+}
+
 export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],

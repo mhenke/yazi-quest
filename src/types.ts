@@ -11,6 +11,7 @@ export interface FileNode {
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
   protected?: boolean;
+  isHoneypot?: boolean;
   // Runtime helpers (added dynamically by utilities)
   path?: string[];
   display?: string;

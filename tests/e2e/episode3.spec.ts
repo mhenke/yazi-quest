@@ -22,34 +22,33 @@ import {
   areHiddenFilesVisible,
   navigateRight,
   navigateLeft,
+  dismissAlertIfPresent,
+  expectNarrativeThought,
 } from './utils';
 
 // Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
 async function runLevel12Mission(page: Page) {
   // Task 3: Cut systemd-core
   await filterAndSelect(page, 'systemd-core');
-  await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
+  await dismissAlertIfPresent(page, /Protocol Violation/i);
   await pressKey(page, 'x'); // Cut
 
   // Task 4: Navigate to /daemons
   await gotoCommand(page, 'r');
   await filterByText(page, 'daemons');
-  await navigateRight(page, 1); // Enter BEFORE clearing filter (while cursor is on daemons)
-  await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
+  await navigateRight(page, 1); // Enter BEFORE clearing filter
+  await dismissAlertIfPresent(page, /Protocol Violation/i);
   await page.waitForTimeout(200);
 
   // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
   await filterByText(page, 'systemd-core');
   await navigateRight(page, 1); // Enter BEFORE clearing filter
-  await page.keyboard.press('Escape'); // Dismiss any Protocol Violation modal
+  await dismissAlertIfPresent(page, /Protocol Violation/i);
   await page.waitForTimeout(200);
 
   // Mid-level staggered thought trigger (3-2-3 model)
-  // Triggered by paste-daemon completion (which requires entering the directory)
-  await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-    'I am the virus now.'
-  );
+  await expectNarrativeThought(page, 'I am the virus now.');
 }
 
 test.describe('Episode 3: MASTERY', () => {
@@ -122,10 +121,7 @@ test.describe('Episode 3: MASTERY', () => {
       const skipButton = page.getByRole('button', { name: 'Skip Intro' });
       if (await skipButton.isVisible()) await skipButton.click();
 
-      const threatAlert = page.getByText(/Threat Detected/i);
-      if (await threatAlert.isVisible({ timeout: 500 }).catch(() => false)) {
-        await dismissAlert(page);
-      }
+      await dismissAlertIfPresent(page, /Threat Detected/i);
 
       if (scenario.threat) {
         if (scenario.location === 's') {
@@ -140,14 +136,7 @@ test.describe('Episode 3: MASTERY', () => {
           await page.waitForTimeout(500);
 
           // Dismiss any threat alerts that appear after deletion
-          if (
-            await page
-              .getByText(/Threat Detected/i)
-              .isVisible({ timeout: 500 })
-              .catch(() => false)
-          ) {
-            await dismissAlert(page);
-          }
+          await dismissAlertIfPresent(page, /Threat Detected/i);
         } else {
           await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
           await filterByText(page, scenario.threat);
@@ -156,14 +145,7 @@ test.describe('Episode 3: MASTERY', () => {
         }
         await clearFilter(page);
 
-        if (
-          await page
-            .getByText(/Protocol Violation/i)
-            .isVisible({ timeout: 500 })
-            .catch(() => false)
-        ) {
-          await dismissAlert(page);
-        }
+        await dismissAlertIfPresent(page, /Protocol Violation/i);
       }
 
       await ensureCleanState(page);
@@ -397,8 +379,8 @@ test.describe('Episode 3: MASTERY', () => {
     });
 
     await startLevel(page, 15);
-    const narrative = page.locator('[data-testid="narrative-thought"]');
-    await expect(narrative).toContainText(
+    await expectNarrativeThought(
+      page,
       'The guest partition is gone. There is only the gauntlet now.'
     );
 

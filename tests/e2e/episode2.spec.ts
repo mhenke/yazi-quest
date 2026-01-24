@@ -11,12 +11,13 @@ import {
   ensureCleanState,
   findFZF,
   fuzzyJump,
-  dismissAlert,
+  dismissAlertIfPresent,
+  expectNarrativeThought,
   confirmMission,
   deleteItem,
   expectCurrentDir,
-  search,
   navigateRight,
+  enterDirectory,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -28,7 +29,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // 2) gi (g then i), then l (enter batch_logs)
     await gotoCommand(page, 'i');
-    await navigateRight(page, 1);
+    await enterDirectory(page, 'batch_logs');
     await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
     // 3) s, then type ".log" and press enter key
@@ -49,12 +50,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '3/5', testInfo.outputDir, 'after_gc');
 
     // 6) l (enter vault) then a and type "training_data/"
-    await navigateRight(page, 1);
+    await enterDirectory(page, 'vault');
     await addItem(page, 'training_data/');
     await assertTask(page, '4/5', testInfo.outputDir, 'task4');
 
     // 7) l (enter training_data) then p
-    await navigateRight(page, 1);
+    await enterDirectory(page, 'training_data');
     await pressKey(page, 'p');
     await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
@@ -85,14 +86,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Task 4: Jump to vault using Zoxide (Z -> 'vault' -> Enter)
     await fuzzyJump(page, 'vault');
     // Task 4 complete -> hidden Task 5 appears
-    // So logic: 4 tasks done out of 5 total => 4/5
-    await page.waitForTimeout(1000); // Wait for thought trigger
-    await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-      "It's a trap. I remember the shape of this code."
-    );
+    await expectNarrativeThought(page, "It's a trap. I remember the shape of this code.");
     await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
 
-    await dismissAlert(page); // Dismiss alert
+    await dismissAlertIfPresent(page); // Dismiss alert
     await page.keyboard.press('Shift+Y'); // Abort operation (Y)
 
     await assertTask(page, '5/5', testInfo.outputDir, 'abort_operation');
@@ -152,8 +149,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }, testInfo) => {
     await startLevel(page, 9);
-    const narrative = page.locator('[data-testid="narrative-thought"]');
-    await expect(narrative).toContainText(
+    await expectNarrativeThought(
+      page,
       'The corruption felt... familiar. Like a half-remembered dream.'
     );
 
@@ -201,15 +198,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Task 1: Navigate into '~/incoming/backup_logs.zip/credentials'
     await gotoCommand(page, 'i');
 
-    // Use filter to find zip
-    await filterByText(page, 'backup_logs.zip');
-    await navigateRight(page, 1); // Enter zip
-    await clearFilter(page);
-
-    // Now in zip root, find credentials folder
-    await filterByText(page, 'credentials');
-    await navigateRight(page, 1); // Enter credentials
-    await clearFilter(page);
+    await enterDirectory(page, 'backup_logs.zip');
+    await enterDirectory(page, 'credentials');
 
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_creds');
 
@@ -229,19 +219,13 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 'w'); // go to workspace
 
     // Nav to systemd-core
-    await search(page, 'systemd-core');
-    await page.waitForTimeout(500);
-    await navigateRight(page, 1);
-    await pressKey(page, 'Escape');
+    await enterDirectory(page, 'systemd-core');
 
     // Create credentials/ folder
     await addItem(page, 'credentials/');
 
     // Enter credentials/
-    await search(page, 'credentials');
-    await page.waitForTimeout(500);
-    await navigateRight(page, 1);
-    await pressKey(page, 'Escape');
+    await enterDirectory(page, 'credentials');
 
     // Paste
     await pressKey(page, 'p');
