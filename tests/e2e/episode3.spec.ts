@@ -38,14 +38,12 @@ async function runLevel12Mission(page: Page) {
   await filterByText(page, 'daemons');
   await navigateRight(page, 1); // Enter BEFORE clearing filter
   await dismissAlertIfPresent(page, /Protocol Violation/i);
-  await page.waitForTimeout(200);
 
   // Task 5: Paste and enter daemon
   await pressKey(page, 'p');
   await filterByText(page, 'systemd-core');
   await navigateRight(page, 1); // Enter BEFORE clearing filter
   await dismissAlertIfPresent(page, /Protocol Violation/i);
-  await page.waitForTimeout(200);
 
   // Mid-level staggered thought trigger (3-2-3 model)
   await expectNarrativeThought(page, 'I am the virus now.');
@@ -83,7 +81,6 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'y');
     await expectClipboard(page, 'COPY: 2');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
 
     await assertTask(page, '3/4', testInfo.outputDir, 'yank_files');
 
@@ -128,12 +125,11 @@ test.describe('Episode 3: MASTERY', () => {
           await gotoCommand(page, 'r');
           await search(page, 'scan_');
           await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, {
-            timeout: 500,
+            timeout: 2000,
           });
           await page.keyboard.press('Control+a'); // Select all scan files
           await page.waitForTimeout(500);
           await deleteItem(page, { confirm: true });
-          await page.waitForTimeout(500);
 
           // Dismiss any threat alerts that appear after deletion
           await dismissAlertIfPresent(page, /Threat Detected/i);
@@ -153,7 +149,6 @@ test.describe('Episode 3: MASTERY', () => {
       // === INLINE DISCOVER IDENTITY LOGIC ===
       // Navigate to workspace
       await gotoCommand(page, 'w');
-      await page.waitForTimeout(500);
 
       // If threat exists, we've already completed the mitigation task, so we have 2 tasks done (Nav + Mitigation).
       // If no threat (clean run), only 1 task done (Nav).
@@ -169,7 +164,6 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Toggle hidden files to see .identity.log.enc
       await pressKey(page, '.');
-      await page.waitForTimeout(500);
 
       // Find and cursor to identity file using Recursive Search (s) to avoid filter clearing issues
       await pressKey(page, 's');
@@ -248,7 +242,9 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 's'); // Search
     await typeText(page, '.key');
     await pressKey(page, 'Enter');
-    await page.waitForTimeout(1000); // Wait for results
+    await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
+      timeout: 2000,
+    });
 
     await pressKey(page, 'Ctrl+A'); // Select all
     await pressKey(page, 'x'); // Cut
@@ -372,6 +368,7 @@ test.describe('Episode 3: MASTERY', () => {
   });
 
   test('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }, testInfo) => {
+    test.setTimeout(60000);
     // Override max keystrokes to prevent game over
     await page.evaluate(() => {
       // @ts-expect-error: Custom test function

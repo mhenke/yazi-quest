@@ -95,7 +95,7 @@ import { Page, expect, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export const DEFAULT_DELAY = 500;
+export const DEFAULT_DELAY = 200;
 
 /**
  * Navigates to a specific level, handling intro and boot sequences.
@@ -479,9 +479,15 @@ export async function expectNarrativeThought(page: Page, text: string | RegExp):
  * Standardizes mission completion verification.
  * Waits for mission complete state and asserts the success toast title.
  */
-export async function confirmMission(page: Page, title: string): Promise<void> {
+export async function confirmMission(page: Page, title: string | RegExp): Promise<void> {
   await waitForMissionComplete(page);
-  await expect(page.getByRole('alert').getByText(title)).toBeVisible();
+  const alert = page.getByRole('alert').first();
+  await expect(alert).toBeVisible();
+  const text = await alert.textContent();
+  const match = title instanceof RegExp ? title.test(text || '') : text?.includes(title);
+  if (!match) {
+    throw new Error(`Expected mission title matching '${title}' but found: '${text}'`);
+  }
 }
 
 /**
@@ -674,11 +680,24 @@ export async function isTaskCompleted(page: Page, taskIndex: number): Promise<bo
  * indicating that the next level has loaded. Throws an error if neither occurs.
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
+  const currentUrl = new URL(page.url());
+  const currentLvl = currentUrl.searchParams.get('lvl');
+
   await Promise.race([
-    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 }),
-    page.waitForURL((url) => !url.search.includes(page.url())),
-  ]).catch(() => {
-    throw new Error('Timeout waiting for mission complete or level advancement.');
+    expect(page.getByTestId('mission-complete'))
+      .toBeVisible({ timeout: 10000 })
+      .catch(() => {
+        // Check for text if testId fails
+        return expect(page.getByText('Mission Complete', { exact: false })).toBeVisible({
+          timeout: 1000,
+        });
+      }),
+    page.waitForURL((url) => {
+      const newLvl = url.searchParams.get('lvl');
+      return newLvl !== currentLvl;
+    }),
+  ]).catch((e) => {
+    throw new Error(`Timeout waiting for mission complete or level advancement. Error: ${e}`);
   });
 }
 

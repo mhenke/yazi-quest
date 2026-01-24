@@ -30,9 +30,12 @@ import {
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
-  test.describe('Level 1: SYSTEM AWAKENING', () => {
-    test('completes all navigation tasks', async ({ page }, testInfo) => {
-      await startLevel(page, 1);
+  test.describe('Level 1: SYSTEM AWAKENING', { tag: '@smoke' }, () => {
+    test(`Level 1: SYSTEM AWAKENING - completes all navigation tasks`, async ({
+      page,
+    }, testInfo) => {
+      // Enable console logging
+      page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
 
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
       await navigateDown(page, 1);
@@ -56,7 +59,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
       // Task 5: Navigate to /var using h to go up
-      await page.waitForTimeout(1000); // Wait for state to settle
+      await page.waitForTimeout(300); // Wait for state to settle
       await goUp(page, 3); // Go up 3 levels to root
       await expectCurrentDir(page, '/'); // Root is displayed as '/'
 
@@ -65,7 +68,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_var');
 
       // Verify mission complete
-      await confirmMission(page, 'SYSTEM AWAKENING');
+      await confirmMission(page, /SYSTEM AWAKENING/i);
     });
   });
 
@@ -164,7 +167,7 @@ test.describe('Episode 1: AWAKENING', () => {
     });
   });
 
-  test.describe('Level 5: CONTAINMENT BREACH', () => {
+  test.describe('Level 5: CONTAINMENT BREACH', { tag: '@smoke' }, () => {
     test('selects, cuts, creates vault structure and hides files', async ({ page }, testInfo) => {
       await startLevel(page, 5);
 

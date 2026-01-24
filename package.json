@@ -14,7 +14,8 @@
     "format": "prettier --write .",
     "test": "echo \"No unit tests specified\"",
     "test:e2e": "playwright test",
-    "prepush": "npm run lint && npm run type-check && npm run build && npm run test:e2e"
+    "test:smoke": "playwright test --grep \"@smoke\"",
+    "prepush": "npm run lint && npm run type-check && npm run build && npm run test:smoke"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { goToLevel, assertLevelStartedIncomplete, assertTask } from './utils';
 
-test.describe('Baseline Sanity Check', () => {
+test.describe('Baseline Sanity Check', { tag: '@smoke' }, () => {
   test('Level 1: Navigation Smoke Test', async ({ page }, testInfo) => {
     await goToLevel(page, 1);
     await assertLevelStartedIncomplete(page);

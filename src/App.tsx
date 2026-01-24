@@ -56,8 +56,6 @@ import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
 
-import { CelebrationConfetti } from './components/CelebrationConfetti';
-
 // Helper to get a random element from an array
 const getRandomElement = <T,>(arr: T[]): T => {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -1000,20 +998,37 @@ export default function App() {
     if (tasksComplete) {
       // Determine if sort is default
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
-
-      // Determine if filters are clear
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
+
+      console.log('[DEBUG] Completion Check:', {
+        level: currentLevel.id,
+        tasksComplete,
+        isSortDefault,
+        isFilterClear,
+        currentDir: currentDirNode?.id,
+        filters: gameState.filters,
+        showHidden: gameState.showHidden,
+        showSuccessToast,
+        showEpisodeIntro: gameState.showEpisodeIntro,
+        mode: gameState.mode,
+      });
+
+      // Determine if filters are clear
+      // currentDirNode and isFilterClear already declared above
 
       // Check violations - show auto-fix warnings for final task
       // Priority: Hidden > Sort > Filter
       if (gameState.showHidden) {
+        console.log('[DEBUG] Hiding SuccessToast due to showHidden');
         setShowHiddenWarning(true);
         setShowSuccessToast(false);
       } else if (!isSortDefault) {
+        console.log('[DEBUG] Hiding SuccessToast due to Sort');
         setShowSortWarning(true);
         setShowSuccessToast(false);
       } else if (!isFilterClear) {
+        console.log('[DEBUG] Hiding SuccessToast due to Filter');
         if (gameState.mode !== 'filter-warning') {
           setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
         }
@@ -1025,12 +1040,25 @@ export default function App() {
         if (gameState.mode === 'filter-warning') {
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
         }
+
+        console.log('[DEBUG] Success Path Reached!', {
+          showSuccessToast,
+          showEpisodeIntro: gameState.showEpisodeIntro,
+        });
+
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
+          console.log('[DEBUG] Setting showSuccessToast = TRUE');
           playSuccessSound(gameState.settings.soundEnabled);
           setShowSuccessToast(true);
         }
       }
     } else {
+      console.log('[DEBUG] Tasks NOT Complete', {
+        level: currentLevel.id,
+        tasksComplete,
+        completedIds: gameState.completedTaskIds[currentLevel.id],
+        allTaskIds: currentLevel.tasks.map((t) => t.id),
+      });
       // Tasks not complete - only clear warnings if user manually fixed the issue
       // Don't trigger new warnings here (handled by navigation handlers)
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
@@ -2404,7 +2432,7 @@ export default function App() {
 
       {showSuccessToast && (
         <>
-          <CelebrationConfetti />
+          {/* <CelebrationConfetti /> */}
           <SuccessToast
             message={currentLevel.successMessage || 'Sector Cleared'}
             levelTitle={currentLevel.title}

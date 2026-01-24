@@ -263,11 +263,11 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             <div
               data-testid="narrative-thought"
               className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
+              data-message={thought.message}
             >
               <span className="base-text">{thought.message}</span>
-              <span className="glitch-layer-1">{thought.message}</span>
-              <span className="glitch-layer-2">{thought.message}</span>
-              <span className="glitch-layer-3">{thought.message}</span>
+              <span className="white-text">{thought.message}</span>
+              <span className="orange-text">{thought.message}</span>
             </div>
           )}
         </div>
