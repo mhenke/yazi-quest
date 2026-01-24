@@ -68,6 +68,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
 
         // If Shift+Enter -> advance (or initialize on last)
         // Allow a single Shift+Enter to skip a still-typing section and move to the next.

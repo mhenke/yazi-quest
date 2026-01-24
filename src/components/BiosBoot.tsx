@@ -87,6 +87,8 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
         onComplete();
       }
     };

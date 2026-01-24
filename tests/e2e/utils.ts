@@ -154,6 +154,11 @@ export async function startLevel(
 
   // Wait for the app to be ready - specifically for the status bar Tasks indicator.
   await page.waitForFunction(() => !!document.querySelector('[data-testid="status-bar"]'));
+
+  // Ensure no blocking overlays (Intro/Boot) are present before returning
+  // This is critical because App.tsx blocks inputs while these are visible
+  await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({ timeout: 10000 });
+
   await page.waitForTimeout(DEFAULT_DELAY); // Standard post-load delay
 
   // Assert level started incomplete

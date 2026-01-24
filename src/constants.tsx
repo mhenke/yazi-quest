@@ -2544,7 +2544,8 @@ export const LEVELS: Level[] = [
           return (
             node?.name === 'personnel_list.txt' &&
             c.usedG === true &&
-            (c.usedPreviewDown === true || c.usedPreviewUp === true)
+            c.usedPreviewDown === true &&
+            c.usedPreviewUp === true
           );
         },
         completed: false,

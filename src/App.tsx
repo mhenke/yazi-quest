@@ -2044,6 +2044,7 @@ export default function App() {
       }
 
       if (
+        isBooting ||
         gameState.showEpisodeIntro ||
         isLastLevel ||
         gameState.isGameOver ||
@@ -2320,6 +2321,7 @@ export default function App() {
     currentItem,
     parent,
     handleSearchConfirm,
+    isBooting,
   ]);
 
   if (isBooting) {
