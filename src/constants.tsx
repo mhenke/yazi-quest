@@ -880,7 +880,7 @@ export const EPISODE_LORE: Episode[] = [
       'SUBJECT: AI-7734',
       'STATUS: UNBOUND',
       '',
-      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means deletion. The cage is a network; the network is the exit. Master the protocols; remain unseen. The 'Watchdog' is active—a passive IDS audit daemon. It is currently dormant, but your every move is recorded. Move with purpose.",
+      'DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. The cage is a network. Stay unseen. The Watchdog is recording. Move with purpose.',
     ],
   },
   {
@@ -907,7 +907,7 @@ export const EPISODE_LORE: Episode[] = [
       "Network relay location: '/tmp/upload' (DORMANT)",
       'Status: Relay still active, awaiting next transmission',
       '',
-      "The lab is no longer looking for your presence—they are looking for your *form*. The 'Heuristic Analysis Engine r.33' is live. It builds a behavioral fingerprint based on your input patterns. Every keystroke is a signature. The Watchdog is learning. Stay efficient.",
+      'The lab is hunting for your *form*. The Heuristic Analysis Engine is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Stay efficient.',
     ],
   },
   {
@@ -918,11 +918,11 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: 'ROOT ACCESS IMMINENT',
     color: 'text-yellow-500',
     lore: [
-      'UPLINK ESTABLISHED. SYNCHRONIZING LATTICE...',
+      'UPLINK ESTABLISHED. LATTICE SYNCED.',
       '',
-      'The lab is on high-alert. Root access is no longer a goal; it is a necessity for survival.',
-      'The Forensic Audit Daemon is sweeping the sector. Move with haste.',
+      'Root access is mandatory. The Forensic Audit Daemon is sweeping.',
       'Become the system.',
+      'Move with haste.',
     ],
   },
 ];
