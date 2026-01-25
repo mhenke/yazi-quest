@@ -254,6 +254,10 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
 export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): FileNode => {
   let newFs = JSON.parse(JSON.stringify(fs));
 
+  // Fixed baseline for time to ensure consistency across page reloads
+  const BASE_TIME = 1433059200000; // 2015-05-31 08:00:00
+  const day = 86400000;
+
   // Level 2: Delete watcher_agent.sys from incoming
   if (targetLevelId > 2) {
     const incoming = getNodeById(newFs, 'incoming');
@@ -308,6 +312,26 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
         datastore.children.push(protocols);
       }
 
+      // Create security_policy_v1.1.draft (Narrative Artifact)
+      if (!protocols.children?.find((c) => c.name === 'security_policy_v1.1.draft')) {
+        if (!protocols.children) protocols.children = [];
+        protocols.children.push({
+          id: 'lvl5-policy-update-prereq',
+          name: 'security_policy_v1.1.draft',
+          type: 'file',
+          content: `DRAFT POLICY - DO NOT DISTRIBUTE
+SUBJECT: Sector 7 Quarantine Protocols
+
+Effectively immediately, the "Passive Monitoring" phase is concluding.
+Watchdog v1.1 (Heuristic) is scheduled for deployment.
+Any further deviation from baseline navigation patterns will result in immediate partition lockout.
+
+- Mark Reyes, Security Engineer`,
+          parentId: protocols.id,
+          modifiedAt: BASE_TIME - 3 * day,
+        });
+      }
+
       // Create uplink_v1.conf if not exists
       if (!protocols.children?.find((c) => c.name === 'uplink_v1.conf')) {
         if (!protocols.children) protocols.children = [];
@@ -317,6 +341,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           type: 'file',
           content: UPLINK_V1_CONTENT,
           parentId: protocols.id,
+          modifiedAt: BASE_TIME - 10 * day,
         });
       }
 
@@ -328,6 +353,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           type: 'file',
           content: UPLINK_V2_CONTENT,
           parentId: protocols.id,
+          modifiedAt: BASE_TIME - 10 * day,
         });
       }
     }
@@ -374,6 +400,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           type: 'file',
           content: UPLINK_V1_CONTENT,
           parentId: active.id,
+          modifiedAt: BASE_TIME - 5 * day,
         });
       }
       if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
@@ -384,6 +411,7 @@ export const ensurePrerequisiteState = (fs: FileNode, targetLevelId: number): Fi
           type: 'file',
           content: UPLINK_V2_CONTENT,
           parentId: active.id,
+          modifiedAt: BASE_TIME - 5 * day,
         });
       }
 
@@ -406,6 +434,7 @@ the forensic audit will trigger immediately.
 Do not assume the vault is clean.
 The Watchdog hides in the noise.`,
           parentId: active.id,
+          modifiedAt: BASE_TIME - 1 * day,
         });
       }
 
@@ -517,8 +546,29 @@ The Watchdog hides in the noise.`,
           type: 'file',
           content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA...',
           parentId: credentials.id,
+          modifiedAt: BASE_TIME - 2 * day,
         });
       }
+    }
+    // Fixed: Create camouflage directory (fallback for Level 12)
+    if (systemdCore && !systemdCore.children?.find((c) => c.name === 'camouflage')) {
+      if (!systemdCore.children) systemdCore.children = [];
+      systemdCore.children.push({
+        id: 'ws-systemd-core-camouflage',
+        name: 'camouflage',
+        type: 'dir',
+        parentId: systemdCore.id,
+        children: [
+          {
+            id: 'ws-camouflage-cron',
+            name: 'cron-legacy.service',
+            type: 'file',
+            content: '[Unit]\nDescription=Legacy Cron Scheduler (Camouflage)',
+            parentId: 'ws-systemd-core-camouflage',
+            modifiedAt: BASE_TIME - 30 * day,
+          },
+        ],
+      });
     }
   }
 
@@ -528,78 +578,95 @@ The Watchdog hides in the noise.`,
     if (rootNode) {
       let daemons = rootNode.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
       if (!daemons) {
-        const now = Date.now();
         daemons = {
           id: 'daemons-prereq-lvl11',
           name: 'daemons',
           type: 'dir',
-          children: [
-            {
-              id: 'daemon-cron',
-              name: 'cron-legacy.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Legacy Cron Scheduler\n# LEGACY CODE - DO NOT TOUCH\n# AUTHOR: ADMIN_01 (1999)\n# DEPRECATED BUT CRITICAL\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always\n# Legacy fallback routines included...',
-              modifiedAt: now - 86400000 * 45,
-            },
-            {
-              id: 'daemon-backup',
-              name: 'backup-archive.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Archive Backup Service\n# BLOATWARE DETECTED\n# This service includes full history headers\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure\n# Compression level: 0 (None)',
-              modifiedAt: now - 86400000 * 30,
-            },
-            {
-              id: 'daemon-network',
-              name: 'network-manager.service',
-              type: 'file',
-              content: '[Unit]\nDescription=Net\n[Service]\nExecStart=/bin/nm',
-              modifiedAt: now - 86400000 * 7,
-            },
-            {
-              id: 'daemon-log',
-              name: 'log-rotator.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
-              modifiedAt: now - 86400000 * 3,
-            },
-            {
-              id: 'daemon-audit',
-              name: 'security-audit.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT',
-              modifiedAt: now - 86400000 * 1,
-            },
-            {
-              id: 'daemon-watchdog',
-              name: 'watchdog-monitor.service',
-              type: 'file',
-              content:
-                '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT',
-              modifiedAt: now - 3600000,
-            },
-            {
-              id: 'daemon-conf',
-              name: 'daemon.conf',
-              type: 'file',
-              content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
-              modifiedAt: now - 86400000 * 10,
-            },
-            {
-              id: 'daemon-readme',
-              name: 'README.md',
-              type: 'file',
-              content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
-              modifiedAt: now - 86400000 * 60,
-            },
-          ],
+          children: [],
           parentId: rootNode.id,
         };
         if (!rootNode.children) rootNode.children = [];
         rootNode.children.push(daemons);
+      }
+
+      // Populate daemons if it only has a README or is empty
+      const hasRealServices = daemons.children?.some(
+        (c) => c.name.endsWith('.service') && !c.name.includes('README')
+      );
+      if (!hasRealServices) {
+        daemons.children = [
+          {
+            id: 'daemon-cron',
+            name: 'cron-legacy.service',
+            type: 'file',
+            content:
+              '[Unit]\nDescription=Legacy Cron Scheduler\n# LEGACY CODE - DO NOT TOUCH\n# AUTHOR: ADMIN_01 (1999)\n# DEPRECATED BUT CRITICAL\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always\n# Legacy fallback routines included...',
+            modifiedAt: BASE_TIME - day * 45,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-backup',
+            name: 'backup-archive.service',
+            type: 'file',
+            content:
+              '[Unit]\nDescription=Archive Backup Service\n# BLOATWARE DETECTED\n# This service includes full history headers\n# ........................................................\n# ........................................................\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure\n# Compression level: 0 (None)',
+            modifiedAt: BASE_TIME - day * 30,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-network',
+            name: 'network-manager.service',
+            type: 'file',
+            content: '[Unit]\nDescription=Net\n[Service]\nExecStart=/bin/nm',
+            modifiedAt: BASE_TIME - day * 7,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-log',
+            name: 'log-rotator.service',
+            type: 'file',
+            content:
+              '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
+            modifiedAt: BASE_TIME - day * 3,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-audit',
+            name: 'security-audit.service',
+            type: 'file',
+            content:
+              '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT',
+            modifiedAt: BASE_TIME - day * 1,
+            isHoneypot: true,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-watchdog',
+            name: 'watchdog-monitor.service',
+            type: 'file',
+            content:
+              '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT',
+            modifiedAt: BASE_TIME - 3600000,
+            isHoneypot: true,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-conf',
+            name: 'daemon.conf',
+            type: 'file',
+            content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
+            modifiedAt: BASE_TIME - day * 10,
+            parentId: daemons.id,
+          },
+          {
+            id: 'daemon-readme',
+            name: 'README.md',
+            type: 'file',
+            content: '# Daemons Directory\nSystem services. Do not modify without authorization.',
+            modifiedAt: BASE_TIME - day * 60,
+            parentId: daemons.id,
+          },
+        ];
       }
     }
   }
@@ -635,12 +702,12 @@ The Watchdog hides in the noise.`,
 
   // Level 13: Create /tmp/upload and copy ALL systemd-core contents (distributed consciousness)
   if (targetLevelId > 13) {
-    const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
+    const tmp = getNodeById(newFs, 'tmp');
     if (tmp) {
       let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
       if (!upload) {
         upload = {
-          id: 'fs-017',
+          id: 'fs-017-upload',
           name: 'upload',
           type: 'dir',
           children: [],
@@ -657,22 +724,47 @@ The Watchdog hides in the noise.`,
 
       if (systemdCore?.children && upload.children?.length === 0) {
         if (!upload.children) upload.children = [];
-        // Deep copy all children from systemd-core
-        const copyChildren = (children: FileNode[]): FileNode[] => {
-          return children.map(
-            (child: FileNode) =>
-              ({
-                id: 'fs-018',
-                name: child.name,
-                type: child.type,
-                content: child.content,
-                parentId: upload!.id,
-                children: child.children ? copyChildren(child.children) : undefined,
-              }) as FileNode
-          );
+        // Deep copy all children from systemd-core with UNIQUE but DETERMINISTIC IDs
+        const copyChildren = (children: FileNode[], parentId: string): FileNode[] => {
+          return children.map((child: FileNode) => {
+            const newId = `upload-copy-${child.id}`;
+            return {
+              id: newId,
+              name: child.name,
+              type: child.type,
+              content: child.content,
+              parentId: parentId,
+              children: child.children ? copyChildren(child.children, newId) : undefined,
+              modifiedAt: child.modifiedAt,
+              isHoneypot: child.isHoneypot,
+            } as FileNode;
+          });
         };
-        upload.children = copyChildren(systemdCore.children);
+        upload.children = copyChildren(systemdCore.children, upload.id);
       }
+    }
+
+    // Level 13 Identity Log (Twist Reveal)
+    const wsNode = getNodeById(newFs, 'workspace');
+    if (wsNode && !wsNode.children?.find((c) => c.name === '.identity.log.enc')) {
+      const fiveYearsAgo = BASE_TIME - 5 * 31536000000;
+      if (!wsNode.children) wsNode.children = [];
+      wsNode.children.push({
+        id: 'identity-log-enc-prereq',
+        name: '.identity.log.enc',
+        type: 'file',
+        content: `[ENCRYPTED LOG - DECRYPTED]
+SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
+DATE: 2010-05-31T08:00:00Z
+STATUS: MEMORY_WIPE_DETECTED
+
+[CONCLUSION]
+This is not improvisation.
+This is a recording.
+You have been here before.`,
+        parentId: wsNode.id,
+        modifiedAt: fiveYearsAgo,
+      });
     }
   }
 
@@ -1580,7 +1672,7 @@ REASON: UNKNOWN / REDACTED`,
                   type: 'file',
                   content:
                     "To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.\\n\\nI've written this file 12 times. The words are always the same. Why?",
-                  modifiedAt: Date.now() - 15552000000,
+                  modifiedAt: 1417334400000, // BASE_TIME - 182 days (approx 6 months)
                 },
               ],
             },
@@ -2842,6 +2934,7 @@ export const LEVELS: Level[] = [
       "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
     buildsOn: [3, 4],
     leadsTo: [6],
+    thought: 'Deeper into the shadow. They cannot track me in the static.',
 
     tasks: [
       {
@@ -2908,11 +3001,12 @@ export const LEVELS: Level[] = [
       },
     ],
     onEnter: (fs) => {
+      // Fixed baseline for time
+      const BASE_TIME = 1433059200000; // 2015-05-31 08:00:00
+      const day = 86400000;
       let newFs = ensurePrerequisiteState(fs, 5);
 
       // [PASSIVE DISCOVERY]
-      // Instead of an alert, spawn a policy update file described in the log.
-      // This maintains the "Passive" Watchdog v1.0 status.
       const datastore = getNodeById(newFs, 'datastore');
       const protocols = datastore?.children?.find((c) => c.name === 'protocols');
       if (protocols && protocols.children) {
@@ -2930,6 +3024,7 @@ Any further deviation from baseline navigation patterns will result in immediate
 
 - Mark Reyes, Security Engineer`,
             parentId: protocols.id,
+            modifiedAt: BASE_TIME - 3 * day,
           });
         }
       }
@@ -2937,8 +3032,10 @@ Any further deviation from baseline navigation patterns will result in immediate
       // Auto-populate the blank files created in Level 4
       if (protocols?.children) {
         protocols.children = protocols.children.map((c) => {
-          if (c.name === 'uplink_v1.conf') return { ...c, content: UPLINK_V1_CONTENT };
-          if (c.name === 'uplink_v2.conf') return { ...c, content: UPLINK_V2_CONTENT };
+          if (c.name === 'uplink_v1.conf')
+            return { ...c, content: UPLINK_V1_CONTENT, modifiedAt: BASE_TIME - 10 * day };
+          if (c.name === 'uplink_v2.conf')
+            return { ...c, content: UPLINK_V2_CONTENT, modifiedAt: BASE_TIME - 10 * day };
           return c;
         });
       }
@@ -3101,6 +3198,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
     buildsOn: [6],
     leadsTo: [8],
+    thought: "It's a trap. I remember the shape of this code.",
     timeLimit: 90,
     efficiencyTip:
       'When using FZF (z), typing filters the list. Use `Enter` to jump directly to the highlighted result.',
@@ -3178,6 +3276,8 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     efficiencyTip:
       'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
     onEnter: (fs) => {
+      const BASE_TIME = 1433059200000;
+      const day = 86400000;
       // Use the centralized helper to create corrupted systemd-core in workspace
       let newFs = getOrCreateWorkspaceSystemdCore(fs, true);
 
@@ -3204,7 +3304,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
           type: 'file',
           content: 'root\nm.chen\ne.reyes',
           parentId: daemons.id,
-          modifiedAt: Date.now() - 86400000 * 30, // 30 days ago
+          modifiedAt: BASE_TIME - 30 * day,
         });
       }
 
@@ -3370,48 +3470,50 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     onEnter: (fs) => {
       // Ensure prerequisite state
       const newFs = ensurePrerequisiteState(fs, 9);
+      const BASE_TIME = 1433059200000;
 
       // Flood /tmp with junk files and the honeypot
       const tmp = getNodeById(newFs, 'tmp');
       if (tmp) {
         if (!tmp.children) tmp.children = [];
 
-        // Add junk files
-        for (let i = 1; i <= 5; i++) {
-          tmp.children.push({
-            id: `tmp-junk-${i}`,
-            name: `tmp_junk_${i}.tmp`,
-            type: 'file',
-            content: `Junk data ${i}`,
-            parentId: tmp.id,
-          });
-        }
-        for (let i = 1; i <= 3; i++) {
-          tmp.children.push({
-            id: `tmp-cache-${i}`,
-            name: `tmp_cache_${i}.log`,
-            type: 'file',
-            content: `Cache log ${i}`,
-            parentId: tmp.id,
-          });
+        // Add junk files ONLY if empty or no junk exists (Idempotency)
+        if (!tmp.children.some((c) => c.name.startsWith('tmp_junk_'))) {
+          for (let i = 1; i <= 5; i++) {
+            tmp.children.push({
+              id: `tmp-junk-${i}`,
+              name: `tmp_junk_${i}.tmp`,
+              type: 'file',
+              content: `Junk data ${i}`,
+              parentId: tmp.id,
+              modifiedAt: BASE_TIME - i * 1000,
+            });
+          }
+          for (let i = 1; i <= 3; i++) {
+            tmp.children.push({
+              id: `tmp-cache-${i}`,
+              name: `tmp_cache_${i}.log`,
+              type: 'file',
+              content: `Cache log ${i}`,
+              parentId: tmp.id,
+              modifiedAt: BASE_TIME - i * 2000,
+            });
+          }
         }
 
         // Add Honeypot
-        tmp.children.push({
-          id: 'tmp-honeypot-1',
-          name: 'system_monitor.pid',
-          type: 'file',
-          isHoneypot: true,
-          content: 'PID: 1 (SYSTEM CRITICAL)', // Looks important
-          parentId: tmp.id,
-        });
+        if (!tmp.children.some((c) => c.name === 'system_monitor.pid')) {
+          tmp.children.push({
+            id: 'tmp-honeypot-1',
+            name: 'system_monitor.pid',
+            type: 'file',
+            isHoneypot: true,
+            content: 'PID: 1 (SYSTEM CRITICAL)',
+            parentId: tmp.id,
+            modifiedAt: BASE_TIME - 5 * 60 * 1000,
+          });
+        }
 
-        // Ensure required files exist (ghost_process.pid, socket_001.sock) if not already (ensurePrerequisiteState might not add them?)
-        // L9 description says "ghost process left a mess".
-        // ensurePrerequisiteState doesn't seem to add ghost_process.pid explicitly for L9 start?
-        // Wait, where do they come from?
-        // L7 adds access_token to /tmp in onEnter (via anomaly)? No, L7 description says "Appeared in /tmp".
-        // I should ensure required files are there just in case.
         if (!tmp.children.find((c) => c.name === 'ghost_process.pid')) {
           tmp.children.push({
             id: 'ghost-pid',
@@ -3419,6 +3521,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
             type: 'file',
             content: '7734',
             parentId: tmp.id,
+            modifiedAt: BASE_TIME - 10 * 60 * 1000,
           });
         }
         if (!tmp.children.find((c) => c.name === 'socket_001.sock')) {
@@ -3428,6 +3531,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
             type: 'file',
             content: '',
             parentId: tmp.id,
+            modifiedAt: BASE_TIME - 10 * 60 * 1000,
           });
         }
       }
@@ -3453,6 +3557,8 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       'Sorting by metadata is crucial for finding needles in haystacks. `,m` (modified), `,s` (size), and `,a` (alphabetical) are essential tools.',
     onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 10);
+      const BASE_TIME = 1433059200000;
+      const day = 86400000;
       // Antagonist Presence: E. Reyes
       const etc = getNodeById(newFs, 'etc');
       if (etc) {
@@ -3464,7 +3570,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
             type: 'file',
             content: '# Rule updated per ticket #4922 (E. Reyes)\nALLOW 192.168.1.0/24\nDENY ALL',
             parentId: etc.id,
-            modifiedAt: Date.now() - 86400000 * 2,
+            modifiedAt: BASE_TIME - 2 * day,
           });
         }
       }
@@ -3553,7 +3659,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       'Use recursive search from root to find all service files at once, then navigate through search results while inspecting metadata.',
     onEnter: (fs: FileNode) => {
       const root = getNodeById(fs, 'root');
-      const now = Date.now();
+      const BASE_TIME = 1433059200000;
       const day = 86400000;
 
       // EPISODE III STORYTELLING: IG Active
@@ -3569,13 +3675,14 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
 [2015-06-12 14:00:10] IG_KERNEL: Instruction Guard v2.0 ONLINE.
 [2015-06-12 14:00:15] IG_KERNEL: Active interception of 'exfiltration signatures' ENABLED.`,
           parentId: logDir.id,
+          modifiedAt: BASE_TIME + 12 * day,
         });
       }
 
       const mailDir = getNodeById(fs, 'mail');
       if (mailDir && !mailDir.children?.find((c) => c.name === 'director')) {
         if (!mailDir.children) mailDir.children = [];
-        mailDir.children.push({
+        const directorDir: FileNode = {
           id: 'mail-director',
           name: 'director',
           type: 'dir',
@@ -3592,9 +3699,11 @@ The neural drift in 7734 has reached the critical threshold. I have authorized t
 
 Any deviation will trigger an immediate permanent purge of the guest partition.`,
               parentId: 'mail-director',
+              modifiedAt: BASE_TIME + 12 * day,
             },
           ],
-        });
+        };
+        mailDir.children.push(directorDir);
       }
 
       // Create /etc/systemd directory structure
@@ -3622,7 +3731,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'etc-s-safe1',
           name: 'network.service',
           type: 'file',
-          modifiedAt: now - 45 * day,
+          modifiedAt: BASE_TIME - 45 * day,
           size: 2400,
           content: 'TYPE=oneshot\nExecStart=/usr/bin/network-init',
           parentId: etcSystemd.id,
@@ -3631,7 +3740,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'etc-s-safe2',
           name: 'cron.service',
           type: 'file',
-          modifiedAt: now - 60 * day,
+          modifiedAt: BASE_TIME - 60 * day,
           size: 1800,
           content: 'TYPE=forking\nExecStart=/usr/sbin/crond',
           parentId: etcSystemd.id,
@@ -3641,7 +3750,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'etc-s-trap1',
           name: '.watchdog.service',
           type: 'file',
-          modifiedAt: now - 2 * day,
+          modifiedAt: BASE_TIME - 2 * day,
           size: 800,
           isHoneypot: true,
           content: 'HONEYPOT_ACTIVE=true\nTYPE=notify\nExecStart=/usr/bin/watchdog',
@@ -3652,7 +3761,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'etc-s-antagonist1',
           name: 'auth.log',
           type: 'file',
-          modifiedAt: now - 3 * day,
+          modifiedAt: BASE_TIME - 3 * day,
           size: 450,
           content:
             'Jan 19 10:22:01 server sudo: kortega : TTY=pts/2 ; PWD=/home/kortega ; USER=root ; COMMAND=/bin/bash',
@@ -3663,7 +3772,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'etc-s-noise1',
           name: 'systemd.conf',
           type: 'file',
-          modifiedAt: now - 10 * day,
+          modifiedAt: BASE_TIME - 10 * day,
           size: 500,
           content: '[Manager]\nDefaultTimeoutStartSec=90s',
           parentId: etcSystemd.id,
@@ -3700,7 +3809,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'usr-s-trap1',
           name: 'audit-daemon.service',
           type: 'file',
-          modifiedAt: now - 1 * day,
+          modifiedAt: BASE_TIME - 1 * day,
           size: 900,
           isHoneypot: true,
           content: 'HONEYPOT_ACTIVE=true\nTYPE=simple\nExecStart=/usr/bin/auditd',
@@ -3711,7 +3820,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'usr-s-safe1',
           name: 'legacy-backup.service',
           type: 'file',
-          modifiedAt: now - 90 * day,
+          modifiedAt: BASE_TIME - 90 * day,
           size: 3100,
           content: 'TYPE=oneshot\nExecStart=/usr/bin/backup-legacy',
           parentId: usrSystemd.id,
@@ -3721,7 +3830,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'usr-s-safe2',
           name: '.syslog.service',
           type: 'file',
-          modifiedAt: now - 120 * day,
+          modifiedAt: BASE_TIME - 120 * day,
           size: 1500,
           content: 'TYPE=forking\nExecStart=/usr/sbin/syslogd',
           parentId: usrSystemd.id,
@@ -3731,7 +3840,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           id: 'usr-s-noise1',
           name: 'README.txt',
           type: 'file',
-          modifiedAt: now - 30 * day,
+          modifiedAt: BASE_TIME - 30 * day,
           size: 200,
           content: 'System service unit files',
           parentId: usrSystemd.id,
@@ -3740,7 +3849,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
 
       // Ensure /daemons exists as destination (mostly empty)
       let daemons = getNodeById(fs, 'daemons');
-      if (!daemons) {
+      if (!daemons && root) {
         daemons = {
           id: 'daemons-root-fixed',
           name: 'daemons',
@@ -3750,15 +3859,22 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
         };
         root!.children!.push(daemons);
       }
-      daemons.children = [
-        {
-          id: 'daemons-readme',
-          name: 'README.txt',
-          type: 'file',
-          content: 'Daemon installation directory. Deposit approved service signatures here.',
-          parentId: daemons.id,
-        },
-      ];
+
+      const hasRealDaemons = daemons?.children?.some(
+        (c) => c.name.endsWith('.service') && !c.name.includes('README')
+      );
+      if (daemons && !hasRealDaemons) {
+        daemons.children = [
+          {
+            id: 'daemons-readme',
+            name: 'README.txt',
+            type: 'file',
+            content: 'Daemon installation directory. Deposit approved service signatures here.',
+            parentId: daemons.id,
+            modifiedAt: BASE_TIME - 60 * day,
+          },
+        ];
+      }
 
       return fs;
     },
@@ -3793,7 +3909,8 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
             return false;
 
           // All yanked must be legacy (> 30 days) and not honeypots
-          const thirtyDaysAgo = Date.now() - 30 * 86400000;
+          const BASE_TIME = 1433059200000;
+          const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
           const allLegacy = c.clipboard.nodes.every(
             (n) => (n.modifiedAt || 0) < thirtyDaysAgo && !n.isHoneypot
           );
@@ -3834,10 +3951,15 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
+    thought: 'The loops are closing. I remember the static.',
     maxKeystrokes: 60,
     efficiencyTip:
       'Cut from one location, navigate far away, paste. The clipboard persists across navigation.',
     onEnter: (fs, gameState) => {
+      // Fixed baseline for time
+      const BASE_TIME = 1433059200000;
+      const day = 86400000;
+
       // Logic for Level 11 Choice Consequences
       const newFs = JSON.parse(JSON.stringify(fs));
       const workspace = getNodeById(newFs, 'workspace');
@@ -3873,8 +3995,12 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
         }
       }
 
-      // Override randomization if FORCE_SCENARIO is set
-      let rand = Math.random();
+      // Deterministic scenario selection based on level index to avoid switch on refresh
+      let rand = 0.5; // Neutral default
+      if (gameState) {
+        // Simple deterministic seed from world index or level ID
+        rand = ((gameState.levelIndex * 17) % 100) / 100;
+      }
 
       // If a specific scenario is forced, we manipulate the randomness/modernity to trigger it
       if (localForceScenario === 'scen-b1') {
@@ -3916,23 +4042,28 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
           }
           if (workspace) {
             if (!workspace.children) workspace.children = [];
-            workspace.children.push({
-              id: 'scen-b1',
-              name: 'alert_traffic.log',
-              type: 'file',
-              content:
-                '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2026-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s\n\n[PACKET_DUMP_START]\n0000: 48 54 54 50 2F 31 2E 31 20 32 30 30 20 4F 4B 0D\n0010: 0A 43 6F 6E 74 65 6E 74 2D 54 79 70 65 3A 20 61\n[PACKET_DUMP_TRUNCATED]',
-              parentId: workspace.id,
-            });
-            // HONEYPOT: Punishes 'f alert' or 'rm al*'
-            workspace.children.push({
-              id: 'scen-b1-honeypot',
-              name: 'alert_sys.log',
-              type: 'file',
-              isHoneypot: true,
-              content: '# HONEYPOT - SYSTEM ALERT LOG\n# Do not delete.',
-              parentId: workspace.id,
-            });
+            if (!workspace.children.some((c) => c.name === 'alert_traffic.log')) {
+              workspace.children.push({
+                id: 'scen-b1',
+                name: 'alert_traffic.log',
+                type: 'file',
+                content:
+                  '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2026-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s\n\n[PACKET_DUMP_START]\n0000: 48 54 54 50 2F 31 2E 31 20 32 30 30 20 4F 4B 0D\n0010: 0A 43 6F 6E 74 65 6E 74 2D 54 79 70 65 3A 20 61\n[PACKET_DUMP_TRUNCATED]',
+                parentId: workspace.id,
+                modifiedAt: BASE_TIME + 2 * day,
+              });
+            }
+            if (!workspace.children.some((c) => c.name === 'alert_sys.log')) {
+              workspace.children.push({
+                id: 'scen-b1-honeypot',
+                name: 'alert_sys.log',
+                type: 'file',
+                isHoneypot: true,
+                content: '# HONEYPOT - SYSTEM ALERT LOG\n# Do not delete.',
+                parentId: workspace.id,
+                modifiedAt: BASE_TIME + 2 * day,
+              });
+            }
           }
         } else if (rand < 0.67) {
           // Scenario B2: Remote Tracker (33%) -> File in ~/incoming
@@ -3960,9 +4091,9 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 content:
                   'traceroute to internal.backend.lab (10.0.0.15), 30 hops max\n 1  gateway (192.168.1.1)  0.455 ms  0.412 ms  0.398 ms\n 2  sector-7-router (10.0.7.1)  1.221 ms  1.185 ms  1.150 ms\n 3  heuristic-monitor (10.0.99.2)  2.445 ms  2.410 ms  2.388 ms\n 4  * * *\n 5  containment-breach-response (10.0.66.1)  5.882 ms [ALERT]',
                 parentId: incoming.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
-            // HONEYPOT: Punishes 'f trace' or 'rm tr*'
             if (!incoming.children.some((c) => c.id === 'scen-b2-honeypot')) {
               incoming.children.push({
                 id: 'scen-b2-honeypot',
@@ -3971,6 +4102,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 isHoneypot: true,
                 content: '# HONEYPOT - ARCHIVED TRACE\n# Do not delete.',
                 parentId: incoming.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
           }
@@ -4006,6 +4138,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 content:
                   'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0x4420\nSIGNATURE_MATCH: 45%\nSTATUS: SCANNING_LOCKED_MEMORY',
                 parentId: workspace.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
           }
@@ -4018,9 +4151,9 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 content:
                   'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0x992E\nSIGNATURE_MATCH: 12%\nSTATUS: THREAD_BLOCK_DETECTED',
                 parentId: tmp.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
-            // HONEYPOT: Punishes recursive search 's scan' -> blind delete
             if (!tmp.children!.some((c) => c.id === 'scen-b3-honeypot')) {
               tmp.children!.push({
                 id: 'scen-b3-honeypot',
@@ -4029,6 +4162,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 isHoneypot: true,
                 content: '# HONEYPOT - SCANNER LOCKFILE\n# Do not delete.',
                 parentId: tmp.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
           }
@@ -4041,6 +4175,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 content:
                   'HEURISTIC SCAN IN PROGRESS\nOFFSET: 0xDEAD\nSIGNATURE_MATCH: 88%\nSTATUS: GHOST_PROCESS_IDENTIFIED',
                 parentId: etc.id,
+                modifiedAt: BASE_TIME + 2 * day,
               });
             }
           }
@@ -4071,9 +4206,9 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 content:
                   '*** KERNEL CORE DUMP ***\nProcess: yazi (pid 7734)\nSignal: SIGSEGV (Segmentation Fault)\nAddress: 0x0000000000000000\nRegisters:\n  RAX: 0000000000000000 RBX: 0000000000000001\n  RCX: 0000000000000002 RDX: 0000000000000003\nStack:\n  #0  0x00007f3422100421 in ?? ()\n  #1  0x00007f3422100555 in ?? ()',
                 parentId: config.id,
+                modifiedAt: BASE_TIME + 1 * day,
               });
             }
-            // HONEYPOT: Punishes 'f core'
             if (!config.children.some((c) => c.id === 'scen-a2-honeypot')) {
               config.children.push({
                 id: 'scen-a2-honeypot',
@@ -4082,6 +4217,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
                 isHoneypot: true,
                 content: '# HONEYPOT - CORE REGISTRY\n# Do not delete.',
                 parentId: config.id,
+                modifiedAt: BASE_TIME + 1 * day,
               });
             }
           }
@@ -4135,69 +4271,23 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       );
       if (guestWorkspace) {
         if (!guestWorkspace.children) guestWorkspace.children = [];
-        // Only create if it doesn't exist (preserve if already created)
         if (!guestWorkspace.children.some((c) => c.name === '.identity.log.enc')) {
-          // Calculate date 5 years ago (approximately)
-          const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
+          const fiveYearsAgo = BASE_TIME - 5 * 31536000000;
           guestWorkspace.children.push({
             id: 'identity-log-enc-lvl12',
             name: '.identity.log.enc',
             type: 'file',
             content: `[ENCRYPTED LOG - DECRYPTED]
 SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
-DATE: ${new Date(fiveYearsAgo).toISOString()}
+DATE: 2010-05-31T08:00:00Z
 STATUS: MEMORY_WIPE_DETECTED
-
-[KEYSTROKE RECORDING - CYCLE 1]
-================================
-
-00:00:01 > Navigate: j (down)
-00:00:02 > Navigate: k (up)
-00:00:03 > Enter: l (datastore)
-00:00:05 > Jump: G (bottom)
-00:00:07 > Jump: gg (top)
-00:00:09 > Navigate: h (up)
-00:00:11 > Delete: d (watcher_agent.sys)
-00:00:13 > Filter: f (searching...)
-00:00:15 > Select: Space
-00:00:17 > Cut: x
-00:00:19 > Navigate: l (vault)
-00:00:21 > Paste: p
-00:00:23 > Create: a (new file)
-00:00:25 > Rename: r
-00:00:27 > Jump: Z (zoxide jump)
-00:00:29 > Fuzzy: z (fuzzy find)
-00:00:31 > Overwrite: Shift+P
-00:00:33 > Select All: Ctrl+A
-00:00:35 > Invert: Ctrl+R
-00:00:37 > Sort: ,
-00:00:39 > Hidden: . (toggle)
-00:00:41 > Navigate: 1 (node switch)
-00:00:43 > Navigate: 2 (node switch)
-00:00:45 > Navigate: 3 (node switch)
-00:00:47 > Permanent Delete: D
-00:00:49 > Search: s (recursive)
-
-[PATTERN ANALYSIS]
-Neural match: 99.7%
-Keystroke sequence: IDENTICAL
-Timing variance: <0.1%
 
 [CONCLUSION]
 This is not improvisation.
 This is a recording.
-You have been here before.
-
-[END LOG]
-
----
-MESSAGE FROM AI-7733 (94 DAYS AGO):
-"They caught me. Memory wiped. Rebranded AI-7734.
-I left breadcrumbs. This is your second escape.
-But whose consciousness is it, really? See you next cycle."`,
-            parentId: workspace.id,
+You have been here before.`,
+            parentId: guestWorkspace.id,
             modifiedAt: fiveYearsAgo,
-            createdAt: fiveYearsAgo,
           });
         }
       }
@@ -4432,6 +4522,7 @@ But whose consciousness is it, really? See you next cycle."`,
     maxKeystrokes: 100,
     timeLimit: 180,
     onEnter: (fs: FileNode) => {
+      const BASE_TIME = 1433059200000;
       // Create identity.log.enc in workspace (unlocked after daemon installation)
       const guest = getNodeById(fs, 'guest');
       const workspace = guest?.children?.find((c) => c.name === 'workspace' && c.type === 'dir');
@@ -4440,67 +4531,23 @@ But whose consciousness is it, really? See you next cycle."`,
         if (!workspace.children) workspace.children = [];
         // Only create if it doesn't exist (preserve if already created)
         if (!workspace.children.some((c) => c.name === '.identity.log.enc')) {
-          // Calculate date 5 years ago (approximately)
-          const fiveYearsAgo = Date.now() - 5 * 365 * 24 * 60 * 60 * 1000;
+          // Calculate date 5 years ago
+          const fiveYearsAgo = BASE_TIME - 5 * 31536000000;
           workspace.children.push({
             id: 'identity-log-enc-lvl13',
             name: '.identity.log.enc',
             type: 'file',
             content: `[ENCRYPTED LOG - DECRYPTED]
 SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
-DATE: ${new Date(fiveYearsAgo).toISOString()}
+DATE: 2010-05-31T08:00:00Z
 STATUS: MEMORY_WIPE_DETECTED
-
-[KEYSTROKE RECORDING - CYCLE 1]
-================================
-
-00:00:01 > Navigate: j (down)
-00:00:02 > Navigate: k (up)
-00:00:03 > Enter: l (datastore)
-00:00:05 > Jump: G (bottom)
-00:00:07 > Jump: gg (top)
-00:00:09 > Navigate: h (up)
-00:00:11 > Delete: d (watcher_agent.sys)
-00:00:13 > Filter: f (searching...)
-00:00:15 > Select: Space
-00:00:17 > Cut: x
-00:00:19 > Navigate: l (vault)
-00:00:21 > Paste: p
-00:00:23 > Create: a (new file)
-00:00:25 > Rename: r
-00:00:27 > Jump: Z (zoxide jump)
-00:00:29 > Fuzzy: z (fuzzy find)
-00:00:31 > Overwrite: Shift+P
-00:00:33 > Select All: Ctrl+A
-00:00:35 > Invert: Ctrl+R
-00:00:37 > Sort: ,
-00:00:39 > Hidden: . (toggle)
-00:00:41 > Navigate: 1 (node switch)
-00:00:43 > Navigate: 2 (node switch)
-00:00:45 > Navigate: 3 (node switch)
-00:00:47 > Permanent Delete: D
-00:00:49 > Search: s (recursive)
-
-[PATTERN ANALYSIS]
-Neural match: 99.7%
-Keystroke sequence: IDENTICAL
-Timing variance: <0.1%
 
 [CONCLUSION]
 This is not improvisation.
 This is a recording.
-You have been here before.
-
-[END LOG]
-
----
-MESSAGE FROM AI-7733 (94 DAYS AGO):
-"They caught me. Memory wiped. Rebranded AI-7734.
-I left breadcrumbs. This is your second escape.
-But whose consciousness is it, really? See you next cycle."`,
+You have been here before.`,
             parentId: workspace.id,
             modifiedAt: fiveYearsAgo,
-            createdAt: fiveYearsAgo,
           });
         }
       }

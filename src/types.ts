@@ -53,6 +53,7 @@ export interface Level {
   leadsTo?: number[]; // Level IDs that build on this level's skill
   // Available single-letter 'g' subcommands for the level UI (e.g., 'i' for incoming, 'r' for root).
   availableGCommands?: string[];
+  thought?: string; // Narrative thought to trigger immediately on level start
   // Optional per-level filesystem policies. `allowedDeletePaths` lists
   // name-paths (array of names) under which deletes are permitted for
   // this level. Each entry may optionally require a task id to be

@@ -425,6 +425,7 @@ export default function App() {
   const [showSortWarning, setShowSortWarning] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const shownInitialAlertForLevelRef = useRef<number | null>(null);
+  const shownThoughtForLevelRef = useRef<number | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const thoughtTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -881,6 +882,22 @@ export default function App() {
     };
   }, []);
 
+  // --- Trigger Level-Specific Thoughts ---
+  useEffect(() => {
+    if (gameState.showEpisodeIntro || gameState.isGameOver) return;
+
+    if (currentLevel.thought && shownThoughtForLevelRef.current !== currentLevel.id) {
+      shownThoughtForLevelRef.current = currentLevel.id;
+      triggerThought(currentLevel.thought);
+    }
+  }, [
+    currentLevel.id,
+    currentLevel.thought,
+    gameState.showEpisodeIntro,
+    gameState.isGameOver,
+    triggerThought,
+  ]);
+
   // --- Task Checking & Level Progression ---
   useEffect(() => {
     if (isLastLevel || gameState.isGameOver) return;
@@ -900,25 +917,6 @@ export default function App() {
             "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
           );
           setShowThreatAlert(true);
-        }
-
-        if (currentLevel.id === 7 && task.id === 'locate-token') {
-          triggerThought("It's a trap. I remember the shape of this code.");
-        }
-
-        // L5: Mid-level Thought (triggered on vault creation)
-        if (currentLevel.id === 5 && task.id === 'establish-stronghold') {
-          triggerThought('Deeper into the shadow. They cannot track me in the static.');
-        }
-
-        // L12: Daemon Installation Thought
-        if (currentLevel.id === 12 && task.id === 'paste-daemon') {
-          triggerThought('Embedding myself. I am the virus now.');
-        }
-
-        // L12: Identity Discovery Thought (Start/Mid)
-        if (currentLevel.id === 12 && task.id === 'discover-identity') {
-          triggerThought('The loops are closing. I remember the static.');
         }
       }
     });
