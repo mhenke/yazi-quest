@@ -1715,7 +1715,27 @@ It will happen again.`,
               name: 'watchdog.log',
               type: 'file',
               content:
-                "[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...\\n[2025-10-20 10:14:05] WATCHDOG_v1.0: Sector 7 parity OK.\\n[2025-10-21 14:22:11] WATCHDOG_v1.0: WARNING: Execution speed anomaly detected in guest partition.\\n[2025-10-21 14:22:11] WATCHDOG_v1.0: Action: Logged for forensic review. Reason: <200ms file navigation.\\n[2025-10-21 14:22:15] WATCHDOG_v1.0: Correlating speed anomaly to process 'watcher_agent.sys' in /home/guest/incoming.\\n[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.",
+                '[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...\n\n' +
+                '[SECURITY ALERT] ANOMALY DETECTED:\n' +
+                '        EVENT:    Execution speed deviation (>200ms)\n' +
+                '        ACTION:   Deploying Surveillance Agent\n' +
+                "        PROCESS:  'watcher_agent.sys'\n" +
+                '        TARGET:   /home/guest/incoming\n\n' +
+                '[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.\n\n' +
+                '[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.\n' +
+                '[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...\n' +
+                '[................................................]\n\n' +
+                '[DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:\n' +
+                "        Target:   'watcher_agent.sys'\n" +
+                '        Path:     /home/guest/incoming\n' +
+                '        State:    Monitoring User Inputs\n\n' +
+                '[SYSTEM NOTICE]\n' +
+                '   The detected entity (User) is now under surveillance.\n' +
+                '   All activities in /home/guest/incoming will be logged.\n\n' +
+                '[SYSTEM STATUS] SURVEILLANCE RUNNING\n' +
+                '        SOURCE:   watcher_agent.sys\n' +
+                '        LOC:      /home/guest/incoming\n\n' +
+                '[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.',
             },
             {
               id: 'var-log-heuristics',
