@@ -95,7 +95,7 @@ import { Page, expect, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export const DEFAULT_DELAY = 200;
+export const DEFAULT_DELAY = 100;
 
 /**
  * Navigates to a specific level, handling intro and boot sequences.
@@ -160,7 +160,7 @@ export async function startLevel(
 
         // Wait for intro to disappear
         await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({
-          timeout: 5000,
+          timeout: 3000,
         });
       }
     } catch {
@@ -228,7 +228,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
 
       // Wait for intro to disappear
       await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({
-        timeout: 5000,
+        timeout: 3000,
       });
     }
   } catch {
@@ -334,7 +334,7 @@ export async function assertTask(
   // eslint-disable-next-line security/detect-non-literal-regexp
   const tasksRegex = new RegExp(`Tasks:\\s*${expectedCompleted}/\\d+`);
   await expect(page.getByTestId('task-counter').getByText(tasksRegex)).toBeVisible({
-    timeout: 5000,
+    timeout: 3000,
   });
 
   if (screenshotName) {

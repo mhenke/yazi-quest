@@ -289,7 +289,10 @@ test.describe('Episode 3: MASTERY', () => {
     //   'To self: The loops are closing. I remember the static.'
     // );
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_audit_complete');
-    await clearFilter(page);
+
+    // Manually reset state as a player would:
+    await pressKey(page, '.'); // Toggle hidden files OFF (resolves hidden warning)
+    await clearFilter(page); // Clear active filter (resolves filter warning)
 
     await waitForMissionComplete(page);
   });
@@ -461,7 +464,8 @@ test.describe('Episode 3: MASTERY', () => {
     // 5. Paste (p)
     await pressKey(page, 'p');
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_complete');
-
+    await clearFilter(page);
+    await dismissAlert(page);
     await waitForMissionComplete(page);
   });
 });

@@ -53,7 +53,7 @@ async function skipViaHybrid(page: Page): Promise<void> {
  * Wait for the game UI to be ready (status bar visible).
  */
 async function waitForGameReady(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(DEFAULT_DELAY);
 }
 
@@ -62,7 +62,7 @@ async function waitForGameReady(page: Page): Promise<void> {
  */
 async function assertPath(page: Page, expectedPath: string): Promise<void> {
   const breadcrumb = page.locator('.breadcrumb');
-  await expect(breadcrumb).toContainText(expectedPath, { timeout: 5000 });
+  await expect(breadcrumb).toContainText(expectedPath, { timeout: 3000 });
 }
 
 /**
@@ -70,7 +70,7 @@ async function assertPath(page: Page, expectedPath: string): Promise<void> {
  */
 async function assertTasksStartAtZero(page: Page): Promise<void> {
   const taskCounter = page.getByText(/Tasks:\s*0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 5000 });
+  await expect(taskCounter).toBeVisible({ timeout: 3000 });
 }
 
 test.describe('Intro Pathway Validation', () => {
@@ -169,7 +169,7 @@ test.describe('Intro Pathway Validation', () => {
       await page.goto('/?lvl=1');
       await page.waitForLoadState('networkidle');
       // Episode intro should be visible with the correct title
-      await expect(page.getByText('EPISODE I: AWAKENING')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('EPISODE I: AWAKENING')).toBeVisible({ timeout: 3000 });
       await expect(page.getByRole('button', { name: 'Skip Intro' })).toBeVisible();
     });
 
@@ -187,19 +187,19 @@ test.describe('Intro Pathway Validation', () => {
         }
       }
       // BiosBoot should now be visible with BIOS text
-      await expect(page.getByText(/ANTIGRAVITY BIOS/)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/ANTIGRAVITY BIOS/)).toBeVisible({ timeout: 3000 });
     });
 
     test('Level 6: EpisodeIntro displays EPISODE II: FORTIFICATION', async ({ page }) => {
       await page.goto('/?lvl=6');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByText('EPISODE II: FORTIFICATION')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('EPISODE II: FORTIFICATION')).toBeVisible({ timeout: 3000 });
     });
 
     test('Level 11: EpisodeIntro displays EPISODE III: MASTERY', async ({ page }) => {
       await page.goto('/?lvl=11');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByText('EPISODE III: MASTERY')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('EPISODE III: MASTERY')).toBeVisible({ timeout: 3000 });
     });
   });
 

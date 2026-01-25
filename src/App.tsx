@@ -501,7 +501,7 @@ export default function App() {
 
   // Helper to show notification with auto-clear
   const showNotification = useCallback(
-    (message: string, duration: number = 3000, isThought: boolean = false, author?: string) => {
+    (message: string, duration: number = 2000, isThought: boolean = false, author?: string) => {
       // If used for thoughts, redirect to triggerThought (compatibility)
       if (isThought) {
         triggerThought(message, duration, author);
