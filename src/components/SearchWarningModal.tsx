@@ -5,7 +5,9 @@ interface SearchWarningModalProps {
   allowAutoFix: boolean;
 }
 
-export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({ allowAutoFix }) => {
+export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({
+  allowAutoFix: _allowAutoFix,
+}) => {
   return (
     <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-8 max-w-md text-center relative overflow-hidden rounded-lg">
@@ -43,20 +45,13 @@ export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({ allowAut
           </div>
 
           <div className="w-full flex justify-center mt-4">
-            {allowAutoFix ? (
-              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-                Press{' '}
-                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                  Shift+Enter
-                </span>
-                to continue...
-              </p>
-            ) : (
-              <p className="text-zinc-500 text-sm font-mono tracking-wide">
-                Press <span className="font-bold text-zinc-300">Esc</span> to dismiss and exit
-                search.
-              </p>
-            )}
+            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+              Press{' '}
+              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                Shift+Enter
+              </span>
+              to continue...
+            </p>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import {
   startLevel,
   pressKey,
@@ -25,7 +25,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test('Level 6: BATCH OPERATIONS - completes recursive search and batch operations', async ({
     page,
   }, testInfo) => {
-    await startLevel(page, 6);
+    await startLevel(page, 6, { intro: false });
 
     // 2) gi (g then i), then l (enter batch_logs)
     await gotoCommand(page, 'i');
@@ -101,11 +101,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test('Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite', async ({
     page,
   }, testInfo) => {
-    await startLevel(page, 8);
+    await startLevel(page, 8, { intro: false });
 
     // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
-    await pressKey(page, 'g');
-    await pressKey(page, 'w');
+    await gotoCommand(page, 'w');
     await navigateRight(page, 1);
     await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
@@ -114,20 +113,14 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '2/5', testInfo.outputDir, 'preview_corrupted');
 
     // Objective 3: Clear the filter (Esc x2: once for input, once for filter)
-    await pressKey(page, 'Escape');
-    await pressKey(page, 'Escape');
+    await clearFilter(page);
     await assertTask(page, '3/5', testInfo.outputDir, 'clear_filter');
 
     // Objective 4: Jump to '~/.config/vault/active' (Shift+Z -> "active" -> Enter) and yank (y)
-    await pressKey(page, 'Shift+Z');
-    await page.waitForTimeout(500); // Wait for input field
-    await page.keyboard.type('active', { delay: 50 });
-    await page.waitForTimeout(200);
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500); // Wait for jump animation
+    await fuzzyJump(page, 'active');
 
     // Ensure we are in active directory
-    await expect(page.locator('header')).toContainText('active');
+    await expectCurrentDir(page, 'active');
 
     // Select uplink_v1.conf and yank
     await pressKey(page, 'y');
@@ -135,8 +128,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Objective 5: Return to '~/workspace/systemd-core' (Shift+H) and OVERWRITE (Shift+P)
     await pressKey(page, 'Shift+H');
-    await page.waitForTimeout(500);
-    await expect(page.locator('header')).toContainText('systemd-core');
+    await expectCurrentDir(page, 'systemd-core');
 
     await pressKey(page, 'Shift+P');
     await assertTask(page, '5/5', testInfo.outputDir, 'force_overwrite');

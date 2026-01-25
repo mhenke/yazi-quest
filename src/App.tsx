@@ -26,6 +26,7 @@ import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
 import { getVisibleItems, getRecursiveSearchResults } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+import { checkAllTasksComplete } from './utils/gameUtils';
 // eslint-disable-next-line import/no-named-as-default
 import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
@@ -968,24 +969,7 @@ export default function App() {
     }
 
     // Check if everything is complete (including just finished ones)
-    const projectedCompletedIds = [
-      ...(gameState.completedTaskIds[currentLevel.id] || []),
-      ...newlyCompleted,
-    ];
-
-    const tasksComplete = currentLevel.tasks.every((t) => {
-      // Create a projected state for the hidden check
-      const projectedGameState: GameState = {
-        ...gameState,
-        completedTaskIds: {
-          ...gameState.completedTaskIds,
-          [currentLevel.id]: projectedCompletedIds,
-        },
-      };
-
-      const isHidden = t.hidden && t.hidden(projectedGameState, currentLevel);
-      return t.completed || newlyCompleted.includes(t.id) || isHidden;
-    });
+    const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
 
     // Check for Protocol Violations - ONLY on final task completion
     // For intermediate tasks, warnings are handled by navigation handlers (checkFilterAndBlockNavigation)
@@ -1983,7 +1967,7 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tasksComplete = currentLevel.tasks.every((t) => t.completed);
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       // Only enter completion lockdown if the success toast is actually shown.
       // If blocked by a protocol violation warning, we MUST allow keys through so the user can fix it.
       if (tasksComplete && showSuccessToast) {
@@ -2053,57 +2037,65 @@ export default function App() {
         if (e.key === '.') {
           setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
         }
-        // Allow Shift+Enter to auto-fix ONLY if tasks are complete
-        if (e.key === 'Enter' && e.shiftKey && tasksComplete) {
-          setGameState((prev) => ({ ...prev, showHidden: false }));
+        // Allow Shift+Enter to dismiss the warning
+        if (e.key === 'Enter' && e.shiftKey) {
+          setShowHiddenWarning(false);
+        }
+        // Allow Escape to dismiss the warning
+        if (e.key === 'Escape') {
+          setShowHiddenWarning(false);
         }
         return; // Block other inputs
       }
 
-      // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
-      // to clear the active filter and continue (protocol-violation bypass).
-      // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
-      // to clear the active filter and continue (protocol-violation bypass).
+      // If FilterWarning modal is shown, allow Shift+Enter to dismiss
+      // to continue without clearing the active filter (user must clear manually).
+      // If FilterWarning modal is shown (via mode), allow Shift+Enter to dismiss
+      // to continue without clearing the active filter (user must clear manually).
       if (gameState.mode === 'filter-warning') {
         if (e.key === 'Enter' && e.shiftKey) {
-          // Conditional Auto-Fix
-          if (tasksComplete) {
-            setGameState((prev) => {
-              const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
-              const newFilters = { ...prev.filters };
-              if (currentDirNode) {
-                delete newFilters[currentDirNode.id];
-              }
-              return {
-                ...prev,
-                mode: 'normal',
-                filters: newFilters,
-                acceptNextKeyForSort: false,
-                notification: null,
-              };
-            });
-          }
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
           return;
         }
 
         return; // Block other inputs if filter warning is active
       }
 
-      // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
-      // to clear the active search and continue (protocol-violation bypass).
+      // If SearchWarning modal is shown, allow Shift+Enter to dismiss
+      // to continue without clearing the active search (user must clear manually).
       if (gameState.mode === 'search-warning') {
         if (e.key === 'Enter' && e.shiftKey) {
-          // Conditional Auto-Fix - clear search
-          if (tasksComplete) {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              searchQuery: null,
-              searchResults: [],
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
-          }
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
           return;
         }
 
@@ -2112,20 +2104,14 @@ export default function App() {
 
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
-        const allowAutoFix = tasksComplete;
-
         if (e.key === 'Enter' && e.shiftKey) {
-          if (allowAutoFix) {
-            setShowSortWarning(false);
-            setGameState((prev) => ({
-              ...prev,
-              sortBy: 'natural',
-              sortDirection: 'asc',
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
-          }
+          setShowSortWarning(false);
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
           return;
         }
 
@@ -2149,6 +2135,17 @@ export default function App() {
           // Reset the sort-accept state and return to normal mode
           setGameState((prev) => ({ ...prev, acceptNextKeyForSort: false, mode: 'normal' }));
           return; // Block other inputs
+        }
+
+        if (e.key === 'Escape') {
+          setShowSortWarning(false);
+          setGameState((prev) => ({
+            ...prev,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          }));
+          return;
         }
 
         // Block any other keys if sort warning is active and it's not a valid interaction
@@ -2375,16 +2372,16 @@ export default function App() {
       )}
 
       {showHiddenWarning && (
-        <HiddenFilesWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+        <HiddenFilesWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
       {showSortWarning && (
-        <SortWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+        <SortWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
       {gameState.mode === 'filter-warning' && (
-        <FilterWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+        <FilterWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
       {gameState.mode === 'search-warning' && (
-        <SearchWarningModal allowAutoFix={currentLevel.tasks.every((t) => t.completed)} />
+        <SearchWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
@@ -2679,7 +2676,7 @@ export default function App() {
         <StatusBar
           state={gameState}
           level={currentLevel}
-          allTasksComplete={currentLevel.tasks.every((t) => t.completed) && !gameState.showHidden}
+          allTasksComplete={checkAllTasksComplete(gameState, currentLevel) && !gameState.showHidden}
           onNextLevel={advanceLevel}
           currentItem={currentItem}
         />

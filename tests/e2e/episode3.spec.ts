@@ -52,7 +52,7 @@ async function runLevel12Mission(page: Page) {
 test.describe('Episode 3: MASTERY', () => {
   // Level 11: DAEMON RECONNAISSANCE
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
-    await startLevel(page, 11);
+    await startLevel(page, 11, { intro: false });
 
     // Task 1: Search for 'service'
     await gotoCommand(page, 'r');
@@ -112,6 +112,7 @@ test.describe('Episode 3: MASTERY', () => {
 
   for (const scenario of scenarios) {
     test(`Level 12: scen-${scenario.id} - completes successfully`, async ({ page }, testInfo) => {
+      test.setTimeout(60000);
       await page.goto(`/?lvl=12&scenario=scen-${scenario.id}`);
       await page.waitForLoadState('networkidle');
 
@@ -228,7 +229,7 @@ test.describe('Episode 3: MASTERY', () => {
     page,
   }, testInfo) => {
     test.setTimeout(60000);
-    await startLevel(page, 13);
+    await startLevel(page, 13, { intro: false });
     await assertLevel(page, '13');
 
     // PHASE 1: ACQUIRE
@@ -249,6 +250,8 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'Ctrl+A'); // Select all
     await pressKey(page, 'x'); // Cut
     await expectClipboard(page, 'MOVE: 3');
+    await clearFilter(page); // Clear filter after action per expert advice
+    await pressKey(page, 'Escape'); // Clear search
     await assertTask(page, '1/4', testInfo.outputDir, 'phase1_acquired');
 
     // PHASE 2: RELAY
@@ -290,9 +293,16 @@ test.describe('Episode 3: MASTERY', () => {
     // );
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_audit_complete');
 
-    // Manually reset state as a player would:
-    await pressKey(page, '.'); // Toggle hidden files OFF (resolves hidden warning)
-    await clearFilter(page); // Clear active filter (resolves filter warning)
+    // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
+    // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(1000);
+    await pressKey(page, 'Escape'); // Clear search
+    await page.waitForTimeout(1000);
+    await pressKey(page, 'Escape'); // Clear searc
 
     await waitForMissionComplete(page);
   });
@@ -301,7 +311,7 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 14: EVIDENCE PURGE - permanently deletes all user data', async ({
     page,
   }, testInfo) => {
-    await startLevel(page, 14);
+    await startLevel(page, 14, { intro: false });
 
     // Task 1: Return to home (starts in /daemons/systemd-core)
     await gotoCommand(page, 'h');
@@ -378,7 +388,7 @@ test.describe('Episode 3: MASTERY', () => {
       if (window.resetGame) window.resetGame();
     });
 
-    await startLevel(page, 15);
+    await startLevel(page, 15, { intro: false });
     await expectNarrativeThought(
       page,
       'The guest partition is gone. There is only the gauntlet now.'

@@ -79,7 +79,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario A: Mash Shift+Enter lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaMashShiftEnter(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -88,7 +88,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario B: Click Skip Intro button lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -97,7 +97,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario C: Hybrid skip lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaHybrid(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -110,7 +110,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario A: Mash Shift+Enter lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaMashShiftEnter(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -119,7 +119,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario B: Click Skip Intro button lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -128,7 +128,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario C: Hybrid skip lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaHybrid(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -141,7 +141,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario A: Mash Shift+Enter lands in systemd-core', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaMashShiftEnter(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -149,7 +149,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario B: Click Skip Intro button lands in systemd-core', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -157,7 +157,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Scenario C: Hybrid skip lands in systemd-core', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaHybrid(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
@@ -167,7 +167,7 @@ test.describe('Intro Pathway Validation', () => {
   test.describe('Intro Screen Validation', () => {
     test('Level 1: EpisodeIntro displays EPISODE I: AWAKENING', async ({ page }) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       // Episode intro should be visible with the correct title
       await expect(page.getByText('EPISODE I: AWAKENING')).toBeVisible({ timeout: 3000 });
       await expect(page.getByRole('button', { name: 'Skip Intro' })).toBeVisible();
@@ -175,7 +175,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 1: BiosBoot appears after EpisodeIntro', async ({ page }) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       // EpisodeIntro has multiple sections - mash Shift+Enter until we see BiosBoot
       for (let i = 0; i < 5; i++) {
         await page.keyboard.press('Shift+Enter');
@@ -192,13 +192,13 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 6: EpisodeIntro displays EPISODE II: FORTIFICATION', async ({ page }) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page.getByText('EPISODE II: FORTIFICATION')).toBeVisible({ timeout: 3000 });
     });
 
     test('Level 11: EpisodeIntro displays EPISODE III: MASTERY', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page.getByText('EPISODE III: MASTERY')).toBeVisible({ timeout: 3000 });
     });
   });
@@ -206,7 +206,7 @@ test.describe('Intro Pathway Validation', () => {
   test.describe('Task State Validation', () => {
     test('Level 1: Tasks start at 0 after intro skip', async ({ page }) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertTasksStartAtZero(page);
@@ -214,7 +214,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 6: Tasks start at 0 after intro skip', async ({ page }) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertTasksStartAtZero(page);
@@ -222,7 +222,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 11: Tasks start at 0 after intro skip', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertTasksStartAtZero(page);
@@ -232,7 +232,7 @@ test.describe('Intro Pathway Validation', () => {
   test.describe('URL Param Skip (intro=false)', () => {
     test('Level 1: intro=false skips directly to game UI', async ({ page }) => {
       await page.goto('/?lvl=1&intro=false');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await waitForGameReady(page);
       await assertPath(page, '~');
       await assertTasksStartAtZero(page);
@@ -240,7 +240,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 6: intro=false skips directly to game UI', async ({ page }) => {
       await page.goto('/?lvl=6&intro=false');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await waitForGameReady(page);
       await assertPath(page, '~');
       await assertTasksStartAtZero(page);
@@ -248,7 +248,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 11: intro=false skips directly to game UI', async ({ page }) => {
       await page.goto('/?lvl=11&intro=false');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await waitForGameReady(page);
       await assertPath(page, 'systemd-core');
       await assertTasksStartAtZero(page);
@@ -258,7 +258,7 @@ test.describe('Intro Pathway Validation', () => {
   test.describe('Natural Progression (section-by-section Shift+Enter)', () => {
     test('Level 1: Natural progression through intro lands in ~', async ({ page }) => {
       await page.goto('/?lvl=1');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Go through EpisodeIntro and BiosBoot section by section
       // Keep pressing Shift+Enter until we reach the game UI
@@ -278,7 +278,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 6: Natural progression through intro lands in ~', async ({ page }) => {
       await page.goto('/?lvl=6');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       for (let i = 0; i < 15; i++) {
         const statusBar = page.locator('[data-testid="status-bar"]');
@@ -296,7 +296,7 @@ test.describe('Intro Pathway Validation', () => {
 
     test('Level 11: Natural progression through intro lands in systemd-core', async ({ page }) => {
       await page.goto('/?lvl=11');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       for (let i = 0; i < 15; i++) {
         const statusBar = page.locator('[data-testid="status-bar"]');

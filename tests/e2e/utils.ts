@@ -62,7 +62,7 @@ export async function findFZF(page: Page, name: string): Promise<void> {
 export async function renameItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('r');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
-  await page.waitForTimeout(200); // Wait for modal animation/focus
+  await page.waitForTimeout(50); // Small wait for focus stabilization
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
@@ -77,7 +77,7 @@ export async function renameItem(page: Page, name: string): Promise<void> {
 export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('a');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 2000 });
-  await page.waitForTimeout(200); // Wait for modal animation/focus
+  await page.waitForTimeout(50); // Small wait for focus stabilization
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
@@ -92,10 +92,8 @@ export async function addItem(page: Page, name: string): Promise<void> {
  */
 
 import { Page, expect, TestInfo } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
 
-export const DEFAULT_DELAY = 100;
+export const DEFAULT_DELAY = 75;
 
 /**
  * Navigates to a specific level, handling intro and boot sequences.
@@ -116,7 +114,7 @@ export async function startLevel(
   }
 
   await page.goto(`/?${params.toString()}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Unified intro skip logic.
   // Set a global skip flag and dispatch the skip event to handle boot and intro overlays
@@ -327,8 +325,8 @@ export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
 export async function assertTask(
   page: Page,
   taskCount: string,
-  outputDir: string,
-  screenshotName?: string
+  _outputDir: string,
+  _screenshotName?: string
 ): Promise<void> {
   const expectedCompleted = taskCount.split('/')[0];
   // eslint-disable-next-line security/detect-non-literal-regexp
@@ -336,25 +334,6 @@ export async function assertTask(
   await expect(page.getByTestId('task-counter').getByText(tasksRegex)).toBeVisible({
     timeout: 3000,
   });
-
-  if (screenshotName) {
-    const url = new URL(page.url());
-    const lvlStr = url.searchParams.get('lvl') || '0';
-    const lvl = parseInt(lvlStr, 10);
-    const ep = lvl > 0 ? Math.floor((lvl - 1) / 5) + 1 : 0;
-    const evidenceDir = path.join(outputDir, 'evidence', `episode${ep}`, `lvl${lvl}`);
-
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!fs.existsSync(evidenceDir)) {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      fs.mkdirSync(evidenceDir, { recursive: true });
-    }
-
-    const filename = screenshotName.endsWith('.png') ? screenshotName : `${screenshotName}.png`;
-    const fullPath = path.join(evidenceDir, filename);
-
-    await page.screenshot({ path: fullPath });
-  }
 }
 
 /**
@@ -684,11 +663,11 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
 
   await Promise.race([
     expect(page.getByTestId('mission-complete'))
-      .toBeVisible({ timeout: 10000 })
+      .toBeVisible({ timeout: 5000 })
       .catch(() => {
         // Check for text if testId fails
         return expect(page.getByText('Mission Complete', { exact: false })).toBeVisible({
-          timeout: 1000,
+          timeout: 2500,
         });
       }),
     page.waitForURL((url) => {

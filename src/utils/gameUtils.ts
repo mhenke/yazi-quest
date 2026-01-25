@@ -207,3 +207,16 @@ export const checkPastingHoneypot = (
 
   return { triggered: false, type: 'warning' };
 };
+
+/**
+ * Checks if all tasks for the current level are complete,
+ * taking into account hidden/skipped tasks.
+ */
+export const checkAllTasksComplete = (gameState: GameState, level: Level): boolean => {
+  return level.tasks.every((t) => {
+    // Inject completion status from gameState for the projection
+    const isCompleted = (gameState.completedTaskIds[level.id] || []).includes(t.id);
+    const isHidden = t.hidden && t.hidden(gameState, level);
+    return isCompleted || isHidden;
+  });
+};
