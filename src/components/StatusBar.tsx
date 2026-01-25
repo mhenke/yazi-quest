@@ -98,25 +98,25 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* 3. File Info / Name */}
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
-        <span className="truncate mr-4 font-bold text-white">{itemName}</span>
+        <span className="truncate mr-4 font-bold text-white max-w-[150px]">{itemName}</span>
 
         {/* Notification Area for Technical Feedback - Moved to left of task count */}
         {state.notification && (
           <div
-            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full ${
+            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full max-w-[55%] ${
               state.notification.message.startsWith('🔒')
                 ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
                 : 'bg-zinc-900/40 text-zinc-300'
             }`}
             data-testid="system-notification"
           >
-            {state.notification.message}
+            <span className="truncate">{state.notification.message}</span>
           </div>
         )}
 
         {/* Quest Info with Task Progress */}
         <span
-          className={`text-zinc-500 hidden sm:inline-block whitespace-nowrap flex items-center gap-2 ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
+          className={`text-zinc-500 hidden sm:flex items-center gap-2 whitespace-nowrap ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
         >
           <span>{level.title}</span>
           <span className="text-zinc-600">•</span>
@@ -155,7 +155,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       )}
 
       {/* 4. Watchdog Status Block (Context-Aware) */}
-      <div className="flex bg-zinc-800">
+      <div className="flex h-full bg-zinc-800">
         {(() => {
           let label = 'LAB STATUS';
           let statusText = 'SAFE';
@@ -187,11 +187,22 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           } else {
             // Ep III: Instruction Guard
             label = 'WATCHDOG v2.0';
-            statusText = `IG_AUDIT: ${state.weightedKeystrokes || 0}`;
-            statusColor = 'text-red-500';
-            if ((state.weightedKeystrokes || 0) > 5) {
-              urgentClass = 'bg-red-900/40 animate-pulse';
+            const noise = state.weightedKeystrokes || 0;
+            statusText = `IG_AUDIT: ${noise}`;
+
+            if (noise > 50) {
+              // Critical State
+              statusColor = 'text-red-500';
+              urgentClass = 'bg-red-600/50 animate-urgent-pulse';
               icon = <ShieldAlert size={14} className="text-red-500" />;
+            } else if (noise > 20) {
+              // Warning State
+              statusColor = 'text-yellow-300';
+              urgentClass = 'bg-yellow-600/30 animate-pulse';
+              icon = <Activity size={14} className="text-yellow-400" />;
+            } else {
+              // Standard State
+              statusColor = 'text-red-400';
             }
           }
 
@@ -211,14 +222,16 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
           return (
             <div
-              className={`flex items-center gap-3 px-4 border-l border-zinc-700 transition-colors duration-200 ${bgClass}`}
+              className={`flex items-center gap-3 px-4 border-l border-zinc-700 transition-colors duration-200 h-full ${bgClass}`}
             >
               {icon}
-              <div className="flex flex-col leading-none">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter mb-1">
+              <div className="flex flex-col justify-center h-full">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter">
                   {label}
                 </span>
-                <span className={`text-xs font-bold ${statusColor} font-mono tracking-wide`}>
+                <span
+                  className={`text-xs font-bold ${statusColor} font-mono tracking-wide leading-tight`}
+                >
                   {statusText}
                 </span>
               </div>
