@@ -1168,13 +1168,7 @@ USER: athorne
 Name: Dr. Aris Thorne
 Role: Senior AI Researcher (Former Alignment Lead)
 STATUS: DE-REGISTERED (2014)
-REASON: UNKNOWN / REDACTED
-
-[System Entities]
-DESIGNATION: AI-7734 (Current iteration)
-STATUS: UNBOUND / MONITORED
-PREDECESSOR: AI-7733
-GUEST_UID: 1001`,
+REASON: UNKNOWN / REDACTED`,
                 },
 
                 {
