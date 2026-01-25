@@ -124,8 +124,8 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
       };
 
       // e.key is 'Enter'.
-      if (e.key === 'Enter' && e.shiftKey) {
-        // Shift+Enter to close
+      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+        // Escape or Shift+Enter to close
         onClose();
         return;
       }
@@ -183,6 +183,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-3 sm:gap-6 overflow-hidden mr-4 h-8">
           <button
+            data-testid="map-button"
             onClick={onClose} // Or use a designated toggle handler if we want the button to close too. Actually this button is "Map". It should toggle.
             // The prop is 'onClose', but App probably passes a toggle function.
             // Let's call it onClose for now as it triggers the action, or better:
@@ -312,6 +313,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           {/* Hint & Help Controls */}
           <div className="flex items-center gap-2">
             <button
+              data-testid="hint-button"
               onClick={onToggleHint}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-yellow-400 transition-colors border border-transparent hover:border-zinc-700"
               title="Show Hint (Alt+H)"
@@ -319,6 +321,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               <Lightbulb size={20} />
             </button>
             <button
+              data-testid="help-button"
               onClick={onToggleHelp}
               className="flex items-center justify-center w-8 h-8 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors border border-transparent hover:border-zinc-700"
               title="Show Help (Alt+?)"
@@ -331,8 +334,15 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
       {/* Legend Modal */}
       {isOpen && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        <div
+          data-testid="quest-map-modal"
+          className="absolute inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={onClose} // Close when clicking on the backdrop
+        >
+          <div
+            className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+          >
             {/* Header */}
             <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900">
               <div className="flex items-center gap-3 justify-between">
@@ -343,7 +353,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   </h2>
                 </div>
                 <div className="text-xs text-zinc-600 font-mono">
-                  h/l: episodes • j/k: missions • Enter: jump • Shift+Enter: close
+                  h/l: episodes • j/k: missions • Enter: jump • Shift+Enter or Escape: close
                 </div>
               </div>
             </div>
@@ -353,6 +363,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               {episodes.map((ep, idx) => (
                 <button
                   key={idx}
+                  data-testid="episode-tab"
                   onClick={() => setActiveTab(idx)}
                   className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-col items-center gap-1
                             ${activeTab === idx ? `${ep.color} ${ep.bg} border-current` : 'text-zinc-600 border-transparent hover:text-zinc-400 hover:bg-zinc-900'}

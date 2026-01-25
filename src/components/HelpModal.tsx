@@ -17,7 +17,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       // Prevent default to avoid side effects on the main app
       e.preventDefault();
 
-      if (e.key === 'Enter' && e.shiftKey) {
+      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
         onClose();
       } else if (e.key === 'j' || e.key === 'ArrowDown') {
         setScrollPosition((prev) => prev + 1);
@@ -60,11 +60,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      data-testid="help-modal"
+      className="absolute inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose} // Close when clicking on the backdrop
       tabIndex={-1} // Make the div focusable
       ref={scrollRef} // Assign ref to the outermost div for focus
     >
-      <div className="w-full max-w-4xl md:max-w-6xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto">
+      <div
+        className="w-full max-w-4xl md:max-w-6xl bg-zinc-900 border border-zinc-700 shadow-2xl p-4 relative max-h-[80vh] overflow-auto"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+      >
         <div className="mb-6 border-b border-zinc-800 pb-2">
           <h2 className="text-xl font-bold text-orange-500 tracking-wider">HELP / KEYBINDINGS</h2>
         </div>
@@ -112,7 +117,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           </div>
         </div>
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
-          Query command reference (?) • Press Shift+Enter to close
+          Query command reference (?) • Press Shift+Enter or Escape to close
         </div>
       </div>
     </div>

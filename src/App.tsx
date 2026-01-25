@@ -237,19 +237,23 @@ export default function App() {
     }
 
     // Replay all onEnter hooks up to and including the target level
+    // This ensures that all level-specific file system changes are applied
     for (let i = 0; i <= effectiveIndex; i++) {
       const level = LEVELS[i];
       if (level.onEnter) {
         try {
-          const isFresh = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-          if (!level.seedMode || level.seedMode !== 'fresh' || isFresh) {
-            // Construct minimal gameState for onEnter hooks that need it (e.g., Level 12)
-            const partialGameState: Partial<GameState> = {
-              completedTaskIds,
-              level11Flags: undefined, // Will be undefined until Level 11 completes
-            };
-            fs = level.onEnter(fs, partialGameState as GameState);
-          }
+          // Construct minimal gameState for onEnter hooks that need it (e.g., Level 12)
+          // When jumping to Level 12+, we provide default flags to avoid undefined errors
+          const partialGameState: Partial<GameState> = {
+            completedTaskIds,
+            levelIndex: i, // Use the loop index as current level context during replay
+            level11Flags: (gameState as GameState)?.level11Flags || {
+              selectedModern: true, // Default to Modern/Hard path if jumping
+              triggeredHoneypot: false,
+              scoutedFiles: [],
+            },
+          };
+          fs = level.onEnter(fs, partialGameState as GameState);
         } catch (err) {
           try {
             reportError(err, { phase: 'level.onEnter', level: level?.id });
@@ -1983,7 +1987,64 @@ export default function App() {
         return; // Block all other keys
       }
 
+      // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
+      if (e.key === '?' && e.altKey) {
+        e.preventDefault();
+        setGameState((prev) => ({ ...prev, showHelp: true }));
+        return;
+      }
+
+      if (e.key === 'h' && e.altKey) {
+        e.preventDefault();
+        setGameState((prev) => {
+          if (prev.showHint) {
+            const nextStage = (prev.hintStage + 1) % 3;
+            return { ...prev, hintStage: nextStage };
+          }
+          return { ...prev, showHint: true, hintStage: 0 };
+        });
+        return;
+      }
+
+      if (e.key === 'm' && e.altKey) {
+        e.preventDefault();
+        setGameState((prev) => ({ ...prev, showMap: true }));
+        return;
+      }
+
       if (showThreatAlert) {
+        // Allow meta commands even when threat alert is shown - these should overlay the alert
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command but don't dismiss the alert
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         if (e.key === 'Enter' && e.shiftKey) {
           setShowThreatAlert(false);
         }
@@ -2011,17 +2072,95 @@ export default function App() {
           setGameState((prev) => ({ ...prev, showMap: false }));
         }
 
+        // Allow Escape to close any open modal
+        else if (e.key === 'Escape') {
+          e.preventDefault();
+          setGameState((prev) => ({
+            ...prev,
+            showHelp: false,
+            showHint: false,
+            showMap: false,
+          }));
+        }
+
         return; // Block all other keys from background Yazi
       }
 
       // If only the InfoPanel is open, block all emulator keys except Esc/Tab to close it
       if (gameState.showInfoPanel) {
+        // Allow meta commands even when InfoPanel is open
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         if (e.key === 'Escape' || e.key === 'Tab') {
           e.preventDefault();
           setGameState((prev) => ({ ...prev, showInfoPanel: false }));
           return;
         }
         return; // Block all other keys while InfoPanel is open
+      }
+
+      // Allow meta commands even during booting, episode intro, game over, etc.
+      if (
+        (isBooting ||
+          gameState.showEpisodeIntro ||
+          isLastLevel ||
+          gameState.isGameOver ||
+          ['input-file', 'filter', 'rename'].includes(gameState.mode)) &&
+        ((e.key === '?' && e.altKey) || (e.key === 'h' && e.altKey) || (e.key === 'm' && e.altKey))
+      ) {
+        // Process the meta command
+        if (e.key === '?' && e.altKey) {
+          e.preventDefault();
+          setGameState((prev) => ({ ...prev, showHelp: true }));
+          return;
+        }
+
+        if (e.key === 'h' && e.altKey) {
+          e.preventDefault();
+          setGameState((prev) => {
+            if (prev.showHint) {
+              const nextStage = (prev.hintStage + 1) % 3;
+              return { ...prev, hintStage: nextStage };
+            }
+            return { ...prev, showHint: true, hintStage: 0 };
+          });
+          return;
+        }
+
+        if (e.key === 'm' && e.altKey) {
+          e.preventDefault();
+          setGameState((prev) => ({ ...prev, showMap: true }));
+          return;
+        }
       }
 
       if (
@@ -2037,6 +2176,38 @@ export default function App() {
 
       // Handle hidden files warning modal interception
       if (showHiddenWarning) {
+        // Allow meta commands even when hidden warning is shown
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         // Check if we can auto-fix (only last task)
         // Re-calculate tasksComplete here or rely on prop? rely on variable
         if (e.key === '.') {
@@ -2062,6 +2233,38 @@ export default function App() {
       // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
       // to clear the active filter and continue (protocol-violation bypass).
       if (gameState.mode === 'filter-warning') {
+        // Allow meta commands even when filter warning is shown
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         if (e.key === 'Enter' && e.shiftKey) {
           // Conditional Auto-Fix
           if (tasksComplete) {
@@ -2107,6 +2310,38 @@ export default function App() {
       // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
       // to clear the active search and continue (protocol-violation bypass).
       if (gameState.mode === 'search-warning') {
+        // Allow meta commands even when search warning is shown
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         if (e.key === 'Enter' && e.shiftKey) {
           // Conditional Auto-Fix - clear search
           if (tasksComplete) {
@@ -2145,6 +2380,38 @@ export default function App() {
 
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
+        // Allow meta commands even when sort warning is shown
+        if (
+          (e.key === '?' && e.altKey) ||
+          (e.key === 'h' && e.altKey) ||
+          (e.key === 'm' && e.altKey)
+        ) {
+          // Process the meta command
+          if (e.key === '?' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showHelp: true }));
+            return;
+          }
+
+          if (e.key === 'h' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => {
+              if (prev.showHint) {
+                const nextStage = (prev.hintStage + 1) % 3;
+                return { ...prev, hintStage: nextStage };
+              }
+              return { ...prev, showHint: true, hintStage: 0 };
+            });
+            return;
+          }
+
+          if (e.key === 'm' && e.altKey) {
+            e.preventDefault();
+            setGameState((prev) => ({ ...prev, showMap: true }));
+            return;
+          }
+        }
+
         const allowAutoFix = tasksComplete;
 
         if (e.key === 'Enter' && e.shiftKey) {
@@ -2227,13 +2494,14 @@ export default function App() {
         });
       }
 
-      if (e.key === '?' && e.altKey && gameState.mode === 'normal') {
+      // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
+      if (e.key === '?' && e.altKey) {
         e.preventDefault();
         setGameState((prev) => ({ ...prev, showHelp: true }));
         return;
       }
 
-      if (e.key === 'h' && e.altKey && gameState.mode === 'normal') {
+      if (e.key === 'h' && e.altKey) {
         e.preventDefault();
         setGameState((prev) => {
           if (prev.showHint) {
@@ -2245,7 +2513,7 @@ export default function App() {
         return;
       }
 
-      if (e.key === 'm' && e.altKey && gameState.mode === 'normal') {
+      if (e.key === 'm' && e.altKey) {
         e.preventDefault();
         setGameState((prev) => ({ ...prev, showMap: true }));
         return;
@@ -2435,10 +2703,6 @@ export default function App() {
         </>
       )}
 
-      {showThreatAlert && (
-        <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
-      )}
-
       {showHiddenWarning && (
         <HiddenFilesWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
@@ -2454,6 +2718,11 @@ export default function App() {
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
         <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
+      )}
+
+      {/* Render ThreatAlert AFTER other modals so it appears on top */}
+      {showThreatAlert && (
+        <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
       )}
 
       <div className="flex flex-col flex-1 h-full min-w-0">
