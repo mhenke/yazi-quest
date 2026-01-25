@@ -173,10 +173,13 @@ export function getRecursiveContent(
   while (stack.length) {
     const { node: n, pathIds } = stack.pop()!;
 
-    // Augment node with runtime-only helpers expected elsewhere
-    n.path = [...pathIds];
-    n.display = resolvePath(root, [...pathIds]);
-    out.push(n as FileNode);
+    // Augment node with runtime-only helpers expected elsewhere (cloning to avoid mutating the original FS state)
+    const clonedNode: FileNode = {
+      ...n,
+      path: [...pathIds],
+      display: resolvePath(root, [...pathIds]),
+    };
+    out.push(clonedNode);
 
     // Prune protected subtrees if level provided
     if (level && isProtected(root, undefined, n, level, 'enter')) {
@@ -551,7 +554,7 @@ export function isProtected(
     const isLocateWatcherComplete = level.tasks.find((t) => t.id === 'locate-watcher')?.completed;
 
     if (!isLocateWatcherComplete) {
-      return 'Complete threat analysis first (inspect metadata with Tab and scan content with J/K).';
+      return 'Complete threat analysis first (inspect metadata with Tab).';
     }
   }
 

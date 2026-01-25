@@ -1215,7 +1215,7 @@ export default function App() {
     if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
       shownInitialAlertForLevelRef.current = 5;
       setAlertMessage(
-        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown. Evacuate immediately.'
+        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.'
       );
       setShowThreatAlert(true);
       return;

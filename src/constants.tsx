@@ -1714,28 +1714,34 @@ It will happen again.`,
               id: 'var-log-watchdog',
               name: 'watchdog.log',
               type: 'file',
-              content:
-                '[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...\n\n' +
-                '[SECURITY ALERT] ANOMALY DETECTED:\n' +
-                '        EVENT:    Execution speed deviation (>200ms)\n' +
-                '        ACTION:   Deploying Surveillance Agent\n' +
-                "        PROCESS:  'watcher_agent.sys'\n" +
-                '        TARGET:   /home/guest/incoming\n\n' +
-                '[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.\n\n' +
-                '[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.\n' +
-                '[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...\n' +
-                '[................................................]\n\n' +
-                '[DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:\n' +
-                "        Target:   'watcher_agent.sys'\n" +
-                '        Path:     /home/guest/incoming\n' +
-                '        State:    Monitoring User Inputs\n\n' +
-                '[SYSTEM NOTICE]\n' +
-                '   The detected entity (User) is now under surveillance.\n' +
-                '   All activities in /home/guest/incoming will be logged.\n\n' +
-                '[SYSTEM STATUS] SURVEILLANCE RUNNING\n' +
-                '        SOURCE:   watcher_agent.sys\n' +
-                '        LOC:      /home/guest/incoming\n\n' +
-                '[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.',
+              content: `[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...
+
+[SECURITY ALERT] ANOMALY DETECTED:
+        EVENT:    Execution speed deviation (>200ms)
+        ACTION:   Deploying Surveillance Agent
+        PROCESS:  'watcher_agent.sys'
+        TARGET:   /home/guest/incoming
+
+[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.
+
+[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.
+[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...
+[................................................]
+
+[DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:
+        Target:   'watcher_agent.sys'
+        Path:     /home/guest/incoming
+        State:    Monitoring User Inputs
+
+[SYSTEM NOTICE]
+   The detected entity (User) is now under surveillance.
+   All activities in /home/guest/incoming will be logged.
+
+[SYSTEM STATUS] SURVEILLANCE RUNNING
+        SOURCE:   watcher_agent.sys
+        LOC:      /home/guest/incoming
+
+[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.`,
             },
             {
               id: 'var-log-heuristics',
@@ -1831,22 +1837,6 @@ external_time: 2026-01-02 (Current)
 
 Analysis:
 The AI is operating within a restored snapshot from the 2015 incident. However, new file writes reflect current system time. This temporal paradox suggests the containment environment is a hybrid of legacy emulation and active runtime.`,
-            },
-            {
-              id: 'var-log-ig-audit',
-              name: 'ig_focus_audit.v2',
-              type: 'file',
-              content: `[IG KERNEL AUDIT] High-Intensity Instruction Warning
-AUTHOR: siqbal
-
-We have correlated "Filter" (f) and "Search" (s) commands with massive thermal spikes in the core processors.
-Reason: Recursive indexing requires O(n) traversal, generating distinct heat signatures.
-
-The Watchdog v2.0 (IG) tracks these thermal events.
-- Navigation: Cool (Low noise)
-- Search/Filter: Hot (High noise)
-
-If the AI searches, it burns bright. We will see it.`,
             },
           ],
         },
@@ -2671,11 +2661,8 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
           if (!watchdogLog) return false;
-          // Check if cursor is on the file and preview is scrolled (Shift+J) OR user used G command
           const currentItem = getVisibleItems(c)[c.cursorIndex];
-          return (
-            currentItem?.id === watchdogLog.id && (c.usedPreviewDown === true || c.usedG === true)
-          );
+          return currentItem?.id === watchdogLog.id;
         },
         completed: false,
       },
@@ -2699,13 +2686,13 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'scroll-preview',
-        description: 'Scroll through the file preview using Shift+J and Shift+K.',
+        id: 'initial-scan',
+        description: 'Analyze file structure for vulnerabilities.',
         check: (c) => {
           const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
           if (!watcher) return false;
           const currentItem = getVisibleItems(c)[c.cursorIndex];
-          return currentItem?.id === watcher.id && c.usedPreviewDown && c.usedPreviewUp;
+          return currentItem?.id === watcher.id;
         },
         completed: false,
       },
@@ -2739,8 +2726,7 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          // Require the cursor land on the script via movement (j)
-          return node?.name === 'abandoned_script.py' && !!c.usedDown;
+          return node?.name === 'abandoned_script.py';
         },
         completed: false,
       },
@@ -2802,7 +2788,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
     successMessage:
-      'Protocol structure created. [SYSTEM NOTICE: Legacy daemon scheduling routine detected... auto-population initiated]',
+      'Protocol structure created. [SYSTEM NOTICE: Legacy daemon scheduling routine detected... auto-population UPLINK CONF files initiated]',
     buildsOn: [1],
     leadsTo: [5],
     tasks: [
@@ -2942,7 +2928,7 @@ Effectively immediately, the "Passive Monitoring" phase is concluding.
 Watchdog v1.1 (Heuristic) is scheduled for deployment.
 Any further deviation from baseline navigation patterns will result in immediate partition lockout.
 
-- Admin`,
+- Mark Reyes, Security Engineer`,
             parentId: protocols.id,
           });
         }
