@@ -79,12 +79,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const isLowTime = state.timeLeft !== null && state.timeLeft <= 10;
-
-  // Keystroke logic
-  const showKeystrokes = level.maxKeystrokes !== undefined;
-  const isHighKeystrokes = showKeystrokes && state.keystrokes >= level.maxKeystrokes! * 0.9;
-
   // Helper to determine sort active state
   const isCustomSort = state.sortBy !== 'natural';
 
@@ -160,38 +154,60 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </div>
       )}
 
-      {/* 4. Timer / Metrics (Right Aligned) */}
+      {/* 4. Watchdog Status Block (Context-Aware) */}
       <div className="flex bg-zinc-800">
-        {/* Threat Level Display */}
-        {/* Threat Monitor (Audit 2.1) - Replaces basic notification area when high threat, or sits alongside? 
-            Let's put it to the left of the timer/notification area. 
-        */}
+        {(() => {
+          let label = 'LAB STATUS';
+          let statusText = 'SAFE';
+          let statusColor = 'text-blue-400';
 
-        {/* Threat Status Indicator */}
-        <div
-          className={`px-2 flex items-center gap-2 border-l border-zinc-700 font-bold uppercase tracking-widest text-[10px] ${
-            state.threatLevel > 80
-              ? 'bg-red-600 text-black animate-pulse'
-              : state.threatLevel > 50
-                ? 'bg-orange-600 text-black'
-                : state.threatLevel > 20
-                  ? 'bg-yellow-600 text-black'
-                  : 'bg-zinc-800 text-zinc-500'
-          }`}
-        >
-          <span className="hidden sm:inline">LAB_STATUS:</span>
-          <span>{state.threatStatus}</span>
-          {/* Visual Bar */}
-          <div className="w-12 h-1.5 bg-black/30 rounded-full overflow-hidden ml-1">
+          // Define Watchdog Phases
+          if (level.id <= 5) {
+            // Ep I: Passive Watchdog
+            label = 'WATCHDOG v1.0';
+            statusText = 'IDS_DORMANT: PASSIVE';
+            statusColor = 'text-cyan-400';
+          } else if (level.id <= 10) {
+            // Ep II: Heuristic Scan
+            label = 'WATCHDOG v1.1';
+            statusText = 'HEURISTIC_SCAN: ACTIVE';
+            statusColor = 'text-yellow-400 animate-pulse-slow';
+          } else {
+            // Ep III: Instruction Guard
+            label = 'WATCHDOG v2.0';
+            statusText = `IG_AUDIT: ${state.weightedKeystrokes || 0}`;
+            statusColor = 'text-red-500';
+          }
+
+          // Pulse effect for IG noise (Ep III) - High heat triggers red pulse
+          const isLoud = level.id >= 11 && (state.lastActionIntensity || 0) > 1;
+          const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : 'bg-transparent';
+
+          return (
             <div
-              className="h-full bg-current transition-all duration-500 ease-out"
-              style={{ width: `${state.threatLevel}%` }}
-            />
-          </div>
-        </div>
+              className={`flex items-center gap-2 px-3 border-l border-zinc-700 transition-colors duration-200 ${bgClass}`}
+            >
+              <div className="flex flex-col leading-none">
+                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter mb-0.5">
+                  {label}
+                </span>
+                <span className={`text-[10px] font-bold ${statusColor} font-mono tracking-wide`}>
+                  {statusText}
+                </span>
+              </div>
 
-        {/* Level Complete Trigger notification logic... */}
-        {allTasksComplete ? (
+              {/* Timer (Always visible but unobtrusive) */}
+              {state.timeLeft !== null && (
+                <div className="ml-2 pl-2 border-l border-zinc-700 text-zinc-500 font-mono text-xs">
+                  {formatTime(state.timeLeft)}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Next Level Button (Context Aware) */}
+        {allTasksComplete && (
           <button
             onClick={onNextLevel}
             className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
@@ -201,34 +217,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               SHIFT <ArrowRight size={8} /> ENTER
             </span>
           </button>
-        ) : null}
-
-        {/* Show Timer if active */}
-        {state.timeLeft !== null && !allTasksComplete && (
-          <div
-            className={`px-4 py-0.5 font-bold border-l border-zinc-700 flex items-center gap-2 transition-colors ${
-              isLowTime
-                ? 'bg-red-600 text-white animate-pulse'
-                : 'bg-red-900/80 text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
-            }`}
-          >
-            <span className="hidden sm:inline text-[10px] opacity-90 uppercase tracking-widest">
-              Watchdog:
-            </span>
-            <span className="font-mono text-sm">{formatTime(state.timeLeft)}</span>
-          </div>
-        )}
-
-        {/* Show Keystrokes if Mastery Level */}
-        {showKeystrokes && (
-          <div
-            className={`px-3 font-bold border-l border-zinc-700 flex items-center gap-2 ${isHighKeystrokes ? 'text-red-500 bg-red-950/30' : 'text-yellow-500'}`}
-          >
-            <span className="hidden sm:inline text-[10px] opacity-70">HEURISTIC:</span>
-            <span className="font-mono text-sm">
-              {state.keystrokes}/{level.maxKeystrokes}
-            </span>
-          </div>
         )}
       </div>
 

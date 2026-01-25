@@ -40,6 +40,27 @@ const getNarrativeAction = (key: string): string | null => {
   return null;
 };
 
+// Helper to determine action intensity (Instruction Noise)
+// Ep 3 mechanic: Some actions are "louder" than others
+export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
+  // Navigation (Low Noise)
+  if (
+    ['j', 'k', 'l', 'h', 'g', 'G', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)
+  ) {
+    return 1;
+  }
+  // Analysis (Medium Noise)
+  if (['f', 's', '/'].includes(key)) {
+    return 3;
+  }
+  // Exfiltration/Destruction (High Noise)
+  if (['x', 'p', 'd', 'D', 'y'].includes(key) || (ctrlKey && ['a', 'x', 'v'].includes(key))) {
+    return 5;
+  }
+  // Default (Low)
+  return 1;
+};
+
 // Helper to check for active filter in the current directory and block navigation
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
@@ -568,6 +589,9 @@ export const useKeyboardHandlers = (
         }
       }
 
+      // Retrieve intensity for this keypress
+      const intensity = getActionIntensity(e.key, e.ctrlKey);
+
       switch (e.key) {
         case 'j':
         case 'ArrowDown':
@@ -598,6 +622,7 @@ export const useKeyboardHandlers = (
               usedPreviewDown: false,
               usedPreviewUp: false,
               level11Flags: updatedLevel11Flags,
+              lastActionIntensity: intensity, // [IG_AUDIT] Track noise
             };
           });
           break;
@@ -611,6 +636,7 @@ export const useKeyboardHandlers = (
             usedUp: true,
             usedPreviewDown: false,
             usedPreviewUp: false,
+            lastActionIntensity: intensity, // [IG_AUDIT] Track noise
           }));
           break;
         case 'J':
@@ -652,6 +678,7 @@ export const useKeyboardHandlers = (
               usedG: true,
               usedPreviewDown: false,
               usedPreviewUp: false,
+              lastActionIntensity: 1, // G is low noise
             }));
           } catch {
             // ignore
@@ -698,6 +725,7 @@ export const useKeyboardHandlers = (
               // Also clear any search when navigating
               searchQuery: null,
               searchResults: [],
+              lastActionIntensity: intensity, // [IG_AUDIT] Track noise
             }));
           }
           break;
@@ -775,6 +803,7 @@ export const useKeyboardHandlers = (
                 history: [...prev.history, prev.currentPath],
                 future: [],
                 previewScroll: 0,
+                lastActionIntensity: intensity, // [IG_AUDIT] Track noise
                 zoxideData: {
                   ...prev.zoxideData,
                   [pathStr]: {
@@ -798,6 +827,7 @@ export const useKeyboardHandlers = (
                 selectedIds: newSelected,
                 cursorIndex: Math.min(items.length - 1, prev.cursorIndex + 1),
                 previewScroll: 0,
+                lastActionIntensity: 1, // Space is navigation-adjacent
               };
             });
           }

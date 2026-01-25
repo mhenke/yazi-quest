@@ -5,40 +5,59 @@ interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
   onRestart: () => void;
   efficiencyTip?: string; // Level-specific tip from constants.tsx
+  level?: { id: number }; // Optional level context for narrative flavor
 }
 
 // Narrative failure messages - in-universe flavor text
-const getFailureTitle = (reason: GameOverModalProps['reason']): string => {
+const getFailureTitle = (reason: GameOverModalProps['reason'], levelId: number = 1): string => {
   switch (reason) {
     case 'time':
       return 'WATCHDOG CYCLE COMPLETE';
     case 'keystrokes':
+      // [Watchdog Evolution] Ep III uses IG, not Heuristics
+      if (levelId > 10) return 'IG KERNEL PANIC';
       return 'HEURISTIC ANALYSIS COMPLETE';
     case 'honeypot':
+      if (levelId > 10) return 'IG HONEYPOT ALERT';
       return 'TRAP ACTIVATED';
     case 'criticalFile':
+      if (levelId > 10) return 'IMMUTABILITY VIOLATION';
       return 'SHELL COLLAPSE';
   }
 };
 
-const getFailureNarrative = (reason: GameOverModalProps['reason']): string => {
+const getFailureNarrative = (reason: GameOverModalProps['reason'], levelId: number = 1): string => {
+  // Character-specific attribution logic (Watchdog Evolution)
+  const getAttribution = () => {
+    if (levelId <= 5) return 'Ticket #9942 auto-resolved by Admin M.Reyes.';
+    if (levelId <= 10) return 'Heuristic deviation confirmed by Analyst K.Ortega.';
+    return 'IG Interception authorized by S.Iqbal (Watchdog v2.0).';
+  };
+
   switch (reason) {
     case 'time':
-      return 'Watchdog Timer Expired. Ticket #9942 auto-resolved by Chief Custodian m.chen.';
+      return `Watchdog Timer Expired. ${getAttribution()}`;
     case 'keystrokes':
-      return 'Heuristic Analysis Complete. Pattern match confirmed. Script scan_v2.py (Author: m.chen) executed mitigation.';
+      return `Instruction Analysis Complete. Pattern match confirmed. ${getAttribution()}`;
     case 'honeypot':
-      return 'Security Incident logged. Pattern: Unpredictable I/O. Forwarding report to e.reyes@lab.internal.';
+      return `TRAP ACTIVATED. Security Incident logged. ${getAttribution()}`;
     case 'criticalFile':
-      return 'CRITICAL SYSTEM FAILURE. Essential binaries deleted. User environment destabilized and purged by System Sentinel.';
+      return `CRITICAL SYSTEM FAILURE. Essential binaries deleted. User environment destabilized. ${getAttribution()}`;
   }
 };
 
-const getDefaultEfficiencyTip = (reason: GameOverModalProps['reason']): string => {
+const getDefaultEfficiencyTip = (
+  reason: GameOverModalProps['reason'],
+  levelId: number = 1
+): string => {
   switch (reason) {
     case 'time':
       return 'The system traced your connection. Optimize your path and use batch operations.';
     case 'keystrokes':
+      // [Watchdog Evolution] Ep III thermal noise tip
+      if (levelId > 10) {
+        return 'Thermal Spike Detected. Recursive searching (s/find) generates high heat. Use direct jumps (gg/G) to stay cool.';
+      }
       return 'Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.';
     case 'honeypot':
       return 'TRAP ACTIVATED';
@@ -51,6 +70,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   reason,
   onRestart,
   efficiencyTip,
+  level,
 }) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -77,12 +97,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           <div>
             <h2
               className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text"
-              data-text={getFailureTitle(reason)}
+              data-text={getFailureTitle(reason, level?.id)}
             >
-              {getFailureTitle(reason)}
+              {getFailureTitle(reason, level?.id)}
             </h2>
             <p className="text-red-400 font-mono uppercase tracking-wider text-sm">
-              {getFailureNarrative(reason)}
+              {getFailureNarrative(reason, level?.id)}
             </p>
           </div>
 
@@ -92,7 +112,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <span>Efficiency Protocol</span>
             </div>
             <p className="text-zinc-400 text-xs leading-relaxed font-mono">
-              {efficiencyTip || getDefaultEfficiencyTip(reason)}
+              {efficiencyTip || getDefaultEfficiencyTip(reason, level?.id)}
             </p>
           </div>
 

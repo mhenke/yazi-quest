@@ -592,6 +592,9 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
     // Ignore timeout
   }
 
+  // Wait for the item to be visible in the active pane to ensure filter applied
+  await expect(page.getByTestId('filesystem-pane-active').getByText(filterText)).toBeVisible();
+
   await pressKey(page, ' '); // Toggle selection
   await clearFilter(page); // Clear filter for next action
 }

@@ -169,14 +169,18 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 5: CONTAINMENT BREACH', { tag: '@smoke' }, () => {
     test('selects, cuts, creates vault structure and hides files', async ({ page }, testInfo) => {
       await startLevel(page, 5, { intro: false });
+      // press shift+enter to dismiss alert dialog
+      await dismissAlertIfPresent(page);
 
       // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
-      await dismissAlertIfPresent(page, /QUARANTINE ALERT/i);
+      // [Watchdog Evolution]: Alert removed in favor of passive policy file.
+      // await dismissAlertIfPresent(page, /QUARANTINE ALERT/i);
 
       // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)
-      await gotoCommand(page, 'd'); // go to datastore
-      await expect(page.getByTestId('filesystem-pane-active').getByText('protocols')).toBeVisible();
-      await pressKey(page, 'l'); // enter protocols
+      // Level 5 starts in ~/datastore/protocols, so we don't need to navigate there.
+      await expect(page.getByTestId('breadcrumbs')).toContainText('~/datastore/protocols');
+
+      const activePane = page.getByTestId('filesystem-pane-active');
 
       await expect(
         page.getByTestId('filesystem-pane-active').getByText('uplink_v1.conf')
@@ -185,27 +189,41 @@ test.describe('Episode 1: AWAKENING', () => {
         page.getByTestId('filesystem-pane-active').getByText('uplink_v2.conf')
       ).toBeVisible();
 
-      const activePane = page.getByTestId('filesystem-pane-active');
-
       // Verify no selection initially
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(0);
 
-      // Verify both files are present in the list
-      await expect(activePane.getByRole('listitem')).toHaveCount(2);
+      // Verify presence of new passive policy file
+      await expect(
+        page.getByTestId('filesystem-pane-active').getByText('security_policy_v1.1.draft')
+      ).toBeVisible();
 
-      await pressKey(page, ' '); // select top (cursor should be at top by default)
+      // Verify all 3 files are present (Policy + 2 Uplinks)
+      await expect(activePane.getByRole('listitem')).toHaveCount(3);
+
+      // Select Uplink V1 and V2 using manual sorting assumptions (User Walkthrough)
+      // List: security_policy (0), uplink_v1 (1), uplink_v2 (2)
+
+      // Move to uplink_v1 (Index 1)
+      await navigateDown(page, 1);
+      await page.waitForTimeout(200);
+
+      // Select uplink_v1
+      await pressKey(page, ' ');
+      await page.waitForTimeout(200);
+
+      // Verify first selection worked
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
 
-      await pressKey(page, 'Shift+g'); // go to bottom
-      await pressKey(page, ' '); // select bottom
+      // Select uplink_v2 (Index 2) - Space should have auto-advanced cursor to 2
+      await pressKey(page, ' ');
+      await page.waitForTimeout(200);
 
-      // Verify 2 files selected
+      // Verify second selection worked
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(2);
 
       await pressKey(page, 'x'); // cut both
 
       // Verify Task 1 complete (clipboard populated)
-      // If this fails, then selection or cut failed
       await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
       // Task 2: Navigate to ~ (gh) and reveal hidden files (.)

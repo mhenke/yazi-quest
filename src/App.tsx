@@ -51,7 +51,11 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import { useKeyboardHandlers, checkFilterAndBlockNavigation } from './hooks/useKeyboardHandlers';
+import {
+  useKeyboardHandlers,
+  checkFilterAndBlockNavigation,
+  getActionIntensity,
+} from './hooks/useKeyboardHandlers';
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
@@ -389,6 +393,9 @@ export default function App() {
       usedTrashDelete: false,
       usedHistoryBack: false,
       usedHistoryForward: false,
+      weightedKeystrokes: 0,
+      lastActionIntensity: 0,
+      startTime: now,
     };
   });
 
@@ -2207,7 +2214,19 @@ export default function App() {
         !isGamePaused &&
         !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)
       ) {
-        setGameState((prev) => ({ ...prev, keystrokes: prev.keystrokes + 1 }));
+        setGameState((prev) => {
+          // [IG_AUDIT] Episode III Weighted Noise Logic
+          let noise = 1;
+          if (currentLevel?.id >= 11) {
+            noise = getActionIntensity(e.key, e.ctrlKey);
+          }
+
+          return {
+            ...prev,
+            keystrokes: prev.keystrokes + 1,
+            weightedKeystrokes: (prev.weightedKeystrokes || 0) + noise,
+          };
+        });
       }
 
       if (e.key === '?' && e.altKey && gameState.mode === 'normal') {
@@ -2368,6 +2387,7 @@ export default function App() {
           reason={gameState.gameOverReason!}
           onRestart={handleRestartLevel}
           efficiencyTip={currentLevel.efficiencyTip}
+          level={currentLevel}
         />
       )}
 
@@ -2502,7 +2522,7 @@ export default function App() {
                 : 1,
           }}
         >
-          <div className="font-mono text-sm text-zinc-400">
+          <div className="font-mono text-sm text-zinc-400" data-testid="breadcrumbs">
             {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
             {(() => {
               if (gameState.searchQuery) {

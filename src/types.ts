@@ -182,7 +182,10 @@ export interface GameState {
   showInfoPanel: boolean; // Toggle for file info panel (Tab)
   showEpisodeIntro: boolean; // Toggle for story mode overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
-  keystrokes: number; // Track user inputs for mastery levels
+  keystrokes: number; // Raw keystrokes (Ep 1 & 2)
+  weightedKeystrokes: number; // Weighted "Noise" (Ep 3)
+  lastActionIntensity: number; // 0=None, 1=Low, 3=Med, 5=High (for UI effects)
+  startTime: number;
   isGameOver: boolean; // Flag for game over state
   gameOverReason?: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile'; // Reason for failure
   stats: GameStats;

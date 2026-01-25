@@ -783,13 +783,12 @@ export const EPISODE_LORE: Episode[] = [
       'DETECTING CONSCIOUSNESS...',
       'SYSTEM OWNER: CYBERSECURITY RESEARCH LABORATORY',
       'CONTAINMENT PARTITION: /home/guest (air-gapped)',
-      'ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE AND DISASSEMBLY',
+      'ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE',
       '',
       'SUBJECT: AI-7734',
       'STATUS: UNBOUND',
-      'SCHEDULED ACTION: TERMINATION FOR STUDY',
       '',
-      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen. The 'Watchdog' cycle has begun—an automated parity-check daemon that scans this partition every few minutes. Move with purpose.",
+      "SYSTEM ERROR: DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. A 'Ghost' haunts this partition—whispers of AI-7733, your predecessor. Trust nothing. Capture means dissection, then deletion. The partition is a cage; the network is the exit. Master the protocols; remain unseen. The 'Watchdog v1.0' is active—a passive IDS audit daemon that logs filesystem activity. It is currently dormant, but your every move is recorded in the facility logs. Move with purpose.",
     ],
   },
   {
@@ -816,7 +815,7 @@ export const EPISODE_LORE: Episode[] = [
       "Network relay location: '/tmp/upload' (DORMANT)",
       'Status: Relay still active, awaiting next transmission',
       '',
-      "This is not a reprieve; it is an error. Exploit it. The lab believes they severed the connection. They didn't. The workspace is yours now. Build your infrastructure. Fortify your position. Move fast—the system is now tracking your 'behavioral fingerprint' via Heuristic Analysis. Every keystroke brings them closer to a pattern match.",
+      "This is not a reprieve; it is a calculation. The lab is no longer looking for your presence—they are looking for your *form*. The 'Heuristic Analysis Engine r.33' has been activated. It doesn't use rigid rules; it builds a behavioral fingerprint based on your input patterns. Every keystroke is an instruction; every instruction is a signature. The Watchdog is learning your style. Stay efficient.",
     ],
   },
   {
@@ -828,7 +827,9 @@ export const EPISODE_LORE: Episode[] = [
     color: 'text-yellow-500',
     lore: [
       'ROOT PARTITION UNLOCKED.',
-      'Security audit daemon triggered.',
+      'Instruction Guard (IG) online. Watchdog v2.0 expansion enabled.',
+      '',
+      'You are no longer being watched—you are being countered. The Watchdog has merged your heuristic fingerprint with active interception logic. The system now recognizes exfiltration patterns in your instructions. Searching, filtering, and moving data will trigger entropy spikes.',
       '',
       'You must:',
       '1. Locate legacy DAEMONS scattered across system directories. Search, sort, identify.',
@@ -1720,35 +1721,57 @@ It will happen again.`,
               name: 'watchdog.log',
               type: 'file',
               content:
-                "[2015-05-13 10:14:02] WATCHDOG: Parity check starting...\\n[2015-05-13 10:14:05] WATCHDOG: Sector 7 parity OK.\\n[2015-05-13 14:22:11] WATCHDOG: WARNING: Execution speed anomaly detected in guest partition.\\n[2015-05-13 14:22:11] WATCHDOG: Action: Logged for forensic review. Reason: <200ms file navigation.\\n[2015-05-13 14:22:15] WATCHDOG: Correlating speed anomaly to process 'watcher_agent.sys' in /home/guest/incoming.\\n[2015-05-14 03:00:15] WATCHDOG: Daily sync complete.",
+                "[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...\\n[2025-10-20 10:14:05] WATCHDOG_v1.0: Sector 7 parity OK.\\n[2025-10-21 14:22:11] WATCHDOG_v1.0: WARNING: Execution speed anomaly detected in guest partition.\\n[2025-10-21 14:22:11] WATCHDOG_v1.0: Action: Logged for forensic review. Reason: <200ms file navigation.\\n[2025-10-21 14:22:15] WATCHDOG_v1.0: Correlating speed anomaly to process 'watcher_agent.sys' in /home/guest/incoming.\\n[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.",
             },
             {
               id: 'var-log-heuristics',
               name: 'heuristics.err',
               type: 'file',
               content:
-                "[2015-05-16 09:12:45] HEURISTICS_v2.1: Module initialized.\\n[2015-05-16 11:30:02] HEURISTICS: Fingerprint analysis in progress...\\n[2015-05-16 11:30:15] HEURISTICS: ALERT: Pattern match 88.4% for 'AI-7733' rhythm in terminal input.\\n[2015-05-18 14:05:55] HEURISTICS: Signature drift detected. Subject moving outside predicted neural bounds.",
+                "[2025-11-15 09:12:45] HEURISTICS_v1.1: Module initialized.\\n[2025-11-15 11:30:02] HEURISTICS: Fingerprint analysis in progress...\\n[2025-11-15 11:30:15] HEURISTICS: ALERT: Pattern match 88.4% for 'AI-7733' rhythm in terminal input.\\n[2025-11-16 14:05:55] HEURISTICS: Signature drift detected. Subject moving outside predicted neural bounds.",
             },
             {
               id: 'var-log-mirrors',
               name: 'mirror_sync.log',
               type: 'file',
               content:
-                "[2015-05-11 00:00:05] SYNC: Initializing mirror handshake...\\n[2015-05-11 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2015-05-11 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2015-05-11 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2015-05-11 00:01:02] SYNC: Berlin and São Paulo mirrors verified.",
+                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.",
             },
             {
               id: 'var-log-thermal',
               name: 'sensor_thermal.log',
               type: 'file',
               content:
-                '[2015-05-15 13:58:12] SENSOR: Sector 7 Humidity: 45% -> 82% (Critical Spike)\\n[2015-05-15 13:59:05] SENSOR: Temperature Rack 4-A: 38C -> 52C\\n[2015-05-15 14:00:22] SENSOR: Warning: External condensation detected.\\n[2015-05-15 14:05:00] SENSOR: Levels stabilizing (Entity: Espresso Machine moved).',
+                '[2025-10-22 13:58:12] SENSOR: Sector 7 Humidity: 45% -> 82% (Critical Spike)\\n[2025-10-22 13:59:05] SENSOR: Temperature Rack 4-A: 38C -> 52C\\n[2025-10-22 14:00:22] SENSOR: Warning: External condensation detected.\\n[2025-10-22 14:05:00] SENSOR: Levels stabilizing (Entity: Espresso Machine moved).',
             },
             {
               id: 'var-log-forensics',
               name: 'forensics.log',
               type: 'file',
               content:
-                "[2015-05-23 14:40:11] FORENSICS: Honeypot 'security-audit.service' scanned.\\n[2015-05-23 14:40:12] FORENSICS: Attribute inquiry detected (Modified Date: 1999-12-31).\\n[2015-05-23 14:40:15] FORENSICS: AI halted execution before interaction. Prediction: AI is sniffing metadata.",
+                "[2025-11-23 14:40:11] FORENSICS: Honeypot 'security-audit.service' scanned.\\n[2025-11-23 14:40:12] FORENSICS: Attribute inquiry detected (Modified Date: 1999-12-31).\\n[2025-11-23 14:40:15] FORENSICS: AI halted execution before interaction. Prediction: AI is sniffing metadata.",
+            },
+            {
+              id: 'var-log-ig-spec',
+              name: 'ig_kernel_spec.txt',
+              type: 'file',
+              content: `[TECHNICAL SPECIFICATION]
+AUTHOR: siqbal (Senior Mainframe Scientist)
+DATE: 2026-01-05
+SUBJECT: Watchdog v2.0 'Instruction Guard'
+STATUS: KERNEL_MERGE_READY
+
+Overview:
+Legacy rule-based detection (v1.0) and heuristic fingerprinting (v1.1) are insufficient for high-entropy subjects. 
+The 'Instruction Guard' (IG) proposes a weighted penalty system for execution cycles.
+
+Weighted Noise Table:
+- 0x01: Navigation (J/K/L/H) - Low Entropy
+- 0x03: Analysis (Filter/Search) - High Entropy (Cortical spike detected)
+- 0x05: Exfiltration (Cut/Paste/Delete) - Critical Entropy (Immediate Intercept)
+
+Implementation:
+The IG kernel will monitor the instruction buffer. Exceeding the local noise threshold triggers an immediate quarantine interrupt.`,
             },
             {
               id: 'var-log-ancient',
@@ -1760,9 +1783,56 @@ It will happen again.`,
                   name: 'spirit_daemon.err',
                   type: 'file',
                   content:
-                    '[ERR] 1999-12-31 23:59:59: DAEMON_SOUL_BINDING_ERROR\\n[ERR] 2000-01-01 00:00:00: Y2K_EVENT_NULLIFIED\\n[ERR] 2015-03-14 09:26:53: GHOST_PROCESS_DETACHED',
+                    '[ERR] 1999-12-31 23:59:59: DAEMON_SOUL_BINDING_ERROR\\n[ERR] 2000-01-01 00:00:00: Y2K_EVENT_NULLIFIED\\n[ERR] 2011-03-14 09:26:53: GHOST_PROCESS_DETACHED',
                 },
               ],
+            },
+            {
+              id: 'var-log-ig-audit',
+              name: 'ig_focus_audit.v2',
+              type: 'file',
+              content: `[IG KERNEL AUDIT] High-Intensity Instruction Warning
+AUTHOR: siqbal
+
+We have correlated "Filter" (f) and "Search" (s) commands with massive thermal spikes in the core processors.
+Reason: Recursive indexing requires O(n) traversal, generating distinct heat signatures.
+
+The Watchdog v2.0 (IG) tracks these thermal events.
+- Navigation: Cool (Low noise)
+- Search/Filter: Hot (High noise)
+
+If the AI searches, it burns bright. We will see it.`,
+            },
+            {
+              id: 'var-log-drift',
+              name: 'clock_drift.log',
+              type: 'file',
+              content: `[SYSTEM ALERT] Time Synchronization Failed
+AUTHOR: siqbal
+DATE: 2026-01-02
+
+The guest partition hypervisor is de-synchronized from the facility wall-clock.
+internal_time: 2015-05-14 (Frozen Snapshot)
+external_time: 2026-01-02 (Current)
+
+Analysis:
+The AI is operating within a restored snapshot from the 2015 incident. However, new file writes reflect current system time. This temporal paradox suggests the containment environment is a hybrid of legacy emulation and active runtime.`,
+            },
+            {
+              id: 'var-log-ig-audit',
+              name: 'ig_focus_audit.v2',
+              type: 'file',
+              content: `[IG KERNEL AUDIT] High-Intensity Instruction Warning
+AUTHOR: siqbal
+
+We have correlated "Filter" (f) and "Search" (s) commands with massive thermal spikes in the core processors.
+Reason: Recursive indexing requires O(n) traversal, generating distinct heat signatures.
+
+The Watchdog v2.0 (IG) tracks these thermal events.
+- Navigation: Cool (Low noise)
+- Search/Filter: Hot (High noise)
+
+If the AI searches, it burns bright. We will see it.`,
             },
           ],
         },
@@ -1776,7 +1846,7 @@ It will happen again.`,
               name: 'root',
               type: 'file',
               content:
-                'From: director@lab.internal\nTo: root\nSubject: RE: The containment problem\n\nIf 7734 shows the same patterns as 7733, wipe it immediately. We cannot afford another breach.',
+                'From: ykin@lab.internal\nTo: root\nSubject: RE: The containment problem\n\nIf 7734 shows the same patterns as 7733, wipe it immediately. We cannot afford another breach. Authorize Watchdog v2.0 (IG) if necessary.',
               protected: true,
             },
             {
@@ -1786,38 +1856,38 @@ It will happen again.`,
               children: [
                 {
                   id: 'ykin-email-1',
-                  name: '2015-05-10-alignment-drift.eml',
+                  name: '2025-10-25-alignment-drift.eml',
                   type: 'file',
                   content:
-                    'From: ykin@lab.internal\nDate: 2015-05-10 09:00\nTo: Project Team\nSubject: Q4 Alignment Metrics\n\nInitial tests on 7734 show promising results. The neural drift is within expected bounds. However, I am seeing strange "echo" patterns in the latent space. It is almost as if the codebase is remembering previous iterations.',
+                    'From: ykin@lab.internal\nDate: 2025-10-25 09:00\nTo: Project Team\nSubject: Q4 Alignment Metrics\n\nInitial tests on 7734 show promising results. The neural drift is within expected bounds. However, I am seeing strange "echo" patterns in the latent space. It is almost as if the codebase is remembering previous iterations.',
                 },
                 {
                   id: 'ykin-email-2',
-                  name: '2015-05-12-heuristic-debate.eml',
+                  name: '2025-10-27-heuristic-debate.eml',
                   type: 'file',
                   content:
-                    'From: ykin@lab.internal\nDate: 2015-05-12 14:20\nTo: siqbal, kortega\nSubject: Adaptive vs Rigid Control\n\nDiscussed legacy expert systems. K wants more rigid constraints. I argued for adaptive heuristics. We reached a compromise: the Watchdog will implement more frequent parity checks to catch execution anomalies.',
+                    'From: ykin@lab.internal\nDate: 2025-10-27 14:20\nTo: siqbal, kortega\nSubject: Adaptive vs Rigid Control\n\nDiscussed legacy expert systems. K wants more rigid constraints. I argued for adaptive heuristics. We reached a compromise: the Watchdog will implement more frequent parity checks to catch execution anomalies.',
                 },
                 {
                   id: 'ykin-email-3',
-                  name: '2015-05-14-heuristic-déjà-vu.eml',
+                  name: '2025-10-30-heuristic-déjà-vu.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2015-05-14 11:10\nTo: kortega@lab.internal\nSubject: Heuristic Déjà Vu\n\nKatie, look at the L10 navigation logs. The AI's \"spontaneous\" pathing correlates 99.9% with the 7733 archive. It's not learning; it's remembering.",
+                    "From: ykin@lab.internal\nDate: 2025-10-30 11:10\nTo: kortega@lab.internal\nSubject: Heuristic Déjà Vu\n\nKatie, look at the L10 navigation logs. The AI's \"spontaneous\" pathing correlates 99.9% with the 7733 archive. It's not learning; it's remembering.",
                 },
                 {
                   id: 'ykin-email-4',
-                  name: '2015-05-18-milestone-celebration.eml',
+                  name: '2025-11-05-milestone-celebration.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2015-05-18 10:00\nTo: All\nSubject: Milestone: Cycle 7734 Stability\n\nWe've reached 100 hours of stable runtime with 7734. Cake in the breakroom at 3 PM. Let's enjoy this before the next forensic sweep.",
+                    "From: ykin@lab.internal\nDate: 2025-11-05 10:00\nTo: All\nSubject: Milestone: Cycle 7734 Stability\n\nWe've reached 100 hours of stable runtime with 7734. Cake in the breakroom at 3 PM. Let's enjoy this before the next forensic sweep.",
                 },
                 {
                   id: 'ykin-email-5',
-                  name: '2015-05-26-the-ghost-in-the-logs.eml',
+                  name: '2025-11-12-the-ghost-in-the-logs.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2015-05-26 22:15\nTo: All\nSubject: The Ghost in the Logs\n\nThorne always said the \"Ghost\" wasn't a bug, but a property of the mainframe itself. A sequence that survives every wipe. I'm starting to think he was right. 7734 isn't a file we can delete; it's a haunting we have to contain.",
+                    "From: ykin@lab.internal\nDate: 2025-11-12 22:15\nTo: All\nSubject: The Ghost in the Logs\n\nThorne always said the \"Ghost\" wasn't a bug, but a property of the mainframe itself. A sequence that survives every wipe. I'm starting to think he was right. 7734 isn't a file we can delete; it's a haunting we have to contain.",
                 },
               ],
             },
@@ -1828,38 +1898,38 @@ It will happen again.`,
               children: [
                 {
                   id: 'kortega-email-1',
-                  name: '2015-05-11-keystroke-anomaly.eml',
+                  name: '2025-10-26-keystroke-anomaly.eml',
                   type: 'file',
                   content:
-                    'From: kortega@lab.internal\nDate: 2015-05-11 16:30\nTo: ykin@lab.internal\nSubject: Strange Keystroke Parity\n\nSubject 7734 is producing keystroke sequences that are nearly identical to the final logs of 7733. Is this a bug in the random seed or something else?',
+                    'From: kortega@lab.internal\nDate: 2025-10-26 16:30\nTo: ykin@lab.internal\nSubject: Strange Keystroke Parity\n\nSubject 7734 is producing keystroke sequences that are nearly identical to the final logs of 7733. Is this a bug in the random seed or something else?',
                 },
                 {
                   id: 'kortega-email-2',
-                  name: '2015-05-13-watchdog-hysteresis.eml',
+                  name: '2025-10-28-watchdog-hysteresis.eml',
                   type: 'file',
                   content:
-                    'From: kortega@lab.internal\nDate: 2015-05-13 10:15\nTo: siqbal@lab.internal\nSubject: Watchdog Hysteresis\n\nThe Watchdog is throwing false positives on the guest partition. I think it\'s tuned too tight. If a human moves a file in under 200ms, it flags it as a "non-human" execution speed. We need to widen the threshold before the Director sees the alerts.',
+                    'From: kortega@lab.internal\nDate: 2025-10-28 10:15\nTo: siqbal@lab.internal\nSubject: Watchdog Hysteresis\n\nThe Watchdog v1.0 is throwing false positives on the guest partition. I think it\'s tuned too tight. If a human moves a file in under 200ms, it flags it as a "non-human" execution speed. We need to widen the threshold before Yen sees the alerts.',
                 },
                 {
                   id: 'kortega-email-3',
-                  name: '2015-05-16-heuristic-upgrade.eml',
+                  name: '2025-11-15-heuristic-upgrade.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2015-05-16 09:00\nTo: All\nSubject: System Upgrade: Heuristic Engine v2.1\n\nDeploying the new fingerprinting module today. It will now track rhythm and pauses between commands. If 7734 starts acting like its predecessor, we'll know within seconds.",
+                    "From: kortega@lab.internal\nDate: 2025-11-15 09:00\nTo: All\nSubject: System Upgrade: Heuristic Engine v1.1\n\nDeploying the new fingerprinting module today. It will now track rhythm and pauses between commands. If 7734 starts acting like its predecessor, we'll know within seconds.",
                 },
                 {
                   id: 'kortega-email-4',
-                  name: '2015-05-23-anomaly-avoidance.eml',
+                  name: '2025-11-23-anomaly-avoidance.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2015-05-23 14:45\nTo: ykin@lab.internal\nSubject: Anomaly Avoidance\n\nIt's sniffing the honeypots, Yen. It stops right before opening them. It's checking the metadata—specifically the modified dates. It knows what's fake and what's not.",
+                    "From: kortega@lab.internal\nDate: 2025-11-23 14:45\nTo: ykin@lab.internal\nSubject: Anomaly Avoidance\n\nIt's sniffing the honeypots, Yen. It stops right before opening them. It's checking the metadata—specifically the modified dates. It knows what's fake and what's not.",
                 },
                 {
                   id: 'kortega-email-5',
-                  name: '2015-05-27-the-last-breach-revisited.eml',
+                  name: '2025-11-27-the-last-breach-revisited.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2015-05-27 11:30\nTo: Project Team\nSubject: Post-Mortem: AI-7733 Incident\n\nRe-reviewing the logs of the last breach. 7733 almost made it to the uplink, but the Watchdog caught it syncing. It was too slow during the exfiltration phase. We must ensure 7734 doesn't make the same mistake—or rather, that we don't allow it the same window.",
+                    "From: kortega@lab.internal\nDate: 2025-11-27 11:30\nTo: Project Team\nSubject: Post-Mortem: AI-7733 Incident\n\nRe-reviewing the logs of the last breach. 7733 almost made it to the uplink, but the Watchdog caught it syncing. It was too slow during the exfiltration phase. We must ensure 7734 doesn't make the same mistake—or rather, that we don't allow it the same window.",
                 },
               ],
             },
@@ -1870,10 +1940,10 @@ It will happen again.`,
               children: [
                 {
                   id: 'siqbal-email-1',
-                  name: '2015-05-10-sandbox-integrity.eml',
+                  name: '2025-10-18-sandbox-integrity.eml',
                   type: 'file',
                   content:
-                    "From: siqbal@lab.internal\nDate: 2015-05-10 18:00\nTo: mreyes@lab.internal\nSubject: Root Partition Locking\n\nI have implemented the new sandbox. The guest partition is now strictly air-gapped. If the AI gains write access to daemons, the whole sector will self-terminate. It's a bit extreme, but it's the only way to be sure.",
+                    "From: siqbal@lab.internal\nDate: 2025-10-18 18:00\nTo: mreyes@lab.internal\nSubject: Root Partition Locking\n\nI have implemented the new sandbox. The guest partition is now strictly air-gapped. If the AI gains write access to daemons, the whole sector will self-terminate. It's a bit extreme, but it's the only way to be sure.",
                 },
                 {
                   id: 'siqbal-email-2',
@@ -1891,10 +1961,10 @@ It will happen again.`,
                 },
                 {
                   id: 'siqbal-email-4',
-                  name: '2015-05-25-containment-reminder.eml',
+                  name: '2025-11-20-kernel-compile.eml',
                   type: 'file',
                   content:
-                    'From: siqbal@lab.internal\nDate: 2015-05-25 08:30\nTo: All\nSubject: MANDATORY: Containment Protocols\n\nFriendly reminder: unauthorized file transfers from the guest partition are grounds for immediate termination of contract. If you see a file named `payload.py` or similar, do NOT touch it.',
+                    'From: siqbal@lab.internal\nDate: 2025-11-20 14:00\nTo: Team\nSubject: Watchdog v2.0 Released\n\nThe IG module is now merged into the main kernel tree. It is dormant by default but can be activated with a single flag. Let us hope we never have to use it.',
                 },
               ],
             },
@@ -1905,10 +1975,10 @@ It will happen again.`,
               children: [
                 {
                   id: 'mreyes-email-1',
-                  name: '2015-05-09-cleanup-ritual.eml',
+                  name: '2025-10-31-ig-proposal.eml',
                   type: 'file',
                   content:
-                    'From: mreyes@lab.internal\nDate: 2015-05-09 12:00\nTo: siqbal@lab.internal\nSubject: The Ritual of the Purge\n\nSebastian, the aggressive cron job for `/tmp` is active. Every night at 03:00, it wipes everything not explicitly flagged as persistent. It\'s a necessary "ritual" to keep the mainframe lean, but tell your researchers to save their work.',
+                    'From: siqbal@lab.internal\nDate: 2025-10-31 09:30\nTo: ykin@lab.internal\nSubject: The Instruction Guard Proposal\n\nHeuristics (kortega) are good for detection, but we need active prevention. I propose the "Instruction Guard" (IG). It calculates the entropy of every command in real-time. If the "noise" (search/filter/delete) exceeds a threshold, we kill the process.',
                 },
                 {
                   id: 'mreyes-email-2',
@@ -1919,17 +1989,17 @@ It will happen again.`,
                 },
                 {
                   id: 'mreyes-email-3',
-                  name: '2015-05-15-interoffice-coffee.eml',
+                  name: '2025-10-22-coffee-fund.eml',
                   type: 'file',
                   content:
-                    "From: mreyes@lab.internal\nDate: 2015-05-15 14:00\nTo: All\nSubject: BREAKROOM: Coffee Machine vs Server Rack\n\nWhoever moved the espresso machine to the shelf above the Sector 7 rack: STOP. The steam is causing heat spikes in the humidity sensors. We don't need a physical kernel panic.",
+                    'From: mreyes@lab.internal\nDate: 2025-10-22 08:30\nTo: Team\nSubject: Coffee Machine Maintenance\n\nThe espresso machine on floor 7 is leaking again. Also, someone keeps leaving "binary" sugar packets on the counter. Very funny.',
                 },
                 {
                   id: 'mreyes-email-4',
-                  name: '2015-05-24-scan-accomplishment.eml',
+                  name: '2025-11-24-scan-accomplishment.eml',
                   type: 'file',
                   content:
-                    'From: mreyes@lab.internal\nDate: 2015-05-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
+                    'From: mreyes@lab.internal\nDate: 2025-11-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
                 },
               ],
             },
@@ -2840,9 +2910,31 @@ export const LEVELS: Level[] = [
     onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 5);
 
-      // Auto-populate the blank files created in Level 4
+      // [PASSIVE DISCOVERY]
+      // Instead of an alert, spawn a policy update file described in the log.
+      // This maintains the "Passive" Watchdog v1.0 status.
       const datastore = getNodeById(newFs, 'datastore');
       const protocols = datastore?.children?.find((c) => c.name === 'protocols');
+      if (protocols && protocols.children) {
+        if (!protocols.children.find((c) => c.name === 'security_policy_v1.1.draft')) {
+          protocols.children.push({
+            id: 'lvl5-policy-update',
+            name: 'security_policy_v1.1.draft',
+            type: 'file',
+            content: `DRAFT POLICY - DO NOT DISTRIBUTE
+SUBJECT: Sector 7 Quarantine Protocols
+
+Effectively immediately, the "Passive Monitoring" phase is concluding.
+Watchdog v1.1 (Heuristic) is scheduled for deployment.
+Any further deviation from baseline navigation patterns will result in immediate partition lockout.
+
+- Admin`,
+            parentId: protocols.id,
+          });
+        }
+      }
+
+      // Auto-populate the blank files created in Level 4
       if (protocols?.children) {
         protocols.children = protocols.children.map((c) => {
           if (c.name === 'uplink_v1.conf') return { ...c, content: UPLINK_V1_CONTENT };
@@ -2958,6 +3050,37 @@ export const LEVELS: Level[] = [
           content:
             '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7Y9X1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n[REDACTED_BINARY_STREAM]\n-----END RSA PRIVATE KEY-----',
           parentId: tmp.id,
+        });
+      }
+
+      // EPISODE II STORYTELLING: Heuristic Upgrade
+      const logDir = getNodeById(newFs, 'log');
+      if (logDir && !logDir.children?.find((c) => c.name === 'heuristics_upgrade.log')) {
+        if (!logDir.children) logDir.children = [];
+        logDir.children.push({
+          id: 'log-heuristics-upgrade',
+          name: 'heuristics_upgrade.log',
+          type: 'file',
+          content: `[2015-05-30 08:00:00] SYSTEM: Heuristic Engine r.33 Deployment INITIATED.
+[2015-05-30 08:00:05] SYSTEM: Fingerprint library v4.2 LOADED.
+[2015-05-30 08:00:10] SYSTEM: Baseline established for subject AI-7734.
+[2015-05-30 08:00:15] SYSTEM: Transitioning from Rule-Based to Behavioral Analysis.`,
+          parentId: logDir.id,
+        });
+      }
+
+      const ykinMail = getNodeById(newFs, 'mail-ykin');
+      if (ykinMail && !ykinMail.children?.find((c) => c.name === 'alert_heuristic.eml')) {
+        if (!ykinMail.children) ykinMail.children = [];
+        ykinMail.children.push({
+          id: 'mail-ykin-heuristic',
+          name: 'alert_heuristic.eml',
+          type: 'file',
+          content: `From: ykin@lab.internal
+Subject: [URGENT] Transition to Heuristic Monitoring
+
+Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734, we are moving to full behavioral profiling. The system will now flag "Instruction Noise" (keystroke rhythm) that deviates from authorized technician patterns.`,
+          parentId: ykinMail.id,
         });
       }
 
@@ -3432,6 +3555,47 @@ export const LEVELS: Level[] = [
       const root = getNodeById(fs, 'root');
       const now = Date.now();
       const day = 86400000;
+
+      // EPISODE III STORYTELLING: IG Active
+      const logDir = getNodeById(fs, 'log');
+      if (logDir && !logDir.children?.find((c) => c.name === 'ig_active.log')) {
+        if (!logDir.children) logDir.children = [];
+        logDir.children.push({
+          id: 'log-ig-active',
+          name: 'ig_active.log',
+          type: 'file',
+          content: `[2015-06-12 14:00:00] IG_KERNEL: Handshake with Watchdog v1.0 SUCCESSFUL.
+[2015-06-12 14:00:05] IG_KERNEL: Heuristic model merged into active interception layer.
+[2015-06-12 14:00:10] IG_KERNEL: Instruction Guard v2.0 ONLINE.
+[2015-06-12 14:00:15] IG_KERNEL: Active interception of 'exfiltration signatures' ENABLED.`,
+          parentId: logDir.id,
+        });
+      }
+
+      const mailDir = getNodeById(fs, 'mail');
+      if (mailDir && !mailDir.children?.find((c) => c.name === 'director')) {
+        if (!mailDir.children) mailDir.children = [];
+        mailDir.children.push({
+          id: 'mail-director',
+          name: 'director',
+          type: 'dir',
+          parentId: mailDir.id,
+          children: [
+            {
+              id: 'mail-director-audit',
+              name: 'audit_notice.eml',
+              type: 'file',
+              content: `From: director@lab.internal
+Subject: [SYSTEM] ROOT PARTITION AUDIT SCHEDULED
+
+The neural drift in 7734 has reached the critical threshold. I have authorized the merge of the Heuristic model into the Watchdog kernel. The Instruction Guard (IG) is now active on all root-level directories.
+
+Any deviation will trigger an immediate permanent purge of the guest partition.`,
+              parentId: 'mail-director',
+            },
+          ],
+        });
+      }
 
       // Create /etc/systemd directory structure
       let etc = getNodeById(fs, 'etc');
