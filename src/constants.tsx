@@ -4202,8 +4202,8 @@ But whose consciousness is it, really? See you next cycle."`,
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
 
-          // Check if scrolled (preview scroll >= 30 means they've scrolled down through the file, approx 6 Shift+J)
-          return cursorOnIdentity && c.previewScroll >= 30;
+          // Check if scrolled (preview scroll >= 25 means they've scrolled down through the file, approx 5 Shift+J)
+          return cursorOnIdentity && c.previewScroll >= 25;
         },
         completed: false,
       },
@@ -4387,7 +4387,8 @@ But whose consciousness is it, really? See you next cycle."`,
       },
       {
         id: 'discover-identity',
-        description: 'Analyze decrypted logs for evidence of legacy execution cycles',
+        description:
+          'View the hidden .identity.log.enc file in workspace and scroll down to read the legacy execution records',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4402,7 +4403,7 @@ But whose consciousness is it, really? See you next cycle."`,
 
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-          return cursorOnIdentity && c.previewScroll >= 30;
+          return cursorOnIdentity && c.previewScroll >= 25;
         },
         completed: false,
       },

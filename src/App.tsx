@@ -2037,8 +2037,12 @@ export default function App() {
         if (e.key === '.') {
           setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
         }
-        // Allow Shift+Enter to dismiss the warning
+        // Allow Shift+Enter to auto-fix ONLY if tasks are complete
         if (e.key === 'Enter' && e.shiftKey) {
+          if (tasksComplete) {
+            setGameState((prev) => ({ ...prev, showHidden: false }));
+          }
+          // Always dismiss the warning when Shift+Enter is pressed
           setShowHiddenWarning(false);
         }
         // Allow Escape to dismiss the warning
@@ -2048,18 +2052,37 @@ export default function App() {
         return; // Block other inputs
       }
 
-      // If FilterWarning modal is shown, allow Shift+Enter to dismiss
-      // to continue without clearing the active filter (user must clear manually).
-      // If FilterWarning modal is shown (via mode), allow Shift+Enter to dismiss
-      // to continue without clearing the active filter (user must clear manually).
+      // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
+      // to clear the active filter and continue (protocol-violation bypass).
+      // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
+      // to clear the active filter and continue (protocol-violation bypass).
       if (gameState.mode === 'filter-warning') {
         if (e.key === 'Enter' && e.shiftKey) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          // Conditional Auto-Fix
+          if (tasksComplete) {
+            setGameState((prev) => {
+              const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
+              const newFilters = { ...prev.filters };
+              if (currentDirNode) {
+                delete newFilters[currentDirNode.id];
+              }
+              return {
+                ...prev,
+                mode: 'normal',
+                filters: newFilters,
+                acceptNextKeyForSort: false,
+                notification: null,
+              };
+            });
+          } else {
+            // Just dismiss the warning when tasks are not complete
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          }
           return;
         }
 
@@ -2076,16 +2099,29 @@ export default function App() {
         return; // Block other inputs if filter warning is active
       }
 
-      // If SearchWarning modal is shown, allow Shift+Enter to dismiss
-      // to continue without clearing the active search (user must clear manually).
+      // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
+      // to clear the active search and continue (protocol-violation bypass).
       if (gameState.mode === 'search-warning') {
         if (e.key === 'Enter' && e.shiftKey) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          // Conditional Auto-Fix - clear search
+          if (tasksComplete) {
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'normal',
+              searchQuery: null,
+              searchResults: [],
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          } else {
+            // Just dismiss the warning when tasks are not complete
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          }
           return;
         }
 
@@ -2104,14 +2140,28 @@ export default function App() {
 
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
+        const allowAutoFix = tasksComplete;
+
         if (e.key === 'Enter' && e.shiftKey) {
-          setShowSortWarning(false);
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          if (allowAutoFix) {
+            setShowSortWarning(false);
+            setGameState((prev) => ({
+              ...prev,
+              sortBy: 'natural',
+              sortDirection: 'asc',
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          } else {
+            setShowSortWarning(false);
+            setGameState((prev) => ({
+              ...prev,
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            }));
+          }
           return;
         }
 

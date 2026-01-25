@@ -44,13 +44,20 @@ export const SortWarningModal: React.FC<SortWarningModalProps> = ({
             </div>
           </div>
           <div className="w-full flex justify-center mt-4">
-            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-              Press{' '}
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                Shift+Enter
-              </span>
-              to continue...
-            </p>
+            {_allowAutoFix ? (
+              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+                Press{' '}
+                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                  Shift+Enter
+                </span>
+                to continue...
+              </p>
+            ) : (
+              <p className="text-zinc-500 text-sm font-mono tracking-wide">
+                Press <span className="font-bold text-zinc-300">Esc</span> to dismiss and fix
+                manually.
+              </p>
+            )}
           </div>
         </div>
       </div>

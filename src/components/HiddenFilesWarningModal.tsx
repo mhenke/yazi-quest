@@ -6,7 +6,7 @@ interface HiddenFilesWarningModalProps {
 }
 
 export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = ({
-  allowAutoFix,
+  allowAutoFix: _allowAutoFix,
 }) => {
   return (
     <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -38,20 +38,26 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
               <p className="text-zinc-300 text-xs font-mono">
                 Press{' '}
                 <span className="text-yellow-400 font-bold">
-                  {allowAutoFix ? 'Shift+Enter' : '.'}
+                  {_allowAutoFix ? 'Shift+Enter' : '.'}
                 </span>{' '}
-                to {allowAutoFix ? 'autofix' : 'conceal hidden files'}.
+                to {_allowAutoFix ? 'autofix' : 'conceal hidden files'}.
               </p>
             </div>
           </div>
           <div className="w-full flex justify-center mt-4">
-            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-              Press{' '}
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                Shift+Enter
-              </span>
-              to continue...
-            </p>
+            {_allowAutoFix ? (
+              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+                Press{' '}
+                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                  Shift+Enter
+                </span>
+                to continue...
+              </p>
+            ) : (
+              <p className="text-zinc-300 text-xs font-mono">
+                Press <span className="text-yellow-400 font-bold">.</span> to conceal hidden files.
+              </p>
+            )}
           </div>
         </div>
       </div>
