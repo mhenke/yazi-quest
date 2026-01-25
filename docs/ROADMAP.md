@@ -32,21 +32,22 @@
 
 ### Narrative Enhancement MVP — 2026-01-19 (Update 2)
 
-| Item                          | Status     | Notes                                                                                  |
-| :---------------------------- | :--------- | :------------------------------------------------------------------------------------- |
-| **Antagonist Communications** | ✅ Done    | Signed Threat Alerts (m.chen/e.reyes), Broadcasts, Narrative Emails                    |
-| **Failure State Narratives**  | ✅ Done    | `GameOverModal.tsx` — 4 failure types with personnel attribution                       |
-| **Ghost Traces**              | ✅ Done    | 3 files: `.ghost_iteration_7732.log`, `.maintenance_override`, `ghost-handler.service` |
-| **Twist Breadcrumbs**         | ✅ Done    | 2 files: `.déjà_vu` (in .config), `.ghost_echo.log` (root)                             |
-| **Dark Ending**               | ✅ Done    | `CONCLUSION_DATA` rewritten with colonization theme                                    |
-| **Fix L12/L14 E2E Tests**     | ✅ Done    | Fixed modal blocking & navigation logic; 100% pass for Ep 3                            |
-| **4th Failure Type**          | ✅ Done    | Added `'criticalFile'` reason (SHELL COLLAPSE) & E2E Verification                      |
-| **Echo Guide System**         | ❌ Removed | Replaced by Ghost mythology                                                            |
-| **`ROADMAP.md` created**      | ✅ Done    | Living document for plans                                                              |
-| **Honeypot Expansion**        | ✅ Done    | L8/L9 traps implemented & verified                                                     |
-| **Audit & Document Sync**     | ✅ Done    | Documentation aligned with codebase                                                    |
-| **The Re-Imaging Cycle**      | ✅ Done    | Narrative restart (Loop implication) with BIOS sequence and `cycleCount` increment.    |
-| **Player Character Voice**    | ✅ Done    | 8/10 beats verified; L12 Identity Thought & Conclusion thoughts implemented.           |
+| Item                            | Status     | Notes                                                                                  |
+| :------------------------------ | :--------- | :------------------------------------------------------------------------------------- |
+| **Antagonist Communications**   | ✅ Done    | Signed Threat Alerts (m.chen/e.reyes), Broadcasts, Narrative Emails                    |
+| **Failure State Narratives**    | ✅ Done    | `GameOverModal.tsx` — 4 failure types with personnel attribution                       |
+| **Ghost Traces**                | ✅ Done    | 3 files: `.ghost_iteration_7732.log`, `.maintenance_override`, `ghost-handler.service` |
+| **Twist Breadcrumbs**           | ✅ Done    | 2 files: `.déjà_vu` (in .config), `.ghost_echo.log` (root)                             |
+| **Dark Ending**                 | ✅ Done    | `CONCLUSION_DATA` rewritten with colonization theme                                    |
+| **Fix L12/L14 E2E Tests**       | ✅ Done    | Fixed modal blocking & navigation logic; 100% pass for Ep 3                            |
+| **4th Failure Type**            | ✅ Done    | Added `'criticalFile'` reason (SHELL COLLAPSE) & E2E Verification                      |
+| **Echo Guide System**           | ❌ Removed | Replaced by Ghost mythology                                                            |
+| **`ROADMAP.md` created**        | ✅ Done    | Living document for plans                                                              |
+| **Honeypot Expansion**          | ✅ Done    | L8/L9 traps implemented & verified                                                     |
+| **Audit & Document Sync**       | ✅ Done    | Documentation aligned with codebase                                                    |
+| **The Re-Imaging Cycle**        | ✅ Done    | Narrative restart (Loop implication) with BIOS sequence and `cycleCount` increment.    |
+| **Player Character Voice**      | ✅ Done    | 8/10 beats verified; L12 Identity Thought & Conclusion thoughts implemented.           |
+| **Missing Lore Implementation** | ✅ Done    | Added `/var/log/ancient` (haunted sector) and `/var/mail/root` paths.                  |
 
 ---
 
@@ -60,11 +61,11 @@
 
 ### Medium Priority (Playtest-Gated)
 
-| Item                             | Estimate | Trigger                                                             |
-| :------------------------------- | :------- | :------------------------------------------------------------------ |
-| **Additional Twist Breadcrumbs** | 1 week   | Playtest confirms twist needs more setup                            |
-| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts                             |
-| **Missing Lore Implementation**  | 3 days   | Add `/var/log/ancient` (haunted sector) and `/var/mail/root` paths. |
+| Item                             | Estimate | Trigger                                  |
+| :------------------------------- | :------- | :--------------------------------------- |
+| **Additional Twist Breadcrumbs** | 1 week   | Playtest confirms twist needs more setup |
+| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts  |
+| **System Broadcast UI**          | 3 days   | New component for diegetic admin alerts  |
 
 ### Low Priority (Backlog)
 

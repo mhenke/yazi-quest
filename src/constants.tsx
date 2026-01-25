@@ -2647,7 +2647,7 @@ export const LEVELS: Level[] = [
     description:
       "The Watchdog has logged your activity. A 'watcher_agent.sys' process is now active in your staging directory, monitoring for further anomalies. You must find it, inspect it, and terminate it. First, gather intel from the logs.",
     initialPath: ['root', 'var'],
-    hint: "Navigate to '/var/log' to find 'watchdog.log'. Then use 'gi' to jump to '~/incoming' to find the agent. Use 'Tab' to inspect file metadata. Use 'd' then 'y' to delete.",
+    hint: "Navigate to '/var/log' to find 'watchdog.log'. Then use 'gi' to jump to '~/incoming' to find the agent. Use 'Tab' to inspect file metadata. Use 'd' to delete.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['i', 'r'],
     tasks: [

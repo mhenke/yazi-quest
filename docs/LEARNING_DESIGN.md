@@ -106,13 +106,13 @@ Yazi Quest follows a strict dependency chain. We do not introduce a tool until t
 
 _Goal: Build muscle memory for atomic operations._
 
-| Level  | Skill Introduced  | Why here?                                                    | Why not earlier?                                            |
-| :----- | :---------------- | :----------------------------------------------------------- | :---------------------------------------------------------- |
-| **L1** | `j/k` (Nav)       | The atom of interaction. Nothing else works without it.      | N/A                                                         |
-| **L2** | `d` (Delete)      | Immediate gratification; agency. ~Consolidated Tasks (L2.1)~ | Needs navigation first.                                     |
-| **L3** | `Space` (Select)  | Pre-requisite for batch operations.                          | Single-file operations (L2) are simpler to model first.     |
-| **L4** | `x/p` (Cut/Paste) | The first "transport" mechanic.                              | Requires selection (L3) to be meaningful.                   |
-| **L5** | `gg/G` (Jump)     | ~Retention Checkpoint~: Explicit hints removed.              | In L1-4, lists were short enough that `j/k` was sufficient. |
+| Level  | Skill Introduced  | Why here?                                                                                          | Why not earlier?                                        |
+| :----- | :---------------- | :------------------------------------------------------------------------------------------------- | :------------------------------------------------------ |
+| **L1** | `j/k` (Nav)       | The atom of interaction. Nothing else works without it.                                            | N/A                                                     |
+| **L2** | `d` (Delete)      | Immediate gratification; agency. ~Consolidated Tasks (L2.1)~                                       | Needs navigation first.                                 |
+| **L3** | `Space` (Select)  | Pre-requisite for batch operations.                                                                | Single-file operations (L2) are simpler to model first. |
+| **L4** | `x/p` (Cut/Paste) | The first "transport" mechanic.                                                                    | Requires selection (L3) to be meaningful.               |
+| **L5** | Batch Operations  | ~Retention Checkpoint~: Explicit hints removed. Requires `Space` (Select), `x` (Cut), `p` (Paste). | In L1-4, operations were single-file. L5 demands scale. |
 
 ### Episode II: The "Efficiency" Phase (Levels 6–10)
 

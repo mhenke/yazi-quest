@@ -96,7 +96,7 @@ Upon completing the final transmission in Level 15, the system undergoes a hard 
 Episode I — Awakening
 
 - L1: System Awakening — Basic navigation and discovery.
-- L2: Threat Neutralization — **Consolidated Tasks:** Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d, y`) active Compliance Daemons.
+- L2: Threat Neutralization — **Consolidated Tasks:** Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d`) active Compliance Daemons.
 - L3: Data Harvest — Use filters to find key artifacts; learn legacy of AI-7733.
 - L4: Uplink Establishment — Copy/relocate protocol files into vaults.
 - L5: Containment Breach — **Retention Checkpoint:** Navigate/Batch operations without explicit key hints.
