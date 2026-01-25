@@ -354,7 +354,6 @@ export async function assertTask(
     const fullPath = path.join(evidenceDir, filename);
 
     await page.screenshot({ path: fullPath });
-    // console.log(`Screenshot captured: ${fullPath}`);
   }
 }
 

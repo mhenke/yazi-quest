@@ -74,7 +74,6 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 export default function App() {
-  console.log('App component rendered');
   const [gameState, setGameState] = useState<GameState>(() => {
     // 1. Initialize Completed Tasks State
     const completedTaskIds: Record<number, string[]> = {};
@@ -464,9 +463,6 @@ export default function App() {
         if (gameState.searchQuery) {
           // Apply sorting to search results
           let results = gameState.searchResults;
-          console.log(
-            `[DEBUG] visibleItems: searchQuery='${gameState.searchQuery}' results=${results.length} first=${results[0]?.name}`
-          );
 
           // Apply filter on search results if active (search -> filter chaining)
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
@@ -544,7 +540,6 @@ export default function App() {
         ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
         : [];
 
-      console.log('handleSearchConfirm: query=', query, 'results found=', results.length);
       setGameState((prev) => ({
         ...prev,
         mode: 'normal',
@@ -923,7 +918,6 @@ export default function App() {
     // Removal: Narrative thoughts now trigger at start or mid-level, not on last task.
 
     if (changed) {
-      console.log('DEBUG: Tasks changed. Newly completed:', newlyCompleted);
       setGameState((prev) => {
         // ... existing update code ...
         let updates: Partial<GameState> = {
@@ -1001,34 +995,18 @@ export default function App() {
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
-      console.log('[DEBUG] Completion Check:', {
-        level: currentLevel.id,
-        tasksComplete,
-        isSortDefault,
-        isFilterClear,
-        currentDir: currentDirNode?.id,
-        filters: gameState.filters,
-        showHidden: gameState.showHidden,
-        showSuccessToast,
-        showEpisodeIntro: gameState.showEpisodeIntro,
-        mode: gameState.mode,
-      });
-
       // Determine if filters are clear
       // currentDirNode and isFilterClear already declared above
 
       // Check violations - show auto-fix warnings for final task
       // Priority: Hidden > Sort > Filter
       if (gameState.showHidden) {
-        console.log('[DEBUG] Hiding SuccessToast due to showHidden');
         setShowHiddenWarning(true);
         setShowSuccessToast(false);
       } else if (!isSortDefault) {
-        console.log('[DEBUG] Hiding SuccessToast due to Sort');
         setShowSortWarning(true);
         setShowSuccessToast(false);
       } else if (!isFilterClear) {
-        console.log('[DEBUG] Hiding SuccessToast due to Filter');
         if (gameState.mode !== 'filter-warning') {
           setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
         }
@@ -1041,24 +1019,12 @@ export default function App() {
           setGameState((prev) => ({ ...prev, mode: 'normal' }));
         }
 
-        console.log('[DEBUG] Success Path Reached!', {
-          showSuccessToast,
-          showEpisodeIntro: gameState.showEpisodeIntro,
-        });
-
         if (!showSuccessToast && !gameState.showEpisodeIntro) {
-          console.log('[DEBUG] Setting showSuccessToast = TRUE');
           playSuccessSound(gameState.settings.soundEnabled);
           setShowSuccessToast(true);
         }
       }
     } else {
-      console.log('[DEBUG] Tasks NOT Complete', {
-        level: currentLevel.id,
-        tasksComplete,
-        completedIds: gameState.completedTaskIds[currentLevel.id],
-        allTaskIds: currentLevel.tasks.map((t) => t.id),
-      });
       // Tasks not complete - only clear warnings if user manually fixed the issue
       // Don't trigger new warnings here (handled by navigation handlers)
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
@@ -2025,9 +1991,6 @@ export default function App() {
           e.preventDefault();
           advanceLevel();
         }
-        if (e.key === 'Escape') {
-          setShowSuccessToast(false);
-        }
         return; // Block all other keys
       }
 
@@ -2102,16 +2065,6 @@ export default function App() {
       // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
       // to clear the active filter and continue (protocol-violation bypass).
       if (gameState.mode === 'filter-warning') {
-        if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
-          return;
-        }
-
         if (e.key === 'Enter' && e.shiftKey) {
           // Conditional Auto-Fix
           if (tasksComplete) {
@@ -2139,16 +2092,6 @@ export default function App() {
       // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
       // to clear the active search and continue (protocol-violation bypass).
       if (gameState.mode === 'search-warning') {
-        if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
-          return;
-        }
-
         if (e.key === 'Enter' && e.shiftKey) {
           // Conditional Auto-Fix - clear search
           if (tasksComplete) {
@@ -2170,20 +2113,6 @@ export default function App() {
       // If SortWarningModal is visible, handle specific sort commands or Escape
       if (showSortWarning) {
         const allowAutoFix = tasksComplete;
-
-        if (e.key === 'Escape') {
-          // Escape just closes the modal, does NOT fix the sort (unless user did it manually)
-          // Actually, standard behavior for Escape in dialogs is just to close.
-          // But here, if we close it, the violation persists.
-          // If we are mid-level, that's fine, user continues.
-          // If we are end-level, the loop will re-trigger it?
-          // The loop runs on 'changed' or 'App' render? No, usually in effect.
-          // App effect runs on [gameState, ...].
-          // If we just setShowSortWarning(false), and don't change state, the effect might not re-run immediately
-          // to show it again, giving user time to fix it.
-          setShowSortWarning(false);
-          return;
-        }
 
         if (e.key === 'Enter' && e.shiftKey) {
           if (allowAutoFix) {

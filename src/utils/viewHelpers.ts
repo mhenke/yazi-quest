@@ -73,7 +73,6 @@ export const getRecursiveSearchResults = (
       // Check if file matches query
       const nameMatch = child.name.toLowerCase().includes(lowerQuery);
       if (child.type === 'file' && nameMatch) {
-        console.log(`[DEBUG] SEARCH MATCH FILE: ${child.name} query=${lowerQuery}`);
         // Clone node and add displayPath for showing full relative path
         results.push({ ...child, displayPath: relativePath, path: currentIdPath });
       }

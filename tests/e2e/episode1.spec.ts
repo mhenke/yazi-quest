@@ -34,8 +34,7 @@ test.describe('Episode 1: AWAKENING', () => {
     test(`Level 1: SYSTEM AWAKENING - completes all navigation tasks`, async ({
       page,
     }, testInfo) => {
-      // Enable console logging
-      page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
+      await startLevel(page, 1, { intro: false });
 
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
       await navigateDown(page, 1);

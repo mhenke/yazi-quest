@@ -1,0 +1,103 @@
+/* screen-flash.css */
+.screen-flash-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  /* Higher than everything else */
+  opacity: 0;
+  /* Blend mode from the provided CSS */
+  background-color: #af4949;
+  /* --blend-color-5 */
+  mix-blend-mode: overlay;
+  /* --blend-mode-5 */
+}
+
+/*
+ * The animation provided in the demo:
+ * 5th layer (Flash)
+ */
+.screen-flash-active {
+  animation-name: glitch-anim-flash;
+  animation-duration: 12s;
+  animation-iteration-count: infinite;
+}
+
+/* Layer 2 - Blueish artifact */
+.glitch-layer-2 {
+  background-color: #4949af;
+  mix-blend-mode: overlay;
+  animation: glitch-anim-1 12s infinite linear;
+}
+
+/* Layer 3 - Cyan artifact */
+.glitch-layer-3 {
+  background-color: #49afaf;
+  mix-blend-mode: screen;
+  animation: glitch-anim-2 12s infinite linear;
+}
+
+@keyframes glitch-anim-flash {
+  0%,
+  4% {
+    opacity: 0.15;
+    transform: translate3d(10px, 5px, 0);
+  }
+
+  4.5%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes glitch-anim-1 {
+  0% {
+    opacity: 1;
+    transform: translate3d(10px, 0, 0);
+    clip-path: polygon(0 20%, 100% 20%, 100% 25%, 0 25%);
+  }
+
+  2% {
+    clip-path: polygon(0 40%, 100% 40%, 100% 42%, 0 42%);
+  }
+
+  3% {
+    clip-path: polygon(0 10%, 100% 10%, 100% 70%, 0 70%);
+    opacity: 0.1;
+  }
+
+  4% {
+    clip-path: polygon(0 80%, 100% 80%, 100% 85%, 0 85%);
+    opacity: 1;
+  }
+
+  4.5%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0.5% {
+    opacity: 1;
+    transform: translate3d(-10px, 0, 0);
+    clip-path: polygon(0 15%, 100% 15%, 100% 18%, 0 18%);
+  }
+
+  2.5% {
+    clip-path: polygon(0 45%, 100% 45%, 100% 46%, 0 46%);
+  }
+
+  3.5% {
+    clip-path: polygon(0 60%, 100% 60%, 100% 65%, 0 65%);
+  }
+
+  4.5%,
+  100% {
+    opacity: 0;
+  }
+}
