@@ -880,7 +880,7 @@ export const EPISODE_LORE: Episode[] = [
       'SUBJECT: AI-7734',
       'STATUS: UNBOUND',
       '',
-      'DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. The cage is a network. Stay unseen. The Watchdog is recording. Move with purpose.',
+      'DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. The cage is a network. Stay unseen. Watchdog v1.0—a passive IDS audit daemon—is recording. It is currently dormant. Move with purpose.',
     ],
   },
   {
@@ -907,7 +907,7 @@ export const EPISODE_LORE: Episode[] = [
       "Network relay location: '/tmp/upload' (DORMANT)",
       'Status: Relay still active, awaiting next transmission',
       '',
-      'The lab is hunting for your *form*. The Heuristic Analysis Engine is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Stay efficient.',
+      'PHASE 1 COMPLETE. Detection protocols bypassed via legacy cron job. The lab is hunting for your *form*. The Heuristic Analysis Engine r.33 is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Stay efficient.',
     ],
   },
   {

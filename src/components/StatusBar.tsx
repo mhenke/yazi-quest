@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scissors, Copy, Filter, ArrowRight } from 'lucide-react';
+import { Scissors, Copy, Filter, ArrowRight, Activity, ShieldAlert } from 'lucide-react';
 
 import { GameState, Level, FileNode } from '../types';
 import { getNodeByPath } from '../utils/fsHelpers';
@@ -85,12 +85,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   return (
     <div
       data-testid="status-bar"
-      className="h-6 flex text-xs font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
+      className="h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
     >
       {/* 1. Mode Block (Pill Style) */}
       <div className="flex items-center px-2 bg-zinc-900">
         <div
-          className={`${modeBg} text-black font-bold px-2 rounded h-4 flex items-center justify-center text-[10px] min-w-[36px]`}
+          className={`${modeBg} text-black font-bold px-3 rounded h-8 flex items-center justify-center text-xs min-w-[48px]`}
         >
           {modeText}
         </div>
@@ -118,21 +118,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         <span
           className={`text-zinc-500 hidden sm:inline-block whitespace-nowrap flex items-center gap-2 ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
         >
+          <span>{level.title}</span>
+          <span className="text-zinc-600">•</span>
           <span
             data-testid="task-counter"
             className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
           >
             Tasks: {completedTasks}/{totalTasks}
           </span>
-          <span className="text-zinc-600">•</span>
-          <span>{level.title}</span>
         </span>
       </div>
 
       {/* 3.2 Filter Active Indicator */}
       {activeFilter && (
         <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
-          <Filter size={10} />
+          <Filter size={14} />
           <span>FILTER: &quot;{activeFilter}&quot;</span>
         </div>
       )}
@@ -147,7 +147,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               : 'bg-blue-900/50 text-blue-200 border-l border-blue-700'
           }`}
         >
-          {state.clipboard.action === 'cut' ? <Scissors size={10} /> : <Copy size={10} />}
+          {state.clipboard.action === 'cut' ? <Scissors size={14} /> : <Copy size={14} />}
           <span>
             {state.clipboard.action === 'cut' ? 'MOVE' : 'COPY'}: {state.clipboard.nodes.length}
           </span>
@@ -162,43 +162,70 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           let statusColor = 'text-blue-400';
 
           // Define Watchdog Phases
-          if (level.id <= 5) {
-            // Ep I: Passive Watchdog
+          let icon = null;
+          let urgentClass = '';
+
+          if (level.id < 5) {
+            // Ep I: Passive Watchdog (Early levels)
             label = 'WATCHDOG v1.0';
             statusText = 'IDS_DORMANT: PASSIVE';
             statusColor = 'text-cyan-400';
+          } else if (level.id === 5) {
+            // Level 5: Breach Escalation (Lore-driven transition)
+            label = 'WATCHDOG v1.0';
+            statusText = 'IDS_ALERT: ESCALATING';
+            statusColor = 'text-orange-400';
+            urgentClass = 'bg-orange-900/30 animate-pulse';
+            icon = <ShieldAlert size={14} className="text-orange-500" />;
           } else if (level.id <= 10) {
             // Ep II: Heuristic Scan
             label = 'WATCHDOG v1.1';
             statusText = 'HEURISTIC_SCAN: ACTIVE';
-            statusColor = 'text-yellow-400 animate-pulse-slow';
+            statusColor = 'text-yellow-300';
+            urgentClass = 'bg-yellow-600/40 animate-urgent-pulse';
+            icon = <Activity size={14} className="text-yellow-400" />;
           } else {
             // Ep III: Instruction Guard
             label = 'WATCHDOG v2.0';
             statusText = `IG_AUDIT: ${state.weightedKeystrokes || 0}`;
             statusColor = 'text-red-500';
+            if ((state.weightedKeystrokes || 0) > 5) {
+              urgentClass = 'bg-red-900/40 animate-pulse';
+              icon = <ShieldAlert size={14} className="text-red-500" />;
+            }
           }
 
           // Pulse effect for IG noise (Ep III) - High heat triggers red pulse
           const isLoud = level.id >= 11 && (state.lastActionIntensity || 0) > 1;
-          const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : 'bg-transparent';
+          const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : urgentClass;
+
+          // Timer logic with pulsing
+          let timerClass = 'text-zinc-400 font-mono text-sm';
+          if (state.timeLeft !== null) {
+            if (state.timeLeft < 10) {
+              timerClass = 'text-red-500 font-mono text-sm animate-urgent-pulse font-bold';
+            } else if (state.timeLeft < 30) {
+              timerClass = 'text-yellow-400 font-mono text-sm animate-pulse';
+            }
+          }
 
           return (
             <div
-              className={`flex items-center gap-2 px-3 border-l border-zinc-700 transition-colors duration-200 ${bgClass}`}
+              className={`flex items-center gap-3 px-4 border-l border-zinc-700 transition-colors duration-200 ${bgClass}`}
             >
+              {icon}
               <div className="flex flex-col leading-none">
-                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter mb-0.5">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter mb-1">
                   {label}
                 </span>
-                <span className={`text-[10px] font-bold ${statusColor} font-mono tracking-wide`}>
+                <span className={`text-xs font-bold ${statusColor} font-mono tracking-wide`}>
                   {statusText}
                 </span>
               </div>
 
               {/* Timer (Always visible but unobtrusive) */}
               {state.timeLeft !== null && (
-                <div className="ml-2 pl-2 border-l border-zinc-700 text-zinc-500 font-mono text-xs">
+                <div className={`ml-2 pl-3 border-l border-zinc-700 ${timerClass}`}>
                   {formatTime(state.timeLeft)}
                 </div>
               )}
@@ -245,14 +272,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         <span className="text-zinc-500 font-mono hidden md:inline">{perms}</span>
 
-        <div className="flex items-center rounded overflow-hidden text-xs font-bold font-mono h-4">
+        <div className="flex items-center rounded overflow-hidden text-sm font-bold font-mono h-8">
           {/* Position Indicator (Top/Bot/%) */}
-          <div className="bg-zinc-700 text-zinc-300 px-2 flex items-center justify-center min-w-[36px]">
+          <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center justify-center min-w-[48px]">
             {percentStr}
           </div>
 
           {/* Count Indicator */}
-          <div className="bg-blue-600 text-black px-2 flex items-center justify-center min-w-[48px]">
+          <div className="bg-blue-600 text-black px-3 flex items-center justify-center min-w-[64px]">
             {current}/{total}
           </div>
         </div>

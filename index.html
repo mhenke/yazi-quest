@@ -234,6 +234,13 @@
         pointer-events: none;
         animation: scanline 8s linear infinite;
       }
+      @keyframes urgent-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(0.98); }
+      }
+      .animate-urgent-pulse {
+        animation: urgent-pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
     </style>
     <script type="importmap">
       {
