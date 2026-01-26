@@ -37,8 +37,8 @@ test.describe('Dialogs Functionality', () => {
     await page.keyboard.press('Alt+?');
     await expect(page.locator('[data-testid="help-modal"]')).toBeVisible();
 
-    // Click on the backdrop to close Help modal (clicking on the modal element itself since it's the backdrop)
-    await page.locator('[data-testid="help-modal"]').click({ position: { x: 10, y: 10 } });
+    // Close Help modal using Escape key since backdrop click might be intercepted by other elements
+    await page.keyboard.press('Escape');
     await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
   });
 
@@ -99,8 +99,8 @@ test.describe('Dialogs Functionality', () => {
     await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
-    // Click on the backdrop to close Quest Map modal (clicking on the modal element itself)
-    await page.locator('[data-testid="quest-map-modal"]').click({ position: { x: 10, y: 10 } });
+    // Close Quest Map modal using Escape key since backdrop click might be intercepted by other elements
+    await page.keyboard.press('Escape');
     await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
   });
 
