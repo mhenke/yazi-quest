@@ -513,7 +513,12 @@ The Watchdog hides in the noise.`,
   if (targetLevelId > 9) {
     const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
     if (tmp?.children) {
-      const filesToKeep = ['ghost_process.pid', 'socket_001.sock', 'access_token.key'];
+      const filesToKeep = [
+        'ghost_process.pid',
+        'socket_001.sock',
+        'access_token.key',
+        'system_monitor.pid',
+      ];
       tmp.children = tmp.children.filter((c) => c.type === 'dir' || filesToKeep.includes(c.name));
     }
   }

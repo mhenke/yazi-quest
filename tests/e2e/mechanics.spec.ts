@@ -12,6 +12,7 @@ import {
   sortCommand,
   search,
   expectNarrativeThought,
+  dismissAlertIfPresent,
 } from './utils';
 
 test.describe('Game Mechanics & Failures', () => {
@@ -130,10 +131,11 @@ test.describe('Game Mechanics & Failures', () => {
     await sortCommand(page, 'Shift+M');
 
     // 3. Select 'security-audit.service' (the honeypot - very recent)
-    // After sorting by oldest first (Shift+M), recent files are at the bottom.
-    // However, if we didn't sort correctly or stayed at the top, we might grab legacy.
-    // The test wants to verify that grabbing a RECENT file doesn't count.
     await filterAndSelect(page, 'security-audit.service');
+
+    // Level 11 triggers a Threat Alert when selecting a honeypot in content.
+    // We must dismiss it to continue the test flow.
+    await dismissAlertIfPresent(page, /HONEYPOT TRIGGERED/i);
 
     // 4. Cut it (x) - Level 11 Task 3 requires 'cut'
     await pressKey(page, 'x');
@@ -141,7 +143,7 @@ test.describe('Game Mechanics & Failures', () => {
     // 5. Verify task '3/4' is NOT complete (still at 2/4 after sort)
     await assertTask(page, '2/4', testInfo.outputDir, 'l11_honeypot_select');
 
-    // 6. Verify narrative thought appeared
+    // 6. Verify narrative thought appeared (triggered by useKeyboardHandlers.ts)
     await expectNarrativeThought(page, /too recent/i);
   });
 });

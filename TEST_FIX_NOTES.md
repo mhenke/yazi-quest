@@ -42,3 +42,9 @@ Issue: 'workspace/' contains 'notes.txt' and 'systemd-core'. 'notes.txt' comes f
 Fix: Use robust navigation like enterDirectory('name') which uses explicit filtering to ensure the correct item is targeted regardless of sort order.
 ❌ await gotoCommand(page, 'w'); await navigateRight(page, 1);
 ✅ await gotoCommand(page, 'w'); await enterDirectory(page, 'systemd-core');
+
+8. Honeypot Alert Precedence
+   Symptom: Selective guidance thoughts (from `useKeyboardHandlers`) are blocked by modal alerts (from `App.tsx`). Cause: Level-specific selection logic in `App.tsx` may trigger a `ThreatAlert` modal that traps focus/interaction before the narrative logic executes.
+
+Issue: In Level 11, selecting a honeypot triggers a `ThreatAlert`. Test expectations for `expectNarrativeThought` fail because the alert prevents the final "cut/yank" action, or because the modal obscures the guidance.
+Fix: Ensure tests handle and dismiss required alerts (`dismissAlertIfPresent`) before checking for narrative guidance. Align `App.tsx` global checks with specific episode narrative goals.
