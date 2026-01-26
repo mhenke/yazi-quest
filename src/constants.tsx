@@ -1640,13 +1640,13 @@ REASON: UNKNOWN / REDACTED`,
               ],
             },
             {
-              id: 'workspace',
+              id: 'initial-workspace',
               name: 'workspace',
               type: 'dir',
               protected: true,
               children: [
                 {
-                  id: 'systemd-core',
+                  id: 'initial-systemd-core',
                   name: 'systemd-core',
                   type: 'dir',
                   protected: true,
@@ -2492,14 +2492,6 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
           type: 'file',
           content: 'This contains all three substrings but is not a keeper file',
           isHoneypot: true,
-        },
-        {
-          id: 'tmp-honeypot-1',
-          name: 'system_monitor.pid',
-          type: 'file',
-          isHoneypot: true,
-          content: 'PID: 1 (SYSTEM CRITICAL)',
-          parentId: 'tmp',
         },
         {
           id: 'fs-access-token-key-tmp',
@@ -3675,10 +3667,10 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     description:
       "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket, its PID file, the system monitor, and access credentials must be preserved for analysis. Clean the directory using advanced filtering without deleting the critical files.",
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Use filter (f) with pattern '.(key|pid|sock)' to identify keeper files, select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
+    hint: "Navigate to '/tmp'. Use filter (f) with pattern '\\.(key|pid|sock)$' to identify keeper files precisely, select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
     coreSkill: 'Advanced Filtering + Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: Clean /tmp | PRESERVE: Files matching pattern '.(key|pid|sock)' | METHOD: Filter → Select → Invert → Permanent Delete",
+      "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
     successMessage:
       'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
     buildsOn: [8],
@@ -3690,7 +3682,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       {
         id: 'cleanup-1-select',
         description:
-          "Navigate to '/tmp' (gt) and use filter (f) with pattern '.(key|pid|sock)' to identify and select keeper files",
+          "Navigate to '/tmp' (gt) and use filter (f) with pattern '\\.(key|pid|sock)$' to identify and select keeper files",
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;

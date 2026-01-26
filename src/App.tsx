@@ -24,7 +24,7 @@ import {
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
-import { getVisibleItems, getRecursiveSearchResults } from './utils/viewHelpers';
+import { getVisibleItems, getRecursiveSearchResults, getFilterRegex } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { checkAllTasksComplete } from './utils/gameUtils';
 // eslint-disable-next-line import/no-named-as-default
@@ -247,7 +247,7 @@ export default function App() {
           const partialGameState: Partial<GameState> = {
             completedTaskIds,
             levelIndex: i, // Use the loop index as current level context during replay
-            level11Flags: (gameState as GameState)?.level11Flags || {
+            level11Flags: {
               selectedModern: true, // Default to Modern/Hard path if jumping
               triggeredHoneypot: false,
               scoutedFiles: [],
@@ -481,43 +481,18 @@ export default function App() {
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
           const filter = currentDir ? gameState.filters[currentDir.id] : null;
           if (filter) {
-            // Check if filter contains regex special characters
-            const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(filter);
-
-            if (hasRegexChars) {
-              // Only allow safe regex patterns - alphanumeric, parentheses, pipe, dots, and dollar signs
-              const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(filter);
-
-              if (isSafeRegex) {
-                try {
-                  // Try to treat filter as a regex pattern
-                  // eslint-disable-next-line security/detect-non-literal-regexp
-                  const regex = new RegExp(filter, 'i');
-                  results = results.filter(
-                    (item) => regex.test(item.name) || (item.display && regex.test(item.display))
-                  );
-                } catch {
-                  // Fall back to simple substring matching if regex is invalid
-                  results = results.filter(
-                    (item) =>
-                      item.name.toLowerCase().includes(filter.toLowerCase()) ||
-                      (item.display && item.display.toLowerCase().includes(filter.toLowerCase()))
-                  );
-                }
-              } else {
-                // If not a safe regex pattern, use simple substring matching
-                results = results.filter(
-                  (item) =>
-                    item.name.toLowerCase().includes(filter.toLowerCase()) ||
-                    (item.display && item.display.toLowerCase().includes(filter.toLowerCase()))
-                );
-              }
+            const regex = getFilterRegex(filter);
+            if (regex) {
+              results = results.filter(
+                (item) => regex.test(item.name) || (item.display && regex.test(item.display))
+              );
             } else {
-              // If no special regex chars, use simple substring matching (traditional behavior)
+              // Fallback to substring match
+              const lowerFilter = filter.toLowerCase();
               results = results.filter(
                 (item) =>
-                  item.name.toLowerCase().includes(filter.toLowerCase()) ||
-                  (item.display && item.display.toLowerCase().includes(filter.toLowerCase()))
+                  item.name.toLowerCase().includes(lowerFilter) ||
+                  (item.display && item.display.toLowerCase().includes(lowerFilter))
               );
             }
           }

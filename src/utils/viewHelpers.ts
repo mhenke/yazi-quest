@@ -3,6 +3,50 @@ import { GameState, FileNode } from '../types';
 import { getNodeByPath } from './fsHelpers';
 import { sortNodes } from './sortHelpers';
 
+// Shared helper for creating safe regex from user input
+export const getSafeFilterRegex = (filter: string): RegExp | null => {
+  if (!filter) return null;
+
+  // Check if filter contains regex special characters
+  const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(filter);
+
+  if (hasRegexChars) {
+    // Allow alphanumeric, parentheses, pipe, dots, dollar signs, backslashes for escaping, and hyphens (for ranges)
+    const isSafeRegex = /^[\w().|$^[\]*+?{}\\\ \-]+$/i.test(filter);
+
+    if (isSafeRegex) {
+      // Smart-case: if filter contains any uppercase, make it case-sensitive
+      const isCaseSensitive = /[A-Z]/.test(filter);
+      const flags = isCaseSensitive ? 'g' : 'gi';
+
+      try {
+        // eslint-disable-next-line security/detect-non-literal-regexp
+        return new RegExp(filter, flags);
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+};
+
+// Helper to create a regex from the filter string, handling smart-case.
+// Returns null if the filter is an invalid regex (e.g. open parenthesis).
+export const getFilterRegex = (filter: string): RegExp | null => {
+  if (!filter) return null;
+
+  // Smart-case: if filter contains any uppercase, make it case-sensitive
+  const isCaseSensitive = /[A-Z]/.test(filter);
+  const flags = isCaseSensitive ? 'g' : 'gi';
+
+  try {
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    return new RegExp(filter, flags);
+  } catch {
+    return null;
+  }
+};
+
 export const getVisibleItems = (state: GameState): FileNode[] => {
   if (state.searchQuery) {
     // If a search is active, return the sorted search results
@@ -21,30 +65,14 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
 
   const filter = state.filters[currentDir.id] || '';
   if (filter) {
-    // Check if filter contains regex special characters
-    const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(filter);
-
-    if (hasRegexChars) {
-      // Only allow safe regex patterns - alphanumeric, parentheses, pipe, dots, and dollar signs
-      const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(filter);
-
-      if (isSafeRegex) {
-        try {
-          // Try to treat filter as a regex pattern
-          // eslint-disable-next-line security/detect-non-literal-regexp
-          const regex = new RegExp(filter, 'i');
-          items = items.filter((c) => regex.test(c.name));
-        } catch {
-          // Fall back to simple substring matching if regex is invalid
-          items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
-        }
-      } else {
-        // If not a safe regex pattern, use simple substring matching
-        items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
-      }
+    const regex = getFilterRegex(filter);
+    if (regex) {
+      items = items.filter((c) => regex.test(c.name));
     } else {
-      // If no special regex chars, use simple substring matching (traditional behavior)
-      items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
+      // If regex is invalid (e.g. typing "file("), fall back to simple substring match
+      // to avoid crash and provide "literal until closed" behavior.
+      const lowerFilter = filter.toLowerCase();
+      items = items.filter((c) => c.name.toLowerCase().includes(lowerFilter));
     }
   }
 
