@@ -593,7 +593,8 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   }
 
   // Wait for the item to be visible in the active pane to ensure filter applied
-  await expect(page.getByTestId('filesystem-pane-active').getByText(filterText)).toBeVisible();
+  // Use data-testid for robustness as getByText can be ambiguous
+  await expect(page.getByTestId(`file-${filterText}`)).toBeVisible();
 
   await pressKey(page, ' '); // Toggle selection
   await clearFilter(page); // Clear filter for next action
