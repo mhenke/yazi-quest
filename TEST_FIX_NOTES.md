@@ -48,3 +48,14 @@ Fix: Use robust navigation like enterDirectory('name') which uses explicit filte
 
 Issue: In Level 11, selecting a honeypot triggers a `ThreatAlert`. Test expectations for `expectNarrativeThought` fail because the alert prevents the final "cut/yank" action, or because the modal obscures the guidance.
 Fix: Ensure tests handle and dismiss required alerts (`dismissAlertIfPresent`) before checking for narrative guidance. Align `App.tsx` global checks with specific episode narrative goals.
+
+9. Z-Index Interference with Modal Backdrop Clicks
+   Symptom: Modal backdrop clicks fail to close modals even though the modal is visible. Cause: Elements with higher z-index values intercept pointer events intended for modal backdrops.
+
+Issue: LevelProgress component has a persistent header with z-[100] which is higher than modal backdrops (z-[95]). When trying to click on modal backdrops (HelpModal or QuestMapModal), clicks are intercepted by the LevelProgress header.
+❌ await page.locator('[data-testid="help-modal"]').click({ position: { x: 10, y: 10 } });
+❌ await page.mouse.click(10, 10); // Still intercepted by higher z-index elements
+✅ await page.keyboard.press('Escape'); // Use keyboard shortcut instead of clicking backdrop
+✅ await page.keyboard.press('Shift+Enter'); // Alternative keyboard shortcut
+
+Fix: When encountering backdrop click failures, check for elements with higher z-index values that might be intercepting clicks. Use keyboard shortcuts (Escape, Shift+Enter) as reliable alternatives to backdrop clicks for closing modals.

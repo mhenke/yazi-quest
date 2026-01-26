@@ -750,26 +750,28 @@ The Watchdog hides in the noise.`,
     }
 
     // Level 13 Identity Log (Twist Reveal)
-    const wsNode = getNodeById(newFs, 'workspace');
-    if (wsNode && !wsNode.children?.find((c) => c.name === '.identity.log.enc')) {
-      const fiveYearsAgo = BASE_TIME - 5 * 31536000000;
-      if (!wsNode.children) wsNode.children = [];
-      wsNode.children.push({
-        id: 'identity-log-enc-prereq',
-        name: '.identity.log.enc',
-        type: 'file',
-        content: `[ENCRYPTED LOG - DECRYPTED]
-SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
-DATE: 2010-05-31T08:00:00Z
-STATUS: MEMORY_WIPE_DETECTED
-
-[CONCLUSION]
-This is not improvisation.
-This is a recording.
-You have been here before.`,
-        parentId: wsNode.id,
-        modifiedAt: fiveYearsAgo,
-      });
+    if (targetLevelId >= 13) {
+      const wsNode = getNodeById(newFs, 'workspace');
+      if (wsNode && !wsNode.children?.find((c) => c.name === '.identity.log.enc')) {
+        const fiveYearsAgo = BASE_TIME - 5 * 31536000000;
+        if (!wsNode.children) wsNode.children = [];
+        wsNode.children.push({
+          id: 'identity-log-enc-prereq',
+          name: '.identity.log.enc',
+          type: 'file',
+          content: `[ENCRYPTED LOG - DECRYPTED]
+    SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
+    DATE: 2010-05-31T08:00:00Z
+    STATUS: MEMORY_WIPE_DETECTED
+    
+    [CONCLUSION]
+    This is not improvisation.
+    This is a recording.
+    You have been here before.`,
+          parentId: wsNode.id,
+          modifiedAt: fiveYearsAgo,
+        });
+      }
     }
   }
 
@@ -4365,10 +4367,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
 
       // Create identity.log.enc in workspace (unlocked after daemon installation)
       // This file reveals the twist: player's actions are a replay of AI-7733's previous escape
-      const guest = getNodeById(newFs, 'guest');
-      const guestWorkspace = guest?.children?.find(
-        (c) => c.name === 'workspace' && c.type === 'dir'
-      );
+      const guestWorkspace = getNodeById(newFs, 'workspace');
       if (guestWorkspace) {
         if (!guestWorkspace.children) guestWorkspace.children = [];
         if (!guestWorkspace.children.some((c) => c.name === '.identity.log.enc')) {
@@ -4624,8 +4623,7 @@ You have been here before.`,
     onEnter: (fs: FileNode) => {
       const BASE_TIME = 1433059200000;
       // Create identity.log.enc in workspace (unlocked after daemon installation)
-      const guest = getNodeById(fs, 'guest');
-      const workspace = guest?.children?.find((c) => c.name === 'workspace' && c.type === 'dir');
+      const workspace = getNodeById(fs, 'workspace');
 
       if (workspace) {
         if (!workspace.children) workspace.children = [];

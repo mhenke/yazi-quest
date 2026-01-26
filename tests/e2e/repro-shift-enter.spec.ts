@@ -8,6 +8,10 @@ import {
   gotoCommand,
   filterByText,
   navigateRight,
+  addItem,
+  areHiddenFilesVisible,
+  expectCurrentDir,
+  ensureCleanState,
 } from './utils';
 
 test.describe('Reproduction: Shift+Enter Dismissal', () => {
@@ -37,9 +41,7 @@ test.describe('Reproduction: Shift+Enter Dismissal', () => {
 
     // 2. Create relay
     await gotoCommand(page, 'w');
-    await pressKey(page, 'a');
-    await typeText(page, 'central_relay');
-    await page.keyboard.press('Enter');
+    await addItem(page, 'central_relay/');
     await assertTask(page, '2/4', testInfo.outputDir);
 
     // 3. Paste
@@ -49,12 +51,23 @@ test.describe('Reproduction: Shift+Enter Dismissal', () => {
     await assertTask(page, '3/4', testInfo.outputDir);
 
     // 4. Audit
-    await page.keyboard.press('h');
-    if (!(await page.getByText('HIDDEN: ON').isVisible())) {
+    await pressKey(page, 'h'); // Go back to workspace
+    await expectCurrentDir(page, 'workspace');
+    await ensureCleanState(page);
+
+    // Ensure hidden visible
+    if (!(await areHiddenFilesVisible(page))) {
       await pressKey(page, '.');
+      await page.waitForTimeout(500);
     }
+
     await filterByText(page, '.identity');
-    for (let i = 0; i < 10; i++) {
+    // Ensure the identity file is selected
+    await expect(
+      page.getByTestId('filesystem-pane-active').getByText('.identity.log.enc')
+    ).toBeVisible({ timeout: 5000 });
+
+    for (let i = 0; i < 15; i++) {
       await pressKey(page, 'Shift+J');
     }
     await assertTask(page, '4/4', testInfo.outputDir);

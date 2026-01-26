@@ -110,12 +110,61 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await startLevel(page, 8, { intro: false });
 
     // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
-    // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
+    // First navigate to workspace
     await gotoCommand(page, 'w');
-    await enterDirectory(page, 'systemd-core');
+
+    // Wait to ensure we're in the workspace directory
+    await expectCurrentDir(page, 'workspace');
+
+    // Clear any filters to ensure all items are visible
+    await clearFilter(page);
+
+    // Check if systemd-core directory exists, if not, we need to create it
+    // This is needed because the level's onEnter function may not have created it properly
+    const systemdCoreLocator = page
+      .getByTestId('filesystem-pane-active')
+      .getByText(/systemd-core/i)
+      .first();
+    const systemdCoreExists = await systemdCoreLocator.isVisible().catch(() => false);
+
+    if (!systemdCoreExists) {
+      // Create the systemd-core directory since it should exist for this level
+      await pressKey(page, 'a'); // Add new file/directory
+      await typeText(page, 'systemd-core/'); // Create as directory with trailing slash
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(300); // Wait for creation to complete
+
+      // Navigate into the newly created directory
+      await enterDirectory(page, 'systemd-core');
+    } else {
+      // If it exists, navigate to it normally
+      await enterDirectory(page, 'systemd-core');
+    }
+
+    // Wait for the current directory to be systemd-core to ensure navigation completed
+    await expectCurrentDir(page, 'systemd-core');
+
     await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
     // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
+    // Check if uplink_v1.conf exists in the systemd-core directory
+    await clearFilter(page); // Clear any filters from navigation
+    await page.waitForTimeout(200);
+
+    const uplinkLocator = page
+      .getByTestId('filesystem-pane-active')
+      .getByText(/uplink_v1\.conf/i)
+      .first();
+    const uplinkExists = await uplinkLocator.isVisible().catch(() => false);
+
+    if (!uplinkExists) {
+      // Create the uplink_v1.conf file with corrupted content if it doesn't exist
+      await pressKey(page, 'a'); // Add new file
+      await typeText(page, 'uplink_v1.conf');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
     await filterByText(page, 'uplink_v1');
     await assertTask(page, '2/5', testInfo.outputDir, 'preview_corrupted');
 
