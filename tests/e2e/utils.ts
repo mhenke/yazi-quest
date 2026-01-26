@@ -1,4 +1,14 @@
 /**
+ * Yazi Quest E2E Test Utilities
+ *
+ * Common helper functions for testing the Yazi Quest game.
+ */
+
+import { Page, expect, TestInfo } from '@playwright/test';
+
+export const DEFAULT_DELAY = 75;
+
+/**
  * Helper to press a navigation key multiple times.
  */
 async function repeatKey(page: Page, key: string, count: number): Promise<void> {
@@ -84,16 +94,6 @@ export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 2000 });
 }
-
-/**
- * Yazi Quest E2E Test Utilities
- *
- * Common helper functions for testing the Yazi Quest game.
- */
-
-import { Page, expect, TestInfo } from '@playwright/test';
-
-export const DEFAULT_DELAY = 75;
 
 /**
  * Navigates to a specific level, handling intro and boot sequences.
@@ -183,8 +183,9 @@ export async function startLevel(
  * Navigates to a specific level, handling intro screens appropriately.
  */
 export async function goToLevel(page: Page, level: number): Promise<void> {
-  await page.goto(`/?lvl=${level}`);
-  await page.waitForLoadState('networkidle');
+  // Use `domcontentloaded` instead of `networkidle` to be more resilient
+  // `networkidle` can time out if background requests (like analytics or fonts) persist
+  await page.goto(`/?lvl=${level}`, { waitUntil: 'domcontentloaded' });
 
   // Unified intro skip logic.
   // Set a global skip flag and dispatch the skip event to handle boot and intro overlays
