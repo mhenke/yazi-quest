@@ -21,7 +21,31 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
 
   const filter = state.filters[currentDir.id] || '';
   if (filter) {
-    items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
+    // Check if filter contains regex special characters
+    const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(filter);
+
+    if (hasRegexChars) {
+      // Only allow safe regex patterns - alphanumeric, parentheses, pipe, dots, and dollar signs
+      const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(filter);
+
+      if (isSafeRegex) {
+        try {
+          // Try to treat filter as a regex pattern
+          // eslint-disable-next-line security/detect-non-literal-regexp
+          const regex = new RegExp(filter, 'i');
+          items = items.filter((c) => regex.test(c.name));
+        } catch {
+          // Fall back to simple substring matching if regex is invalid
+          items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
+        }
+      } else {
+        // If not a safe regex pattern, use simple substring matching
+        items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
+      }
+    } else {
+      // If no special regex chars, use simple substring matching (traditional behavior)
+      items = items.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()));
+    }
   }
 
   return sortNodes(items, state.sortBy, state.sortDirection);

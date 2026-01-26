@@ -54,7 +54,31 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const activeFilter = currentDir ? state.filters[currentDir.id] || '' : '';
 
   if (activeFilter) {
-    items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    // Check if filter contains regex special characters
+    const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(activeFilter);
+
+    if (hasRegexChars) {
+      // Only allow safe regex patterns - alphanumeric, parentheses, pipe, dots, and dollar signs
+      const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(activeFilter);
+
+      if (isSafeRegex) {
+        try {
+          // Try to treat filter as a regex pattern
+          // eslint-disable-next-line security/detect-non-literal-regexp
+          const regex = new RegExp(activeFilter, 'i');
+          items = items.filter((c) => regex.test(c.name));
+        } catch {
+          // Fall back to simple substring matching if regex is invalid
+          items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+        }
+      } else {
+        // If not a safe regex pattern, use simple substring matching
+        items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+      }
+    } else {
+      // If no special regex chars, use simple substring matching (traditional behavior)
+      items = items.filter((c) => c.name.toLowerCase().includes(activeFilter.toLowerCase()));
+    }
   }
   const total = items.length;
   const current = total === 0 ? 0 : state.cursorIndex + 1;

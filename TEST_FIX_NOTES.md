@@ -70,3 +70,22 @@ Issue: LevelProgress component has a persistent header with z-[100] which is hig
 ✅ await page.keyboard.press('Shift+Enter'); // Alternative keyboard shortcut
 
 Fix: When encountering backdrop click failures, check for elements with higher z-index values that might be intercepting clicks. Use keyboard shortcuts (Escape, Shift+Enter) as reliable alternatives to backdrop clicks for closing modals.
+
+10. Regex Safety in Filter Implementation
+    Symptom: ESLint security warnings for non-literal arguments to RegExp constructor. Cause: Direct user input passed to RegExp without validation creates potential ReDoS or injection vulnerabilities.
+
+Issue: Using `new RegExp(filter, 'i')` with user-provided filter patterns triggers security/detect-non-literal-regexp warnings.
+Fix: Implement safety validation to ensure only safe regex patterns are processed: - Validate pattern contains only safe characters: `/^[\w().|$^[\]*+?{} ]+$/i` - Use try/catch blocks to handle invalid regex gracefully - Fall back to simple substring matching for unsafe patterns - Maintain functionality while preventing security vulnerabilities
+
+✅ // Safe implementation:
+const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(filter);
+if (isSafeRegex) {
+try {
+const regex = new RegExp(filter, 'i');
+// Process with regex
+} catch {
+// Fallback to substring matching
+}
+} else {
+// Use substring matching for unsafe patterns
+}

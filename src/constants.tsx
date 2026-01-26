@@ -2402,6 +2402,105 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
           ],
           parentId: 'tmp',
         },
+        // Add more noise/junk files to make filtering more challenging
+        {
+          id: 'tmp-junk-1',
+          name: 'cache_001.tmp',
+          type: 'file',
+          content: 'CACHE_DATA_BLOCK_001',
+        },
+        {
+          id: 'tmp-junk-2',
+          name: 'cache_002.tmp',
+          type: 'file',
+          content: 'CACHE_DATA_BLOCK_002',
+        },
+        {
+          id: 'tmp-junk-3',
+          name: 'log_trace_20260101.txt',
+          type: 'file',
+          content: 'LOG_ENTRY_001\\nLOG_ENTRY_002',
+        },
+        {
+          id: 'tmp-junk-4',
+          name: 'log_trace_20260102.txt',
+          type: 'file',
+          content: 'LOG_ENTRY_003\\nLOG_ENTRY_004',
+        },
+        {
+          id: 'tmp-junk-5',
+          name: 'temp_session.dat',
+          type: 'file',
+          content: 'SESSION_DATA_PLACEHOLDER',
+        },
+        {
+          id: 'tmp-junk-6',
+          name: 'backup_part_1.chk',
+          type: 'file',
+          content: 'BACKUP_CHUNK_001',
+        },
+        {
+          id: 'tmp-junk-7',
+          name: 'backup_part_2.chk',
+          type: 'file',
+          content: 'BACKUP_CHUNK_002',
+        },
+        {
+          id: 'tmp-junk-8',
+          name: 'process_monitor.log',
+          type: 'file',
+          content: 'MONITORING_DATA_PLACEHOLDER',
+        },
+        {
+          id: 'tmp-junk-9',
+          name: 'debug_output.dump',
+          type: 'file',
+          content: 'DEBUG_INFO_PLACEHOLDER',
+        },
+        {
+          id: 'tmp-junk-10',
+          name: 'trace_buffer.out',
+          type: 'file',
+          content: 'TRACE_OUTPUT_PLACEHOLDER',
+        },
+        // Honeypot files - contain key/pid/sock as substrings but are not the keeper files
+        // These will be matched by (key|pid|sock) but not by \.(key|pid|sock)
+        {
+          id: 'tmp-honeypot-sock',
+          name: 'mysockfile.txt',
+          type: 'file',
+          content: 'This is not a .sock file - it just contains "sock" as a substring',
+          isHoneypot: true,
+        },
+        {
+          id: 'tmp-honeypot-key',
+          name: 'passwordkey_backup.log',
+          type: 'file',
+          content: 'This is not a .key file - it just contains "key" as a substring',
+          isHoneypot: true,
+        },
+        {
+          id: 'tmp-honeypot-pid',
+          name: 'pid_monitor_service.conf',
+          type: 'file',
+          content: 'This is not a .pid file - it just contains "pid" as a substring',
+          isHoneypot: true,
+        },
+        {
+          id: 'tmp-honeypot-mixed',
+          name: 'socket_pid_key_info.doc',
+          type: 'file',
+          content: 'This contains all three substrings but is not a keeper file',
+          isHoneypot: true,
+        },
+        {
+          id: 'tmp-honeypot-1',
+          name: 'system_monitor.pid',
+          type: 'file',
+          isHoneypot: true,
+          content: 'PID: 1 (SYSTEM CRITICAL)',
+          parentId: 'tmp',
+        },
         {
           id: 'fs-access-token-key-tmp',
           name: 'access_token.key',
@@ -3574,12 +3673,12 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'TRACE CLEANUP',
     description:
-      "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket, its PID file, and the system monitor must be preserved for analysis. Clean the directory without deleting the critical files.",
+      "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket, its PID file, the system monitor, and access credentials must be preserved for analysis. Clean the directory using advanced filtering without deleting the critical files.",
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Select the files to KEEP ('ghost_process.pid', 'socket_001.sock', and 'system_monitor.pid'). Invert your selection with Ctrl+R to select all the junk files, then permanently delete (D) the selection.",
-    coreSkill: 'Invert Selection (Ctrl+R)',
+    hint: "Navigate to '/tmp'. Use filter (f) with pattern '.(key|pid|sock)' to identify keeper files, select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
+    coreSkill: 'Advanced Filtering + Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: Clean /tmp | PRESERVE: 'ghost_process.pid', 'socket_001.sock', 'system_monitor.pid' | METHOD: Select → Invert → Permanent Delete",
+      "TARGET: Clean /tmp | PRESERVE: Files matching pattern '.(key|pid|sock)' | METHOD: Filter → Select → Invert → Permanent Delete",
     successMessage:
       'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
     buildsOn: [8],
@@ -3591,7 +3690,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       {
         id: 'cleanup-1-select',
         description:
-          "Navigate to '/tmp' (gt) and select 'ghost_process.pid', 'socket_001.sock', and 'system_monitor.pid'",
+          "Navigate to '/tmp' (gt) and use filter (f) with pattern '.(key|pid|sock)' to identify and select keeper files",
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -3620,13 +3719,14 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
         description: 'Permanently delete the selected junk files (D)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
-          // Should be exactly 2 files left, and they should be the ones we want to preserve
+          // Should be exactly 4 files left (the ones we want to preserve)
           return (
             c.usedD === true &&
-            tmp?.children?.length === 3 &&
+            tmp?.children?.length === 4 &&
             !!tmp.children.find((n) => n.name === 'ghost_process.pid') &&
             !!tmp.children.find((n) => n.name === 'socket_001.sock') &&
-            !!tmp.children.find((n) => n.name === 'system_monitor.pid')
+            !!tmp.children.find((n) => n.name === 'system_monitor.pid') &&
+            !!tmp.children.find((n) => n.name === 'access_token.key')
           );
         },
         completed: false,
