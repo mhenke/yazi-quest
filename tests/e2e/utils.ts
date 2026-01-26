@@ -639,6 +639,14 @@ export async function gotoCommand(
 }
 
 /**
+ * Execute a sort command ( , followed by target modifier).
+ */
+export async function sortCommand(page: Page, modifier: string): Promise<void> {
+  await pressKey(page, ',');
+  await pressKey(page, modifier);
+}
+
+/**
  * Asserts that the game is currently on the expected level.
  */
 export async function assertLevel(page: Page, levelId: string): Promise<void> {

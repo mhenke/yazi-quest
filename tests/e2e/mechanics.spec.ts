@@ -7,7 +7,11 @@ import {
   assertTask,
   filterAndSelect,
   deleteItem,
+  navigateDown,
   navigateRight,
+  sortCommand,
+  search,
+  expectNarrativeThought,
 } from './utils';
 
 test.describe('Game Mechanics & Failures', () => {
@@ -112,27 +116,32 @@ test.describe('Game Mechanics & Failures', () => {
   test('L11 Honeypot: Selecting recent service does not complete task', async ({
     page,
   }, testInfo) => {
-    await startLevel(page, 11);
+    await startLevel(page, 11, { intro: false });
 
-    // 1. Search for service files
+    // 1. gr, j, l, . then s, type ".service", enter
     await gotoCommand(page, 'r');
-    await pressKey(page, 's');
-    await page.keyboard.type('service');
-    await pressKey(page, 'Enter');
+    await navigateDown(page, 1);
+    await navigateRight(page, 1); // Enter daemons
+    await pressKey(page, '.'); // Show hidden
+    await search(page, '.service');
+    await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
-    // 2. Sort by modified (,m)
-    await pressKey(page, ',');
-    await pressKey(page, 'm');
+    // 2. Sort by modified (Shift+M)
+    await sortCommand(page, 'Shift+M');
 
-    // 3. Select 'audit-daemon.service' (the honeypot - very recent)
-    // We'll find it by name for robustness
-    await filterAndSelect(page, 'audit-daemon.service');
+    // 3. Select 'security-audit.service' (the honeypot - very recent)
+    // After sorting by oldest first (Shift+M), recent files are at the bottom.
+    // However, if we didn't sort correctly or stayed at the top, we might grab legacy.
+    // The test wants to verify that grabbing a RECENT file doesn't count.
+    await filterAndSelect(page, 'security-audit.service');
 
-    // 4. Yank it
-    await pressKey(page, 'y');
+    // 4. Cut it (x) - Level 11 Task 3 requires 'cut'
+    await pressKey(page, 'x');
 
     // 5. Verify task '3/4' is NOT complete (still at 2/4 after sort)
-    // This is a soft failure check - the task check should return false
     await assertTask(page, '2/4', testInfo.outputDir, 'l11_honeypot_select');
+
+    // 6. Verify narrative thought appeared
+    await expectNarrativeThought(page, /too recent/i);
   });
 });

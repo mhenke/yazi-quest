@@ -18,6 +18,7 @@ import {
   expectCurrentDir,
   enterDirectory,
   filterAndSelect,
+  sortCommand,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -195,8 +196,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '1/4', testInfo.outputDir, 'nav_to_creds');
 
     // Task 2: Sort by modification time to identify the most recent key (,m)
-    await pressKey(page, ',');
-    await pressKey(page, 'm');
+    await sortCommand(page, 'm');
     await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
 
     // Task 3: Yank the newest key ('access_key_new.pem')

@@ -481,8 +481,10 @@ export default function App() {
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
           const filter = currentDir ? gameState.filters[currentDir.id] : null;
           if (filter) {
-            results = results.filter((item) =>
-              item.name.toLowerCase().includes(filter.toLowerCase())
+            results = results.filter(
+              (item) =>
+                item.name.toLowerCase().includes(filter.toLowerCase()) ||
+                (item.display && item.display.toLowerCase().includes(filter.toLowerCase()))
             );
           }
 

@@ -913,6 +913,24 @@ export const useKeyboardHandlers = (
             // Still allow the operation so player can learn to abort with Y
           }
 
+          // [LEVEL 11] Guidance for legacy selection
+          if (gameState.levelIndex === 10) {
+            // Level 11 is index 10
+            const BASE_TIME = 1433059200000;
+            const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
+            const hasRecent = uniqueNodes.some(
+              (n) => (n.modifiedAt || 0) > thirtyDaysAgo && !n.isHoneypot
+            );
+            if (hasRecent) {
+              const feedback =
+                'SCAN: This signature is too recent. Forensics will trace the delta. I need something older... something legacy.';
+              setGameState((prev) => ({
+                ...prev,
+                thought: { message: feedback, author: 'AI-7734' },
+              }));
+            }
+          }
+
           if (uniqueNodes.length > 0) {
             // Attach actualParentPath for search mode
             const nodesWithPaths = gameState.searchQuery

@@ -22,6 +22,8 @@ import {
   areHiddenFilesVisible,
   navigateRight,
   navigateLeft,
+  navigateDown,
+  sortCommand,
   dismissAlertIfPresent,
   expectNarrativeThought,
 } from './utils';
@@ -54,45 +56,33 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
     await startLevel(page, 11, { intro: false });
 
-    // Task 1: Search for 'service'
+    // Task 1: gr, j, l, . then s, type ".service", enter
     await gotoCommand(page, 'r');
-    await pressKey(page, 's');
-    await typeText(page, 'service');
-    await pressKey(page, 'Enter');
+    await navigateDown(page, 1);
+    await navigateRight(page, 1); // Enter daemons
+    await pressKey(page, '.'); // Show hidden
+    await search(page, '.service');
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
-    // Task 2: Sort by modified (,M for oldest first)
-    await pressKey(page, ',');
-    await pressKey(page, 'M'); // Uppercase M = oldest first
+    // Task 2: , then Shift+M
+    await sortCommand(page, 'Shift+M');
     await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
 
-    // Task 3: Select 2 legacy files (oldest two in the sorted list)
-    // After sorting by modified ascending (oldest first), legacy files are at top:
-    // 1. legacy-backup.service (90 days old) - LEGACY (oldest)
-    // 2. cron.service (60 days old) - SAFE
-    // 3. network.service (45 days old) - LEGACY
-    // 4. audit-daemon.service (1 day old) - HONEYPOT!
-    // Select the first two: legacy-backup and cron
-    await pressKey(page, ' '); // Select first file (legacy-backup.service)
-    await pressKey(page, 'j'); // Move down
-    await pressKey(page, ' '); // Select second file (cron.service)
+    // Task 3: space twice and x (Exfiltrate)
+    await pressKey(page, ' ');
+    await pressKey(page, ' ');
+    await pressKey(page, 'x');
+    await expectClipboard(page, 'MOVE: 2');
+    await assertTask(page, '3/4', testInfo.outputDir, 'exfiltrate_files');
 
-    // Task 4: Yank
-    await pressKey(page, 'y');
-    await expectClipboard(page, 'COPY: 2');
-    await page.keyboard.press('Escape');
+    // Task 4: escape, press (.) and then ,n and finally gw, l, p
+    await pressKey(page, 'Escape');
+    await pressKey(page, '.'); // Toggle hidden back
+    await sortCommand(page, 'n'); // Natural sort
 
-    await assertTask(page, '3/4', testInfo.outputDir, 'yank_files');
-
-    // Task 5: Paste in /daemons
-    await ensureCleanState(page);
-    await gotoCommand(page, 'r');
-    await expectCurrentDir(page, '/'); // Verify we are at root
-
-    await filterByText(page, 'daemons');
-    await pressKey(page, 'l');
-    await clearFilter(page);
-    await expectCurrentDir(page, 'daemons'); // Verify we are in daemons
+    await gotoCommand(page, 'w');
+    await navigateRight(page, 1); // Enter systemd-core
+    await expectCurrentDir(page, 'systemd-core');
 
     await pressKey(page, 'p');
     await assertTask(page, '4/4', testInfo.outputDir, 'paste_files');

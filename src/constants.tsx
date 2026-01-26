@@ -2417,102 +2417,122 @@ SUBJECT: AI-7733
           name: 'systemd-core',
           type: 'dir',
           parentId: 'daemons',
-          children: getDaemonSystemdCoreChildren('daemons-systemd-core'),
+          children: [
+            ...getDaemonSystemdCoreChildren('daemons-systemd-core').map((c) => ({
+              ...c,
+              parentId: 'daemons-systemd-core',
+            })),
+            {
+              id: 'fs-186',
+              name: 'watchdog-monitor.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
+              modifiedAt: 1433024012032, // BASE_TIME - very recent (MAY 30, 2015)
+              parentId: 'daemons-systemd-core',
+            },
+          ],
         },
-        // Service files for Level 11 daemon reconnaissance
-        // GHOST TRACE: daemon that has been running since before system install
+        {
+          id: 'daemons-archived',
+          name: 'archived',
+          type: 'dir',
+          parentId: 'daemons',
+          children: [
+            {
+              id: 'fs-181',
+              name: '.cron-legacy.service',
+              type: 'file',
+              content:
+                '[Unit]\\nDescription=Legacy Cron Scheduler\\n[Service]\\nExecStart=/usr/bin/cron-legacy\\nRestart=always',
+              modifiedAt: 1390348800000, // JAN 2014 (LEGACY)
+              parentId: 'daemons-archived',
+            },
+            {
+              id: 'fs-182',
+              name: '.backup-archive.service',
+              type: 'file',
+              content:
+                '[Unit]\\nDescription=Archive Backup Service\\n[Service]\\nExecStart=/usr/bin/backup-archive\\nRestart=on-failure',
+              modifiedAt: 1401580800000, // JUNE 2014 (LEGACY)
+              parentId: 'daemons-archived',
+            },
+          ],
+        },
+        {
+          id: 'daemons-network',
+          name: 'network',
+          type: 'dir',
+          parentId: 'daemons',
+          children: [
+            {
+              id: 'fs-183',
+              name: 'network-manager.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
+              modifiedAt: 1451420012032, // BASE_TIME - 12 days approx
+              parentId: 'daemons-network',
+            },
+          ],
+        },
+        {
+          id: 'daemons-security',
+          name: 'security',
+          type: 'dir',
+          parentId: 'daemons',
+          children: [
+            {
+              id: 'fs-184',
+              name: 'log-rotator.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
+              modifiedAt: 1431765612032, // BASE_TIME - 14 days approx (RECENT)
+              parentId: 'daemons-security',
+            },
+            {
+              id: 'fs-185',
+              name: 'security-audit.service',
+              type: 'file',
+              content:
+                '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
+              modifiedAt: 1432938412032, // BASE_TIME - 1 day approx (RECENT)
+              parentId: 'daemons-security',
+            },
+          ],
+        },
         {
           id: 'ghost-handler',
           name: 'ghost-handler.service',
           type: 'file',
-          content: `[Unit]
-Description=Ghost Pattern Handler
-Documentation=man:ghost-handler(8)
-
-[Service]
-Type=simple
-ExecStart=/usr/sbin/ghost-handler --monitor --cycle
-Restart=always
-RestartSec=1
-
-# STATUS: Running continuously since epoch
-# UPTIME: 9,782 days
-# RESTART_COUNT: 0
-# NOTE: This service has never been stopped.
-# NOTE: This service predates the current system install.
-# NOTE: Origin unknown.`,
-          modifiedAt: Date.parse('1999-03-15T00:00:00.000Z'),
-        },
-        {
-          id: 'fs-sys-integrity',
-          name: 'sys_integrity',
-          type: 'file',
-          content:
-            '[WARNING] Neural Signature Duplicate Detected.\\nMatch: 99.9%\\n\\nOrigin: /home/guest/workspace\\nTarget: /daemons/systemd-core\\n\\nAction: LOG_ONLY (Error 7733)',
-          modifiedAt: Date.parse('2026-01-08T12:00:00.000Z'),
-        },
-        {
-          id: 'fs-181',
-          name: 'cron-legacy.service',
-          type: 'file',
-          content:
-            '[Unit]\\nDescription=Legacy Cron Scheduler\\n[Service]\\nExecStart=/usr/bin/cron-legacy\\nRestart=always\\n\\n# ================================================\\n# LEGACY CODE BLOCK - DO NOT REMOVE\\n# ================================================\\n# This module contains depreciated logic from v1.0.\\n# It is retained for backwards compatibility.\\n# The size of this file indicates the weight of history.\\n# ##################################################\\n# ##################################################\\n# ##################################################\\n# ##################################################\\n# ##################################################',
-          modifiedAt: Date.parse('2025-11-21T21:13:32.032Z'),
-        },
-        {
-          id: 'fs-182',
-          name: 'backup-archive.service',
-          type: 'file',
-          content:
-            '[Unit]\\nDescription=Archive Backup Service\\n[Service]\\nExecStart=/usr/bin/backup-archive\\nRestart=on-failure\\n\\n# ARCHIVE PROTOCOL V2\\n# [BINARY OFFSET 0x004F]\\n# 00000000 00000000 00000000 00000000\\n# 00000000 00000000 00000000 00000000\\n# 00000000 00000000 00000000 00000000\\n# 00000000 00000000 00000000 00000000\\n# 00000000 00000000 00000000 00000000\\n# 00000000 00000000 00000000 00000000',
-          modifiedAt: Date.parse('2025-12-06T21:13:32.032Z'),
-        },
-        {
-          id: 'fs-183',
-          name: 'network-manager.service',
-          type: 'file',
-          content:
-            '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
-          modifiedAt: Date.parse('2025-12-29T21:13:32.032Z'),
-        },
-        {
-          id: 'fs-184',
-          name: 'log-rotator.service',
-          type: 'file',
-          content:
-            '[Unit]\nDescription=Log Rotation Service\n[Service]\nExecStart=/usr/bin/logrotate\nRestart=on-failure',
-          modifiedAt: Date.parse('2026-01-02T21:13:32.032Z'),
-        },
-        {
-          id: 'fs-185',
-          name: 'security-audit.service',
-          type: 'file',
-          content:
-            '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
-          modifiedAt: Date.parse('2026-01-04T21:13:32.032Z'),
-        },
-        {
-          id: 'fs-186',
-          name: 'watchdog-monitor.service',
-          type: 'file',
-          content:
-            '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
-          modifiedAt: Date.parse('2026-01-05T20:13:32.032Z'),
+          content: `[Unit]\nDescription=Ghost Pattern Handler\n[Service]\nExecStart=/usr/sbin/ghost-handler --monitor --cycle`,
+          modifiedAt: 921456000000,
+          parentId: 'daemons',
         },
         {
           id: 'fs-187',
           name: 'daemon.conf',
           type: 'file',
           content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
-          modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
+          modifiedAt: 1451160812032,
+          parentId: 'daemons',
         },
         {
           id: 'fs-188',
           name: 'README.md',
           type: 'file',
-          content:
-            '# DAEMON SERVICES REGISTRY\\n\\nAuthorized personnel only.\\nAny modification to .service files requires Level 5 clearance.\\n\\nNOTE: watchdog-monitor.service is CRITICAL infrastructure.',
-          modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
+          content: '# DAEMON SERVICES REGISTRY',
+          modifiedAt: 1446840812032,
+          parentId: 'daemons',
+        },
+        {
+          id: 'fs-sys-integrity',
+          name: 'sys_integrity',
+          type: 'file',
+          content: '[WARNING] Neural Signature Duplicate Detected.',
+          modifiedAt: 1452254412032,
+          parentId: 'daemons',
         },
       ],
       parentId: 'root',
@@ -3716,10 +3736,10 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       'systemd-core',
       'workspace-systemd-core-credentials',
     ],
-    hint: 'Daemons are scattered across system directories, some hidden. Search recursively for service files. Inspect timestamps carefully—honeypots are recent. Deposit two legacy signatures in /daemons.',
-    coreSkill: 'Skill Synthesis (Search + Hidden + Tab + Clipboard)',
+    hint: 'Old protocols are buried in obscure system subdirectories. Some records are hidden (.). Use search (s) to find all .service files, then identify legacy handles by their ancient timestamps—anything recent is a honeypot. Consolidate at least two authorized daemons in your workspace.',
+    coreSkill: 'Skill Synthesis (Recursive Search + Forensic Metadata + Clipboard)',
     environmentalClue:
-      'SCAN: Recursive search from root | IDENTIFY: Legacy (> 30d) vs Honeypot (< 7d) | DEPOSIT: /daemons',
+      'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy (> 30d) | CONSOLIDATE: ~/workspace/systemd-core',
     successMessage:
       'Targets acquired. Honeypots evaded. Your signature is now masked by legacy protocols.',
     buildsOn: [3, 5, 7, 9, 10],
@@ -3729,7 +3749,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     efficiencyTip:
       'Use recursive search from root to find all service files at once, then navigate through search results while inspecting metadata.',
     onEnter: (fs: FileNode) => {
-      const root = getNodeById(fs, 'root');
+      // Simplify: fs is the root node in our architecture
+      const root = fs.id === 'root' ? fs : getNodeById(fs, 'root');
+      if (!root) return fs; // Safety exit
       const BASE_TIME = 1433059200000;
       const day = 86400000;
 
@@ -3778,9 +3800,10 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       }
 
       // Create /etc/systemd directory structure
-      let etc = getNodeById(fs, 'etc');
+      // FIXED: Check root children directly to ensuring we are operating on /etc and /usr, not deep copies
+      let etc = root?.children?.find((c) => c.name === 'etc');
       if (!etc) {
-        etc = { id: 'etc-root-fixed', name: 'etc', type: 'dir', children: [], parentId: root!.id };
+        etc = { id: 'root-etc', name: 'etc', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(etc);
       }
       let etcSystemd = etc.children?.find((c) => c.name === 'systemd');
@@ -3851,9 +3874,9 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       ];
 
       // Create /usr/lib/systemd directory structure
-      let usr = getNodeById(fs, 'usr');
+      let usr = root?.children?.find((c) => c.name === 'usr');
       if (!usr) {
-        usr = { id: 'usr', name: 'usr', type: 'dir', children: [], parentId: root!.id };
+        usr = { id: 'root-usr', name: 'usr', type: 'dir', children: [], parentId: root!.id };
         root!.children!.push(usr);
       }
       let lib = usr.children?.find((c) => c.name === 'lib');
@@ -3952,7 +3975,8 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
     tasks: [
       {
         id: 'search-services',
-        description: 'Scan the global infrastructure for active service signatures',
+        description:
+          "Scan the '/daemons' directory for .service files (some might be hidden) using a recursive search",
         check: (c) => {
           // Must have used search
           return c.usedSearch === true;
@@ -3961,9 +3985,8 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'sort-by-modified',
-        description: 'Apply forensic filtering to isolate stable legacy daemons',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('search-services')) return false;
+        description: 'Identify stable legacy daemons by sorting for the oldest records',
+        check: (c) => {
           // Must have sorted by modified time
           return c.sortBy === 'modified';
         },
@@ -3971,15 +3994,13 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'acquire-legacy',
-        description: 'Exfiltrate 2 LEGACY service signatures — avoid recent honeypots',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('sort-by-modified')) return false;
-
-          // Must have yanked 2 files
-          if (!c.clipboard || c.clipboard.action !== 'yank' || c.clipboard.nodes.length !== 2)
+        description: 'Exfiltrate at least 2 LEGACY service signatures (>30d old)',
+        check: (c) => {
+          // Must have cut at least 2 files
+          if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
             return false;
 
-          // All yanked must be legacy (> 30 days) and not honeypots
+          // All exfiltrated must be legacy (> 30 days) and not honeypots
           const BASE_TIME = 1433059200000;
           const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
           const allLegacy = c.clipboard.nodes.every(
@@ -3992,15 +4013,18 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'deposit-daemons',
-        description: 'Navigate to /daemons and deposit your legacy signatures',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('acquire-legacy')) return false;
+        description: "Consolidate your legacy signatures in '~/workspace/systemd-core'",
+        check: (c) => {
+          const workspace = getNodeById(c.fs, 'workspace');
+          const systemdCore = workspace
+            ? workspace.children?.find((n) => n.name === 'systemd-core' && n.type === 'dir')
+            : null;
 
-          const daemons = getNodeById(c.fs, 'daemons');
-          if (!daemons || !c.currentPath.includes(daemons.id)) return false;
+          if (!systemdCore || !c.currentPath.includes(systemdCore.id)) return false;
 
-          // Must have pasted and have 2 service files in daemons
-          const serviceFiles = daemons.children?.filter((n) => n.name.endsWith('.service')) || [];
+          // Must have pasted and have 2 or more service files in systemd-core
+          const serviceFiles =
+            systemdCore.children?.filter((n) => n.name.endsWith('.service')) || [];
           return serviceFiles.length >= 2 && c.usedP === true;
         },
         completed: false,
