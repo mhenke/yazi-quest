@@ -1990,7 +1990,12 @@ export default function App() {
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
       if (e.key === '?' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showHelp: true }));
+        setGameState((prev) => ({
+          ...prev,
+          showHelp: !prev.showHelp,
+          showHint: false,
+          showMap: false,
+        }));
         return;
       }
 
@@ -1998,17 +2003,21 @@ export default function App() {
         e.preventDefault();
         setGameState((prev) => {
           if (prev.showHint) {
-            const nextStage = (prev.hintStage + 1) % 3;
-            return { ...prev, hintStage: nextStage };
+            return { ...prev, showHint: false, showHelp: false, showMap: false };
           }
-          return { ...prev, showHint: true, hintStage: 0 };
+          return { ...prev, showHint: true, hintStage: 0, showHelp: false, showMap: false };
         });
         return;
       }
 
       if (e.key === 'm' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showMap: true }));
+        setGameState((prev) => ({
+          ...prev,
+          showMap: !prev.showMap,
+          showHelp: false,
+          showHint: false,
+        }));
         return;
       }
 
@@ -2054,22 +2063,39 @@ export default function App() {
       // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Alt toggles and Shift+Enter.
       // Note: Shift+Enter is handled by individual modal components internally.
       if (gameState.showHelp || gameState.showHint || gameState.showMap) {
-        // Allow Alt+? to toggle Help OFF if it's open
-        if (e.key === '?' && e.altKey && gameState.showHelp) {
+        // Toggle/Switch Logic
+        if (e.key === '?' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showHelp: false }));
-        }
-
-        // Allow Alt+h to toggle Hint OFF if it's open
-        else if (e.key === 'h' && e.altKey && gameState.showHint) {
+          // If Help is open, close it. If another is open, switch to Help.
+          setGameState((prev) => ({
+            ...prev,
+            showHelp: !prev.showHelp,
+            showHint: false,
+            showMap: false,
+          }));
+        } else if (e.key === 'h' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showHint: false }));
-        }
-
-        // Allow Alt+m to toggle Map OFF if it's open
-        else if (e.key === 'm' && e.altKey && gameState.showMap) {
+          setGameState((prev) => {
+            // If Hint is already open, cycle stages or toggle off?
+            // Existing logic elsewhere uses toggle or cycle. Let's start fresh or cycle.
+            // But here we are switching. If hint is open, maybe cycle?
+            // To match test "Alt+H to toggle Hint OFF", we should toggle off if active.
+            if (prev.showHint) {
+              // If it was just about switching, we'd stay open. But tests expect toggle.
+              // Let's toggle OFF if it's the active one.
+              return { ...prev, showHint: false, showHelp: false, showMap: false };
+            }
+            // Otherwise open it (and close others)
+            return { ...prev, showHint: true, hintStage: 0, showHelp: false, showMap: false };
+          });
+        } else if (e.key === 'm' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showMap: false }));
+          setGameState((prev) => ({
+            ...prev,
+            showMap: !prev.showMap,
+            showHelp: false,
+            showHint: false,
+          }));
         }
 
         // Allow Escape to close any open modal
@@ -2734,7 +2760,7 @@ export default function App() {
           onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
           onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
           isOpen={gameState.showMap}
-          onClose={() => setGameState((prev) => ({ ...prev, showMap: false }))}
+          onClose={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
           onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);

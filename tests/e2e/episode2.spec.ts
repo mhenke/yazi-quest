@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   startLevel,
   pressKey,
@@ -16,8 +16,8 @@ import {
   confirmMission,
   deleteItem,
   expectCurrentDir,
-  navigateRight,
   enterDirectory,
+  filterAndSelect,
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
@@ -71,21 +71,26 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 1: Jump to Root (gr)
     await gotoCommand(page, 'r');
-    // Verify Task 1 completion
-    await assertTask(page, '1/5', testInfo.outputDir, 'jump_to_root');
+    // Verify Task 1 completion (1/4 visible tasks initially)
+    await assertTask(page, '1/4', testInfo.outputDir, 'jump_to_root');
 
     // Task 2: Locate 'access_token.key' using FZF find (z)
     await findFZF(page, 'access_token');
+
+    // Verify we actually landed on the file
+    const selectedFile = page.locator('[aria-current="location"]');
+    await expect(selectedFile).toContainText('access_token.key');
+
     // Verify Task 2 completion (Locate Token)
-    await assertTask(page, '2/5', testInfo.outputDir, 'locate_token');
+    await assertTask(page, '2/4', testInfo.outputDir, 'locate_token');
 
     await pressKey(page, 'x'); // cut the file
     // Verify Task 3 completion (Stage Token)
-    await assertTask(page, '3/5', testInfo.outputDir, 'stage_token');
+    await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
 
     // Task 4: Jump to vault using Zoxide (Z -> 'vault' -> Enter)
     await fuzzyJump(page, 'vault');
-    // Task 4 complete -> hidden Task 5 appears
+    // Task 4 complete -> hidden Task 5 appears, so count becomes 4/5
     await expectNarrativeThought(page, "It's a trap. I remember the shape of this code.");
     await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
 
@@ -104,8 +109,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await startLevel(page, 8, { intro: false });
 
     // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
+    // Objective 1: Navigate to '~/workspace/systemd-core' (gw followed by l)
     await gotoCommand(page, 'w');
-    await navigateRight(page, 1);
+    await enterDirectory(page, 'systemd-core');
     await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
     // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
@@ -150,22 +156,15 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 't');
 
     // Verify we are in /tmp (Task 1 won't complete until selection is done, so we check breadcrumb/path)
-    await expectCurrentDir(page, 'tmp'); // Select ghost_process.pid
-    // Pattern: Filter -> Select -> Clear Filter
-    await filterByText(page, 'ghost_process.pid');
-    await pressKey(page, ' ');
-    await clearFilter(page);
+    await expectCurrentDir(page, 'tmp');
 
-    // Select socket_001.sock
-    await filterByText(page, 'socket_001.sock');
-    await pressKey(page, ' ');
-    await clearFilter(page);
+    // Pattern: Filter -> Select -> Clear Filter
+    // Use filterAndSelect for robust visibility waiting
+    await filterAndSelect(page, 'ghost_process.pid');
+    await filterAndSelect(page, 'socket_001.sock');
 
     // FIX: Also select system_monitor.pid so it gets deselected on invert (preserving it)
-    // This is the solution to the Honeypot puzzle
-    await filterByText(page, 'system_monitor.pid');
-    await pressKey(page, ' ');
-    await clearFilter(page);
+    await filterAndSelect(page, 'system_monitor.pid');
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 

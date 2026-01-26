@@ -593,7 +593,13 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   }
 
   // Wait for the item to be visible in the active pane to ensure filter applied
-  await expect(page.getByTestId('filesystem-pane-active').getByText(filterText)).toBeVisible();
+  // Wait for the item to be visible in the active pane to ensure filter applied
+  // Use a regex for case-insensitive partial match to be more robust
+  // eslint-disable-next-line security/detect-non-literal-regexp
+  const regex = new RegExp(filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({
+    timeout: 5000,
+  });
 
   await pressKey(page, ' '); // Toggle selection
   await clearFilter(page); // Clear filter for next action

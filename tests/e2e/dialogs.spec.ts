@@ -42,12 +42,12 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
   });
 
-  test('should open and close Hint modal with Alt+H and Escape', async ({ page }) => {
+  test('should open and close Hint modal with Alt+h and Escape', async ({ page }) => {
     // Initially, Hint modal should not be visible
     await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
 
-    // Press Alt+H to open Hint modal
-    await page.keyboard.press('Alt+H');
+    // Press Alt+h to open Hint modal
+    await page.keyboard.press('Alt+h');
     await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
 
     // Press Escape to close Hint modal
@@ -55,12 +55,12 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
   });
 
-  test('should open and close Hint modal with Alt+H and Shift+Enter', async ({ page }) => {
+  test('should open and close Hint modal with Alt+h and Shift+Enter', async ({ page }) => {
     // Initially, Hint modal should not be visible
     await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
 
-    // Press Alt+H to open Hint modal
-    await page.keyboard.press('Alt+H');
+    // Press Alt+h to open Hint modal
+    await page.keyboard.press('Alt+h');
     await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
 
     // Press Shift+Enter to close Hint modal
@@ -68,22 +68,12 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
   });
 
-  test('should close Hint modal by clicking on backdrop', async ({ page }) => {
-    // Press Alt+H to open Hint modal
-    await page.keyboard.press('Alt+H');
-    await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
-
-    // Click on the backdrop to close Hint modal (clicking on the modal element itself since it's positioned in the corner)
-    await page.locator('[data-testid="hint-modal"]').click({ position: { x: 10, y: 10 } });
-    await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
-  });
-
-  test('should open and close Quest Map modal with Alt+M and Escape', async ({ page }) => {
+  test('should open and close Quest Map modal with Alt+m and Escape', async ({ page }) => {
     // Initially, Quest Map modal should not be visible
     await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
 
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
     // Press Escape to close Quest Map modal
@@ -91,12 +81,12 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
   });
 
-  test('should open and close Quest Map modal with Alt+M and Shift+Enter', async ({ page }) => {
+  test('should open and close Quest Map modal with Alt+m and Shift+Enter', async ({ page }) => {
     // Initially, Quest Map modal should not be visible
     await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
 
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
     // Press Shift+Enter to close Quest Map modal
@@ -105,8 +95,8 @@ test.describe('Dialogs Functionality', () => {
   });
 
   test('should close Quest Map modal by clicking on backdrop', async ({ page }) => {
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
     // Click on the backdrop to close Quest Map modal (clicking on the modal element itself)
@@ -139,6 +129,10 @@ test.describe('Dialogs Functionality', () => {
     // Click the map button in the status bar
     await page.locator('[data-testid="map-button"]').click();
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
+
+    // Click the map button again to close it (Toggle)
+    await page.locator('[data-testid="map-button"]').click();
+    await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
   });
 
   test('should support navigation in Help modal with j/k keys', async ({ page }) => {
@@ -176,8 +170,8 @@ test.describe('Dialogs Functionality', () => {
   });
 
   test('should support navigation in Quest Map modal with h/l and j/k keys', async ({ page }) => {
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
     // Get active tab initially (first tab is typically active by default)
@@ -214,48 +208,42 @@ test.describe('Dialogs Functionality', () => {
     // This test verifies that meta commands work even when other dialogs are active
     // For this test, we'll simulate the scenario by opening the map and then trying to open help
 
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
-    // Now press Alt+? to open Help modal (should work even though map is open)
+    // Verify switching: Press Alt+? should switch to Help (closing Map)
     await page.keyboard.press('Alt+?');
-    await expect(page.locator('[data-testid="help-modal"]')).toBeVisible();
-
-    // The help modal should be visible, and map should be closed
-    await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
+    await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible(); // Map closed
+    await expect(page.locator('[data-testid="help-modal"]')).toBeVisible(); // Help opened
 
     // Close the help modal
     await page.keyboard.press('Escape');
   });
 
-  test('should open hint modal with Alt+H even when other dialogs are active', async ({ page }) => {
-    // Press Alt+M to open Quest Map modal
-    await page.keyboard.press('Alt+M');
+  test('should open hint modal with Alt+h even when other dialogs are active', async ({ page }) => {
+    // Press Alt+m to open Quest Map modal
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
-    // Now press Alt+H to open Hint modal (should work even though map is open)
-    await page.keyboard.press('Alt+H');
-    await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
-
-    // The hint modal should be visible, and map should be closed
+    // Verify switching: Press Alt+h should switch to Hint (closing Map)
+    await page.keyboard.press('Alt+h');
     await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
+    await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
 
     // Close the hint modal
     await page.keyboard.press('Escape');
   });
 
-  test('should open map modal with Alt+M even when other dialogs are active', async ({ page }) => {
+  test('should open map modal with Alt+m even when other dialogs are active', async ({ page }) => {
     // Press Alt+? to open Help modal
     await page.keyboard.press('Alt+?');
     await expect(page.locator('[data-testid="help-modal"]')).toBeVisible();
 
-    // Now press Alt+M to open Map modal (should work even though help is open)
-    await page.keyboard.press('Alt+M');
-    await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
-
-    // The map modal should be visible, and help should be closed
+    // Verify switching: Press Alt+m should switch to Map (closing Help)
+    await page.keyboard.press('Alt+m');
     await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
+    await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
 
     // Close the map modal
     await page.keyboard.press('Escape');

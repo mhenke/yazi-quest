@@ -15,10 +15,8 @@ test.describe('Game Constraints', () => {
     }
 
     // Expect Game Over Modal with correct text - using more specific heading locator
-    await expect(
-      page.getByRole('heading', { name: /HEURISTIC ANALYSIS COMPLETE/i }).first()
-    ).toBeVisible();
-    await expect(page.getByText(/Heuristic Analysis Complete/i).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /IG KERNEL PANIC/i }).first()).toBeVisible();
+    await expect(page.getByText(/Instruction Analysis Complete/i).first()).toBeVisible();
   });
 
   test('Time Limit: Running out of time triggers Game Over', async ({ page }) => {
@@ -35,7 +33,7 @@ test.describe('Game Constraints', () => {
     });
 
     // Ensure the timer is visible/active
-    await expect(page.getByText(/Watchdog:/)).toBeVisible();
+    await expect(page.getByText(/WATCHDOG/i).first()).toBeVisible();
 
     // Fast-forward 100 seconds (Level 6 limit is 90s)
     await page.clock.runFor(100000);

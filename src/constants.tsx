@@ -3256,6 +3256,23 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     timeLimit: 90,
     efficiencyTip:
       'When using FZF (z), typing filters the list. Use `Enter` to jump directly to the highlighted result.',
+    onEnter: (fs) => {
+      let newFs = ensurePrerequisiteState(fs, 7);
+      // Ensure access_token.key exists in /tmp for Level 7 logic
+      const tmp = getNodeById(newFs, 'tmp');
+      if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
+        if (!tmp.children) tmp.children = [];
+        tmp.children.push({
+          id: 'fs-access-token-key-tmp',
+          name: 'access_token.key',
+          type: 'file',
+          content: 'AB-9921-X [VALID]',
+          parentId: tmp.id,
+          modifiedAt: Date.now(),
+        });
+      }
+      return newFs;
+    },
     tasks: [
       {
         id: 'nav-to-root',
