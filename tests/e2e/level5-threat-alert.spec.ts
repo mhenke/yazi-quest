@@ -10,7 +10,7 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     page,
   }) => {
     // Wait for the ThreatAlert to appear (it should show automatically on Level 5)
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible({ timeout: 500 });
 
     // Verify that the ThreatAlert is indeed visible
     await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible();
@@ -54,7 +54,7 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     page,
   }) => {
     // Wait for the ThreatAlert to appear
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible({ timeout: 500 });
 
     // Dismiss the ThreatAlert with Shift+Enter
     await page.keyboard.press('Shift+Enter');

@@ -65,7 +65,7 @@ test.describe('Reproduction: Shift+Enter Dismissal', () => {
     // Ensure the identity file is selected
     await expect(
       page.getByTestId('filesystem-pane-active').getByText('.identity.log.enc')
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 500 });
 
     for (let i = 0; i < 15; i++) {
       await pressKey(page, 'Shift+J');

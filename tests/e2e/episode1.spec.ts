@@ -102,7 +102,7 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 5: d, y - delete the file
       await pressKey(page, 'd'); // Mark for deletion with 'd'
-      await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 2000 }); // Wait for confirmation modal
+      await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 }); // Wait for confirmation modal
       await page.waitForTimeout(200);
       await pressKey(page, 'y'); // Confirm deletion with 'y'
       await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');

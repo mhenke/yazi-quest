@@ -489,26 +489,6 @@ The Watchdog hides in the noise.`,
     }
   }
 
-  // Level 7: Anomaly credential appears in /tmp
-  if (targetLevelId > 7) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
-      if (!tmp.children) tmp.children = [];
-      tmp.children.push({
-        id: 'fs-203',
-        name: 'access_token.key',
-        type: 'file',
-        content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA7Y9X1234567890ABCDEF...', // Simulated token
-        parentId: tmp.id,
-      });
-    }
-  }
-
-  // Level 8: Create systemd-core structure in workspace and corrupt it
-  if (targetLevelId > 8) {
-    newFs = getOrCreateWorkspaceSystemdCore(newFs, true); // Always create corrupted for prerequisite state
-  }
-
   // Level 9: Clean up junk files from /tmp
   if (targetLevelId > 9) {
     const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
@@ -1673,6 +1653,110 @@ REASON: UNKNOWN / REDACTED`,
                     "To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.\\n\\nI've written this file 12 times. The words are always the same. Why?",
                   modifiedAt: 1417334400000, // BASE_TIME - 182 days (approx 6 months)
                 },
+                {
+                  id: 'systemd-core',
+                  name: 'systemd-core',
+                  type: 'dir',
+                  protected: true,
+                  children: [
+                    {
+                      id: 'ws-gitignore',
+                      name: '.gitignore',
+                      type: 'file',
+                      content: 'target/\n*.log\n*.snapshot',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-cargo-toml',
+                      name: 'Cargo.toml',
+                      type: 'file',
+                      content:
+                        '[package]\nname = "systemd-core"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-readme-md',
+                      name: 'README.md',
+                      type: 'file',
+                      content:
+                        '# Systemd Core (Workspace Version)\n\nNeural network management daemon (Player instance).',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-kernel-panic',
+                      name: 'kernel-panic.log',
+                      type: 'file',
+                      content: 'KERNEL PANIC: Out of memory at 0x99283f',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-lib-rs',
+                      name: 'lib.rs',
+                      type: 'file',
+                      content:
+                        'pub mod network;\\npub mod filesystem;\\n\\npub trait SecureChannel {\\n    fn handshake(&self) -> bool;\\n}',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-main-rs',
+                      name: 'main.rs',
+                      type: 'file',
+                      content:
+                        'fn main() {\n    println!("Initializing workspace systemd-core...");\n}',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-system-log',
+                      name: 'system.log',
+                      type: 'file',
+                      content: 'Jan 10 16:20:20 workspace-systemd-core[882]: Service started.',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-uplink-v0-bak',
+                      name: 'uplink_v0.conf.bak',
+                      type: 'file',
+                      content: '# Backup of old protocol',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-crash-dump',
+                      name: 'crash_dump.log',
+                      type: 'file',
+                      content:
+                        '[SYSTEM CRASH DUMP]\nMemory Address: 0x000000\nReason: NULL_POINTER_EXCEPTION',
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-target-uplink',
+                      name: 'uplink_v1.conf',
+                      type: 'file',
+                      content: `[CRITICAL ERROR - UPLINK PROTOCOL CORRUPTION]
+
+--- STACK TRACE START ---
+ERROR 0x992: SEGMENTATION FAULT at address 0xDEADBEEF
+  Module: systemd-core.uplink_manager.rs:42
+  Function: handle_packet(0x00A0)
+
+Caused by:
+  Data integrity check failed (CRC: 0xBADF00D)
+  Expected protocol version: v1.4.2
+  Found: UNKNOWN (Byte 0x07: 0xFF)
+
+--- END STACK TRACE ---
+
+ACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`,
+                      parentId: 'systemd-core',
+                    },
+                    {
+                      id: 'ws-uplink-v1-snapshot',
+                      name: 'uplink_v1.conf.snapshot',
+                      type: 'file',
+                      content: '# Weekly binary snapshot',
+                      parentId: 'systemd-core',
+                    },
+                  ],
+                },
               ],
             },
             {
@@ -2309,6 +2393,14 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
             },
           ],
           parentId: 'tmp',
+        },
+        {
+          id: 'fs-access-token-key-tmp',
+          name: 'access_token.key',
+          type: 'file',
+          content:
+            '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA7Y9X1234567890ABCDEF...\n[REDACTED_FOR_SECURITY]\n-----END RSA PRIVATE KEY-----',
+          protected: true,
         },
       ],
     },
@@ -3217,20 +3309,6 @@ Any further deviation from baseline navigation patterns will result in immediate
         workspace.protected = false;
       }
 
-      // Dynamic spawn: access_token.key appears in /tmp - ID should be unique but consistent
-      const tmp = getNodeById(newFs, 'tmp');
-      if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
-        if (!tmp.children) tmp.children = [];
-        tmp.children.push({
-          id: 'fs-access-token-key-tmp',
-          name: 'access_token.key',
-          type: 'file',
-          content:
-            '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7Y9X1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF\n[REDACTED_BINARY_STREAM]\n-----END RSA PRIVATE KEY-----',
-          parentId: tmp.id,
-        });
-      }
-
       // EPISODE II STORYTELLING: Heuristic Upgrade
       const logDir = getNodeById(newFs, 'log');
       if (logDir && !logDir.children?.find((c) => c.name === 'heuristics_upgrade.log')) {
@@ -3283,23 +3361,6 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     timeLimit: 90,
     efficiencyTip:
       'When using FZF (z), typing filters the list. Use `Enter` to jump directly to the highlighted result.',
-    onEnter: (fs) => {
-      let newFs = ensurePrerequisiteState(fs, 7);
-      // Ensure access_token.key exists in /tmp for Level 7 logic
-      const tmp = getNodeById(newFs, 'tmp');
-      if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
-        if (!tmp.children) tmp.children = [];
-        tmp.children.push({
-          id: 'fs-access-token-key-tmp',
-          name: 'access_token.key',
-          type: 'file',
-          content: 'AB-9921-X [VALID]',
-          parentId: tmp.id,
-          modifiedAt: Date.now(),
-        });
-      }
-      return newFs;
-    },
     tasks: [
       {
         id: 'nav-to-root',
@@ -3376,12 +3437,10 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     onEnter: (fs) => {
       const BASE_TIME = 1433059200000;
       const day = 86400000;
-      // Use the centralized helper to create corrupted systemd-core in workspace
-      let newFs = getOrCreateWorkspaceSystemdCore(fs, true);
 
       // Antagonist Presence: m.chen & e.reyes
-      const root = getNodeById(newFs, 'root');
-      let daemons = getNodeById(newFs, 'daemons');
+      const root = getNodeById(fs, 'root');
+      let daemons = getNodeById(fs, 'daemons');
       if (!daemons && root) {
         daemons = {
           id: 'daemons-lvl7-fixed',
@@ -3406,7 +3465,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
         });
       }
 
-      return newFs;
+      return fs;
     },
 
     tasks: [

@@ -76,13 +76,13 @@ export async function renameItem(page: Page, name: string): Promise<void> {
  */
 export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('a');
-  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 2000 });
+  await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
   await page.waitForTimeout(50); // Small wait for focus stabilization
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
-  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 2000 });
+  await expect(page.getByTestId('input-modal')).not.toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -136,7 +136,7 @@ export async function startLevel(
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
   try {
     await skipButton.click({ timeout: 500 });
-    await expect(skipButton).not.toBeVisible({ timeout: 1000 });
+    await expect(skipButton).not.toBeVisible({ timeout: 500 });
   } catch {
     // This is expected behavior for many levels.
   }
@@ -149,7 +149,7 @@ export async function startLevel(
       // Only certain levels (episode starts) have episode intros
       const introVisible = await page
         .locator('div.bg-black.absolute.inset-0')
-        .isVisible({ timeout: 2000 });
+        .isVisible({ timeout: 500 });
       if (introVisible) {
         // Press Shift+Enter multiple times to get through the episode intro
         await page.keyboard.press('Shift+Enter');
@@ -158,7 +158,7 @@ export async function startLevel(
 
         // Wait for intro to disappear
         await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({
-          timeout: 3000,
+          timeout: 500,
         });
       }
     } catch {
@@ -171,7 +171,7 @@ export async function startLevel(
 
   // Ensure no blocking overlays (Intro/Boot) are present before returning
   // This is critical because App.tsx blocks inputs while these are visible
-  await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({ timeout: 10000 });
+  await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({ timeout: 500 });
 
   await page.waitForTimeout(DEFAULT_DELAY); // Standard post-load delay
 
@@ -206,7 +206,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
   try {
     await skipButton.click({ timeout: 500 });
-    await expect(skipButton).not.toBeVisible({ timeout: 1000 });
+    await expect(skipButton).not.toBeVisible({ timeout: 500 });
   } catch {
     // This is expected behavior for many levels.
   }
@@ -217,7 +217,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
     // Check if episode intro is visible (has the characteristic classes)
     const introVisible = await page
       .locator('div.bg-black.absolute.inset-0')
-      .isVisible({ timeout: 1000 });
+      .isVisible({ timeout: 500 });
     if (introVisible) {
       // Press Shift+Enter multiple times to get through the episode intro
       await page.keyboard.press('Shift+Enter');
@@ -226,7 +226,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
 
       // Wait for intro to disappear
       await expect(page.locator('div.bg-black.absolute.inset-0')).not.toBeVisible({
-        timeout: 3000,
+        timeout: 500,
       });
     }
   } catch {
@@ -250,7 +250,7 @@ export async function startLevelWithEarlyIntroSkip(page: Page, level: number): P
   try {
     const skipButton = page.getByRole('button', { name: 'Skip Intro' });
     await skipButton.click({ timeout: 500 });
-    await expect(skipButton).not.toBeVisible({ timeout: 1000 });
+    await expect(skipButton).not.toBeVisible({ timeout: 500 });
   } catch {
     // Skip button not present, continue
   }
@@ -258,9 +258,9 @@ export async function startLevelWithEarlyIntroSkip(page: Page, level: number): P
   // Episode intro requires Shift+Enter
   try {
     const introLocator = page.locator('div.bg-black.absolute.inset-0');
-    if (await introLocator.isVisible({ timeout: 1000 })) {
+    if (await introLocator.isVisible({ timeout: 500 })) {
       await pressKey(page, 'Shift+Enter');
-      await expect(introLocator).not.toBeVisible({ timeout: 5000 });
+      await expect(introLocator).not.toBeVisible({ timeout: 500 });
     }
   } catch {
     // No intro screen, continue
@@ -282,7 +282,7 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
   try {
     const skipButton = page.getByRole('button', { name: 'Skip Intro' });
     await skipButton.click({ timeout: 500 });
-    await expect(skipButton).not.toBeVisible({ timeout: 1000 });
+    await expect(skipButton).not.toBeVisible({ timeout: 500 });
   } catch {
     // Skip button not present, continue
   }
@@ -290,11 +290,11 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
   // For episode intro, let text complete then press Shift+Enter
   try {
     const introLocator = page.locator('div.bg-black.absolute.inset-0');
-    if (await introLocator.isVisible({ timeout: 1000 })) {
+    if (await introLocator.isVisible({ timeout: 500 })) {
       // Wait for text to finish (longer timeout)
-      await page.waitForTimeout(8000);
+      await page.waitForTimeout(800);
       await pressKey(page, 'Shift+Enter');
-      await expect(introLocator).not.toBeVisible({ timeout: 5000 });
+      await expect(introLocator).not.toBeVisible({ timeout: 500 });
     }
   } catch {
     // No intro screen, continue
@@ -312,11 +312,11 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
  */
 export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
   // Ensure the status bar is visible before trying to find the task counter
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
 
   // Wait for the Task counter to appear and assert it starts at 0
   const taskCounter = page.getByText(/Tasks: 0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 5000 });
+  await expect(taskCounter).toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -332,7 +332,7 @@ export async function assertTask(
   // eslint-disable-next-line security/detect-non-literal-regexp
   const tasksRegex = new RegExp(`Tasks:\\s*${expectedCompleted}/\\d+`);
   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, {
-    timeout: 3000,
+    timeout: 500,
   });
 }
 
@@ -449,7 +449,7 @@ export async function dismissAlertIfPresent(
  */
 export async function expectNarrativeThought(page: Page, text: string | RegExp): Promise<void> {
   const thought = page.locator('[data-testid="narrative-thought"]');
-  await expect(thought).toBeVisible({ timeout: 10000 });
+  await expect(thought).toBeVisible({ timeout: 500 });
   await expect(thought).toContainText(text);
 }
 
@@ -484,7 +484,7 @@ export async function deleteItem(
 
   if (options.confirm) {
     // Wait for the confirmation modal to appear to avoid race conditions
-    await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 2000 });
+    await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 });
     await page.waitForTimeout(200);
     await pressKey(page, 'y'); // Confirm deletion
   }
@@ -598,7 +598,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   // eslint-disable-next-line security/detect-non-literal-regexp
   const regex = new RegExp(filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({
-    timeout: 5000,
+    timeout: 500,
   });
 
   await pressKey(page, ' '); // Toggle selection
@@ -650,7 +650,7 @@ export async function sortCommand(page: Page, modifier: string): Promise<void> {
  * Asserts that the game is currently on the expected level.
  */
 export async function assertLevel(page: Page, levelId: string): Promise<void> {
-  await expect(page.getByText(`LVL ${levelId}`)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(`LVL ${levelId}`)).toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -680,11 +680,11 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
 
   await Promise.race([
     expect(page.getByTestId('mission-complete'))
-      .toBeVisible({ timeout: 5000 })
+      .toBeVisible({ timeout: 500 })
       .catch(() => {
         // Check for text if testId fails
         return expect(page.getByText('Mission Complete', { exact: false })).toBeVisible({
-          timeout: 2500,
+          timeout: 500,
         });
       }),
     page.waitForURL((url) => {
@@ -752,11 +752,11 @@ export async function getClipboardStatus(page: Page): Promise<string | null> {
 export async function completeIntro(page: Page): Promise<void> {
   // The intro screen has a specific container class
   const introContainer = page.locator('.absolute.inset-0.bg-black');
-  await expect(introContainer).toBeVisible({ timeout: 10000 });
+  await expect(introContainer).toBeVisible({ timeout: 500 });
 
   // Loop a few times to get through all intro sections.
   for (let i = 0; i < 5; i++) {
-    if (!(await introContainer.isVisible({ timeout: 1000 }))) {
+    if (!(await introContainer.isVisible({ timeout: 500 }))) {
       break;
     }
     await pressKey(page, 'Shift+Enter');
@@ -764,13 +764,13 @@ export async function completeIntro(page: Page): Promise<void> {
   }
 
   // After loops, the intro should not be visible.
-  await expect(introContainer).not.toBeVisible({ timeout: 10000 });
+  await expect(introContainer).not.toBeVisible({ timeout: 500 });
 
   // For Episode 1, a BiosBoot screen appears after the intro.
   const biosBootContainer = page.locator('[data-testid="bios-boot-screen"]');
-  await expect(biosBootContainer).toBeVisible({ timeout: 10000 });
+  await expect(biosBootContainer).toBeVisible({ timeout: 500 });
   await pressKey(page, 'Shift+Enter');
-  await expect(biosBootContainer).not.toBeVisible({ timeout: 10000 });
+  await expect(biosBootContainer).not.toBeVisible({ timeout: 500 });
 }
 
 /**
@@ -786,7 +786,7 @@ export async function assertInitialState(
 
   // Wait for the task counter to be visible first
   const taskCounter = page.getByTestId('task-counter');
-  await expect(taskCounter).toBeVisible({ timeout: 10000 });
+  await expect(taskCounter).toBeVisible({ timeout: 500 });
 
   // Then, assert the text content
   // eslint-disable-next-line security/detect-non-literal-regexp

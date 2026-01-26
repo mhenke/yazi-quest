@@ -116,7 +116,7 @@ test.describe('Episode 3: MASTERY', () => {
           await gotoCommand(page, 'r');
           await search(page, 'scan_');
           await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, {
-            timeout: 2000,
+            timeout: 500,
           });
           await page.keyboard.press('Control+a'); // Select all scan files
           await page.waitForTimeout(500);
@@ -234,7 +234,7 @@ test.describe('Episode 3: MASTERY', () => {
     await typeText(page, '.key');
     await pressKey(page, 'Enter');
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
-      timeout: 2000,
+      timeout: 500,
     });
 
     await pressKey(page, 'Ctrl+A'); // Select all
