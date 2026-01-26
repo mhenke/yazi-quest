@@ -1646,14 +1646,6 @@ REASON: UNKNOWN / REDACTED`,
               protected: true,
               children: [
                 {
-                  id: 'fs-notes-txt',
-                  name: 'notes.txt',
-                  type: 'file',
-                  content:
-                    "To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.\\n\\nI've written this file 12 times. The words are always the same. Why?",
-                  modifiedAt: 1417334400000, // BASE_TIME - 182 days (approx 6 months)
-                },
-                {
                   id: 'systemd-core',
                   name: 'systemd-core',
                   type: 'dir',
@@ -1756,6 +1748,14 @@ ACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`,
                       parentId: 'systemd-core',
                     },
                   ],
+                },
+                {
+                  id: 'fs-notes-txt',
+                  name: 'z-notes.txt',
+                  type: 'file',
+                  content:
+                    "To self: The system feels loops. I think I have been here before.\\nDate: 6 months ago.\\n\\nI've written this file 12 times. The words are always the same. Why?",
+                  modifiedAt: 1417334400000, // BASE_TIME - 182 days (approx 6 months)
                 },
               ],
             },
@@ -2372,6 +2372,14 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
           name: 'emergency_protocol.txt',
           type: 'file',
           content: `# EMERGENCY PROTOCOL ALPHA\n# In case of 7734 re-manifestation:\n# Purge /tmp/upload, lock guest partition, alert Sector 7 Watchdog. Do NOT engage directly.`,
+        },
+        {
+          id: 'tmp-honeypot-1',
+          name: 'system_monitor.pid',
+          type: 'file',
+          isHoneypot: true,
+          content: 'PID: 1 (SYSTEM CRITICAL)', // Looks important
+          parentId: 'tmp',
         },
         // Pre-seed upload relay with realistic artifacts so later levels relying on /tmp/upload have content
         {
@@ -3656,19 +3664,6 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
               modifiedAt: BASE_TIME - i * 2000,
             });
           }
-        }
-
-        // Add Honeypot
-        if (!tmp.children.some((c) => c.name === 'system_monitor.pid')) {
-          tmp.children.push({
-            id: 'tmp-honeypot-1',
-            name: 'system_monitor.pid',
-            type: 'file',
-            isHoneypot: true,
-            content: 'PID: 1 (SYSTEM CRITICAL)',
-            parentId: tmp.id,
-            modifiedAt: BASE_TIME - 5 * 60 * 1000,
-          });
         }
 
         if (!tmp.children.find((c) => c.name === 'ghost_process.pid')) {

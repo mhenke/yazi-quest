@@ -43,6 +43,17 @@ Fix: Use robust navigation like enterDirectory('name') which uses explicit filte
 ❌ await gotoCommand(page, 'w'); await navigateRight(page, 1);
 ✅ await gotoCommand(page, 'w'); await enterDirectory(page, 'systemd-core');
 
+7. Missing Initial Filesystem Artifacts
+   Symptom: Element(s) not found when tests expect specific files/directories to exist. Cause: Files or directories required for specific levels are not present in the initial filesystem state or are dynamically created only when entering specific levels.
+
+Issue: Tests for Level 8 fail because '~/workspace/systemd-core' doesn't exist when jumping directly to the level. Similarly, Level 9 tests fail because 'system_monitor.pid' is not in '/tmp' when expected.
+Fix: Ensure critical files/directories are present in the initial filesystem (INITIAL_FS) and marked as 'protected: true' to prevent accidental deletion. Remove dynamic creation logic from 'onEnter' functions when no longer needed.
+
+- Add required directories/files to INITIAL_FS in constants.tsx
+- Mark them as 'protected: true' to prevent user modification
+- Remove redundant creation logic from level 'onEnter' functions
+- Update ensurePrerequisiteState to not recreate files already in initial FS
+
 8. Honeypot Alert Precedence
    Symptom: Selective guidance thoughts (from `useKeyboardHandlers`) are blocked by modal alerts (from `App.tsx`). Cause: Level-specific selection logic in `App.tsx` may trigger a `ThreatAlert` modal that traps focus/interaction before the narrative logic executes.
 
