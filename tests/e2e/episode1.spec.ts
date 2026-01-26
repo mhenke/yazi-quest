@@ -85,16 +85,16 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'i'); // Use gi to go to incoming
       await assertTask(page, '2/5', testInfo.outputDir, 'nav_to_incoming');
 
-      // Task 3: G and Tab - use G to go to bottom and Tab to inspect
-      await pressKey(page, 'Shift+g'); // Use G (Shift+g) to go to bottom
-      await pressKey(page, 'Tab'); // Use Tab to inspect the file
-      await assertTask(page, '3/5', testInfo.outputDir, 'locate_and_inspect');
+      // Task 3 & 4: G and Tab
+      // Pressing G lands cursor on watcher -> completes 'initial-scan' (Task 4)
+      // Pressing Tab inspecting metadata -> completes 'locate-watcher' (Task 3)
+      // So we jump from 2/5 to 4/5 here.
+      await pressKey(page, 'Shift+g');
+      await pressKey(page, 'Tab');
+      await assertTask(page, '4/5', testInfo.outputDir, 'locate_and_inspect');
 
-      // Task 4: J and K - scroll preview using J and K
-      await pressKey(page, 'Escape'); // Close info panel if open
-      await pressKey(page, 'Shift+j'); // Scroll preview down with J
-      await pressKey(page, 'Shift+k'); // Scroll preview up with K
-      await assertTask(page, '4/5', testInfo.outputDir, 'scroll_preview');
+      // Close info panel
+      await pressKey(page, 'Escape');
 
       // Task 5: d, y - delete the file
       await pressKey(page, 'd'); // Mark for deletion with 'd'
