@@ -331,7 +331,7 @@ export async function assertTask(
   const expectedCompleted = taskCount.split('/')[0];
   // eslint-disable-next-line security/detect-non-literal-regexp
   const tasksRegex = new RegExp(`Tasks:\\s*${expectedCompleted}/\\d+`);
-  await expect(page.getByTestId('task-counter').getByText(tasksRegex)).toBeVisible({
+  await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, {
     timeout: 3000,
   });
 }
