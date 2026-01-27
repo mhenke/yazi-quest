@@ -136,3 +136,13 @@ const regex = new RegExp(filter, 'i');
     ✅ // Direct navigation to the directory containing the file
     await gotoCommand(page, 'w'); // Go to workspace
     await enterDirectory(page, 'subdir'); // Navigate to specific directory
+
+16. Synthetic Events vs Native Keyboard Press in Inputs
+    Symptom: Tests fail to clear input fields using Ctrl+A + Backspace, resulting in appended text (e.g. "uplink_v1.confuplink_v2.conf") instead of replacement.
+    Cause: Synthetic events dispatching `Ctrl+A` or `Meta+A` do not trigger the browser's native "Select All" behavior in input fields for security/sandboxing reasons.
+
+    Issue: `pressKey(page, 'Ctrl+A')` dispatches a window event but doesn't select input text.
+    Fix: Use Playwright's native `page.keyboard.press('Control+A')` which correctly simulates the hardware interaction.
+
+    ❌ await pressKey(page, 'Ctrl+A'); // Synthetic dispatch
+    ✅ await page.keyboard.press('Control+A'); // Native Playwright event
