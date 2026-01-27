@@ -161,7 +161,9 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 3: Duplicate file (y, p) and rename to uplink_v2.conf (r)
       await pressKey(page, 'y');
+      await page.waitForTimeout(500); // Wait for paste operation to complete and UI to update
       await pressKey(page, 'p');
+      await page.waitForTimeout(500); // Wait for paste operation to complete and UI to update
       await renameItem(page, 'uplink_v2.conf');
       await assertTask(page, '3/3', testInfo.outputDir, 'duplicate_and_rename');
 
