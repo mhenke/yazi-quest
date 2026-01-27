@@ -27,6 +27,7 @@ import {
   enterDirectory,
   goUp,
   expectCurrentDir,
+  DEFAULT_DELAY,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
@@ -58,7 +59,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
       // Task 5: Navigate to /var using h to go up
-      await page.waitForTimeout(500); // Wait for state to settle
+      await page.waitForTimeout(DEFAULT_DELAY); // Wait for state to settle
       await goUp(page, 3); // Go up 3 levels to root
       await expectCurrentDir(page, '/'); // Root is displayed as '/'
 
@@ -103,7 +104,7 @@ test.describe('Episode 1: AWAKENING', () => {
       // Task 5: d, y - delete the file
       await pressKey(page, 'd'); // Mark for deletion with 'd'
       await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 }); // Wait for confirmation modal
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
       await pressKey(page, 'y'); // Confirm deletion with 'y'
       await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');
 
@@ -161,9 +162,9 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 3: Duplicate file (y, p) and rename to uplink_v2.conf (r)
       await pressKey(page, 'y');
-      await page.waitForTimeout(500); // Wait for paste operation to complete and UI to update
+      await page.waitForTimeout(DEFAULT_DELAY); // Wait for paste operation to complete and UI to update
       await pressKey(page, 'p');
-      await page.waitForTimeout(500); // Wait for paste operation to complete and UI to update
+      await page.waitForTimeout(DEFAULT_DELAY); // Wait for paste operation to complete and UI to update
       await renameItem(page, 'uplink_v2.conf');
       await assertTask(page, '3/3', testInfo.outputDir, 'duplicate_and_rename');
 
@@ -211,18 +212,18 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Move to uplink_v1 (Index 1)
       await navigateDown(page, 1);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Select uplink_v1
       await pressKey(page, ' ');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Verify first selection worked
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
 
       // Select uplink_v2 (Index 2) - Space should have auto-advanced cursor to 2
       await pressKey(page, ' ');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Verify second selection worked
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(2);

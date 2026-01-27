@@ -17,7 +17,7 @@ async function skipViaButton(page: Page): Promise<void> {
   for (let i = 0; i < 5; i++) {
     try {
       await skipButton.click({ timeout: 500 });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
     } catch {
       break;
     }
@@ -30,7 +30,7 @@ async function skipViaButton(page: Page): Promise<void> {
 async function skipViaMashShiftEnter(page: Page): Promise<void> {
   for (let i = 0; i < 10; i++) {
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(DEFAULT_DELAY);
     const statusBar = page.locator('[data-testid="status-bar"]');
     if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
       break;
@@ -43,9 +43,9 @@ async function skipViaMashShiftEnter(page: Page): Promise<void> {
  */
 async function skipViaHybrid(page: Page): Promise<void> {
   await page.keyboard.press('Shift+Enter');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(DEFAULT_DELAY);
   await page.keyboard.press('Shift+Enter');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(DEFAULT_DELAY);
   await skipViaButton(page);
 }
 
@@ -179,7 +179,7 @@ test.describe('Intro Pathway Validation', () => {
       // EpisodeIntro has multiple sections - mash Shift+Enter until we see BiosBoot
       for (let i = 0; i < 5; i++) {
         await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(DEFAULT_DELAY);
         // Check if BiosBoot is visible
         const bios = page.getByText(/ANTIGRAVITY BIOS/);
         if (await bios.isVisible({ timeout: 500 }).catch(() => false)) {
@@ -268,7 +268,7 @@ test.describe('Intro Pathway Validation', () => {
           break;
         }
         await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(DEFAULT_DELAY);
       }
 
       await waitForGameReady(page);
@@ -286,7 +286,7 @@ test.describe('Intro Pathway Validation', () => {
           break;
         }
         await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(DEFAULT_DELAY);
       }
 
       await waitForGameReady(page);
@@ -304,7 +304,7 @@ test.describe('Intro Pathway Validation', () => {
           break;
         }
         await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(DEFAULT_DELAY);
       }
 
       await waitForGameReady(page);

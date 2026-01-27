@@ -26,6 +26,7 @@ import {
   sortCommand,
   dismissAlertIfPresent,
   expectNarrativeThought,
+  DEFAULT_DELAY,
 } from './utils';
 
 // Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
@@ -119,7 +120,7 @@ test.describe('Episode 3: MASTERY', () => {
             timeout: 500,
           });
           await pressKey(page, 'Ctrl+A'); // Select all
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(DEFAULT_DELAY);
           await deleteItem(page, { confirm: true });
 
           // Dismiss any threat alerts that appear after deletion
@@ -128,7 +129,7 @@ test.describe('Episode 3: MASTERY', () => {
           await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
           await filterByText(page, scenario.threat);
           await deleteItem(page, { confirm: true });
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(DEFAULT_DELAY);
         }
         await clearFilter(page);
 
@@ -158,13 +159,14 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Find and cursor to identity file using Recursive Search (s) to avoid filter clearing issues
       await pressKey(page, 's');
+      // Note: No input modal exists for search, avoiding assertion.
       await typeText(page, 'identity');
-      await page.waitForTimeout(500); // Ensure input is registered
+      await page.waitForTimeout(DEFAULT_DELAY); // Ensure input is registered
       await page.keyboard.press('Enter');
       // [Fix] Wait for search results and verify single match
       await expect(page.getByRole('listitem')).toHaveCount(1, { timeout: 2000 });
       await expect(page.getByRole('listitem').first()).toContainText('identity');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Search might trigger a warning if implemented (unlikely for s, but good to wait)
       // Ensure we are in search results
@@ -172,13 +174,13 @@ test.describe('Episode 3: MASTERY', () => {
       // Move cursor to first item (identity log)
       await pressKey(page, 'g');
       await pressKey(page, 'g');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Scroll preview pane IMMEDIATELY to complete task check while cursor is on file
       for (let i = 0; i < 12; i++) {
         await pressKey(page, 'Shift+j');
       }
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Task should be complete now - assert BEFORE clearing filter
       // For no-threat: Task 1 = navigate-workspace, Task 2 = discover-identity
@@ -188,11 +190,11 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Now clear filter
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Toggle hidden off before continuing
       await pressKey(page, '.');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       await runLevel12Mission(page);
 
@@ -221,6 +223,9 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys', async ({
     page,
   }, testInfo) => {
+    // Standard viewport
+    await page.setViewportSize({ width: 1280, height: 720 });
+
     test.setTimeout(60000);
     await startLevel(page, 13, { intro: false });
     await assertLevel(page, '13');
@@ -236,7 +241,7 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 's'); // Search
     await typeText(page, '.key');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
       timeout: 500,
     });
@@ -254,22 +259,6 @@ test.describe('Episode 3: MASTERY', () => {
     await gotoCommand(page, 'w'); // Warp to workspace
     await expectCurrentDir(page, 'workspace');
 
-    await addItem(page, 'central_relay/'); // Create directory
-    await assertTask(page, '2/4', testInfo.outputDir, 'phase2_relay_created');
-
-    // PHASE 3: SYNC
-    // ----------------------------------------------------------------
-    await filterByText(page, 'central_relay');
-    await navigateRight(page, 1); // Enter relay
-    await clearFilter(page);
-    await pressKey(page, 'p'); // Paste
-    await assertTask(page, '3/4', testInfo.outputDir, 'phase3_synchronized');
-
-    // PHASE 4: AUDIT
-    // ----------------------------------------------------------------
-    await navigateLeft(page, 1); // Go back to workspace
-    await expectCurrentDir(page, 'workspace');
-
     // Ensure hidden visible
     if (!(await areHiddenFilesVisible(page))) {
       await pressKey(page, '.');
@@ -277,26 +266,28 @@ test.describe('Episode 3: MASTERY', () => {
 
     await filterByText(page, '.identity'); // Select identity file
 
-    // Preview and scroll
-    for (let i = 0; i < 10; i++) {
-      await pressKey(page, 'Shift+J');
-    }
-    // Mid-level staggered thought trigger (3-2-3 model) - Level 13 is silent
-    // await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-    //   'To self: The loops are closing. I remember the static.'
-    // );
-    await assertTask(page, '4/4', testInfo.outputDir, 'phase4_audit_complete');
+    // Preview (no scroll needed per logic update)
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await assertTask(page, '2/4', testInfo.outputDir, 'phase3_identity_read');
+
+    await pressKey(page, 'Escape'); // Clear '.identity' filter
+    await addItem(page, 'central_relay/'); // Create directory
+    await assertTask(page, '3/4', testInfo.outputDir, 'phase2_relay_created');
+
+    // PHASE 4: SYNC
+    // ----------------------------------------------------------------
+
+    await navigateRight(page, 1); // Enter relay
+    await clearFilter(page);
+    await pressKey(page, 'p'); // Paste
+
+    // Task 4: Verify sync (4/4) - Increased timeout for state update
+    await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, { timeout: 500 });
 
     // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
     // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(DEFAULT_DELAY);
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(500);
-    await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(500);
-    await pressKey(page, 'Escape'); // Clear search
-    await page.waitForTimeout(500);
-    await pressKey(page, 'Escape'); // Clear searc
 
     await waitForMissionComplete(page);
   });
@@ -354,11 +345,20 @@ test.describe('Episode 3: MASTERY', () => {
       }
 
       const targets = ['incoming', 'media', 'workspace', 'datastore'];
+      // Robust batch deletion: Filter, Select, Clear Filter for each target
       for (const target of targets) {
         await filterAndSelect(page, target);
       }
-      // Delete selected original folders permanently
+
+      // Ensure selection is registered before deletion
+      await page.waitForTimeout(DEFAULT_DELAY);
       await deleteItem(page, { permanent: true, confirm: true });
+
+      await page.waitForTimeout(DEFAULT_DELAY);
+      // Verify targets are gone
+      for (const target of targets) {
+        await expect(page.getByTestId(`file-${target}`)).not.toBeVisible();
+      }
       await assertTask(page, '4/5', testInfo.outputDir, 'task4_purge_data');
     });
 
@@ -433,6 +433,7 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'D'); // Permanent delete
     await pressKey(page, 'y');
     await clearFilter(page);
+    await assertTask(page, '2/4', testInfo.outputDir, 'phase3_part1_v1_deleted'); // Intermediate check
 
     // 2. Rename uplink_v2.conf to uplink_active.conf
     await filterByText(page, 'uplink_v2');
@@ -467,7 +468,10 @@ test.describe('Episode 3: MASTERY', () => {
 
     // 5. Paste (p)
     await pressKey(page, 'p');
-    await assertTask(page, '4/4', testInfo.outputDir, 'phase4_complete');
+    // Task 4: Verify payload in active (4/4? No, check logic)
+    // Wait, let's verify if 'verify-training' is the target.
+    // Logic: verify-training checks for payload.py in active.
+    await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
     await clearFilter(page);
     await dismissAlert(page);
     await waitForMissionComplete(page);

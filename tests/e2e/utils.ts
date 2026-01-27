@@ -683,12 +683,10 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
 
   await Promise.race([
     expect(page.getByTestId('mission-complete'))
-      .toBeVisible({ timeout: 500 })
+      .toBeVisible()
       .catch(() => {
         // Check for text if testId fails
-        return expect(page.getByText('Mission Complete', { exact: false })).toBeVisible({
-          timeout: 500,
-        });
+        return expect(page.getByText('Mission Complete', { exact: false })).toBeVisible();
       }),
     page.waitForURL((url) => {
       const newLvl = url.searchParams.get('lvl');

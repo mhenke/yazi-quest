@@ -146,3 +146,30 @@ const regex = new RegExp(filter, 'i');
 
     ❌ await pressKey(page, 'Ctrl+A'); // Synthetic dispatch
     ✅ await page.keyboard.press('Control+A'); // Native Playwright event
+
+17. Flaky Search Input Interaction
+    Symptom: Tests fail to type search queries correctly, often typing into the void or missing characters, causing "Search returning too many items" or "Item not found" errors.
+    Cause: Tests assume the search input modal opens instantly after pressing 's', but rendering delays or race conditions can cause `typeText` to execute before focus is ready.
+    Issue: `await pressKey(page, 's'); await typeText(page, 'identity');` fails if modal isn't ready.
+    Fix: Explicitly assert visibility of the input modal before typing.
+
+    ❌ await pressKey(page, 's'); await typeText(page, 'identity');
+    ✅ await pressKey(page, 's'); await expect(page.getByTestId('input-modal')).toBeVisible(); await typeText(page, 'identity');
+
+18. Insufficient Scroll for "Read File" Tasks
+    Symptom: Tasks requiring "reading" a file (scrolling to the bottom) fail completion checks.
+    Cause: The logical definition of "read" (e.g. `c.previewScroll >= 25`) might require more keystrokes than assumed, depending on the scroll increment per key press.
+    Issue: Loop pressing `Shift+J` 10 times wasn't reaching the required scroll depth.
+    Fix: Calculate the required iterations conservatively (e.g. increase to 15) and add minor delays to ensure the UI updates the scroll state between keypresses.
+
+19. Missing State Updates in Action Handlers
+    Symptom: Game logic checks for flags like `usedD` (Delete) or `usedP` (Paste) to verify task completion, but the test fails even after performing the action.
+    Cause: The internal game hook might perform the file operation (updating FS) but fail to set the auxiliary state flag.
+    Issue: `Level 14` require `usedD` for completion.
+    Fix: Audit the action handlers (e.g. `confirmDelete` in `useKeyboardHandlers.ts`) to ensure they set the relevant state flags upon success.
+
+20. Aggressive Timeouts on Final State Transitions
+    Symptom: "Timeout waiting for mission complete" failures even when the mission seems to finish.
+    Cause: Using `Promise.race` with a short, hardcoded timeout (e.g., 500ms) for critical transitions like "Mission Complete" is flaky on slower CI/local environments.
+    Issue: `toBeVisible({ timeout: 500 })` is too aggressive for a major UI state change.
+    Fix: Rely on Playwright's default timeout (usually 5s-30s) or use a standard `DEFAULT_DELAY` constant, avoiding tight custom timeouts for critical success paths.

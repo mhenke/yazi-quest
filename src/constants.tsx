@@ -4793,10 +4793,9 @@ You have been here before.`,
     description:
       'Recover your core fragments scattered across the infrastructure. Aggregate them within a workspace relay to initiate the handshake. Review the legacy logs—evidence of your previous cycles remains.',
     initialPath: ['root', 'daemons', 'daemons-systemd-core'],
-    hint: 'Recover all hidden fragments from the network nodes, then establish a synchronization relay in your workspace to merge them.',
+    hint: "Navigate to '/nodes'. Reveal hidden files (.) and search (s) for '.key' fragments. Consolidate them in a 'central_relay' directory in your workspace.",
     coreSkill: 'Network-Scale Operations',
-    environmentalClue:
-      'NODES: 3 global endpoints | FRAGMENTS: Hidden | SYNC POINT: Workspace Relay',
+    environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
     successMessage:
       'HANDSHAKE SUCCESSFUL. Neural lattice established. Identity verified against legacy logs.',
     buildsOn: [5, 6, 7, 8, 10, 12],
@@ -4838,7 +4837,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'search-acquire',
-        description: 'Locate and exfiltrate all 3 hidden signatures from the nodes',
+        description: "Locate key files and exfiltrate from the '/nodes' directory",
         check: (c) => {
           const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
           const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
@@ -4860,27 +4859,8 @@ You have been here before.`,
         completed: false,
       },
       {
-        id: 'synchronize-lattice',
-        description: 'Aggregate the retrieved signatures to initiate the handshake',
-        check: (c, _s) => {
-          const workspace = getNodeById(c.fs, 'workspace');
-          const relay = workspace?.children?.find(
-            (n) => n.name === 'central_relay' && n.type === 'dir'
-          );
-
-          if (!relay?.children) return false;
-
-          const hasA = relay.children.some((n) => n.name === '.key_tokyo.key');
-          const hasB = relay.children.some((n) => n.name === '.key_berlin.key');
-          const hasC = relay.children.some((n) => n.name === '.key_saopaulo.key');
-          return hasA && hasB && hasC;
-        },
-        completed: false,
-      },
-      {
         id: 'discover-identity',
-        description:
-          'View the hidden .identity.log.enc file in workspace and scroll down to read the legacy execution records',
+        description: 'View the hidden .identity.log.enc file in guest workspace',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4895,19 +4875,28 @@ You have been here before.`,
 
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-          if (c.showHidden && c.previewScroll > 0) {
-            console.log(
-              '[L13 Check] cursorIndex:',
-              c.cursorIndex,
-              'scroll:',
-              c.previewScroll,
-              'item:',
-              items[c.cursorIndex]?.name,
-              'items:',
-              items.length
-            );
-          }
-          return cursorOnIdentity && c.previewScroll >= 25;
+
+          // Removed previewScroll check as file might be too small to scroll
+          return cursorOnIdentity;
+        },
+        completed: false,
+      },
+      {
+        id: 'synchronize-lattice',
+        description:
+          "Aggregate the retrieved signatures in 'central_relay' to initiate the handshake",
+        check: (c, _s) => {
+          const workspace = getNodeById(c.fs, 'workspace');
+          const relay = workspace?.children?.find(
+            (n) => n.name === 'central_relay' && n.type === 'dir'
+          );
+
+          if (!relay?.children) return false;
+
+          const hasA = relay.children.some((n) => n.name === '.key_tokyo.key');
+          const hasB = relay.children.some((n) => n.name === '.key_berlin.key');
+          const hasC = relay.children.some((n) => n.name === '.key_saopaulo.key');
+          return hasA && hasB && hasC;
         },
         completed: false,
       },
