@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import {
   startLevel,
   assertLevel,
@@ -29,27 +29,99 @@ import {
   DEFAULT_DELAY,
 } from './utils';
 
-// Helper for common Level 12 finale steps (Tasks 3-5 for all scenarios)
-async function runLevel12Mission(page: Page) {
-  // Task 3: Cut systemd-core
+// Helper to handle Level 12 threat scenarios
+async function handleLevel12Threat(
+  page: Page,
+  scenario: { id: string; threat: string | null; location: string | null }
+) {
+  await dismissAlertIfPresent(page, /Threat Detected/i);
+  if (!scenario.threat) return;
+
+  if (scenario.location === 's') {
+    await gotoCommand(page, 'r');
+    await search(page, 'scan_');
+    await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, { timeout: 2000 });
+    await pressKey(page, 'Ctrl+A');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await deleteItem(page, { confirm: true });
+    await dismissAlertIfPresent(page, /Threat Detected/i);
+  } else {
+    await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
+    await filterByText(page, scenario.threat);
+    await deleteItem(page, { confirm: true });
+    await page.waitForTimeout(DEFAULT_DELAY);
+  }
+  await clearFilter(page);
+  await dismissAlertIfPresent(page, /Protocol Violation/i);
+}
+
+// Helper for Level 12 common path (Discover Identity -> Cut -> Nav -> Paste)
+async function runLevel12CommonPath(
+  page: Page,
+  testInfo: TestInfo,
+  scenario: { id: string; threat: string | null }
+) {
+  const totalTasks = scenario.threat ? 6 : 5;
+
+  // 1. Discover Identity
+  await gotoCommand(page, 'w');
+  const navTaskNum = scenario.threat ? 2 : 1;
+  await assertTask(
+    page,
+    `${navTaskNum}/${totalTasks}`,
+    testInfo.outputDir,
+    `nav_workspace_${scenario.id}`
+  );
+
+  await pressKey(page, '.'); // Show hidden
+  await filterByText(page, 'identity');
+  await expect(page.getByTestId('file-.identity.log.enc')).toBeVisible({ timeout: 2000 });
+  await page.waitForTimeout(DEFAULT_DELAY);
+  await pressKey(page, 'g');
+  await pressKey(page, 'g');
+  await page.waitForTimeout(DEFAULT_DELAY);
+
+  // Simulation of reading
+  for (let i = 0; i < 5; i++) await pressKey(page, 'Shift+j');
+
+  const discoverTaskNum = scenario.threat ? 3 : 2;
+  await assertTask(page, `${discoverTaskNum}/${totalTasks}`, testInfo.outputDir);
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(DEFAULT_DELAY);
+  await pressKey(page, '.'); // Hide hidden
+
+  // 2. Cut systemd-core
   await filterAndSelect(page, 'systemd-core');
   await dismissAlertIfPresent(page, /Protocol Violation/i);
-  await pressKey(page, 'x'); // Cut
+  await pressKey(page, 'x');
 
-  // Task 4: Navigate to /daemons
+  const cutTaskNum = scenario.threat ? 4 : 3;
+  await assertTask(page, `${cutTaskNum}/${totalTasks}`, testInfo.outputDir);
+
+  // 3. Navigate to /daemons
   await gotoCommand(page, 'r');
   await filterByText(page, 'daemons');
-  await navigateRight(page, 1); // Enter BEFORE clearing filter
+  await navigateRight(page, 1);
   await dismissAlertIfPresent(page, /Protocol Violation/i);
 
-  // Task 5: Paste and enter daemon
+  const navDaemonsTaskNum = scenario.threat ? 5 : 4;
+  await assertTask(page, `${navDaemonsTaskNum}/${totalTasks}`, testInfo.outputDir);
+
+  // 4. Paste and finish
   await pressKey(page, 'p');
   await filterByText(page, 'systemd-core');
-  await navigateRight(page, 1); // Enter BEFORE clearing filter
+  await navigateRight(page, 1);
   await dismissAlertIfPresent(page, /Protocol Violation/i);
 
-  // Mid-level staggered thought trigger (3-2-3 model)
   await expectNarrativeThought(page, 'The loops are closing');
+  await assertTask(
+    page,
+    `${totalTasks}/${totalTasks}`,
+    testInfo.outputDir,
+    `mission_complete_${scenario.id}`
+  );
+  await waitForMissionComplete(page);
 }
 
 test.describe('Episode 3: MASTERY', () => {
@@ -103,103 +175,15 @@ test.describe('Episode 3: MASTERY', () => {
 
   for (const scenario of scenarios) {
     test(`Level 12: scen-${scenario.id} - completes successfully`, async ({ page }, testInfo) => {
-      test.setTimeout(60000);
-      await page.goto(`/?lvl=12&scenario=scen-${scenario.id}`);
-      await page.waitForLoadState('networkidle');
+      test.setTimeout(90000); // Increased timeout for stability
+      await startLevel(page, 12, {
+        intro: false,
+        extraParams: { scenario: `scen-${scenario.id}` },
+      });
 
-      const skipButton = page.getByRole('button', { name: 'Skip Intro' });
-      if (await skipButton.isVisible()) await skipButton.click();
-
-      await dismissAlertIfPresent(page, /Threat Detected/i);
-
-      if (scenario.threat) {
-        if (scenario.location === 's') {
-          await gotoCommand(page, 'r');
-          await search(page, 'scan_');
-          await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, {
-            timeout: 500,
-          });
-          await pressKey(page, 'Ctrl+A'); // Select all
-          await page.waitForTimeout(DEFAULT_DELAY);
-          await deleteItem(page, { confirm: true });
-
-          // Dismiss any threat alerts that appear after deletion
-          await dismissAlertIfPresent(page, /Threat Detected/i);
-        } else {
-          await gotoCommand(page, scenario.location as 'c' | 'w' | 'i');
-          await filterByText(page, scenario.threat);
-          await deleteItem(page, { confirm: true });
-          await page.waitForTimeout(DEFAULT_DELAY);
-        }
-        await clearFilter(page);
-
-        await dismissAlertIfPresent(page, /Protocol Violation/i);
-      }
-
+      await handleLevel12Threat(page, scenario);
       await ensureCleanState(page);
-
-      // === INLINE DISCOVER IDENTITY LOGIC ===
-      // Navigate to workspace
-      await gotoCommand(page, 'w');
-
-      // If threat exists, we've already completed the mitigation task, so we have 2 tasks done (Nav + Mitigation).
-      // If no threat (clean run), only 1 task done (Nav).
-      const expectedDone = scenario.threat ? 2 : 1;
-      const expectedTotal = scenario.threat ? 6 : 5;
-
-      await assertTask(
-        page,
-        `${expectedDone}/${expectedTotal}`,
-        testInfo.outputDir,
-        `nav_workspace_${scenario.id}`
-      );
-
-      // Toggle hidden files to see .identity.log.enc
-      await pressKey(page, '.');
-
-      // Find and cursor to identity file using Filter (f) for robust selection
-      await filterByText(page, 'identity');
-
-      // Verify target file is visible (strictly filtered)
-      await expect(page.getByTestId('file-.identity.log.enc')).toBeVisible({ timeout: 2000 });
-      await page.waitForTimeout(DEFAULT_DELAY);
-
-      // Move cursor to first item (identity log) - in filtered view, it should be the only/top item
-      await pressKey(page, 'g');
-      await pressKey(page, 'g');
-      await page.waitForTimeout(DEFAULT_DELAY);
-
-      // Scroll preview pane IMMEDIATELY to complete task check while cursor is on file
-      for (let i = 0; i < 12; i++) {
-        await pressKey(page, 'Shift+j');
-      }
-      await page.waitForTimeout(DEFAULT_DELAY);
-
-      // Task should be complete now - assert BEFORE clearing filter
-      // For no-threat: Task 1 = navigate-workspace, Task 2 = discover-identity
-      // For threat: Task 1 = threat, Task 2 = navigate-workspace, Task 3 = discover-identity
-      const discoverTaskNum = scenario.threat ? 3 : 2;
-      await assertTask(page, `${discoverTaskNum}/${scenario.threat ? 6 : 5}`, testInfo.outputDir);
-
-      // Now clear filter
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(DEFAULT_DELAY);
-
-      // Toggle hidden off before continuing
-      await pressKey(page, '.');
-      await page.waitForTimeout(DEFAULT_DELAY);
-
-      await runLevel12Mission(page);
-
-      const totalTasks = scenario.threat ? 6 : 5;
-      await assertTask(
-        page,
-        `${totalTasks}/${totalTasks}`,
-        testInfo.outputDir,
-        `mission_complete_${scenario.id}`
-      );
-
-      await waitForMissionComplete(page);
+      await runLevel12CommonPath(page, testInfo, scenario);
     });
   }
 

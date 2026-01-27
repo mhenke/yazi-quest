@@ -4254,10 +4254,11 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       // Check URL param first, then fall back to FORCE_SCENARIO constant
       const urlParams =
         typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      let localForceScenario = urlParams?.get('scenario') || FORCE_SCENARIO;
+      const scenarioParam = urlParams?.get('scenario');
+      let localForceScenario = scenarioParam || FORCE_SCENARIO;
 
-      // 1. Check Flags (Primary Truth)
-      if (gameState?.level11Flags) {
+      // 1. Check Flags (Primary Truth) - Only if no manual scenario override
+      if (gameState?.level11Flags && !scenarioParam) {
         if (gameState.level11Flags.triggeredHoneypot) {
           // FORCE LOCKDOWN SCENARIO (Worst case)
           localForceScenario = 'scen-b1';

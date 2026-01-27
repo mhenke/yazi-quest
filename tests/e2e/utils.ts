@@ -105,12 +105,17 @@ export const DEFAULT_DELAY = 75;
 export async function startLevel(
   page: Page,
   level: number,
-  options: { intro: boolean } = { intro: true }
+  options: { intro: boolean; extraParams?: Record<string, string> } = { intro: true }
 ): Promise<void> {
   const params = new URLSearchParams();
   params.set('lvl', level.toString());
   if (!options.intro) {
     params.set('intro', 'false');
+  }
+  if (options.extraParams) {
+    for (const [key, value] of Object.entries(options.extraParams)) {
+      params.set(key, value);
+    }
   }
 
   await page.goto(`/?${params.toString()}`);
