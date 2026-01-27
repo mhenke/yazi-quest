@@ -113,3 +113,26 @@ const regex = new RegExp(filter, 'i');
 
     Issue: Level 9 test missed `access_token.key`. Invert treated it as junk. It was deleted. Check failed.
     Fix: Verify the full list of "Files to Keep" and ensure the test selects them all before inverting.
+
+14. Literal Character Escaping in Search/Filter Patterns
+    Symptom: Search or filter returns more results than expected (e.g., 13 items instead of 1). Cause: The game treats search/filter input as regex patterns, so literal characters like periods (.) are interpreted as wildcards matching any character.
+
+    Issue: Searching for '.identity.log.enc' matches files like 'aidentityblogcenc' because periods match any character.
+    Fix: Escape literal periods with backslashes when using search/filter functionality in tests.
+
+    ❌ await typeText(page, '.identity.log.enc'); // Periods match any character
+    ✅ await typeText(page, '\\.identity\\.log\\.enc'); // Periods are literal
+
+15. Search Results vs Directory View Task Completion
+    Symptom: Task completion fails even when target file is found via recursive search. Cause: Task completion logic checks game state against actual directory path, not search results view.
+
+    Issue: Using 's' (recursive search) finds the file but task doesn't complete because the game state isn't in the target directory.
+    Fix: Either use direct navigation to the target directory or ensure the task completion logic works with search results context.
+
+    ❌ // Using recursive search for task that requires being in specific directory
+    await pressKey(page, 's');
+    await typeText(page, 'target-file.txt');
+    await pressKey(page, 'Enter');
+    ✅ // Direct navigation to the directory containing the file
+    await gotoCommand(page, 'w'); // Go to workspace
+    await enterDirectory(page, 'subdir'); // Navigate to specific directory
