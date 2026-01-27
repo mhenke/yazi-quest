@@ -118,7 +118,7 @@ test.describe('Episode 3: MASTERY', () => {
           await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, {
             timeout: 500,
           });
-          await page.keyboard.press('Control+a'); // Select all scan files
+          await pressKey(page, 'Ctrl+A'); // Select all
           await page.waitForTimeout(500);
           await deleteItem(page, { confirm: true });
 
@@ -235,7 +235,8 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, '.'); // Show hidden
     await pressKey(page, 's'); // Search
     await typeText(page, '.key');
-    await pressKey(page, 'Enter');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
       timeout: 500,
     });

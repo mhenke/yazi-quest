@@ -63,7 +63,8 @@ export async function renameItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('r');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
   await page.waitForTimeout(50); // Small wait for focus stabilization
-  await page.keyboard.press('Control+A');
+  // await page.keyboard.press('Control+A');
+  await pressKey(page, 'Ctrl+A'); // Select all
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
@@ -78,7 +79,7 @@ export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('a');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
   await page.waitForTimeout(50); // Small wait for focus stabilization
-  await page.keyboard.press('Control+A');
+  await pressKey(page, 'Ctrl+A'); // Select all
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');

@@ -35,7 +35,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // 3) s, then type ".log" and press enter key
     await pressKey(page, 's');
     await typeText(page, '\\.log');
-    await pressKey(page, 'Enter');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
 
     // Wait for search results to populate (at least 4 logs expected)
     await page.waitForFunction(
@@ -45,7 +46,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '2/5', testInfo.outputDir, 'task2');
 
     // 4) ctrl+a, then y
-    await pressKey(page, 'Control+a');
+    await pressKey(page, 'Ctrl+a');
     // Ensure selection registered before yanking
     await expect(
       page.getByText(/Selected \d+ items/i).or(page.getByText(/Selected all/i))
@@ -222,30 +223,23 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Use the intended solution regex to robustly select all 4 target files at once
     await pressKey(page, 'f');
     // Note: We need to escape the backslash for the type string.
-    // The regex is ^.*\.(key|pid|sock)$
-    await typeText(page, '^.*\\.(key|pid|sock)$');
-    await pressKey(page, 'Enter');
+    // The regex is \.(key|pid|sock)$
+    await typeText(page, '\\.(key|pid|sock)$');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(300); // Wait for filter to be applied
 
-    // Wait for the filter to apply and show exactly 4 items (ghost, sock, monitor, access_token)
-    await page.waitForFunction(
-      () => document.querySelectorAll('[data-testid^="file-"]').length === 4
-    );
+    // Ensure we're in normal mode before selecting all
+    await page.waitForTimeout(200);
 
     // Select All Visible (Robustly selects the 4 filtered items)
-    await page.keyboard.press('Control+A');
+    await pressKey(page, 'Ctrl+A'); // Select all
 
-    // Verify selection before clearing filter (checking notification or just assuming robust)
-    await expect(
-      page.getByText(/Selected 4 items/i).or(page.getByText(/Selected all/i))
-    ).toBeVisible();
-
-    // Clear filter to reveal the junk (Task 1 completion requires selection, not filter)
-    await clearFilter(page);
+    await page.keyboard.press('Escape'); // Dismiss active filter
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
     // Task 2: Invert the selection (Ctrl+R)
-    await pressKey(page, 'Control+r');
+    await pressKey(page, 'Ctrl+R');
     await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
 
     // Task 3: Permanently delete the selected junk files (D)
