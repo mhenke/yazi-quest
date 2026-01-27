@@ -345,20 +345,47 @@ test.describe('Episode 3: MASTERY', () => {
       }
 
       const targets = ['incoming', 'media', 'workspace', 'datastore'];
-      // Robust batch deletion: Filter, Select, Clear Filter for each target
+
+      // Batch selection loop
       for (const target of targets) {
-        await filterAndSelect(page, target);
+        await pressKey(page, 'f');
+        await typeText(page, target);
+        await page.keyboard.press('Enter'); // Confirm filter
+
+        // Wait for at least one match
+        const fileRow = page.getByTestId(`file-${target}`).first();
+        await expect(fileRow).toBeVisible();
+        await page.waitForTimeout(DEFAULT_DELAY);
+
+        // Check for duplicates (e.g. 'workspace' might appear twice due to glitch)
+        const matchCount = await page.getByTestId(`file-${target}`).count();
+
+        // Select ALL matches
+        for (let i = 0; i < matchCount; i++) {
+          await page.keyboard.press(' ');
+          await page.waitForTimeout(DEFAULT_DELAY / 2);
+        }
+
+        // Verify at least one is marked
+        await expect(fileRow).toContainText('[VIS]');
+
+        // Clear filter
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(DEFAULT_DELAY);
       }
 
       // Ensure selection is registered before deletion
-      await page.waitForTimeout(DEFAULT_DELAY);
+      await page.waitForTimeout(DEFAULT_DELAY * 2);
+
+      // Execute Permanent Delete (Shift+D)
       await deleteItem(page, { permanent: true, confirm: true });
 
       await page.waitForTimeout(DEFAULT_DELAY);
       // Verify targets are gone
       for (const target of targets) {
-        await expect(page.getByTestId(`file-${target}`)).not.toBeVisible();
+        await expect(page.getByTestId(`file-${target}`)).not.toBeVisible({ timeout: 1000 });
       }
+
       await assertTask(page, '4/5', testInfo.outputDir, 'task4_purge_data');
     });
 
@@ -473,7 +500,15 @@ test.describe('Episode 3: MASTERY', () => {
     // Logic: verify-training checks for payload.py in active.
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
     await clearFilter(page);
-    await dismissAlert(page);
+
+    // Handle Protocol Violation modal (Shift+Enter to autofix)
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Sometimes it needs a second press or finding the button specifically
+    // But usually one Shift+Enter works if focused.
+
     await waitForMissionComplete(page);
   });
 });

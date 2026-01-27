@@ -4935,7 +4935,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'nav-guest',
-        description: "Synchronize position with 'guest' partition",
+        description: "Navigate to the '~/guest' partition where evidence must be purged",
         check: (c, _s) => {
           // If we haven't done anything else yet, don't auto-complete
           if (c.keystrokes === 0) return false;
