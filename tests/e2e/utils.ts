@@ -62,9 +62,8 @@ export async function findFZF(page: Page, name: string): Promise<void> {
 export async function renameItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('r');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
-  await page.waitForTimeout(50); // Small wait for focus stabilization
-  // await page.keyboard.press('Control+A');
-  await pressKey(page, 'Ctrl+A'); // Select all
+  await page.waitForTimeout(500); // Small wait for focus stabilization
+  await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
@@ -78,8 +77,8 @@ export async function renameItem(page: Page, name: string): Promise<void> {
 export async function addItem(page: Page, name: string): Promise<void> {
   await page.keyboard.press('a');
   await expect(page.getByTestId('input-modal')).toBeVisible({ timeout: 500 });
-  await page.waitForTimeout(50); // Small wait for focus stabilization
-  await pressKey(page, 'Ctrl+A'); // Select all
+  await page.waitForTimeout(500); // Small wait for focus stabilization
+  await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await page.keyboard.type(name, { delay: 30 });
   await page.keyboard.press('Enter');
@@ -293,7 +292,7 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
     const introLocator = page.locator('div.bg-black.absolute.inset-0');
     if (await introLocator.isVisible({ timeout: 500 })) {
       // Wait for text to finish (longer timeout)
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(500);
       await pressKey(page, 'Shift+Enter');
       await expect(introLocator).not.toBeVisible({ timeout: 500 });
     }
@@ -436,7 +435,7 @@ export async function dismissAlertIfPresent(
   try {
     if (await alert.isVisible({ timeout: 500 })) {
       await dismissAlert(page);
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(500);
       return true;
     }
   } catch {
@@ -486,7 +485,7 @@ export async function deleteItem(
   if (options.confirm) {
     // Wait for the confirmation modal to appear to avoid race conditions
     await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(500);
     await pressKey(page, 'y'); // Confirm deletion
   }
 }
@@ -550,7 +549,7 @@ export async function filterByText(page: Page, text: string): Promise<void> {
     const modal = page.getByText(/Protocol Violation/i);
     if (await modal.isVisible({ timeout: 500 })) {
       await page.keyboard.press('Escape'); // Dismiss modal
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(500);
     }
   } catch {
     // Ignore timeout, modal didn't appear
@@ -588,7 +587,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
     const modal = page.getByText(/Protocol Violation/i);
     if (await modal.isVisible({ timeout: 500 })) {
       await page.keyboard.press('Escape'); // Dismiss modal
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(500);
     }
   } catch {
     // Ignore timeout
@@ -603,9 +602,9 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
     timeout: 500,
   });
 
-  await page.waitForTimeout(100); // Wait for state to settle
+  await page.waitForTimeout(500); // Wait for state to settle
   await pressKey(page, ' '); // Toggle selection
-  await page.waitForTimeout(100); // Wait for selection to register
+  await page.waitForTimeout(500); // Wait for selection to register
   await clearFilter(page); // Clear filter for next action
 }
 

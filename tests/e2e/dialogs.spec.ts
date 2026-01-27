@@ -147,7 +147,7 @@ test.describe('Dialogs Functionality', () => {
 
     // Press 'j' to scroll down
     await page.keyboard.press('j');
-    await page.waitForTimeout(100); // Wait for scroll animation
+    await page.waitForTimeout(500); // Wait for scroll animation
 
     // Check that scroll position has changed
     const afterJScrollTop = await page
@@ -157,7 +157,7 @@ test.describe('Dialogs Functionality', () => {
 
     // Press 'k' to scroll up
     await page.keyboard.press('k');
-    await page.waitForTimeout(100); // Wait for scroll animation
+    await page.waitForTimeout(500); // Wait for scroll animation
 
     // Check that scroll position has changed back
     const afterKScrollTop = await page
@@ -182,7 +182,7 @@ test.describe('Dialogs Functionality', () => {
 
     // Press 'l' to switch to next episode tab
     await page.keyboard.press('l');
-    await page.waitForTimeout(100); // Wait for tab switch
+    await page.waitForTimeout(500); // Wait for tab switch
 
     // Check that active tab has changed (still only one should be active, but different)
     const afterLActiveTabs = await page
@@ -192,7 +192,7 @@ test.describe('Dialogs Functionality', () => {
 
     // Press 'h' to switch back to previous episode tab
     await page.keyboard.press('h');
-    await page.waitForTimeout(100); // Wait for tab switch
+    await page.waitForTimeout(500); // Wait for tab switch
 
     // Check that active tab has changed back (still only one should be active, but back to first)
     const afterHActiveTabs = await page

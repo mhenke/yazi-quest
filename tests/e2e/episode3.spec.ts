@@ -159,12 +159,12 @@ test.describe('Episode 3: MASTERY', () => {
       // Find and cursor to identity file using Recursive Search (s) to avoid filter clearing issues
       await pressKey(page, 's');
       await typeText(page, 'identity');
-      await page.waitForTimeout(300); // Ensure input is registered
+      await page.waitForTimeout(500); // Ensure input is registered
       await page.keyboard.press('Enter');
       // [Fix] Wait for search results and verify single match
       await expect(page.getByRole('listitem')).toHaveCount(1, { timeout: 2000 });
       await expect(page.getByRole('listitem').first()).toContainText('identity');
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(500);
 
       // Search might trigger a warning if implemented (unlikely for s, but good to wait)
       // Ensure we are in search results
@@ -172,13 +172,13 @@ test.describe('Episode 3: MASTERY', () => {
       // Move cursor to first item (identity log)
       await pressKey(page, 'g');
       await pressKey(page, 'g');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       // Scroll preview pane IMMEDIATELY to complete task check while cursor is on file
       for (let i = 0; i < 12; i++) {
         await pressKey(page, 'Shift+j');
       }
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(500);
 
       // Task should be complete now - assert BEFORE clearing filter
       // For no-threat: Task 1 = navigate-workspace, Task 2 = discover-identity
@@ -188,11 +188,11 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Now clear filter
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       // Toggle hidden off before continuing
       await pressKey(page, '.');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       await runLevel12Mission(page);
 
@@ -236,7 +236,7 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 's'); // Search
     await typeText(page, '.key');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(500);
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
       timeout: 500,
     });
@@ -289,13 +289,13 @@ test.describe('Episode 3: MASTERY', () => {
 
     // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
     // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
     await pressKey(page, 'Escape'); // Clear search
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
     await pressKey(page, 'Escape'); // Clear searc
 
     await waitForMissionComplete(page);

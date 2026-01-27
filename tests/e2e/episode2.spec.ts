@@ -36,7 +36,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 's');
     await typeText(page, '\\.log');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(500);
 
     // Wait for search results to populate (at least 4 logs expected)
     await page.waitForFunction(
@@ -48,7 +48,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // 4) ctrl+a, then y
     await pressKey(page, 'Ctrl+a');
     // Wait for selection to register
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
@@ -141,7 +141,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
       await pressKey(page, 'a'); // Add new file/directory
       await typeText(page, 'systemd-core/'); // Create as directory with trailing slash
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(300); // Wait for creation to complete
+      await page.waitForTimeout(500); // Wait for creation to complete
 
       // Navigate into the newly created directory
       await enterDirectory(page, 'systemd-core');
@@ -158,7 +158,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
     // Check if uplink_v1.conf exists in the systemd-core directory
     await clearFilter(page); // Clear any filters from navigation
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(500);
 
     const uplinkLocator = page
       .getByTestId('filesystem-pane-active')
@@ -171,7 +171,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
       await pressKey(page, 'a'); // Add new file
       await typeText(page, 'uplink_v1.conf');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(500);
     }
 
     await filterByText(page, 'uplink_v1');
@@ -224,16 +224,16 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // The regex is \.(key|pid|sock)$
     await typeText(page, '\\.(key|pid|sock)$');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300); // Wait for filter to be applied
+    await page.waitForTimeout(500); // Wait for filter to be applied
 
     // Ensure we're in normal mode before selecting all
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(500);
 
     // Select All Visible (Robustly selects the 4 filtered items)
     await pressKey(page, 'Ctrl+A'); // Select all
 
     // Wait for selection to register
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
     await page.keyboard.press('Escape'); // Dismiss active filter
 
@@ -247,7 +247,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await deleteItem(page, { permanent: true, confirm: true });
 
     // Allow time for task completion to register
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
 
