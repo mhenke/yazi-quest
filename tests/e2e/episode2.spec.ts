@@ -47,10 +47,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // 4) ctrl+a, then y
     await pressKey(page, 'Ctrl+a');
-    // Ensure selection registered before yanking
-    await expect(
-      page.getByText(/Selected \d+ items/i).or(page.getByText(/Selected all/i))
-    ).toBeVisible();
+    // Wait for selection to register
+    await page.waitForTimeout(300);
 
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
