@@ -51,11 +51,8 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import {
-  useKeyboardHandlers,
-  checkFilterAndBlockNavigation,
-  getActionIntensity,
-} from './hooks/useKeyboardHandlers';
+import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
+import { checkFilterAndBlockNavigation, getActionIntensity } from './hooks/keyboard/utils';
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
 import './glitch-text-3.css';
