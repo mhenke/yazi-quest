@@ -4633,7 +4633,7 @@ You have been here before.`,
       {
         id: 'scen-b3-swarm',
         description:
-          "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_*.tmp' files system-wide!",
+          "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_.*\\.tmp' files system-wide!",
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
