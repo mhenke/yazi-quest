@@ -234,6 +234,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Select All Visible (Robustly selects the 4 filtered items)
     await pressKey(page, 'Ctrl+A'); // Select all
 
+    // Wait for selection to register
+    await page.waitForTimeout(300);
+
     await page.keyboard.press('Escape'); // Dismiss active filter
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
