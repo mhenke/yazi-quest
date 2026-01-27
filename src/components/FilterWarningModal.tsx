@@ -50,7 +50,7 @@ export const FilterWarningModal: React.FC<FilterWarningModalProps> = ({
                 Press{' '}
                 <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
                   Shift+Enter
-                </span>
+                </span>{' '}
                 to continue...
               </p>
             ) : (

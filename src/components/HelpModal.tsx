@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { KEYBINDINGS, META_KEYBINDINGS } from '../constants';
 
@@ -58,10 +59,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
     return binding.narrativeDescription || binding.description;
   };
 
-  return (
+  return createPortal(
     <div
       data-testid="help-modal"
-      className="absolute inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose} // Close when clicking on the backdrop
       tabIndex={-1} // Make the div focusable
       ref={scrollRef} // Assign ref to the outermost div for focus
@@ -120,6 +121,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           Query command reference (?) • Press Shift+Enter or Escape to close
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

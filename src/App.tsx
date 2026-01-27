@@ -179,6 +179,10 @@ export default function App() {
     if (!initialZoxide['/daemons/systemd-core']) {
       initialZoxide['/daemons/systemd-core'] = { count: 1, lastAccess: now - 21600000 };
     }
+    // [Fix Level 7] Ensure /tmp exists for quantum bypass
+    if (!initialZoxide['/tmp']) {
+      initialZoxide['/tmp'] = { count: 15, lastAccess: now - 1800000 };
+    }
 
     const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
 
@@ -482,24 +486,42 @@ export default function App() {
           const filter = currentDir ? gameState.filters[currentDir.id] : null;
           if (filter) {
             const regex = getFilterRegex(filter);
+
             if (regex) {
               results = results.filter(
                 (item) => regex.test(item.name) || (item.display && regex.test(item.display))
               );
             } else {
-              // Fallback to substring match
-              const lowerFilter = filter.toLowerCase();
-              results = results.filter(
-                (item) =>
-                  item.name.toLowerCase().includes(lowerFilter) ||
-                  (item.display && item.display.toLowerCase().includes(lowerFilter))
-              );
+              // If regex is invalid, show no items (Yazi/fd behavior)
+              results = [];
             }
           }
 
           return sortNodes(results, gameState.sortBy, gameState.sortDirection);
         }
-        return getVisibleItems(gameState);
+
+        // Logic matched to StatusBar.tsx for consistency
+        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+        if (!currentDir || !currentDir.children) return [];
+
+        let items = [...currentDir.children];
+
+        if (!gameState.showHidden) {
+          items = items.filter((c) => !c.name.startsWith('.'));
+        }
+
+        const filter = gameState.filters[currentDir.id] || '';
+        if (filter) {
+          const regex = getFilterRegex(filter);
+          if (regex) {
+            items = items.filter((c) => regex.test(c.name));
+          } else {
+            // If regex is invalid, show no items (Yazi/fd behavior)
+            items = [];
+          }
+        }
+
+        return sortNodes(items, gameState.sortBy, gameState.sortDirection);
       }),
     [gameState]
   );
@@ -1987,6 +2009,19 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      console.log(
+        '[App] handleKeyDown:',
+        e.key,
+        'mode:',
+        gameState.mode,
+        'shift:',
+        e.shiftKey,
+        'ctrl:',
+        e.ctrlKey,
+        'alt:',
+        e.altKey
+      );
+
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       // Only enter completion lockdown if the success toast is actually shown.
       // If blocked by a protocol violation warning, we MUST allow keys through so the user can fix it.
@@ -1999,7 +2034,7 @@ export default function App() {
       }
 
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
-      if (e.key === '?' && e.altKey) {
+      if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
         setGameState((prev) => ({
           ...prev,
@@ -2010,7 +2045,7 @@ export default function App() {
         return;
       }
 
-      if (e.key === 'h' && e.altKey) {
+      if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
         setGameState((prev) => {
           if (prev.showHint) {
@@ -2021,7 +2056,7 @@ export default function App() {
         return;
       }
 
-      if (e.key === 'm' && e.altKey) {
+      if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey) {
         e.preventDefault();
         setGameState((prev) => ({
           ...prev,
@@ -2033,37 +2068,9 @@ export default function App() {
       }
 
       if (showThreatAlert) {
-        // Allow meta commands even when threat alert is shown - these should overlay the alert
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command but don't dismiss the alert
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
+        // If ThreatAlert is shown, it blocks everything except:
+        // 1. Shift+Enter to dismiss
+        // 2. Meta commands (handled above)
 
         if (e.key === 'Enter' && e.shiftKey) {
           setShowThreatAlert(false);
@@ -2270,6 +2277,7 @@ export default function App() {
       // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
       // to clear the active filter and continue (protocol-violation bypass).
       if (gameState.mode === 'filter-warning') {
+        console.log('[App] filter-warning key:', e.key, 'shift:', e.shiftKey);
         // Allow meta commands even when filter warning is shown
         if (
           (e.key === '?' && e.altKey) ||
@@ -2746,9 +2754,16 @@ export default function App() {
       {showSortWarning && (
         <SortWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
-      {gameState.mode === 'filter-warning' && (
-        <FilterWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
-      )}
+      {gameState.mode === 'filter-warning' &&
+        (() => {
+          console.log(
+            '[App] Render FilterWarning, allowAutoFix:',
+            checkAllTasksComplete(gameState, currentLevel)
+          );
+          return (
+            <FilterWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
+          );
+        })()}
       {gameState.mode === 'search-warning' && (
         <SearchWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
       )}
@@ -2771,7 +2786,8 @@ export default function App() {
           onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
           onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
           isOpen={gameState.showMap}
-          onClose={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
+          onClose={() => setGameState((prev) => ({ ...prev, showMap: false }))}
+          onToggleMap={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
           onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);
@@ -2890,6 +2906,7 @@ export default function App() {
 
           <div className="flex-1 flex flex-col relative min-w-0">
             <FileSystemPane
+              key={`fs-pane-main-${gameState.currentPath.join('/')}`}
               items={visibleItems}
               isActive={
                 !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)

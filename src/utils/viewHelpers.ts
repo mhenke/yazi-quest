@@ -17,7 +17,7 @@ export const getSafeFilterRegex = (filter: string): RegExp | null => {
     if (isSafeRegex) {
       // Smart-case: if filter contains any uppercase, make it case-sensitive
       const isCaseSensitive = /[A-Z]/.test(filter);
-      const flags = isCaseSensitive ? 'g' : 'gi';
+      const flags = isCaseSensitive ? '' : 'i';
 
       try {
         // eslint-disable-next-line security/detect-non-literal-regexp
@@ -31,18 +31,21 @@ export const getSafeFilterRegex = (filter: string): RegExp | null => {
 };
 
 // Helper to create a regex from the filter string, handling smart-case.
-// Returns null if the filter is an invalid regex (e.g. open parenthesis).
-export const getFilterRegex = (filter: string): RegExp | null => {
-  if (!filter) return null;
+// Returns null if the filter is an invalid regex.
+// Note: This strictly follows Yazi/fd behavior where input is raw regex (. = wildcard).
+export const getFilterRegex = (input: string): RegExp | null => {
+  if (!input) return null;
 
   // Smart-case: if filter contains any uppercase, make it case-sensitive
-  const isCaseSensitive = /[A-Z]/.test(filter);
-  const flags = isCaseSensitive ? 'g' : 'gi';
+  const isCaseSensitive = /[A-Z]/.test(input);
+  const flags = isCaseSensitive ? '' : 'i';
 
   try {
     // eslint-disable-next-line security/detect-non-literal-regexp
-    return new RegExp(filter, flags);
+    return new RegExp(input, flags);
   } catch {
+    // Return a regex that matches nothing if input is invalid
+    // Prevents crashing and signals invalidity
     return null;
   }
 };
@@ -66,13 +69,12 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
   const filter = state.filters[currentDir.id] || '';
   if (filter) {
     const regex = getFilterRegex(filter);
+
     if (regex) {
       items = items.filter((c) => regex.test(c.name));
     } else {
-      // If regex is invalid (e.g. typing "file("), fall back to simple substring match
-      // to avoid crash and provide "literal until closed" behavior.
-      const lowerFilter = filter.toLowerCase();
-      items = items.filter((c) => c.name.toLowerCase().includes(lowerFilter));
+      // If regex is invalid, show no items (Yazi/fd behavior)
+      items = [];
     }
   }
 
@@ -109,7 +111,7 @@ export const getRecursiveSearchResults = (
   if (!query || !rootNode) return [];
 
   const results: FileNode[] = [];
-  const lowerQuery = query.toLowerCase();
+  const regex = getFilterRegex(query);
 
   const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
     if (!node.children) return;
@@ -122,8 +124,9 @@ export const getRecursiveSearchResults = (
       const relativePath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
       const currentIdPath = [...idPath, child.id];
 
-      // Check if file matches query
-      const nameMatch = child.name.toLowerCase().includes(lowerQuery);
+      // Check if file matches query using regex
+      const nameMatch = regex ? regex.test(child.name) : false;
+
       if (child.type === 'file' && nameMatch) {
         // Clone node and add displayPath for showing full relative path
         results.push({ ...child, displayPath: relativePath, path: currentIdPath });
@@ -131,8 +134,9 @@ export const getRecursiveSearchResults = (
 
       // Recurse into directories and archives
       if (child.type === 'dir' || child.type === 'archive') {
-        // Also check if directory name matches
-        if (child.name.toLowerCase().includes(lowerQuery)) {
+        const dirMatch = regex ? regex.test(child.name) : false;
+
+        if (dirMatch) {
           results.push({ ...child, displayPath: relativePath, path: currentIdPath });
         }
         searchRecursive(child, relativePath, currentIdPath);

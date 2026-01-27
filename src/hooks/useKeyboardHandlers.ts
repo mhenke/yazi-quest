@@ -309,6 +309,7 @@ export const useKeyboardHandlers = (
           pendingDeleteIds: [],
           selectedIds: [],
           notification: { message: getNarrativeAction('d') || 'Items deleted' },
+          usedD: true,
         };
       });
     },

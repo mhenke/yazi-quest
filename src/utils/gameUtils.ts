@@ -24,6 +24,9 @@ export const getNarrativeAction = (key: string): string | null => {
   return null;
 };
 
+// Define the pattern used in level 9 to identify keeper files
+const LEVEL_9_KEEPER_PATTERN = /\.(key|pid|sock)$/;
+
 /**
  * Checks if a honeypot has been triggered.
  */
@@ -64,16 +67,23 @@ export const checkHoneypotTriggered = (
 
   if (triggeredHoneypot) {
     const node = items.find((n) => n.id === triggeredHoneypot);
-    // Level 9 Narrative Flavor
-    if (currentLevel.id === 9 && node?.name === 'system_monitor.pid') {
-      const secondaryMsg = gameState.usedCtrlR
-        ? 'PATTERN PARTIALLY RECOGNIZED. Forensics detected deletion of SYSTEM MONITOR partition.'
-        : null;
-      return {
-        triggered: true,
-        reason: 'honeypot',
-        message: secondaryMsg || undefined,
-      };
+
+    // Level 9: Special handling for keeper vs decoy files
+    if (currentLevel.id === 9) {
+      // Keeper files in level 9 match the predefined pattern
+      // These are files ending with .key, .pid, or .sock
+      if (node?.name && LEVEL_9_KEEPER_PATTERN.test(node.name)) {
+        return {
+          triggered: true,
+          reason: 'honeypot',
+          message: `TRAP ACTIVATED: Attempting to delete critical asset '${node?.name}'. This will compromise your operation.`,
+        };
+      }
+
+      // If it's a different honeypot file in level 9, it's likely a decoy that can be deleted
+      // These are the honeypot files like 'mysockfile.txt', 'passwordkey_backup.log', etc.
+      // that contain key/pid/sock as substrings but are not actual keeper files
+      return { triggered: false };
     }
 
     return {
@@ -91,6 +101,22 @@ export const checkHoneypotTriggered = (
 
   if (contentTrap) {
     const node = items.find((n) => n.id === contentTrap);
+
+    // Level 9: Allow deletion of decoy files even if they have content traps
+    if (currentLevel.id === 9) {
+      // Keeper files in level 9 match the predefined pattern
+      // These are files ending with .key, .pid, or .sock
+      if (node?.name && LEVEL_9_KEEPER_PATTERN.test(node.name)) {
+        return {
+          triggered: true,
+          reason: 'honeypot',
+          message: `ANOMALY DETECTED: Deletion of signature-trap ${node?.name} detected.`,
+        };
+      }
+      // If it's not a keeper file, allow deletion (it's likely a decoy)
+      return { triggered: false };
+    }
+
     return {
       triggered: true,
       reason: 'honeypot',

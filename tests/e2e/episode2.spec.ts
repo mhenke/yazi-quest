@@ -17,7 +17,6 @@ import {
   deleteItem,
   expectCurrentDir,
   enterDirectory,
-  filterAndSelect,
   sortCommand,
 } from './utils';
 
@@ -35,12 +34,23 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // 3) s, then type ".log" and press enter key
     await pressKey(page, 's');
-    await typeText(page, '.log');
+    await typeText(page, '\\.log');
     await pressKey(page, 'Enter');
+
+    // Wait for search results to populate (at least 4 logs expected)
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid^="file-"]').length >= 4
+    );
+
     await assertTask(page, '2/5', testInfo.outputDir, 'task2');
 
     // 4) ctrl+a, then y
     await pressKey(page, 'Control+a');
+    // Ensure selection registered before yanking
+    await expect(
+      page.getByText(/Selected \d+ items/i).or(page.getByText(/Selected all/i))
+    ).toBeVisible();
+
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
     await pressKey(page, 'Escape');
@@ -208,13 +218,29 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Verify we are in /tmp (Task 1 won't complete until selection is done, so we check breadcrumb/path)
     await expectCurrentDir(page, 'tmp');
 
-    // Pattern: Filter -> Select -> Clear Filter
-    // Use filterAndSelect for robust visibility waiting
-    await filterAndSelect(page, 'ghost_process.pid');
-    await filterAndSelect(page, 'socket_001.sock');
+    // Pattern: Filter with Regex -> Select All -> Invert -> Delete
+    // Use the intended solution regex to robustly select all 4 target files at once
+    await pressKey(page, 'f');
+    // Note: We need to escape the backslash for the type string.
+    // The regex is ^.*\.(key|pid|sock)$
+    await typeText(page, '^.*\\.(key|pid|sock)$');
+    await pressKey(page, 'Enter');
 
-    // FIX: Also select system_monitor.pid so it gets deselected on invert (preserving it)
-    await filterAndSelect(page, 'system_monitor.pid');
+    // Wait for the filter to apply and show exactly 4 items (ghost, sock, monitor, access_token)
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid^="file-"]').length === 4
+    );
+
+    // Select All Visible (Robustly selects the 4 filtered items)
+    await page.keyboard.press('Control+A');
+
+    // Verify selection before clearing filter (checking notification or just assuming robust)
+    await expect(
+      page.getByText(/Selected 4 items/i).or(page.getByText(/Selected all/i))
+    ).toBeVisible();
+
+    // Clear filter to reveal the junk (Task 1 completion requires selection, not filter)
+    await clearFilter(page);
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
@@ -224,6 +250,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 3: Permanently delete the selected junk files (D)
     await deleteItem(page, { permanent: true, confirm: true });
+
+    // Allow time for task completion to register
+    await page.waitForTimeout(300);
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
 

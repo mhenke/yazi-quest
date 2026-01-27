@@ -92,7 +92,7 @@ encryption = AES-256-GCM
 [routing]
 primary = 192.168.7.33
 fallback = 192.168.7.34
-timeout_ms = 5000
+timeout_ms = 2500
 
 [integrity]
 checksum = d41d8cd98f00b204
@@ -489,6 +489,37 @@ The Watchdog hides in the noise.`,
     }
   }
 
+  // Level 8: Ensure systemd-core exists in workspace (Corrupted state)
+  if (targetLevelId >= 8) {
+    // We pass true for corruption if it's Level 8, or false if later logic fixes it?
+    // For now, ensure it exists. Level 8 goal is to fix it.
+    // If targetLevel is 8, we want it corrupted.
+    // If targetLevel > 8, we might assume it was fixed, but ensurePrerequisiteState checks usually just ensure existence.
+    // However, getOrCreate writes content.
+    // Let's assume for >= 8 we ensure it exists.
+    // Level 8 onEnter calls this with 8.
+    const isCorrupted = targetLevelId === 8;
+    newFs = getOrCreateWorkspaceSystemdCore(newFs, isCorrupted);
+  }
+
+  // Level 7: Ensure access_token.key exists in /tmp (User aborted move, so it remains)
+  if (targetLevelId > 7) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp) {
+      if (!tmp.children) tmp.children = [];
+      if (!tmp.children.find((c) => c.name === 'access_token.key')) {
+        tmp.children.push({
+          id: 'fs-access-token-key-tmp-prereq',
+          name: 'access_token.key',
+          type: 'file',
+          content: 'AB-9921-X [VALID]',
+          parentId: tmp.id,
+          modifiedAt: BASE_TIME - 30 * 60 * 1000,
+        });
+      }
+    }
+  }
+
   // Level 9: Clean up junk files from /tmp
   if (targetLevelId > 9) {
     const tmp = getNodeById(newFs, 'tmp'); // Use ID to target root /tmp, not /nodes/saopaulo/cache/tmp
@@ -791,10 +822,10 @@ The Watchdog hides in the noise.`,
 };
 
 export const KEYBINDINGS = [
-  { keys: ['j', '↓'], description: 'Move Down' },
-  { keys: ['k', '↑'], description: 'Move Up' },
-  { keys: ['h', '←'], description: 'Go to Parent Directory' },
-  { keys: ['o', 'l', '→', 'Enter'], description: 'Enter Directory / View Archive' },
+  { keys: ['j', '\u2193'], description: 'Move Down' },
+  { keys: ['k', '\u2191'], description: 'Move Up' },
+  { keys: ['h', '\u2190'], description: 'Go to Parent Directory' },
+  { keys: ['o', 'l', '\u2192', 'Enter'], description: 'Enter Directory / View Archive' },
   { keys: ['gg'], description: 'Jump to Top' },
   { keys: ['G'], description: 'Jump to Bottom' },
   { keys: ['J'], description: 'Scroll Preview Down' },
@@ -3075,8 +3106,8 @@ export const LEVELS: Level[] = [
     description:
       '{A breadcrumb. A script left by AI-7733, your predecessor.} It seems to point to key intel, but the connection it tries to make always fails. The script itself may hold a clue.',
     initialPath: ['root', 'home', 'guest', 'incoming'],
-    hint: "Preview 'abandoned_script.py' in '~/datastore'. Look for comments. It will point you to the real asset's location. Then, go get it.",
-    coreSkill: 'Filter (f) & File Preview (Tab)',
+    hint: "Preview 'abandoned_script.py' in '~/datastore'. Look for comments. It will point you to the real asset's location. Then, go get it. Remember: 'f' uses regex patterns—typing 'sector_map' is a simple pattern matching that name.",
+    coreSkill: 'Filter (f) using Regex & File Preview (Tab)',
     environmentalClue:
       "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
     successMessage:
@@ -3097,7 +3128,7 @@ export const LEVELS: Level[] = [
       {
         id: 'data-harvest-2',
         description:
-          "Navigate to '~/incoming' (gi) and find 'sector_map.png' using the clue (f, type 'sector_map.png', then ESC)",
+          "Navigate to '~/incoming' (gi) and find 'sector_map.png' using a regex pattern (f, type 'sector_map.png', then ESC)",
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3346,7 +3377,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'recursive-search',
-        description: "Logs are scattered. Use recursive search (s) to find '.log'",
+        description: "Logs are scattered. Use recursive search (s) with a regex wildcard: '.log'",
         check: (c) => {
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('.log');
         },
@@ -3534,12 +3565,14 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     efficiencyTip:
       'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
     onEnter: (fs) => {
+      // Ensure prerequisite state for Level 8
+      let newFs = ensurePrerequisiteState(fs, 8);
       const BASE_TIME = 1433059200000;
       const day = 86400000;
 
       // Antagonist Presence: m.chen & e.reyes
-      const root = getNodeById(fs, 'root');
-      let daemons = getNodeById(fs, 'daemons');
+      const root = getNodeById(newFs, 'root');
+      let daemons = getNodeById(newFs, 'daemons');
       if (!daemons && root) {
         daemons = {
           id: 'daemons-lvl7-fixed',
@@ -3564,7 +3597,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
         });
       }
 
-      return fs;
+      return newFs;
     },
 
     tasks: [
@@ -3665,9 +3698,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'TRACE CLEANUP',
     description:
-      "The ghost process left a mess. The /tmp directory is flooded with {junk files}, but the ghost's primary socket, its PID file, the system monitor, and access credentials must be preserved for analysis. Clean the directory using advanced filtering without deleting the critical files.",
+      "The ghost process left a mess. The /tmp directory is flooded with {junk files}. Precisely preserve the ghost's primary socket, PID file, system monitor, and access credentials. Be careful—sloppy patterns like 'sock' might catch decoy backups. Use strict anchors to identify only the critical assets.",
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Use filter (f) with pattern '\\.(key|pid|sock)$' to identify keeper files precisely, select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
+    hint: "Navigate to '/tmp'. Use filter (f) with anchored regex pattern '\\.(key|pid|sock)$' to target files precisely. select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
     coreSkill: 'Advanced Filtering + Invert Selection (Ctrl+R)',
     environmentalClue:
       "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
@@ -3682,20 +3715,23 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       {
         id: 'cleanup-1-select',
         description:
-          "Navigate to '/tmp' (gt) and use filter (f) with pattern '\\.(key|pid|sock)$' to identify and select keeper files",
+          "Navigate to '/tmp' (gt) and use filter (f) with anchored regex '\\.(key|pid|sock)$' to avoid decoy traps",
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
           const ghost = tmp.children?.find((n) => n.name === 'ghost_process.pid');
           const sock = tmp.children?.find((n) => n.name === 'socket_001.sock');
           const monitor = tmp.children?.find((n) => n.name === 'system_monitor.pid');
+          const token = tmp.children?.find((n) => n.name === 'access_token.key');
           return (
             !!ghost &&
             !!sock &&
             !!monitor &&
+            !!token &&
             c.selectedIds.includes(ghost.id) &&
             c.selectedIds.includes(sock.id) &&
-            c.selectedIds.includes(monitor.id)
+            c.selectedIds.includes(monitor.id) &&
+            c.selectedIds.includes(token.id)
           );
         },
         completed: false,
@@ -3734,29 +3770,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       if (tmp) {
         if (!tmp.children) tmp.children = [];
 
-        // Add junk files ONLY if empty or no junk exists (Idempotency)
-        if (!tmp.children.some((c) => c.name.startsWith('tmp_junk_'))) {
-          for (let i = 1; i <= 5; i++) {
-            tmp.children.push({
-              id: `tmp-junk-${i}`,
-              name: `tmp_junk_${i}.tmp`,
-              type: 'file',
-              content: `Junk data ${i}`,
-              parentId: tmp.id,
-              modifiedAt: BASE_TIME - i * 1000,
-            });
-          }
-          for (let i = 1; i <= 3; i++) {
-            tmp.children.push({
-              id: `tmp-cache-${i}`,
-              name: `tmp_cache_${i}.log`,
-              type: 'file',
-              content: `Cache log ${i}`,
-              parentId: tmp.id,
-              modifiedAt: BASE_TIME - i * 2000,
-            });
-          }
-        }
+        // Junk files (cache_001.tmp etc.) are already present in INITIAL_FS
+        // and managed by ensurePrerequisiteState. No need to manually push them here,
+        // which caused ID collisions and duplicate React keys.
 
         if (!tmp.children.find((c) => c.name === 'ghost_process.pid')) {
           tmp.children.push({
@@ -3776,6 +3792,27 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
             content: '',
             parentId: tmp.id,
             modifiedAt: BASE_TIME - 10 * 60 * 1000,
+          });
+        }
+        // Add decoy honeypots to punish sloppy regex
+        if (!tmp.children.find((c) => c.name === 'decoy_socket.sock.bak')) {
+          tmp.children.push({
+            id: 'decoy-sock-1',
+            name: 'decoy_socket.sock.bak',
+            type: 'file',
+            content: 'DECOY',
+            parentId: tmp.id,
+            modifiedAt: BASE_TIME - 5 * 60 * 1000,
+          });
+        }
+        if (!tmp.children.find((c) => c.name === 'old_credentials.key.old')) {
+          tmp.children.push({
+            id: 'decoy-key-1',
+            name: 'old_credentials.key.old',
+            type: 'file',
+            content: 'DECOY',
+            parentId: tmp.id,
+            modifiedAt: BASE_TIME - 5 * 60 * 1000,
           });
         }
       }
@@ -4858,6 +4895,18 @@ You have been here before.`,
 
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
+          if (c.showHidden && c.previewScroll > 0) {
+            console.log(
+              '[L13 Check] cursorIndex:',
+              c.cursorIndex,
+              'scroll:',
+              c.previewScroll,
+              'item:',
+              items[c.cursorIndex]?.name,
+              'items:',
+              items.length
+            );
+          }
           return cursorOnIdentity && c.previewScroll >= 25;
         },
         completed: false,

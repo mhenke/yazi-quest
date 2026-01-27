@@ -161,6 +161,9 @@ test.describe('Episode 3: MASTERY', () => {
       await typeText(page, 'identity');
       await page.waitForTimeout(300); // Ensure input is registered
       await page.keyboard.press('Enter');
+      // [Fix] Wait for search results and verify single match
+      await expect(page.getByRole('listitem')).toHaveCount(1, { timeout: 2000 });
+      await expect(page.getByRole('listitem').first()).toContainText('identity');
       await page.waitForTimeout(800);
 
       // Search might trigger a warning if implemented (unlikely for s, but good to wait)

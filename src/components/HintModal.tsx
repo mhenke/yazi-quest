@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Lightbulb } from 'lucide-react';
 
 interface HintModalProps {
@@ -41,10 +42,10 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
 
   const stageLabels = ['Hint (Vague)', 'Hint (Partial)', 'Hint (Detailed)'];
   const stageLabel = stageLabels[stage] || stageLabels[2];
-  return (
+  return createPortal(
     <div
       data-testid="hint-modal"
-      className="absolute bottom-10 left-6 z-[95] w-full max-w-sm bg-zinc-900/95 border border-zinc-700 shadow-2xl p-5 flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 rounded-lg backdrop-blur-sm"
+      className="fixed bottom-10 left-6 z-[250] w-full max-w-sm bg-zinc-900/95 border border-zinc-700 shadow-2xl p-5 flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 rounded-lg backdrop-blur-sm"
       role="dialog"
       aria-modal="false"
     >
@@ -65,6 +66,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
       <div className="text-center text-[10px] text-zinc-600 font-mono mt-1">
         Press Shift+Enter or Escape to close
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

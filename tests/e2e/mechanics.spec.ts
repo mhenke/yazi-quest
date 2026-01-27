@@ -66,7 +66,7 @@ test.describe('Game Mechanics & Failures', () => {
     await pressKey(page, 'y'); // Confirm
 
     // 4. Expect Game Over
-    await expect(page.getByText('TRAP ACTIVATED')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
     await expect(page.getByText('Security Incident logged')).toBeVisible();
   });
 
@@ -88,7 +88,7 @@ test.describe('Game Mechanics & Failures', () => {
     await pressKey(page, 'y'); // confirm
 
     // 4. Expect Game Over
-    await expect(page.getByText('TRAP ACTIVATED')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
   });
 
   test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {

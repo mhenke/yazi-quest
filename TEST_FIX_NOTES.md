@@ -69,8 +69,6 @@ Issue: LevelProgress component has a persistent header with z-[100] which is hig
 ✅ await page.keyboard.press('Escape'); // Use keyboard shortcut instead of clicking backdrop
 ✅ await page.keyboard.press('Shift+Enter'); // Alternative keyboard shortcut
 
-Fix: When encountering backdrop click failures, check for elements with higher z-index values that might be intercepting clicks. Use keyboard shortcuts (Escape, Shift+Enter) as reliable alternatives to backdrop clicks for closing modals.
-
 10. Regex Safety in Filter Implementation
     Symptom: ESLint security warnings for non-literal arguments to RegExp constructor. Cause: Direct user input passed to RegExp without validation creates potential ReDoS or injection vulnerabilities.
 
@@ -89,3 +87,29 @@ const regex = new RegExp(filter, 'i');
 } else {
 // Use substring matching for unsafe patterns
 }
+
+11. Missing Prerequisite Logic in Level Definitions
+    Symptom: Navigation commands (gw) seem to fail or stay at root. Cause: The target level's `onEnter` hook failed to call `ensurePrerequisiteState`, leaving the filesystem incomplete (missing directories like `systemd-core`).
+
+    Issue: Level 8 expected `~/workspace/systemd-core` but didn't initialize it because `onEnter` only created `daemons`.
+    Fix: Always call `ensurePrerequisiteState(fs, CURRENT_LEVEL)` in `onEnter` and ensure `ensurePrerequisiteState` covers the specific level's requirements (e.g. `if (targetLevelId >= 8)`).
+
+    ✅
+    onEnter: (fs) => {
+    let newFs = ensurePrerequisiteState(fs, 8); // Added call
+    // ...
+    }
+
+12. Missing Action Flags in State Updates
+    Symptom: Task check requiring `c.usedD` or `c.usedP` fails even if the action is performed. Cause: The handler function (e.g., `confirmDelete`) updates the filesystem but forgets to set the tracking flag in `GameState`.
+
+    Issue: Level 9 deleted junk files successfully but failed completion because `usedD` was false.
+    Fix: Ensure all significant actions update their corresponding tracking flags in `setGameState`.
+
+    ✅ usedD: true, // in confirmDelete
+
+13. Incomplete Selection in Inversion Tests
+    Symptom: "Delete Junk" tasks fail because valid files are deleted. Cause: When using "Select Keepers -> Invert -> Delete Junk" pattern, the test must select ALL keepers. If one is missed, Invert leaves it unselected (junk), and it gets deleted.
+
+    Issue: Level 9 test missed `access_token.key`. Invert treated it as junk. It was deleted. Check failed.
+    Fix: Verify the full list of "Files to Keep" and ensure the test selects them all before inverting.

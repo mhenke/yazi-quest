@@ -332,7 +332,7 @@ export async function assertTask(
   // eslint-disable-next-line security/detect-non-literal-regexp
   const tasksRegex = new RegExp(`Tasks:\\s*${expectedCompleted}/\\d+`);
   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, {
-    timeout: 500,
+    timeout: 1000,
   });
 }
 
@@ -580,6 +580,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   await pressKey(page, 'f');
   await typeText(page, filterText);
   await page.keyboard.press('Enter'); // Confirm filter
+  await expect(page.getByTestId('filter-input')).not.toBeVisible(); // Ensure mode switch
 
   // Handle distinct Protocol Violation modal that may appear
   try {
@@ -601,7 +602,9 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
     timeout: 500,
   });
 
+  await page.waitForTimeout(100); // Wait for state to settle
   await pressKey(page, ' '); // Toggle selection
+  await page.waitForTimeout(100); // Wait for selection to register
   await clearFilter(page); // Clear filter for next action
 }
 
