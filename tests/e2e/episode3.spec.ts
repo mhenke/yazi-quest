@@ -499,15 +499,11 @@ test.describe('Episode 3: MASTERY', () => {
     // Wait, let's verify if 'verify-training' is the target.
     // Logic: verify-training checks for payload.py in active.
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
-    await clearFilter(page);
 
-    // Handle Protocol Violation modal (Shift+Enter to autofix)
+    // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
+    // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
     await page.waitForTimeout(DEFAULT_DELAY);
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(DEFAULT_DELAY);
-
-    // Sometimes it needs a second press or finding the button specifically
-    // But usually one Shift+Enter works if focused.
 
     await waitForMissionComplete(page);
   });
