@@ -193,3 +193,15 @@ const regex = new RegExp(filter, 'i');
     Cause: Using `Promise.race` with a short, hardcoded timeout (e.g., 500ms) for critical transitions like "Mission Complete" is flaky on slower CI/local environments.
     Issue: `toBeVisible({ timeout: 500 })` is too aggressive for a major UI state change.
     Fix: Rely on Playwright's default timeout (usually 5s-30s) or use a standard `DEFAULT_DELAY` constant, avoiding tight custom timeouts for critical success paths.
+
+### 25. Modal Overlay and Z-Index Conflicts (LevelProgress header vs. Dialogs)
+
+- **Symptom**: A button (like "Map") opens a modal, but cannot close it by re-clicking because the modal's backdrop (or the modal itself) has a higher z-index than the button's parent container, making the button unclickable.
+- **Root Cause**: The header container had `z-index: 150`, while the Quest Map modal backdrop had `z-index: 250`.
+- **Fix**: Elevate the interactive container (header) to a higher z-index (e.g., `300`) than the modal overlays to ensure buttons remain interactive.
+
+### 26. Modal Shortcut Toggle Logic vs. Hardcoded Visibility
+
+- **Symptom**: Pressing a shortcut (e.g., `Alt+M`) opens a modal, but pressing it again fails to close it, even if the user expects toggle behavior.
+- **Root Cause**: The keydown handler was hardcoded to `setGameState(p => ({ ...p, showMap: true }))` instead of toggling the state.
+- **Fix**: Ensure meta-command shortcuts (Help, Map, Hint) use toggle logic: `setGameState(p => ({ ...p, showMap: !p.showMap }))`.
