@@ -127,9 +127,9 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         },
       };
 
-      // e.key is 'Enter'.
-      if (e.key === 'Enter' && e.shiftKey) {
-        // Shift+Enter to close
+      // e.key is 'Enter' or 'Escape'.
+      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
+        // Shift+Enter or Escape to close
         onClose();
         return;
       }
@@ -180,7 +180,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   return (
     <>
-      <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-4 sm:px-6 flex items-center justify-between backdrop-blur-sm z-[150] relative">
+      <div className="w-full bg-black/50 border-b border-zinc-800 py-3 px-4 sm:px-6 flex items-center justify-between backdrop-blur-sm z-[300] relative">
         {/* Left Side: Map Button + Current Episode Progress */}
         <div className="flex items-center gap-3 sm:gap-6 overflow-hidden mr-4 h-8">
           <button

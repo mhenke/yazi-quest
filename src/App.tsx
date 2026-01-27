@@ -2542,7 +2542,7 @@ export default function App() {
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
       if (e.key === '?' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showHelp: true }));
+        setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
         return;
       }
 
@@ -2560,7 +2560,7 @@ export default function App() {
 
       if (e.key === 'm' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showMap: true }));
+        setGameState((prev) => ({ ...prev, showMap: !prev.showMap }));
         return;
       }
 
