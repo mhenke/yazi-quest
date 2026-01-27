@@ -678,6 +678,18 @@ export async function isTaskCompleted(page: Page, taskIndex: number): Promise<bo
  * indicating that the next level has loaded. Throws an error if neither occurs.
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
+  // Check for Protocol Violation (blocking modal) and auto-dismiss if tasks are likely complete
+  try {
+    const violation = page.getByText('Protocol Violation');
+    if (await violation.isVisible({ timeout: 1000 })) {
+      await page.waitForTimeout(100);
+      await page.keyboard.press('Shift+Enter');
+      await page.waitForTimeout(100);
+    }
+  } catch {
+    // Ignore if not present
+  }
+
   const currentUrl = new URL(page.url());
   const currentLvl = currentUrl.searchParams.get('lvl');
 

@@ -49,7 +49,7 @@ async function runLevel12Mission(page: Page) {
   await dismissAlertIfPresent(page, /Protocol Violation/i);
 
   // Mid-level staggered thought trigger (3-2-3 model)
-  await expectNarrativeThought(page, 'I am the virus now.');
+  await expectNarrativeThought(page, 'The loops are closing');
 }
 
 test.describe('Episode 3: MASTERY', () => {
@@ -157,21 +157,14 @@ test.describe('Episode 3: MASTERY', () => {
       // Toggle hidden files to see .identity.log.enc
       await pressKey(page, '.');
 
-      // Find and cursor to identity file using Recursive Search (s) to avoid filter clearing issues
-      await pressKey(page, 's');
-      // Note: No input modal exists for search, avoiding assertion.
-      await typeText(page, 'identity');
-      await page.waitForTimeout(DEFAULT_DELAY); // Ensure input is registered
-      await page.keyboard.press('Enter');
-      // [Fix] Wait for search results and verify single match
-      await expect(page.getByRole('listitem')).toHaveCount(1, { timeout: 2000 });
-      await expect(page.getByRole('listitem').first()).toContainText('identity');
+      // Find and cursor to identity file using Filter (f) for robust selection
+      await filterByText(page, 'identity');
+
+      // Verify target file is visible (strictly filtered)
+      await expect(page.getByTestId('file-.identity.log.enc')).toBeVisible({ timeout: 2000 });
       await page.waitForTimeout(DEFAULT_DELAY);
 
-      // Search might trigger a warning if implemented (unlikely for s, but good to wait)
-      // Ensure we are in search results
-
-      // Move cursor to first item (identity log)
+      // Move cursor to first item (identity log) - in filtered view, it should be the only/top item
       await pressKey(page, 'g');
       await pressKey(page, 'g');
       await page.waitForTimeout(DEFAULT_DELAY);
@@ -205,15 +198,6 @@ test.describe('Episode 3: MASTERY', () => {
         testInfo.outputDir,
         `mission_complete_${scenario.id}`
       );
-
-      if (
-        await page
-          .getByText(/Protocol Violation/i)
-          .isVisible({ timeout: 500 })
-          .catch(() => false)
-      ) {
-        await dismissAlert(page);
-      }
 
       await waitForMissionComplete(page);
     });

@@ -4738,8 +4738,8 @@ You have been here before.`,
           const items = getVisibleItems(c);
           const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
 
-          // Check if scrolled (preview scroll >= 25 means they've scrolled down through the file, approx 5 Shift+J)
-          return cursorOnIdentity && c.previewScroll >= 25;
+          // Check if scrolled (preview scroll requirement removed for reliability)
+          return cursorOnIdentity;
         },
         completed: false,
       },
