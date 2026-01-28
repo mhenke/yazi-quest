@@ -4,6 +4,8 @@ import { Terminal, Signal, UploadCloud, ArrowRight, Zap, Shield, Crown } from 'l
 import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE, CREDITS_DATA } from '../constants';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
+import { useGlobalInput } from '../hooks/useGlobalInput';
+import { InputPriority } from '../GlobalInputContext';
 
 interface OutroSequenceProps {
   onRestartCycle?: () => void;
@@ -127,17 +129,17 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
   }, [showTeaser, currentText, sectionIndex, sections.length, partIndex, isComplete]);
 
   // Keyboard handler for Enter/Space to advance
-  useEffect(() => {
-    if (showTeaser) return;
+  useGlobalInput(
+    (e) => {
+      if (showTeaser) return true; // Block keys when teaser is showing (except skip button which is handled by UI)
 
-    const handler = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
 
         // Shift+Enter advances
         if (e.shiftKey) {
           handleAdvance();
-          return;
+          return true;
         }
 
         // Enter without shift only skips typing if animation is running
@@ -149,12 +151,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
           isAnimatingRef.current = false;
           setShowContinue(true);
         }
+        return true;
       }
-    };
-
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [handleAdvance, showTeaser, currentText]);
+      return true; // Block other keys
+    },
+    InputPriority.CRITICAL
+  );
 
   // Play video only when teaser is shown and manage teaser music
   useEffect(() => {

@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CheckCircle2, Zap } from 'lucide-react';
+import { useGlobalInput } from '../hooks/useGlobalInput';
+import { InputPriority } from '../GlobalInputContext';
 
 interface SuccessToastProps {
   message: string;
@@ -7,19 +9,23 @@ interface SuccessToastProps {
   onDismiss: () => void; // Shift+Enter - advances to next level
 }
 
-export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle, onDismiss }) => {
+export const SuccessToast: React.FC<SuccessToastProps> = ({
+  message,
+  levelTitle,
+  onDismiss,
+}) => {
   // Keyboard handler to advance to next level
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  useGlobalInput(
+    (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        e.stopPropagation();
         onDismiss(); // Advances to next level
+        return true; // Handled
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDismiss]);
+      return true; // Block other inputs while toast is visible
+    },
+    InputPriority.MODAL
+  );
 
   return (
     <div

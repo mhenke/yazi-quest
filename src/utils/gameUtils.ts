@@ -7,6 +7,9 @@ import { isProtected } from './fsHelpers';
  * Returns a random element from an array.
  */
 export const getRandomElement = <T>(arr: T[]): T => {
+  if (arr.length === 0) {
+    throw new Error('Cannot get random element from empty array');
+  }
   return arr[Math.floor(Math.random() * arr.length)];
 };
 

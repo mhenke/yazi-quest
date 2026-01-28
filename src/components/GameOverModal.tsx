@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { AlertTriangle, Zap } from 'lucide-react';
+import { useGlobalInput } from '../hooks/useGlobalInput';
+import { InputPriority } from '../GlobalInputContext';
 
 interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
@@ -72,16 +74,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   efficiencyTip,
   level,
 }) => {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+  useGlobalInput(
+    (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         onRestart();
+        return true;
       }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onRestart]);
+      return true; // Block all other input
+    },
+    InputPriority.MODAL_HIGH
+  );
 
   return (
     <div className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300">
