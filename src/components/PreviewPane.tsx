@@ -17,13 +17,14 @@ import {
 import { sortNodes } from '../utils/sortHelpers';
 import { isProtected } from '../utils/fsHelpers';
 import { FileNode, Level, GameState } from '../types';
+import { Action } from '../hooks/gameReducer';
 
 interface PreviewPaneProps {
   node: FileNode | null;
   level: Level;
   gameState: GameState;
   previewScroll?: number;
-  setGameState?: React.Dispatch<React.SetStateAction<GameState>>;
+  dispatch?: React.Dispatch<Action>;
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -50,7 +51,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   level,
   gameState,
   previewScroll = 0,
-  setGameState,
+  dispatch,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
@@ -73,12 +74,12 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
       const maxPreviewScroll = Math.ceil(maxScrollValue / 20);
 
       // If the current previewScroll exceeds the maximum possible value, update the game state
-      if (previewScroll > maxPreviewScroll && setGameState) {
+      if (previewScroll > maxPreviewScroll && dispatch) {
         // Update the gameState to clamp the previewScroll value
-        setGameState((prev) => ({
-          ...prev,
-          previewScroll: maxPreviewScroll,
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { previewScroll: maxPreviewScroll },
+        });
       }
 
       // Ensure previewScroll doesn't exceed the maximum possible value
@@ -87,7 +88,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
       // Apply the scroll position
       scrollRef.current.scrollTop = boundedPreviewScroll * 20;
     }
-  }, [previewScroll, node, setGameState]);
+  }, [previewScroll, node, dispatch]);
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-300 h-full overflow-hidden border-l border-zinc-800">

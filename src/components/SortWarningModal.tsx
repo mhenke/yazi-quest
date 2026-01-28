@@ -3,6 +3,7 @@ import { ListOrdered, AlertTriangle } from 'lucide-react';
 
 interface SortWarningModalProps {
   allowAutoFix: boolean;
+  onDismiss?: () => void;
 }
 
 export const SortWarningModal: React.FC<SortWarningModalProps> = ({

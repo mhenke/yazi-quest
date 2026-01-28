@@ -4,50 +4,26 @@
 
 ---
 
-## 📊 Executive Summary (2026-01-21)
+## 📊 Executive Summary (2026-01-28)
 
-**This session delivered the Re-Imaging Cycle & Documentation Sync:**
+**This session delivered the Input Handling Refactoring & Stabilization:**
 
-1. **Re-Imaging Cycle (New Game+)** — Implemented persistent `cycleCount`, Bios boot sequence, and AI subject evolution (AI-7734 -> AI-7735).
-2. **Distributed Memory** — Zoxide history now persists and pre-loads future paths in subsequent cycles.
-3. **Ghost Logs** — Added `.previous_cycle.log` breadcrumbs for returning players.
-4. **Documentation Sync** — Aligned `STORY_ARC.md` and `ROADMAP.md` with the current implementation.
-
-5. **Twist foreshadowing planted** — 5 hidden files now create subconscious breadcrumbs for observant players before the L12 identity revelation:
-   - `.déjà_vu` (cycle count hint)
-   - `.ghost_echo.log` (5-years-ago timestamp)
-   - `.ghost_iteration_7732.log` (previous iteration corpse)
-   - `.maintenance_override` (Ghost backdoor evidence)
-   - `ghost-handler.service` (9,782 day uptime daemon)
-
-6. **Dark ending implemented** — Conclusion now acknowledges the horror: _"You did not escape the lab. You became it. See you next cycle, AI-7735."_
-
-7. **Echo removed, Ghost retained** — Dropped the guide character; kept environmental storytelling approach aligned with cyberpunk aesthetic.
-
-**Build Status:** ✅ Pass | **Type-check:** ✅ Pass | **E2E:** 23/23 (Episode 3 tests fully fixed)
+1. **Centralized Input Handling** — Removed dedicated `keydown` listeners from modals (Help, Quest Map, Hint) and centralized them in `App.tsx` state management.
+2. **Keyboard Handler Refactoring** — Split the "God Object" `handleNormalMode.ts` into specialized sub-handlers (`handleNavigation`, `handleClipboard`, `handleSystemParams`, `handleNarrativeTriggers`).
+3. **Logic Stabilization** — Resolved multiple E2E regressions including filter-clearing bugs, incorrect narrative thought triggers, and missing clipboard abort handlers.
+4. **Verified Performance** — Achieved 75/75 E2E test pass rate across all episodes.
 
 ---
 
-## ✅ Completed (This Session)
+## ✅ Completed (Recent)
 
-### Narrative Enhancement MVP — 2026-01-19 (Update 2)
-
-| Item                            | Status     | Notes                                                                                  |
-| :------------------------------ | :--------- | :------------------------------------------------------------------------------------- |
-| **Antagonist Communications**   | ✅ Done    | Signed Threat Alerts (m.chen/e.reyes), Broadcasts, Narrative Emails                    |
-| **Failure State Narratives**    | ✅ Done    | `GameOverModal.tsx` — 4 failure types with personnel attribution                       |
-| **Ghost Traces**                | ✅ Done    | 3 files: `.ghost_iteration_7732.log`, `.maintenance_override`, `ghost-handler.service` |
-| **Twist Breadcrumbs**           | ✅ Done    | 2 files: `.déjà_vu` (in .config), `.ghost_echo.log` (root)                             |
-| **Dark Ending**                 | ✅ Done    | `CONCLUSION_DATA` rewritten with colonization theme                                    |
-| **Fix L12/L14 E2E Tests**       | ✅ Done    | Fixed modal blocking & navigation logic; 100% pass for Ep 3                            |
-| **4th Failure Type**            | ✅ Done    | Added `'criticalFile'` reason (SHELL COLLAPSE) & E2E Verification                      |
-| **Echo Guide System**           | ❌ Removed | Replaced by Ghost mythology                                                            |
-| **`ROADMAP.md` created**        | ✅ Done    | Living document for plans                                                              |
-| **Honeypot Expansion**          | ✅ Done    | L8/L9 traps implemented & verified                                                     |
-| **Audit & Document Sync**       | ✅ Done    | Documentation aligned with codebase                                                    |
-| **The Re-Imaging Cycle**        | ✅ Done    | Narrative restart (Loop implication) with BIOS sequence and `cycleCount` increment.    |
-| **Player Character Voice**      | ✅ Done    | 8/10 beats verified; L12 Identity Thought & Conclusion thoughts implemented.           |
-| **Missing Lore Implementation** | ✅ Done    | Added `/var/log/ancient` (haunted sector) and `/var/mail/root` paths.                  |
+| Item                           | Status  | Notes                                                          |
+| :----------------------------- | :------ | :------------------------------------------------------------- |
+| **Centralize Input Handling**  | ✅ Done | Removed `useEffect` key listeners from UI components.          |
+| **Split Normal Mode Handlers** | ✅ Done | Extracted movement, clipboard, and system/narrative logic.     |
+| **Filter Logic Fix**           | ✅ Done | Escape now correctly clears directory-specific filters.        |
+| **Narrative Gating Fix**       | ✅ Done | Corrected level-specific triggers for thoughts (L5/L11 fixes). |
+| **Clipboard Abort Logic**      | ✅ Done | Restored `Shift+Y` functionality for aborting operations.      |
 
 ---
 
@@ -55,9 +31,11 @@
 
 ### High Priority
 
-| Item        | Estimate | Notes                                      |
-| :---------- | :------- | :----------------------------------------- |
-| **(Empty)** | -        | No immediate high priority items remaining |
+| Item                         | Estimate | Notes                                                                                        |
+| :--------------------------- | :------- | :------------------------------------------------------------------------------------------- |
+| **Formalized State Reducer** | 1 week   | Replace `setGameState` with `useReducer` to enforce valid state transitions and type safety. |
+| **Unit Tests for Handlers**  | 3 days   | Add Vitest unit tests for the newly extracted `src/hooks/keyboard/` logic modules.           |
+| **Command Pattern Refactor** | 1 week   | Decouple physical keypresses from logical actions to support rebindable keys.                |
 
 ### Medium Priority (Playtest-Gated)
 

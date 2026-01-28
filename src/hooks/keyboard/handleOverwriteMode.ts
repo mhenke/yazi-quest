@@ -1,81 +1,101 @@
-import React from 'react';
 import { GameState, FsError } from '../../types';
 import { deleteNode, resolveAndCreatePath } from '../../utils/fsHelpers';
+import { Action } from '../gameReducer';
 
 export const handleOverwriteConfirmKeyDown = (
   e: KeyboardEvent,
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>
+  dispatch: React.Dispatch<Action>,
+  gameState: GameState
 ) => {
   if (e.key === 'y' || e.key === 'Enter') {
-    setGameState((prev) => {
-      if (!prev.pendingOverwriteNode) return { ...prev, mode: 'normal' };
+    if (!gameState.pendingOverwriteNode) {
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+      return;
+    }
 
-      // [HONEYPOT EXPANSION] - Level 8 Trap Check
-      if (
-        prev.clipboard?.nodes.some(
-          (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
-        )
-      ) {
-        return {
-          ...prev,
+    // [HONEYPOT EXPANSION] - Level 8 Trap Check
+    if (
+      gameState.clipboard?.nodes.some(
+        (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
+      )
+    ) {
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
           isGameOver: true,
           gameOverReason: 'honeypot',
           notification: null,
           mode: 'normal',
           pendingOverwriteNode: null,
-        };
-      }
+        },
+      });
+      return;
+    }
 
-      let newFs = prev.fs;
-      const deleteRes = deleteNode(
-        newFs,
-        prev.currentPath,
-        prev.pendingOverwriteNode.id,
-        prev.levelIndex
-      );
-      if (!deleteRes.ok)
-        return {
-          ...prev,
+    let newFs = gameState.fs;
+    const deleteRes = deleteNode(
+      newFs,
+      gameState.currentPath,
+      gameState.pendingOverwriteNode.id,
+      gameState.levelIndex
+    );
+    if (!deleteRes.ok) {
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
           mode: 'normal',
           notification: {
             message: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
           },
-        };
-      newFs = deleteRes.value;
+        },
+      });
+      return;
+    }
+    newFs = deleteRes.value;
 
-      const createRes = resolveAndCreatePath(newFs, prev.currentPath, prev.inputBuffer);
-      if (createRes.error) {
-        return {
-          ...prev,
+    const createRes = resolveAndCreatePath(newFs, gameState.currentPath, gameState.inputBuffer);
+    if (createRes.error) {
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
           fs: newFs,
           mode: 'normal',
           inputBuffer: '',
           notification: { message: createRes.error },
           pendingOverwriteNode: null,
-        };
-      }
+        },
+      });
+      return;
+    }
 
-      if (createRes.collision && createRes.collisionNode) {
-        return {
-          ...prev,
+    if (createRes.collision && createRes.collisionNode) {
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
           fs: newFs,
           mode: 'overwrite-confirm',
-          inputBuffer: prev.inputBuffer,
+          inputBuffer: gameState.inputBuffer,
           pendingOverwriteNode: createRes.collisionNode,
           notification: { message: 'Collision still detected after overwrite attempt.' },
-        };
-      }
+        },
+      });
+      return;
+    }
 
-      return {
-        ...prev,
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
         fs: createRes.fs,
         mode: 'normal',
         inputBuffer: '',
         pendingOverwriteNode: null,
         notification: { message: 'Overwritten successfully.' },
-      };
+      },
     });
   } else if (e.key === 'n' || e.key === 'Escape') {
-    setGameState((prev) => ({ ...prev, mode: 'normal', pendingOverwriteNode: null }));
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: { mode: 'normal', pendingOverwriteNode: null },
+    });
   }
 };

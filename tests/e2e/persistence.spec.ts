@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startLevel, gotoCommand, expectCurrentDir, fuzzyJump, DEFAULT_DELAY, pressKey } from './utils';
+import { startLevel, gotoCommand, expectCurrentDir, DEFAULT_DELAY, pressKey } from './utils';
 
 test.describe('Persistence & State Survival', () => {
   test('localStorage persists zoxide history across reloads', async ({ page }) => {
@@ -27,8 +27,8 @@ test.describe('Persistence & State Survival', () => {
 
     // Unified intro skip logic
     await page.evaluate(() => {
-        window.__yaziQuestSkipIntroRequested = true;
-        window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
+      window.__yaziQuestSkipIntroRequested = true;
+      window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
     });
 
     // Wait for game ready
@@ -59,8 +59,8 @@ test.describe('Persistence & State Survival', () => {
 
     // Skip intro
     await page.evaluate(() => {
-        window.__yaziQuestSkipIntroRequested = true;
-        window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
+      window.__yaziQuestSkipIntroRequested = true;
+      window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
     });
 
     // 3. Verify Cycle 5 effects

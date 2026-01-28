@@ -120,7 +120,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 'w');
 
     // Wait to ensure we're in the workspace directory
-    await expectCurrentDir(page, 'workspace');
+    await expectCurrentDir(page, '~/workspace');
 
     // Clear any filters to ensure all items are visible
     await clearFilter(page);
@@ -144,7 +144,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     }
 
     // Wait for the current directory to be systemd-core to ensure navigation completed
-    await expectCurrentDir(page, 'systemd-core');
+    await expectCurrentDir(page, '~/workspace/systemd-core');
 
     await assertTask(page, '1/5', testInfo.outputDir, 'nav_to_systemd');
 
@@ -178,7 +178,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await fuzzyJump(page, 'active');
 
     // Ensure we are in active directory
-    await expectCurrentDir(page, 'active');
+    await expectCurrentDir(page, '~/.config/vault/active');
 
     // Select uplink_v1.conf and yank
     await pressKey(page, 'y');
@@ -186,7 +186,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Objective 5: Return to '~/workspace/systemd-core' (Shift+H) and OVERWRITE (Shift+P)
     await pressKey(page, 'Shift+H');
-    await expectCurrentDir(page, 'systemd-core');
+    await expectCurrentDir(page, '~/workspace/systemd-core');
 
     await pressKey(page, 'Shift+P');
     await assertTask(page, '5/5', testInfo.outputDir, 'force_overwrite');
@@ -208,7 +208,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 't');
 
     // Verify we are in /tmp (Task 1 won't complete until selection is done, so we check breadcrumb/path)
-    await expectCurrentDir(page, 'tmp');
+    await expectCurrentDir(page, '/tmp');
 
     // Pattern: Filter with Regex -> Select All -> Invert -> Delete
     // Use the intended solution regex to robustly select all 4 target files at once

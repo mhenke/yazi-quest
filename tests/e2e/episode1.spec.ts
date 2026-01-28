@@ -26,9 +26,8 @@ import {
   navigateUp,
   navigateRight,
   enterDirectory,
-  goUp,
   expectCurrentDir,
-  DEFAULT_DELAY,
+  getCurrentPath,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
@@ -57,13 +56,27 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'g');
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
-      // Task 5: Navigate to /var using h to go up
-      await gotoCommand(page, 'r'); // Jump to root (gr) - more robust than h*3
-      await page.waitForTimeout(DEFAULT_DELAY);
-      await expectCurrentDir(page, '/'); // Root is displayed as '/'
+      // Navigate up until we reach root '/'
+      // Use native keyboard events for robustness
+      await page
+        .locator('[data-testid^="file-"]')
+        .first()
+        .click({ timeout: 1000 })
+        .catch(() => page.click('body'));
+      await page.waitForTimeout(200);
+
+      // Robustly navigate to root
+      let attempts = 0;
+      while ((await getCurrentPath(page)) !== '/' && attempts < 10) {
+        await page.keyboard.press('h');
+        await page.waitForTimeout(250);
+        attempts++;
+      }
+
+      await expectCurrentDir(page, '/', true); // Root is displayed as '/'
 
       await enterDirectory(page, 'var');
-      await expectCurrentDir(page, 'var');
+      await expectCurrentDir(page, '/var');
       await assertTask(page, '5/5', testInfo.outputDir, 'navigate_to_var');
 
       // Verify mission complete

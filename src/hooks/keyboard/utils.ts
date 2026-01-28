@@ -1,5 +1,5 @@
-import React from 'react';
 import { GameState } from '../../types';
+import { Action } from '../gameReducer';
 import { getNodeByPath } from '../../utils/fsHelpers';
 import { KEYBINDINGS } from '../../constants/keybindings';
 
@@ -45,7 +45,7 @@ export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  dispatch: React.Dispatch<Action>,
   direction: 'forward' | 'backward' = 'backward'
 ): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
@@ -53,16 +53,12 @@ export const checkFilterAndBlockNavigation = (
     if (direction === 'forward') {
       // When navigating INTO a subdirectory, clear the filter and allow navigation
       e.preventDefault();
-      setGameState((prev) => {
-        const newFilters = { ...prev.filters };
-        delete newFilters[currentDirNode.id];
-        return { ...prev, filters: newFilters };
-      });
+      dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
       return false; // Allow navigation after clearing filter
     }
     // Backward navigation with filter active - show warning
     e.preventDefault();
-    setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'filter-warning' } });
     return true; // Navigation blocked
   }
   return false; // Navigation allowed
@@ -71,11 +67,11 @@ export const checkFilterAndBlockNavigation = (
 export const checkSearchAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>
+  dispatch: React.Dispatch<Action>
 ): boolean => {
   if (gameState.searchQuery && gameState.searchResults.length > 0) {
     e.preventDefault();
-    setGameState((prev) => ({ ...prev, mode: 'search-warning' }));
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'search-warning' } });
     return true; // Navigation blocked
   }
   return false; // Navigation allowed

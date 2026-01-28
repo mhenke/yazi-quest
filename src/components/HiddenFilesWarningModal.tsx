@@ -3,6 +3,7 @@ import { EyeOff, AlertTriangle } from 'lucide-react';
 
 interface HiddenFilesWarningModalProps {
   allowAutoFix: boolean;
+  onDismiss?: () => void;
 }
 
 export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = ({

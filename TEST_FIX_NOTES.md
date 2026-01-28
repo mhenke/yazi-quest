@@ -205,3 +205,46 @@ const regex = new RegExp(filter, 'i');
 - **Symptom**: Pressing a shortcut (e.g., `Alt+M`) opens a modal, but pressing it again fails to close it, even if the user expects toggle behavior.
 - **Root Cause**: The keydown handler was hardcoded to `setGameState(p => ({ ...p, showMap: true }))` instead of toggling the state.
 - **Fix**: Ensure meta-command shortcuts (Help, Map, Hint) use toggle logic: `setGameState(p => ({ ...p, showMap: !p.showMap }))`.
+
+### 27. Directory Path Assertion Specificity (Regression Risk)
+
+- **Symptom**: Fixing one test by making assertions strict (e.g., `toHaveText` instead of `toContainText`) breaks other tests that rely on partial matching (e.g., asserting "tmp" while in "/tmp").
+- **Root Cause**: `expectCurrentDir` was changed to use `toHaveText` broadly to fix a root directory check failure (where "/" matched "~/datastore"), but this broke tests in Episode 3 and Persistence expecting partial matches.
+- **Fix**: Support optional strictness in the assertion helper, defaulting to partial match for backward compatibility, and opting-in to strict matching only where necessary (e.g., Root check).
+
+  ```typescript
+  // utils.ts
+  export async function expectCurrentDir(page: Page, dirName: string, exact: boolean = false) {
+    if (exact) await expect(page.locator('.breadcrumb')).toHaveText(dirName);
+    else await expect(page.locator('.breadcrumb')).toContainText(dirName);
+  }
+
+  // episode1.spec.ts (Root check needs strictness)
+  await expectCurrentDir(page, '/', true);
+  ```
+
+### 28. Robust Modal Dismissal before Mission Completion
+
+- **Symptom**: `waitForMissionComplete` times out because "Mission Complete" text is obscured or blocked by a lingering "Protocol Violation" modal.
+- **Root Cause**: Relying on a single blind `Shift+Enter` or `waitForMissionComplete`'s internal auto-dismissal is flaky if the modal flickers or re-triggers (e.g. if Hidden files are still ON).
+- **Fix**: Explicitly use `dismissAlertIfPresent(page, /Protocol Violation/i)` in the test script _immediately before_ waiting for completion. Do not rely solely on the utility helper to clean up complex states.
+
+  ```typescript
+  // Ensure we aggressively dismiss any blocking modals
+  await dismissAlertIfPresent(page, /Protocol Violation/i);
+  await dismissAlertIfPresent(page, /Security Alert/i);
+  await waitForMissionComplete(page);
+  ```
+
+### 29. Flaky URL Navigation Wait Strategy
+
+- **Symptom**: Transients timeouts in tests that navigate to levels via URL (e.g. `goToLevel`), failing with `page.waitForLoadState('networkidle')`.
+- **Root Cause**: `networkidle` is discouraged in recent Playwright versions because it waits for _no network traffic_ for 500ms, which is brittle with background polling, analytical beacons, or slow asset loading.
+- **Fix**: Replace `networkidle` with `domcontentloaded` for the initial navigation waiter, and rely on explicit element-level assertions (wait for start screen or filesystem container) to confirm the app is truly interactive.
+
+  ```typescript
+  // utils.ts
+  await page.goto(url);
+  await page.waitForLoadState('domcontentloaded'); // Faster, less flaky
+  // ... subsequent steps wait for specific UI elements
+  ```

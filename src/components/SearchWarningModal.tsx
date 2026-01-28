@@ -3,6 +3,7 @@ import { Search, AlertTriangle } from 'lucide-react';
 
 interface SearchWarningModalProps {
   allowAutoFix: boolean;
+  onDismiss?: () => void;
 }
 
 export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({

@@ -1,45 +1,42 @@
-import React from 'react';
-import { GameState } from '../../types';
+import { GameState, Linemode } from '../../types';
+import { Action } from '../gameReducer';
 
 export const handleSortModeKeyDown = (
   e: KeyboardEvent,
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>
+  dispatch: React.Dispatch<Action>,
+  gameState: GameState
 ) => {
   const key = e.key;
   const shift = e.shiftKey;
 
   if (key === 'Escape') {
-    setGameState((prev) => ({ ...prev, mode: 'normal', acceptNextKeyForSort: false }));
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', acceptNextKeyForSort: false } });
     return;
   }
 
   if (key === 'l') {
-    setGameState((prev) => {
-      const modes: ('none' | 'size' | 'mtime' | 'permissions')[] = [
-        'none',
-        'size',
-        'mtime',
-        'permissions',
-      ];
-      const nextIndex = (modes.indexOf(prev.linemode) + 1) % modes.length;
-      return {
-        ...prev,
+    const modes: Linemode[] = ['none', 'size', 'mtime', 'permissions'];
+    const nextIndex = (modes.indexOf(gameState.linemode) + 1) % modes.length;
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
         mode: 'normal',
         acceptNextKeyForSort: false,
-
         linemode: modes[nextIndex],
-      };
+      },
     });
     return;
   }
 
   if (key === '-') {
-    setGameState((prev) => ({
-      ...prev,
-      mode: 'normal',
-      acceptNextKeyForSort: false,
-      linemode: 'none',
-    }));
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
+        mode: 'normal',
+        acceptNextKeyForSort: false,
+        linemode: 'none',
+      },
+    });
     return;
   }
 
@@ -91,15 +88,17 @@ export const handleSortModeKeyDown = (
   const config = SORT_CONFIG[key.toLowerCase()];
 
   if (config) {
-    setGameState((prev) => ({
-      ...prev,
-      mode: 'normal',
-      acceptNextKeyForSort: false,
-      sortBy: config.by,
-      sortDirection: shift ? config.reverseDir : config.defaultDir,
-      linemode: config.linemode || prev.linemode,
-      usedSortM: prev.usedSortM || key.toLowerCase() === 'm',
-      notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
-    }));
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
+        mode: 'normal',
+        acceptNextKeyForSort: false,
+        sortBy: config.by,
+        sortDirection: shift ? config.reverseDir : config.defaultDir,
+        linemode: config.linemode || gameState.linemode,
+        usedSortM: gameState.usedSortM || key.toLowerCase() === 'm',
+        notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
+      },
+    });
   }
 };

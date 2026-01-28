@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
@@ -17,6 +17,8 @@ interface LevelProgressProps {
 
   onToggleMap: () => void;
   onJumpToLevel?: (levelIndex: number) => void;
+  activeTab?: number;
+  selectedMissionIdx?: number;
 }
 
 export const LevelProgress: React.FC<LevelProgressProps> = ({
@@ -25,23 +27,18 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   thought,
   onToggleHint,
   onToggleHelp,
-  isOpen, // New prop
-  onClose, // New prop to close explicitly
-  onToggleMap, // Explicit toggle handler
+  isOpen,
+  onClose,
+  onToggleMap,
   onJumpToLevel,
+  // Lifted Props
+  activeTab = 0,
+  selectedMissionIdx = 0,
 }) => {
-  const [activeTab, setActiveTab] = useState<number>(0);
-  const [selectedMissionIdx, setSelectedMissionIdx] = useState<number>(0);
   const missionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Removed internal showLegend state and Alt+m listener.
-  // App.tsx controls visibility via isOpen prop.
-
-  // Helper icons for the 3 episodes (mapped by index)
-  // Ep 1: Zap (Awakening), Ep 2: Shield (Fortification), Ep 3: Crown (Mastery)
+  // Derived Data (same as before)
   const episodeIcons = [Zap, Shield, Crown];
-
-  // Derive Episode Data based on episodeId property
   const episodes = EPISODE_LORE.map((lore, idx) => {
     const color = lore.color ?? 'text-blue-500';
     return {
@@ -54,117 +51,17 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     };
   });
 
-  // Determine completion status
-  // Episode is complete if currentLevelIndex is past the last level of this episode
   const completionStatus = episodes.map((ep) => {
     const lastLevelOfEpisode = ep.levels[ep.levels.length - 1];
     const lastLevelGlobalIdx = levels.indexOf(lastLevelOfEpisode);
     return currentLevelIndex > lastLevelGlobalIdx;
   });
 
-  // Determine current active episode index based on currentLevelIndex
   const currentLevel = levels[currentLevelIndex];
   const currentEpisodeId = currentLevel ? currentLevel.episodeId : 1;
   const currentEpisodeIdx = currentEpisodeId - 1;
 
-  // Sync modal tab with current episode when opening
-  useEffect(() => {
-    if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveTab(currentEpisodeIdx);
-      // Find the current level within the episode and select it
-      const currentEpisodeLevels = episodes[currentEpisodeIdx]?.levels || [];
-      const currentLevelInEpisode = currentEpisodeLevels.findIndex(
-        (l) => levels.indexOf(l) === currentLevelIndex
-      );
-      setSelectedMissionIdx(currentLevelInEpisode >= 0 ? currentLevelInEpisode : 0);
-    }
-  }, [isOpen, currentEpisodeIdx, episodes, levels, currentLevelIndex]);
-
   const activeEpisode = episodes[activeTab] || episodes[0];
-
-  // Keyboard navigation for Quest Map modal
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent background handlers (App) from acting when the map is open
-      e.stopPropagation();
-
-      const activeLevels = episodes[activeTab]?.levels || [];
-
-      // Action Handlers
-      const actions: Record<string, () => void> = {
-        h: () => {
-          setActiveTab((prev) => Math.max(0, prev - 1));
-          setSelectedMissionIdx(0);
-        },
-        l: () => {
-          setActiveTab((prev) => Math.min(episodes.length - 1, prev + 1));
-          setSelectedMissionIdx(0);
-        },
-        j: () => {
-          setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 1));
-        },
-        k: () => {
-          setSelectedMissionIdx((prev) => Math.max(0, prev - 1));
-        },
-        J: () => {
-          // Shift+J
-          if (e.shiftKey) {
-            setSelectedMissionIdx((prev) => Math.min(activeLevels.length - 1, prev + 5));
-          }
-        },
-        K: () => {
-          // Shift+K
-          if (e.shiftKey) {
-            setSelectedMissionIdx((prev) => Math.max(0, prev - 5));
-          }
-        },
-        Enter: () => {
-          // Normal Enter: Try to jump
-          // If Shift is pressed, App handles it? No, we suppressed bubbling.
-        },
-      };
-
-      // e.key is 'Enter' or 'Escape'.
-      if ((e.key === 'Enter' && e.shiftKey) || e.key === 'Escape') {
-        // Shift+Enter or Escape to close
-        onClose();
-        return;
-      }
-
-      const handler = actions[e.key];
-      if (handler) {
-        // If Enter, we check if it was Shift+Enter logic (already handled above)
-        // Standard Enter
-        if (e.key === 'Enter' && !e.shiftKey) {
-          const selectedLevel = activeLevels[selectedMissionIdx];
-          if (selectedLevel && onJumpToLevel) {
-            const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
-            if (globalIdx !== -1 && globalIdx <= currentLevelIndex) {
-              onJumpToLevel(globalIdx);
-              onClose();
-            }
-          }
-        } else if (e.key !== 'Enter') {
-          handler();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    isOpen,
-    activeTab,
-    selectedMissionIdx,
-    episodes,
-    levels,
-    onJumpToLevel,
-    onClose,
-    currentLevelIndex,
-  ]);
 
   // Auto-scroll to selected mission
   useEffect(() => {
@@ -174,7 +71,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           behavior: 'smooth',
           block: 'nearest',
         });
-      }, 50); // Timeout ensures DOM is ready
+      }, 50);
     }
   }, [selectedMissionIdx, isOpen, activeTab]);
 
@@ -366,7 +263,6 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   <button
                     key={idx}
                     data-testid="episode-tab"
-                    onClick={() => setActiveTab(idx)}
                     className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-col items-center gap-1
                             ${activeTab === idx ? `${ep.color} ${ep.bg} border-current` : 'text-zinc-600 border-transparent hover:text-zinc-400 hover:bg-zinc-900'}
                         `}

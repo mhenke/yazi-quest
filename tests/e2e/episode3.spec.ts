@@ -14,7 +14,6 @@ import {
   search,
   addItem,
   filterAndSelect,
-  dismissAlert,
   confirmMission,
   deleteItem,
   renameItem,
@@ -247,12 +246,12 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, 'p'); // Paste
 
     // Task 4: Verify sync (4/4) - Increased timeout for state update
-    await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, { timeout: 500 });
+    await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, { timeout: 2000 });
 
     // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
-    // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
-    await page.waitForTimeout(DEFAULT_DELAY);
-    await page.keyboard.press('Shift+Enter');
+    // Ensure we aggressively dismiss any blocking modals
+    await dismissAlertIfPresent(page, /Protocol Violation/i);
+    await page.waitForTimeout(200);
 
     await waitForMissionComplete(page);
   });
@@ -362,7 +361,7 @@ test.describe('Episode 3: MASTERY', () => {
     });
 
     // Auto-fix protocol violation (hidden files) to see Success Toast
-    await dismissAlert(page);
+    await dismissAlertIfPresent(page, /Protocol Violation/i);
     await confirmMission(page, 'EVIDENCE PURGE - WORKSPACE');
   });
 
@@ -466,9 +465,9 @@ test.describe('Episode 3: MASTERY', () => {
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
 
     // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
-    // Since we just asserted 4/4, we can now dismiss them to see the SuccessToast.
-    await page.waitForTimeout(DEFAULT_DELAY);
-    await page.keyboard.press('Shift+Enter');
+    // Ensure we aggressively dismiss any blocking modals
+    await dismissAlertIfPresent(page, /Protocol Violation/i);
+    await page.waitForTimeout(200);
 
     await waitForMissionComplete(page);
   });

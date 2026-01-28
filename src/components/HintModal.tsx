@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { Lightbulb } from 'lucide-react';
 
@@ -26,19 +26,19 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
     displayText = hint;
   }
 
-  // Handle close shortcut locally
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
-        // Escape or Shift+Enter to close
-        e.preventDefault();
-        e.stopPropagation();
-        _onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [_onClose]);
+  // Handle close shortcut locally - REMOVED for centralized input
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+  //       // Escape or Shift+Enter to close
+  //       e.preventDefault();
+  //       e.stopPropagation();
+  //       _onClose();
+  //     }
+  //   };
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   return () => window.removeEventListener('keydown', handleKeyDown);
+  // }, [_onClose]);
 
   const stageLabels = ['Hint (Vague)', 'Hint (Partial)', 'Hint (Detailed)'];
   const stageLabel = stageLabels[stage] || stageLabels[2];

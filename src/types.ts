@@ -182,6 +182,14 @@ export interface GameState {
   showHidden: boolean; // Toggle for showing hidden files (starting with .)
   showInfoPanel: boolean; // Toggle for file info panel (Tab)
   showEpisodeIntro: boolean; // Toggle for story mode overlay
+  showHiddenWarning?: boolean;
+  showSortWarning?: boolean;
+  showFilterWarning?: boolean;
+  showSearchWarning?: boolean;
+  showThreatAlert?: boolean;
+  alertMessage?: string;
+  showSuccessToast?: boolean;
+  isBooting: boolean; // Flag for the BIOS boot sequence overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Raw keystrokes (Ep 1 & 2)
   weightedKeystrokes: number; // Weighted "Noise" (Ep 3)
@@ -232,6 +240,11 @@ export interface GameState {
   searchResults: FileNode[]; // Flattened results from recursive search
   usedSearch?: boolean; // Tracks if player used 's' for recursive search
   usedFilter?: boolean; // Tracks if player used 'f' for filter mode
+
+  // Lifted UI State (Centralized Input)
+  helpScrollPosition?: number; // Scroll offset for HelpModal
+  questMapTab?: number; // Active episode tab index (0-2)
+  questMapMissionIdx?: number; // Selected mission index in current tab
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

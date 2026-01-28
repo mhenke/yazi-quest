@@ -1,47 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { KEYBINDINGS, META_KEYBINDINGS } from '../constants';
 
 interface HelpModalProps {
   onClose: () => void;
+  scrollPosition: number;
 }
 
 const LINE_HEIGHT = 20; // Approximate line height in pixels
 
-export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
-  const [scrollPosition, setScrollPosition] = useState(0);
+export const HelpModal: React.FC<HelpModalProps> = ({ onClose, scrollPosition }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent default to avoid side effects on the main app
-      e.preventDefault();
-
-      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
-        onClose();
-      } else if (e.key === 'j' || e.key === 'ArrowDown') {
-        setScrollPosition((prev) => prev + 1);
-      } else if (e.key === 'k' || e.key === 'ArrowUp') {
-        setScrollPosition((prev) => Math.max(0, prev - 1));
-      } else if (e.key === 'J' && e.shiftKey) {
-        setScrollPosition((prev) => prev + 5);
-      } else if (e.key === 'K' && e.shiftKey) {
-        setScrollPosition((prev) => Math.max(0, prev - 5));
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     // Focus the scrollable div when the modal opens
     if (scrollRef.current) {
       scrollRef.current.focus();
     }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {

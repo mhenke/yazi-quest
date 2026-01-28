@@ -1,34 +1,32 @@
-import React from 'react';
 import { GameState, Level } from '../../types';
 import { getNodeByPath, isProtected } from '../../utils/fsHelpers';
 import { getVisibleItems } from '../../utils/viewHelpers';
-import { checkFilterAndBlockNavigation, checkSearchAndBlockNavigation } from './utils';
+import { checkSearchAndBlockNavigation } from './utils';
+import { Action } from '../gameReducer';
 
 export const handleGCommandKeyDown = (
   e: KeyboardEvent,
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  dispatch: React.Dispatch<Action>,
   gameState: GameState,
   currentLevel: Level
 ) => {
-  if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
-    return;
-  }
-
   // Level 1 Pedagogical Constraint: Block shortcuts (gd, gw, etc.) to force manual navigation
   // Only allow 'g' (for gg) or Escape
   if (currentLevel.id === 1) {
     if (e.key !== 'g' && e.key !== 'Escape') {
-      setGameState((prev) => ({
-        ...prev,
-        mode: 'normal',
-        notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
-      }));
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+          mode: 'normal',
+          notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
+        },
+      });
       return;
     }
   }
 
   if (e.key === 'Escape') {
-    setGameState((prev) => ({ ...prev, mode: 'normal' }));
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
     return;
   }
 
@@ -38,17 +36,19 @@ export const handleGCommandKeyDown = (
     try {
       const items = getVisibleItems(gameState) || [];
       const last = Math.max(0, items.length - 1);
-      setGameState((prev) => ({
-        ...prev,
-        cursorIndex: last,
-        mode: 'normal',
-        usedG: true,
-        previewScroll: 0,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-      }));
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+          cursorIndex: last,
+          mode: 'normal',
+          usedG: true,
+          previewScroll: 0,
+          usedPreviewDown: false,
+          usedPreviewUp: false,
+        },
+      });
     } catch {
-      setGameState((prev) => ({ ...prev, mode: 'normal' }));
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
     }
     return;
   }
@@ -58,14 +58,7 @@ export const handleGCommandKeyDown = (
     {
       path: string[];
       label: string;
-      flag?:
-        | keyof GameState['stats']
-        | 'usedG'
-        | 'usedGI'
-        | 'usedGC'
-        | 'usedGG'
-        | 'usedGR'
-        | 'usedGH';
+      flag?: 'usedG' | 'usedGI' | 'usedGC' | 'usedGG' | 'usedGR' | 'usedGH';
     }
   > = {
     g: { path: [], label: 'top', flag: 'usedGG' }, // Special handling later, but defined here for completeness
@@ -83,18 +76,20 @@ export const handleGCommandKeyDown = (
   if (target) {
     // Special case for 'gg' (top of list) - doesn't change path
     if (e.key === 'g') {
-      setGameState((prev) => ({
-        ...prev,
-        cursorIndex: 0,
-        mode: 'normal',
-        usedGG: true,
-        previewScroll: 0,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-      }));
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+          cursorIndex: 0,
+          mode: 'normal',
+          usedGG: true,
+          previewScroll: 0,
+          usedPreviewDown: false,
+          usedPreviewUp: false,
+        },
+      });
     } else {
       // Check for active search - block navigation
-      if (checkSearchAndBlockNavigation(e, gameState, setGameState)) {
+      if (checkSearchAndBlockNavigation(e, gameState, dispatch)) {
         return;
       }
       // Check for protection
@@ -108,35 +103,34 @@ export const handleGCommandKeyDown = (
           'jump'
         );
         if (protection) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            notification: { message: `🔒 ${protection}` },
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              notification: { message: `🔒 ${protection}` },
+            },
+          });
           return;
         }
       }
 
       // Standard Path Jumps
-      setGameState((prev) => {
-        const extraFlags = target.flag ? { [target.flag]: true } : {};
-        return {
-          ...prev,
-          currentPath: target.path,
-          cursorIndex: 0,
+      const extraFlags = target.flag ? { [target.flag]: true } : {};
+      dispatch({ type: 'NAVIGATE', path: target.path });
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
           mode: 'normal',
           notification: { message: `Jumped to ${target.label}` },
-          history: [...prev.history, prev.currentPath],
-          future: [],
           previewScroll: 0,
           usedPreviewDown: false,
           usedPreviewUp: false,
           ...extraFlags,
-        };
+        },
       });
     }
   } else {
     // Unknown key, exit mode
-    setGameState((prev) => ({ ...prev, mode: 'normal' }));
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
   }
 };

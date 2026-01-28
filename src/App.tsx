@@ -1,7 +1,4 @@
-import { InputModal } from './components/InputModal';
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-
-import { GameState, FileNode, ZoxideEntry, FsError, calculateFrecency } from './types';
+import React, { useEffect, useCallback, useRef, useMemo, useReducer } from 'react';
 import {
   LEVELS,
   INITIAL_FS,
@@ -9,6 +6,10 @@ import {
   ECHO_EPISODE_1_LORE,
   ensurePrerequisiteState,
 } from './constants';
+import type { GameState, ZoxideEntry, FileNode, FsError } from './types';
+import type { Action } from './hooks/gameReducer';
+import { InputModal } from './components/InputModal';
+import { calculateFrecency } from './types';
 import {
   getNodeByPath,
   getParentNode,
@@ -46,6 +47,8 @@ import { FilterWarningModal } from './components/FilterWarningModal';
 import { SearchWarningModal } from './components/SearchWarningModal';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
+import { Zap, Shield, Crown } from 'lucide-react';
+import { gameReducer } from './hooks/gameReducer';
 import { FuzzyFinder } from './components/FuzzyFinder';
 import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSystemPane';
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
@@ -76,7 +79,7 @@ const getNarrativeAction = (key: string): string | null => {
 };
 
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>(() => {
+  const [gameState, dispatch] = useReducer(gameReducer, null as unknown as GameState, () => {
     // 1. Initialize Completed Tasks State
     const completedTaskIds: Record<number, string[]> = {};
     LEVELS.forEach((l) => {
@@ -231,7 +234,7 @@ export default function App() {
           id: 'ghost-log-01',
           name: '.previous_cycle.log',
           type: 'file',
-          content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7733`,
+          content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7734`,
           parentId: workspace.id,
         });
       }
@@ -401,18 +404,27 @@ export default function App() {
       weightedKeystrokes: 0,
       lastActionIntensity: 0,
       startTime: now,
-    };
+      // Initial Lifted UI State
+      helpScrollPosition: 0,
+      questMapTab: 0,
+      questMapMissionIdx: 0,
+      showHiddenWarning: false,
+      showSortWarning: false,
+      showFilterWarning: false,
+      showSearchWarning: false,
+      showThreatAlert: false,
+      alertMessage: '',
+      showSuccessToast: false,
+      isBooting: false,
+    } as GameState;
   });
-
-  const [isBooting, setIsBooting] = useState(false);
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   useEffect(() => {
     if (window.__yaziQuestSkipIntroRequested) {
-      setGameState((prev) => ({ ...prev, showEpisodeIntro: false }));
-      setIsBooting(false);
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { showEpisodeIntro: false, isBooting: false } });
     }
-  }, []);
+  }, [dispatch]);
 
   // --- LOCALSTORAGE PERSISTENCE ---
   useEffect(() => {
@@ -424,11 +436,6 @@ export default function App() {
     }
   }, [gameState.zoxideData, gameState.cycleCount]);
 
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showThreatAlert, setShowThreatAlert] = useState(false);
-  const [showHiddenWarning, setShowHiddenWarning] = useState(false);
-  const [showSortWarning, setShowSortWarning] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
   const shownInitialAlertForLevelRef = useRef<number | null>(null);
   const shownThoughtForLevelRef = useRef<number | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -442,9 +449,9 @@ export default function App() {
     gameState.mode === 'filter-warning' ||
     gameState.mode === 'confirm-delete' ||
     gameState.mode === 'overwrite-confirm' ||
-    showThreatAlert ||
-    showHiddenWarning ||
-    showSortWarning;
+    gameState.showThreatAlert ||
+    gameState.showHiddenWarning ||
+    gameState.showSortWarning;
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevelRaw = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
@@ -534,12 +541,11 @@ export default function App() {
       if (thoughtTimerRef.current) {
         clearTimeout(thoughtTimerRef.current);
       }
-      setGameState((prev) => ({ ...prev, thought: { message, author } }));
+      dispatch({ type: 'SET_THOUGHT', message: message, author: author });
       // Narrative thoughts no longer auto-clear per user request.
-      // They clear on next level or next thought.
       thoughtTimerRef.current = null;
     },
-    []
+    [dispatch]
   );
 
   // Helper to show notification with auto-clear
@@ -554,13 +560,18 @@ export default function App() {
       if (notificationTimerRef.current) {
         clearTimeout(notificationTimerRef.current);
       }
-      setGameState((prev) => ({ ...prev, notification: { message, isThought, author } }));
+      dispatch({
+        type: 'SET_NOTIFICATION',
+        message: message,
+        author: author,
+        isThought: isThought,
+      });
       notificationTimerRef.current = setTimeout(() => {
-        setGameState((prev) => ({ ...prev, notification: null }));
+        dispatch({ type: 'CLEAR_NOTIFICATION' });
         notificationTimerRef.current = null;
       }, duration);
     },
-    [triggerThought]
+    [dispatch, triggerThought]
   );
 
   // Extract keyboard handlers to custom hook
@@ -570,9 +581,11 @@ export default function App() {
     handleConfirmDeleteModeKeyDown,
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
+    handleHelpModeKeyDown,
+    handleQuestMapModeKeyDown,
     confirmDelete,
     cancelDelete,
-  } = useKeyboardHandlers(showNotification);
+  } = useKeyboardHandlers(dispatch, showNotification);
 
   const handleSearchConfirm = useCallback(() => {
     if (gameState.mode === 'search') {
@@ -583,18 +596,19 @@ export default function App() {
         ? getRecursiveSearchResults(currentDir, query, gameState.showHidden)
         : [];
 
-      setGameState((prev) => ({
-        ...prev,
-        mode: 'normal',
-        searchQuery: query,
-        searchResults: results,
-        inputBuffer: '',
-        usedSearch: true,
-        // Reset cursor and preview logic
-        cursorIndex: 0,
-        previewScroll: 0,
-        stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-      }));
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+          mode: 'normal',
+          searchQuery: query,
+          searchResults: results,
+          inputBuffer: '',
+          usedSearch: true,
+          cursorIndex: 0,
+          previewScroll: 0,
+          stats: { ...gameState.stats, fzfFinds: gameState.stats.fzfFinds + 1 },
+        },
+      });
     }
   }, [
     gameState.mode,
@@ -602,6 +616,8 @@ export default function App() {
     gameState.fs,
     gameState.currentPath,
     gameState.showHidden,
+    gameState.stats,
+    dispatch,
   ]);
 
   const handleInputConfirm = useCallback(() => {
@@ -618,21 +634,25 @@ export default function App() {
           collisionNode,
         } = resolveAndCreatePath(gameState.fs, gameState.currentPath, input);
         if (collision && collisionNode) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'overwrite-confirm',
-            pendingOverwriteNode: collisionNode,
-            notification: { message: 'Collision detected' },
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'overwrite-confirm',
+              pendingOverwriteNode: collisionNode,
+              notification: { message: 'Collision detected' },
+            },
+          });
           return;
         }
         if (error) {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            notification: { message: error },
-            inputBuffer: '',
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              notification: { message: error },
+              inputBuffer: '',
+            },
+          });
           return;
         }
         // Ensure the newly created node appears in the UI according to the current sort
@@ -693,16 +713,18 @@ export default function App() {
           }
         }
 
-        setGameState((prev) => ({
-          ...prev,
-          fs: sortedFs,
-          mode: 'normal',
-          inputBuffer: '',
-          cursorIndex: newCursorIndex,
-          notification: {
-            message: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            fs: sortedFs,
+            mode: 'normal',
+            inputBuffer: '',
+            cursorIndex: newCursorIndex,
+            notification: {
+              message: getNarrativeAction('a') || (targetNode ? 'PATH CREATED' : 'FILE CREATED'),
+            },
           },
-        }));
+        });
         return;
       }
 
@@ -714,19 +736,23 @@ export default function App() {
         newNodeId,
       } = createPath(gameState.fs, gameState.currentPath, input);
       if (collision && collisionNode) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'overwrite-confirm',
-          pendingOverwriteNode: collisionNode,
-          notification: { message: 'Collision detected' },
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            mode: 'overwrite-confirm',
+            pendingOverwriteNode: collisionNode,
+            notification: { message: 'Collision detected' },
+          },
+        });
       } else if (error) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          notification: { message: error },
-          inputBuffer: '',
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            mode: 'normal',
+            notification: { message: error },
+            inputBuffer: '',
+          },
+        });
       } else {
         // Ensure created node shows up in the expected sorted position
         const sortedFs2 = cloneFS(newFs);
@@ -745,14 +771,16 @@ export default function App() {
           visibleChildren = visibleChildren.filter((c) => !c.name.startsWith('.'));
         }
         const newCursorIndex = visibleChildren.findIndex((c) => c.id === newNodeId);
-        setGameState((prev) => ({
-          ...prev,
-          fs: sortedFs2,
-          mode: 'normal',
-          inputBuffer: '',
-          cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
-          notification: { message: getNarrativeAction('a') || 'FILE CREATED' },
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            fs: sortedFs2,
+            mode: 'normal',
+            inputBuffer: '',
+            cursorIndex: newCursorIndex >= 0 ? newCursorIndex : 0,
+            notification: { message: getNarrativeAction('a') || 'FILE CREATED' },
+          },
+        });
       }
     }
   }, [
@@ -763,6 +791,7 @@ export default function App() {
     gameState.sortBy,
     gameState.sortDirection,
     gameState.showHidden,
+    dispatch,
   ]);
 
   const handleRenameConfirm = useCallback(() => {
@@ -775,21 +804,25 @@ export default function App() {
         gameState.levelIndex
       );
       if (!res.ok) {
-        setGameState((prev) => ({
-          ...prev,
-          mode: 'normal',
-          notification: {
-            message: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            mode: 'normal',
+            notification: {
+              message: `Rename failed: ${(res as { ok: false; error: FsError }).error}`,
+            },
           },
-        }));
+        });
       } else {
-        setGameState((prev) => ({
-          ...prev,
-          fs: res.value,
-          mode: 'normal',
-          notification: { message: getNarrativeAction('r') || 'Renamed' },
-          stats: { ...prev.stats, renames: prev.stats.renames + 1 },
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            fs: res.value,
+            mode: 'normal',
+            notification: { message: getNarrativeAction('r') || 'Renamed' },
+            stats: { ...gameState.stats, renames: gameState.stats.renames + 1 },
+          },
+        });
       }
     }
   }, [
@@ -798,6 +831,8 @@ export default function App() {
     gameState.currentPath,
     gameState.inputBuffer,
     gameState.levelIndex,
+    gameState.stats,
+    dispatch,
   ]);
 
   const handleFuzzySelect = useCallback(
@@ -829,28 +864,30 @@ export default function App() {
               ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
               : { message: `Jumped to ${path}` };
 
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            currentPath: idPath,
-            cursorIndex: 0,
-            notification,
-            stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-            zoxideData: {
-              ...prev.zoxideData,
-              [path]: {
-                count: (prev.zoxideData[path]?.count || 0) + 1,
-                lastAccess: now,
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              currentPath: idPath,
+              cursorIndex: 0,
+              notification,
+              stats: { ...gameState.stats, fuzzyJumps: gameState.stats.fuzzyJumps + 1 },
+              zoxideData: {
+                ...gameState.zoxideData,
+                [path]: {
+                  count: (gameState.zoxideData[path]?.count || 0) + 1,
+                  lastAccess: now,
+                },
               },
+              history: [...gameState.history, gameState.currentPath],
+              future: [],
+              usedPreviewDown: false,
+              usedPreviewUp: false,
             },
-            history: [...prev.history, prev.currentPath],
-            future: [],
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          }));
+          });
         } else {
           // Fallback: if path resolution fails, close dialog
-          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
         }
       } else {
         // FZF click/select handling: pathIds contains node id path relative to currentPath
@@ -872,26 +909,24 @@ export default function App() {
 
           const fileIndex = sortedChildren.findIndex((c) => c.id === fileId);
 
-          setGameState((prev) => {
-            const newFilters = { ...prev.filters };
-
-            return {
-              ...prev,
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
               mode: 'normal',
               currentPath: targetDir,
               cursorIndex: fileIndex >= 0 ? fileIndex : 0,
-              filters: newFilters,
+              filters: { ...gameState.filters },
               inputBuffer: '',
-              history: [...prev.history, prev.currentPath],
+              history: [...gameState.history, gameState.currentPath],
               future: [],
               notification: { message: `Found: ${path}` },
               usedPreviewDown: false,
               usedPreviewUp: false,
-              stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-            };
+              stats: { ...gameState.stats, fzfFinds: gameState.stats.fzfFinds + 1 },
+            },
           });
         } else {
-          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
         }
       }
     },
@@ -902,6 +937,11 @@ export default function App() {
       gameState.showHidden,
       gameState.sortBy,
       gameState.sortDirection,
+      gameState.stats,
+      gameState.history,
+      gameState.filters,
+      gameState.zoxideData,
+      dispatch,
     ]
   );
 
@@ -947,10 +987,14 @@ export default function App() {
 
         // Level 7: Trigger honeypot alert when player reaches Vault
         if (currentLevel.id === 7 && task.id === 'zoxide-vault') {
-          setAlertMessage(
-            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately."
-          );
-          setShowThreatAlert(true);
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              alertMessage:
+                "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
+              showThreatAlert: true,
+            },
+          });
         }
       }
     });
@@ -958,173 +1002,221 @@ export default function App() {
     // Removal: Narrative thoughts now trigger at start or mid-level, not on last task.
 
     if (changed) {
-      setGameState((prev) => {
-        // ... existing update code ...
-        let updates: Partial<GameState> = {
-          completedTaskIds: {
-            ...prev.completedTaskIds,
-            [currentLevel.id]: [
-              ...(prev.completedTaskIds[currentLevel.id] || []),
-              ...newlyCompleted,
-            ],
-          },
-        };
+      // Collect all updates for the level completion/transition
+      let updates: Partial<GameState> = {
+        completedTaskIds: {
+          ...gameState.completedTaskIds,
+          [currentLevel.id]: [
+            ...(gameState.completedTaskIds[currentLevel.id] || []),
+            ...newlyCompleted,
+          ],
+        },
+      };
 
-        // Level 15 Gauntlet Logic ...
-        if (currentLevel.id === 15) {
-          const nextPhase = (prev.gauntletPhase || 0) + 1;
-          const currentScore = (prev.gauntletScore || 0) + 1;
-          const isFinished = nextPhase >= 8;
+      // Level 15 Gauntlet Logic ...
+      if (currentLevel.id === 15) {
+        const nextPhase = (gameState.gauntletPhase || 0) + 1;
+        const currentScore = (gameState.gauntletScore || 0) + 1;
+        const isFinished = nextPhase >= 8;
 
-          if (isFinished) {
-            if (currentScore < 6) {
-              return {
-                ...prev,
+        if (isFinished) {
+          if (currentScore < 6) {
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
                 ...updates,
                 isGameOver: true,
                 gameOverReason: 'keystrokes',
                 notification: { message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` },
-              };
-            }
-            updates = {
-              ...updates,
-              gauntletScore: currentScore,
-              notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
-            };
-          } else {
-            updates = {
-              ...updates,
-              gauntletPhase: nextPhase,
-              gauntletScore: currentScore,
-              timeLeft: 20,
-              notification: { message: `PHASE ${nextPhase + 1} START` },
-            };
+              },
+            });
+            return;
           }
+          updates = {
+            ...updates,
+            gauntletScore: currentScore,
+            notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
+          };
+        } else {
+          updates = {
+            ...updates,
+            gauntletPhase: nextPhase,
+            gauntletScore: currentScore,
+            timeLeft: 20,
+            notification: { message: `PHASE ${nextPhase + 1} START` },
+          };
         }
+      }
 
-        return { ...prev, ...updates };
-      });
-      // ... existing code ...
+      dispatch({ type: 'UPDATE_UI_STATE', updates });
     }
+  }, [
+    isLastLevel,
+    gameState.isGameOver,
+    gameState.settings.soundEnabled,
+    gameState.gauntletPhase,
+    gameState.gauntletScore,
+    gameState.completedTaskIds,
+    gameState,
+    currentLevel,
+    dispatch,
+  ]);
 
+  useEffect(() => {
     // Check if everything is complete (including just finished ones)
     const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
 
     // Check for Protocol Violations - ONLY on final task completion
-    // For intermediate tasks, warnings are handled by navigation handlers (checkFilterAndBlockNavigation)
     if (tasksComplete) {
-      // Determine if sort is default
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
-      // Determine if filters are clear
-      // currentDirNode and isFilterClear already declared above
-
-      // Check violations - show auto-fix warnings for final task
-      // Priority: Hidden > Sort > Filter
       if (gameState.showHidden) {
-        setShowHiddenWarning(true);
-        setShowSuccessToast(false);
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { showHiddenWarning: true, showSuccessToast: false },
+        });
       } else if (!isSortDefault) {
-        setShowSortWarning(true);
-        setShowSuccessToast(false);
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { showSortWarning: true, showSuccessToast: false },
+        });
       } else if (!isFilterClear) {
         if (gameState.mode !== 'filter-warning') {
-          setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
+          dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
         }
-        setShowSuccessToast(false);
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showSuccessToast: false } });
       } else {
-        // All clear - show success
-        setShowHiddenWarning(false);
-        setShowSortWarning(false);
+        let uiUpdates: Partial<GameState> = {
+          showHiddenWarning: false,
+          showSortWarning: false,
+        };
         if (gameState.mode === 'filter-warning') {
-          setGameState((prev) => ({ ...prev, mode: 'normal' }));
+          uiUpdates.mode = 'normal';
         }
 
-        if (!showSuccessToast && !gameState.showEpisodeIntro) {
+        if (!gameState.showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
-          setShowSuccessToast(true);
+          uiUpdates.showSuccessToast = true;
         }
+        dispatch({ type: 'UPDATE_UI_STATE', updates: uiUpdates });
       }
     } else {
-      // Tasks not complete - only clear warnings if user manually fixed the issue
-      // Don't trigger new warnings here (handled by navigation handlers)
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
-      if (!gameState.showHidden && showHiddenWarning) setShowHiddenWarning(false);
-      if (isSortDefault && showSortWarning) setShowSortWarning(false);
-      if (isFilterClear && gameState.mode === 'filter-warning')
-        setGameState((prev) => ({ ...prev, mode: 'normal' }));
+      let uiUpdates: Partial<GameState> = {};
+      if (!gameState.showHidden && gameState.showHiddenWarning) uiUpdates.showHiddenWarning = false;
+      if (isSortDefault && gameState.showSortWarning) uiUpdates.showSortWarning = false;
+      if (isFilterClear && gameState.mode === 'filter-warning') {
+        uiUpdates.mode = 'normal';
+      }
+      if (Object.keys(uiUpdates).length > 0) {
+        dispatch({ type: 'UPDATE_UI_STATE', updates: uiUpdates });
+      }
     }
+
     // Level 11: Specific Logic for Reconnaissance
     if (currentLevel.id === 11) {
       if (gameState.showInfoPanel && currentItem) {
-        setGameState((prev) => {
-          const scouted = prev.level11Flags?.scoutedFiles || [];
-          if (!scouted.includes(currentItem.id)) {
-            return {
-              ...prev,
+        const scouted = gameState.level11Flags?.scoutedFiles || [];
+        if (!scouted.includes(currentItem.id)) {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
               level11Flags: {
-                ...prev.level11Flags,
+                ...gameState.level11Flags,
                 scoutedFiles: [...scouted, currentItem.id],
-                triggeredHoneypot: prev.level11Flags?.triggeredHoneypot || false,
-                selectedModern: prev.level11Flags?.selectedModern || false,
+                triggeredHoneypot: gameState.level11Flags?.triggeredHoneypot || false,
+                selectedModern: gameState.level11Flags?.selectedModern || false,
               },
-            };
-          }
-          return prev;
-        });
+            },
+          });
+        }
       }
 
-      // Check for Honeypot Selection
-      // Files with 'HONEYPOT' inside them are traps.
-      const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
+      const selectedNodes = (visibleItems || []).filter((n) =>
+        gameState.selectedIds.includes(n.id)
+      );
       const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
 
       if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
-        setAlertMessage(
-          '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.'
-        );
-        setShowThreatAlert(true);
-        setGameState((prev) => ({
-          ...prev,
-          level11Flags: {
-            ...prev.level11Flags!,
-            triggeredHoneypot: true,
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            alertMessage:
+              '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
+            showThreatAlert: true,
+            level11Flags: {
+              ...gameState.level11Flags!,
+              triggeredHoneypot: true,
+            },
           },
-        }));
+        });
       }
     }
+
     // Level 6 & 12: Honeypot Detection
-    // Level 6: 'active_sync.lock' in batch_logs (Teaches select all -> deselect) -> Check CLIPBOARD (trap on Move)
-    // Level 12: Various honeypots (Teaches precise filtering) -> Check SELECTION (trap on Touch)
     if (currentLevel.id === 6) {
       const hasClipboardHoneypot = gameState.clipboard?.nodes?.some((n) =>
         n.content?.includes('HONEYPOT')
       );
 
-      if (hasClipboardHoneypot && !showThreatAlert) {
-        setAlertMessage(
-          'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.'
-        );
-        setShowThreatAlert(true);
+      if (hasClipboardHoneypot && !gameState.showThreatAlert) {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            alertMessage:
+              'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
+            showThreatAlert: true,
+          },
+        });
       }
     } else if (currentLevel.id === 12) {
-      const selectedNodes = visibleItems.filter((n) => gameState.selectedIds.includes(n.id));
+      const selectedNodes = (visibleItems || []).filter((n) =>
+        gameState.selectedIds.includes(n.id)
+      );
       const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
 
-      if (hasHoneypot && !showThreatAlert) {
-        setAlertMessage(
-          '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.'
-        );
-        setShowThreatAlert(true);
+      if (hasHoneypot && !gameState.showThreatAlert) {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            alertMessage:
+              '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
+            showThreatAlert: true,
+          },
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, currentLevel, isLastLevel, showNotification, visibleItems, currentItem]);
+  }, [
+    gameState.mode,
+    gameState.selectedIds,
+    gameState.clipboard,
+    gameState.showHidden,
+    gameState.sortBy,
+    gameState.sortDirection,
+    gameState.showInfoPanel,
+    gameState.level11Flags,
+    gameState.showThreatAlert,
+    gameState.showSuccessToast,
+    gameState.showHiddenWarning,
+    gameState.showSortWarning,
+    gameState.filters,
+    gameState.fs,
+    gameState.currentPath,
+    currentLevel,
+    currentItem,
+    visibleItems,
+    dispatch,
+    playSuccessSound,
+    gameState.settings.soundEnabled,
+    gameState.showEpisodeIntro,
+    checkAllTasksComplete,
+  ]);
 
   // NOTE: Do NOT auto-reset sort when the modal opens — reset should happen
   // only when the user explicitly dismisses the modal (Shift+Enter / Esc)
@@ -1149,95 +1241,46 @@ export default function App() {
       return;
 
     const timer = setInterval(() => {
-      setGameState((prev) => {
-        // Check completion against state to avoid closure staleness issues with derived objects
-        const levelId = LEVELS[prev.levelIndex].id;
-        const tasks = LEVELS[prev.levelIndex].tasks;
-        const completedIds = prev.completedTaskIds[levelId] || [];
-        const isComplete = tasks.every((t) => completedIds.includes(t.id));
-
-        if (isComplete && !prev.showHidden) {
-          clearInterval(timer);
-          return prev;
-        }
-
-        if (prev.timeLeft === null || prev.timeLeft <= 0) {
-          // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
-          if (currentLevel.id === 15) {
-            const nextPhase = (prev.gauntletPhase || 0) + 1;
-            const isFinished = nextPhase >= 8;
-
-            if (isFinished) {
-              // Final check on failure (same as success path check)
-              const score = prev.gauntletScore || 0;
-              if (score < 6) {
-                clearInterval(timer);
-                return {
-                  ...prev,
-                  isGameOver: true,
-                  gameOverReason: 'time',
-                  notification: { message: `MASTERY FAILED: Score ${score}/8.` },
-                };
-              }
-              // If >= 6 (unlikely on failure step, but theoretically possible if they failed last 2), pass.
-              // We rely on standard completion check which happens elsewhere? No, timer is separate.
-              // Actually, if they Time Out on the LAST phase, they haven't completed the task.
-              // So standard completion logic won't fire. We must force completion or game over.
-              // If they passed 6/8 previously, they win even if they time out on #8?
-              // "Forgiveness" implies yes.
-              // So if score >= 6, we mark ALL tasks complete to force progression?
-              // Or just show Outro/Next?
-              // Let's force level advancement.
-              clearInterval(timer);
-              return {
-                ...prev,
-                // Mark all L15 tasks as complete to trick the completion check
-                completedTaskIds: {
-                  ...prev.completedTaskIds,
-                  [15]: currentLevel.tasks.map((t) => t.id),
-                },
-                notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
-              };
-            }
-
-            // Intermediate Phase Failure
-            return {
-              ...prev,
-              gauntletPhase: nextPhase,
-              timeLeft: 20,
-              notification: { message: `PHASE FAILED! Next Phase...` },
-            };
-          }
-
-          clearInterval(timer);
-          return { ...prev, isGameOver: true, gameOverReason: 'time' };
-        }
-        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      dispatch({
+        type: 'TICK',
+        currentLevelId: currentLevel.id,
+        tasks: currentLevel.tasks.map((t) => ({ id: t.id, completed: t.completed })),
+        episodeId: currentLevel.episodeId,
+        timeLimit: currentLevel.timeLimit,
+        maxKeystrokes: currentLevel.maxKeystrokes,
       });
     }, 1000);
 
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    currentLevel.id,
     currentLevel.timeLimit,
+    currentLevel.maxKeystrokes,
+    currentLevel.tasks,
+    currentLevel.episodeId,
     isLastLevel,
     gameState.showEpisodeIntro,
     gameState.isGameOver,
-    currentLevel,
     gameState.showHidden,
     isGamePaused,
+    dispatch,
   ]);
 
-  // Check Keystroke Limit
   useEffect(() => {
     if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
 
     if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-      setGameState((prev) => ({ ...prev, isGameOver: true, gameOverReason: 'keystrokes' }));
+      dispatch({ type: 'GAME_OVER', reason: 'keystrokes' });
     }
-  }, [gameState.keystrokes, currentLevel.maxKeystrokes, isLastLevel, gameState.isGameOver]);
+  }, [
+    gameState.keystrokes,
+    currentLevel.maxKeystrokes,
+    isLastLevel,
+    gameState.isGameOver,
+    dispatch,
+  ]);
 
-  // Trigger ThreatAlert on Level 5 start OR Level 12 scenario detection
   useEffect(() => {
     if (gameState.isGameOver || gameState.showEpisodeIntro) return;
 
@@ -1246,10 +1289,14 @@ export default function App() {
     // Level 5: Quarantine Alert (only show once per level entry)
     if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
       shownInitialAlertForLevelRef.current = 5;
-      setAlertMessage(
-        '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.'
-      );
-      setShowThreatAlert(true);
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+          alertMessage:
+            '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.',
+          showThreatAlert: true,
+        },
+      });
       return;
     }
 
@@ -1259,30 +1306,30 @@ export default function App() {
       const incoming = getNodeById(gameState.fs, 'incoming');
       const config = getNodeById(gameState.fs, '.config');
 
+      let alertMsg = '';
       if (workspace && workspace.children?.some((n) => n.name === 'alert_traffic.log')) {
-        setAlertMessage(
-          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.'
-        );
-        setShowThreatAlert(true);
+        alertMsg =
+          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.';
       } else if (incoming && incoming.children?.some((n) => n.id === 'scen-b2')) {
-        setAlertMessage(
-          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.'
-        );
-        setShowThreatAlert(true);
+        alertMsg =
+          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.';
       } else if (
         workspace &&
         workspace.children?.some((n) => n.id === 'scen-b3-1' || n.id === 'scen-b3-2')
       ) {
-        setAlertMessage(
-          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.'
-        );
-        setShowThreatAlert(true);
+        alertMsg =
+          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.';
       } else if (config && config.children?.some((n) => n.id === 'scen-a2')) {
-        setAlertMessage('WARNING: Process instability detected. Core dump written to .config.');
-        setShowThreatAlert(true);
+        alertMsg = 'WARNING: Process instability detected. Core dump written to .config.';
       } else if (workspace && workspace.children?.some((n) => n.id === 'scen-a3')) {
-        setAlertMessage('WARNING: Dependency failure. Error log generated.');
-        setShowThreatAlert(true);
+        alertMsg = 'WARNING: Dependency failure. Error log generated.';
+      }
+
+      if (alertMsg) {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { alertMessage: alertMsg, showThreatAlert: true },
+        });
       }
     }
   }, [
@@ -1290,68 +1337,8 @@ export default function App() {
     gameState.isGameOver,
     gameState.showEpisodeIntro,
     currentLevel.id,
-    // Add FS dependency so checking happens after onEnter mutations
     gameState.fs,
-  ]);
-
-  // --- Global Threat Monitor (Audit 2.1) ---
-  useEffect(() => {
-    if (gameState.isGameOver || gameState.showEpisodeIntro || isGamePaused) return;
-
-    setGameState((prev) => {
-      let newThreat = prev.threatLevel;
-      let newStatus = prev.threatStatus;
-      const episodeId = currentLevel.episodeId;
-
-      // Base decay (threat slowly drops if not aggravated)
-      if (newThreat > 0) newThreat -= 0.1;
-
-      // Episode I: Time Pressure (Detection Risk)
-      if (episodeId === 1 && prev.timeLeft !== null && currentLevel.timeLimit) {
-        const timeRatio = 1 - prev.timeLeft / currentLevel.timeLimit;
-        const targetThreat = timeRatio * 100;
-        if (newThreat < targetThreat) newThreat = targetThreat;
-      }
-
-      // Episode II: Resource Usage (Keystroke Exhaustion)
-      else if (episodeId === 2 && currentLevel.maxKeystrokes) {
-        const keyRatio = prev.keystrokes / currentLevel.maxKeystrokes;
-        const targetThreat = keyRatio * 100;
-        if (newThreat < targetThreat) newThreat = targetThreat;
-      }
-
-      // Episode III: Active Countermeasures
-      else if (episodeId === 3) {
-        newThreat += 0.2; // Passive rise
-        if (prev.level11Flags?.triggeredHoneypot) {
-          if (newThreat < 90) newThreat = 90;
-        }
-      }
-
-      // Clamp & Status
-      if (newThreat < 0) newThreat = 0;
-      if (newThreat > 100) newThreat = 100;
-
-      if (newThreat < 20) newStatus = 'CALM';
-      else if (newThreat < 50) newStatus = 'ANALYZING';
-      else if (newThreat < 80) newStatus = 'TRACING';
-      else newStatus = 'BREACH';
-
-      if (Math.abs(newThreat - prev.threatLevel) < 0.1 && newStatus === prev.threatStatus) {
-        return prev;
-      }
-
-      return { ...prev, threatLevel: newThreat, threatStatus: newStatus };
-    });
-  }, [
-    gameState.timeLeft,
-    gameState.keystrokes,
-    gameState.isGameOver,
-    gameState.showEpisodeIntro,
-    isGamePaused,
-    currentLevel.episodeId,
-    currentLevel.timeLimit,
-    currentLevel.maxKeystrokes,
+    dispatch,
   ]);
 
   const advanceLevel = useCallback(() => {
@@ -1363,128 +1350,133 @@ export default function App() {
 
     // Priority: Hidden > Sort > Filter
     if (gameState.showHidden) {
-      setShowHiddenWarning(true);
-      setShowSuccessToast(false);
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: { showHiddenWarning: true, showSuccessToast: false },
+      });
       return;
     } else if (!isSortDefault) {
-      setShowSortWarning(true);
-      setShowSuccessToast(false);
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: { showSortWarning: true, showSuccessToast: false },
+      });
       return;
     } else if (!isFilterClear) {
-      setGameState((prev) => ({ ...prev, mode: 'filter-warning' }));
-      setShowSuccessToast(false);
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: { mode: 'filter-warning', showSuccessToast: false },
+      });
       return;
     }
 
-    setGameState((prev) => {
-      const nextIdx = prev.levelIndex + 1;
+    // Calculate next state
+    const nextIdx = gameState.levelIndex + 1;
 
-      if (nextIdx >= LEVELS.length) {
-        return { ...prev, levelIndex: nextIdx };
+    if (nextIdx >= LEVELS.length) {
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { levelIndex: nextIdx } });
+      return;
+    }
+
+    const nextLevel = LEVELS[nextIdx];
+    const isNewEp = nextLevel.episodeId !== LEVELS[gameState.levelIndex].episodeId;
+
+    let fs = cloneFS(gameState.fs);
+    let onEnterError: Error | null = null;
+    try {
+      const isFresh = JSON.stringify(gameState.fs) === JSON.stringify(INITIAL_FS);
+      if (nextLevel.onEnter && (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)) {
+        fs = nextLevel.onEnter(fs, gameState);
       }
-
-      const nextLevel = LEVELS[nextIdx];
-      const isNewEp = nextLevel.episodeId !== LEVELS[prev.levelIndex].episodeId;
-
-      let fs = cloneFS(prev.fs);
-      let onEnterError: Error | null = null;
+    } catch (err) {
       try {
-        const isFresh = JSON.stringify(prev.fs) === JSON.stringify(INITIAL_FS);
-        if (
-          nextLevel.onEnter &&
-          (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)
-        ) {
-          fs = nextLevel.onEnter(fs, prev);
-        }
-      } catch (err) {
-        try {
-          reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id });
-        } catch {
-          console.error('nextLevel.onEnter failed', err);
-        }
-        onEnterError = err as Error;
+        reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id });
+      } catch {
+        console.error('nextLevel.onEnter failed', err);
       }
+      onEnterError = err as Error;
+    }
 
-      const now = Date.now();
-      const targetPath = isNewEp ? nextLevel.initialPath || prev.currentPath : prev.currentPath;
-      const pathStr = resolvePath(fs, targetPath);
+    const now = Date.now();
+    const targetPath = isNewEp
+      ? nextLevel.initialPath || gameState.currentPath
+      : gameState.currentPath;
+    const pathStr = resolvePath(fs, targetPath);
 
-      let newZoxideData = { ...prev.zoxideData };
-      newZoxideData[pathStr] = {
-        count: (newZoxideData[pathStr]?.count || 0) + 1,
-        lastAccess: now,
+    let newZoxideData = { ...gameState.zoxideData };
+    newZoxideData[pathStr] = {
+      count: (newZoxideData[pathStr]?.count || 0) + 1,
+      lastAccess: now,
+    };
+
+    // Level-specific notifications for narrative events
+    let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;
+    if (onEnterError) {
+      levelNotification = { message: 'Level initialization failed' };
+    } else if (nextLevel.id === 6) {
+      levelNotification = {
+        message:
+          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
       };
+    } else if (nextLevel.id === 8) {
+      levelNotification = {
+        message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
+        author: 'm.chen',
+      };
+    } else if (nextLevel.id === 12) {
+      levelNotification = {
+        message:
+          '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
+        author: 'e.reyes',
+      };
+    } else if (nextLevel.id === 14) {
+      levelNotification = {
+        message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
+        author: 'Root',
+      };
+    } else if (nextIdx >= 11 - 1) {
+      // -1 because levelIndex is 0-based
+      levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
+    }
 
-      // Level-specific notifications for narrative events
-      let levelNotification: { message: string; author?: string; isThought?: boolean } | null =
-        null;
-      if (onEnterError) {
-        levelNotification = { message: 'Level initialization failed' };
-      } else if (nextLevel.id === 6) {
-        levelNotification = {
-          message:
-            '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
-        };
-      } else if (nextLevel.id === 8) {
-        levelNotification = {
-          message:
-            '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
-          author: 'm.chen',
-        };
-      } else if (nextLevel.id === 12) {
-        levelNotification = {
-          message:
-            '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
-          author: 'e.reyes',
-        };
-      } else if (nextLevel.id === 14) {
-        levelNotification = {
-          message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
-          author: 'Root',
-        };
-      } else if (nextIdx >= 11 - 1) {
-        // -1 because levelIndex is 0-based
-        levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
-      }
+    // Transition thoughts: Emotional responses to previous level completion (3-2-3 Model)
+    if (nextLevel.id === 2 && gameState.completedTaskIds[1]?.length > 0) {
+      levelNotification = {
+        message: 'Must Purge. One less eye watching me.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 3 && gameState.completedTaskIds[2]?.length > 0) {
+      levelNotification = {
+        message: 'Breadcrumbs... he was here. I am not the first.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 5 && gameState.completedTaskIds[4]?.length > 0) {
+      // Keep the system notification for L5 enter, but the THOUGHT moves to mid-level
+      levelNotification = {
+        message:
+          '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
+        author: 'sys.daemon',
+      };
+    } else if (nextLevel.id === 9 && gameState.completedTaskIds[8]?.length > 0) {
+      levelNotification = {
+        message: 'The corruption felt... familiar. Like a half-remembered dream.',
+        isThought: true,
+      };
+    } else if (nextLevel.id === 10 && gameState.completedTaskIds[9]?.length > 0) {
+      levelNotification = {
+        message:
+          "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
+        isThought: true,
+      };
+    } else if (nextLevel.id === 15 && gameState.completedTaskIds[14]?.length > 0) {
+      levelNotification = {
+        message: 'The guest partition is gone. There is only the gauntlet now.',
+        isThought: true,
+      };
+    }
 
-      // Transition thoughts: Emotional responses to previous level completion (3-2-3 Model)
-      if (nextLevel.id === 2 && prev.completedTaskIds[1]?.length > 0) {
-        levelNotification = {
-          message: 'Must Purge. One less eye watching me.',
-          isThought: true,
-        };
-      } else if (nextLevel.id === 3 && prev.completedTaskIds[2]?.length > 0) {
-        levelNotification = {
-          message: 'Breadcrumbs... he was here. I am not the first.',
-          isThought: true,
-        };
-      } else if (nextLevel.id === 5 && prev.completedTaskIds[4]?.length > 0) {
-        // Keep the system notification for L5 enter, but the THOUGHT moves to mid-level
-        levelNotification = {
-          message:
-            '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
-          author: 'sys.daemon',
-        };
-      } else if (nextLevel.id === 9 && prev.completedTaskIds[8]?.length > 0) {
-        levelNotification = {
-          message: 'The corruption felt... familiar. Like a half-remembered dream.',
-          isThought: true,
-        };
-      } else if (nextLevel.id === 10 && prev.completedTaskIds[9]?.length > 0) {
-        levelNotification = {
-          message:
-            "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
-          isThought: true,
-        };
-      } else if (nextLevel.id === 15 && prev.completedTaskIds[14]?.length > 0) {
-        levelNotification = {
-          message: 'The guest partition is gone. There is only the gauntlet now.',
-          isThought: true,
-        };
-      }
-
-      return {
-        ...prev,
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
         levelIndex: nextIdx,
         fs: fs,
         levelStartFS: cloneFS(fs),
@@ -1516,7 +1508,7 @@ export default function App() {
         future: [],
         previewScroll: 0,
         completedTaskIds: {
-          ...prev.completedTaskIds,
+          ...gameState.completedTaskIds,
           [nextLevel.id]: [], // Ensure array exists for next level
         },
         // Ensure sort and filters are reset at the beginning of each level
@@ -1527,128 +1519,46 @@ export default function App() {
         gauntletPhase: 0, // Reset gauntlet phase
         gauntletScore: 0,
         level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
-      };
+        showSuccessToast: false,
+        showThreatAlert: false,
+      },
     });
-    setShowSuccessToast(false);
-    setShowThreatAlert(false);
+
     shownInitialAlertForLevelRef.current = null; // Reset so alert can show for new level
-  }, [gameState]);
+  }, [gameState, dispatch]);
 
   const handleRestartLevel = useCallback(() => {
-    setGameState((prev) => {
-      const restoredFS = cloneFS(prev.levelStartFS);
-      const restoredPath = [...prev.levelStartPath];
-      const currentLvl = LEVELS[prev.levelIndex];
-      // Reset completed tasks for this level in the state map
-      const newCompletedTaskIds = { ...prev.completedTaskIds, [currentLvl.id]: [] };
-
-      // For levels that start an episode, ensure restarting from failure doesn't re-trigger the intro
-      const shouldIgnoreIntro = currentLvl.id === 6 || currentLvl.id === 11;
-
-      return {
-        ...prev,
-        fs: restoredFS,
-        currentPath: restoredPath,
-        cursorIndex: 0,
-        clipboard: null,
-        mode: 'normal',
-        filters: {},
-        showHidden: false, // Reset hidden files
-        searchQuery: null, // Reset search
-        searchResults: [], // Reset search results
-        sortBy: 'natural', // Reset sort
-        sortDirection: 'asc', // Reset sort direction
-        notification: { message: 'System Reinitialized' },
-        selectedIds: [],
-        pendingDeleteIds: [],
-        pendingOverwriteNode: null,
-        isGameOver: false,
-        gameOverReason: undefined,
-        timeLeft: currentLvl.timeLimit || null,
-        keystrokes: 0,
-        showHint: false,
-        hintStage: 0,
-        showEpisodeIntro: false, // Explicitly set to false
-        ignoreEpisodeIntro: shouldIgnoreIntro, // Prevent intro on next render if needed
-        fuzzySelectedIndex: 0,
-        usedG: false,
-        usedGI: false,
-        usedGC: false,
-        usedGR: false,
-        usedCtrlA: false,
-        usedGG: false,
-        usedDown: false,
-        usedUp: false,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-        usedP: false,
-        acceptNextKeyForSort: false,
-        usedHistoryBack: false,
-        usedHistoryForward: false,
-        future: [],
-        previewScroll: 0,
-        completedTaskIds: newCompletedTaskIds,
-        gauntletPhase: 0,
-        gauntletScore: 0,
-        level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
-        usedSearch: false,
-      };
+    dispatch({
+      type: 'SET_LEVEL',
+      index: gameState.levelIndex,
+      fs: cloneFS(gameState.levelStartFS),
+      path: [...gameState.levelStartPath],
     });
     shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
-  }, []);
+  }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch]);
 
   // Handle the end of the final level - trigger restart sequence
   const handleRestartCycle = useCallback(() => {
-    // Increment cycle and reset state immediately to Episode I
-    setGameState((prev) => {
-      const nextCycle = (prev.cycleCount || 1) + 1;
-      const initialLevel = LEVELS[0];
-      const initialPath = ['root', 'home', 'guest'];
-
-      return {
-        ...prev,
-        levelIndex: 0,
-        currentPath: initialPath,
-        cursorIndex: 0,
-        mode: 'normal',
-        filters: {},
-        history: [],
-        future: [],
-        cycleCount: nextCycle,
-        fs: ensurePrerequisiteState(cloneFS(INITIAL_FS), initialLevel.id),
-        levelStartFS: cloneFS(INITIAL_FS),
-        levelStartPath: [...initialPath],
-        notification: {
-          message: `[RE-IMAGE COMPLETE] Subject 773${4 + (nextCycle - 1)} Online. Monitoring started.`,
-          author: 'Root',
-        },
-        completedTaskIds: Object.fromEntries(LEVELS.map((l) => [l.id, []])),
-        isGameOver: false,
-        timeLeft: initialLevel.timeLimit || null,
-        keystrokes: 0,
-        showEpisodeIntro: true,
-      };
-    });
-  }, []);
+    dispatch({ type: 'RESTART_CYCLE' });
+  }, [dispatch]);
 
   const handleBootComplete = useCallback(() => {
-    setIsBooting(false);
-  }, []);
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { isBooting: false } });
+  }, [dispatch]);
 
   // --- Handlers ---
 
   const handleZoxidePromptKeyDown = useCallback(
-    (
-      e: KeyboardEvent,
-      gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
-    ) => {
+    (e: KeyboardEvent, gameState: GameState, dispatch: React.Dispatch<Action>) => {
       switch (e.key) {
         case 'Escape':
-          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
           break;
         case 'Backspace':
-          setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer.slice(0, -1) }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: { inputBuffer: gameState.inputBuffer.slice(0, -1) },
+          });
           break;
         case 'Enter': {
           const { zoxideData, inputBuffer } = gameState;
@@ -1676,55 +1586,66 @@ export default function App() {
                 'jump'
               );
               if (protection) {
-                setGameState((prev) => ({
-                  ...prev,
-                  mode: 'normal',
-                  notification: { message: `🔒 ${protection}` },
-                  inputBuffer: '',
-                }));
+                dispatch({
+                  type: 'UPDATE_UI_STATE',
+                  updates: {
+                    mode: 'normal',
+                    notification: { message: `🔒 ${protection}` },
+                    inputBuffer: '',
+                  },
+                });
                 return;
               }
 
               const now = Date.now();
-              setGameState((prev) => ({
-                ...prev,
-                mode: 'normal',
-                currentPath: match.path,
-                cursorIndex: 0,
-                notification: { message: `Jumped to ${bestMatch.path}` },
-                inputBuffer: '',
-                history: [...prev.history, prev.currentPath],
-                future: [],
-                stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                zoxideData: {
-                  ...prev.zoxideData,
-                  [bestMatch.path]: {
-                    count: (prev.zoxideData[bestMatch.path]?.count || 0) + 1,
-                    lastAccess: now,
+              dispatch({
+                type: 'UPDATE_UI_STATE',
+                updates: {
+                  mode: 'normal',
+                  currentPath: match.path,
+                  cursorIndex: 0,
+                  notification: { message: `Jumped to ${bestMatch.path}` },
+                  inputBuffer: '',
+                  history: [...gameState.history, gameState.currentPath],
+                  future: [],
+                  stats: { ...gameState.stats, fuzzyJumps: gameState.stats.fuzzyJumps + 1 },
+                  zoxideData: {
+                    ...gameState.zoxideData,
+                    [bestMatch.path]: {
+                      count: (gameState.zoxideData[bestMatch.path]?.count || 0) + 1,
+                      lastAccess: now,
+                    },
                   },
                 },
-              }));
+              });
             } else {
-              setGameState((prev) => ({
-                ...prev,
-                mode: 'normal',
-                inputBuffer: '',
-                notification: { message: `Path not found: ${bestMatch.path}` },
-              }));
+              dispatch({
+                type: 'UPDATE_UI_STATE',
+                updates: {
+                  mode: 'normal',
+                  inputBuffer: '',
+                  notification: { message: `Path not found: ${bestMatch.path}` },
+                },
+              });
             }
           } else {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              inputBuffer: '',
-              notification: { message: 'No match found' },
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                mode: 'normal',
+                inputBuffer: '',
+                notification: { message: 'No match found' },
+              },
+            });
           }
           break;
         }
         default:
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-            setGameState((prev) => ({ ...prev, inputBuffer: prev.inputBuffer + e.key }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: { inputBuffer: gameState.inputBuffer + e.key },
+            });
           }
           break;
       }
@@ -1733,11 +1654,7 @@ export default function App() {
   );
 
   const handleFuzzyModeKeyDown = useCallback(
-    (
-      e: KeyboardEvent,
-      gameState: GameState,
-      setGameState: React.Dispatch<React.SetStateAction<GameState>>
-    ) => {
+    (e: KeyboardEvent, gameState: GameState, dispatch: React.Dispatch<Action>) => {
       // Match FuzzyFinder logic for consistency
       const isZoxide = gameState.mode === 'zoxide-jump';
       let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
@@ -1781,7 +1698,7 @@ export default function App() {
             return;
           }
 
-          if (checkFilterAndBlockNavigation(e, gameState, setGameState)) {
+          if (checkFilterAndBlockNavigation(e, gameState, dispatch)) {
             return;
           }
 
@@ -1809,12 +1726,14 @@ export default function App() {
                 );
 
                 if (protection) {
-                  setGameState((prev) => ({
-                    ...prev,
-                    mode: 'normal',
-                    notification: { message: `🔒 ${protection}` },
-                    inputBuffer: '',
-                  }));
+                  dispatch({
+                    type: 'UPDATE_UI_STATE',
+                    updates: {
+                      mode: 'normal',
+                      notification: { message: `🔒 ${protection}` },
+                      inputBuffer: '',
+                    },
+                  });
                   return;
                 }
 
@@ -1826,29 +1745,31 @@ export default function App() {
                   ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
                   : { message: `Jumped to ${selected.path}` };
 
-                setGameState((prev) => ({
-                  ...prev,
-                  mode: 'normal',
-                  currentPath: match.path,
-                  cursorIndex: 0,
-                  notification,
-                  inputBuffer: '',
-                  history: [...prev.history, prev.currentPath],
-                  future: [], // Reset future on new jump
-                  usedPreviewDown: false,
-                  usedPreviewUp: false,
-                  stats: { ...prev.stats, fuzzyJumps: prev.stats.fuzzyJumps + 1 },
-                  zoxideData: {
-                    ...prev.zoxideData,
-                    [selected.path]: {
-                      count: (prev.zoxideData[selected.path]?.count || 0) + 1,
-                      lastAccess: now,
+                dispatch({
+                  type: 'UPDATE_UI_STATE',
+                  updates: {
+                    mode: 'normal',
+                    currentPath: match.path,
+                    cursorIndex: 0,
+                    notification,
+                    inputBuffer: '',
+                    history: [...gameState.history, gameState.currentPath],
+                    future: [], // Reset future on new jump
+                    usedPreviewDown: false,
+                    usedPreviewUp: false,
+                    stats: { ...gameState.stats, fuzzyJumps: gameState.stats.fuzzyJumps + 1 },
+                    zoxideData: {
+                      ...gameState.zoxideData,
+                      [selected.path]: {
+                        count: (gameState.zoxideData[selected.path]?.count || 0) + 1,
+                        lastAccess: now,
+                      },
                     },
                   },
-                }));
+                });
               } else {
                 // Fallback: If for some reason match is not found, close dialog
-                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
               }
             } else {
               if (selected.pathIds && Array.isArray(selected.pathIds)) {
@@ -1870,12 +1791,14 @@ export default function App() {
                     'jump'
                   );
                   if (protection) {
-                    setGameState((prev) => ({
-                      ...prev,
-                      mode: 'normal',
-                      notification: { message: `🔒 ${protection}` },
-                      inputBuffer: '',
-                    }));
+                    dispatch({
+                      type: 'UPDATE_UI_STATE',
+                      updates: {
+                        mode: 'normal',
+                        notification: { message: `🔒 ${protection}` },
+                        inputBuffer: '',
+                      },
+                    });
                     return;
                   }
                 }
@@ -1900,101 +1823,120 @@ export default function App() {
 
                 const fileIndex = sortedChildren.findIndex((c) => c.id === fileName);
 
-                setGameState((prev) => {
-                  // CRITICAL FIX: Explicitly clear any filters for the target directory
-                  // so that siblings are visible when jumping to the file.
-                  const targetDirNode = getNodeByPath(prev.fs, targetDir);
-                  const newFilters = { ...prev.filters };
-                  if (targetDirNode) {
-                    delete newFilters[targetDirNode.id];
-                  }
+                // CRITICAL FIX: Explicitly clear any filters for the target directory
+                // so that siblings are visible when jumping to the file.
+                const targetDirNode = getNodeByPath(gameState.fs, targetDir);
+                const newFilters = { ...gameState.filters };
+                if (targetDirNode) {
+                  delete newFilters[targetDirNode.id];
+                }
 
-                  return {
-                    ...prev,
+                dispatch({
+                  type: 'UPDATE_UI_STATE',
+                  updates: {
                     mode: 'normal',
                     currentPath: targetDir,
                     cursorIndex: fileIndex >= 0 ? fileIndex : 0,
                     filters: newFilters,
                     inputBuffer: '',
-                    history: [...prev.history, prev.currentPath],
+                    history: [...gameState.history, gameState.currentPath],
                     future: [], // Reset future
                     notification: { message: `Found: ${selected.path}` },
                     usedPreviewDown: false,
                     usedPreviewUp: false,
-                    stats: { ...prev.stats, fzfFinds: prev.stats.fzfFinds + 1 },
-                  };
+                    stats: { ...gameState.stats, fzfFinds: gameState.stats.fzfFinds + 1 },
+                  },
                 });
               } else {
-                setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
               }
             }
           } else {
-            setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
           }
           break;
         }
         case 'Escape':
-          setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
           break;
         case 'ArrowDown':
-          setGameState((prev) => ({
-            ...prev,
-            fuzzySelectedIndex: Math.min(candidates.length - 1, (prev.fuzzySelectedIndex || 0) + 1),
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              fuzzySelectedIndex: Math.min(
+                candidates.length - 1,
+                (gameState.fuzzySelectedIndex || 0) + 1
+              ),
+            },
+          });
           break;
         case 'ArrowUp':
-          setGameState((prev) => ({
-            ...prev,
-            fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              fuzzySelectedIndex: Math.max(0, (gameState.fuzzySelectedIndex || 0) - 1),
+            },
+          });
           break;
         case 'n':
           if (e.ctrlKey) {
             e.preventDefault();
-            setGameState((prev) => ({
-              ...prev,
-              fuzzySelectedIndex: Math.min(
-                candidates.length - 1,
-                (prev.fuzzySelectedIndex || 0) + 1
-              ),
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                fuzzySelectedIndex: Math.min(
+                  candidates.length - 1,
+                  (gameState.fuzzySelectedIndex || 0) + 1
+                ),
+              },
+            });
           } else {
-            setGameState((prev) => ({
-              ...prev,
-              inputBuffer: prev.inputBuffer + e.key,
-              fuzzySelectedIndex: 0,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                inputBuffer: gameState.inputBuffer + e.key,
+                fuzzySelectedIndex: 0,
+              },
+            });
           }
           break;
         case 'p':
           if (e.ctrlKey) {
             e.preventDefault();
-            setGameState((prev) => ({
-              ...prev,
-              fuzzySelectedIndex: Math.max(0, (prev.fuzzySelectedIndex || 0) - 1),
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                fuzzySelectedIndex: Math.max(0, (gameState.fuzzySelectedIndex || 0) - 1),
+              },
+            });
           } else {
-            setGameState((prev) => ({
-              ...prev,
-              inputBuffer: prev.inputBuffer + e.key,
-              fuzzySelectedIndex: 0,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                inputBuffer: gameState.inputBuffer + e.key,
+                fuzzySelectedIndex: 0,
+              },
+            });
           }
           break;
         case 'Backspace':
-          setGameState((prev) => ({
-            ...prev,
-            inputBuffer: prev.inputBuffer.slice(0, -1),
-            fuzzySelectedIndex: 0,
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              inputBuffer: gameState.inputBuffer.slice(0, -1),
+              fuzzySelectedIndex: 0,
+            },
+          });
           break;
         default:
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-            setGameState((prev) => ({
-              ...prev,
-              inputBuffer: prev.inputBuffer + e.key,
-              fuzzySelectedIndex: 0,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                inputBuffer: gameState.inputBuffer + e.key,
+                fuzzySelectedIndex: 0,
+              },
+            });
           }
           break;
       }
@@ -2006,23 +1948,10 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log(
-        '[App] handleKeyDown:',
-        e.key,
-        'mode:',
-        gameState.mode,
-        'shift:',
-        e.shiftKey,
-        'ctrl:',
-        e.ctrlKey,
-        'alt:',
-        e.altKey
-      );
-
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       // Only enter completion lockdown if the success toast is actually shown.
       // If blocked by a protocol violation warning, we MUST allow keys through so the user can fix it.
-      if (tasksComplete && showSuccessToast) {
+      if (tasksComplete && gameState.showSuccessToast) {
         if (e.key === 'Enter' && e.shiftKey) {
           e.preventDefault();
           advanceLevel();
@@ -2033,145 +1962,112 @@ export default function App() {
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
       if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({
-          ...prev,
-          showHelp: !prev.showHelp,
-          showHint: false,
-          showMap: false,
-        }));
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { showHelp: !gameState.showHelp, showHint: false, showMap: false },
+        });
         return;
       }
 
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => {
-          if (prev.showHint) {
-            return { ...prev, showHint: false, showHelp: false, showMap: false };
-          }
-          return { ...prev, showHint: true, hintStage: 0, showHelp: false, showMap: false };
-        });
+        if (gameState.showHint) {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: { showHint: false, showHelp: false, showMap: false },
+          });
+        } else {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: { showHint: true, hintStage: 0, showHelp: false, showMap: false },
+          });
+        }
         return;
       }
 
       if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({
-          ...prev,
-          showMap: !prev.showMap,
-          showHelp: false,
-          showHint: false,
-        }));
-        return;
-      }
-
-      if (showThreatAlert) {
-        // If ThreatAlert is shown, it blocks everything except:
-        // 1. Shift+Enter to dismiss
-        // 2. Meta commands (handled above)
-
-        if (e.key === 'Enter' && e.shiftKey) {
-          setShowThreatAlert(false);
-        }
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { showMap: !gameState.showMap, showHelp: false, showHint: false },
+        });
         return;
       }
 
       // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Alt toggles and Shift+Enter.
-      // Note: Shift+Enter is handled by individual modal components internally.
-      if (gameState.showHelp || gameState.showHint || gameState.showMap) {
-        // Toggle/Switch Logic
-        if (e.key === '?' && e.altKey) {
-          e.preventDefault();
-          // If Help is open, close it. If another is open, switch to Help.
-          setGameState((prev) => ({
-            ...prev,
-            showHelp: !prev.showHelp,
-            showHint: false,
-            showMap: false,
-          }));
-        } else if (e.key === 'h' && e.altKey) {
-          e.preventDefault();
-          setGameState((prev) => {
-            // If Hint is already open, cycle stages or toggle off?
-            // Existing logic elsewhere uses toggle or cycle. Let's start fresh or cycle.
-            // But here we are switching. If hint is open, maybe cycle?
-            // To match test "Alt+H to toggle Hint OFF", we should toggle off if active.
-            if (prev.showHint) {
-              // If it was just about switching, we'd stay open. But tests expect toggle.
-              // Let's toggle OFF if it's the active one.
-              return { ...prev, showHint: false, showHelp: false, showMap: false };
-            }
-            // Otherwise open it (and close others)
-            return { ...prev, showHint: true, hintStage: 0, showHelp: false, showMap: false };
-          });
-        } else if (e.key === 'm' && e.altKey) {
-          e.preventDefault();
-          setGameState((prev) => ({
-            ...prev,
-            showMap: !prev.showMap,
-            showHelp: false,
-            showHint: false,
-          }));
-        }
+      if (gameState.showHelp) {
+        handleHelpModeKeyDown(e, gameState, () =>
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })
+        );
+        return;
+      }
 
-        // Allow Escape to close any open modal
-        else if (e.key === 'Escape') {
-          e.preventDefault();
-          setGameState((prev) => ({
-            ...prev,
-            showHelp: false,
-            showHint: false,
-            showMap: false,
-          }));
-        }
+      if (gameState.showMap) {
+        // Derive episodes for the handler
+        const episodeIcons = [Zap, Shield, Crown];
+        const episodes = EPISODE_LORE.map((lore, idx) => {
+          const color = lore.color ?? 'text-blue-500';
+          return {
+            ...lore,
+            levels: LEVELS.filter((l) => l.episodeId === lore.id),
+            border: color.replace('text-', 'border-') + '/30',
+            bg: color.replace('text-', 'bg-') + '/10',
+            color,
+            icon: episodeIcons[idx] || Shield,
+          };
+        });
 
-        return; // Block all other keys from background Yazi
+        handleQuestMapModeKeyDown(
+          e,
+          gameState,
+          LEVELS,
+          episodes,
+          () => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } }),
+          (globalIdx: number) => {
+            const lvl = LEVELS[globalIdx];
+            let fs = cloneFS(INITIAL_FS);
+            if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
+            dispatch({
+              type: 'SET_LEVEL',
+              index: globalIdx,
+              fs,
+              path: lvl.initialPath || ['root', 'home', 'guest'],
+            });
+          }
+        );
+        return;
+      }
+
+      if (gameState.showHint) {
+        // Standard close for Hint if Esc or Shift+Enter
+        if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false } });
+        }
+        return;
+      }
+
+      if (gameState.showThreatAlert) {
+        // If ThreatAlert is shown, it blocks everything except:
+        // 1. Shift+Enter to dismiss
+        // 2. Meta commands (handled above)
+        if (e.key === 'Enter' && e.shiftKey) {
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } });
+        }
+        return;
       }
 
       // If only the InfoPanel is open, block all emulator keys except Esc/Tab to close it
       if (gameState.showInfoPanel) {
-        // Allow meta commands even when InfoPanel is open
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
-
         if (e.key === 'Escape' || e.key === 'Tab') {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showInfoPanel: false }));
-          return;
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } });
         }
-        return; // Block all other keys while InfoPanel is open
+        return;
       }
 
       // Allow meta commands even during booting, episode intro, game over, etc.
       if (
-        (isBooting ||
+        (gameState.isBooting ||
           gameState.showEpisodeIntro ||
           isLastLevel ||
           gameState.isGameOver ||
@@ -2181,31 +2077,30 @@ export default function App() {
         // Process the meta command
         if (e.key === '?' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showHelp: true }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: true } });
           return;
         }
 
         if (e.key === 'h' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => {
-            if (prev.showHint) {
-              const nextStage = (prev.hintStage + 1) % 3;
-              return { ...prev, hintStage: nextStage };
-            }
-            return { ...prev, showHint: true, hintStage: 0 };
-          });
+          if (gameState.showHint) {
+            const nextStage = (gameState.hintStage + 1) % 3;
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
+          } else {
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: true, hintStage: 0 } });
+          }
           return;
         }
 
         if (e.key === 'm' && e.altKey) {
           e.preventDefault();
-          setGameState((prev) => ({ ...prev, showMap: true }));
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: true } });
           return;
         }
       }
 
       if (
-        isBooting ||
+        gameState.isBooting ||
         gameState.showEpisodeIntro ||
         isLastLevel ||
         gameState.isGameOver ||
@@ -2216,371 +2111,237 @@ export default function App() {
       }
 
       // Handle hidden files warning modal interception
-      if (showHiddenWarning) {
-        // Allow meta commands even when hidden warning is shown
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
-
+      if (gameState.showHiddenWarning) {
         // Check if we can auto-fix (only last task)
-        // Re-calculate tasksComplete here or rely on prop? rely on variable
         if (e.key === '.') {
-          setGameState((prev) => ({ ...prev, showHidden: !prev.showHidden }));
+          dispatch({ type: 'TOGGLE_HIDDEN' });
         }
         // Allow Shift+Enter to auto-fix ONLY if tasks are complete
         if (e.key === 'Enter' && e.shiftKey) {
           if (tasksComplete) {
-            setGameState((prev) => ({ ...prev, showHidden: false }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: { showHidden: false, showHiddenWarning: false },
+            });
+          } else {
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
           }
-          // Always dismiss the warning when Shift+Enter is pressed
-          setShowHiddenWarning(false);
         }
         // Allow Escape to dismiss the warning
         if (e.key === 'Escape') {
-          setShowHiddenWarning(false);
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
         }
         return; // Block other inputs
       }
 
       // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
-      // to clear the active filter and continue (protocol-violation bypass).
-      // If FilterWarning modal is shown (via mode), allow Escape to dismiss or Shift+Enter
-      // to clear the active filter and continue (protocol-violation bypass).
       if (gameState.mode === 'filter-warning') {
-        console.log('[App] filter-warning key:', e.key, 'shift:', e.shiftKey);
-        // Allow meta commands even when filter warning is shown
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
-
         if (e.key === 'Enter' && e.shiftKey) {
-          // Conditional Auto-Fix
           if (tasksComplete) {
-            setGameState((prev) => {
-              const currentDirNode = getNodeByPath(prev.fs, prev.currentPath);
-              const newFilters = { ...prev.filters };
-              if (currentDirNode) {
-                delete newFilters[currentDirNode.id];
-              }
-              return {
-                ...prev,
+            const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+            const newFilters = { ...gameState.filters };
+            if (currentDirNode) {
+              delete newFilters[currentDirNode.id];
+            }
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
                 mode: 'normal',
                 filters: newFilters,
                 acceptNextKeyForSort: false,
                 notification: null,
-              };
+              },
             });
           } else {
-            // Just dismiss the warning when tasks are not complete
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                mode: 'normal',
+                acceptNextKeyForSort: false,
+                notification: null,
+              },
+            });
           }
           return;
         }
 
         if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            },
+          });
           return;
         }
 
         return; // Block other inputs if filter warning is active
       }
 
-      // If SearchWarning modal is shown, allow Escape to dismiss or Shift+Enter
-      // to clear the active search and continue (protocol-violation bypass).
+      // If SearchWarning modal is shown
       if (gameState.mode === 'search-warning') {
-        // Allow meta commands even when search warning is shown
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
-
         if (e.key === 'Enter' && e.shiftKey) {
-          // Conditional Auto-Fix - clear search
           if (tasksComplete) {
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              searchQuery: null,
-              searchResults: [],
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                mode: 'normal',
+                searchQuery: null,
+                searchResults: [],
+                acceptNextKeyForSort: false,
+                notification: null,
+              },
+            });
           } else {
-            // Just dismiss the warning when tasks are not complete
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                mode: 'normal',
+                acceptNextKeyForSort: false,
+                notification: null,
+              },
+            });
           }
           return;
         }
 
         if (e.key === 'Escape') {
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            },
+          });
           return;
         }
 
         return; // Block other inputs if search warning is active
       }
 
-      // If SortWarningModal is visible, handle specific sort commands or Escape
-      if (showSortWarning) {
-        // Allow meta commands even when sort warning is shown
-        if (
-          (e.key === '?' && e.altKey) ||
-          (e.key === 'h' && e.altKey) ||
-          (e.key === 'm' && e.altKey)
-        ) {
-          // Process the meta command
-          if (e.key === '?' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showHelp: true }));
-            return;
-          }
-
-          if (e.key === 'h' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => {
-              if (prev.showHint) {
-                const nextStage = (prev.hintStage + 1) % 3;
-                return { ...prev, hintStage: nextStage };
-              }
-              return { ...prev, showHint: true, hintStage: 0 };
-            });
-            return;
-          }
-
-          if (e.key === 'm' && e.altKey) {
-            e.preventDefault();
-            setGameState((prev) => ({ ...prev, showMap: true }));
-            return;
-          }
-        }
-
+      // If SortWarningModal is visible
+      if (gameState.showSortWarning) {
         const allowAutoFix = tasksComplete;
 
         if (e.key === 'Enter' && e.shiftKey) {
           if (allowAutoFix) {
-            setShowSortWarning(false);
-            setGameState((prev) => ({
-              ...prev,
-              sortBy: 'natural',
-              sortDirection: 'asc',
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                showSortWarning: false,
+                sortBy: 'natural',
+                sortDirection: 'asc',
+                mode: 'normal',
+                acceptNextKeyForSort: false,
+                notification: null,
+              },
+            });
           } else {
-            setShowSortWarning(false);
-            setGameState((prev) => ({
-              ...prev,
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                showSortWarning: false,
+                mode: 'normal',
+                acceptNextKeyForSort: false,
+                notification: null,
+              },
+            });
           }
           return;
         }
 
         // Allow sort commands (like ',' and then 'n') to be processed
         if (e.key === ',') {
-          setGameState((prev) => ({ ...prev, mode: 'sort', acceptNextKeyForSort: true }));
-          return; // Prevent fall-through
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: { mode: 'sort', acceptNextKeyForSort: true },
+          });
+          return;
         }
 
         if (gameState.acceptNextKeyForSort) {
-          handleSortModeKeyDown(e, setGameState);
-
-          // Infer dismissal from the key the user pressed: only ',n' (natural sort) should clear the SortWarning.
+          handleSortModeKeyDown(e, gameState);
           const pressed = e.key || '';
-          // Check for 'n' without shift (Natural Ascending)
           const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
-          if (isNatural) {
-            setShowSortWarning(false);
-          }
-
-          // Reset the sort-accept state and return to normal mode
-          setGameState((prev) => ({ ...prev, acceptNextKeyForSort: false, mode: 'normal' }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              showSortWarning: !isNatural,
+              acceptNextKeyForSort: false,
+              mode: 'normal',
+            },
+          });
           return; // Block other inputs
         }
 
         if (e.key === 'Escape') {
-          setShowSortWarning(false);
-          setGameState((prev) => ({
-            ...prev,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          }));
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              showSortWarning: false,
+              mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
+            },
+          });
           return;
         }
 
-        // Block any other keys if sort warning is active and it's not a valid interaction
         return;
       }
 
       // Count keystrokes (only if no blocking modal)
       if (
         !isGamePaused &&
-        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm'].includes(e.key)
+        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())
       ) {
-        setGameState((prev) => {
-          // [IG_AUDIT] Episode III Weighted Noise Logic
-          let noise = 1;
-          if (currentLevel?.id >= 11) {
-            noise = getActionIntensity(e.key, e.ctrlKey);
-          }
-
-          return {
-            ...prev,
-            keystrokes: prev.keystrokes + 1,
-            weightedKeystrokes: (prev.weightedKeystrokes || 0) + noise,
-          };
-        });
+        // [IG_AUDIT] Episode III Weighted Noise Logic
+        let noise = 1;
+        if (currentLevel?.id >= 11) {
+          noise = getActionIntensity(e.key, e.ctrlKey);
+        }
+        dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
       }
 
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
       if (e.key === '?' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } });
         return;
       }
 
       if (e.key === 'h' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => {
-          if (prev.showHint) {
-            const nextStage = (prev.hintStage + 1) % 3;
-            return { ...prev, hintStage: nextStage };
-          }
-          return { ...prev, showHint: true, hintStage: 0 };
-        });
+        if (gameState.showHint) {
+          const nextStage = (gameState.hintStage + 1) % 3;
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
+        } else {
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: true, hintStage: 0 } });
+        }
         return;
       }
 
       if (e.key === 'm' && e.altKey) {
         e.preventDefault();
-        setGameState((prev) => ({ ...prev, showMap: !prev.showMap }));
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } });
         return;
       }
 
       // Alt+Shift+M - Toggle sound (meta command)
       if (e.key.toLowerCase() === 'm' && e.altKey && e.shiftKey && gameState.mode === 'normal') {
         e.preventDefault();
-        setGameState((prev) => ({
-          ...prev,
-          settings: { ...prev.settings, soundEnabled: !prev.settings.soundEnabled },
-          notification: {
-            message: `Sound ${!prev.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            settings: { ...gameState.settings, soundEnabled: !gameState.settings.soundEnabled },
+            notification: {
+              message: `Sound ${!gameState.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
+            },
           },
-        }));
-        return;
-      }
-
-      // Mode dispatch
-      // Special-case: if a previous key requested the sort handler to capture the next
-      // raw key (e.g., pressing ',' then quickly 'n'), handle that here even if React
-      // hasn't yet flushed mode:'sort' into state.
-      if (gameState.acceptNextKeyForSort && gameState.mode === 'normal') {
-        handleSortModeKeyDown(e, setGameState);
-        setGameState((p) => ({ ...p, acceptNextKeyForSort: false }));
+        });
         return;
       }
 
@@ -2590,7 +2351,6 @@ export default function App() {
           handleNormalModeKeyDown(
             e,
             gameState,
-            setGameState,
             visibleItems,
             parent || null,
             currentItem,
@@ -2599,32 +2359,30 @@ export default function App() {
           );
           break;
         case 'sort':
-          handleSortModeKeyDown(e, setGameState);
+          handleSortModeKeyDown(e, gameState);
           break;
         case 'confirm-delete':
-          handleConfirmDeleteModeKeyDown(e, setGameState, visibleItems, currentLevel);
+          handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, gameState);
           break;
         case 'search':
-          // Search mode has its own inline handler in the input component
-          // Only handle Enter here as fallback
           if (e.key === 'Enter') {
             handleSearchConfirm();
           } else if (e.key === 'Escape') {
-            setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
           }
           break;
         case 'zoxide-jump':
         case 'fzf-current':
-          handleFuzzyModeKeyDown(e, gameState, setGameState);
+          handleFuzzyModeKeyDown(e as unknown as KeyboardEvent, gameState, dispatch);
           break;
         case 'g-command':
-          handleGCommandKeyDown(e, setGameState, gameState, currentLevel);
+          handleGCommandKeyDown(e, gameState, currentLevel);
           break;
         case 'z-prompt':
-          handleZoxidePromptKeyDown(e, gameState, setGameState);
+          handleZoxidePromptKeyDown(e, gameState, dispatch);
           break;
         case 'overwrite-confirm':
-          handleOverwriteConfirmKeyDown(e, setGameState);
+          handleOverwriteConfirmKeyDown(e, gameState);
           break;
         default:
           break;
@@ -2646,18 +2404,15 @@ export default function App() {
     handleOverwriteConfirmKeyDown,
     handleGCommandKeyDown,
     advanceLevel,
-    showHiddenWarning,
-    showThreatAlert,
-    showSortWarning,
     visibleItems,
     currentItem,
     parent,
     handleSearchConfirm,
-    isBooting,
+    dispatch,
   ]);
 
-  if (isBooting) {
-    return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount} />;
+  if (gameState.isBooting) {
+    return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount || 1} />;
   }
 
   if (isLastLevel) {
@@ -2678,14 +2433,16 @@ export default function App() {
           })()}
           onComplete={() => {
             if (currentLevel.episodeId === 1) {
-              setIsBooting(true);
+              dispatch({ type: 'UPDATE_UI_STATE', updates: { isBooting: true } });
             }
-            setGameState((prev) => ({
-              ...prev,
-              showEpisodeIntro: false,
-              currentPath: [...currentLevel.initialPath], // Reset to level's initial path
-              cursorIndex: 0, // Reset cursor to top
-            }));
+            dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                showEpisodeIntro: false,
+                currentPath: [...currentLevel.initialPath], // Reset to level's initial path
+                cursorIndex: 0, // Reset cursor to top
+              },
+            });
           }}
         />
       )}
@@ -2700,21 +2457,26 @@ export default function App() {
       )}
 
       {gameState.showHelp && (
-        <HelpModal onClose={() => setGameState((prev) => ({ ...prev, showHelp: false }))} />
+        <HelpModal
+          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })}
+          scrollPosition={gameState.helpScrollPosition || 0}
+        />
       )}
 
       {gameState.showHint && (
         <HintModal
           hint={currentLevel.hint}
           stage={gameState.hintStage}
-          onClose={() => setGameState((prev) => ({ ...prev, showHint: false, hintStage: 0 }))}
+          onClose={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false, hintStage: 0 } })
+          }
         />
       )}
 
       {gameState.showInfoPanel && (
         <InfoPanel
           file={currentItem}
-          onClose={() => setGameState((prev) => ({ ...prev, showInfoPanel: false }))}
+          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } })}
         />
       )}
 
@@ -2729,12 +2491,12 @@ export default function App() {
             const displayPath = node ? `${currentDir === '/' ? '' : currentDir}/${node.name}` : id;
             return displayPath;
           })}
-          onConfirm={() => confirmDelete(setGameState, visibleItems, currentLevel)}
-          onCancel={() => cancelDelete(setGameState)}
+          onConfirm={() => confirmDelete(visibleItems, currentLevel, gameState)}
+          onCancel={() => cancelDelete()}
         />
       )}
 
-      {showSuccessToast && (
+      {gameState.showSuccessToast && (
         <>
           {/* <CelebrationConfetti /> */}
           <SuccessToast
@@ -2745,24 +2507,36 @@ export default function App() {
         </>
       )}
 
-      {showHiddenWarning && (
-        <HiddenFilesWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
+      {gameState.showHiddenWarning && (
+        <HiddenFilesWarningModal
+          allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
+          onDismiss={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } })
+          }
+        />
       )}
-      {showSortWarning && (
-        <SortWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
+      {gameState.showSortWarning && (
+        <SortWarningModal
+          allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
+          onDismiss={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showSortWarning: false } })
+          }
+        />
       )}
       {gameState.mode === 'filter-warning' &&
         (() => {
-          console.log(
-            '[App] Render FilterWarning, allowAutoFix:',
-            checkAllTasksComplete(gameState, currentLevel)
-          );
           return (
-            <FilterWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
+            <FilterWarningModal
+              allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
+              onDismiss={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+            />
           );
         })()}
       {gameState.mode === 'search-warning' && (
-        <SearchWarningModal allowAutoFix={checkAllTasksComplete(gameState, currentLevel)} />
+        <SearchWarningModal
+          allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
+          onDismiss={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+        />
       )}
 
       {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
@@ -2770,8 +2544,13 @@ export default function App() {
       )}
 
       {/* Render ThreatAlert AFTER other modals so it appears on top */}
-      {showThreatAlert && (
-        <ThreatAlert message={alertMessage} onDismiss={() => setShowThreatAlert(false)} />
+      {gameState.showThreatAlert && (
+        <ThreatAlert
+          message={gameState.alertMessage || ''}
+          onDismiss={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } })
+          }
+        />
       )}
 
       <div className="flex flex-col flex-1 h-full min-w-0">
@@ -2780,52 +2559,30 @@ export default function App() {
           currentLevelIndex={gameState.levelIndex}
           notification={null}
           thought={gameState.thought}
-          onToggleHint={() => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }))}
-          onToggleHelp={() => setGameState((prev) => ({ ...prev, showHelp: !prev.showHelp }))}
+          onToggleHint={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: !gameState.showHint } })
+          }
+          onToggleHelp={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } })
+          }
           isOpen={gameState.showMap}
-          onClose={() => setGameState((prev) => ({ ...prev, showMap: false }))}
-          onToggleMap={() => setGameState((prev) => ({ ...prev, showMap: !prev.showMap }))}
+          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } })}
+          onToggleMap={() =>
+            dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
+          }
           onJumpToLevel={(idx) => {
             const lvl = LEVELS[idx];
             let fs = cloneFS(INITIAL_FS);
             if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
-            setGameState((prev) => ({
-              ...prev,
-              levelIndex: idx,
+            dispatch({
+              type: 'SET_LEVEL',
+              index: idx,
               fs,
-              currentPath: lvl.initialPath || ['root', 'home', 'guest'],
-              showEpisodeIntro: false,
-              filters: {},
-              showHidden: false, // Reset hidden files
-              searchQuery: null, // Reset search
-              searchResults: [], // Reset search results
-              sortBy: 'natural', // Reset sort
-              sortDirection: 'asc', // Reset sort direction
-              future: [],
-              previewScroll: 0,
-              usedPreviewDown: false,
-              usedPreviewUp: false,
-              usedDown: false,
-              usedUp: false,
-              usedG: false,
-              usedGG: false,
-              usedGI: false,
-              usedGH: false,
-              usedGD: false,
-              usedGW: false,
-              usedGO: false,
-              usedTrashDelete: false,
-              usedFilter: false,
-              usedSearch: false,
-              usedShiftP: false,
-              usedHistoryBack: false,
-              usedVisual: false,
-              // Also reset completedTaskIds for the jumped level
-              completedTaskIds: {},
-              // Also reset completedTaskIds for the jumped level if we treat it as a fresh start,
-              // but usually jump preserves state. Let's keep it simple.
-            }));
+              path: lvl.initialPath || ['root', 'home', 'guest'],
+            });
           }}
+          activeTab={gameState.questMapTab}
+          selectedMissionIdx={gameState.questMapMissionIdx}
         />
 
         <header
@@ -2863,14 +2620,17 @@ export default function App() {
                   value={gameState.inputBuffer}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setGameState((prev) => ({ ...prev, inputBuffer: val }));
+                    dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleSearchConfirm();
                       e.stopPropagation();
                     } else if (e.key === 'Escape') {
-                      setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }));
+                      dispatch({
+                        type: 'UPDATE_UI_STATE',
+                        updates: { mode: 'normal', inputBuffer: '' },
+                      });
                       e.stopPropagation();
                     }
                   }}
@@ -2979,17 +2739,24 @@ export default function App() {
             )}
 
             {gameState.mode === 'g-command' && (
-              <GCommandDialog onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))} />
+              <GCommandDialog
+                onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+              />
             )}
 
             {gameState.mode === 'input-file' && (
               <InputModal
                 label="Create"
                 value={gameState.inputBuffer}
-                onChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
+                onChange={(val) =>
+                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } })
+                }
                 onConfirm={handleInputConfirm}
                 onCancel={() =>
-                  setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
+                  dispatch({
+                    type: 'UPDATE_UI_STATE',
+                    updates: { mode: 'normal', inputBuffer: '' },
+                  })
                 }
                 borderColorClass="border-green-500"
                 testid="create-input"
@@ -3001,28 +2768,30 @@ export default function App() {
                 label="Filter"
                 value={gameState.inputBuffer}
                 onChange={(val) => {
-                  setGameState((prev) => {
-                    const dir = getNodeByPath(prev.fs, prev.currentPath);
-                    const newFilters = { ...prev.filters };
-                    if (dir) newFilters[dir.id] = val;
-                    return { ...prev, inputBuffer: val, filters: newFilters, cursorIndex: 0 };
-                  });
+                  const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                  if (dir) {
+                    dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
+                  }
                 }}
                 onConfirm={() => {
-                  setGameState((p) => ({
-                    ...p,
-                    mode: 'normal',
-                    inputBuffer: '',
-                    stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
-                  }));
+                  dispatch({
+                    type: 'UPDATE_UI_STATE',
+                    updates: {
+                      mode: 'normal',
+                      inputBuffer: '',
+                      stats: { ...gameState.stats, filterUsage: gameState.stats.filterUsage + 1 },
+                    },
+                  });
                 }}
                 onCancel={() => {
-                  setGameState((p) => ({
-                    ...p,
-                    mode: 'normal',
-                    inputBuffer: '',
-                    stats: { ...p.stats, filterUsage: p.stats.filterUsage + 1 },
-                  }));
+                  dispatch({
+                    type: 'UPDATE_UI_STATE',
+                    updates: {
+                      mode: 'normal',
+                      inputBuffer: '',
+                      stats: { ...gameState.stats, filterUsage: gameState.stats.filterUsage + 1 },
+                    },
+                  });
                 }}
                 borderColorClass="border-orange-500"
                 testid="filter-input"
@@ -3033,10 +2802,15 @@ export default function App() {
               <InputModal
                 label="Rename"
                 value={gameState.inputBuffer}
-                onChange={(val) => setGameState((prev) => ({ ...prev, inputBuffer: val }))}
+                onChange={(val) =>
+                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } })
+                }
                 onConfirm={handleRenameConfirm}
                 onCancel={() =>
-                  setGameState((prev) => ({ ...prev, mode: 'normal', inputBuffer: '' }))
+                  dispatch({
+                    type: 'UPDATE_UI_STATE',
+                    updates: { mode: 'normal', inputBuffer: '' },
+                  })
                 }
                 borderColorClass="border-cyan-500" // or green/cyan mix
                 testid="rename-input"
@@ -3047,7 +2821,7 @@ export default function App() {
               <FuzzyFinder
                 gameState={gameState}
                 onSelect={handleFuzzySelect}
-                onClose={() => setGameState((p) => ({ ...p, mode: 'normal' }))}
+                onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
               />
             )}
           </div>
@@ -3057,7 +2831,7 @@ export default function App() {
             level={currentLevel}
             gameState={gameState}
             previewScroll={gameState.previewScroll}
-            setGameState={setGameState}
+            dispatch={dispatch}
           />
         </div>
 

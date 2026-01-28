@@ -189,7 +189,7 @@ export async function startLevel(
  */
 export async function goToLevel(page: Page, level: number): Promise<void> {
   await page.goto(`/?lvl=${level}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Unified intro skip logic.
   // Set a global skip flag and dispatch the skip event to handle boot and intro overlays
@@ -534,8 +534,16 @@ export async function expectClipboard(page: Page, text: string): Promise<void> {
 /**
  * Asserts the current directory name in the breadcrumbs.
  */
-export async function expectCurrentDir(page: Page, dirName: string): Promise<void> {
-  await expect(page.locator('.breadcrumb')).toContainText(dirName);
+export async function expectCurrentDir(
+  page: Page,
+  dirName: string,
+  exact: boolean = false
+): Promise<void> {
+  if (exact) {
+    await expect(page.locator('.breadcrumb')).toHaveText(dirName);
+  } else {
+    await expect(page.locator('.breadcrumb')).toContainText(dirName);
+  }
 }
 
 /**
@@ -747,7 +755,7 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
  * Get the current directory path shown in the UI.
  */
 export async function getCurrentPath(page: Page): Promise<string> {
-  const pathElement = page.locator('//header/div[contains(@class, "flex-1")]').first();
+  const pathElement = page.locator('.breadcrumb').first();
   return (await pathElement.textContent()) || '';
 }
 

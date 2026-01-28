@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startLevel, DEFAULT_DELAY, pressKey } from './utils';
+import { startLevel, pressKey } from './utils';
 
 test.describe('Dialogs Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -176,12 +176,6 @@ test.describe('Dialogs Functionality', () => {
     await pressKey(page, 'Alt+m');
     await expect(page.getByTestId('quest-map-modal')).toBeVisible();
 
-    // Get active tab initially (first tab is typically active by default)
-    const initialActiveTabs = await page
-      .getByTestId('episode-tab')
-      .filter({ has: page.locator('.border-current') }) // Simulating .border-current check via filter if class check is tricky, but let's stick to locator if possible or use stricter selector
-      .locator('.border-current') // Wait, the test uses locator with class.
-      .count();
     // Reverting to original selector style but with getByTestId for the base
     // Actually the original test used locator('[data-testid="episode-tab"].border-current')
     // We can clean this up.

@@ -3,6 +3,7 @@ import { Filter, AlertTriangle } from 'lucide-react';
 
 interface FilterWarningModalProps {
   allowAutoFix: boolean;
+  onDismiss?: () => void;
 }
 
 export const FilterWarningModal: React.FC<FilterWarningModalProps> = ({

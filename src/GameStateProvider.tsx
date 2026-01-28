@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, useMemo, ReactNode } from 'react';
-import { GameState, ZoxideEntry } from './types';
+import React, { createContext, useContext, useEffect, useMemo, useReducer, ReactNode } from 'react';
 import { LEVELS, INITIAL_FS, ensurePrerequisiteState } from './constants';
+import { GameState, ZoxideEntry } from './types';
 
 type GameStateAction =
   | { type: 'SET_MODE'; payload: GameState['mode'] }
@@ -10,6 +10,7 @@ type GameStateAction =
   | { type: 'SET_NOTIFICATION'; payload: GameState['notification'] }
   | { type: 'SET_THOUGHT'; payload: GameState['thought'] }
   | { type: 'ADVANCE_LEVEL' };
+
 import { cloneFS, getNodeById, resolvePath } from './utils/fsHelpers';
 import { isValidZoxideData } from './utils/validation';
 import { reportError } from './utils/error';
@@ -325,6 +326,7 @@ const createInitialState = (): GameState => {
     usedTrashDelete: false,
     usedHistoryBack: false,
     usedHistoryForward: false,
+    isBooting: false,
   };
 };
 
@@ -346,14 +348,21 @@ const gameStateReducer = (state: GameState, action: GameStateAction): GameState 
       const newIndex = state.levelIndex + 1;
       const nextLevel = LEVELS[newIndex];
       if (!nextLevel) return state; // End of game handled elsewhere
+      const newFs = ensurePrerequisiteState(cloneFS(INITIAL_FS), nextLevel.id);
       return {
         ...state,
         levelIndex: newIndex,
-        fs: ensurePrerequisiteState(cloneFS(INITIAL_FS), nextLevel.id), // Simplified for now
-        levelStartFS: cloneFS(state.fs), // Should probably be fresh for next level
+        fs: newFs,
+        levelStartFS: cloneFS(newFs),
         currentPath: nextLevel.initialPath || ['root', 'home', 'guest'],
         cursorIndex: 0,
-        // ... more advance logic
+        // Reset other level-specific state as needed
+        selectedIds: [],
+        pendingDeleteIds: [],
+        deleteType: null,
+        pendingOverwriteNode: null,
+        timeLeft: nextLevel.timeLimit || null,
+        startTime: Date.now(),
       };
     // ... many more action handlers to be added as we migrate
     default:
@@ -362,7 +371,7 @@ const gameStateReducer = (state: GameState, action: GameStateAction): GameState 
 };
 
 export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(gameStateReducer, null, createInitialState);
+  const [state, dispatch] = useReducer(gameStateReducer, createInitialState());
 
   // Persistence effects
   useEffect(() => {
@@ -372,7 +381,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     } catch (e) {
       console.error('Failed to save state to localStorage', e);
     }
-  }, [state.zoxideData, state.cycleCount]);
+  }, [state]);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
