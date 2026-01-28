@@ -248,3 +248,49 @@ const regex = new RegExp(filter, 'i');
   await page.waitForLoadState('domcontentloaded'); // Faster, less flaky
   // ... subsequent steps wait for specific UI elements
   ```
+
+### 30. Native Keyboard API vs. window.dispatchEvent
+
+- **Symptom**: `Escape`, `Enter`, or modifiers like `Ctrl+R` fail to trigger handlers in tests, even when the key seems "pressed". Modals remain open, or selection inversion doesn't occur.
+- **Root Cause**: Custom `pressKey` helpers often use `window.dispatchEvent(new KeyboardEvent(...))`. These are **synthetic events**. While they trigger global listeners, they:
+  1.  **Do not handle focus correctly**: Browsers often ignore synthetic events on focused elements (like input fields) for security.
+  2.  **Do not bubble/queue naturally**: They bypass the browser's native event loop and focus-management logic.
+  3.  **Fail to trigger browser-native behaviors**: (e.g., `Escape` dismissing a native dialog or `Enter` submitting a form).
+- **Fix**: Replace all synthetic dispatch logic with Playwright's **native** API: `page.keyboard.press()`. This correctly simulates the OS-level hardware interaction, handles bubbling, and respects the currently focused element.
+
+  ```typescript
+  // utils.ts Rewrite
+  export async function pressKey(page: Page, key: string): Promise<void> {
+    let pwKey = key;
+    if (key === ' ') pwKey = 'Space';
+    if (key.includes('+')) {
+      pwKey = key.replace('Ctrl+', 'Control+').replace('Alt+', 'Alt+').replace('Shift+', 'Shift+');
+    }
+    await page.keyboard.press(pwKey); // Reliable, Native
+    await page.waitForTimeout(DEFAULT_DELAY);
+  }
+  ```
+
+  > [!IMPORTANT]
+  > Standardizing on `page.keyboard.press` resolved long-standing flakiness in Level 3 (Filter Escape), Level 9 (Selection Inversion), and Modal dismissal overall.
+
+### 31. Cursor Persistence during List Mutations
+
+- **Symptom**: Sequences like "Filter -> Escape -> Cut" cut the wrong file (e.g., cutting `batch_logs` instead of `sector_map.png`).
+- **Root Cause**: When a filter is cleared or a search is exited, the file list expands or changes completely. If `cursorIndex` remains static (e.g., at 0), it now points to whatever item rotated into that slot.
+- **Fix**: implemented logic in `gameReducer.ts` for `CLEAR_FILTER` and `SET_MODE` that:
+  1.  Captures the `id` of the current item before the state change.
+  2.  Calculates the new list.
+  3.  Re-finds the `id` in the new list and updates `cursorIndex` to match its new position.
+
+### 32. Cross-Level State Leakage
+
+- **Symptom**: Levels or tasks complete instantly upon entry if performed in a previous level run.
+- **Root Cause**: The `SET_LEVEL` action was retaining `used*` tracking flags (e.g., `usedCtrlR`, `usedSearch`) from the previous execution context.
+- **Fix**: Added a comprehensive reset block in the `SET_LEVEL` reducer case to explicitly clear all task-tracking booleans.
+
+### 33. Robust Input Focus & Interaction
+
+- **Symptom**: Text typed into search or filter modals leaking into the global filesystem listener (e.g., typing `s` starts another search).
+- **Root Cause**: React's `autoFocus` can sometimes be delayed or focus can be lost during re-renders. Playwright's `page.keyboard.type` sends keys to the "active element," which might revert to `body`.
+- **Fix**: Standardized `utils.ts` (e.g. `filterByText`, `renameItem`) to explicitly `locator.focus()`, `locator.fill('')`, and then interact with the input element directly.

@@ -54,14 +54,23 @@ export const handleClipboardKeyDown = (
     case 'r':
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        const allIds = items.map((item) => item.id);
-        const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
-        dispatch({ type: 'SET_SELECTION', ids: inverted });
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlR: true } });
-        showNotification(
-          getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
-          500
-        );
+        // Invert selection against all potential items in the directory (respecting showHidden)
+        // instead of just the currently visible (filtered) items.
+        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+        if (currentDir && currentDir.children) {
+          let allPotentialItems = currentDir.children;
+          if (!gameState.showHidden) {
+            allPotentialItems = allPotentialItems.filter((node) => !node.name.startsWith('.'));
+          }
+          const allIds = allPotentialItems.map((item) => item.id);
+          const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
+          dispatch({ type: 'SET_SELECTION', ids: inverted });
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlR: true } });
+          showNotification(
+            getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
+            500
+          );
+        }
         return true;
       } else if (gameState.selectedIds.length > 1) {
         dispatch({
@@ -141,6 +150,7 @@ export const handleClipboardKeyDown = (
           updates: {
             selectedIds: [],
             usedY: gameState.usedY || e.key === 'y',
+            usedX: gameState.usedX || e.key === 'x',
             notification: {
               message:
                 getNarrativeAction(e.key) ||

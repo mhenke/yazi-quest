@@ -214,6 +214,7 @@ export interface GameState {
   usedPreviewUp?: boolean; // Tracks if player used Shift+K
   usedP?: boolean; // Tracks if player used 'p' to paste
   usedShiftP?: boolean; // Tracks if player used 'Shift+P' (overwrite paste)
+  usedX?: boolean; // Tracks if player used 'x' to cut
   usedD?: boolean; // Tracks if player used 'D' for permanent delete
   usedTrashDelete?: boolean; // Tracks if player used 'd' for trash delete
   usedHistoryBack?: boolean;

@@ -3,7 +3,6 @@ import {
   startLevel,
   pressKey,
   gotoCommand,
-  typeText,
   assertTask,
   filterByText,
   clearFilter,
@@ -14,6 +13,7 @@ import {
   dismissAlertIfPresent,
   expectNarrativeThought,
   confirmMission,
+  search,
   deleteItem,
   expectCurrentDir,
   enterDirectory,
@@ -33,10 +33,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await enterDirectory(page, 'batch_logs');
     await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
-    // 3) s, then type ".log" and press enter key
-    await pressKey(page, 's');
-    await typeText(page, '\\.log');
-    await page.keyboard.press('Enter');
+    // 3) Use robust search helper
+    await search(page, '\\.log');
 
     // Wait for search results to populate (at least 4 logs expected)
     await page.waitForFunction(
@@ -49,7 +47,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'Ctrl+a');
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
-    await pressKey(page, 'Escape');
+    await page.keyboard.press('Escape');
     await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
     // 5) gc (g then c) -- Escape is already pressed
@@ -161,9 +159,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     if (!uplinkExists) {
       // Create the uplink_v1.conf file with corrupted content if it doesn't exist
-      await pressKey(page, 'a'); // Add new file
-      await typeText(page, 'uplink_v1.conf');
-      await page.keyboard.press('Enter');
+      await addItem(page, 'uplink_v1.conf');
       await page.waitForTimeout(DEFAULT_DELAY);
     }
 
@@ -215,14 +211,14 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await filterByText(page, '\\.(key|pid|sock)$');
 
     // Select All Visible (Robustly selects the 4 filtered items)
-    await pressKey(page, 'Ctrl+A'); // Select all
+    await pressKey(page, 'Ctrl+a'); // Select all
 
     await page.keyboard.press('Escape'); // Dismiss active filter
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
     // Task 2: Invert the selection (Ctrl+R)
-    await pressKey(page, 'Ctrl+R');
+    await pressKey(page, 'Ctrl+r');
     await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
 
     // Task 3: Permanently delete the selected junk files (D)

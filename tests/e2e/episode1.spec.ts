@@ -91,7 +91,7 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 1: l, G (shift+g) - navigate to log directory and use G
       await enterDirectory(page, 'log'); // We start in /var
-      await pressKey(page, 'Shift+g'); // Use G (Shift+g) to view the file
+      await pressKey(page, 'Shift+G'); // Use G (Shift+G) to view the file
       await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
 
       // Task 2: gi - use goto command to jump to ~/incoming
@@ -99,7 +99,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '2/5', testInfo.outputDir, 'nav_to_incoming');
 
       // Task 3: G and Tab - use G to go to bottom and Tab to inspect
-      await pressKey(page, 'Shift+g'); // Use G (Shift+g) to go to bottom
+      await pressKey(page, 'Shift+G'); // Use G (Shift+G) to go to bottom
       await pressKey(page, 'Tab'); // Use Tab to inspect the file
       // Selecting the file completes "initial-scan" (Task 4) AND inspecting completes "locate-watcher" (Task 3)
       // So we jump to 4/5 tasks complete.
@@ -141,7 +141,7 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Task 3: x, ESC - cut file and clear filter
       await pressKey(page, 'x'); // cut the file (x)
-      await pressKey(page, 'Escape'); // ESC to clear filter
+      await page.keyboard.press('Escape'); // ESC to clear filter
       await assertTask(page, '3/4', testInfo.outputDir, 'cut_sector_map');
 
       // Task 4: gh, 2*j, l, p - go home, navigate to media, enter, paste

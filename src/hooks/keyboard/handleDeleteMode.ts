@@ -4,7 +4,7 @@ import {
   checkCriticalFileDeletion,
   validateDeletions,
 } from '../../utils/gameUtils';
-import { isProtected, deleteNode } from '../../utils/fsHelpers';
+import { isProtected, deleteNode, getNodeById } from '../../utils/fsHelpers';
 import { getNarrativeAction } from './utils';
 import { Action } from '../gameReducer';
 
@@ -75,7 +75,14 @@ export const confirmDelete = (
   }
 
   for (const id of gameState.pendingDeleteIds) {
-    const node = visibleItems.find((n) => n.id === id);
+    // Try to find the node in visibleItems first (faster, and contains path info for search results)
+    let node = visibleItems.find((n) => n.id === id);
+
+    // If not found in visible items (e.g. filtered out), look in the FS
+    if (!node) {
+      node = getNodeById(newFs, id);
+    }
+
     if (node) {
       // Determine the target directory path for this node.
       // Search results include their full path from root; normal items use the currentPath.
@@ -92,7 +99,7 @@ export const confirmDelete = (
       );
       if (protection) {
         errorMsg = protection;
-        break;
+        continue;
       }
       const res = deleteNode(newFs, targetDirPath, id, gameState.levelIndex);
       if (!res.ok) {
@@ -106,33 +113,30 @@ export const confirmDelete = (
     }
   }
 
+  dispatch({
+    type: 'DELETE_NODES',
+    newFs: newFs,
+  });
+
   if (errorMsg) {
     dispatch({
       type: 'UPDATE_UI_STATE',
       updates: {
         mode: 'normal',
         pendingDeleteIds: [],
-        notification: { message: `🔒 PROTECTED: ${errorMsg}` },
+        notification: { message: `🔒 PARTIAL: ${errorMsg}` },
+        usedD: true,
       },
     });
-    return;
+  } else {
+    dispatch({
+      type: 'UPDATE_UI_STATE',
+      updates: {
+        notification: { message: getNarrativeAction('d') || 'Items deleted' },
+        usedD: true,
+      },
+    });
   }
-
-  dispatch({
-    type: 'DELETE_NODES',
-    newFs: newFs,
-  });
-
-  // Also dispatch notification and usedD flag via UPDATE_UI_STATE or separately if needed.
-  // Actually, I can update DELETE_NODES in gameReducer to handle these common bits.
-  // But for now:
-  dispatch({
-    type: 'UPDATE_UI_STATE',
-    updates: {
-      notification: { message: getNarrativeAction('d') || 'Items deleted' },
-      usedD: true,
-    },
-  });
 };
 
 export const cancelDelete = (dispatch: React.Dispatch<Action>) => {

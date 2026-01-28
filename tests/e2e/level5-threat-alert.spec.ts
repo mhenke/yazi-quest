@@ -29,8 +29,8 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     // The ThreatAlert should still be visible
     await expect(page.getByTestId('threat-alert')).toBeVisible();
 
-    // Now try Alt+H to open hint
-    await pressKey(page, 'Alt+H');
+    // Now try Alt+h to open hint
+    await pressKey(page, 'Alt+h');
     await expect(page.getByTestId('hint-modal')).toBeVisible();
     await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible underneath
 
@@ -39,8 +39,8 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     await expect(page.getByTestId('hint-modal')).not.toBeVisible();
     await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible
 
-    // Now try Alt+M to open map
-    await pressKey(page, 'Alt+M');
+    // Now try Alt+m to open map
+    await pressKey(page, 'Alt+m');
     await expect(page.getByTestId('quest-map-modal')).toBeVisible();
     await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible underneath
 

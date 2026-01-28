@@ -129,6 +129,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         <span
           className={`text-zinc-500 hidden sm:flex items-center gap-2 whitespace-nowrap ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
         >
+          <span className="font-bold text-zinc-400">L{level.id}</span>
+          <span className="text-zinc-600">|</span>
           <span>{level.title}</span>
           <span className="text-zinc-600">•</span>
           <span

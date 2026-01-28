@@ -6,7 +6,6 @@ import {
   pressKeys,
   gotoCommand,
   waitForMissionComplete,
-  typeText,
   ensureCleanState,
   assertTask,
   filterByText,
@@ -41,7 +40,7 @@ async function handleLevel12Threat(
     await gotoCommand(page, 'r');
     await search(page, 'scan_');
     await expect(page.locator('[data-testid^="file-scan_"]')).toHaveCount(3, { timeout: 2000 });
-    await pressKey(page, 'Ctrl+A');
+    await pressKey(page, 'Ctrl+a');
     await page.waitForTimeout(DEFAULT_DELAY);
     await deleteItem(page, { confirm: true });
     await dismissAlertIfPresent(page, /Threat Detected/i);
@@ -203,15 +202,13 @@ test.describe('Episode 3: MASTERY', () => {
     await clearFilter(page);
 
     await pressKey(page, '.'); // Show hidden
-    await pressKey(page, 's'); // Search
-    await typeText(page, '.key');
-    await page.keyboard.press('Enter');
+    await search(page, '.key');
     await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
       timeout: 500,
     });
 
-    await pressKeys(page, ['Ctrl+A', 'x']); // Select all then Cut
+    await pressKeys(page, ['Ctrl+a', 'x']); // Select all then Cut
     await expectClipboard(page, 'MOVE: 3');
     await clearFilter(page); // Clear filter after action per expert advice
     await pressKey(page, 'Escape'); // Clear search
@@ -310,32 +307,8 @@ test.describe('Episode 3: MASTERY', () => {
 
       const targets = ['incoming', 'media', 'workspace', 'datastore'];
 
-      // Batch selection loop
       for (const target of targets) {
-        await pressKey(page, 'f');
-        await typeText(page, target);
-        await page.keyboard.press('Enter'); // Confirm filter
-
-        // Wait for at least one match
-        const fileRow = page.getByTestId(`file-${target}`).first();
-        await expect(fileRow).toBeVisible();
-        await page.waitForTimeout(DEFAULT_DELAY);
-
-        // Check for duplicates (e.g. 'workspace' might appear twice due to glitch)
-        const matchCount = await page.getByTestId(`file-${target}`).count();
-
-        // Select ALL matches
-        for (let i = 0; i < matchCount; i++) {
-          await page.keyboard.press(' ');
-          await page.waitForTimeout(DEFAULT_DELAY / 2);
-        }
-
-        // Verify at least one is marked
-        await expect(fileRow).toContainText('[VIS]');
-
-        // Clear filter
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(DEFAULT_DELAY);
+        await filterAndSelect(page, target);
       }
 
       // Ensure selection is registered before deletion
@@ -399,7 +372,7 @@ test.describe('Episode 3: MASTERY', () => {
     }
 
     // 3. Select all 3 keys using Ctrl+A (robust)
-    await pressKey(page, 'Ctrl+A');
+    await pressKey(page, 'Ctrl+a');
 
     // 4. Cut (x)
     await pressKey(page, 'x');

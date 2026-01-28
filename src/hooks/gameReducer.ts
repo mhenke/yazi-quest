@@ -1,6 +1,7 @@
 import { GameState, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } from '../types';
 import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
+import { getVisibleItems } from '../utils/viewHelpers';
 
 export type Action =
   | { type: 'SET_MODE'; mode: GameState['mode'] }
@@ -69,8 +70,24 @@ export type Action =
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
-    case 'SET_MODE':
-      return { ...state, mode: action.mode, inputBuffer: '' };
+    case 'SET_MODE': {
+      // Find current item ID to maintain cursor position if list changes
+      const visibleItemsBefore = getVisibleItems(state);
+      const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
+
+      let newState = { ...state, mode: action.mode, inputBuffer: '' };
+
+      // Special case: if we were in search and are now in normal, or vice versa
+      // (Actually any mode switch might change visible list)
+      if (currentItemId) {
+        const visibleItemsAfter = getVisibleItems(newState);
+        const newIndex = visibleItemsAfter.findIndex((item) => item.id === currentItemId);
+        if (newIndex !== -1) {
+          newState = { ...newState, cursorIndex: newIndex };
+        }
+      }
+      return newState;
+    }
 
     case 'NAVIGATE':
       return {
@@ -204,6 +221,30 @@ export function gameReducer(state: GameState, action: Action): GameState {
           [LEVELS[action.index].id]: [],
         },
         zoxideData: action.zoxideData || state.zoxideData,
+        // Reset all tracking flags to prevent state leakage between levels
+        usedG: false,
+        usedGI: false,
+        usedGC: false,
+        usedGR: false,
+        usedGH: false,
+        usedCtrlA: false,
+        usedCtrlR: false,
+        usedGG: false,
+        usedDown: false,
+        usedUp: false,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
+        usedP: false,
+        usedShiftP: false,
+        usedX: false,
+        usedD: false,
+        usedTrashDelete: false,
+        usedHistoryBack: false,
+        usedHistoryForward: false,
+        usedSortM: false,
+        usedY: false,
+        usedSearch: false,
+        usedFilter: false,
       };
 
     case 'RESTART_CYCLE':
@@ -303,12 +344,26 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         filters: { ...state.filters, [action.dirId]: action.filter },
+        cursorIndex: 0,
       };
 
     case 'CLEAR_FILTER': {
+      // Find current item ID to maintain cursor position
+      const visibleItemsBefore = getVisibleItems(state);
+      const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
+
       const newFilters = { ...state.filters };
       delete newFilters[action.dirId];
-      return { ...state, filters: newFilters };
+      const newState = { ...state, filters: newFilters };
+
+      if (currentItemId) {
+        const visibleItemsAfter = getVisibleItems(newState);
+        const newIndex = visibleItemsAfter.findIndex((item) => item.id === currentItemId);
+        if (newIndex !== -1) {
+          newState.cursorIndex = newIndex;
+        }
+      }
+      return newState;
     }
 
     case 'RENAME_NODE':

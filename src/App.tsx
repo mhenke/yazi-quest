@@ -2324,7 +2324,7 @@ export default function App() {
         return;
       }
 
-      if (e.key === 'm' && e.altKey) {
+      if (e.key === 'm' && e.altKey && !e.shiftKey) {
         e.preventDefault();
         dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } });
         return;
@@ -2784,12 +2784,19 @@ export default function App() {
                   });
                 }}
                 onCancel={() => {
+                  const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                  if (dir) {
+                    dispatch({ type: 'CLEAR_FILTER', dirId: dir.id });
+                  }
                   dispatch({
                     type: 'UPDATE_UI_STATE',
                     updates: {
                       mode: 'normal',
                       inputBuffer: '',
-                      stats: { ...gameState.stats, filterUsage: gameState.stats.filterUsage + 1 },
+                      stats: {
+                        ...gameState.stats,
+                        filterUsage: gameState.stats.filterUsage + 1,
+                      },
                     },
                   });
                 }}

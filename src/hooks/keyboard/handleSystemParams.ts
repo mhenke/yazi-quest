@@ -38,6 +38,7 @@ export const handleSystemParamsKeyDown = (
           inputBuffer: '',
           searchQuery: null,
           searchResults: [],
+          usedSearch: true,
         },
       });
       // Also need to clear filters? The original code had filters: {}

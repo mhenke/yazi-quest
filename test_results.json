@@ -1,0 +1,3306 @@
+{
+  "config": {
+    "configFile": "/home/mhenke/Projects/yazi-quest/playwright.config.ts",
+    "rootDir": "/home/mhenke/Projects/yazi-quest/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 6
+    },
+    "preserveOutput": "always",
+    "reporter": [["json"]],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/mhenke/Projects/yazi-quest/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/mhenke/Projects/yazi-quest/tests/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 6,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "baseline-sanity.spec.ts",
+      "file": "baseline-sanity.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Baseline Sanity Check",
+          "file": "baseline-sanity.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Level 1: Navigation Smoke Test",
+              "ok": true,
+              "tags": ["smoke"],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2065,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:44.966Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9d085b4c31073623c334-ce6dbd28ebfc00f3f5ee",
+              "file": "baseline-sanity.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "Level 6: Batch Operations Smoke Test",
+              "ok": true,
+              "tags": ["smoke"],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2061,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:45.006Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9d085b4c31073623c334-653ea5e1cd7c60abd9b2",
+              "file": "baseline-sanity.spec.ts",
+              "line": 11,
+              "column": 3
+            },
+            {
+              "title": "Level 11: Reconnaissance Smoke Test",
+              "ok": true,
+              "tags": ["smoke"],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2025,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:44.980Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9d085b4c31073623c334-0c1a0ef983f995c31d3f",
+              "file": "baseline-sanity.spec.ts",
+              "line": 17,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "constraints.spec.ts",
+      "file": "constraints.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Game Constraints",
+          "file": "constraints.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Keystroke Limit: Exceeding maxKeystrokes triggers Game Over",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 14205,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:44.975Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0d352ccff8ec24e02131-d9bebbd11c5e759f7fa4",
+              "file": "constraints.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "Time Limit: Running out of time triggers Game Over",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 4692,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:44.965Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0d352ccff8ec24e02131-9b7822dc27f17d0226d4",
+              "file": "constraints.spec.ts",
+              "line": 22,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "dialogs.spec.ts",
+      "file": "dialogs.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dialogs Functionality",
+          "file": "dialogs.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should open and close Help modal with Alt+? and Escape",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 2502,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:45.005Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-dcf15e5d2139086d30bf",
+              "file": "dialogs.spec.ts",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should open and close Help modal with Alt+? and Shift+Enter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3805,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:47.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-672d6d94f740c57fd76f",
+              "file": "dialogs.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "should close Help modal by clicking on backdrop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1824,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:47.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-e0f22d65bdffe7b567b8",
+              "file": "dialogs.spec.ts",
+              "line": 37,
+              "column": 3
+            },
+            {
+              "title": "should open and close Hint modal with Alt+h and Escape",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1752,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:47.294Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-02da7160deb7570d4988",
+              "file": "dialogs.spec.ts",
+              "line": 47,
+              "column": 3
+            },
+            {
+              "title": "should open and close Hint modal with Alt+h and Shift+Enter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 3971,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:47.724Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-d31fb49d26b3f31c085a",
+              "file": "dialogs.spec.ts",
+              "line": 60,
+              "column": 3
+            },
+            {
+              "title": "should open and close Quest Map modal with Alt+m and Escape",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1646,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:49.026Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-037ec46060c752a71d01",
+              "file": "dialogs.spec.ts",
+              "line": 74,
+              "column": 3
+            },
+            {
+              "title": "should open and close Quest Map modal with Alt+m and Shift+Enter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3815,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:49.077Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-4a5dc2a96a9ab3f435f6",
+              "file": "dialogs.spec.ts",
+              "line": 87,
+              "column": 3
+            },
+            {
+              "title": "should close Quest Map modal by clicking on backdrop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 1656,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:49.795Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-9c9acaaf53da9b888f7c",
+              "file": "dialogs.spec.ts",
+              "line": 101,
+              "column": 3
+            },
+            {
+              "title": "should open Hint modal by clicking the hint button",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1376,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:50.688Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-8049a807d283d64b93e4",
+              "file": "dialogs.spec.ts",
+              "line": 111,
+              "column": 3
+            },
+            {
+              "title": "should open Help modal by clicking the help button",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1528,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:51.002Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-9c5847f121c0951ddb7b",
+              "file": "dialogs.spec.ts",
+              "line": 120,
+              "column": 3
+            },
+            {
+              "title": "should open Quest Map modal by clicking the map button",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 1436,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:51.476Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-f759f17ff23ff6bc9490",
+              "file": "dialogs.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "should support navigation in Help modal with j/k keys",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 2262,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:51.727Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-206fbd6a19f44f575e04",
+              "file": "dialogs.spec.ts",
+              "line": 142,
+              "column": 3
+            },
+            {
+              "title": "should support navigation in Quest Map modal with h/l and j/k keys",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2239,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:52.082Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-01276be180f0625f1dcb",
+              "file": "dialogs.spec.ts",
+              "line": 174,
+              "column": 3
+            },
+            {
+              "title": "should open help modal with Alt+? even when other dialogs are active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2353,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:52.555Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-a41b4993e9e686e4b6f8",
+              "file": "dialogs.spec.ts",
+              "line": 193,
+              "column": 3
+            },
+            {
+              "title": "should open hint modal with Alt+h even when other dialogs are active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2120,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:52.907Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-7c42d9cf2becc22fe690",
+              "file": "dialogs.spec.ts",
+              "line": 210,
+              "column": 3
+            },
+            {
+              "title": "should open map modal with Alt+m even when other dialogs are active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 2115,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:52.928Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-6c22925f8035e267071b",
+              "file": "dialogs.spec.ts",
+              "line": 224,
+              "column": 3
+            },
+            {
+              "title": "should open help modal with Alt+? even when ThreatAlert is active (simulated)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 2488,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:54.005Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c8c8ce29fa4987e6487c-32f3a7b5ecfaa2f44db9",
+              "file": "dialogs.spec.ts",
+              "line": 238,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "episode1.spec.ts",
+      "file": "episode1.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Episode 1: AWAKENING",
+          "file": "episode1.spec.ts",
+          "line": 33,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Level 1: SYSTEM AWAKENING",
+              "file": "episode1.spec.ts",
+              "line": 34,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Level 1: SYSTEM AWAKENING - completes all navigation tasks",
+                  "ok": true,
+                  "tags": ["smoke"],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 5344,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:27:54.352Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "89fcc3c780edc6e4b06c-3ef5fb0ccf6284e8f849",
+                  "file": "episode1.spec.ts",
+                  "line": 35,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 2: THREAT NEUTRALIZATION",
+              "file": "episode1.spec.ts",
+              "line": 87,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "locates and deletes watcher_agent.sys",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 4339,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*1\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 0/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 0/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 0/5\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*1\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 0/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 0/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 0/5\"\u001b[22m\n\n    at assertTask (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:372:50)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode1.spec.ts:95:13",
+                            "location": {
+                              "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                              "column": 50,
+                              "line": 372
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39mutils.ts:372\n\n  370 |   const expectedCompleted = taskCount.split('/')[0];\n  371 |   const tasksRegex = new RegExp(`Tasks:\\\\s*${expectedCompleted}/\\\\d+`);\n> 372 |   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, { timeout: 2000 });\n      |                                                  ^\n  373 | }\n  374 |\n  375 | /**"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                                "column": 50,
+                                "line": 372
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*1\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 0/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 0/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 0/5\"\u001b[22m\n\n\n   at utils.ts:372\n\n  370 |   const expectedCompleted = taskCount.split('/')[0];\n  371 |   const tasksRegex = new RegExp(`Tasks:\\\\s*${expectedCompleted}/\\\\d+`);\n> 372 |   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, { timeout: 2000 });\n      |                                                  ^\n  373 | }\n  374 |\n  375 | /**\n    at assertTask (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:372:50)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode1.spec.ts:95:13"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:27:54.963Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/home/mhenke/Projects/yazi-quest/test-results/episode1-Episode-1-AWAKENI-9553d-d-deletes-watcher-agent-sys-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/home/mhenke/Projects/yazi-quest/test-results/episode1-Episode-1-AWAKENI-9553d-d-deletes-watcher-agent-sys-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 50,
+                            "line": 372
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "89fcc3c780edc6e4b06c-bceb33716d9dafb6f5b9",
+                  "file": "episode1.spec.ts",
+                  "line": 88,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 3: DATA HARVEST",
+              "file": "episode1.spec.ts",
+              "line": 127,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "filters, cuts and pastes sector_map.png",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 4944,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:27:55.081Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "89fcc3c780edc6e4b06c-2abefb641e6cf3968a38",
+                  "file": "episode1.spec.ts",
+                  "line": 128,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 4: UPLINK ESTABLISHMENT",
+              "file": "episode1.spec.ts",
+              "line": 159,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "creates directory structures and duplicates files",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 3853,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:27:55.099Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "89fcc3c780edc6e4b06c-fb58bbd6dcbe1df51bdb",
+                  "file": "episode1.spec.ts",
+                  "line": 160,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 5: CONTAINMENT BREACH",
+              "file": "episode1.spec.ts",
+              "line": 185,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "selects, cuts, creates vault structure and hides files",
+                  "ok": true,
+                  "tags": ["smoke"],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 6871,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:27:56.521Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "89fcc3c780edc6e4b06c-1969b5cad5c8637487b9",
+                  "file": "episode1.spec.ts",
+                  "line": 186,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "episode2.spec.ts",
+      "file": "episode2.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Episode 2: FORTIFICATION",
+          "file": "episode2.spec.ts",
+          "line": 24,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Level 6: BATCH OPERATIONS - completes recursive search and batch operations",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 8271,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*5\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 4/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 4/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 4/5\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*5\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 4/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 4/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 4/5\"\u001b[22m\n\n    at assertTask (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:372:50)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:67:11",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 50,
+                          "line": 372
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:372\n\n  370 |   const expectedCompleted = taskCount.split('/')[0];\n  371 |   const tasksRegex = new RegExp(`Tasks:\\\\s*${expectedCompleted}/\\\\d+`);\n> 372 |   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, { timeout: 2000 });\n      |                                                  ^\n  373 | }\n  374 |\n  375 | /**"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 50,
+                            "line": 372
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('task-counter')\nExpected pattern: \u001b[32m/Tasks:\\s*5\\/\\d+/\u001b[39m\nReceived string:  \u001b[31m\"Tasks: 4/5\"\u001b[39m\nTimeout: 2000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('task-counter')\u001b[22m\n\u001b[2m    6 × locator resolved to <span data-testid=\"task-counter\" class=\"font-bold text-yellow-400\">Tasks: 4/5</span>\u001b[22m\n\u001b[2m      - unexpected value \"Tasks: 4/5\"\u001b[22m\n\n\n   at utils.ts:372\n\n  370 |   const expectedCompleted = taskCount.split('/')[0];\n  371 |   const tasksRegex = new RegExp(`Tasks:\\\\s*${expectedCompleted}/\\\\d+`);\n> 372 |   await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, { timeout: 2000 });\n      |                                                  ^\n  373 | }\n  374 |\n  375 | /**\n    at assertTask (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:372:50)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:67:11"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:58.985Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-77733-search-and-batch-operations-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-77733-search-and-batch-operations-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 50,
+                        "line": 372
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5053e65295d495866217-c0cd0ef235c564cfe635",
+              "file": "episode2.spec.ts",
+              "line": 26,
+              "column": 3
+            },
+            {
+              "title": "Level 7: QUANTUM BYPASS - completes FZF find and clipboard abort",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 7811,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n\n    at findFZF (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:178:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:85:5",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 23,
+                          "line": 178
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:178\n\n  176 |   await pressKey(page, 'z');\n  177 |   const input = page.locator('input').first();\n> 178 |   await expect(input).toBeVisible();\n      |                       ^\n  179 |   await typeText(page, name);\n  180 |   await page.keyboard.press('Enter');\n  181 |   await page.waitForTimeout(DEFAULT_DELAY);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 23,
+                            "line": 178
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n\n\n   at utils.ts:178\n\n  176 |   await pressKey(page, 'z');\n  177 |   const input = page.locator('input').first();\n> 178 |   await expect(input).toBeVisible();\n      |                       ^\n  179 |   await typeText(page, name);\n  180 |   await page.keyboard.press('Enter');\n  181 |   await page.waitForTimeout(DEFAULT_DELAY);\n    at findFZF (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:178:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:85:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:59.343Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-6d9bd-ZF-find-and-clipboard-abort-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-6d9bd-ZF-find-and-clipboard-abort-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 23,
+                        "line": 178
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5053e65295d495866217-0fc3408220bb00b903d5",
+              "file": "episode2.spec.ts",
+              "line": 74,
+              "column": 3
+            },
+            {
+              "title": "Level 8: DAEMON DISGUISE CONSTRUCTION - performs force overwrite",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 10174,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n\n    at fuzzyJump (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:138:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:178:5",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 23,
+                          "line": 138
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:138\n\n  136 |   // Fuzzy finder input doesn't always have a testid, so we find it by role\n  137 |   const input = page.locator('input').first();\n> 138 |   await expect(input).toBeVisible();\n      |                       ^\n  139 |   await typeText(page, target);\n  140 |   await page.keyboard.press('Enter');\n  141 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 23,
+                            "line": 138
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input').first()\u001b[22m\n\n\n   at utils.ts:138\n\n  136 |   // Fuzzy finder input doesn't always have a testid, so we find it by role\n  137 |   const input = page.locator('input').first();\n> 138 |   await expect(input).toBeVisible();\n      |                       ^\n  139 |   await typeText(page, target);\n  140 |   await page.keyboard.press('Enter');\n  141 | }\n    at fuzzyJump (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:138:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode2.spec.ts:178:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:01.154Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-4b206----performs-force-overwrite-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode2-Episode-2-FORTIFI-4b206----performs-force-overwrite-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 23,
+                        "line": 138
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5053e65295d495866217-9f2ccdf6943275c84577",
+              "file": "episode2.spec.ts",
+              "line": 113,
+              "column": 3
+            },
+            {
+              "title": "Level 9: TRACE CLEANUP - selects, inverts, and deletes junk",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 3792,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:27:59.739Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5053e65295d495866217-c3938f814b09f86c9f33",
+              "file": "episode2.spec.ts",
+              "line": 198,
+              "column": 3
+            },
+            {
+              "title": "Level 10: CREDENTIAL HEIST - identifies and secures active key",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7463,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:00.070Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5053e65295d495866217-a558bc667720bc531b92",
+              "file": "episode2.spec.ts",
+              "line": 240,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "episode3.spec.ts",
+      "file": "episode3.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Episode 3: MASTERY",
+          "file": "episode3.spec.ts",
+          "line": 127,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Level 11: DAEMON RECONNAISSANCE - completes reconnaissance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 6047,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:03.441Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-58078f85535c5b1b500f",
+              "file": "episode3.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "Level 12: scen-a1 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 9195,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:03.593Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-2048bd356b9908140c6e",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 12: scen-a2 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 10955,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:08.223Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-05a1a7ecfb60e89f5380",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 12: scen-a3 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 11028,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:08.282Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-57f60979999332909b35",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 12: scen-b1 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 10420,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:07.567Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-ae6547161876f8b8e353",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 12: scen-b2 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 11143,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:09.514Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-3178960d385d7d5a70c9",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 12: scen-b3 - completes successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11656,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:12.994Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45de387760ceda949927-a0541f601c21a74a5028",
+              "file": "episode3.spec.ts",
+              "line": 174,
+              "column": 5
+            },
+            {
+              "title": "Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 6417,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('status-bar')\nExpected substring: \u001b[32m\"L13\"\u001b[39m\nReceived string:    \u001b[31m\"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('status-bar')\u001b[22m\n\u001b[2m    4 × locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 003:00HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:59HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:58HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:57HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:56HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('status-bar')\nExpected substring: \u001b[32m\"L13\"\u001b[39m\nReceived string:    \u001b[31m\"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('status-bar')\u001b[22m\n\u001b[2m    4 × locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 003:00HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:59HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:58HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:57HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:56HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\n    at assertLevel (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:350:48)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:196:11",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 48,
+                          "line": 350
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:350\n\n  348 |  */\n  349 | export async function assertLevel(page: Page, levelId: string): Promise<void> {\n> 350 |   await expect(page.getByTestId('status-bar')).toContainText(`L${levelId}`);\n      |                                                ^\n  351 | }\n  352 |\n  353 | /**"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 48,
+                            "line": 350
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('status-bar')\nExpected substring: \u001b[32m\"L13\"\u001b[39m\nReceived string:    \u001b[31m\"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('status-bar')\u001b[22m\n\u001b[2m    4 × locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 003:00HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:59HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:58HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:57HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:56HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\u001b[2m    - locator resolved to <div data-testid=\"status-bar\" class=\"h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30\">…</div>\u001b[22m\n\u001b[2m    - unexpected value \"NORcamouflageNODE SYNC: ACTIVEDISTRIBUTED CONSCIOUSNESS•Tasks: 0/4WATCHDOG v2.0IG_AUDIT: 002:55HIDDEN: OFFsizedrwxr-xr-xTop1/12\"\u001b[22m\n\n\n   at utils.ts:350\n\n  348 |  */\n  349 | export async function assertLevel(page: Page, levelId: string): Promise<void> {\n> 350 |   await expect(page.getByTestId('status-bar')).toContainText(`L${levelId}`);\n      |                                                ^\n  351 | }\n  352 |\n  353 | /**\n    at assertLevel (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:350:48)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:196:11"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:12.809Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-35213----gathers-distributed-keys-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-35213----gathers-distributed-keys-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 48,
+                        "line": 350
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "45de387760ceda949927-bb30db6b74012c87f4db",
+              "file": "episode3.spec.ts",
+              "line": 188,
+              "column": 3
+            },
+            {
+              "title": "Level 14: EVIDENCE PURGE - permanently deletes all user data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 11501,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('file-incoming').first()\nExpected substring: \u001b[32m\"[VIS]\"\u001b[39m\nReceived string:    \u001b[31m\"incoming10\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('file-incoming').first()\u001b[22m\n\u001b[2m    9 × locator resolved to <div role=\"listitem\" aria-label=\"incoming, dir\" data-testid=\"file-incoming\" class=\"↵    px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative↵    ↵    ↵    ↵    ↵  \">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"incoming10\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('file-incoming').first()\nExpected substring: \u001b[32m\"[VIS]\"\u001b[39m\nReceived string:    \u001b[31m\"incoming10\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('file-incoming').first()\u001b[22m\n\u001b[2m    9 × locator resolved to <div role=\"listitem\" aria-label=\"incoming, dir\" data-testid=\"file-incoming\" class=\"↵    px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative↵    ↵    ↵    ↵    ↵  \">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"incoming10\"\u001b[22m\n\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:334:31\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:305:5",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts",
+                          "column": 31,
+                          "line": 334
+                        },
+                        "snippet": "  332 |\n  333 |         // Verify at least one is marked\n> 334 |         await expect(fileRow).toContainText('[VIS]');\n      |                               ^\n  335 |\n  336 |         // Clear filter\n  337 |         await page.keyboard.press('Escape');"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts",
+                            "column": 31,
+                            "line": 334
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('file-incoming').first()\nExpected substring: \u001b[32m\"[VIS]\"\u001b[39m\nReceived string:    \u001b[31m\"incoming10\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('file-incoming').first()\u001b[22m\n\u001b[2m    9 × locator resolved to <div role=\"listitem\" aria-label=\"incoming, dir\" data-testid=\"file-incoming\" class=\"↵    px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative↵    ↵    ↵    ↵    ↵  \">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"incoming10\"\u001b[22m\n\n\n  332 |\n  333 |         // Verify at least one is marked\n> 334 |         await expect(fileRow).toContainText('[VIS]');\n      |                               ^\n  335 |\n  336 |         // Clear filter\n  337 |         await page.keyboard.press('Escape');\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:334:31\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:305:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Task 2: Move vault to /tmp",
+                          "duration": 2140
+                        },
+                        {
+                          "title": "Task 3: Create decoys",
+                          "duration": 1454
+                        },
+                        {
+                          "title": "Task 4: Delete original directories",
+                          "duration": 6171,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('file-incoming').first()\nExpected substring: \u001b[32m\"[VIS]\"\u001b[39m\nReceived string:    \u001b[31m\"incoming10\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('file-incoming').first()\u001b[22m\n\u001b[2m    9 × locator resolved to <div role=\"listitem\" aria-label=\"incoming, dir\" data-testid=\"file-incoming\" class=\"↵    px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative↵    ↵    ↵    ↵    ↵  \">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"incoming10\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('file-incoming').first()\nExpected substring: \u001b[32m\"[VIS]\"\u001b[39m\nReceived string:    \u001b[31m\"incoming10\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('file-incoming').first()\u001b[22m\n\u001b[2m    9 × locator resolved to <div role=\"listitem\" aria-label=\"incoming, dir\" data-testid=\"file-incoming\" class=\"↵    px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative↵    ↵    ↵    ↵    ↵  \">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"incoming10\"\u001b[22m\n\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:334:31\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:305:5",
+                            "location": {
+                              "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts",
+                              "column": 31,
+                              "line": 334
+                            },
+                            "snippet": "  332 |\n  333 |         // Verify at least one is marked\n> 334 |         await expect(fileRow).toContainText('[VIS]');\n      |                               ^\n  335 |\n  336 |         // Clear filter\n  337 |         await page.keyboard.press('Escape');"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-01-28T20:28:18.003Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts",
+                        "column": 31,
+                        "line": 334
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "45de387760ceda949927-d1f65c77ea42f793d2a1",
+              "file": "episode3.spec.ts",
+              "line": 260,
+              "column": 3
+            },
+            {
+              "title": "Level 15: TRANSMISSION PROTOCOL - completes the cycle",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 6852,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('input-modal')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('input-modal')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('input-modal')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('input-modal')\u001b[22m\n\n    at renameItem (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:190:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:431:5",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 23,
+                          "line": 190
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:190\n\n  188 |   await pressKey(page, 'r');\n  189 |   const modal = page.getByTestId('input-modal');\n> 190 |   await expect(modal).toBeVisible({ timeout: 1000 });\n      |                       ^\n  191 |   const input = modal.locator('input');\n  192 |   await input.focus();\n  193 |   await input.fill(name);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 23,
+                            "line": 190
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('input-modal')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('input-modal')\u001b[22m\n\n\n   at utils.ts:190\n\n  188 |   await pressKey(page, 'r');\n  189 |   const modal = page.getByTestId('input-modal');\n> 190 |   await expect(modal).toBeVisible({ timeout: 1000 });\n      |                       ^\n  191 |   const input = modal.locator('input');\n  192 |   await input.focus();\n  193 |   await input.fill(name);\n    at renameItem (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:190:23)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:431:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:19.293Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-c101e-TOCOL---completes-the-cycle-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/episode3-Episode-3-MASTERY-c101e-TOCOL---completes-the-cycle-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 23,
+                        "line": 190
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "45de387760ceda949927-65d7482bd6b101dfada0",
+              "file": "episode3.spec.ts",
+              "line": 368,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "help-modal.spec.ts",
+      "file": "help-modal.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Help Modal",
+          "file": "help-modal.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "opens and closes correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2385,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:20.766Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9813c15865284dae281a-9e908b2cb49d1abfb4e1",
+              "file": "help-modal.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "scrolls with j/k keys",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 2785,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:19.452Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9813c15865284dae281a-b7f032d8996b6a591711",
+              "file": "help-modal.spec.ts",
+              "line": 28,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "intro-pathway.spec.ts",
+      "file": "intro-pathway.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Intro Pathway Validation",
+          "file": "intro-pathway.spec.ts",
+          "line": 72,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Level 1: Landing in ~ (home directory)",
+              "file": "intro-pathway.spec.ts",
+              "line": 73,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Scenario A: Mash Shift+Enter lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1862,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:20.720Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-4419ed7bbabbae239876",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 76,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario B: Click Skip Intro button lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 2048,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:22.279Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-54bf41405175163a0481",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 85,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario C: Hybrid skip lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 2649,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:22.606Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-93aa021763bcfa3a6904",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 94,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 6: Landing in ~ (home directory)",
+              "file": "intro-pathway.spec.ts",
+              "line": 104,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Scenario A: Mash Shift+Enter lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1860,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:23.301Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-73c2cafc169bac48f06f",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 107,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario B: Click Skip Intro button lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 2017,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:24.353Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-149a7615b12009d78b63",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 116,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario C: Hybrid skip lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2719,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:24.788Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-bb1c536acae11adfefb5",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 125,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Level 11: Landing in ~/workspace/systemd-core",
+              "file": "intro-pathway.spec.ts",
+              "line": 135,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Scenario A: Mash Shift+Enter lands in systemd-core",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1489,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:25.192Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-c9ca5119bf90f3c91886",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 138,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario B: Click Skip Intro button lands in systemd-core",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1912,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:25.275Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-87829d44b043a3212bf2",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 146,
+                  "column": 5
+                },
+                {
+                  "title": "Scenario C: Hybrid skip lands in systemd-core",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 11,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 2402,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:27.301Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-dcdab2bef477be3a9bf1",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 154,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Intro Screen Validation",
+              "file": "intro-pathway.spec.ts",
+              "line": 163,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Level 1: EpisodeIntro displays EPISODE I: AWAKENING",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 1104,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:26.409Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-a35eb9f3beb4862e5970",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 164,
+                  "column": 5
+                },
+                {
+                  "title": "Level 1: BiosBoot appears after EpisodeIntro",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 2974,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:26.700Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-5b30d4e870de90afd903",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 172,
+                  "column": 5
+                },
+                {
+                  "title": "Level 6: EpisodeIntro displays EPISODE II: FORTIFICATION",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1094,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:27.201Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-cbae5602028cca0257f8",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 190,
+                  "column": 5
+                },
+                {
+                  "title": "Level 11: EpisodeIntro displays EPISODE III: MASTERY",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1171,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:27.532Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-5d096bf0647badd9ba09",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 196,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Task State Validation",
+              "file": "intro-pathway.spec.ts",
+              "line": 203,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Level 1: Tasks start at 0 after intro skip",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 1948,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:27.535Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-f3adf2cdb6c7969c8f2d",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 204,
+                  "column": 5
+                },
+                {
+                  "title": "Level 6: Tasks start at 0 after intro skip",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1950,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:28.314Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-ec2d1451c2ed3e9b2e7f",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 212,
+                  "column": 5
+                },
+                {
+                  "title": "Level 11: Tasks start at 0 after intro skip",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2039,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:28.720Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-5af893defe90f9f3136c",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 220,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "URL Param Skip (intro=false)",
+              "file": "intro-pathway.spec.ts",
+              "line": 229,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Level 1: intro=false skips directly to game UI",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 1452,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:29.501Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-7e462060adebfabfc5d8",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 230,
+                  "column": 5
+                },
+                {
+                  "title": "Level 6: intro=false skips directly to game UI",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 12,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 1714,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:30.875Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-bb33982686ce698261a4",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 238,
+                  "column": 5
+                },
+                {
+                  "title": "Level 11: intro=false skips directly to game UI",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1298,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:29.691Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-7a9e4bd1bb5889bb4381",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 246,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Natural Progression (section-by-section Shift+Enter)",
+              "file": "intro-pathway.spec.ts",
+              "line": 255,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Level 1: Natural progression through intro lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 11,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 1685,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:29.877Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-8ce200aebf6c013e276e",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 256,
+                  "column": 5
+                },
+                {
+                  "title": "Level 6: Natural progression through intro lands in ~",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1431,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:30.289Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-6749915c5f075e82df1f",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 275,
+                  "column": 5
+                },
+                {
+                  "title": "Level 11: Natural progression through intro lands in systemd-core",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1501,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-28T20:28:30.778Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "4959a67a3860f84a6a1b-69c4c0d7ff31fdac57f2",
+                  "file": "intro-pathway.spec.ts",
+                  "line": 292,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "level5-threat-alert.spec.ts",
+      "file": "level5-threat-alert.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Level 5 ThreatAlert Dialog Functionality",
+          "file": "level5-threat-alert.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should allow meta commands (Alt+M, Alt+H, Alt+?) even when ThreatAlert is active on Level 5 - modals should overlay alert",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 3264,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:30.989Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26918dc664b4751639c3-efb872abb2c9b7fab56e",
+              "file": "level5-threat-alert.spec.ts",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should dismiss ThreatAlert with Shift+Enter and still allow meta commands",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4624,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:31.021Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26918dc664b4751639c3-9a595fb34fc8188f2e55",
+              "file": "level5-threat-alert.spec.ts",
+              "line": 53,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "mechanics.spec.ts",
+      "file": "mechanics.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Game Mechanics & Failures",
+          "file": "mechanics.spec.ts",
+          "line": 19,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Shell Collapse: Deleting critical system directory triggers Game Over",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 3634,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:31.614Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "36f75ee2a81b01ff0dcd-405ea9c9aeb325dd8de9",
+              "file": "mechanics.spec.ts",
+              "line": 20,
+              "column": 3
+            },
+            {
+              "title": "L8 Trap: Overwriting with honeypot triggers Game Over",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "failed",
+                      "duration": 5183,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('filesystem-pane-active').getByText(/active/i).first()\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('filesystem-pane-active').getByText(/active/i).first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('filesystem-pane-active').getByText(/active/i).first()\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('filesystem-pane-active').getByText(/active/i).first()\u001b[22m\n\n    at filterAndSelect (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:567:85)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:52:5",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 85,
+                          "line": 567
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:567\n\n  565 |   // Wait for the item to be visible\n  566 |   const regex = new RegExp(filterText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');\n> 567 |   await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({\n      |                                                                                     ^\n  568 |     timeout: 1000,\n  569 |   });\n  570 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 85,
+                            "line": 567
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('filesystem-pane-active').getByText(/active/i).first()\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('filesystem-pane-active').getByText(/active/i).first()\u001b[22m\n\n\n   at utils.ts:567\n\n  565 |   // Wait for the item to be visible\n  566 |   const regex = new RegExp(filterText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');\n> 567 |   await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({\n      |                                                                                     ^\n  568 |     timeout: 1000,\n  569 |   });\n  570 |\n    at filterAndSelect (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:567:85)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:52:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:31.776Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-79120-honeypot-triggers-Game-Over-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-79120-honeypot-triggers-Game-Over-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 85,
+                        "line": 567
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "36f75ee2a81b01ff0dcd-096a7682bd3b18fd31e4",
+              "file": "mechanics.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "L9 Trap: Deleting system_monitor.pid triggers Game Over",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 9899,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /TRAP ACTIVATED/i })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /TRAP ACTIVATED/i })\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /TRAP ACTIVATED/i })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /TRAP ACTIVATED/i })\u001b[22m\n\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:86:74",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                          "column": 74,
+                          "line": 86
+                        },
+                        "snippet": "  84 |\n  85 |     // 4. Expect Game Over\n> 86 |     await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();\n     |                                                                          ^\n  87 |   });\n  88 |\n  89 |   test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                            "column": 74,
+                            "line": 86
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /TRAP ACTIVATED/i })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /TRAP ACTIVATED/i })\u001b[22m\n\n\n  84 |\n  85 |     // 4. Expect Game Over\n> 86 |     await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();\n     |                                                                          ^\n  87 |   });\n  88 |\n  89 |   test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:86:74"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:32.329Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-3b4d0-itor-pid-triggers-Game-Over-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-3b4d0-itor-pid-triggers-Game-Over-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                        "column": 74,
+                        "line": 86
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "36f75ee2a81b01ff0dcd-3748283f765b96b9cd87",
+              "file": "mechanics.spec.ts",
+              "line": 73,
+              "column": 3
+            },
+            {
+              "title": "L14 Honeypot: Deleting visible data before decoys triggers Game Over",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 9857,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('HONEYPOT TRIGGERED')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('HONEYPOT TRIGGERED')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('HONEYPOT TRIGGERED')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('HONEYPOT TRIGGERED')\u001b[22m\n\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:106:56",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                          "column": 56,
+                          "line": 106
+                        },
+                        "snippet": "  104 |\n  105 |     // 5. Expect Game Over with HONEYPOT message\n> 106 |     await expect(page.getByText('HONEYPOT TRIGGERED')).toBeVisible();\n      |                                                        ^\n  107 |     await expect(page.getByText('Security tripwire detected')).toBeVisible();\n  108 |   });\n  109 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                            "column": 56,
+                            "line": 106
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('HONEYPOT TRIGGERED')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('HONEYPOT TRIGGERED')\u001b[22m\n\n\n  104 |\n  105 |     // 5. Expect Game Over with HONEYPOT message\n> 106 |     await expect(page.getByText('HONEYPOT TRIGGERED')).toBeVisible();\n      |                                                        ^\n  107 |     await expect(page.getByText('Security tripwire detected')).toBeVisible();\n  108 |   });\n  109 |\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:106:56"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:32.773Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-c86a9-e-decoys-triggers-Game-Over-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-c86a9-e-decoys-triggers-Game-Over-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts",
+                        "column": 56,
+                        "line": 106
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "36f75ee2a81b01ff0dcd-d615e1ca24c63deab542",
+              "file": "mechanics.spec.ts",
+              "line": 89,
+              "column": 3
+            },
+            {
+              "title": "L11 Honeypot: Selecting recent service does not complete task",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 7367,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"narrative-thought\"]')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"narrative-thought\"]')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"narrative-thought\"]')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"narrative-thought\"]')\u001b[22m\n\n    at expectNarrativeThought (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:414:25)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:140:11",
+                        "location": {
+                          "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                          "column": 25,
+                          "line": 414
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mutils.ts:414\n\n  412 | export async function expectNarrativeThought(page: Page, text: string | RegExp): Promise<void> {\n  413 |   const thought = page.locator('[data-testid=\"narrative-thought\"]');\n> 414 |   await expect(thought).toBeVisible({ timeout: 1000 });\n      |                         ^\n  415 |   await expect(thought).toContainText(text);\n  416 | }\n  417 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                            "column": 25,
+                            "line": 414
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"narrative-thought\"]')\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"narrative-thought\"]')\u001b[22m\n\n\n   at utils.ts:414\n\n  412 | export async function expectNarrativeThought(page: Page, text: string | RegExp): Promise<void> {\n  413 |   const thought = page.locator('[data-testid=\"narrative-thought\"]');\n> 414 |   await expect(thought).toBeVisible({ timeout: 1000 });\n      |                         ^\n  415 |   await expect(thought).toContainText(text);\n  416 | }\n  417 |\n    at expectNarrativeThought (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:414:25)\n    at /home/mhenke/Projects/yazi-quest/tests/e2e/mechanics.spec.ts:140:11"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:34.301Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-8e34a-vice-does-not-complete-task-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/mhenke/Projects/yazi-quest/test-results/mechanics-Game-Mechanics-F-8e34a-vice-does-not-complete-task-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts",
+                        "column": 25,
+                        "line": 414
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "36f75ee2a81b01ff0dcd-4cbd32546acefcf6da8a",
+              "file": "mechanics.spec.ts",
+              "line": 110,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "persistence.spec.ts",
+      "file": "persistence.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Persistence & State Survival",
+          "file": "persistence.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "localStorage persists zoxide history across reloads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 6032,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:35.319Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a5ef73a4e2a1baaea746-ca47bb86f183aab47a49",
+              "file": "persistence.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "Cycle count persists in localStorage",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1948,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-28T20:28:35.697Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a5ef73a4e2a1baaea746-2e6d2d087d0e1f162efc",
+              "file": "persistence.spec.ts",
+              "line": 50,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-28T20:27:44.051Z",
+    "duration": 58634.1,
+    "expected": 64,
+    "skipped": 0,
+    "unexpected": 11,
+    "flaky": 0
+  }
+}
