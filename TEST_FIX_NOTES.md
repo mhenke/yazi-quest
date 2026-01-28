@@ -294,3 +294,53 @@ const regex = new RegExp(filter, 'i');
 - **Symptom**: Text typed into search or filter modals leaking into the global filesystem listener (e.g., typing `s` starts another search).
 - **Root Cause**: React's `autoFocus` can sometimes be delayed or focus can be lost during re-renders. Playwright's `page.keyboard.type` sends keys to the "active element," which might revert to `body`.
 - **Fix**: Standardized `utils.ts` (e.g. `filterByText`, `renameItem`) to explicitly `locator.focus()`, `locator.fill('')`, and then interact with the input element directly.
+
+### 34. Input Mode Key Propagation & State Sync Issues
+
+- **Symptom**: Filter input field appears empty despite typing, only showing the last character, with UI flashing on each keystroke. Tests fail when trying to type into filter input.
+- **Root Cause**: Two issues: 1) Main keyboard handler was intercepting key events meant for input fields in input modes ('filter', 'input-file', 'rename'), preventing proper typing. 2) The filter's `onChange` handler was updating the filter state but not synchronizing the `inputBuffer` state that controls the input field's displayed value.
+- **Fix**:
+  1. Added a check in the main `handleKeyDown` function to return early if in an input mode and the event target is an input element:
+     ```typescript
+     if (
+       ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
+       e.target instanceof HTMLInputElement
+     ) {
+       return; // Let the input element handle the key
+     }
+     ```
+  2. Updated the filter InputModal's `onChange` handler to also update the `inputBuffer` state:
+     ```typescript
+     onChange={(val) => {
+       const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+       if (dir) {
+         dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
+       }
+       // Also update inputBuffer so the input field shows the typed text
+       dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
+     }}
+     ```
+  3. Added verification in test utilities to ensure input fields contain expected text:
+     ```typescript
+     await expect(input).toHaveValue(text);
+     ```
+
+### 35. Input Modal Event Handling Consistency
+
+- **Symptom**: Input modals (filter, search, create) not properly handling key events, causing interference with main keyboard handlers.
+- **Root Cause**: InputModal's onKeyDown handler was only stopping propagation for Enter and Escape, allowing other keys to reach the main keyboard handler which would process them as navigation commands.
+- **Fix**: Updated InputModal's onKeyDown to stop propagation for all keys when in an input modal, ensuring that key events don't bubble up to the main handler:
+  ```typescript
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    }
+    // Stop propagation for all keys when in an input modal
+    // to prevent the main keyboard handler from processing them
+    e.stopPropagation();
+  }}
+  ```
