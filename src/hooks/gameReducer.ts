@@ -2,6 +2,7 @@ import { GameState, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } fro
 import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
+import { isValidTransition } from '../utils/stateMachine';
 
 export type Action =
   | { type: 'SET_MODE'; mode: GameState['mode'] }
@@ -71,6 +72,11 @@ export type Action =
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'SET_MODE': {
+      if (!isValidTransition(state.mode, action.mode)) {
+        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> ${action.mode}`);
+        return state;
+      }
+
       // Find current item ID to maintain cursor position if list changes
       const visibleItemsBefore = getVisibleItems(state);
       const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
@@ -330,6 +336,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'CONFIRM_SEARCH':
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (CONFIRM_SEARCH)`);
+        return state;
+      }
       return {
         ...state,
         mode: 'normal',
@@ -367,6 +377,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case 'RENAME_NODE':
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (RENAME_NODE)`);
+        return state;
+      }
       return {
         ...state,
         fs: action.newFs,
@@ -375,6 +389,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'DELETE_NODES':
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (DELETE_NODES)`);
+        return state;
+      }
       return {
         ...state,
         fs: action.newFs,
@@ -384,6 +402,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'ADD_NODE':
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (ADD_NODE)`);
+        return state;
+      }
       return {
         ...state,
         fs: action.newFs,
@@ -398,8 +420,18 @@ export function gameReducer(state: GameState, action: Action): GameState {
         clipboard: action.action === 'cut' ? null : state.clipboard,
       };
 
-    case 'UPDATE_UI_STATE':
+    case 'UPDATE_UI_STATE': {
+      if (action.updates.mode && action.updates.mode !== state.mode) {
+        if (!isValidTransition(state.mode, action.updates.mode)) {
+          console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> ${action.updates.mode}`);
+          // Remove mode from updates but apply the rest
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { mode, ...rest } = action.updates;
+          return { ...state, ...rest };
+        }
+      }
       return { ...state, ...action.updates };
+    }
 
     case 'SET_INPUT_BUFFER':
       return { ...state, inputBuffer: action.buffer };
