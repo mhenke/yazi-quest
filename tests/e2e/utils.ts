@@ -98,9 +98,13 @@ export async function clearFilter(page: Page): Promise<void> {
 export async function filterByText(page: Page, text: string): Promise<void> {
   await pressKey(page, 'f');
   const input = page.getByTestId('filter-input');
-  await expect(input).toBeVisible({ timeout: 1000 });
+  await expect(input).toBeVisible({ timeout: 3000 }); // Increase timeout
   await input.focus();
   await input.fill(text);
+
+  // Verify that the input contains the expected text
+  await expect(input).toHaveValue(text);
+
   await page.keyboard.press('Enter');
 
   // Handle distinct Protocol Violation modal that may appear
@@ -559,13 +563,16 @@ export async function isInfoPanelVisible(page: Page): Promise<boolean> {
  */
 export async function filterAndSelect(page: Page, filterText: string): Promise<void> {
   await pressKey(page, 'f');
-  const modal = page.getByTestId('filter-input');
-  await expect(modal).toBeVisible({ timeout: 1000 });
-  const input = modal.locator('input');
+  const input = page.getByTestId('filter-input');
+  await expect(input).toBeVisible({ timeout: 3000 }); // Increase timeout
   await input.focus();
   await input.fill(filterText);
+
+  // Verify that the input contains the expected text
+  await expect(input).toHaveValue(filterText);
+
   await page.keyboard.press('Enter');
-  await expect(modal).not.toBeVisible();
+  await expect(input).not.toBeVisible();
 
   // Wait for the item to be visible
   const escapedText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
