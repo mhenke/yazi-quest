@@ -37,7 +37,6 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 's');
     await typeText(page, '\\.log');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     // Wait for search results to populate (at least 4 logs expected)
     await page.waitForFunction(
@@ -48,9 +47,6 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // 4) ctrl+a, then y
     await pressKey(page, 'Ctrl+a');
-    // Wait for selection to register
-    await page.waitForTimeout(DEFAULT_DELAY);
-
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
     await pressKey(page, 'Escape');
@@ -139,11 +135,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     if (!systemdCoreExists) {
       // Create the systemd-core directory since it should exist for this level
-      await pressKey(page, 'a'); // Add new file/directory
-      await typeText(page, 'systemd-core/'); // Create as directory with trailing slash
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(DEFAULT_DELAY); // Wait for creation to complete
-
+      await addItem(page, 'systemd-core/');
       // Navigate into the newly created directory
       await enterDirectory(page, 'systemd-core');
     } else {
@@ -220,21 +212,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Pattern: Filter with Regex -> Select All -> Invert -> Delete
     // Use the intended solution regex to robustly select all 4 target files at once
-    await pressKey(page, 'f');
-    // Note: We need to escape the backslash for the type string.
-    // The regex is \.(key|pid|sock)$
-    await typeText(page, '\\.(key|pid|sock)$');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(DEFAULT_DELAY); // Wait for filter to be applied
-
-    // Ensure we're in normal mode before selecting all
-    await page.waitForTimeout(DEFAULT_DELAY);
+    await filterByText(page, '\\.(key|pid|sock)$');
 
     // Select All Visible (Robustly selects the 4 filtered items)
     await pressKey(page, 'Ctrl+A'); // Select all
-
-    // Wait for selection to register
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     await page.keyboard.press('Escape'); // Dismiss active filter
 
