@@ -351,6 +351,7 @@ export async function pressKey(page: Page, key: string): Promise<void> {
     code: string;
     shiftKey?: boolean;
     ctrlKey?: boolean;
+    altKey?: boolean;
   } = { key: '', code: '' };
 
   if (key.includes('+')) {
@@ -366,6 +367,17 @@ export async function pressKey(page: Page, key: string): Promise<void> {
       eventPayload.ctrlKey = true;
       eventPayload.key = mainKey.toLowerCase();
       eventPayload.code = `Key${mainKey.toUpperCase()}`;
+    } else if (modifier === 'alt') {
+      eventPayload.altKey = true;
+      // Handle Alt+? specifically
+      if (mainKey === '?') {
+        eventPayload.key = '?';
+        eventPayload.code = 'Slash';
+        eventPayload.shiftKey = true; // ? implies Shift
+      } else {
+        eventPayload.key = mainKey.toLowerCase();
+        eventPayload.code = `Key${mainKey.toUpperCase()}`;
+      }
     }
   } else {
     eventPayload.key = key;
