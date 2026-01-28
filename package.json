@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --quiet",
     "format": "prettier --write .",
-    "test": "echo \"No unit tests specified\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test --grep \"@smoke\"",
     "prepush": "npm run lint && npm run type-check && npm run build && npm run test:smoke"

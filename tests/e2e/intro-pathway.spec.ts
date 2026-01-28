@@ -7,7 +7,7 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
-import { DEFAULT_DELAY, assertTask } from './utils';
+import { DEFAULT_DELAY, assertTask, pressKey } from './utils';
 
 /**
  * Helper to skip intro via the Skip Intro button.
@@ -17,7 +17,6 @@ async function skipViaButton(page: Page): Promise<void> {
   for (let i = 0; i < 5; i++) {
     try {
       await skipButton.click({ timeout: 500 });
-      await page.waitForTimeout(DEFAULT_DELAY);
     } catch {
       break;
     }
@@ -29,8 +28,7 @@ async function skipViaButton(page: Page): Promise<void> {
  */
 async function skipViaMashShiftEnter(page: Page): Promise<void> {
   for (let i = 0; i < 10; i++) {
-    await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(DEFAULT_DELAY);
+    await pressKey(page, 'Shift+Enter');
     const statusBar = page.locator('[data-testid="status-bar"]');
     if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
       break;
@@ -42,10 +40,8 @@ async function skipViaMashShiftEnter(page: Page): Promise<void> {
  * Helper to skip intro using a hybrid approach: partial Shift+Enter then button.
  */
 async function skipViaHybrid(page: Page): Promise<void> {
-  await page.keyboard.press('Shift+Enter');
-  await page.waitForTimeout(DEFAULT_DELAY);
-  await page.keyboard.press('Shift+Enter');
-  await page.waitForTimeout(DEFAULT_DELAY);
+  await pressKey(page, 'Shift+Enter');
+  await pressKey(page, 'Shift+Enter');
   await skipViaButton(page);
 }
 
@@ -177,9 +173,10 @@ test.describe('Intro Pathway Validation', () => {
       await page.goto('/?lvl=1');
       await page.waitForLoadState('domcontentloaded');
       // EpisodeIntro has multiple sections - mash Shift+Enter until we see BiosBoot
-      for (let i = 0; i < 5; i++) {
-        await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(DEFAULT_DELAY);
+      // With pressKey delay, we might need more iterations or wait for intro screens to settle
+      for (let i = 0; i < 30; i++) {
+        await pressKey(page, 'Shift+Enter');
+        await page.waitForTimeout(250);
         // Check if BiosBoot is visible
         const bios = page.getByText(/ANTIGRAVITY BIOS/);
         if (await bios.isVisible({ timeout: 500 }).catch(() => false)) {
@@ -187,7 +184,7 @@ test.describe('Intro Pathway Validation', () => {
         }
       }
       // BiosBoot should now be visible with BIOS text
-      await expect(page.getByText(/ANTIGRAVITY BIOS/)).toBeVisible({ timeout: 500 });
+      await expect(page.getByText(/ANTIGRAVITY BIOS/)).toBeVisible({ timeout: 5000 });
     });
 
     test('Level 6: EpisodeIntro displays EPISODE II: FORTIFICATION', async ({ page }) => {
@@ -267,8 +264,7 @@ test.describe('Intro Pathway Validation', () => {
         if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
           break;
         }
-        await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(DEFAULT_DELAY);
+        await pressKey(page, 'Shift+Enter');
       }
 
       await waitForGameReady(page);
@@ -285,8 +281,7 @@ test.describe('Intro Pathway Validation', () => {
         if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
           break;
         }
-        await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(DEFAULT_DELAY);
+        await pressKey(page, 'Shift+Enter');
       }
 
       await waitForGameReady(page);
@@ -303,8 +298,7 @@ test.describe('Intro Pathway Validation', () => {
         if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
           break;
         }
-        await page.keyboard.press('Shift+Enter');
-        await page.waitForTimeout(DEFAULT_DELAY);
+        await pressKey(page, 'Shift+Enter');
       }
 
       await waitForGameReady(page);
