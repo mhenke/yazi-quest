@@ -422,5 +422,73 @@ describe('fsHelpers', () => {
         level2.tasks[0].completed = true;
         expect(isProtected(root, [], watcher, level2, 'delete')).toBeNull();
     });
+
+    it('should prevent cutting systemd-core in levels other than 12', () => {
+        const systemd: FileNode = { ...mockNode, protected: true, name: 'systemd-core' };
+        const level11 = createMockLevel(11);
+        const level13 = createMockLevel(13);
+
+        expect(isProtected(root, [], systemd, level11, 'cut')).toContain('cannot be purged');
+        expect(isProtected(root, [], systemd, level13, 'cut')).toContain('cannot be purged');
+    });
+
+    it('should allow Level 14 deletions based on allowedDeletePaths', () => {
+        const datastore: FileNode = { id: 'ds', name: 'datastore', type: 'dir', protected: true, children: [] };
+        const other: FileNode = { id: 'other', name: 'other', type: 'file', protected: true };
+        const guest: FileNode = { id: 'guest', name: 'guest', type: 'dir', children: [datastore, other] };
+        const home: FileNode = { id: 'home', name: 'home', type: 'dir', children: [guest] };
+        const mockRoot: FileNode = { id: 'root', name: 'root', type: 'dir', children: [home] };
+
+        const level14 = createMockLevel(14);
+        level14.allowedDeletePaths = [
+            { path: ['home', 'guest', 'datastore'] }
+        ];
+
+        // Should allow delete of datastore
+        expect(isProtected(mockRoot, [], datastore, level14, 'delete')).toBeNull();
+
+        // Should NOT allow delete of other (sibling)
+        expect(isProtected(mockRoot, [], other, level14, 'delete')).toContain('cannot be purged');
+    });
+
+    it('should enforce requiresTaskId in Level 14 allowedDeletePaths', () => {
+        const config: FileNode = { ...mockNode, type: 'dir', protected: true, name: '.config', parentId: 'guest' };
+         // Mock root structure
+         const guest: FileNode = {
+            id: 'guest', name: 'guest', type: 'dir', children: [config], parentId: 'home'
+        };
+        const home: FileNode = {
+            id: 'home', name: 'home', type: 'dir', children: [guest], parentId: 'root'
+        };
+        const mockRoot: FileNode = {
+            id: 'root', name: 'root', type: 'dir', children: [home]
+        };
+
+        const level14 = createMockLevel(14);
+        level14.allowedDeletePaths = [
+            { path: ['home', 'guest', '.config'], requiresTaskId: 'delete-visible' }
+        ];
+
+        // 1. Task NOT complete -> Should be protected
+        expect(isProtected(mockRoot, [], config, level14, 'delete', {})).toContain('cannot be purged');
+
+        // 2. Task COMPLETE -> Should be allowed
+        const completedTasks = { 14: ['delete-visible'] };
+        expect(isProtected(mockRoot, [], config, level14, 'delete', completedTasks)).toBeNull();
+    });
+
+    it('should allow interaction with Level 12 scenario files', () => {
+        // These files are scenario-specific but generally unprotected.
+        // We verify that isProtected doesn't accidentally block them.
+        const level12 = createMockLevel(12);
+
+        const alertLog: FileNode = { ...mockNode, name: 'alert_traffic.log', protected: false };
+        const traceSys: FileNode = { ...mockNode, name: 'trace_packet.sys', protected: false };
+        const scanTmp: FileNode = { ...mockNode, name: 'scan_a.tmp', protected: false };
+
+        expect(isProtected(root, [], alertLog, level12, 'delete')).toBeNull();
+        expect(isProtected(root, [], traceSys, level12, 'delete')).toBeNull();
+        expect(isProtected(root, [], scanTmp, level12, 'delete')).toBeNull();
+    });
   });
 });
