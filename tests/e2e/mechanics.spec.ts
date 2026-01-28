@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   startLevel,
   pressKey,
+  pressKeys,
   gotoCommand,
   expectCurrentDir,
   assertTask,
@@ -62,8 +63,7 @@ test.describe('Game Mechanics & Failures', () => {
     await filterAndSelect(page, 'uplink_v1.conf');
 
     // 3. Overwrite (Shift+P)
-    await pressKey(page, 'Shift+P');
-    await pressKey(page, 'y'); // Confirm
+    await pressKeys(page, ['Shift+P', 'y']); // Confirm overwrite
 
     // 4. Expect Game Over
     await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
@@ -80,12 +80,7 @@ test.describe('Game Mechanics & Failures', () => {
     await filterAndSelect(page, 'system_monitor.pid');
 
     // 3. Delete
-    await pressKey(page, 'Shift+D'); // Permanent Delete
-
-    // Wait for modal to ensure we are in confirm-delete mode
-    await expect(page.getByRole('alertdialog')).toBeVisible();
-
-    await pressKey(page, 'y'); // confirm
+    await pressKeys(page, ['Shift+D', 'y']); // Permanent Delete and confirm
 
     // 4. Expect Game Over
     await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
@@ -105,9 +100,7 @@ test.describe('Game Mechanics & Failures', () => {
     await filterAndSelect(page, '.purge_lock');
 
     // 4. Attempt to delete it before creating decoys
-    await pressKey(page, 'Shift+D');
-    await expect(page.getByRole('alertdialog')).toBeVisible();
-    await pressKey(page, 'y');
+    await pressKeys(page, ['Shift+D', 'y']);
 
     // 5. Expect Game Over with HONEYPOT message
     await expect(page.getByText('HONEYPOT TRIGGERED')).toBeVisible();

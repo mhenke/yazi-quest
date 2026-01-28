@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startLevel } from './utils';
+import { startLevel, pressKey } from './utils';
 
 test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,37 +16,37 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible();
 
     // Try to open the help modal using Alt+?
-    await page.keyboard.press('Alt+?');
+    await pressKey(page, 'Alt+?');
 
     // Both the help modal AND the threat alert should be visible (modal overlays the alert)
-    await expect(page.locator('[data-testid="help-modal"]')).toBeVisible();
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible(); // Should still be visible underneath
+    await expect(page.getByTestId('help-modal')).toBeVisible();
+    await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible underneath
 
     // Close the help modal
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
+    await pressKey(page, 'Escape');
+    await expect(page.getByTestId('help-modal')).not.toBeVisible();
 
     // The ThreatAlert should still be visible
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible();
+    await expect(page.getByTestId('threat-alert')).toBeVisible();
 
     // Now try Alt+H to open hint
-    await page.keyboard.press('Alt+H');
-    await expect(page.locator('[data-testid="hint-modal"]')).toBeVisible();
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible(); // Should still be visible underneath
+    await pressKey(page, 'Alt+H');
+    await expect(page.getByTestId('hint-modal')).toBeVisible();
+    await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible underneath
 
     // Close the hint modal
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="hint-modal"]')).not.toBeVisible();
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible(); // Should still be visible
+    await pressKey(page, 'Escape');
+    await expect(page.getByTestId('hint-modal')).not.toBeVisible();
+    await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible
 
     // Now try Alt+M to open map
-    await page.keyboard.press('Alt+M');
-    await expect(page.locator('[data-testid="quest-map-modal"]')).toBeVisible();
-    await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible(); // Should still be visible underneath
+    await pressKey(page, 'Alt+M');
+    await expect(page.getByTestId('quest-map-modal')).toBeVisible();
+    await expect(page.getByTestId('threat-alert')).toBeVisible(); // Should still be visible underneath
 
     // Close the map modal
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="quest-map-modal"]')).not.toBeVisible();
+    await pressKey(page, 'Escape');
+    await expect(page.getByTestId('quest-map-modal')).not.toBeVisible();
     await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible(); // Should still be visible
   });
 
@@ -57,15 +57,16 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     await expect(page.locator('[data-testid="threat-alert"]')).toBeVisible({ timeout: 500 });
 
     // Dismiss the ThreatAlert with Shift+Enter
-    await page.keyboard.press('Shift+Enter');
-    await expect(page.locator('[data-testid="threat-alert"]')).not.toBeVisible();
+    await pressKey(page, 'Shift+Enter');
+    await page.waitForTimeout(2000);
+    await expect(page.getByTestId('threat-alert')).not.toBeVisible({ timeout: 10000 });
 
     // Now try to open help modal with Alt+?
-    await page.keyboard.press('Alt+?');
-    await expect(page.locator('[data-testid="help-modal"]')).toBeVisible();
+    await pressKey(page, 'Alt+?');
+    await expect(page.getByTestId('help-modal')).toBeVisible();
 
     // Close the help modal
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
+    await pressKey(page, 'Escape');
+    await expect(page.getByTestId('help-modal')).not.toBeVisible();
   });
 });

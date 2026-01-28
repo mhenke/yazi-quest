@@ -3,6 +3,7 @@ import {
   startLevel,
   assertLevel,
   pressKey,
+  pressKeys,
   gotoCommand,
   waitForMissionComplete,
   typeText,
@@ -142,15 +143,12 @@ test.describe('Episode 3: MASTERY', () => {
     await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
 
     // Task 3: space twice and x (Exfiltrate)
-    await pressKey(page, ' ');
-    await pressKey(page, ' ');
-    await pressKey(page, 'x');
+    await pressKeys(page, [' ', ' ', 'x']);
     await expectClipboard(page, 'MOVE: 2');
     await assertTask(page, '3/4', testInfo.outputDir, 'exfiltrate_files');
 
     // Task 4: escape, press (.) and then ,n and finally gw, l, p
-    await pressKey(page, 'Escape');
-    await pressKey(page, '.'); // Toggle hidden back
+    await pressKeys(page, ['Escape', '.']); // Toggle hidden back
     await sortCommand(page, 'n'); // Natural sort
 
     await gotoCommand(page, 'w');
@@ -214,8 +212,7 @@ test.describe('Episode 3: MASTERY', () => {
       timeout: 500,
     });
 
-    await pressKey(page, 'Ctrl+A'); // Select all
-    await pressKey(page, 'x'); // Cut
+    await pressKeys(page, ['Ctrl+A', 'x']); // Select all then Cut
     await expectClipboard(page, 'MOVE: 3');
     await clearFilter(page); // Clear filter after action per expert advice
     await pressKey(page, 'Escape'); // Clear search

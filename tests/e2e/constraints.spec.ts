@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startLevel } from './utils';
+import { startLevel, pressKey } from './utils';
 
 test.describe('Game Constraints', () => {
   test('Keystroke Limit: Exceeding maxKeystrokes triggers Game Over', async ({ page }) => {
@@ -9,9 +9,9 @@ test.describe('Game Constraints', () => {
     await startLevel(page, 11);
 
     // Mash keys to exceed 60 keystrokes
-    // We can use page.keyboard directly to be faster than pressKey helper
+    // Use pressKey to ensure keystrokes are registered by the game logic hook properly
     for (let i = 0; i < 70; i++) {
-      await page.keyboard.press('j');
+      await pressKey(page, 'j');
     }
 
     // Expect Game Over Modal with correct text - using more specific heading locator

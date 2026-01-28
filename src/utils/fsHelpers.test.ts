@@ -5,6 +5,7 @@ import {
   addNode,
   deleteNode,
   createPath,
+  addNodeWithConflictResolution,
 } from './fsHelpers';
 import { FileNode } from '../types';
 
@@ -194,6 +195,75 @@ describe('fsHelpers', () => {
       const result = createPath(fsWithFile, ['root', 'home'], 'notes.txt');
       expect(result.collision).toBe(true);
       expect(result.collisionNode?.name).toBe('notes.txt');
+    });
+  });
+
+  describe('addNodeWithConflictResolution', () => {
+    it('should add a node without conflict if name is unique', () => {
+      const newNode: FileNode = {
+        id: 'new-file',
+        name: 'unique.txt',
+        type: 'file',
+        parentId: 'guest'
+      };
+
+      const result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], newNode);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // The helper regenerates the ID, so we look up by parent and name
+        const parent = getNodeById(result.value, 'guest');
+        const added = parent?.children?.find(c => c.name === 'unique.txt');
+        expect(added).toBeDefined();
+        expect(added?.name).toBe('unique.txt');
+      }
+    });
+
+    it('should rename node with _1 suffix if name conflicts', () => {
+      // Existing file is test.txt
+      const newNode: FileNode = {
+        id: 'conflict-file',
+        name: 'test.txt',
+        type: 'file',
+        parentId: 'guest'
+      };
+
+      const result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], newNode);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // ID should be new generated ID, not the one passed in (fsHelpers usually regens ID on conflict add?)
+        // Let's check finding by name in parent
+        const parent = getNodeById(result.value, 'guest');
+        const renamed = parent?.children?.find(c => c.name === 'test_1.txt');
+        expect(renamed).toBeDefined();
+      }
+    });
+
+    it('should increment suffix if _1 also exists', () => {
+      // Add test_1.txt first
+      const firstConflict: FileNode = {
+        id: 'conflict-1',
+        name: 'test.txt',
+        type: 'file',
+        parentId: 'guest'
+      };
+      let result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], firstConflict);
+      // Now add another test.txt
+      const secondConflict: FileNode = {
+        id: 'conflict-2',
+        name: 'test.txt',
+        type: 'file',
+        parentId: 'guest'
+      };
+
+      if (result.ok) {
+        result = addNodeWithConflictResolution(result.value, ['root', 'home', 'guest'], secondConflict);
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+           const parent = getNodeById(result.value, 'guest');
+           const renamed = parent?.children?.find(c => c.name === 'test_2.txt');
+           expect(renamed).toBeDefined();
+        }
+      }
     });
   });
 });

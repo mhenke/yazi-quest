@@ -361,12 +361,24 @@ export async function pressKey(page: Page, key: string): Promise<void> {
 
     if (modifier === 'shift') {
       eventPayload.shiftKey = true;
-      eventPayload.key = mainKey.toUpperCase();
-      eventPayload.code = `Key${mainKey.toUpperCase()}`;
+      // If mainKey is single char, uppercase it.
+      if (mainKey.length === 1) {
+        eventPayload.key = mainKey.toUpperCase();
+        eventPayload.code = `Key${mainKey.toUpperCase()}`;
+      } else {
+        // Special keys like Enter
+        eventPayload.key = mainKey;
+        eventPayload.code = mainKey; // 'Enter' code is 'Enter'
+      }
     } else if (modifier === 'ctrl' || modifier === 'control') {
       eventPayload.ctrlKey = true;
-      eventPayload.key = mainKey.toLowerCase();
-      eventPayload.code = `Key${mainKey.toUpperCase()}`;
+      if (mainKey.length === 1) {
+        eventPayload.key = mainKey.toLowerCase();
+        eventPayload.code = `Key${mainKey.toUpperCase()}`;
+      } else {
+        eventPayload.key = mainKey;
+        eventPayload.code = mainKey;
+      }
     } else if (modifier === 'alt') {
       eventPayload.altKey = true;
       // Handle Alt+? specifically
@@ -375,8 +387,13 @@ export async function pressKey(page: Page, key: string): Promise<void> {
         eventPayload.code = 'Slash';
         eventPayload.shiftKey = true; // ? implies Shift
       } else {
-        eventPayload.key = mainKey.toLowerCase();
-        eventPayload.code = `Key${mainKey.toUpperCase()}`;
+        if (mainKey.length === 1) {
+          eventPayload.key = mainKey.toLowerCase();
+          eventPayload.code = `Key${mainKey.toUpperCase()}`;
+        } else {
+          eventPayload.key = mainKey;
+          eventPayload.code = mainKey;
+        }
       }
     }
   } else {

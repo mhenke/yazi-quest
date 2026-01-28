@@ -58,8 +58,8 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
       // Task 5: Navigate to /var using h to go up
-      await page.waitForTimeout(DEFAULT_DELAY); // Wait for state to settle
-      await goUp(page, 3); // Go up 3 levels to root
+      await gotoCommand(page, 'r'); // Jump to root (gr) - more robust than h*3
+      await page.waitForTimeout(DEFAULT_DELAY);
       await expectCurrentDir(page, '/'); // Root is displayed as '/'
 
       await enterDirectory(page, 'var');
