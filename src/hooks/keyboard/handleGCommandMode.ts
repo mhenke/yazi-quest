@@ -14,10 +14,10 @@ export const handleGCommandKeyDown = (
   // Only allow 'g' (for gg) or Escape
   if (currentLevel.id === 1) {
     if (e.key !== 'g' && e.key !== 'Escape') {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          mode: 'normal',
           notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
         },
       });
@@ -26,7 +26,7 @@ export const handleGCommandKeyDown = (
   }
 
   if (e.key === 'Escape') {
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
     return;
   }
 
@@ -36,11 +36,11 @@ export const handleGCommandKeyDown = (
     try {
       const items = getVisibleItems(gameState) || [];
       const last = Math.max(0, items.length - 1);
+      dispatch({ type: 'SET_CURSOR', index: last });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          cursorIndex: last,
-          mode: 'normal',
           usedG: true,
           previewScroll: 0,
           usedPreviewDown: false,
@@ -48,7 +48,7 @@ export const handleGCommandKeyDown = (
         },
       });
     } catch {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
     }
     return;
   }
@@ -76,11 +76,11 @@ export const handleGCommandKeyDown = (
   if (target) {
     // Special case for 'gg' (top of list) - doesn't change path
     if (e.key === 'g') {
+      dispatch({ type: 'SET_CURSOR', index: 0 });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          cursorIndex: 0,
-          mode: 'normal',
           usedGG: true,
           previewScroll: 0,
           usedPreviewDown: false,
@@ -103,10 +103,10 @@ export const handleGCommandKeyDown = (
           'jump'
         );
         if (protection) {
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: {
-              mode: 'normal',
               notification: { message: `🔒 ${protection}` },
             },
           });
@@ -117,10 +117,10 @@ export const handleGCommandKeyDown = (
       // Standard Path Jumps
       const extraFlags = target.flag ? { [target.flag]: true } : {};
       dispatch({ type: 'NAVIGATE', path: target.path });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          mode: 'normal',
           notification: { message: `Jumped to ${target.label}` },
           previewScroll: 0,
           usedPreviewDown: false,
@@ -131,6 +131,6 @@ export const handleGCommandKeyDown = (
     }
   } else {
     // Unknown key, exit mode
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
   }
 };

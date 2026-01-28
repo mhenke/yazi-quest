@@ -34,8 +34,8 @@ export const useNarrative = (
       // Trigger the thought via dispatch
       dispatch({
         type: 'SET_THOUGHT',
-        message: currentLevel.thought.message,
-        author: currentLevel.thought.author
+        message: currentLevel.thought,
+        author: undefined
       });
     }
   }, [

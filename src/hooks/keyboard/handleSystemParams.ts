@@ -16,11 +16,11 @@ export const handleSystemParamsKeyDown = (
     case 'f':
       if (!e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        dispatch({ type: 'SET_MODE', mode: 'filter' });
+        dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
-            mode: 'filter',
-            inputBuffer: '',
             usedFilter: true,
           },
         });
@@ -31,20 +31,16 @@ export const handleSystemParamsKeyDown = (
     case 's':
       e.preventDefault();
       showNotification(getNarrativeAction('s') || 'Recursive search');
+      dispatch({ type: 'SET_MODE', mode: 'search' });
+      dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          mode: 'search',
-          inputBuffer: '',
-          searchQuery: null,
-          searchResults: [],
           usedSearch: true,
+          filters: {}, // Clear all filters
         },
       });
-      // Also need to clear filters? The original code had filters: {}
-      // But gameReducer clear_filter is per dirId.
-      // Let's use UPDATE_UI_STATE for now if we want to clear ALL filters.
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { filters: {} } });
       return true;
 
     case '.': {
@@ -56,9 +52,10 @@ export const handleSystemParamsKeyDown = (
     }
 
     case ',':
+      dispatch({ type: 'SET_MODE', mode: 'sort' });
       dispatch({
         type: 'UPDATE_UI_STATE',
-        updates: { mode: 'sort' as const, acceptNextKeyForSort: true },
+        updates: { acceptNextKeyForSort: true },
       });
       return true;
 
@@ -69,11 +66,11 @@ export const handleSystemParamsKeyDown = (
         }
         e.preventDefault();
         showNotification(getNarrativeAction('Z') || 'Zoxide jump');
+        dispatch({ type: 'SET_MODE', mode: 'zoxide-jump' });
+        dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
-            mode: 'zoxide-jump',
-            inputBuffer: '',
             fuzzySelectedIndex: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,
@@ -90,11 +87,11 @@ export const handleSystemParamsKeyDown = (
         }
         e.preventDefault();
         showNotification(getNarrativeAction('z') || 'FZF file search');
+        dispatch({ type: 'SET_MODE', mode: 'fzf-current' });
+        dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
-            mode: 'fzf-current',
-            inputBuffer: '',
             fuzzySelectedIndex: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,

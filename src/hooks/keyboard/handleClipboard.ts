@@ -90,9 +90,10 @@ export const handleClipboardKeyDown = (
           showNotification(`🔒 PROTECTED: ${protection}`, 4000);
           return true;
         }
+        dispatch({ type: 'SET_MODE', mode: 'rename' });
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { mode: 'rename', inputBuffer: currentItem.name },
+          type: 'SET_INPUT_BUFFER',
+          buffer: currentItem.name,
         });
         return true;
       }
@@ -187,10 +188,10 @@ export const handleClipboardKeyDown = (
         showNotification('Nothing to delete', 500);
         return true;
       }
+      dispatch({ type: 'SET_MODE', mode: 'confirm-delete' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          mode: 'confirm-delete',
           pendingDeleteIds: toDelete,
           deleteType: e.key === 'D' ? 'permanent' : 'trash',
           usedD: gameState.usedD || e.key === 'D',

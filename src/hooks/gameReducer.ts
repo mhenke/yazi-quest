@@ -52,14 +52,38 @@ export type Action =
   | { type: 'TOGGLE_SELECTION'; id: string; itemCount?: number }
   | { type: 'SET_SEARCH'; query: string | null; results: FileNode[] }
   | { type: 'CONFIRM_SEARCH'; query: string; results: FileNode[] }
-  | { type: 'UPDATE_UI_STATE'; updates: Partial<GameState> }
+  | {
+      type: 'UPDATE_UI_STATE';
+      updates: Partial<
+        Omit<
+          GameState,
+          | 'fs'
+          | 'currentPath'
+          | 'levelIndex'
+          | 'mode'
+          | 'history'
+          | 'future'
+          | 'zoxideData'
+          | 'clipboard'
+        >
+      >;
+    }
   | { type: 'SET_INPUT_BUFFER'; buffer: string }
   | { type: 'SET_FILTER'; dirId: string; filter: string }
   | { type: 'CLEAR_FILTER'; dirId: string }
-  | { type: 'RENAME_NODE'; oldId: string; newNode: FileNode; newFs: FileNode }
-  | { type: 'DELETE_NODES'; newFs: FileNode }
-  | { type: 'ADD_NODE'; newNode: FileNode; newFs: FileNode }
+  | { type: 'RENAME_NODE'; oldId: string; newNode: FileNode; newFs: FileNode; notification?: string }
+  | { type: 'DELETE_NODES'; newFs: FileNode; notification?: string }
+  | {
+      type: 'ADD_NODE';
+      newNode: FileNode;
+      newFs: FileNode;
+      notification?: string;
+      cursorIndex?: number;
+    }
+  | { type: 'ZOXIDE_JUMP'; path: string[]; matchPath: string }
+  | { type: 'FZF_JUMP'; path: string[]; fileIndex?: number }
   | { type: 'PASTE'; newFs: FileNode; action: 'cut' | 'yank' }
+  | { type: 'ADVANCE_TO_OUTRO'; levelIndex: number }
   | {
       type: 'TICK';
       currentLevelId: number;
@@ -276,7 +300,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'GAME_OVER':
-      return { ...state, isGameOver: true, gameOverReason: action.reason };
+      return {
+        ...state,
+        isGameOver: true,
+        gameOverReason: action.reason,
+        mode: 'normal', // Reset mode to close any active modal
+        inputBuffer: '',
+      };
 
     case 'RESET_LEVEL':
       return {
@@ -378,7 +408,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case 'RENAME_NODE':
       if (!isValidTransition(state.mode, 'normal')) {
-        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (RENAME_NODE)`);
+        console.warn(
+          `StateMachine: Invalid transition blocked: ${state.mode} -> normal (RENAME_NODE)`
+        );
         return state;
       }
       return {
@@ -386,11 +418,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
         fs: action.newFs,
         mode: 'normal',
         inputBuffer: '',
+        notification: action.notification ? { message: action.notification } : state.notification,
+        stats: { ...state.stats, renames: state.stats.renames + 1 },
       };
 
     case 'DELETE_NODES':
       if (!isValidTransition(state.mode, 'normal')) {
-        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (DELETE_NODES)`);
+        console.warn(
+          `StateMachine: Invalid transition blocked: ${state.mode} -> normal (DELETE_NODES)`
+        );
         return state;
       }
       return {
@@ -399,11 +435,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
         selectedIds: [],
         pendingDeleteIds: [],
         mode: 'normal',
+        notification: action.notification ? { message: action.notification } : state.notification,
+        usedD: true,
       };
 
     case 'ADD_NODE':
       if (!isValidTransition(state.mode, 'normal')) {
-        console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> normal (ADD_NODE)`);
+        console.warn(
+          `StateMachine: Invalid transition blocked: ${state.mode} -> normal (ADD_NODE)`
+        );
         return state;
       }
       return {
@@ -411,7 +451,94 @@ export function gameReducer(state: GameState, action: Action): GameState {
         fs: action.newFs,
         mode: 'normal',
         inputBuffer: '',
+        notification: action.notification ? { message: action.notification } : state.notification,
+        cursorIndex:
+          action.cursorIndex !== undefined ? action.cursorIndex : state.cursorIndex,
       };
+
+    case 'ZOXIDE_JUMP': {
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(
+          `StateMachine: Invalid transition blocked: ${state.mode} -> normal (ZOXIDE_JUMP)`
+        );
+        return state;
+      }
+      const now = Date.now();
+      const isQuantum = state.levelIndex === 6;
+      const notification = isQuantum
+        ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
+        : { message: `Jumped to ${action.matchPath}` };
+
+      return {
+        ...state,
+        mode: 'normal',
+        currentPath: action.path,
+        cursorIndex: 0,
+        notification,
+        inputBuffer: '',
+        history: [...state.history, state.currentPath],
+        future: [],
+        usedPreviewDown: false,
+        usedPreviewUp: false,
+        stats: { ...state.stats, fuzzyJumps: state.stats.fuzzyJumps + 1 },
+        zoxideData: {
+          ...state.zoxideData,
+          [action.matchPath]: {
+            count: (state.zoxideData[action.matchPath]?.count || 0) + 1,
+            lastAccess: now,
+          },
+        },
+      };
+    }
+
+    case 'ADVANCE_TO_OUTRO':
+      return { ...state, levelIndex: action.levelIndex };
+
+    case 'FZF_JUMP': {
+      if (!isValidTransition(state.mode, 'normal')) {
+        console.warn(
+          `StateMachine: Invalid transition blocked: ${state.mode} -> normal (FZF_JUMP)`
+        );
+        return state;
+      }
+      // CRITICAL FIX: Explicitly clear any filters for the target directory
+      // so that siblings are visible when jumping to the file.
+      // We can't easily get targetDirNode id here without fs helpers, so we clear for "current target dir" logic
+      // But action.path is the TARGET path.
+      // So we assume the caller handles logic or we blindly clear.
+      // Actually, standard FZF logic clears filters for the target dir.
+      // Since we don't have easy node lookup here, let's assume filters logic is simple:
+      // We'll just keep filters as is? No, FZF clears them usually.
+      // Let's rely on `state.filters` clearing.
+      // BUT, we need ID to clear filter. `state.filters` is Record<dirId, string>.
+      // The `path` is array of IDs. The last ID is the dir ID.
+      // Wait, `action.path` is the directory path to jump TO.
+      const targetDirId = action.path[action.path.length - 1];
+      const newFilters = { ...state.filters };
+      if (targetDirId) {
+        delete newFilters[targetDirId];
+      }
+
+      const isQuantum = state.levelIndex === 6;
+      const notification = isQuantum
+        ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
+        : { message: `Found: ${action.path.join('/')}` }; // Fallback message, caller usually handles
+
+      return {
+        ...state,
+        mode: 'normal',
+        currentPath: action.path,
+        cursorIndex: action.fileIndex !== undefined ? action.fileIndex : 0,
+        filters: newFilters,
+        inputBuffer: '',
+        history: [...state.history, state.currentPath],
+        future: [],
+        notification: { message: 'Found item' }, // Generic, can be improved or passed in action
+        usedPreviewDown: false,
+        usedPreviewUp: false,
+        stats: { ...state.stats, fzfFinds: state.stats.fzfFinds + 1 },
+      };
+    }
 
     case 'PASTE':
       return {
@@ -421,15 +548,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'UPDATE_UI_STATE': {
-      if (action.updates.mode && action.updates.mode !== state.mode) {
-        if (!isValidTransition(state.mode, action.updates.mode)) {
-          console.warn(`StateMachine: Invalid transition blocked: ${state.mode} -> ${action.updates.mode}`);
-          // Remove mode from updates but apply the rest
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { mode, ...rest } = action.updates;
-          return { ...state, ...rest };
-        }
-      }
       return { ...state, ...action.updates };
     }
 

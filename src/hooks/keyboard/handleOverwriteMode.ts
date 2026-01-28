@@ -9,7 +9,7 @@ export const handleOverwriteConfirmKeyDown = (
 ) => {
   if (e.key === 'y' || e.key === 'Enter') {
     if (!gameState.pendingOverwriteNode) {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
 
@@ -19,15 +19,10 @@ export const handleOverwriteConfirmKeyDown = (
         (n) => n.name.endsWith('.trap') || n.content?.includes('TRAP')
       )
     ) {
+      dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
       dispatch({
         type: 'UPDATE_UI_STATE',
-        updates: {
-          isGameOver: true,
-          gameOverReason: 'honeypot',
-          notification: null,
-          mode: 'normal',
-          pendingOverwriteNode: null,
-        },
+        updates: { pendingOverwriteNode: null },
       });
       return;
     }
@@ -40,10 +35,10 @@ export const handleOverwriteConfirmKeyDown = (
       gameState.levelIndex
     );
     if (!deleteRes.ok) {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          mode: 'normal',
           notification: {
             message: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
           },
@@ -55,12 +50,12 @@ export const handleOverwriteConfirmKeyDown = (
 
     const createRes = resolveAndCreatePath(newFs, gameState.currentPath, gameState.inputBuffer);
     if (createRes.error) {
+      dispatch({ type: 'UPDATE_FS', fs: newFs });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          fs: newFs,
-          mode: 'normal',
-          inputBuffer: '',
           notification: { message: createRes.error },
           pendingOverwriteNode: null,
         },
@@ -69,12 +64,12 @@ export const handleOverwriteConfirmKeyDown = (
     }
 
     if (createRes.collision && createRes.collisionNode) {
+      dispatch({ type: 'UPDATE_FS', fs: newFs });
+      dispatch({ type: 'SET_MODE', mode: 'overwrite-confirm' });
+      // Input buffer stays same
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          fs: newFs,
-          mode: 'overwrite-confirm',
-          inputBuffer: gameState.inputBuffer,
           pendingOverwriteNode: createRes.collisionNode,
           notification: { message: 'Collision still detected after overwrite attempt.' },
         },
@@ -82,20 +77,20 @@ export const handleOverwriteConfirmKeyDown = (
       return;
     }
 
+    // Success
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        fs: createRes.fs,
-        mode: 'normal',
-        inputBuffer: '',
-        pendingOverwriteNode: null,
-        notification: { message: 'Overwritten successfully.' },
-      },
+      type: 'ADD_NODE',
+      newFs: createRes.fs,
+      newNode: createRes.targetNode!, // Assume targetNode exists on success
+      notification: 'Overwritten successfully.',
     });
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { pendingOverwriteNode: null } });
+
   } else if (e.key === 'n' || e.key === 'Escape') {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({
       type: 'UPDATE_UI_STATE',
-      updates: { mode: 'normal', pendingOverwriteNode: null },
+      updates: { pendingOverwriteNode: null },
     });
   }
 };
