@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
+import { useGlobalInput } from '../hooks/useGlobalInput';
+import { InputPriority } from '../GlobalInputContext';
 
 import { Episode } from '../types';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
@@ -63,12 +65,10 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     return () => clearInterval(interval);
   }, [sectionIndex, sections]);
 
-  // Handle Enter to advance or skip
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  useGlobalInput(
+    (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        e.stopPropagation();
 
         // If Shift+Enter -> advance (or initialize on last)
         // Allow a single Shift+Enter to skip a still-typing section and move to the next.
@@ -89,7 +89,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
           } else {
             onComplete();
           }
-          return;
+          return true; // Handled
         }
 
         // Enter without Shift only skips typing if animation still running
@@ -97,11 +97,16 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
           setCurrentText(sections[sectionIndex]?.join('\n') || '');
           setShowContinue(true);
         }
+        return true; // Handled
       }
-    };
+      return true; // Block everything else
+    },
+    InputPriority.CRITICAL
+  );
 
-    // Allow external skip via custom event so other intro screens (like BiosBoot)
-    // can trigger the same completion behavior. Tests can also dispatch this event.
+  // Allow external skip via custom event so other intro screens (like BiosBoot)
+  // can trigger the same completion behavior. Tests can also dispatch this event.
+  useEffect(() => {
     const handleSkipEvent = () => onComplete();
 
     // If tests set a global skip flag before the component mounts, honor it immediately.
@@ -112,13 +117,10 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     }
 
     window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
-
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
     };
-  }, [showContinue, sectionIndex, sections, onComplete]);
+  }, [onComplete]);
 
   // Determine styling based on content
   // Use orange for metadata lines (explicit prefixes), green for terminal output,
