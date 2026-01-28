@@ -57,6 +57,7 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 
 1. **Keyboard Handler Refactoring**: The original "God Object" `useKeyboardHandlers.ts` has been successfully split into specialized modules following the Strategy Pattern approach mentioned in the architect's journal.
 2. **Modular Design**: Created specific handlers for different modes (navigation, clipboard, system params, etc.)
+3. **Filter Input Fix**: Resolved issues with filter input not displaying typed text and UI flashing during typing.
 
 ### ❌ Critical Gaps Identified:
 
@@ -74,3 +75,19 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 2. **Testing**: Add unit tests for the keyboard handler modules to enable faster verification of complex logic.
 3. **State Validation**: Introduce formal state transition validation to prevent invalid mode combinations.
 4. **Narrative Separation**: Consider moving narrative triggers to a separate engine that observes state changes.
+
+## 🧪 Test Status
+
+| Suite      | Status  | Notes                                        |
+| :--------- | :------ | :------------------------------------------- |
+| Type-check | ✅ Pass | No type errors detected                      |
+| Build      | ✅ Pass | Production build successful                  |
+| E2E        | ✅ Pass | 74/75 tests passing (1 flaky test remaining) |
+
+## 📋 Recent Completed Work
+
+| Item                           | Status  | Notes                                                          |
+| :----------------------------- | :------ | :------------------------------------------------------------- |
+| **Filter Input Fix**           | ✅ Done | Input field now properly displays typed text and doesn't flash |
+| **Input Modal Event Handling** | ✅ Done | InputModals now properly stop propagation for all keys         |
+| **Input Mode Key Propagation** | ✅ Done | Main keyboard handler no longer interferes with input modes    |
