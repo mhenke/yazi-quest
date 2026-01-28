@@ -57,6 +57,8 @@ export const InputModal: React.FC<InputModalProps> = ({
               e.preventDefault();
               onCancel();
             }
+            // Stop propagation for all keys when in an input modal
+            // to prevent the main keyboard handler from processing them
             e.stopPropagation();
           }}
           className={`w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:${borderColorClass}`}

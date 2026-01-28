@@ -1959,6 +1959,15 @@ export default function App() {
         return; // Block all other keys
       }
 
+      // If we're in an input mode and the target is an input element,
+      // don't process the key in the main handler to avoid interference
+      if (
+        ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
+        e.target instanceof HTMLInputElement
+      ) {
+        return; // Let the input element handle the key
+      }
+
       // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
       if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
@@ -2384,6 +2393,12 @@ export default function App() {
         case 'overwrite-confirm':
           handleOverwriteConfirmKeyDown(e, gameState);
           break;
+        case 'filter':
+        case 'input-file':
+        case 'rename':
+          // When in input modes, the InputModal handles all input
+          // Don't process any keys in the main handler to avoid interference
+          break;
         default:
           break;
       }
@@ -2772,6 +2787,8 @@ export default function App() {
                   if (dir) {
                     dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
                   }
+                  // Also update inputBuffer so the input field shows the typed text
+                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
                 }}
                 onConfirm={() => {
                   dispatch({

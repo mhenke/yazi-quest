@@ -6,37 +6,32 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 
 **Goal:** Eliminate race conditions and inconsistent input handling that causes "stuck" states or double-firing events.
 
+- [x] **Split Keyboard Handlers (Completed)**
+  - **Status:** ✅ IMPLEMENTED - The original God Object `useKeyboardHandlers.ts` has been successfully split into specialized modules following the Strategy Pattern approach.
+  - **Modules Created:** `handleNavigation.ts`, `handleClipboard.ts`, `handleSystemParams.ts`, `handleNarrativeTriggers.ts`, `handleSortMode.ts`, `handleDeleteMode.ts`, `handleGCommandMode.ts`, `handleHelpMode.ts`, `handleQuestMapMode.ts`, `handleOverwriteMode.ts`
+  - **Benefit:** Reduced complexity in individual handlers and improved maintainability.
+
 - [ ] **Centralize Input Handling (The "Arbiter" Pattern)**
-  - **Current State:** `App.tsx`, `HelpModal.tsx`, `LevelProgress.tsx` all attach independent `keydown` listeners.
+  - **Current State:** `App.tsx`, `SuccessToast.tsx`, `EpisodeIntro.tsx`, `GameOverModal.tsx`, `BiosBoot.tsx`, `OutroSequence.tsx` all attach independent `keydown` listeners, creating race conditions.
   - **Action:**
     - Create a custom hook `useGlobalInput` or explicit context that serves as the _single source of truth_.
-    - Refactor Modals (`HelpModal`, `HintModal`) to **not** attach their own listeners. Instead, `App.tsx` should dispatch events to them or they should consume a shared event stream.
+    - Refactor components to **not** attach their own listeners. Instead, `App.tsx` should dispatch events to them or they should consume a shared event stream.
     - **Alternative:** Use a "Stack" approach where mounting a modal pushes it to the top of the Input Stack, blocking the layer below.
   - **Benefit:** Fixes the "I pressed Escape but the game triggered search AND closed the modal" bugs.
-
-- [ ] **Fix "God Object" `handleNormalMode.ts`**
-  - **Current State:** 800+ lines mixing navigation, clipboard logic, honeypot detection, and narrative thoughts.
-  - **Action:**
-    - Split into cohesive sub-handlers:
-      - `handleNavigation.ts` (j, k, arrows, G, gg)
-      - `handleClipboard.ts` (x, y, p, P)
-      - `handleSystemParams.ts` (., Z, z)
-      - `handleNarrativeTriggers.ts` (Level 11 scouting, Level 13 syncing)
-  - **Benefit:** Easier testing and less risk of breaking one feature while fixing another.
 
 ## 🛠 High Priority: Resilience & Testing (Phase 2)
 
 **Goal:** Ensure heavy game logic is verified by fast unit tests, not just slow E2E tests.
 
 - [ ] **Unit Tests for Game Logic**
-  - **Current State:** Minimal unit tests (only `fsHelpers.test.ts` found). Core logic is mostly tested via E2E.
+  - **Current State:** Minimal unit tests (only `fsHelpers.test.ts` and `gameUtils.test.ts` found). Core keyboard handling logic lacks specific unit tests.
   - **Action:**
     - Expand `fsHelpers.test.ts` coverage.
     - Write unit tests for the extracted `handle*.ts` logic (mocking the `GameState` and events).
   - **Benefit:** Fast feedback loop for complex logic (like level 13 node syncing or sorting algorithms).
 
 - [ ] **Strict State Transitions (State Machine Lite)**
-  - **Current State:** `mode` is a string. Transitions happen ad-hoc (`setGameState({ mode: 'search' })`).
+  - **Current State:** `mode` is a string. Transitions happen ad-hoc (`dispatch({ type: 'SET_MODE', mode: 'search' })`).
   - **Action:**
     - Define valid transitions. Can we go from `search` to `sort`?
     - Implement a guard function: `transition(currentMode, nextMode)`.
@@ -47,11 +42,35 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 **Goal:** enhance developer experience and long-term maintainability.
 
 - [ ] **Type-Safe `useReducer` Migration**
-  - **Current State:** `useState` with deep object merging (`...prev, ...updates`). Very error-prone.
-  - **Action:** Migrate `GameState` management to `useReducer`.
+  - **Current State:** `useReducer` is partially implemented but state transitions lack formal validation. Deep object merging still occurs in some places.
+  - **Action:** Enhance `gameReducer` with comprehensive state transition validation and stricter typing.
   - **Benefit:** Atomic updates, clearer intent, easier logging of state changes (time-travel debugging).
 
 - [ ] **Narrative & Logic Separation**
-  - **Current State:** "Thoughts" and narrative triggers are hardcoded inside input handlers (e.g., Level 11 logic in `handleNormalMode`).
+  - **Current State:** "Thoughts" and narrative triggers are still mixed with input handling logic in some handlers.
   - **Action:** Move narrative triggers to a separate `NarrativeEngine` or `ScriptSystem` that observes state changes.
   - **Benefit:** Writers can tweak dialogue/thoughts without touching input handling code.
+
+## 📊 Audit Summary
+
+### ✅ Implemented Improvements:
+
+1. **Keyboard Handler Refactoring**: The original "God Object" `useKeyboardHandlers.ts` has been successfully split into specialized modules following the Strategy Pattern approach mentioned in the architect's journal.
+2. **Modular Design**: Created specific handlers for different modes (navigation, clipboard, system params, etc.)
+
+### ❌ Critical Gaps Identified:
+
+1. **Input Handling Race Conditions**: Multiple components still attach their own `keydown` listeners, violating the "single source of truth" principle and creating race conditions as highlighted in the architectural analysis.
+
+2. **Missing Unit Tests**: No specific unit tests exist for the new keyboard handler modules (`handle*.ts` files). The codebase still relies primarily on E2E tests rather than fast unit tests for verifying complex logic.
+
+3. **Weak State Machine**: No formal validation of state transitions exists. Modes can still be set ad-hoc without validating if the transition is legitimate (e.g., from `search` to `sort`).
+
+4. **Narrative Logic Coupling**: Some narrative triggers are still hardcoded inside input handlers rather than being separated into a dedicated system.
+
+### Recommendations:
+
+1. **Immediate Priority**: Implement centralized input handling using a context or input stack system to eliminate race conditions.
+2. **Testing**: Add unit tests for the keyboard handler modules to enable faster verification of complex logic.
+3. **State Validation**: Introduce formal state transition validation to prevent invalid mode combinations.
+4. **Narrative Separation**: Consider moving narrative triggers to a separate engine that observes state changes.
