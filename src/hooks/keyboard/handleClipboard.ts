@@ -10,7 +10,6 @@ import {
 } from '../../utils/fsHelpers';
 import { checkGrabbingHoneypot, checkPastingHoneypot } from '../../utils/gameUtils';
 import { getNarrativeAction } from './utils';
-import { getLevel11LegacyThought } from './handleNarrativeTriggers';
 import { Action } from '../gameReducer';
 
 export const handleClipboardKeyDown = (
@@ -117,15 +116,6 @@ export const handleClipboardKeyDown = (
           '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
           4000
         );
-      }
-
-      const legacyThought = getLevel11LegacyThought(uniqueNodes, gameState.levelIndex);
-      if (legacyThought) {
-        dispatch({
-          type: 'SET_THOUGHT',
-          message: legacyThought,
-          author: 'AI-7734',
-        });
       }
 
       if (uniqueNodes.length > 0) {

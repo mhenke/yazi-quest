@@ -151,8 +151,10 @@ export const handleConfirmDeleteModeKeyDown = (
   currentLevelParam: Level
 ) => {
   if (e.key === 'y' || e.key === 'Enter') {
+    e.preventDefault();
     confirmDelete(dispatch, gameState, visibleItems, currentLevelParam);
   } else if (e.key === 'n' || e.key === 'Escape') {
+    e.preventDefault();
     cancelDelete(dispatch);
   }
 };

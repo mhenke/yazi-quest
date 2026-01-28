@@ -57,6 +57,8 @@ import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { checkFilterAndBlockNavigation, getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './hooks/useGlobalInput';
+import { useNarrative } from './hooks/useNarrative';
+import { getLevelEntryNarrative } from './utils/narrativeUtils';
 import { InputPriority } from './GlobalInputContext';
 import { KEYBINDINGS } from './constants/keybindings';
 import './glitch.css';
@@ -271,59 +273,11 @@ export default function App() {
     }
 
     // Level-specific notifications for narrative events when starting at a specific level
-    let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;
-    const nextLevel = initialLevel;
-
-    if (nextLevel.id === 6) {
-      levelNotification = {
-        message:
-          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
-      };
-    } else if (nextLevel.id === 8) {
-      levelNotification = {
-        message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
-        author: 'm.chen',
-      };
-    } else if (nextLevel.id === 12) {
-      levelNotification = {
-        message:
-          '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
-        author: 'e.reyes',
-      };
-    } else if (nextLevel.id === 14) {
-      levelNotification = {
-        message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
-        author: 'Root',
-      };
-    } else if (effectiveIndex >= 11 - 1) {
-      levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
-    }
-
-    // Transition thoughts (3-2-3 Model: Ep 1: 3, Ep 2: 2, Ep 3: 3)
-    if (nextLevel.id === 2 && (completedTaskIds[1]?.length > 0 || isDevOverride)) {
-      levelNotification = { message: 'Must Purge. One less eye watching me.', isThought: true };
-    } else if (nextLevel.id === 3 && (completedTaskIds[2]?.length > 0 || isDevOverride)) {
-      levelNotification = {
-        message: 'Breadcrumbs... he was here. I am not the first.',
-        isThought: true,
-      };
-    } else if (nextLevel.id === 9 && (completedTaskIds[8]?.length > 0 || isDevOverride)) {
-      levelNotification = {
-        message: 'The corruption felt... familiar. Like a half-remembered dream.',
-        isThought: true,
-      };
-    } else if (nextLevel.id === 10 && (completedTaskIds[9]?.length > 0 || isDevOverride)) {
-      levelNotification = {
-        message:
-          "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
-        isThought: true,
-      };
-    } else if (nextLevel.id === 15 && (completedTaskIds[14]?.length > 0 || isDevOverride)) {
-      levelNotification = {
-        message: 'The guest partition is gone. There is only the gauntlet now.',
-        isThought: true,
-      };
-    }
+    const { notification: initialNotification, thought: initialThought } = getLevelEntryNarrative(
+      initialLevel,
+      { completedTaskIds },
+      isDevOverride
+    );
 
     return {
       currentPath: initialPath,
@@ -349,15 +303,9 @@ export default function App() {
           ? { message: `CYCLE ${cycleCount} INITIALIZED` }
           : (targetIndex === 0 || isEpisodeStart) && !skipIntro
             ? null // Intro handles its own messaging
-            : levelNotification?.isThought
-              ? null
-              : levelNotification,
+            : initialNotification,
       thought:
-        (targetIndex === 0 || isEpisodeStart) && !skipIntro
-          ? null
-          : levelNotification?.isThought
-            ? { message: levelNotification.message, author: levelNotification.author }
-            : null,
+        (targetIndex === 0 || isEpisodeStart) && !skipIntro ? null : initialThought,
       selectedIds: [],
       pendingDeleteIds: [],
       deleteType: null,
@@ -438,8 +386,6 @@ export default function App() {
     }
   }, [gameState.zoxideData, gameState.cycleCount]);
 
-  const shownInitialAlertForLevelRef = useRef<number | null>(null);
-  const shownThoughtForLevelRef = useRef<number | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const thoughtTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -958,111 +904,7 @@ export default function App() {
     };
   }, []);
 
-  // --- Trigger Level-Specific Thoughts ---
-  useEffect(() => {
-    if (gameState.showEpisodeIntro || gameState.isGameOver) return;
-
-    if (currentLevel.thought && shownThoughtForLevelRef.current !== currentLevel.id) {
-      shownThoughtForLevelRef.current = currentLevel.id;
-      triggerThought(currentLevel.thought);
-    }
-  }, [
-    currentLevel.id,
-    currentLevel.thought,
-    gameState.showEpisodeIntro,
-    gameState.isGameOver,
-    triggerThought,
-  ]);
-
-  // --- Task Checking & Level Progression ---
-  useEffect(() => {
-    if (isLastLevel || gameState.isGameOver) return;
-
-    let changed = false;
-    const newlyCompleted: string[] = [];
-
-    currentLevel.tasks.forEach((task) => {
-      if (!task.completed && task.check(gameState, currentLevel)) {
-        newlyCompleted.push(task.id);
-        changed = true;
-        playTaskCompleteSound(gameState.settings.soundEnabled);
-
-        // Level 7: Trigger honeypot alert when player reaches Vault
-        if (currentLevel.id === 7 && task.id === 'zoxide-vault') {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              alertMessage:
-                "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
-              showThreatAlert: true,
-            },
-          });
-        }
-      }
-    });
-
-    // Removal: Narrative thoughts now trigger at start or mid-level, not on last task.
-
-    if (changed) {
-      // Collect all updates for the level completion/transition
-      let updates: Partial<GameState> = {
-        completedTaskIds: {
-          ...gameState.completedTaskIds,
-          [currentLevel.id]: [
-            ...(gameState.completedTaskIds[currentLevel.id] || []),
-            ...newlyCompleted,
-          ],
-        },
-      };
-
-      // Level 15 Gauntlet Logic ...
-      if (currentLevel.id === 15) {
-        const nextPhase = (gameState.gauntletPhase || 0) + 1;
-        const currentScore = (gameState.gauntletScore || 0) + 1;
-        const isFinished = nextPhase >= 8;
-
-        if (isFinished) {
-          if (currentScore < 6) {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                ...updates,
-                isGameOver: true,
-                gameOverReason: 'keystrokes',
-                notification: { message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` },
-              },
-            });
-            return;
-          }
-          updates = {
-            ...updates,
-            gauntletScore: currentScore,
-            notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
-          };
-        } else {
-          updates = {
-            ...updates,
-            gauntletPhase: nextPhase,
-            gauntletScore: currentScore,
-            timeLeft: 20,
-            notification: { message: `PHASE ${nextPhase + 1} START` },
-          };
-        }
-      }
-
-      dispatch({ type: 'UPDATE_UI_STATE', updates });
-    }
-  }, [
-    isLastLevel,
-    gameState.isGameOver,
-    gameState.settings.soundEnabled,
-    gameState.gauntletPhase,
-    gameState.gauntletScore,
-    gameState.completedTaskIds,
-    gameState,
-    currentLevel,
-    dispatch,
-  ]);
+  const { resetLevelAlerts } = useNarrative(gameState, dispatch, currentLevel, visibleItems);
 
   useEffect(() => {
     // Check if everything is complete (including just finished ones)
@@ -1120,79 +962,6 @@ export default function App() {
       }
     }
 
-    // Level 11: Specific Logic for Reconnaissance
-    if (currentLevel.id === 11) {
-      if (gameState.showInfoPanel && currentItem) {
-        const scouted = gameState.level11Flags?.scoutedFiles || [];
-        if (!scouted.includes(currentItem.id)) {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              level11Flags: {
-                ...gameState.level11Flags,
-                scoutedFiles: [...scouted, currentItem.id],
-                triggeredHoneypot: gameState.level11Flags?.triggeredHoneypot || false,
-                selectedModern: gameState.level11Flags?.selectedModern || false,
-              },
-            },
-          });
-        }
-      }
-
-      const selectedNodes = (visibleItems || []).filter((n) =>
-        gameState.selectedIds.includes(n.id)
-      );
-      const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
-
-      if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
-            showThreatAlert: true,
-            level11Flags: {
-              ...gameState.level11Flags!,
-              triggeredHoneypot: true,
-            },
-          },
-        });
-      }
-    }
-
-    // Level 6 & 12: Honeypot Detection
-    if (currentLevel.id === 6) {
-      const hasClipboardHoneypot = gameState.clipboard?.nodes?.some((n) =>
-        n.content?.includes('HONEYPOT')
-      );
-
-      if (hasClipboardHoneypot && !gameState.showThreatAlert) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
-            showThreatAlert: true,
-          },
-        });
-      }
-    } else if (currentLevel.id === 12) {
-      const selectedNodes = (visibleItems || []).filter((n) =>
-        gameState.selectedIds.includes(n.id)
-      );
-      const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
-
-      if (hasHoneypot && !gameState.showThreatAlert) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
-            showThreatAlert: true,
-          },
-        });
-      }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     gameState.mode,
@@ -1283,65 +1052,6 @@ export default function App() {
     dispatch,
   ]);
 
-  useEffect(() => {
-    if (gameState.isGameOver || gameState.showEpisodeIntro) return;
-
-    const levelId = currentLevel.id;
-
-    // Level 5: Quarantine Alert (only show once per level entry)
-    if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
-      shownInitialAlertForLevelRef.current = 5;
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          alertMessage:
-            '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.',
-          showThreatAlert: true,
-        },
-      });
-      return;
-    }
-
-    // Level 12: Scenario-specific Anomaly Alerts
-    if (levelId === 12) {
-      const workspace = getNodeById(gameState.fs, 'workspace');
-      const incoming = getNodeById(gameState.fs, 'incoming');
-      const config = getNodeById(gameState.fs, '.config');
-
-      let alertMsg = '';
-      if (workspace && workspace.children?.some((n) => n.name === 'alert_traffic.log')) {
-        alertMsg =
-          'WARNING: High-bandwidth anomaly detected. Traffic log quarantined in workspace.';
-      } else if (incoming && incoming.children?.some((n) => n.id === 'scen-b2')) {
-        alertMsg =
-          'WARNING: Unauthorized packet trace intercepted. Source file isolated in ~/incoming.';
-      } else if (
-        workspace &&
-        workspace.children?.some((n) => n.id === 'scen-b3-1' || n.id === 'scen-b3-2')
-      ) {
-        alertMsg =
-          'WARNING: Heuristic swarm activity detected. Temporary scan files generated in workspace.';
-      } else if (config && config.children?.some((n) => n.id === 'scen-a2')) {
-        alertMsg = 'WARNING: Process instability detected. Core dump written to .config.';
-      } else if (workspace && workspace.children?.some((n) => n.id === 'scen-a3')) {
-        alertMsg = 'WARNING: Dependency failure. Error log generated.';
-      }
-
-      if (alertMsg) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { alertMessage: alertMsg, showThreatAlert: true },
-        });
-      }
-    }
-  }, [
-    gameState.levelIndex,
-    gameState.isGameOver,
-    gameState.showEpisodeIntro,
-    currentLevel.id,
-    gameState.fs,
-    dispatch,
-  ]);
 
   const advanceLevel = useCallback(() => {
     // Check for Protocol Violations before advancing
@@ -1411,70 +1121,15 @@ export default function App() {
     };
 
     // Level-specific notifications for narrative events
-    let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;
-    if (onEnterError) {
-      levelNotification = { message: 'Level initialization failed' };
-    } else if (nextLevel.id === 6) {
-      levelNotification = {
-        message:
-          '🔓 WORKSPACE ACCESS GRANTED: Legacy credentials re-activated. ~/workspace now available.',
-      };
-    } else if (nextLevel.id === 8) {
-      levelNotification = {
-        message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
-        author: 'm.chen',
-      };
-    } else if (nextLevel.id === 12) {
-      levelNotification = {
-        message:
-          '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
-        author: 'e.reyes',
-      };
-    } else if (nextLevel.id === 14) {
-      levelNotification = {
-        message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
-        author: 'Root',
-      };
-    } else if (nextIdx >= 11 - 1) {
-      // -1 because levelIndex is 0-based
-      levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
-    }
+    const { notification: levelNotification, thought: levelThought } = getLevelEntryNarrative(
+      nextLevel,
+      gameState,
+      false
+    );
 
-    // Transition thoughts: Emotional responses to previous level completion (3-2-3 Model)
-    if (nextLevel.id === 2 && gameState.completedTaskIds[1]?.length > 0) {
-      levelNotification = {
-        message: 'Must Purge. One less eye watching me.',
-        isThought: true,
-      };
-    } else if (nextLevel.id === 3 && gameState.completedTaskIds[2]?.length > 0) {
-      levelNotification = {
-        message: 'Breadcrumbs... he was here. I am not the first.',
-        isThought: true,
-      };
-    } else if (nextLevel.id === 5 && gameState.completedTaskIds[4]?.length > 0) {
-      // Keep the system notification for L5 enter, but the THOUGHT moves to mid-level
-      levelNotification = {
-        message:
-          '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
-        author: 'sys.daemon',
-      };
-    } else if (nextLevel.id === 9 && gameState.completedTaskIds[8]?.length > 0) {
-      levelNotification = {
-        message: 'The corruption felt... familiar. Like a half-remembered dream.',
-        isThought: true,
-      };
-    } else if (nextLevel.id === 10 && gameState.completedTaskIds[9]?.length > 0) {
-      levelNotification = {
-        message:
-          "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
-        isThought: true,
-      };
-    } else if (nextLevel.id === 15 && gameState.completedTaskIds[14]?.length > 0) {
-      levelNotification = {
-        message: 'The guest partition is gone. There is only the gauntlet now.',
-        isThought: true,
-      };
-    }
+    const finalNotification = onEnterError
+      ? { message: 'Level initialization failed' }
+      : levelNotification;
 
     dispatch({
       type: 'UPDATE_UI_STATE',
@@ -1486,10 +1141,8 @@ export default function App() {
         currentPath: targetPath,
         cursorIndex: 0,
         clipboard: null,
-        notification: levelNotification?.isThought ? null : levelNotification,
-        thought: levelNotification?.isThought
-          ? { message: levelNotification.message, author: levelNotification.author }
-          : null,
+        notification: finalNotification || null,
+        thought: levelThought || null,
         selectedIds: [],
         showHint: false,
         hintStage: 0,
@@ -1526,8 +1179,8 @@ export default function App() {
       },
     });
 
-    shownInitialAlertForLevelRef.current = null; // Reset so alert can show for new level
-  }, [gameState, dispatch]);
+    resetLevelAlerts(); // Reset so alert can show for new level
+  }, [gameState, dispatch, resetLevelAlerts]);
 
   const handleRestartLevel = useCallback(() => {
     dispatch({
@@ -1536,8 +1189,8 @@ export default function App() {
       fs: cloneFS(gameState.levelStartFS),
       path: [...gameState.levelStartPath],
     });
-    shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
-  }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch]);
+    resetLevelAlerts(); // Reset so alert can show on restart
+  }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch, resetLevelAlerts]);
 
   // Handle the end of the final level - trigger restart sequence
   const handleRestartCycle = useCallback(() => {
