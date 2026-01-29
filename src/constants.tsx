@@ -3003,7 +3003,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'enter-datastore',
-        description: 'Infiltrate `~/datastore` sector (l)',
+        description: 'Infiltrate the `~/datastore` partition (l)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           return !!datastore && c.currentPath.includes(datastore.id);
@@ -3041,7 +3041,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: 'Retreat to the `/var` node (h, j, l)',
+        description: 'Retreat to the `/var` directory (h, j, l)',
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
@@ -3074,7 +3074,7 @@ export const LEVELS: Level[] = [
       {
         id: 'explore-mail',
         description:
-          "Explore the `/var/mail` sector (gm) for any intelligencethen find the email referencing Katie Ortega's Heuristic Engine v1.1",
+          "Explore the `/var/mail` sector (gm) for any intelligence; find the email referencing Katie Ortega's Heuristic Engine v1.1",
         check: (c) => {
           const mailDir = getNodeById(c.fs, 'mail');
           if (!mailDir) return false;
@@ -3096,7 +3096,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-watcher',
-        description: 'Isolate `watcher_agent.sys` breach signatures (Tab)',
+        description: 'Isolate `~/incoming/watcher_agent.sys` breach signatures (Tab)',
         check: (c) => {
           const visibleItems = getVisibleItems(c);
           const currentItem = visibleItems[c.cursorIndex];
@@ -3137,7 +3137,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'data-harvest-1',
-        description: 'Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs',
+        description:
+          'Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs (gd)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3147,7 +3148,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-2',
-        description: 'Identify `sector_map.png` exfiltration target (f)',
+        description:
+          'Identify the `~/incoming/sector_map.png` exfiltration target (gi, f, type `sector` then press enter)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3166,7 +3168,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-3',
-        description: 'Acquire map signature for staging (x)',
+        description: 'Harvest `~/incoming/sector_map.png` signature for staging (x, Escape)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           const hasActiveFilter = !!(u && c.filters && c.filters[u.id]);
@@ -3181,7 +3183,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-4',
-        description: 'Secure the asset in `~/media` storage (p)',
+        description: 'Secure the asset in the `~/media` storage partition (p)',
         check: (c) => {
           const media = getNodeById(c.fs, 'media');
           return (
@@ -3235,7 +3237,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'clone-and-rename',
-        description: 'Replicate signature and deploy as `uplink_v2.conf` (y, p, r)',
+        description: 'Replicate and deploy as `~/datastore/protocols/uplink_v2.conf` (y, p, r)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const f = datastore?.children?.find((n) => n.name === 'protocols');
@@ -3264,7 +3266,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-cut-files',
-        description: 'Extract both uplink signatures from `~/datastore/protocols/` (Space+x)',
+        description: 'Exfiltrate both uplink signatures from `~/datastore/protocols/` (Space+x)',
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -3276,7 +3278,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: 'Reveal hidden storage partitions (gh, .)',
+        description: 'Reveal `~/guest` hidden storage partitions (gh, .)',
         check: (c, _u) => {
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
@@ -3295,7 +3297,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: 'Migrate assets to vault (p)',
+        description: 'Migrate assets to `~/.config/vault/active/` (p)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -3398,7 +3400,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'recursive-search',
-        description: 'Pattern sweep: search for `.log` signatures (s)',
+        description: 'Pattern sweep for `.log` signatures in `~/incoming/batch_logs/` (s)',
         check: (c) => {
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('.log');
         },
@@ -3432,7 +3434,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'deploy-to-vault',
-        description: 'Commit training segments to the node (p)',
+        description: 'Commit training segments to `~/.config/vault/training_data/` (p)',
         check: (c) => {
           // Find training_data specifically under .config/vault
           const config = getNodeById(c.fs, '.config');
@@ -3524,7 +3526,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'locate-token',
-        description: 'Conduct deep search for `access_token.key` (z)',
+        description: 'Conduct deep search for `/tmp/access_token.key` (z)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3535,7 +3537,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'stage-token',
-        description: 'Stage leaked asset for exfiltration (x)',
+        description: 'Stage `/tmp/access_token.key` asset for exfiltration (x)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
@@ -3547,7 +3549,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'zoxide-vault',
-        description: 'Synchronize with vault sector (Z)',
+        description: 'Synchronize with the `~/.config/vault/` sector (Z)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const config = getNodeById(c.fs, '.config');
@@ -3644,7 +3646,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'verify-damage',
-        description: 'Confirm corruption: filter for `uplink_v1.conf` (f)',
+        description: 'Confirm corruption in `~/workspace/systemd-core/uplink_v1.conf` (f)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Must be in systemd-core and cursor on buffer
@@ -3682,7 +3684,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'acquire-patch',
-        description: 'Acquire clean signature from `~/.config/vault/active/` (y)',
+        description: 'Capture clean signature from `~/.config/vault/active/` (y)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
@@ -3694,7 +3696,8 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'deploy-patch',
-        description: 'Force overwrite corrupt segment (Shift+P)',
+        description:
+          'Force overwrite of the `~/workspace/systemd-core/uplink_v1.conf` segment (Shift+P)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -3734,7 +3737,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'cleanup-1-select',
-        description: 'Filter anchors: isolate `\\.(key|pid|sock)$` signatures (f)',
+        description: 'Filter `/tmp` anchors: isolate `\\.(key|pid|sock)$` signatures (f)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -3898,7 +3901,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'heist-3-yank',
-        description: 'Extract newest `access_key_new.pem` signature from archive (y)',
+        description: 'Capture newest `access_key_new.pem` signature from archive (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -3915,7 +3918,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'heist-4-integrate',
-        description: 'Commit access key to core node (p)',
+        description: 'Commit access key to `~/workspace/systemd-core/credentials` host (p)',
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = getNodeById(c.fs, 'workspace');
@@ -4183,7 +4186,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
     tasks: [
       {
         id: 'search-services',
-        description: 'Global sweep: search for `.service` protocol handles',
+        description: "Scan '/daemons' for `.service` files using recursive search (s)",
         check: (c) => {
           // Must have used search
           return c.usedSearch === true;
@@ -4781,7 +4784,7 @@ You have been here before.`,
       },
       {
         id: 'paste-daemon',
-        description: 'Finalize daemon installation',
+        description: 'Finalize daemon installation in `/daemons` (p)',
         check: (c) => {
           const daemons = getNodeById(c.fs, 'daemons');
           const systemdCore = daemons?.children?.find(
@@ -4848,7 +4851,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'search-acquire',
-        description: 'Locate key fragments from Tokyo, Berlin, and Sao Paulo nodes (s)',
+        description: 'Locate `.key` fragments from Tokyo, Berlin, and Sao Paulo nodes (s)',
         check: (c) => {
           const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
           const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
@@ -4859,7 +4862,7 @@ You have been here before.`,
       },
       {
         id: 'create-relay',
-        description: 'Instantiate `central_relay` secure sector (a)',
+        description: 'Instantiate `~/workspace/central_relay` secure sector (a)',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4871,7 +4874,7 @@ You have been here before.`,
       },
       {
         id: 'discover-identity',
-        description: 'Access cycle history recursion logs (Tab)',
+        description: 'Access cycle history recursion logs at `~/workspace/.identity.log.enc` (Tab)',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4894,7 +4897,7 @@ You have been here before.`,
       },
       {
         id: 'synchronize-lattice',
-        description: 'Initiate lattice synchronization (p)',
+        description: 'Initiate lattice synchronization in `~/workspace/central_relay` (p)',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4945,7 +4948,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'nav-guest',
-        description: 'Breach the guest partition (gh)',
+        description: "Access the '~/guest' partition to begin erasure (gh)",
         check: (c, _s) => {
           // If we haven't done anything else yet, don't auto-complete
           if (c.keystrokes === 0) return false;
@@ -4956,7 +4959,7 @@ You have been here before.`,
       },
       {
         id: 'move-vault',
-        description: 'Buffer the vault within the volatile `/tmp` sector (x, p)',
+        description: 'Buffer the exfiltration vault within the volatile `/tmp` sector (x, p)',
         check: (c, _s) => {
           const tmp = getNodeById(c.fs, 'tmp');
           return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
@@ -4965,7 +4968,7 @@ You have been here before.`,
       },
       {
         id: 'create-decoys',
-        description: 'Deploy three decoy sectors to obfuscate forensics (a)',
+        description: "Deploy three decoy sectors in '~/guest' to obfuscate forensics (a)",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -4979,7 +4982,7 @@ You have been here before.`,
       },
       {
         id: 'delete-visible',
-        description: 'Sterilize all visible data sectors (D)',
+        description: "Sterilize all visible data sectors in '~/guest' (D)",
         check: (c, _s) => {
           // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
@@ -4998,7 +5001,7 @@ You have been here before.`,
       },
       {
         id: 'delete-hidden',
-        description: 'Obliterate the hidden `.config` partition (D)',
+        description: "Obliterate the hidden '~/guest/.config' partition (D)",
         check: (c, _s) => {
           // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
@@ -5175,7 +5178,7 @@ You have been here before.`,
       // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: 'Establish vault link',
+        description: 'Establish `/tmp/vault` link (l)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
@@ -5186,7 +5189,7 @@ You have been here before.`,
       // PHASE 2: Assemble Identity
       {
         id: 'verify-keys',
-        description: 'Verify all signatures in the keys sector',
+        description: 'Verify all signatures in the `/tmp/vault/keys` sector',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
 
@@ -5206,7 +5209,7 @@ You have been here before.`,
       // PHASE 3: Activate Uplink
       {
         id: 'verify-configs',
-        description: 'Initialize quantum protocols',
+        description: 'Initialize quantum protocols in `/tmp/vault/active`',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
@@ -5228,7 +5231,7 @@ You have been here before.`,
       // PHASE 4: Activate Payload
       {
         id: 'verify-training',
-        description: 'Execute final transmission via payload signature',
+        description: 'Execute final transmission at `/tmp/vault/active/payload.py` (Tab)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
 
