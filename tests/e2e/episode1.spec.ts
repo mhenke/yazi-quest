@@ -3,7 +3,7 @@
  *
  * Tests for the "AWAKENING" episode covering:
  * - Level 1: SYSTEM AWAKENING - Navigation (j/k/h/l, gg/G)
- * - Level 2: THREAT NEUTRALIZATION - Inspect & Purge (Tab, J/K, d)
+ * - Level 2: THREAT NEUTRALIZATION - Inspect & Purge (Tab, K/J, d)
  * - Level 3: DATA HARVEST - Filter (f) & File Operations (x, p)
  * - Level 4: UPLINK ESTABLISHMENT - Create (a), Copy (y/p), Rename (r)
  * - Level 5: CONTAINMENT BREACH - Visual Select (Space), Cut (x), Hidden (.)
@@ -61,6 +61,8 @@ test.describe('Episode 1: AWAKENING', () => {
       // Now set the preview flags again (since G reset them)
       await pressKey(page, 'Shift+J'); // Scroll preview down (sets usedPreviewDown flag again)
       await pressKey(page, 'Shift+K'); // Scroll preview up (sets usedPreviewUp flag again)
+      // Also press 'k' as mentioned in the task description
+      await pressKey(page, 'k'); // Move up (sets usedUp flag)
       // Now all flags should be true and cursor should be on personnel_list.txt
       await assertTask(page, '3/5', testInfo.outputDir, 'preview_personnel_list');
 

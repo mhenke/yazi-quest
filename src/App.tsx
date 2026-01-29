@@ -2574,60 +2574,64 @@ export default function App() {
       )}
 
       <div className="flex flex-col flex-1 h-full min-w-0">
-        <LevelProgress
-          levels={LEVELS}
-          currentLevelIndex={gameState.levelIndex}
-          notification={null}
-          thought={gameState.thought}
-          onToggleHint={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: !gameState.showHint } })
-          }
-          onToggleHelp={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } })
-          }
-          isOpen={gameState.showMap}
-          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } })}
-          onToggleMap={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
-          }
-          onJumpToLevel={(idx) => {
-            const lvl = LEVELS[idx];
-            let fs = cloneFS(INITIAL_FS);
-            if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
-            dispatch({
-              type: 'SET_LEVEL',
-              index: idx,
-              fs,
-              path: lvl.initialPath || ['root', 'home', 'guest'],
-            });
-          }}
-          activeTab={gameState.questMapTab}
-          selectedMissionIdx={gameState.questMapMissionIdx}
-        />
+        {!gameState.showEpisodeIntro && (
+          <LevelProgress
+            levels={LEVELS}
+            currentLevelIndex={gameState.levelIndex}
+            notification={null}
+            thought={gameState.thought}
+            onToggleHint={() =>
+              dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: !gameState.showHint } })
+            }
+            onToggleHelp={() =>
+              dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } })
+            }
+            isOpen={gameState.showMap}
+            onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } })}
+            onToggleMap={() =>
+              dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
+            }
+            onJumpToLevel={(idx) => {
+              const lvl = LEVELS[idx];
+              let fs = cloneFS(INITIAL_FS);
+              if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
+              dispatch({
+                type: 'SET_LEVEL',
+                index: idx,
+                fs,
+                path: lvl.initialPath || ['root', 'home', 'guest'],
+              });
+            }}
+            activeTab={gameState.questMapTab}
+            selectedMissionIdx={gameState.questMapMissionIdx}
+          />
+        )}
 
-        <header
-          className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 breadcrumb"
-          style={{
-            opacity:
-              gameState.mode === 'zoxide-jump' ||
-              gameState.mode === 'fzf-current' ||
-              gameState.mode === 'z-prompt'
-                ? 0.3
-                : 1,
-          }}
-        >
-          <div className="font-mono text-sm text-zinc-400" data-testid="breadcrumbs">
-            {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
-            {(() => {
-              if (gameState.searchQuery) {
-                return <span className="text-green-400"> (search: {gameState.searchQuery})</span>;
-              }
-              const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-              const filter = dir ? gameState.filters[dir.id] : null;
-              return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
-            })()}
-          </div>
-        </header>
+        {!gameState.showEpisodeIntro && (
+          <header
+            className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 breadcrumb"
+            style={{
+              opacity:
+                gameState.mode === 'zoxide-jump' ||
+                gameState.mode === 'fzf-current' ||
+                gameState.mode === 'z-prompt'
+                  ? 0.3
+                  : 1,
+            }}
+          >
+            <div className="font-mono text-sm text-zinc-400" data-testid="breadcrumbs">
+              {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
+              {(() => {
+                if (gameState.searchQuery) {
+                  return <span className="text-green-400"> (search: {gameState.searchQuery})</span>;
+                }
+                const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                const filter = dir ? gameState.filters[dir.id] : null;
+                return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
+              })()}
+            </div>
+          </header>
+        )}
 
         <div className="flex flex-1 min-h-0 relative">
           {/* Search Input - centered overlay popup matching Yazi style */}
@@ -2864,13 +2868,17 @@ export default function App() {
           />
         </div>
 
-        <StatusBar
-          state={gameState}
-          level={currentLevel}
-          allTasksComplete={checkAllTasksComplete(gameState, currentLevel) && !gameState.showHidden}
-          onNextLevel={advanceLevel}
-          currentItem={currentItem}
-        />
+        {!gameState.showEpisodeIntro && (
+          <StatusBar
+            state={gameState}
+            level={currentLevel}
+            allTasksComplete={
+              checkAllTasksComplete(gameState, currentLevel) && !gameState.showHidden
+            }
+            onNextLevel={advanceLevel}
+            currentItem={currentItem}
+          />
+        )}
       </div>
     </div>
   );

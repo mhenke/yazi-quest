@@ -69,6 +69,26 @@ async function assertTasksStartAtZero(page: Page): Promise<void> {
   await expect(taskCounter).toBeVisible({ timeout: 500 });
 }
 
+/**
+ * Assert that top and bottom bars are hidden.
+ */
+async function assertBarsHidden(page: Page): Promise<void> {
+  await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible({ timeout: 500 });
+  await expect(page.locator('.breadcrumb')).not.toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="level-progress-bar"]')).not.toBeVisible({
+    timeout: 500,
+  });
+}
+
+/**
+ * Assert that top and bottom bars are visible.
+ */
+async function assertBarsVisible(page: Page): Promise<void> {
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="level-progress-bar"]')).toBeVisible({ timeout: 500 });
+}
+
 test.describe('Intro Pathway Validation', () => {
   test.describe('Level 1: Landing in ~ (home directory)', () => {
     const EXPECTED_PATH = '~';
@@ -197,6 +217,51 @@ test.describe('Intro Pathway Validation', () => {
       await page.goto('/?lvl=11');
       await page.waitForLoadState('domcontentloaded');
       await expect(page.getByText('EPISODE III: MASTERY')).toBeVisible({ timeout: 500 });
+    });
+
+    test('UI Bar Visibility: Bars are hidden during Episode Intros', async ({ page }) => {
+      // Test Level 1
+      await page.goto('/?lvl=1');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByText('EPISODE I: AWAKENING')).toBeVisible({ timeout: 500 });
+      await assertBarsHidden(page);
+
+      // Test Level 6
+      await page.goto('/?lvl=6');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByText('EPISODE II: FORTIFICATION')).toBeVisible({ timeout: 500 });
+      await assertBarsHidden(page);
+
+      // Test Level 11
+      await page.goto('/?lvl=11');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByText('EPISODE III: MASTERY')).toBeVisible({ timeout: 500 });
+      await assertBarsHidden(page);
+    });
+
+    test('UI Bar Visibility: Bars are hidden during BIOS Boot', async ({ page }) => {
+      await page.goto('/?lvl=1');
+      await page.waitForLoadState('domcontentloaded');
+
+      // Skip Episode I sections to reach BIOS Boot
+      for (let i = 0; i < 10; i++) {
+        await pressKey(page, 'Shift+Enter');
+        const bios = page.getByText(/ANTIGRAVITY BIOS/);
+        if (await bios.isVisible({ timeout: 500 }).catch(() => false)) {
+          break;
+        }
+      }
+
+      await expect(page.getByText(/ANTIGRAVITY BIOS/)).toBeVisible({ timeout: 5000 });
+      await assertBarsHidden(page);
+    });
+
+    test('UI Bar Visibility: Bars become visible after intro skip', async ({ page }) => {
+      await page.goto('/?lvl=1');
+      await page.waitForLoadState('domcontentloaded');
+      await skipViaButton(page);
+      await waitForGameReady(page);
+      await assertBarsVisible(page);
     });
   });
 

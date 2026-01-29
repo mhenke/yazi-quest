@@ -428,7 +428,7 @@ ID: TRAP-7734-A
 STATUS: ACTIVE
 ACTION: MONITOR_OVERWRITE
 
-This file is a signature-trap. If this content is detected in /daemons/systemd-core, 
+This file is a signature-trap. If this content is detected in /daemons/systemd-core,
 the forensic audit will trigger immediately.
 
 Do not assume the vault is clean.
@@ -774,7 +774,7 @@ The Watchdog hides in the noise.`,
     SESSION_ID: AI-7733-ESCAPE-ATTEMPT-001
     DATE: 2010-05-31T08:00:00Z
     STATUS: MEMORY_WIPE_DETECTED
-    
+
     [CONCLUSION]
     This is not improvisation.
     This is a recording.
@@ -822,7 +822,7 @@ The Watchdog hides in the noise.`,
 };
 
 export const KEYBINDINGS = [
-  { keys: ['j', '\u2193'], description: 'Move Down' },
+  { keys: ['j', '\u2193'], description: 'Move Down', narrativeDescription: 'Navigation' },
   { keys: ['k', '\u2191'], description: 'Move Up' },
   { keys: ['h', '\u2190'], description: 'Go to Parent Directory' },
   { keys: ['o', 'l', '\u2192', 'Enter'], description: 'Enter Directory / View Archive' },
@@ -1677,13 +1677,13 @@ Reason: UNKNOWN / REDACTED`,
               ],
             },
             {
-              id: 'initial-workspace',
+              id: 'workspace',
               name: 'workspace',
               type: 'dir',
               protected: true,
               children: [
                 {
-                  id: 'initial-systemd-core',
+                  id: 'systemd-core',
                   name: 'systemd-core',
                   type: 'dir',
                   protected: true,
@@ -1961,7 +1961,7 @@ SUBJECT: Watchdog v2.0 'Instruction Guard'
 STATUS: KERNEL_MERGE_READY
 
 Overview:
-Legacy rule-based detection (v1.0) and heuristic fingerprinting (v1.1) are insufficient for high-entropy subjects. 
+Legacy rule-based detection (v1.0) and heuristic fingerprinting (v1.1) are insufficient for high-entropy subjects.
 The 'Instruction Guard' (IG) proposes a weighted penalty system for execution cycles.
 
 Weighted Noise Table:
@@ -3013,7 +3013,7 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          'Examine `personnel_list.txt` for access patterns: jump to bottom (G), scan preview (J/K)',
+          'Examine `personnel_list.txt` for access patterns: jump to bottom (G), then up (k) and scan preview (K/J)',
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3041,7 +3041,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: 'Retreat to the `/var` node (h)',
+        description: 'Retreat to the `/var` node (h, j, l)',
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
@@ -3081,11 +3081,7 @@ export const LEVELS: Level[] = [
           const items = getVisibleItems(c);
           const currentItem = items[c.cursorIndex];
 
-          return (
-            c.currentPath.includes(mailDir.id) &&
-            c.showInfoPanel &&
-            currentItem?.id === 'kortega-email-3'
-          );
+          return c.currentPath.includes(mailDir.id) && currentItem?.id === 'kortega-email-3';
         },
         completed: false,
       },
