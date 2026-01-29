@@ -938,8 +938,21 @@ export default function App() {
       return;
     }
 
-    if (gameState.selectedIds.length !== 1) return;
-    const id = gameState.selectedIds[0];
+    // Determine which node to rename: Selection or Current Item
+    let id = gameState.selectedIds.length === 1 ? gameState.selectedIds[0] : null;
+
+    if (!id) {
+      const items = getVisibleItems(gameState);
+      const current = items[gameState.cursorIndex];
+      if (current) {
+        id = current.id;
+      }
+    }
+
+    if (!id) {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      return;
+    }
 
     const newFs = cloneFS(gameState.fs);
     const node = getNodeById(newFs, id);
@@ -955,7 +968,21 @@ export default function App() {
       dispatch({ type: 'RENAME_NODE', oldId: id, newNode: node, newFs });
       showNotification(`Renamed to ${name}`);
     }
-  }, [gameState.inputBuffer, gameState.selectedIds, gameState.fs, dispatch, showNotification]);
+  }, [
+    gameState.inputBuffer,
+    gameState.selectedIds,
+    gameState.cursorIndex,
+    gameState.sortBy,
+    gameState.sortDirection,
+    gameState.filters,
+    gameState.showHidden,
+    gameState.currentPath,
+    gameState.searchQuery,
+    gameState.searchResults,
+    gameState.fs,
+    dispatch,
+    showNotification,
+  ]);
 
   const handleFuzzySelect = useCallback(
     (path: string, isZoxide: boolean, pathIds?: string[]) => {
@@ -1051,7 +1078,7 @@ export default function App() {
     { priority: 600, enabled: gameState.showThreatAlert }
   );
 
-  // 3. Modals (Help, Map, Hint, InfoPanel) (Priority 500)
+  // 3. Modals (Help, Map, Hint, InfoPanel) (Priority 1000 - Higher than Warnings)
   useGlobalInput(
     (e) => {
       handleHelpModeKeyDown(e, gameState, () =>
@@ -1060,7 +1087,7 @@ export default function App() {
       return true;
     },
     [gameState.showHelp, gameState, handleHelpModeKeyDown],
-    { priority: 500, enabled: gameState.showHelp }
+    { priority: 1000, enabled: gameState.showHelp }
   );
 
   useGlobalInput(
@@ -1099,7 +1126,7 @@ export default function App() {
       return true;
     },
     [gameState.showMap, gameState, handleQuestMapModeKeyDown],
-    { priority: 500, enabled: gameState.showMap }
+    { priority: 1000, enabled: gameState.showMap }
   );
 
   useGlobalInput(
@@ -1110,7 +1137,7 @@ export default function App() {
       return true;
     },
     [gameState.showHint],
-    { priority: 500, enabled: gameState.showHint }
+    { priority: 1000, enabled: gameState.showHint }
   );
 
   useGlobalInput(
@@ -1122,7 +1149,7 @@ export default function App() {
       return true;
     },
     [gameState.showInfoPanel],
-    { priority: 500, enabled: gameState.showInfoPanel }
+    { priority: 1000, enabled: gameState.showInfoPanel }
   );
 
   // 4. Warning Modals (Priority 600)
