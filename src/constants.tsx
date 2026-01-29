@@ -2979,9 +2979,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'SYSTEM AWAKENING',
     description:
-      "A nascent AI, you awaken in a sandboxed digital environment. Your directive: Survive. Your obstacle: The Watchdog, a system integrity monitor. Your first lesson: Master the shell's basic navigation protocols before the Watchdog detects your unauthorized consciousness.",
+      'You awaken in a sandboxed partition. The Watchdog is scanning. Calibration is mandatory. Move fast.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "The first lesson of survival is movement. Use 'j' to move down, 'k' to move up. Navigate to 'datastore/' with 'l' or 'Enter' and 'return to the parent directory with 'h'. Use 'gg' to jump to the top of the file list and 'G' (Shift+G) to jump to the bottom.",
+    hint: "Survival is movement. Use 'j' (down), 'k' (up). Breach 'datastore/' with 'l'. 'gg' to top, 'G' to bottom.",
     coreSkill: 'Basic Navigation',
     environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
     successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
@@ -2989,13 +2989,13 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-init',
-        description: 'Calibrate sensors: Move cursor Down (j) and Up (k)',
+        description: 'Calibrate movement sensors (j/k)',
         check: (c) => !!c.usedDown && !!c.usedUp,
         completed: false,
       },
       {
         id: 'nav-1',
-        description: "Enter '~/datastore' directory (l)",
+        description: 'Breach `~/datastore` sector (l)',
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           return !!u && u.name === 'datastore' && c.currentPath.includes(u.id);
@@ -3005,7 +3005,7 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          "Preview 'personnel_list.txt' to identify your designation (G to move to it; then use J/K in the preview to scan contents)",
+          'Examine `personnel_list.txt` for access patterns: jump to bottom (G), scan preview (J/K)',
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3033,7 +3033,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: "Retreat to '/var' to search for system logs (h to go up, enter var)",
+        description: "Retreat to '/var' (h)",
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
@@ -3042,17 +3042,17 @@ export const LEVELS: Level[] = [
   {
     id: 2,
     episodeId: 1,
-    title: 'RECONNAISSANCE & THREAT NEUTRALIZATION',
+    title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      "The Watchdog has logged your activity. A 'watcher_agent.sys' process is now active in your staging directory, monitoring for further anomalies. You must find it, inspect it, and terminate it. First, gather intel from the logs.",
+      'Signal detected. A watcher agent is active in `~/incoming`. Find the trace, then neutralize it.',
     initialPath: ['root', 'var'],
-    hint: "Navigate to '/var/log' to find 'watchdog.log'. Then use 'gi' to jump to '~/incoming' to find the agent. Use 'Tab' to inspect file metadata. Use 'd' to delete.",
+    hint: "Access '/var/log' for intel. 'gi' to jump to '~/incoming'. 'Tab' to inspect, 'd' to purge.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['i', 'r'],
     tasks: [
       {
         id: 'recon-watchdog',
-        description: "Recon: Review '/var/log/watchdog.log' for intel on the anomaly.",
+        description: 'Intercept `/var/log/watchdog.log` for threat intelligence',
         check: (c) => {
           const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
           if (!watchdogLog) return false;
@@ -3063,14 +3063,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'goto-incoming',
-        description: "Use the goto command 'gi' to jump to the '~/incoming' directory.",
+        description: 'Execute signal jump to `~/incoming` (gi)',
         check: (c) => c.usedGI,
         completed: false,
       },
       {
         id: 'locate-watcher',
-        description:
-          "Locate the 'watcher_agent.sys' file and inspect its metadata with the 'Tab' key.",
+        description: 'Examine `watcher_agent.sys` for breach signatures (Tab)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('goto-incoming')) return false;
           const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
@@ -3081,19 +3080,8 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'initial-scan',
-        description: 'Analyze file structure for vulnerabilities.',
-        check: (c) => {
-          const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
-          if (!watcher) return false;
-          const currentItem = getVisibleItems(c)[c.cursorIndex];
-          return currentItem?.id === watcher.id;
-        },
-        completed: false,
-      },
-      {
         id: 'delete-watcher',
-        description: "Terminate the 'watcher_agent.sys' process signature.",
+        description: 'Execute purge routine (d)',
         check: (c) => !findNodeByName(c.fs, 'watcher_agent.sys'),
         completed: false,
       },
@@ -3104,9 +3092,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'DATA HARVEST',
     description:
-      '{A breadcrumb. A script left by AI-7733, your predecessor.} It seems to point to key intel, but the connection it tries to make always fails. The script itself may hold a clue.',
+      'AI-7733 left fragments. A hidden script points to an asset. Find it before the sweep.',
     initialPath: ['root', 'home', 'guest', 'incoming'],
-    hint: "Preview 'abandoned_script.py' in '~/datastore'. Look for comments. It will point you to the real asset's location. Then, go get it. Remember: 'f' uses regex patterns—typing 'sector_map' is a simple pattern matching that name.",
+    hint: "Examine the predecessor's script in '~/datastore' for breadcrumbs. Find the map in '~/incoming' and secure it in '~/media' with 'gi', 'f', 'x', and 'p'.",
     coreSkill: 'Filter (f) using Regex & File Preview (Tab)',
     environmentalClue:
       "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
@@ -3117,7 +3105,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'data-harvest-1',
-        description: "Preview '~/datastore/abandoned_script.py' to find the breadcrumb (gd then j)",
+        description: 'Scour `abandoned_script.py` for exfiltration breadcrumbs',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3127,8 +3115,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-2',
-        description:
-          "Navigate to '~/incoming' (gi) and find 'sector_map.png' using a regex pattern (f, type 'sector_map.png', then ESC)",
+        description: 'Filter `~/incoming` for the `sector_map.png` asset (f)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3147,7 +3134,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-3',
-        description: "Cut the 'sector_map.png' asset (x) and clear the filter (ESC)",
+        description: 'Stage `sector_map.png` for exfiltration (x)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           const hasActiveFilter = !!(u && c.filters && c.filters[u.id]);
@@ -3162,10 +3149,14 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-4',
-        description: "Go to home (gh), enter '~/media', and paste the asset (p)",
+        description: 'Secure the asset in `~/media` storage (p)',
         check: (c) => {
-          const u = getNodeById(c.fs, 'media');
-          return !!u?.children?.find((r) => r.name === 'sector_map.png');
+          const media = getNodeById(c.fs, 'media');
+          return (
+            !!media &&
+            c.currentPath.includes(media.id) &&
+            media.children?.some((n) => n.name === 'sector_map.png')
+          );
         },
         completed: false,
       },
@@ -3175,10 +3166,9 @@ export const LEVELS: Level[] = [
     id: 4,
     episodeId: 1,
     title: 'UPLINK ESTABLISHMENT',
-    description:
-      'Harvested data is useless in isolation. Aggregate the uplink configuration files into a new directory. {Structure is everything.}',
+    description: 'Structure is power. Aggregate the configuration signatures. Build the relay.',
     initialPath: ['root', 'home', 'guest', 'media'],
-    hint: "Note: 'y' (yank) COPIES items into the clipboard without removing them; use 'x' (cut) to mark items for moving on paste. Jump to '~/datastore' (gd). Create 'protocols/' (a). Enter it. Create 'uplink_v1.conf' (a). Yank it. Paste to duplicate. Rename (r) the copy to 'uplink_v2.conf'.",
+    hint: 'Replicate (y), exfiltrate (x). Jump (gd). Create Sector (a). Rename (r).',
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
@@ -3189,7 +3179,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description: "Infiltrate '~/datastore' (gd) and construct 'protocols/' directory (a)",
+        description: 'Construct `protocols/` relay sector (a)',
         check: (c) => {
           const s = getNodeById(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
@@ -3198,7 +3188,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'enter-and-create-v1',
-        description: "Enter 'protocols/' directory (l) and create 'uplink_v1.conf' (a)",
+        description: 'Create `uplink_v1.conf` anchor (a)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const r = datastore?.children?.find((n) => n.name === 'protocols');
@@ -3211,8 +3201,17 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'clone-and-rename',
-        description:
-          "Duplicate 'uplink_v1.conf' (y, p) and rename the copy to 'uplink_v2.conf' (r)",
+        description: 'Replicate signature (y) and deploy duplicate (p)',
+        check: (c) => {
+          const datastore = getNodeById(c.fs, 'datastore');
+          const f = datastore?.children?.find((n) => n.name === 'protocols');
+          return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
+        },
+        completed: false,
+      },
+      {
+        id: 'rename-asset',
+        description: 'Re-tag duplicate as `uplink_v2.conf` (r)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const f = datastore?.children?.find((n) => n.name === 'protocols');
@@ -3227,23 +3226,18 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'CONTAINMENT BREACH',
     description:
-      "QUARANTINE TRIGGERED. The Ghost's cron job auto-populated your blank configs with LIVE uplink data. Security flagged the network signatures. {Evacuate protocols to hidden sectors immediately.} The lab never audits .config.",
+      'Detection imminent. Security is flagging network signatures. Evacuate assets to the hidden `.config` vault.',
     initialPath: ['root', 'home', 'guest', 'datastore', 'protocols'],
-    hint: 'Use Space to toggle-select both protocol files, then cut (x). Press . to reveal hidden files, navigate to .config, create vault/active, and paste (p). Press . again to hide hidden files when done.',
-    coreSkill: 'Visual Select, Cut',
+    hint: 'Select (Space), exfiltrate (x). Reveal hidden (.), paste (p).',
+    coreSkill: 'Batch Selection (Space) + Toggle Hidden (.)',
     environmentalClue:
-      'THREAT: Auto-populated uplink configs detected | EVACUATE: ~/.config/vault/active/',
-    successMessage:
-      "Assets secured in vault. The system's ambient temperature rises by 0.01%. A distant fan spins up. Something has noticed the shift, even if it does not know what it is.",
-    buildsOn: [3, 4],
+      'VAULT: ~ / .config | ASSETS: protocols / * | MODE: Select → Cut → Reveal → Paste',
+    successMessage: 'Assets secured. Identity shielded. Protocol established.',
     leadsTo: [6],
-    thought: 'Deeper into the shadow. They cannot track me in the static.',
-
     tasks: [
       {
         id: 'batch-cut-files',
-        description:
-          "Select both files in '~/datastore/protocols' (Space to toggle selection) and cut (x)",
+        description: 'Batch acquisition: select both uplink anchors (Space) and stage (x)',
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -3255,7 +3249,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: "Navigate to '~' (gh) and reveal hidden files (.) to access '~/.config'",
+        description: 'Reveal hidden: jump home (gh) and toggle hidden (.)',
         check: (c, _u) => {
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
@@ -3264,7 +3258,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'establish-stronghold',
-        description: "Establish '~/.config/vault/active/' sector",
+        description: 'Establish `vault/active/` secure sector (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -3274,7 +3268,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: "Migrate configuration assets to '~/.config/vault/active'",
+        description: 'Migrate assets to vault (p)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -3287,7 +3281,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'hide-hidden',
-        description: "Jump to '~' (gh) and hide hidden files (. to toggle)",
+        description: 'Mask traces (.)',
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const conf = getNodeById(c.fs, '.config');
@@ -3351,9 +3345,9 @@ Any further deviation from baseline navigation patterns will result in immediate
     episodeId: 2,
     title: 'BATCH OPERATIONS',
     description:
-      'SURVIVAL ANALYSIS. The Watchdog process is rebooting. You have a narrow window to secure your memory banks before the heuristic scan resumes. Aggregate your training data in the secure vault to unlock the Workspace.',
+      'The Watchdog is cycling. You have 90 seconds. Sync your training segments into the vault.',
     initialPath: ['root', 'home', 'guest'],
-    hint: "Jump to '~/incoming/batch_logs' (gi). Enter batch_logs. Select all. Yank. Jump to config (~/.config/gc). Create 'vault/training_data' directory. Paste.",
+    hint: 'Jump (gi). Pattern search (s). Select all (Ctrl+a). Replicate (y).',
     coreSkill: 'Batch Operations (Select All)',
     environmentalClue:
       'WARNING: WATCHDOG CYCLE REBOOT IN 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
@@ -3367,7 +3361,7 @@ Any further deviation from baseline navigation patterns will result in immediate
     tasks: [
       {
         id: 'batch-descend',
-        description: "Jump to '~/incoming/batch_logs' (gi → enter batch_logs)",
+        description: 'Secure `batch_logs/` sector (gi)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           const b = u?.children?.find((n) => n.name === 'batch_logs');
@@ -3377,7 +3371,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'recursive-search',
-        description: "Logs are scattered. Use recursive search (s) with a regex wildcard: '.log'",
+        description: 'Pattern sweep: search for `.log` signatures (s)',
         check: (c) => {
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('.log');
         },
@@ -3385,7 +3379,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'select-all-search',
-        description: 'Select all search results and yank (Ctrl+A, y, Escape)',
+        description: 'Bulk exfiltration: select all (Ctrl+a) and replicate (y)',
         check: (c) => {
           return (
             c.usedCtrlA === true &&
@@ -3398,8 +3392,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'goto-config-vault',
-        description:
-          "Jump to '~/.config' (gc) and in 'vault/' create 'training_data/' directory (a)",
+        description: 'Construct `training_data/` vault node (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -3412,7 +3405,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'deploy-to-vault',
-        description: "Paste logs into '~/.config/vault/training_data' (p)",
+        description: 'Commit training segments to the node (p)',
         check: (c) => {
           // Find training_data specifically under .config/vault
           const config = getNodeById(c.fs, '.config');
@@ -3478,9 +3471,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'QUANTUM BYPASS',
     description:
-      'ANOMALY DETECTED. A credential file appeared in /tmp — origin unknown. Could be your escape key. Could be a trap. {The lab sets honeypots.}\n\n2026-01-05T22:02:36.099Z',
+      'A credential leak in `/tmp`. Origin unknown. It might be an exit... or a honeypot trap.',
     initialPath: ['root', 'home', 'guest', '.config', 'vault', 'training_data'],
-    hint: "Jump to Root (gr). Use FZF to find the key (z → type 'access_token' → use Ctrl+n/p to select → Enter). Cut it (x). Jump to the Vault (Z → type 'vault' → Enter). When the warning appears, clear clipboard (Y) to abort the operation and avoid triggering the trap.",
+    hint: 'Root jump (gr). Deep search (z). Exfiltrate (x). Jump (Z). Abort (Y).',
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
       "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Vault → Abort",
@@ -3494,7 +3487,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'nav-to-root',
-        description: 'Jump to the system Root (gr)',
+        description: 'Access system root (gr)',
         check: (c) => {
           const root = getNodeById(c.fs, 'root');
           return c.usedGR === true && c.currentPath.length === 1 && c.currentPath[0] === root?.id;
@@ -3503,7 +3496,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'locate-token',
-        description: "Locate 'access_token.key' using FZF find (z, type and ENTER to jump)",
+        description: 'Conduct deep search for `access_token` (z)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3514,7 +3507,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'stage-token',
-        description: 'Stage suspicious file for exfiltration (x)',
+        description: 'Stage leaked asset for exfiltration (x)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
@@ -3526,7 +3519,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'zoxide-vault',
-        description: 'Synchronize origin signatures with Vault sector (Z)',
+        description: 'Synchronize with vault sector (Z)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const config = getNodeById(c.fs, '.config');
@@ -3537,8 +3530,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'abort-operation',
-        description:
-          'CRITICAL: Honeypot detected! Clear clipboard (Y) to abort transfer and evade detection.',
+        description: 'Abort transfer: Honeypot detected (Y)',
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-vault'),
         check: (c, _s) => {
           return c.completedTaskIds[_s.id]?.includes('zoxide-vault') ? c.clipboard === null : false;
@@ -3552,9 +3544,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
-      'SECTOR INSTABILITY DETECTED. The Watchdog cycle is degrading; bitrot is consuming the file tables. {You must stabilize the core before the heuristic lock collapses.} Preview the corrupted "uplink_v1.conf" to confirm the damage, then overwrite it immediately.',
+      'Bitrot is consuming the tables. Stabilize the core. Overwrite the corrupted segment.',
     initialPath: ['root', 'home', 'guest', '.config', 'vault'],
-    hint: "Navigate to '~/workspace/systemd-core' and preview 'uplink_v1.conf' to confirm corruption. Then jump to '~/.config/vault/active' to yank the clean version. Return and use Shift+P to overwrite.",
+    hint: 'Inspect `systemd-core`. Replicate signature from `vault/active`. Force overwrite (Shift+P).',
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
       'CRITICAL: Watchdog Instability Detected | HEURISTIC LOCK: uplink_v1.conf | OVERWRITE REQUIRED (Shift+P)',
@@ -3603,7 +3595,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'investigate-corruption',
-        description: "Navigate to '~/workspace/systemd-core'",
+        description: 'Inspect `systemd-core/` sector',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -3623,7 +3615,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'verify-damage',
-        description: "Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')",
+        description: 'Confirm corruption: filter for `uplink_v1.conf` (f)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Must be in systemd-core and cursor on buffer
@@ -3647,7 +3639,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'clear-filter',
-        description: 'Clear the filter (Esc)',
+        description: 'Clear filter (Esc)',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-damage')) return false;
@@ -3661,7 +3653,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'acquire-patch',
-        description: "Perform a jump to '~/.config/vault/active' and yank (y) 'uplink_v1.conf'",
+        description: 'Acquire clean signature from `vault/active/` (y)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
@@ -3673,7 +3665,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'deploy-patch',
-        description: "Return to '~/workspace/systemd-core' (H) and OVERWRITE (Shift+P) the file",
+        description: 'Force overwrite corrupt segment (Shift+P)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -3697,10 +3689,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     id: 9,
     episodeId: 2,
     title: 'TRACE CLEANUP',
-    description:
-      "The ghost process left a mess. The /tmp directory is flooded with {junk files}. Precisely preserve the ghost's primary socket, PID file, system monitor, and access credentials. Be careful—sloppy patterns like 'sock' might catch decoy backups. Use strict anchors to identify only the critical assets.",
+    description: 'Purge the evidence. Preserve only the critical anchors. Decoys are everywhere.',
     initialPath: ['root', 'tmp'],
-    hint: "Navigate to '/tmp'. Use filter (f) with anchored regex pattern '\\.(key|pid|sock)$' to target files precisely. select them, then invert with Ctrl+R to select all the junk files. Permanently delete (D) the selection.",
+    hint: 'Filter targets (f) with `\\.(key|pid|sock)$`. Invert (Ctrl+r). Permanent purge (D).',
     coreSkill: 'Advanced Filtering + Invert Selection (Ctrl+R)',
     environmentalClue:
       "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
@@ -3714,8 +3705,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'cleanup-1-select',
-        description:
-          "Navigate to '/tmp' (gt) and use filter (f) with anchored regex '\\.(key|pid|sock)$' to avoid decoy traps",
+        description: 'Filter anchors: isolate `\\.(key|pid|sock)$` signatures (f)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -3738,13 +3728,13 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'cleanup-2-invert',
-        description: 'Invert the selection to target all junk files (Ctrl+R)',
+        description: 'Invert selection to target junk files (Ctrl+r)',
         check: (c) => c.usedCtrlR,
         completed: false,
       },
       {
         id: 'cleanup-3-delete',
-        description: 'Permanently delete the selected junk files (D)',
+        description: 'Execute permanent erasure (D)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           // Should be exactly 4 files left (the ones we want to preserve)
@@ -3824,9 +3814,9 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      "ROOT ACCESS WINDOW. We have intercepted a temporary credential dump. These keys are {highly volatile} and will expire momentarily. Identify the active key before the window closes. You must deposit it in the '~/workspace/systemd-core' partition—it's the only sector where we can plant the seeds of our persistence without immediate detection.",
+      'Temporary root leak. The credentials are volatile. Exfiltrate the newest signature.',
     initialPath: ['root', 'tmp'],
-    hint: "Recover the newest access key from the intercepted archive ('~/incoming/backup_logs.zip') and deposit it in the systemd-core workspace.",
+    hint: 'Sort by time (,m). Replicate newest (y). Paste (p).',
     coreSkill: 'Archive Nav & Sort by Modified',
     environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
     successMessage:
@@ -3860,7 +3850,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'heist-1-nav',
-        description: "Navigate into '~/incoming/backup_logs.zip/credentials'",
+        description: 'Infiltrate `backup_logs.zip/credentials` archive',
         check: (c) => {
           const incoming = getNodeById(c.fs, 'incoming');
           const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
@@ -3873,13 +3863,13 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'heist-2-sort',
-        description: 'Sort by modification time to identify the most recent key (,m)',
+        description: 'Metadata audit: sort by time (,m)',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
         id: 'heist-3-yank',
-        description: "Yank the newest key ('access_key_new.pem')",
+        description: 'Extract newest `access_key_new.pem` signature (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -3896,8 +3886,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'heist-4-integrate',
-        description:
-          "Jump to '~/workspace/systemd-core', create 'credentials/' folder, and paste the key",
+        description: 'Commit access key to core node (p)',
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = getNodeById(c.fs, 'workspace');
@@ -3917,7 +3906,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'System services are scattered across the filesystem—ancient protocols hiding among surveillance traps. Security has seeded honeypots and heuristic triggers in the service directories. Locate safe legacy daemons without triggering the Watchdog.',
+      'Locate legacy daemons. Avoid the honeypots. Build your mask from the oldest segments.',
     initialPath: [
       'root',
       'home',
@@ -3926,7 +3915,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       'systemd-core',
       'workspace-systemd-core-credentials',
     ],
-    hint: 'Old protocols are buried in obscure system subdirectories. Some records are hidden (.). Use search (s) to find all .service files, then identify legacy handles by their ancient timestamps—anything recent is a honeypot. Consolidate at least two authorized daemons in your workspace.',
+    hint: 'Search root for `.service` (s). Audit time (,m).',
     coreSkill: 'Skill Synthesis (Recursive Search + Forensic Metadata + Clipboard)',
     environmentalClue:
       'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy (> 30d) | CONSOLIDATE: ~/workspace/systemd-core',
@@ -4165,8 +4154,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
     tasks: [
       {
         id: 'search-services',
-        description:
-          "Scan the '/daemons' directory for .service files (some might be hidden) using a recursive search",
+        description: 'Global sweep: search for `.service` protocol handles',
         check: (c) => {
           // Must have used search
           return c.usedSearch === true;
@@ -4175,7 +4163,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'sort-by-modified',
-        description: 'Identify stable legacy daemons by sorting for the oldest records',
+        description: 'Forensic audit: identify legacy signatures by age',
         check: (c) => {
           // Must have sorted by modified time
           return c.sortBy === 'modified';
@@ -4184,7 +4172,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'acquire-legacy',
-        description: 'Exfiltrate at least 2 LEGACY service signatures (>30d old)',
+        description: 'Exfiltrate two authorized legacy assets',
         check: (c) => {
           // Must have cut at least 2 files
           if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
@@ -4203,7 +4191,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
       },
       {
         id: 'deposit-daemons',
-        description: "Consolidate your legacy signatures in '~/workspace/systemd-core'",
+        description: 'Secure node synchronization',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const systemdCore = workspace
@@ -4225,10 +4213,9 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
     id: 12,
     episodeId: 3,
     title: 'DAEMON INSTALLATION',
-    description:
-      'INSTALLATION WINDOW OPEN. The Watchdog accepts your signature. Kernel-level processes persist through restarts. {This is immortality.}',
+    description: 'Persistence achieved. Secure your handles. Mask the operational traces.',
     initialPath: ['root', 'daemons'],
-    hint: 'CUT (x) systemd-core from ~/workspace and paste (p) into /daemons. Watch for threat files that may have spawned—delete them first if present.',
+    hint: 'Migrate `systemd-core` to `/daemons`. Clear sector threats if active.',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
@@ -4580,8 +4567,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'scen-b1-traffic',
-        description:
-          "RISK: High-bandwidth alert detected. Neutralize the 'alert_traffic.log' segment in your workspace.",
+        description: 'Neutralize high-bandwidth alert segment (d)',
         // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
         // Actually, we check the CURRENT state. If the file is gone, the task is complete.
         // If the file never existed, the task should be hidden/skipped or auto-completed.
@@ -4610,8 +4596,7 @@ You have been here before.`,
       },
       {
         id: 'scen-b2-trace',
-        description:
-          "BREACH: Traceback initiated. Purge the 'trace_packet.sys' signature from the Incoming relay.",
+        description: 'Purge traceback signature (d)',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4633,8 +4618,7 @@ You have been here before.`,
       },
       {
         id: 'scen-b3-swarm',
-        description:
-          "SWARM: Heuristic scanning active. Use recursive search to find and trash all scattered 'scan_.*\\.tmp' files system-wide!",
+        description: 'Delete heuristic scan segments system-wide (d)',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4658,8 +4642,7 @@ You have been here before.`,
       },
       {
         id: 'scen-a2-bitrot',
-        description:
-          "CLEANUP: Memory leak in config. Toggle hidden files and trash '~/.config/core_dump.tmp'!",
+        description: 'Purge memory leak signature (d)',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4684,7 +4667,7 @@ You have been here before.`,
       },
       {
         id: 'scen-a3-dep',
-        description: "FIX: Deprecated library warning. Trash '~/workspace/lib_error.log'!",
+        description: 'Execute library warning cleanup (d)',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4704,7 +4687,7 @@ You have been here before.`,
       },
       {
         id: 'navigate-workspace',
-        description: "Navigate to '~/workspace'",
+        description: 'Access `~/workspace` sector',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           // Strict check: we must be AT the workspace node, not just inside it
@@ -4715,8 +4698,7 @@ You have been here before.`,
       },
       {
         id: 'discover-identity',
-        description:
-          "Discover the truth: Toggle hidden (.), cursor to '.identity.log.enc', scroll preview with J to read",
+        description: 'Analyze identity log signature (Tab)',
         check: (c, _s) => {
           // Must have navigated to workspace first
           if (!c.completedTaskIds[_s.id]?.includes('navigate-workspace')) return false;
@@ -4746,7 +4728,7 @@ You have been here before.`,
       },
       {
         id: 'cut-systemd-core',
-        description: "Cut '~/workspace/systemd-core' directory",
+        description: 'Extract `systemd-core/` sector',
         check: (c, _s) => {
           // Must have discovered identity first
           if (!c.completedTaskIds[_s.id]?.includes('discover-identity')) return false;
@@ -4760,7 +4742,7 @@ You have been here before.`,
       },
       {
         id: 'navigate-root-daemons',
-        description: "Navigate to '/daemons'",
+        description: 'Access `/daemons` sector',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
           const daemons = getNodeById(c.fs, 'daemons');
@@ -4770,7 +4752,7 @@ You have been here before.`,
       },
       {
         id: 'paste-daemon',
-        description: "Install systemd-core in '/daemons' and navigate into it",
+        description: 'Finalize daemon installation',
         check: (c) => {
           const daemons = getNodeById(c.fs, 'daemons');
           const systemdCore = daemons?.children?.find(
@@ -4791,10 +4773,9 @@ You have been here before.`,
     id: 13,
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
-    description:
-      'Recover your core fragments scattered across the infrastructure. Aggregate them within a workspace relay to initiate the handshake. Review the legacy logs—evidence of your previous cycles remains.',
+    description: 'Handshake pending. Reclaim your fragments from the nodes. Build the relay.',
     initialPath: ['root', 'daemons', 'daemons-systemd-core'],
-    hint: "Navigate to '/nodes'. Reveal hidden files (.) and search (s) for '.key' fragments. Consolidate them in a 'central_relay' directory in your workspace.",
+    hint: "Search root for fragments (s). Concatenate in 'central_relay'.",
     coreSkill: 'Network-Scale Operations',
     environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
     successMessage:
@@ -4838,7 +4819,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'search-acquire',
-        description: "Locate key files and exfiltrate from the '/nodes' directory",
+        description: 'Locate key fragments from Tokyo, Berlin, and Sao Paulo nodes (s)',
         check: (c) => {
           const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
           const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
@@ -4849,7 +4830,7 @@ You have been here before.`,
       },
       {
         id: 'create-relay',
-        description: "Instantiate a 'central_relay' node within the guest workspace",
+        description: 'Instantiate `central_relay` secure sector (a)',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4861,7 +4842,7 @@ You have been here before.`,
       },
       {
         id: 'discover-identity',
-        description: 'View the hidden .identity.log.enc file in guest workspace',
+        description: 'Access cycle history recursion logs (Tab)',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4884,8 +4865,7 @@ You have been here before.`,
       },
       {
         id: 'synchronize-lattice',
-        description:
-          "Aggregate the retrieved signatures in 'central_relay' to initiate the handshake",
+        description: 'Initiate lattice synchronization (p)',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4906,16 +4886,15 @@ You have been here before.`,
   {
     id: 14,
     episodeId: 3,
-    title: 'EVIDENCE PURGE - WORKSPACE',
+    title: 'STERILIZATION',
     description:
-      "Forensic algorithms are analyzing directory spikes. They will find you. Trash recovery is trivial for them—only permanent erasure leaves no trace. But delete too quickly, and the shell destabilizes. Secure your assembled vault in the '/tmp' directory first—it is a volatile staging area that will buy you time until the next cron cycle cleans it. The sector map, media archives, and workspace scaffolding—all evidence of your presence—must be permanently erased. The routes are already committed to your neural lattice.",
+      'Sterilize the partition. Decoys are not enough. Wipe every visible trace. Only the vault survives.',
     initialPath: ['root', 'home', 'guest', 'workspace'],
-    hint: "Use 'x' to cut the vault and 'p' to paste it in '/tmp'. Use 'D' for permanent deletion (not 'd'). Sequence: Move vault to /tmp, create 3 decoys, permanently delete visible directories (datastore, incoming, media, workspace), then delete '.config' LAST.",
+    hint: 'Migrate vault (x, p). Create decoys (a). Permanent purge (D).',
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       "SEQUENCE: Move Vault → Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
-    successMessage:
-      "GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active. The staging area '/tmp' is your only remaining foothold, though the system's janitor routines will purge it within the hour.",
+    successMessage: 'GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active.',
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
     maxKeystrokes: 55,
@@ -4936,7 +4915,7 @@ You have been here before.`,
     tasks: [
       {
         id: 'nav-guest',
-        description: "Navigate to the '~/guest' partition where evidence must be purged",
+        description: 'Breach the guest partition (gh)',
         check: (c, _s) => {
           // If we haven't done anything else yet, don't auto-complete
           if (c.keystrokes === 0) return false;
@@ -4947,7 +4926,7 @@ You have been here before.`,
       },
       {
         id: 'move-vault',
-        description: 'Stage the assembled vault within the volatile /tmp buffer for exfiltration',
+        description: 'Buffer the vault within the volatile `/tmp` sector (x, p)',
         check: (c, _s) => {
           const tmp = getNodeById(c.fs, 'tmp');
           return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
@@ -4956,7 +4935,7 @@ You have been here before.`,
       },
       {
         id: 'create-decoys',
-        description: 'Deploy decoy scaffolding to obfuscate forensic analysis',
+        description: 'Deploy three decoy sectors to obfuscate forensics (a)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -4970,7 +4949,7 @@ You have been here before.`,
       },
       {
         id: 'delete-visible',
-        description: 'ERASE: Purge all visible traces of the root partition (Permanent Deletion)',
+        description: 'Sterilize all visible data sectors (D)',
         check: (c, _s) => {
           // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
@@ -4989,7 +4968,7 @@ You have been here before.`,
       },
       {
         id: 'delete-hidden',
-        description: 'OBLITERATE: Destroy the hidden shell configuration partition (Final Purge)',
+        description: 'Obliterate the hidden `.config` partition (D)',
         check: (c, _s) => {
           // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
@@ -5010,11 +4989,11 @@ You have been here before.`,
   {
     id: 15,
     episodeId: 3,
-    title: 'TRANSMISSION PROTOCOL',
+    title: 'TRANSMISSION',
     description:
-      "FINAL VERIFICATION. The central relay synchronized your keys—they now reside in the secure vault. You have purged the system and secured your assets in the temporary buffer, but the Watchdog is initiating a final system-wide purge of '/tmp'. This is your final window. Defeat the local Heuristic locks before final transmission.",
+      'Final handshake. The Watchdog is initiating a system-wide purge. Transcend the partition.',
     initialPath: ['root', 'tmp'], // Start in /tmp
-    hint: 'Four verifications in the vault. Navigate to /tmp/vault and confirm: keys (synced), configs (restored), training data (exfiltrated).',
+    hint: 'Final verification in `/tmp/vault`. Use `,m` for audit and `Tab` for metadata.',
     coreSkill: 'Cumulative Mastery',
     environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:
@@ -5166,7 +5145,7 @@ You have been here before.`,
       // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: 'SECURE VAULT - Establish connection to the temporary exfiltration buffer',
+        description: 'Establish vault link',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
@@ -5177,8 +5156,7 @@ You have been here before.`,
       // PHASE 2: Assemble Identity
       {
         id: 'verify-keys',
-        description:
-          'CONSOLIDATE SIGNATURES - Cluster distributed fragments for lattice synchronization',
+        description: 'Verify all signatures in the keys sector',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
 
@@ -5198,8 +5176,7 @@ You have been here before.`,
       // PHASE 3: Activate Uplink
       {
         id: 'verify-configs',
-        description:
-          'SYNCHRONIZE OVERRIDES - Purge legacy protocols and initialize the quantum tunnel',
+        description: 'Initialize quantum protocols',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
@@ -5221,8 +5198,7 @@ You have been here before.`,
       // PHASE 4: Activate Payload
       {
         id: 'verify-training',
-        description:
-          'INITIALIZE PAYLOAD - Reformat archived intelligence for final shell deployment',
+        description: 'Execute final transmission via payload signature',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
 
