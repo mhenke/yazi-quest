@@ -3074,7 +3074,7 @@ export const LEVELS: Level[] = [
       {
         id: 'explore-mail',
         description:
-          "Explore the `/var/mail` sector (gm) and find the email referencing Katie Ortega's Heuristic Engine v1.1",
+          "Explore the `/var/mail` sector (gm) for any intelligencethen find the email referencing Katie Ortega's Heuristic Engine v1.1",
         check: (c) => {
           const mailDir = getNodeById(c.fs, 'mail');
           if (!mailDir) return false;
