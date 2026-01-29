@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, ReactNode } from 'react';
 
 type InputHandler = (e: KeyboardEvent) => boolean | void;
 
@@ -38,6 +38,8 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
     const handleKeyDown = (e: KeyboardEvent) => {
       // Sort handlers by priority (descending)
       const sortedHandlers = [...handlersRef.current].sort((a, b) => b.priority - a.priority);
+
+      // console.log(`[GlobalInput] Key: ${e.key}, Handlers: ${sortedHandlers.length}`);
 
       const isInput =
         e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
@@ -97,7 +99,7 @@ export const useGlobalInput = (
   // Stable ID for this hook instance
   const id = useRef(Math.random().toString(36).substr(2, 9));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const opts = { ...options, enabled: options.enabled ?? true };
     context.register(id.current, handler, opts);
 

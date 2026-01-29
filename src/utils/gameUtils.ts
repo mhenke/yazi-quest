@@ -52,6 +52,7 @@ export const checkHoneypotTriggered = (
     if (deletingHoneypot && !decoysCreated) {
       return {
         triggered: true,
+        reason: 'honeypot',
         message:
           '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
       };

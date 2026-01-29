@@ -7,6 +7,7 @@ interface GameOverModalProps {
   onRestart: () => void;
   efficiencyTip?: string; // Level-specific tip from constants.tsx
   level?: { id: number }; // Optional level context for narrative flavor
+  customMessage?: string; // Override narrative with specific error
 }
 
 // Narrative failure messages - in-universe flavor text
@@ -72,6 +73,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onRestart,
   efficiencyTip,
   level,
+  customMessage,
 }) => {
   useGlobalInput(
     (e) => {
@@ -104,7 +106,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               {getFailureTitle(reason, level?.id)}
             </h2>
             <p className="text-red-400 font-mono uppercase tracking-wider text-sm">
-              {getFailureNarrative(reason, level?.id)}
+              {customMessage || getFailureNarrative(reason, level?.id)}
             </p>
           </div>
 

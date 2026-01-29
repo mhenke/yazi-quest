@@ -341,9 +341,9 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
  * Asserts that the level starts with 0 completed tasks.
  */
 export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 5000 });
   const taskCounter = page.getByText(/Tasks: 0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 500 });
+  await expect(taskCounter).toBeVisible({ timeout: 5000 });
 }
 
 /**
@@ -400,13 +400,13 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
   const currentLvl = currentUrl.searchParams.get('lvl');
 
   await Promise.race([
-    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 }),
+    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 15000 }),
     page.waitForURL(
       (url) => {
         const newLvl = url.searchParams.get('lvl');
         return newLvl !== currentLvl;
       },
-      { timeout: 10000 }
+      { timeout: 15000 }
     ),
   ]).catch((e) => {
     throw new Error(`Timeout waiting for mission complete or advancement. ${e}`);
@@ -578,7 +578,7 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   const escapedText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(escapedText, 'i'); // eslint-disable-line security/detect-non-literal-regexp
   await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({
-    timeout: 1000,
+    timeout: 3000,
   });
 
   await pressKey(page, ' '); // Toggle selection

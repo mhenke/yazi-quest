@@ -16,10 +16,10 @@ export const handleNormalModeKeyDown = (
   currentLevel: Level,
   advanceLevel: () => void,
   showNotification: (message: string, duration?: number) => void
-) => {
+): boolean => {
   // 1. Level 13: Async Distributed Node Switching
   if (handleLevel13NodeSwitch(e, gameState.levelIndex, dispatch)) {
-    return;
+    return true;
   }
 
   // 2. Retrieve intensity for this keypress
@@ -42,7 +42,7 @@ export const handleNormalModeKeyDown = (
       intensity
     )
   )
-    return;
+    return true;
 
   // Clipboard & Selection & Deletion
   if (
@@ -56,11 +56,13 @@ export const handleNormalModeKeyDown = (
       showNotification
     )
   )
-    return;
+    return true;
 
   // System Params, UI Toggles & Search
   if (
     handleSystemParamsKeyDown(e, gameState, dispatch, currentItem, currentLevel, showNotification)
   )
-    return;
+    return true;
+
+  return false;
 };

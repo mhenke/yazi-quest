@@ -72,7 +72,7 @@ export const useKeyboardHandlers = (
       currentLevel: Level,
       advanceLevel: () => void
     ) => {
-      handleNormalModeKeyDown(
+      return handleNormalModeKeyDown(
         e,
         gameState,
         dispatch,
