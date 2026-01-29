@@ -16,10 +16,8 @@ export const handleGCommandKeyDown = (
     if (e.key !== 'g' && e.key !== 'Escape') {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
-        },
+          type: 'SET_NOTIFICATION',
+          message: 'Shortcuts disabled in Level 1. Use manual navigation.'
       });
       return;
     }
@@ -38,15 +36,8 @@ export const handleGCommandKeyDown = (
       const last = Math.max(0, items.length - 1);
       dispatch({ type: 'SET_CURSOR', index: last });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          usedG: true,
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-        },
-      });
+      dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedG' });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false } });
     } catch {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
     }
@@ -78,15 +69,8 @@ export const handleGCommandKeyDown = (
     if (e.key === 'g') {
       dispatch({ type: 'SET_CURSOR', index: 0 });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          usedGG: true,
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-        },
-      });
+      dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedGG' });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false } });
     } else {
       // Check for active search - block navigation
       if (checkSearchAndBlockNavigation(e, gameState, dispatch)) {
@@ -104,30 +88,19 @@ export const handleGCommandKeyDown = (
         );
         if (protection) {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              notification: { message: `🔒 ${protection}` },
-            },
-          });
+          dispatch({ type: 'SET_NOTIFICATION', message: `🔒 ${protection}` });
           return;
         }
       }
 
       // Standard Path Jumps
-      const extraFlags = target.flag ? { [target.flag]: true } : {};
       dispatch({ type: 'NAVIGATE', path: target.path });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          notification: { message: `Jumped to ${target.label}` },
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-          ...extraFlags,
-        },
-      });
+      if (target.flag) {
+          dispatch({ type: 'MARK_ACTION_USED', actionKey: target.flag });
+      }
+      dispatch({ type: 'SET_NOTIFICATION', message: `Jumped to ${target.label}` });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { previewScroll: 0, usedPreviewDown: false, usedPreviewUp: false } });
     }
   } else {
     // Unknown key, exit mode

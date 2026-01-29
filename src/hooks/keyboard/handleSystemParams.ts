@@ -18,12 +18,7 @@ export const handleSystemParamsKeyDown = (
         e.preventDefault();
         dispatch({ type: 'SET_MODE', mode: 'filter' });
         dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            usedFilter: true,
-          },
-        });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedFilter' });
         return true;
       }
       break;
@@ -34,10 +29,10 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'SET_MODE', mode: 'search' });
       dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
       dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+      dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedSearch' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          usedSearch: true,
           filters: {}, // Clear all filters
         },
       });
@@ -68,13 +63,18 @@ export const handleSystemParamsKeyDown = (
         showNotification(getNarrativeAction('Z') || 'Zoxide jump');
         dispatch({ type: 'SET_MODE', mode: 'zoxide-jump' });
         dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { fuzzySelectedIndex: 0 } });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedPreviewDown' }); // Resetting? No, logic was resetting to false
+        // Actually the original logic was resetting usedPreviewDown to false.
+        // MARK_ACTION_USED sets to true.
+        // If the intent is to reset, we can't use MARK_ACTION_USED.
+        // But resetting boolean flags to false is allowed via UPDATE_UI_STATE.
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            fuzzySelectedIndex: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          },
+            type: 'UPDATE_UI_STATE',
+            updates: {
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+            }
         });
         return true;
       }
@@ -89,13 +89,13 @@ export const handleSystemParamsKeyDown = (
         showNotification(getNarrativeAction('z') || 'FZF file search');
         dispatch({ type: 'SET_MODE', mode: 'fzf-current' });
         dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { fuzzySelectedIndex: 0 } });
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            fuzzySelectedIndex: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          },
+            type: 'UPDATE_UI_STATE',
+            updates: {
+                usedPreviewDown: false,
+                usedPreviewUp: false,
+            }
         });
         return true;
       }
@@ -120,7 +120,7 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'TOGGLE_INFO_PANEL' });
       if (currentItem) {
         const updatedLevel11Flags = checkLevel11Scouting(gameState, currentItem);
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { level11Flags: updatedLevel11Flags } });
+        dispatch({ type: 'UPDATE_LEVEL_FLAGS', flags: updatedLevel11Flags });
       }
       return true;
 

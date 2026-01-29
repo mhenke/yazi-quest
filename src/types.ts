@@ -129,6 +129,12 @@ export interface GameSettings {
   soundEnabled: boolean;
 }
 
+export interface Level11Flags {
+  triggeredHoneypot: boolean;
+  selectedModern: boolean;
+  scoutedFiles: string[]; // IDs of files inspected with Tab
+}
+
 export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extension';
 export type SortDirection = 'asc' | 'desc';
 export type Linemode = 'none' | 'size' | 'mtime' | 'permissions';
@@ -229,11 +235,7 @@ export interface GameState {
   gauntletPhase?: number; // 0-8 for Level 15 micro-challenges
   gauntletScore?: number; // Number of successful phases passed in Level 15
   phaseStartTime?: number; // Timestamp for current phase start
-  level11Flags?: {
-    triggeredHoneypot: boolean;
-    selectedModern: boolean;
-    scoutedFiles: string[]; // IDs of files inspected with Tab
-  };
+  level11Flags?: Level11Flags;
   threatLevel: number; // 0-100 Global threat level
   threatStatus: string; // CALM, ANALYZING, TRACING, BREACH
   // Recursive search state

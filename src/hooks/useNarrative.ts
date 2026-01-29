@@ -72,28 +72,28 @@ export const useNarrative = (
         // Narrative Side Effect: Level 7 Honeypot Alert
         if (currentLevel.id === 7 && task.id === 'zoxide-vault') {
           dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              alertMessage:
-                "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
-              showThreatAlert: true,
-            },
+            type: 'SET_ALERT',
+            message: "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
+            show: true
           });
         }
       }
     });
 
     if (changed) {
-      // Collect all updates for the level completion/transition
-      let updates: Partial<GameState> = {
-        completedTaskIds: {
-          ...gameState.completedTaskIds,
-          [currentLevel.id]: [
-            ...(gameState.completedTaskIds[currentLevel.id] || []),
-            ...newlyCompleted,
-          ],
-        },
-      };
+      // Update tasks first
+      dispatch({
+        type: 'UPDATE_UI_STATE',
+        updates: {
+            completedTaskIds: {
+                ...gameState.completedTaskIds,
+                [currentLevel.id]: [
+                    ...(gameState.completedTaskIds[currentLevel.id] || []),
+                    ...newlyCompleted,
+                ],
+            }
+        }
+      });
 
       // Level 15 Gauntlet Logic
       if (currentLevel.id === 15) {
@@ -103,34 +103,24 @@ export const useNarrative = (
 
         if (isFinished) {
           if (currentScore < 6) {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                ...updates,
-                isGameOver: true,
-                gameOverReason: 'keystrokes',
-                notification: { message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` },
-              },
-            });
+            dispatch({ type: 'GAME_OVER', reason: 'keystrokes' });
+            dispatch({ type: 'SET_NOTIFICATION', message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` });
             return;
           }
-          updates = {
-            ...updates,
-            gauntletScore: currentScore,
-            notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
-          };
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { gauntletScore: currentScore } });
+          dispatch({ type: 'SET_NOTIFICATION', message: `GAUNTLET CLEARED: Score ${currentScore}/8` });
         } else {
-          updates = {
-            ...updates,
-            gauntletPhase: nextPhase,
-            gauntletScore: currentScore,
-            timeLeft: 20,
-            notification: { message: `PHASE ${nextPhase + 1} START` },
-          };
+          dispatch({
+              type: 'UPDATE_UI_STATE',
+              updates: {
+                  gauntletPhase: nextPhase,
+                  gauntletScore: currentScore,
+                  timeLeft: 20
+              }
+          });
+          dispatch({ type: 'SET_NOTIFICATION', message: `PHASE ${nextPhase + 1} START` });
         }
       }
-
-      dispatch({ type: 'UPDATE_UI_STATE', updates });
     }
   }, [
     gameState, // This dependency is heavy, but necessary for task.check(gameState)
@@ -148,12 +138,9 @@ export const useNarrative = (
     if (levelId === 5 && shownInitialAlertForLevelRef.current !== 5) {
       shownInitialAlertForLevelRef.current = 5;
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          alertMessage:
-            '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.',
-          showThreatAlert: true,
-        },
+        type: 'SET_ALERT',
+        message: '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.',
+        show: true
       });
       return;
     }
@@ -190,15 +177,11 @@ export const useNarrative = (
       }
 
       if (alertMsg && alertMsg !== gameState.alertMessage) {
-         // Only dispatch if different to avoid loop?
-         // Actually App.tsx didn't check inequality, but it's safer.
-         // But App.tsx relied on `alertMsg` being derived.
-         // If we dispatch `showThreatAlert: true`, it will re-render.
-         // We need to make sure we don't spam.
          if (!gameState.showThreatAlert) {
             dispatch({
-                type: 'UPDATE_UI_STATE',
-                updates: { alertMessage: alertMsg, showThreatAlert: true },
+                type: 'SET_ALERT',
+                message: alertMsg,
+                show: true
             });
          }
       }
@@ -229,15 +212,10 @@ export const useNarrative = (
             const scouted = gameState.level11Flags?.scoutedFiles || [];
             if (!scouted.includes(currentItem.id)) {
                 dispatch({
-                    type: 'UPDATE_UI_STATE',
-                    updates: {
-                    level11Flags: {
-                        ...gameState.level11Flags,
-                        scoutedFiles: [...scouted, currentItem.id],
-                        triggeredHoneypot: gameState.level11Flags?.triggeredHoneypot || false,
-                        selectedModern: gameState.level11Flags?.selectedModern || false,
-                    },
-                    },
+                    type: 'UPDATE_LEVEL_FLAGS',
+                    flags: {
+                        scoutedFiles: [...scouted, currentItem.id]
+                    }
                 });
             }
           }
@@ -251,17 +229,11 @@ export const useNarrative = (
 
       if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
-            showThreatAlert: true,
-            level11Flags: {
-              ...gameState.level11Flags!,
-              triggeredHoneypot: true,
-            },
-          },
+          type: 'SET_ALERT',
+          message: '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
+          show: true
         });
+        dispatch({ type: 'UPDATE_LEVEL_FLAGS', flags: { triggeredHoneypot: true } });
       }
     }
   }, [
@@ -297,12 +269,9 @@ export const useNarrative = (
 
       if (hasClipboardHoneypot && !gameState.showThreatAlert) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
-            showThreatAlert: true,
-          },
+          type: 'SET_ALERT',
+          message: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
+          show: true
         });
       }
     } else if (currentLevel.id === 12) {
@@ -313,12 +282,9 @@ export const useNarrative = (
 
       if (hasHoneypot && !gameState.showThreatAlert) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage:
-              '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
-            showThreatAlert: true,
-          },
+          type: 'SET_ALERT',
+          message: '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
+          show: true
         });
       }
     }

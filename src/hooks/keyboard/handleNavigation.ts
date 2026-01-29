@@ -25,15 +25,15 @@ export const handleNavigationKeyDown = (
       const newItem = items[newCursorIndex];
       const updatedLevel11Flags = checkLevel11Scouting(gameState, newItem);
 
+      dispatch({ type: 'SET_CURSOR', index: newCursorIndex });
+      dispatch({ type: 'UPDATE_LEVEL_FLAGS', flags: updatedLevel11Flags });
+      dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedDown' });
       dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          cursorIndex: newCursorIndex,
           previewScroll: 0,
-          usedDown: true,
           usedPreviewDown: false,
           usedPreviewUp: false,
-          level11Flags: updatedLevel11Flags,
           lastActionIntensity: intensity,
         },
       });
@@ -43,12 +43,14 @@ export const handleNavigationKeyDown = (
     case 'k':
     case 'ArrowUp':
       dispatch({
+        type: 'SET_CURSOR',
+        index: gameState.cursorIndex <= 0 ? Math.max(0, items.length - 1) : gameState.cursorIndex - 1
+      });
+      dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedUp' });
+      dispatch({
         type: 'UPDATE_UI_STATE',
         updates: {
-          cursorIndex:
-            gameState.cursorIndex <= 0 ? Math.max(0, items.length - 1) : gameState.cursorIndex - 1,
           previewScroll: 0,
-          usedUp: true,
           usedPreviewDown: false,
           usedPreviewUp: false,
           lastActionIntensity: intensity,
@@ -58,11 +60,11 @@ export const handleNavigationKeyDown = (
 
     case 'J':
       if (e.shiftKey) {
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedPreviewDown' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
             previewScroll: gameState.previewScroll + 5,
-            usedPreviewDown: true,
           },
         });
         return true;
@@ -71,11 +73,11 @@ export const handleNavigationKeyDown = (
 
     case 'K':
       if (e.shiftKey) {
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedPreviewUp' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
             previewScroll: Math.max(0, gameState.previewScroll - 5),
-            usedPreviewUp: true,
           },
         });
         return true;
@@ -95,12 +97,12 @@ export const handleNavigationKeyDown = (
       try {
         const items = getVisibleItems(gameState) || [];
         const last = Math.max(0, items.length - 1);
+        dispatch({ type: 'SET_CURSOR', index: last });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedG' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
-            cursorIndex: last,
             previewScroll: 0,
-            usedG: true,
             usedPreviewDown: false,
             usedPreviewUp: false,
             lastActionIntensity: 1,
@@ -123,28 +125,21 @@ export const handleNavigationKeyDown = (
         if (itemPath && itemPath.length > 1) {
           const parentPath = itemPath.slice(0, -1);
           dispatch({ type: 'NAVIGATE', path: parentPath });
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              previewScroll: 0,
-              searchQuery: null,
-              searchResults: [],
-            },
-          });
+          dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { previewScroll: 0 } });
           return true;
         }
       }
 
       if (parent) {
         dispatch({ type: 'NAVIGATE', path: gameState.currentPath.slice(0, -1) });
+        dispatch({ type: 'SET_SEARCH', query: null, results: [] });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
             previewScroll: 0,
             usedPreviewDown: false,
             usedPreviewUp: false,
-            searchQuery: null,
-            searchResults: [],
             lastActionIntensity: intensity,
           },
         });
@@ -184,6 +179,7 @@ export const handleNavigationKeyDown = (
             const pathStr = resolvePath(gameState.fs, itemPath);
             dispatch({ type: 'NAVIGATE', path: itemPath });
             dispatch({ type: 'UPDATE_ZOXIDE', path: pathStr });
+            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
             dispatch({
               type: 'UPDATE_UI_STATE',
               updates: {
@@ -192,8 +188,6 @@ export const handleNavigationKeyDown = (
                 usedPreviewDown: false,
                 usedPreviewUp: false,
                 previewScroll: 0,
-                searchQuery: null,
-                searchResults: [],
               },
             });
             return true;
@@ -227,14 +221,14 @@ export const handleNavigationKeyDown = (
         }
         if (gameState.history.length === 0) return true;
         dispatch({ type: 'NAVIGATE_BACK' });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedHistoryBack' });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'History Back' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
             previewScroll: 0,
-            usedHistoryBack: true,
             usedPreviewDown: false,
             usedPreviewUp: false,
-            notification: { message: 'History Back' },
           },
         });
         return true;
@@ -248,14 +242,14 @@ export const handleNavigationKeyDown = (
         }
         if (gameState.future.length === 0) return true;
         dispatch({ type: 'NAVIGATE_FORWARD' });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedHistoryForward' });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'History Forward' });
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: {
             previewScroll: 0,
-            usedHistoryForward: true,
             usedPreviewDown: false,
             usedPreviewUp: false,
-            notification: { message: 'History Forward' },
           },
         });
         return true;

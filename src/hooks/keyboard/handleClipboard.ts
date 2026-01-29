@@ -38,7 +38,7 @@ export const handleClipboardKeyDown = (
         e.preventDefault();
         const allIds = items.map((item) => item.id);
         dispatch({ type: 'SET_SELECTION', ids: allIds });
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlA: true } });
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedCtrlA' });
         showNotification(
           getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
           500
@@ -64,7 +64,7 @@ export const handleClipboardKeyDown = (
           const allIds = allPotentialItems.map((item) => item.id);
           const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
           dispatch({ type: 'SET_SELECTION', ids: inverted });
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlR: true } });
+          dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedCtrlR' });
           showNotification(
             getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
             500
@@ -73,8 +73,8 @@ export const handleClipboardKeyDown = (
         return true;
       } else if (gameState.selectedIds.length > 1) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { notification: { message: 'Batch rename not available in this version' } },
+          type: 'SET_NOTIFICATION',
+          message: 'Batch rename not available in this version'
         });
         return true;
       } else if (currentItem) {
@@ -136,18 +136,14 @@ export const handleClipboardKeyDown = (
           action: e.key === 'x' ? 'cut' : 'yank',
           originalPath: gameState.currentPath,
         });
+        dispatch({ type: 'SET_SELECTION', ids: [] });
+        if (e.key === 'y') dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedY' });
+        if (e.key === 'x') dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedX' });
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            selectedIds: [],
-            usedY: gameState.usedY || e.key === 'y',
-            usedX: gameState.usedX || e.key === 'x',
-            notification: {
-              message:
-                getNarrativeAction(e.key) ||
-                `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
-            },
-          },
+          type: 'SET_NOTIFICATION',
+          message:
+            getNarrativeAction(e.key) ||
+            `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
         });
         return true;
       }
@@ -158,10 +154,7 @@ export const handleClipboardKeyDown = (
       if (e.shiftKey) {
         e.preventDefault();
         dispatch({ type: 'CLEAR_CLIPBOARD' });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { notification: { message: 'Clipboard Aborted' } },
-        });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'Clipboard Aborted' });
         return true;
       }
       break;
@@ -194,10 +187,10 @@ export const handleClipboardKeyDown = (
         updates: {
           pendingDeleteIds: toDelete,
           deleteType: e.key === 'D' ? 'permanent' : 'trash',
-          usedD: gameState.usedD || e.key === 'D',
-          usedTrashDelete: gameState.usedTrashDelete || e.key === 'd',
         },
       });
+      if (e.key === 'D') dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedD' });
+      if (e.key === 'd') dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedTrashDelete' });
       return true;
     }
 
@@ -258,16 +251,10 @@ export const handleClipboardKeyDown = (
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
             dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                notification: {
-                  message:
-                    getNarrativeAction('p') ||
-                    `Deployed ${gameState.clipboard?.nodes.length} assets`,
-                },
-                usedP: true,
-              },
+              type: 'SET_NOTIFICATION',
+              message: getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`
             });
+            dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedP' });
           }
         } catch (err) {
           console.error(err);
@@ -352,15 +339,11 @@ export const handleClipboardKeyDown = (
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
             dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                notification: {
-                  message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
-                },
-                usedP: true,
-                usedShiftP: true,
-              },
+              type: 'SET_NOTIFICATION',
+              message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`
             });
+            dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedP' });
+            dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedShiftP' });
           }
         } catch (err) {
           console.error(err);

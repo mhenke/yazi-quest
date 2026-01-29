@@ -1,4 +1,4 @@
-import { GameState, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } from '../types';
+import { GameState, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry, Level11Flags, GameStats, GameSettings } from '../types';
 import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
@@ -91,7 +91,14 @@ export type Action =
       episodeId: number;
       timeLimit?: number;
       maxKeystrokes?: number;
-    };
+    }
+  // New Explicit Actions
+  | { type: 'SET_ALERT'; message: string; show: boolean }
+  | { type: 'SET_WARNING'; warningType: 'hidden' | 'sort' | 'filter' | 'search'; show: boolean }
+  | { type: 'UPDATE_LEVEL_FLAGS'; flags: Partial<Level11Flags> }
+  | { type: 'INCREMENT_STAT'; stat: keyof GameStats; amount: number }
+  | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
+  | { type: 'MARK_ACTION_USED'; actionKey: keyof GameState };
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -501,18 +508,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         );
         return state;
       }
-      // CRITICAL FIX: Explicitly clear any filters for the target directory
-      // so that siblings are visible when jumping to the file.
-      // We can't easily get targetDirNode id here without fs helpers, so we clear for "current target dir" logic
-      // But action.path is the TARGET path.
-      // So we assume the caller handles logic or we blindly clear.
-      // Actually, standard FZF logic clears filters for the target dir.
-      // Since we don't have easy node lookup here, let's assume filters logic is simple:
-      // We'll just keep filters as is? No, FZF clears them usually.
-      // Let's rely on `state.filters` clearing.
-      // BUT, we need ID to clear filter. `state.filters` is Record<dirId, string>.
-      // The `path` is array of IDs. The last ID is the dir ID.
-      // Wait, `action.path` is the directory path to jump TO.
       const targetDirId = action.path[action.path.length - 1];
       const newFilters = { ...state.filters };
       if (targetDirId) {
@@ -522,7 +517,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       const isQuantum = state.levelIndex === 6;
       const notification = isQuantum
         ? { message: '>> QUANTUM TUNNEL ESTABLISHED <<' }
-        : { message: `Found: ${action.path.join('/')}` }; // Fallback message, caller usually handles
+        : { message: `Found: ${action.path.join('/')}` };
 
       return {
         ...state,
@@ -533,7 +528,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         inputBuffer: '',
         history: [...state.history, state.currentPath],
         future: [],
-        notification: { message: 'Found item' }, // Generic, can be improved or passed in action
+        notification: { message: 'Found item' },
         usedPreviewDown: false,
         usedPreviewUp: false,
         stats: { ...state.stats, fzfFinds: state.stats.fzfFinds + 1 },
@@ -553,6 +548,50 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case 'SET_INPUT_BUFFER':
       return { ...state, inputBuffer: action.buffer };
+
+    case 'SET_ALERT':
+      return {
+        ...state,
+        showThreatAlert: action.show,
+        alertMessage: action.message,
+      };
+
+    case 'SET_WARNING':
+      return {
+        ...state,
+        showHiddenWarning: action.warningType === 'hidden' ? action.show : state.showHiddenWarning,
+        showSortWarning: action.warningType === 'sort' ? action.show : state.showSortWarning,
+        showFilterWarning: action.warningType === 'filter' ? action.show : state.showFilterWarning,
+        showSearchWarning: action.warningType === 'search' ? action.show : state.showSearchWarning,
+      };
+
+    case 'UPDATE_LEVEL_FLAGS':
+      return {
+        ...state,
+        level11Flags: { ...state.level11Flags, ...action.flags },
+      };
+
+    case 'INCREMENT_STAT':
+      return {
+        ...state,
+        stats: {
+          ...state.stats,
+          [action.stat]: (state.stats[action.stat] || 0) + action.amount,
+        },
+      };
+
+    case 'UPDATE_SETTINGS':
+      return {
+        ...state,
+        settings: { ...state.settings, ...action.settings },
+      };
+
+    case 'MARK_ACTION_USED':
+      // Only allow updating boolean flags that start with 'used'
+      if (typeof action.actionKey === 'string' && action.actionKey.startsWith('used')) {
+        return { ...state, [action.actionKey]: true };
+      }
+      return state;
 
     case 'TICK': {
       if (state.isGameOver || state.showEpisodeIntro) return state;

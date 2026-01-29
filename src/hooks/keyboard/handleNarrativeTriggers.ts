@@ -22,10 +22,8 @@ export const handleLevel13NodeSwitch = (
     const target = NODES[e.key];
     dispatch({ type: 'NAVIGATE', path: target.path });
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        notification: { message: `>>> SYNC: ACTIVE NODE CHANGED TO ${target.label} <<<` },
-      },
+      type: 'SET_NOTIFICATION',
+      message: `>>> SYNC: ACTIVE NODE CHANGED TO ${target.label} <<<`
     });
     return true;
   }

@@ -98,13 +98,13 @@ export const handleSortModeKeyDown = (
     if (config.linemode) {
       dispatch({ type: 'SET_LINEMODE', mode: config.linemode });
     }
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { acceptNextKeyForSort: false } });
+    if (key.toLowerCase() === 'm') {
+        dispatch({ type: 'MARK_ACTION_USED', actionKey: 'usedSortM' });
+    }
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        acceptNextKeyForSort: false,
-        usedSortM: gameState.usedSortM || key.toLowerCase() === 'm',
-        notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
-      },
+        type: 'SET_NOTIFICATION',
+        message: `Sort: ${config.label}${shift ? ' (rev)' : ''}`
     });
   }
 };

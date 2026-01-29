@@ -37,12 +37,8 @@ export const handleOverwriteConfirmKeyDown = (
     if (!deleteRes.ok) {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          notification: {
-            message: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`,
-          },
-        },
+          type: 'SET_NOTIFICATION',
+          message: `Overwrite failed: ${(deleteRes as { ok: false; error: FsError }).error}`
       });
       return;
     }
@@ -53,13 +49,8 @@ export const handleOverwriteConfirmKeyDown = (
       dispatch({ type: 'UPDATE_FS', fs: newFs });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          notification: { message: createRes.error },
-          pendingOverwriteNode: null,
-        },
-      });
+      dispatch({ type: 'SET_NOTIFICATION', message: createRes.error || 'Error' });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { pendingOverwriteNode: null } });
       return;
     }
 
@@ -67,13 +58,8 @@ export const handleOverwriteConfirmKeyDown = (
       dispatch({ type: 'UPDATE_FS', fs: newFs });
       dispatch({ type: 'SET_MODE', mode: 'overwrite-confirm' });
       // Input buffer stays same
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          pendingOverwriteNode: createRes.collisionNode,
-          notification: { message: 'Collision still detected after overwrite attempt.' },
-        },
-      });
+      dispatch({ type: 'SET_NOTIFICATION', message: 'Collision still detected after overwrite attempt.' });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { pendingOverwriteNode: createRes.collisionNode } });
       return;
     }
 

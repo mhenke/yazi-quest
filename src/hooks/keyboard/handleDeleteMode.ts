@@ -27,13 +27,8 @@ export const confirmDelete = (
       return;
     } else {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          pendingDeleteIds: [],
-          notification: { message: honeypot.message || 'Honeypot triggered.' },
-        },
-      });
+      dispatch({ type: 'SET_NOTIFICATION', message: honeypot.message || 'Honeypot triggered.' });
+      dispatch({ type: 'UPDATE_UI_STATE', updates: { pendingDeleteIds: [] } });
       return;
     }
   }
@@ -49,13 +44,8 @@ export const confirmDelete = (
   const validation = validateDeletions(gameState, gameState.pendingDeleteIds, currentLevelParam);
   if (validation.ok === false) {
     dispatch({ type: 'SET_MODE', mode: 'normal' });
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        pendingDeleteIds: [],
-        notification: { message: `🔒 PROTECTED: ${validation.error}` },
-      },
-    });
+    dispatch({ type: 'SET_NOTIFICATION', message: `🔒 PROTECTED: ${validation.error}` });
+    dispatch({ type: 'UPDATE_UI_STATE', updates: { pendingDeleteIds: [] } });
     return;
   }
 
