@@ -3013,7 +3013,7 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          'Examine `personnel_list.txt` for access patterns: jump to bottom (G), then up (k) and scan preview (K/J)',
+          'Analyze `~/datastore/personnel_list.txt` for access patterns: jump to bottom (G), then up (k) and scan preview (K/J)',
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3137,7 +3137,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'data-harvest-1',
-        description: 'Scour `abandoned_script.py` for exfiltration breadcrumbs',
+        description: 'Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3213,7 +3213,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description: 'Construct `protocols/` relay sector (a)',
+        description: 'Establish `~/datastore/protocols/` relay node (a)',
         check: (c) => {
           const s = getNodeById(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
@@ -3222,7 +3222,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'enter-and-create-v1',
-        description: 'Create `uplink_v1.conf` anchor (a)',
+        description: 'Initialize `~/datastore/protocols/uplink_v1.conf` signature (a)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const r = datastore?.children?.find((n) => n.name === 'protocols');
@@ -3264,7 +3264,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-cut-files',
-        description: 'Batch acquisition: select both uplink anchors (Space) and stage (x)',
+        description: 'Extract both uplink signatures from `~/datastore/protocols/` (Space+x)',
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -3285,7 +3285,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'establish-stronghold',
-        description: 'Establish `vault/active/` secure sector (a)',
+        description: 'Construct `~/.config/vault/active/` stronghold (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -3388,7 +3388,7 @@ Any further deviation from baseline navigation patterns will result in immediate
     tasks: [
       {
         id: 'batch-descend',
-        description: 'Secure `batch_logs/` sector (gi)',
+        description: 'Infiltrate `~/incoming/batch_logs/` segment (gi)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           const b = u?.children?.find((n) => n.name === 'batch_logs');
@@ -3419,7 +3419,7 @@ Any further deviation from baseline navigation patterns will result in immediate
       },
       {
         id: 'goto-config-vault',
-        description: 'Construct `training_data/` vault node (a)',
+        description: 'Construct `~/.config/vault/training_data/` vault node (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -3524,7 +3524,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'locate-token',
-        description: 'Conduct deep search for `access_token` (z)',
+        description: 'Conduct deep search for `access_token.key` (z)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -3624,7 +3624,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'investigate-corruption',
-        description: 'Inspect `systemd-core/` sector',
+        description: 'Audit `~/workspace/systemd-core/` sector',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -3682,7 +3682,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'acquire-patch',
-        description: 'Acquire clean signature from `vault/active/` (y)',
+        description: 'Acquire clean signature from `~/.config/vault/active/` (y)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
@@ -3879,7 +3879,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     tasks: [
       {
         id: 'heist-1-nav',
-        description: 'Infiltrate `backup_logs.zip/credentials` archive',
+        description: 'Infiltrate `~/incoming/backup_logs.zip/credentials` archive',
         check: (c) => {
           const incoming = getNodeById(c.fs, 'incoming');
           const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
@@ -3898,7 +3898,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
       },
       {
         id: 'heist-3-yank',
-        description: 'Extract newest `access_key_new.pem` signature (y)',
+        description: 'Extract newest `access_key_new.pem` signature from archive (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
