@@ -11,13 +11,11 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
   - **Modules Created:** `handleNavigation.ts`, `handleClipboard.ts`, `handleSystemParams.ts`, `handleNarrativeTriggers.ts`, `handleSortMode.ts`, `handleDeleteMode.ts`, `handleGCommandMode.ts`, `handleHelpMode.ts`, `handleQuestMapMode.ts`, `handleOverwriteMode.ts`
   - **Benefit:** Reduced complexity in individual handlers and improved maintainability.
 
-- [ ] **Centralize Input Handling (The "Arbiter" Pattern)**
-  - **Current State:** `App.tsx`, `SuccessToast.tsx`, `EpisodeIntro.tsx`, `GameOverModal.tsx`, `BiosBoot.tsx`, `OutroSequence.tsx` all attach independent `keydown` listeners, creating race conditions.
-  - **Action:**
-    - Create a custom hook `useGlobalInput` or explicit context that serves as the _single source of truth_.
-    - Refactor components to **not** attach their own listeners. Instead, `App.tsx` should dispatch events to them or they should consume a shared event stream.
-    - **Alternative:** Use a "Stack" approach where mounting a modal pushes it to the top of the Input Stack, blocking the layer below.
-  - **Benefit:** Fixes the "I pressed Escape but the game triggered search AND closed the modal" bugs.
+- [x] **Centralize Input Handling (The "Arbiter" Pattern)**
+  - **Status:** ✅ IMPLEMENTED - Created `GlobalInputContext` and `useGlobalInput` hook.
+  - **Approach:** Implemented a priority-based input stack. `App.tsx` and all overlay components (`SuccessToast`, `EpisodeIntro`, etc.) register handlers with specific priorities.
+  - **Priorities:** System (2000), Boot/Intro (900-1000), Game Over (800), Success Toast (700), Alerts (600), Modals (500), Game Loop (0).
+  - **Benefit:** Eliminated race conditions. Modals now reliably consume inputs (like Escape/Enter) without triggering game actions.
 
 ## 🛠 High Priority: Resilience & Testing (Phase 2)
 
@@ -61,9 +59,7 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 
 ### ❌ Critical Gaps Identified:
 
-1. **Input Handling Race Conditions**: Multiple components still attach their own `keydown` listeners, violating the "single source of truth" principle and creating race conditions as highlighted in the architectural analysis.
-
-2. **Missing Unit Tests**: No specific unit tests exist for the new keyboard handler modules (`handle*.ts` files). The codebase still relies primarily on E2E tests rather than fast unit tests for verifying complex logic.
+1. **Missing Unit Tests**: No specific unit tests exist for the new keyboard handler modules (`handle*.ts` files). The codebase still relies primarily on E2E tests rather than fast unit tests for verifying complex logic.
 
 3. **Weak State Machine**: No formal validation of state transitions exists. Modes can still be set ad-hoc without validating if the transition is legitimate (e.g., from `search` to `sort`).
 
@@ -71,8 +67,7 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 
 ### Recommendations:
 
-1. **Immediate Priority**: Implement centralized input handling using a context or input stack system to eliminate race conditions.
-2. **Testing**: Add unit tests for the keyboard handler modules to enable faster verification of complex logic.
+1. **Testing**: Add unit tests for the keyboard handler modules to enable faster verification of complex logic.
 3. **State Validation**: Introduce formal state transition validation to prevent invalid mode combinations.
 4. **Narrative Separation**: Consider moving narrative triggers to a separate engine that observes state changes.
 
@@ -91,3 +86,4 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 | **Filter Input Fix**           | ✅ Done | Input field now properly displays typed text and doesn't flash |
 | **Input Modal Event Handling** | ✅ Done | InputModals now properly stop propagation for all keys         |
 | **Input Mode Key Propagation** | ✅ Done | Main keyboard handler no longer interferes with input modes    |
+| **Centralized Input Arbiter**  | ✅ Done | Implemented GlobalInputContext to resolve race conditions      |

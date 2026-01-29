@@ -2,10 +2,9 @@
 
 ## 🔍 Contradictions & Areas of Disagreement
 
-### 1. Split Control & Race Conditions
+### 1. Split Control & Race Conditions (RESOLVED)
 **Observation:** `App.tsx` attaches a global `window.addEventListener('keydown')` handler to manage game state modes (`normal`, `sort`, `delete`, etc.). However, multiple UI components (`LevelProgress`, `HelpModal`, `HintModal`, `SuccessToast`) **also** attach their own global `keydown` listeners.
-**Contradiction:** There is no centralized arbiter of "who consumes the event". `App.tsx` attempts to block keys when modals are open (e.g., `if (gameState.showHelp)... return`), but the `HelpModal` itself is also listening. This creates a race condition where the order of execution depends on React's mount order and event bubbling, which is fragile.
-**Best Practice Violation:** "Single Source of Truth" for input handling is violated.
+**Resolution:** Implemented `GlobalInputContext` acting as a single arbiter. Components register handlers with priorities (e.g., Modals=500, Game=0). High-priority handlers consume events, preventing race conditions.
 
 ### 2. Mode Management Logic
 **Observation:** `App.tsx` contains a massive `switch(gameState.mode)` block. The recent refactoring moved the *logic* of these cases to `src/hooks/keyboard/`, but the *orchestration* still lives in `App.tsx` inside a `useEffect`.
@@ -43,5 +42,5 @@ Instead of hardcoding keys to logic (e.g., `if (key === 'j') moveDown()`), we co
 **Benefit:** Solves the race condition. If `HelpModal` is mounted, it pushes itself to the input stack, blocking `App.tsx` from receiving events automatically.
 
 ## ✅ Recommendation
-1.  **Short Term:** Centralize input handling. Remove `keydown` listeners from child components and have `App.tsx` pass down explicit props (e.g., `onClose`) or dispatch actions.
+1.  **Resolved:** Centralize input handling (Completed via `GlobalInputContext`).
 2.  **Long Term:** Implement a Reducer or State Machine to manage `GameState` transitions safely, removing the `setGameState` dependency from handlers.
