@@ -76,10 +76,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
       // If the current previewScroll exceeds the maximum possible value, update the game state
       if (previewScroll > maxPreviewScroll && dispatch) {
         // Update the gameState to clamp the previewScroll value
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { previewScroll: maxPreviewScroll },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: maxPreviewScroll });
       }
 
       // Ensure previewScroll doesn't exceed the maximum possible value

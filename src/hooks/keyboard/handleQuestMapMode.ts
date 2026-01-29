@@ -48,65 +48,46 @@ export const handleQuestMapModeKeyDown = (
   switch (e.key) {
     case 'h':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          questMapTab: Math.max(0, (gameState.questMapTab || 0) - 1),
-          questMapMissionIdx: 0,
-          lastActionIntensity: intensity,
-        },
+        type: 'UPDATE_QUEST_MAP',
+        tab: Math.max(0, (gameState.questMapTab || 0) - 1),
+        missionIdx: 0,
       });
       break;
     case 'l':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          questMapTab: Math.min(episodes.length - 1, (gameState.questMapTab || 0) + 1),
-          questMapMissionIdx: 0,
-          lastActionIntensity: intensity,
-        },
+        type: 'UPDATE_QUEST_MAP',
+        tab: Math.min(episodes.length - 1, (gameState.questMapTab || 0) + 1),
+        missionIdx: 0,
       });
       break;
     case 'j':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          questMapMissionIdx: Math.min(
-            activeLevelsCount - 1,
-            (gameState.questMapMissionIdx || 0) + 1
-          ),
-          lastActionIntensity: intensity,
-        },
+        type: 'UPDATE_QUEST_MAP',
+        missionIdx: Math.min(activeLevelsCount - 1, (gameState.questMapMissionIdx || 0) + 1),
       });
       break;
     case 'k':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          questMapMissionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 1),
-          lastActionIntensity: intensity,
-        },
+        type: 'UPDATE_QUEST_MAP',
+        missionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 1),
       });
       break;
     case 'J': // Shift+J
       if (e.shiftKey) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            questMapMissionIdx: Math.min(
-              activeLevelsCount - 1,
-              (gameState.questMapMissionIdx || 0) + 5
-            ),
-          },
+          type: 'UPDATE_QUEST_MAP',
+          missionIdx: Math.min(
+            activeLevelsCount - 1,
+            (gameState.questMapMissionIdx || 0) + 5
+          ),
         });
       }
       break;
     case 'K': // Shift+K
       if (e.shiftKey) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            questMapMissionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 5),
-          },
+          type: 'UPDATE_QUEST_MAP',
+          missionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 5),
         });
       }
       break;

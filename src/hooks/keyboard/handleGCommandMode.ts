@@ -14,19 +14,17 @@ export const handleGCommandKeyDown = (
   // Only allow 'g' (for gg) or Escape
   if (currentLevel.id === 1) {
     if (e.key !== 'g' && e.key !== 'Escape') {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          mode: 'normal',
-          notification: { message: 'Shortcuts disabled in Level 1. Use manual navigation.' },
-        },
+        type: 'SET_NOTIFICATION',
+        message: 'Shortcuts disabled in Level 1. Use manual navigation.',
       });
       return;
     }
   }
 
   if (e.key === 'Escape') {
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
     return;
   }
 
@@ -36,19 +34,12 @@ export const handleGCommandKeyDown = (
     try {
       const items = getVisibleItems(gameState) || [];
       const last = Math.max(0, items.length - 1);
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          cursorIndex: last,
-          mode: 'normal',
-          usedG: true,
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-        },
-      });
+      dispatch({ type: 'SET_CURSOR', index: last });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
     } catch {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
     }
     return;
   }
@@ -58,16 +49,16 @@ export const handleGCommandKeyDown = (
     {
       path: string[];
       label: string;
-      flag?: 'usedG' | 'usedGI' | 'usedGC' | 'usedGG' | 'usedGR' | 'usedGH';
+      flag?: 'G' | 'GI' | 'GC' | 'GG' | 'GR' | 'GH';
     }
   > = {
-    g: { path: [], label: 'top', flag: 'usedGG' }, // Special handling later, but defined here for completeness
-    h: { path: ['root', 'home', 'guest'], label: 'home', flag: 'usedGH' },
-    c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'usedGC' },
+    g: { path: [], label: 'top', flag: 'GG' }, // Special handling later, but defined here for completeness
+    h: { path: ['root', 'home', 'guest'], label: 'home', flag: 'GH' },
+    c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'GC' },
     w: { path: ['root', 'home', 'guest', 'workspace'], label: 'workspace' },
     t: { path: ['root', 'tmp'], label: 'tmp' },
-    r: { path: ['root'], label: 'root', flag: 'usedGR' },
-    i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'usedGI' },
+    r: { path: ['root'], label: 'root', flag: 'GR' },
+    i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'GI' },
     d: { path: ['root', 'home', 'guest', 'datastore'], label: 'datastore' },
     l: { path: ['root', 'var', 'log'], label: 'log' },
     m: { path: ['root', 'var', 'mail'], label: 'mail' },
@@ -78,17 +69,10 @@ export const handleGCommandKeyDown = (
   if (target) {
     // Special case for 'gg' (top of list) - doesn't change path
     if (e.key === 'g') {
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          cursorIndex: 0,
-          mode: 'normal',
-          usedGG: true,
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-        },
-      });
+      dispatch({ type: 'SET_CURSOR', index: 0 });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'GG' });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
     } else {
       // Check for active search - block navigation
       if (checkSearchAndBlockNavigation(e, gameState, dispatch)) {
@@ -105,34 +89,23 @@ export const handleGCommandKeyDown = (
           'jump'
         );
         if (protection) {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              notification: { message: `🔒 ${protection}` },
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_NOTIFICATION', message: `🔒 ${protection}` });
           return;
         }
       }
 
       // Standard Path Jumps
-      const extraFlags = target.flag ? { [target.flag]: true } : {};
       dispatch({ type: 'NAVIGATE', path: target.path });
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          mode: 'normal',
-          notification: { message: `Jumped to ${target.label}` },
-          previewScroll: 0,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-          ...extraFlags,
-        },
-      });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'SET_NOTIFICATION', message: `Jumped to ${target.label}` });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+      if (target.flag) {
+        dispatch({ type: 'MARK_ACTION_USED', actionId: target.flag });
+      }
     }
   } else {
     // Unknown key, exit mode
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
   }
 };

@@ -58,7 +58,7 @@ export const checkFilterAndBlockNavigation = (
     }
     // Backward navigation with filter active - show warning
     e.preventDefault();
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'filter-warning' } });
+    dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
     return true; // Navigation blocked
   }
   return false; // Navigation allowed
@@ -71,7 +71,7 @@ export const checkSearchAndBlockNavigation = (
 ): boolean => {
   if (gameState.searchQuery && gameState.searchResults.length > 0) {
     e.preventDefault();
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'search-warning' } });
+    dispatch({ type: 'SET_MODE', mode: 'search-warning' });
     return true; // Navigation blocked
   }
   return false; // Navigation allowed

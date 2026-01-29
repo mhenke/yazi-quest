@@ -1,7 +1,19 @@
-import { GameState, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } from '../types';
+import { GameState, GameStats, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } from '../types';
 import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
+
+export type ModalId =
+  | 'help'
+  | 'hint'
+  | 'map'
+  | 'info'
+  | 'threat'
+  | 'success'
+  | 'hiddenWarning'
+  | 'sortWarning'
+  | 'filterWarning'
+  | 'searchWarning';
 
 export type Action =
   | { type: 'SET_MODE'; mode: GameState['mode'] }
@@ -51,7 +63,6 @@ export type Action =
   | { type: 'TOGGLE_SELECTION'; id: string; itemCount?: number }
   | { type: 'SET_SEARCH'; query: string | null; results: FileNode[] }
   | { type: 'CONFIRM_SEARCH'; query: string; results: FileNode[] }
-  | { type: 'UPDATE_UI_STATE'; updates: Partial<GameState> }
   | { type: 'SET_INPUT_BUFFER'; buffer: string }
   | { type: 'SET_FILTER'; dirId: string; filter: string }
   | { type: 'CLEAR_FILTER'; dirId: string }
@@ -66,7 +77,62 @@ export type Action =
       episodeId: number;
       timeLimit?: number;
       maxKeystrokes?: number;
-    };
+    }
+  | { type: 'SET_MODAL_VISIBILITY'; modal: ModalId; visible: boolean }
+  | {
+      type: 'MARK_ACTION_USED';
+      actionId:
+        | 'G'
+        | 'GI'
+        | 'GC'
+        | 'GR'
+        | 'GH'
+        | 'CtrlA'
+        | 'CtrlR'
+        | 'GG'
+        | 'Down'
+        | 'Up'
+        | 'PreviewDown'
+        | 'PreviewUp'
+        | 'P'
+        | 'ShiftP'
+        | 'X'
+        | 'D'
+        | 'TrashDelete'
+        | 'HistoryBack'
+        | 'HistoryForward'
+        | 'SortM'
+        | 'Y'
+        | 'Search'
+        | 'Filter';
+    }
+  | { type: 'SET_PREVIEW_SCROLL'; scroll: number }
+  | { type: 'SET_BOOT_STATUS'; isBooting: boolean }
+  | { type: 'UPDATE_LEVEL_11_FLAGS'; flags: Partial<GameState['level11Flags']> }
+  | {
+      type: 'SET_DELETE_PENDING';
+      ids: string[];
+      deleteType?: 'trash' | 'permanent' | null;
+    }
+  | { type: 'SET_OVERWRITE_PENDING'; node: FileNode | null }
+  | { type: 'SET_SORT_KEY_HANDLER'; accept: boolean }
+  | { type: 'SET_EPISODE_INTRO'; visible: boolean }
+  | { type: 'SET_FUZZY_INDEX'; index: number }
+  | { type: 'CLEAR_ALL_FILTERS' }
+  | { type: 'INCREMENT_STAT'; stat: keyof GameStats; amount?: number }
+  | { type: 'TOGGLE_SOUND' }
+  | { type: 'COMPLETE_TASK'; levelId: number; taskIds: string[] }
+  | { type: 'SET_HELP_SCROLL'; scroll: number }
+  | { type: 'UPDATE_QUEST_MAP'; tab?: number; missionIdx?: number }
+  | { type: 'SET_ALERT_MESSAGE'; message: string }
+  | {
+      type: 'UPDATE_GAUNTLET';
+      phase?: number;
+      score?: number;
+      timeLeft?: number;
+      notification?: GameState['notification'];
+    }
+  | { type: 'ADVANCE_TO_OUTRO' };
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -398,9 +464,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         clipboard: action.action === 'cut' ? null : state.clipboard,
       };
 
-    case 'UPDATE_UI_STATE':
-      return { ...state, ...action.updates };
-
     case 'SET_INPUT_BUFFER':
       return { ...state, inputBuffer: action.buffer };
 
@@ -491,6 +554,203 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
     }
+
+    case 'SET_MODAL_VISIBILITY': {
+      const { modal, visible } = action;
+      switch (modal) {
+        case 'help':
+          return { ...state, showHelp: visible };
+        case 'hint':
+          return { ...state, showHint: visible };
+        case 'map':
+          return { ...state, showMap: visible };
+        case 'info':
+          return { ...state, showInfoPanel: visible };
+        case 'threat':
+          return { ...state, showThreatAlert: visible };
+        case 'success':
+          return { ...state, showSuccessToast: visible };
+        case 'hiddenWarning':
+          return { ...state, showHiddenWarning: visible };
+        case 'sortWarning':
+          return { ...state, showSortWarning: visible };
+        case 'filterWarning':
+          return { ...state, showFilterWarning: visible };
+        case 'searchWarning':
+          return { ...state, showSearchWarning: visible };
+        default:
+          return state;
+      }
+    }
+
+    case 'MARK_ACTION_USED': {
+      const updates: Partial<GameState> = {};
+      switch (action.actionId) {
+        case 'G':
+          updates.usedG = true;
+          break;
+        case 'GI':
+          updates.usedGI = true;
+          break;
+        case 'GC':
+          updates.usedGC = true;
+          break;
+        case 'GR':
+          updates.usedGR = true;
+          break;
+        case 'GH':
+          updates.usedGH = true;
+          break;
+        case 'CtrlA':
+          updates.usedCtrlA = true;
+          break;
+        case 'CtrlR':
+          updates.usedCtrlR = true;
+          break;
+        case 'GG':
+          updates.usedGG = true;
+          break;
+        case 'Down':
+          updates.usedDown = true;
+          break;
+        case 'Up':
+          updates.usedUp = true;
+          break;
+        case 'PreviewDown':
+          updates.usedPreviewDown = true;
+          break;
+        case 'PreviewUp':
+          updates.usedPreviewUp = true;
+          break;
+        case 'P':
+          updates.usedP = true;
+          break;
+        case 'ShiftP':
+          updates.usedShiftP = true;
+          break;
+        case 'X':
+          updates.usedX = true;
+          break;
+        case 'D':
+          updates.usedD = true;
+          break;
+        case 'TrashDelete':
+          updates.usedTrashDelete = true;
+          break;
+        case 'HistoryBack':
+          updates.usedHistoryBack = true;
+          break;
+        case 'HistoryForward':
+          updates.usedHistoryForward = true;
+          break;
+        case 'SortM':
+          updates.usedSortM = true;
+          break;
+        case 'Y':
+          updates.usedY = true;
+          break;
+        case 'Search':
+          updates.usedSearch = true;
+          break;
+        case 'Filter':
+          updates.usedFilter = true;
+          break;
+      }
+      return { ...state, ...updates };
+    }
+
+    case 'SET_PREVIEW_SCROLL':
+      return { ...state, previewScroll: action.scroll };
+
+    case 'SET_BOOT_STATUS':
+      return { ...state, isBooting: action.isBooting };
+
+    case 'UPDATE_LEVEL_11_FLAGS':
+      return {
+        ...state,
+        level11Flags: {
+          ...(state.level11Flags || {
+            triggeredHoneypot: false,
+            selectedModern: false,
+            scoutedFiles: [],
+          }),
+          ...action.flags,
+        },
+      };
+
+    case 'SET_DELETE_PENDING':
+      return {
+        ...state,
+        pendingDeleteIds: action.ids,
+        deleteType: action.deleteType ?? state.deleteType,
+      };
+
+    case 'SET_OVERWRITE_PENDING':
+      return { ...state, pendingOverwriteNode: action.node };
+
+    case 'SET_SORT_KEY_HANDLER':
+      return { ...state, acceptNextKeyForSort: action.accept };
+
+    case 'SET_EPISODE_INTRO':
+      return { ...state, showEpisodeIntro: action.visible };
+
+    case 'SET_FUZZY_INDEX':
+      return { ...state, fuzzySelectedIndex: action.index };
+
+    case 'CLEAR_ALL_FILTERS':
+      return { ...state, filters: {} };
+
+    case 'INCREMENT_STAT':
+      return {
+        ...state,
+        stats: {
+          ...state.stats,
+          [action.stat]: state.stats[action.stat] + (action.amount ?? 1),
+        },
+      };
+
+    case 'TOGGLE_SOUND':
+      return {
+        ...state,
+        settings: { ...state.settings, soundEnabled: !state.settings.soundEnabled },
+      };
+
+    case 'COMPLETE_TASK':
+      return {
+        ...state,
+        completedTaskIds: {
+          ...state.completedTaskIds,
+          [action.levelId]: [
+            ...(state.completedTaskIds[action.levelId] || []),
+            ...action.taskIds,
+          ],
+        },
+      };
+
+    case 'SET_HELP_SCROLL':
+      return { ...state, helpScrollPosition: action.scroll };
+
+    case 'UPDATE_QUEST_MAP':
+      return {
+        ...state,
+        questMapTab: action.tab ?? state.questMapTab,
+        questMapMissionIdx: action.missionIdx ?? state.questMapMissionIdx,
+      };
+
+    case 'SET_ALERT_MESSAGE':
+      return { ...state, alertMessage: action.message };
+
+    case 'UPDATE_GAUNTLET':
+      return {
+        ...state,
+        gauntletPhase: action.phase ?? state.gauntletPhase,
+        gauntletScore: action.score ?? state.gauntletScore,
+        timeLeft: action.timeLeft ?? state.timeLeft,
+        notification: action.notification ?? state.notification,
+      };
+
+    case 'ADVANCE_TO_OUTRO':
+      return { ...state, levelIndex: LEVELS.length };
 
     default:
       return state;

@@ -361,7 +361,8 @@ export default function App() {
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   useEffect(() => {
     const handleSkip = () => {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { showEpisodeIntro: false, isBooting: false } });
+      dispatch({ type: 'SET_EPISODE_INTRO', visible: false });
+      dispatch({ type: 'SET_BOOT_STATUS', isBooting: false });
     };
 
     if (window.__yaziQuestSkipIntroRequested) {
@@ -546,18 +547,14 @@ export default function App() {
     });
 
     if (changed) {
-      // Collect all updates for the level completion/transition
-      let updates: Partial<GameState> = {
-        completedTaskIds: {
-          ...gameState.completedTaskIds,
-          [currentLevel.id]: [
-            ...(gameState.completedTaskIds[currentLevel.id] || []),
-            ...newlyCompleted,
-          ],
-        },
-      };
+      // 1. Mark tasks as complete
+      dispatch({
+        type: 'COMPLETE_TASK',
+        levelId: currentLevel.id,
+        taskIds: newlyCompleted,
+      });
 
-      // Level 15 Gauntlet Logic ...
+      // 2. Level 15 Gauntlet Logic
       if (currentLevel.id === 15) {
         const nextPhase = (gameState.gauntletPhase || 0) + 1;
         const currentScore = (gameState.gauntletScore || 0) + 1;
@@ -565,34 +562,31 @@ export default function App() {
 
         if (isFinished) {
           if (currentScore < 6) {
+            dispatch({ type: 'GAME_OVER', reason: 'keystrokes' });
             dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                ...updates,
-                isGameOver: true,
-                gameOverReason: 'keystrokes',
-                notification: { message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)` },
-              },
+              type: 'SET_NOTIFICATION',
+              message: `MASTERY FAILED: Score ${currentScore}/8. (Req: 6/8)`,
             });
             return;
           }
-          updates = {
-            ...updates,
-            gauntletScore: currentScore,
-            notification: { message: `GAUNTLET CLEARED: Score ${currentScore}/8` },
-          };
+          dispatch({ type: 'UPDATE_GAUNTLET', score: currentScore });
+          dispatch({
+            type: 'SET_NOTIFICATION',
+            message: `GAUNTLET CLEARED: Score ${currentScore}/8`,
+          });
         } else {
-          updates = {
-            ...updates,
-            gauntletPhase: nextPhase,
-            gauntletScore: currentScore,
+          dispatch({
+            type: 'UPDATE_GAUNTLET',
+            phase: nextPhase,
+            score: currentScore,
             timeLeft: 20,
-            notification: { message: `PHASE ${nextPhase + 1} START` },
-          };
+          });
+          dispatch({
+            type: 'SET_NOTIFICATION',
+            message: `PHASE ${nextPhase + 1} START`,
+          });
         }
       }
-
-      dispatch({ type: 'UPDATE_UI_STATE', updates });
     }
   }, [
     isLastLevel,
@@ -614,51 +608,57 @@ export default function App() {
     if (tasksComplete) {
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-      const isFilterClear = !currentDirNode || !gameState.filters[currentDir.id];
+      const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
       if (gameState.showHidden) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { showHiddenWarning: true, showSuccessToast: false },
+          type: 'SET_MODAL_VISIBILITY',
+          modal: 'hiddenWarning',
+          visible: true,
         });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       } else if (!isSortDefault) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { showSortWarning: true, showSuccessToast: false },
-        });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       } else if (!isFilterClear) {
         if (gameState.mode !== 'filter-warning') {
           dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
         }
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showSuccessToast: false } });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       } else {
-        let uiUpdates: Partial<GameState> = {
-          showHiddenWarning: false,
-          showSortWarning: false,
-        };
+        dispatch({
+          type: 'SET_MODAL_VISIBILITY',
+          modal: 'hiddenWarning',
+          visible: false,
+        });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+
         if (gameState.mode === 'filter-warning') {
-          uiUpdates.mode = 'normal';
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
         }
 
         if (!gameState.showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
-          uiUpdates.showSuccessToast = true;
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: true });
         }
-        dispatch({ type: 'UPDATE_UI_STATE', updates: uiUpdates });
       }
     } else {
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
-      let uiUpdates: Partial<GameState> = {};
-      if (!gameState.showHidden && gameState.showHiddenWarning) uiUpdates.showHiddenWarning = false;
-      if (isSortDefault && gameState.showSortWarning) uiUpdates.showSortWarning = false;
-      if (isFilterClear && gameState.mode === 'filter-warning') {
-        uiUpdates.mode = 'normal';
+      if (!gameState.showHidden && gameState.showHiddenWarning) {
+        dispatch({
+          type: 'SET_MODAL_VISIBILITY',
+          modal: 'hiddenWarning',
+          visible: false,
+        });
       }
-      if (Object.keys(uiUpdates).length > 0) {
-        dispatch({ type: 'UPDATE_UI_STATE', updates: uiUpdates });
+      if (isSortDefault && gameState.showSortWarning) {
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+      }
+      if (isFilterClear && gameState.mode === 'filter-warning') {
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
       }
     }
 
@@ -669,15 +669,8 @@ export default function App() {
         const scouted = gameState.level11Flags?.scoutedFiles || [];
         if (!scouted.includes(currentItem.id)) {
           dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              level11Flags: {
-                ...gameState.level11Flags,
-                scoutedFiles: [...scouted, currentItem.id],
-                triggeredHoneypot: gameState.level11Flags?.triggeredHoneypot || false,
-                selectedModern: gameState.level11Flags?.selectedModern || false,
-              },
-            },
+            type: 'UPDATE_LEVEL_11_FLAGS',
+            flags: { scoutedFiles: [...scouted, currentItem.id] },
           });
         }
       }
@@ -789,21 +782,19 @@ export default function App() {
     // Priority: Hidden > Sort > Filter
     if (gameState.showHidden) {
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: { showHiddenWarning: true, showSuccessToast: false },
+        type: 'SET_MODAL_VISIBILITY',
+        modal: 'hiddenWarning',
+        visible: true,
       });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       return;
     } else if (!isSortDefault) {
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: { showSortWarning: true, showSuccessToast: false },
-      });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       return;
     } else if (!isFilterClear) {
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: { mode: 'filter-warning', showSuccessToast: false },
-      });
+      dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       return;
     }
 
@@ -811,7 +802,7 @@ export default function App() {
     const nextIdx = gameState.levelIndex + 1;
 
     if (nextIdx >= LEVELS.length) {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { levelIndex: nextIdx } });
+      dispatch({ type: 'ADVANCE_TO_OUTRO' });
       return;
     }
 
@@ -849,54 +840,15 @@ export default function App() {
     // Level-specific notifications logic removed (moved to Narrative System)
 
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        levelIndex: nextIdx,
-        fs: fs,
-        levelStartFS: cloneFS(fs),
-        levelStartPath: [...targetPath],
-        currentPath: targetPath,
-        cursorIndex: 0,
-        clipboard: null,
-        notification: onEnterError ? { message: 'Level initialization failed' } : null, // Error notification kept here as it relates to this operation
-        thought: null, // Thoughts managed by Narrative System
-        selectedIds: [],
-        showHint: false,
-        hintStage: 0,
-        showEpisodeIntro: isNewEp,
-        timeLeft: nextLevel.timeLimit || null,
-        keystrokes: 0,
-        usedG: false,
-        usedGG: false,
-        usedDown: false,
-        usedUp: false,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-        usedP: false,
-        acceptNextKeyForSort: false,
-        usedHistoryBack: false,
-        usedHistoryForward: false,
-        zoxideData: newZoxideData,
-        future: [],
-        previewScroll: 0,
-        completedTaskIds: {
-          ...gameState.completedTaskIds,
-          [nextLevel.id]: [], // Ensure array exists for next level
-        },
-        // Ensure sort and filters are reset at the beginning of each level
-        sortBy: 'natural',
-        sortDirection: 'asc',
-        filters: {},
-        ignoreEpisodeIntro: false, // Reset the flag on successful level advance
-        gauntletPhase: 0, // Reset gauntlet phase
-        gauntletScore: 0,
-        level11Flags: { triggeredHoneypot: false, selectedModern: false, scoutedFiles: [] },
-        showSuccessToast: false,
-        showThreatAlert: false,
-      },
+      type: 'SET_LEVEL',
+      index: nextIdx,
+      fs: fs,
+      path: targetPath,
+      showIntro: isNewEp,
+      notification: onEnterError ? { message: 'Level initialization failed' } : null,
+      timeLeft: nextLevel.timeLimit || null,
+      zoxideData: newZoxideData,
     });
-
-    shownInitialAlertForLevelRef.current = null; // Reset so alert can show for new level
   }, [gameState, dispatch]);
 
   const handleRestartLevel = useCallback(() => {
@@ -906,7 +858,6 @@ export default function App() {
       fs: cloneFS(gameState.levelStartFS),
       path: [...gameState.levelStartPath],
     });
-    shownInitialAlertForLevelRef.current = null; // Reset so alert can show on restart
   }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch]);
 
   // Handle the end of the final level - trigger restart sequence
@@ -915,17 +866,23 @@ export default function App() {
   }, [dispatch]);
 
   const handleBootComplete = useCallback(() => {
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { isBooting: false } });
+    dispatch({ type: 'SET_BOOT_STATUS', isBooting: false });
   }, [dispatch]);
 
   const handleSearchConfirm = useCallback(() => {
     const query = gameState.inputBuffer.trim();
     if (!query) {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
-    const currentLevel = LEVELS[gameState.levelIndex];
-    const results = getRecursiveSearchResults(gameState.fs, gameState.currentPath, query, currentLevel);
+    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+    if (!currentDirNode) return;
+    const results = getRecursiveSearchResults(
+      currentDirNode,
+      query,
+      gameState.showHidden,
+      gameState.currentPath
+    );
     dispatch({
       type: 'CONFIRM_SEARCH',
       query,
@@ -936,7 +893,7 @@ export default function App() {
   const handleInputConfirm = useCallback(() => {
     const name = gameState.inputBuffer.trim();
     if (!name) {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
 
@@ -959,10 +916,8 @@ export default function App() {
       parentId: parentNode.id,
       content: isDir ? undefined : '',
       children: isDir ? [] : undefined,
-      permissions: isDir ? 'drwxr-xr-x' : '-rw-r--r--',
-      owner: 'guest',
-      group: 'guest',
-      modified: Date.now(),
+      modifiedAt: Date.now(),
+      createdAt: Date.now(),
     };
 
     const newFs = cloneFS(gameState.fs);
@@ -979,7 +934,7 @@ export default function App() {
   const handleRenameConfirm = useCallback(() => {
     const name = gameState.inputBuffer.trim();
     if (!name) {
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
 
@@ -1010,13 +965,8 @@ export default function App() {
         const match = dirs.find((d) => resolvePath(gameState.fs, d.path) === path);
         if (match) {
           dispatch({ type: 'NAVIGATE', path: match.path });
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              stats: { ...gameState.stats, fuzzyJumps: gameState.stats.fuzzyJumps + 1 },
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'INCREMENT_STAT', stat: 'fuzzyJumps' });
         }
       } else {
         if (pathIds) {
@@ -1024,17 +974,12 @@ export default function App() {
           const fileId = pathIds[pathIds.length - 1];
           dispatch({ type: 'NAVIGATE', path: parentPath });
           dispatch({ type: 'SET_SELECTION', ids: [fileId] });
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              stats: { ...gameState.stats, fzfFinds: gameState.stats.fzfFinds + 1 },
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
         }
       }
     },
-    [gameState.fs, gameState.levelIndex, gameState.stats, dispatch]
+    [gameState.fs, gameState.levelIndex, dispatch]
   );
 
   // Global Key Down Handler (Refactored to useGlobalInput)
@@ -1054,30 +999,38 @@ export default function App() {
       if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { showHelp: !gameState.showHelp, showHint: false, showMap: false },
+          type: 'SET_MODAL_VISIBILITY',
+          modal: 'help',
+          visible: !gameState.showHelp,
         });
+        // Ensure others are closed
+        if (!gameState.showHelp) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false });
+        }
         return true;
       }
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
         if (gameState.showHint) {
           const nextStage = (gameState.hintStage + 1) % 3;
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
+          dispatch({ type: 'SET_HINT_STAGE', stage: nextStage });
         } else {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: { showHint: true, hintStage: 0, showHelp: false, showMap: false },
-          });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: true });
+          dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
+          // Close others
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false });
         }
         return true;
       }
       if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey && !e.shiftKey) {
         e.preventDefault();
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { showMap: !gameState.showMap, showHelp: false, showHint: false },
-        });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: !gameState.showMap });
+        if (!gameState.showMap) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
+        }
         return true;
       }
     },
@@ -1089,7 +1042,7 @@ export default function App() {
   useGlobalInput(
     (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: false });
         return true;
       }
       return true; // Block others
@@ -1102,7 +1055,7 @@ export default function App() {
   useGlobalInput(
     (e) => {
       handleHelpModeKeyDown(e, gameState, () =>
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
       );
       return true;
     },
@@ -1130,7 +1083,7 @@ export default function App() {
         gameState,
         LEVELS,
         episodes,
-        () => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } }),
+        () => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false }),
         (globalIdx: number) => {
           const lvl = LEVELS[globalIdx];
           let fs = cloneFS(INITIAL_FS);
@@ -1152,7 +1105,7 @@ export default function App() {
   useGlobalInput(
     (e) => {
       if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false } });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
       }
       return true;
     },
@@ -1164,7 +1117,7 @@ export default function App() {
     (e) => {
       if (e.key === 'Escape' || e.key === 'Tab') {
         e.preventDefault();
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'info', visible: false });
       }
       return true;
     },
@@ -1183,19 +1136,28 @@ export default function App() {
       if (e.key === 'Enter' && e.shiftKey) {
         if (tasksComplete) {
           dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: { showHidden: false, showHiddenWarning: false },
+            type: 'SET_MODAL_VISIBILITY',
+            modal: 'hiddenWarning',
+            visible: false,
           });
+          dispatch({ type: 'TOGGLE_HIDDEN' }); // Should we toggle off? Or just dismiss warning?
+          // If tasks complete, logic in useEffect usually hides warning AND sets showHidden=false.
+          // But here, if user dismisses, we assume they want to proceed?
+          // Original code: dispatch({ type: 'UPDATE_UI_STATE', updates: { showHidden: false, showHiddenWarning: false } });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
+          // Note: Logic above in useEffect sets showHiddenWarning=false.
+          // If we want to hide files too:
+          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
         } else {
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
         }
       }
       if (e.key === 'Escape') {
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
       }
       return true;
     },
-    [gameState.showHiddenWarning, currentLevel, checkAllTasksComplete],
+    [gameState.showHiddenWarning, currentLevel, checkAllTasksComplete, gameState.showHidden],
     { priority: 600, enabled: gameState.showHiddenWarning }
   );
 
@@ -1206,40 +1168,20 @@ export default function App() {
       if (e.key === 'Enter' && e.shiftKey) {
         if (tasksComplete) {
           const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-          const newFilters = { ...gameState.filters };
           if (currentDirNode) {
-            delete newFilters[currentDirNode.id];
+            dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
           }
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              filters: newFilters,
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         } else {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         }
         return true;
       }
       if (e.key === 'Escape') {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         return true;
       }
       return true;
@@ -1254,37 +1196,18 @@ export default function App() {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey) {
         if (tasksComplete) {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              searchQuery: null,
-              searchResults: [],
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         } else {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         }
         return true;
       }
       if (e.key === 'Escape') {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         return true;
       }
       return true;
@@ -1299,35 +1222,20 @@ export default function App() {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey) {
         if (tasksComplete) {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              showSortWarning: false,
-              sortBy: 'natural',
-              sortDirection: 'asc',
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+          dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         } else {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              showSortWarning: false,
-              mode: 'normal',
-              acceptNextKeyForSort: false,
-              notification: null,
-            },
-          });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         }
         return true;
       }
       if (e.key === ',') {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { mode: 'sort', acceptNextKeyForSort: true },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'sort' });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: true });
         return true;
       }
       if (gameState.acceptNextKeyForSort) {
@@ -1335,25 +1243,18 @@ export default function App() {
         const pressed = e.key || '';
         const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            showSortWarning: !isNatural,
-            acceptNextKeyForSort: false,
-            mode: 'normal',
-          },
+          type: 'SET_MODAL_VISIBILITY',
+          modal: 'sortWarning',
+          visible: !isNatural,
         });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
         return true;
       }
       if (e.key === 'Escape') {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            showSortWarning: false,
-            mode: 'normal',
-            acceptNextKeyForSort: false,
-            notification: null,
-          },
-        });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
         return true;
       }
       return true;
@@ -1393,14 +1294,10 @@ export default function App() {
       // Sound Toggle
       if (e.key.toLowerCase() === 'm' && e.altKey && e.shiftKey && gameState.mode === 'normal') {
         e.preventDefault();
+        dispatch({ type: 'TOGGLE_SOUND' });
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            settings: { ...gameState.settings, soundEnabled: !gameState.settings.soundEnabled },
-            notification: {
-              message: `Sound ${!gameState.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
-            },
-          },
+          type: 'SET_NOTIFICATION',
+          message: `Sound ${!gameState.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
         });
         return true;
       }
@@ -1442,7 +1339,7 @@ export default function App() {
           if (e.key === 'Enter') {
             handleSearchConfirm();
           } else if (e.key === 'Escape') {
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
+            dispatch({ type: 'SET_MODE', mode: 'normal' });
           }
           break;
         case 'zoxide-jump':
@@ -1500,16 +1397,11 @@ export default function App() {
           })()}
           onComplete={() => {
             if (currentLevel.episodeId === 1) {
-              dispatch({ type: 'UPDATE_UI_STATE', updates: { isBooting: true } });
+              dispatch({ type: 'SET_BOOT_STATUS', isBooting: true });
             }
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                showEpisodeIntro: false,
-                currentPath: [...currentLevel.initialPath], // Reset to level's initial path
-                cursorIndex: 0, // Reset cursor to top
-              },
-            });
+            dispatch({ type: 'SET_EPISODE_INTRO', visible: false });
+            dispatch({ type: 'NAVIGATE', path: [...currentLevel.initialPath] });
+            dispatch({ type: 'SET_CURSOR', index: 0 });
           }}
         />
       )}
@@ -1526,7 +1418,7 @@ export default function App() {
 
       {gameState.showHelp && (
         <HelpModal
-          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })}
+          onClose={() => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })}
           scrollPosition={gameState.helpScrollPosition || 0}
         />
       )}
@@ -1535,16 +1427,17 @@ export default function App() {
         <HintModal
           hint={currentLevel.hint}
           stage={gameState.hintStage}
-          onClose={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false, hintStage: 0 } })
-          }
+          onClose={() => {
+            dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
+            dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
+          }}
         />
       )}
 
       {gameState.showInfoPanel && (
         <InfoPanel
           file={currentItem}
-          onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } })}
+          onClose={() => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'info', visible: false })}
         />
       )}
 
@@ -1579,7 +1472,11 @@ export default function App() {
         <HiddenFilesWarningModal
           allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
           onDismiss={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } })
+            dispatch({
+              type: 'SET_MODAL_VISIBILITY',
+              modal: 'hiddenWarning',
+              visible: false,
+            })
           }
         />
       )}
@@ -1587,7 +1484,7 @@ export default function App() {
         <SortWarningModal
           allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
           onDismiss={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showSortWarning: false } })
+            dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false })
           }
         />
       )}
@@ -1596,14 +1493,14 @@ export default function App() {
           return (
             <FilterWarningModal
               allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-              onDismiss={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+              onDismiss={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
             />
           );
         })()}
       {gameState.mode === 'search-warning' && (
         <SearchWarningModal
           allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-          onDismiss={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+          onDismiss={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
         />
       )}
 
@@ -1616,7 +1513,7 @@ export default function App() {
         <ThreatAlert
           message={gameState.alertMessage || ''}
           onDismiss={() =>
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } })
+            dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: false })
           }
         />
       )}
@@ -1629,15 +1526,15 @@ export default function App() {
             notification={null}
             thought={gameState.thought}
             onToggleHint={() =>
-              dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: !gameState.showHint } })
+              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: !gameState.showHint })
             }
             onToggleHelp={() =>
-              dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } })
+              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: !gameState.showHelp })
             }
             isOpen={gameState.showMap}
-            onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } })}
+            onClose={() => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })}
             onToggleMap={() =>
-              dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
+              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: !gameState.showMap })
             }
             onJumpToLevel={(idx) => {
               const lvl = LEVELS[idx];
@@ -1692,17 +1589,14 @@ export default function App() {
                   value={gameState.inputBuffer}
                   onChange={(e) => {
                     const val = e.target.value;
-                    dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
+                    dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleSearchConfirm();
                       e.stopPropagation();
                     } else if (e.key === 'Escape') {
-                      dispatch({
-                        type: 'UPDATE_UI_STATE',
-                        updates: { mode: 'normal', inputBuffer: '' },
-                      });
+                      dispatch({ type: 'SET_MODE', mode: 'normal' });
                       e.stopPropagation();
                     }
                   }}
@@ -1812,7 +1706,7 @@ export default function App() {
 
             {gameState.mode === 'g-command' && (
               <GCommandDialog
-                onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+                onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
               />
             )}
 
@@ -1821,14 +1715,11 @@ export default function App() {
                 label="Create"
                 value={gameState.inputBuffer}
                 onChange={(val) =>
-                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } })
+                  dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })
                 }
                 onConfirm={handleInputConfirm}
                 onCancel={() =>
-                  dispatch({
-                    type: 'UPDATE_UI_STATE',
-                    updates: { mode: 'normal', inputBuffer: '' },
-                  })
+                  dispatch({ type: 'SET_MODE', mode: 'normal' })
                 }
                 borderColorClass="border-green-500"
                 testid="create-input"
@@ -1845,34 +1736,19 @@ export default function App() {
                     dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
                   }
                   // Also update inputBuffer so the input field shows the typed text
-                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
+                  dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
                 }}
                 onConfirm={() => {
-                  dispatch({
-                    type: 'UPDATE_UI_STATE',
-                    updates: {
-                      mode: 'normal',
-                      inputBuffer: '',
-                      stats: { ...gameState.stats, filterUsage: gameState.stats.filterUsage + 1 },
-                    },
-                  });
+                  dispatch({ type: 'SET_MODE', mode: 'normal' });
+                  dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
                 }}
                 onCancel={() => {
                   const dir = getNodeByPath(gameState.fs, gameState.currentPath);
                   if (dir) {
                     dispatch({ type: 'CLEAR_FILTER', dirId: dir.id });
                   }
-                  dispatch({
-                    type: 'UPDATE_UI_STATE',
-                    updates: {
-                      mode: 'normal',
-                      inputBuffer: '',
-                      stats: {
-                        ...gameState.stats,
-                        filterUsage: gameState.stats.filterUsage + 1,
-                      },
-                    },
-                  });
+                  dispatch({ type: 'SET_MODE', mode: 'normal' });
+                  dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
                 }}
                 borderColorClass="border-orange-500"
                 testid="filter-input"
@@ -1884,14 +1760,11 @@ export default function App() {
                 label="Rename"
                 value={gameState.inputBuffer}
                 onChange={(val) =>
-                  dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } })
+                  dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })
                 }
                 onConfirm={handleRenameConfirm}
                 onCancel={() =>
-                  dispatch({
-                    type: 'UPDATE_UI_STATE',
-                    updates: { mode: 'normal', inputBuffer: '' },
-                  })
+                  dispatch({ type: 'SET_MODE', mode: 'normal' })
                 }
                 borderColorClass="border-cyan-500" // or green/cyan mix
                 testid="rename-input"
@@ -1902,7 +1775,7 @@ export default function App() {
               <FuzzyFinder
                 gameState={gameState}
                 onSelect={handleFuzzySelect}
-                onClose={() => dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal' } })}
+                onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
               />
             )}
           </div>

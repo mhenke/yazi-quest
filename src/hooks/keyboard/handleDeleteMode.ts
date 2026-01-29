@@ -21,25 +21,21 @@ export const confirmDelete = (
   const honeypot = checkHoneypotTriggered(gameState, gameState.pendingDeleteIds, currentLevelParam);
   if (honeypot.triggered) {
     if (honeypot.reason === 'honeypot') {
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          isGameOver: true,
-          gameOverReason: 'honeypot',
-          notification: honeypot.message ? { message: honeypot.message } : null,
-          mode: 'normal',
-          pendingDeleteIds: [],
-        },
-      });
+      dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
+      if (honeypot.message) {
+        dispatch({ type: 'SET_NOTIFICATION', message: honeypot.message });
+      } else {
+        dispatch({ type: 'CLEAR_NOTIFICATION' });
+      }
       return;
     } else {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          mode: 'normal',
-          pendingDeleteIds: [],
-          notification: { message: honeypot.message || 'Honeypot triggered.' },
-        },
+        type: 'SET_NOTIFICATION',
+        message: honeypot.message || 'Honeypot triggered.',
       });
       return;
     }
@@ -47,30 +43,19 @@ export const confirmDelete = (
 
   // Critical System File Check (Shell Collapse)
   if (checkCriticalFileDeletion(gameState, gameState.pendingDeleteIds)) {
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        isGameOver: true,
-        gameOverReason: 'criticalFile',
-        notification: null,
-        mode: 'normal',
-        pendingDeleteIds: [],
-      },
-    });
+    dispatch({ type: 'GAME_OVER', reason: 'criticalFile' });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
+    dispatch({ type: 'CLEAR_NOTIFICATION' });
     return;
   }
 
   // Policy-based protection check
   const validation = validateDeletions(gameState, gameState.pendingDeleteIds, currentLevelParam);
   if (validation.ok === false) {
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        mode: 'normal',
-        pendingDeleteIds: [],
-        notification: { message: `🔒 PROTECTED: ${validation.error}` },
-      },
-    });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
+    dispatch({ type: 'SET_NOTIFICATION', message: `🔒 PROTECTED: ${validation.error}` });
     return;
   }
 
@@ -119,28 +104,22 @@ export const confirmDelete = (
   });
 
   if (errorMsg) {
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        mode: 'normal',
-        pendingDeleteIds: [],
-        notification: { message: `🔒 PARTIAL: ${errorMsg}` },
-        usedD: true,
-      },
-    });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
+    dispatch({ type: 'SET_NOTIFICATION', message: `🔒 PARTIAL: ${errorMsg}` });
+    dispatch({ type: 'MARK_ACTION_USED', actionId: 'D' });
   } else {
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        notification: { message: getNarrativeAction('d') || 'Items deleted' },
-        usedD: true,
-      },
+      type: 'SET_NOTIFICATION',
+      message: getNarrativeAction('d') || 'Items deleted',
     });
+    dispatch({ type: 'MARK_ACTION_USED', actionId: 'D' });
   }
 };
 
 export const cancelDelete = (dispatch: React.Dispatch<Action>) => {
-  dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', pendingDeleteIds: [] } });
+  dispatch({ type: 'SET_MODE', mode: 'normal' });
+  dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
 };
 
 export const handleConfirmDeleteModeKeyDown = (

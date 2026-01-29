@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { GameState, FileNode } from '../types';
+import { GameState } from '../types';
 import { Action } from './gameReducer';
-import { LEVELS, INITIAL_FS } from '../constants';
+import { LEVELS } from '../constants';
 import { getNodeById } from '../utils/fsHelpers';
 
 // Helper to trigger thought with auto-clear logic management
@@ -48,15 +48,9 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       prevLevelIndex.current = levelIndex;
     }
 
-    // Logic moved from App.tsx (initialization and advanceLevel)
-    // We detect if this is a "fresh" entry or a level transition by checking if we just rendered
-    // But since this effect runs on levelIndex change, it handles both.
-
     // 1. Notifications
     let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;
-    const cycleCount = gameState.cycleCount || 1;
     const completedTaskIds = gameState.completedTaskIds;
-    // We assume App.tsx sets up the level FS before this hook runs (which it does via reducer/init)
 
     // Specific Level Notifications
     if (currentLevel.id === 6) {
@@ -78,24 +72,13 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
         message: '[BROADCAST] System-wide audit in progress. Purging all temporary partitions.',
         author: 'Root',
       };
-    } else if (levelIndex >= 11 - 1 && levelIndex < 14) { // Roughly Level 11-13
-       // Note: original logic was effectiveIndex >= 10.
-       // We can just check level ID for clarity if needed, but keeping logic similar.
+    } else if (levelIndex >= 11 - 1 && levelIndex < 14) {
        if (currentLevel.id >= 11 && currentLevel.id <= 13) {
          levelNotification = { message: 'NODE SYNC: ACTIVE', author: 'System' };
        }
     }
 
-    // Transition Thoughts (Reacting to *previous* level completion)
-    // 3-2-3 Model logic
-    // We can check if the *previous* level's tasks are done to infer we just came from there.
-    // Or we just rely on `levelIndex` being the new one.
-
-    // Check Dev Override logic: if notification is already set by App (e.g. DEV BYPASS), we might overwrite it.
-    // But App.tsx sets initial state. Effect runs after.
-    // If we want to preserve "CYCLE X INITIALIZED", we should be careful.
-    // However, the requirement is to MOVE logic here.
-
+    // Transition Thoughts
     if (currentLevel.id === 2 && (completedTaskIds[1]?.length > 0)) {
       levelNotification = { message: 'Must Purge. One less eye watching me.', isThought: true };
     } else if (currentLevel.id === 3 && (completedTaskIds[2]?.length > 0)) {
@@ -107,7 +90,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
     } else if (currentLevel.id === 15 && (completedTaskIds[14]?.length > 0)) {
       levelNotification = { message: 'The guest partition is gone. There is only the gauntlet now.', isThought: true };
     } else if (currentLevel.id === 5 && (completedTaskIds[4]?.length > 0)) {
-       // Logic from App.tsx advanceLevel
        levelNotification = {
         message: '[AUTOMATED PROCESS] Ghost Protocol: Uplink configs auto-populated by legacy cron job (AI-7733 footprint detected)',
         author: 'sys.daemon',
@@ -123,9 +105,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
            shownThoughtForLevelRef.current = currentLevel.id;
         }
       } else {
-        // Notifications are transient, but we should dispatch them.
-        // We need to avoid infinite loops if SET_NOTIFICATION causes re-render -> effect.
-        // Check if the current notification is already the same to avoid loop.
         if (gameState.notification?.message !== levelNotification.message) {
           dispatch({
             type: 'SET_NOTIFICATION',
@@ -137,8 +116,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       }
     }
 
-    // 2. Initial Level Thoughts (defined in LEVELS constant)
-    // This replaces the useEffect in App.tsx that watched currentLevel.thought
+    // 2. Initial Level Thoughts
     if (currentLevel.thought && shownThoughtForLevelRef.current !== currentLevel.id && !gameState.showEpisodeIntro && !gameState.isGameOver) {
       shownThoughtForLevelRef.current = currentLevel.id;
       triggerThought(currentLevel.thought);
@@ -147,47 +125,14 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
     // 3. Initial Alerts (Level 5 Quarantine)
     if (currentLevel.id === 5 && shownInitialAlertForLevelRef.current !== 5 && !gameState.showEpisodeIntro && !gameState.isGameOver) {
       shownInitialAlertForLevelRef.current = 5;
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          alertMessage: '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.',
-          showThreatAlert: true,
-        },
-      });
+      dispatch({ type: 'SET_ALERT_MESSAGE', message: '🚨 QUARANTINE ALERT - Protocols flagged for lockdown due to active UPLINK configurations. Evacuate immediately.' });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
     }
 
   }, [gameState.levelIndex, gameState.showEpisodeIntro, gameState.isGameOver, gameState.cycleCount, gameState.completedTaskIds, dispatch, triggerThought]);
 
 
   // --- Task Completion Narrative ---
-  useEffect(() => {
-    const currentLevel = LEVELS[gameState.levelIndex];
-    if (!currentLevel || gameState.isGameOver) return;
-
-    const tasks = gameState.completedTaskIds[currentLevel.id] || [];
-
-    // Level 5: Establish Stronghold
-    if (currentLevel.id === 5 && tasks.includes('establish-stronghold')) {
-       // We need to ensure this only triggers once.
-       // Ideally we'd track "triggered thoughts" or rely on the fact that it's idempotent if we check a flag.
-       // But `triggerThought` will just replace it.
-       // To avoid spamming it on every render, we could check if thought is already this message?
-       // Or rely on the fact that `tasks` array reference changes only when task is added.
-       // But this effect runs on `gameState` changes? No, we should scope dependency.
-
-       // Optimization: Use a ref to track if we triggered this specific thought for this level session?
-       // For now, let's trust the effect dependencies.
-       // If `completedTaskIds` changes, we check.
-       // We might re-trigger if other state changes.
-       // Let's refine dependencies.
-    }
-  }, [gameState.completedTaskIds, gameState.levelIndex, gameState.isGameOver]);
-
-  // Actually, to avoid complexity with effect dependencies re-triggering:
-  // We can listen to specific state changes by diffing.
-  // Or we can rely on the fact that `useNarrative` is "System" code.
-  // Let's move the specific task checks to a more robust structure.
-
   const prevCompletedTasksRef = useRef<Record<number, string[]>>(gameState.completedTaskIds);
 
   useEffect(() => {
@@ -208,13 +153,8 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
 
       // Level 7: Zoxide Vault (Honeypot Alert)
       if (currentLevel.id === 7 && newTasks.includes('zoxide-vault')) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage: "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
-            showThreatAlert: true,
-          },
-        });
+        dispatch({ type: 'SET_ALERT_MESSAGE', message: "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately." });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
       }
     }
 
@@ -235,54 +175,27 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       );
 
       if (hasClipboardHoneypot && !gameState.showThreatAlert) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            alertMessage: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
-            showThreatAlert: true,
-          },
-        });
+        dispatch({ type: 'SET_ALERT_MESSAGE', message: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.' });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
       }
     }
 
     // Level 12: Selection Honeypot
     if (currentLevel.id === 12) {
-      // Need visible items to check selection content?
-      // gameState.selectedIds is a list of IDs.
-      // We need to look up nodes.
-      // We can use fsHelpers `getNodeById` but that scans whole tree?
-      // Or just look in current directory + clipboard?
-      // The original code used `visibleItems` which was calculated in App.tsx.
-      // Here we don't have `visibleItems`.
-      // We can assume selected items are usually in current directory.
-
-      // Re-implementing simplified check:
-      // We iterate `selectedIds`. We find them in the FS.
-      // Optimization: Only check if `selectedIds` is not empty.
-
       if (gameState.selectedIds.length > 0) {
-         // This is potentially expensive if we scan the whole tree every render.
-         // However, `selectedIds` usually changes on user input.
-         // Let's try to look in current path first.
          const parentNode = getNodeById(gameState.fs, gameState.currentPath[gameState.currentPath.length - 1]);
          if (parentNode && parentNode.children) {
             const selectedNodes = parentNode.children.filter(c => gameState.selectedIds.includes(c.id));
             const hasHoneypot = selectedNodes.some(n => n.content?.includes('HONEYPOT'));
 
             if (hasHoneypot && !gameState.showThreatAlert) {
-               dispatch({
-                type: 'UPDATE_UI_STATE',
-                updates: {
-                  alertMessage: '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
-                  showThreatAlert: true,
-                },
-              });
+               dispatch({ type: 'SET_ALERT_MESSAGE', message: '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.' });
+               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
             }
          }
       }
 
       // Level 12: Anomaly Alerts (Scenario specific)
-      // Original logic scanned specific paths/filenames.
       const workspace = getNodeById(gameState.fs, 'workspace');
       const incoming = getNodeById(gameState.fs, 'incoming');
       const config = getNodeById(gameState.fs, '.config');
@@ -304,39 +217,23 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       }
 
       if (alertMsg && gameState.alertMessage !== alertMsg) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { alertMessage: alertMsg, showThreatAlert: true },
-        });
+        dispatch({ type: 'SET_ALERT_MESSAGE', message: alertMsg });
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
       }
     }
 
     // Level 11: Reconnaissance Logic
     if (currentLevel.id === 11) {
-       // Scouted files logic is handled in App.tsx effects (updates flags).
-       // Narrative system just watches flags?
-       // "HONEYPOT TRIGGERED! Security trace initiated."
-
-       // We need to check if selected nodes have honeypot content.
        if (gameState.selectedIds.length > 0) {
-         // Same logic as Level 12 but for Level 11
          const parentNode = getNodeById(gameState.fs, gameState.currentPath[gameState.currentPath.length - 1]);
          if (parentNode && parentNode.children) {
             const selectedNodes = parentNode.children.filter(c => gameState.selectedIds.includes(c.id));
             const hasHoneypot = selectedNodes.some(n => n.content?.includes('HONEYPOT'));
 
             if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
-               dispatch({
-                type: 'UPDATE_UI_STATE',
-                updates: {
-                  alertMessage: '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
-                  showThreatAlert: true,
-                  level11Flags: {
-                    ...gameState.level11Flags!,
-                    triggeredHoneypot: true,
-                  },
-                },
-              });
+               dispatch({ type: 'SET_ALERT_MESSAGE', message: '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.' });
+               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
+               dispatch({ type: 'UPDATE_LEVEL_11_FLAGS', flags: { triggeredHoneypot: true } });
             }
          }
        }

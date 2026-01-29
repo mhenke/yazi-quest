@@ -14,40 +14,30 @@ export const handleHelpModeKeyDown = (
     case 'j':
     case 'ArrowDown':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          helpScrollPosition: (gameState.helpScrollPosition || 0) + 1,
-          lastActionIntensity: intensity,
-        },
+        type: 'SET_HELP_SCROLL',
+        scroll: (gameState.helpScrollPosition || 0) + 1,
       });
       break;
     case 'k':
     case 'ArrowUp':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          helpScrollPosition: Math.max(0, (gameState.helpScrollPosition || 0) - 1),
-          lastActionIntensity: intensity,
-        },
+        type: 'SET_HELP_SCROLL',
+        scroll: Math.max(0, (gameState.helpScrollPosition || 0) - 1),
       });
       break;
     case 'J': // Shift+J
       if (e.shiftKey) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            helpScrollPosition: (gameState.helpScrollPosition || 0) + 5,
-          },
+          type: 'SET_HELP_SCROLL',
+          scroll: (gameState.helpScrollPosition || 0) + 5,
         });
       }
       break;
     case 'K': // Shift+K
       if (e.shiftKey) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            helpScrollPosition: Math.max(0, (gameState.helpScrollPosition || 0) - 5),
-          },
+          type: 'SET_HELP_SCROLL',
+          scroll: Math.max(0, (gameState.helpScrollPosition || 0) - 5),
         });
       }
       break;

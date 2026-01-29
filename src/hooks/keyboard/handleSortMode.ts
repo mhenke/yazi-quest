@@ -10,33 +10,24 @@ export const handleSortModeKeyDown = (
   const shift = e.shiftKey;
 
   if (key === 'Escape') {
-    dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', acceptNextKeyForSort: false } });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
     return;
   }
 
   if (key === 'l') {
     const modes: Linemode[] = ['none', 'size', 'mtime', 'permissions'];
     const nextIndex = (modes.indexOf(gameState.linemode) + 1) % modes.length;
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        mode: 'normal',
-        acceptNextKeyForSort: false,
-        linemode: modes[nextIndex],
-      },
-    });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+    dispatch({ type: 'SET_LINEMODE', mode: modes[nextIndex] });
     return;
   }
 
   if (key === '-') {
-    dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        mode: 'normal',
-        acceptNextKeyForSort: false,
-        linemode: 'none',
-      },
-    });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+    dispatch({ type: 'SET_LINEMODE', mode: 'none' });
     return;
   }
 
@@ -88,17 +79,22 @@ export const handleSortModeKeyDown = (
   const config = SORT_CONFIG[key.toLowerCase()];
 
   if (config) {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
     dispatch({
-      type: 'UPDATE_UI_STATE',
-      updates: {
-        mode: 'normal',
-        acceptNextKeyForSort: false,
-        sortBy: config.by,
-        sortDirection: shift ? config.reverseDir : config.defaultDir,
-        linemode: config.linemode || gameState.linemode,
-        usedSortM: gameState.usedSortM || key.toLowerCase() === 'm',
-        notification: { message: `Sort: ${config.label}${shift ? ' (rev)' : ''}` },
-      },
+      type: 'SET_SORT',
+      sortBy: config.by,
+      direction: shift ? config.reverseDir : config.defaultDir,
+    });
+    if (config.linemode) {
+      dispatch({ type: 'SET_LINEMODE', mode: config.linemode });
+    }
+    if (key.toLowerCase() === 'm') {
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'SortM' });
+    }
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: `Sort: ${config.label}${shift ? ' (rev)' : ''}`,
     });
   }
 };

@@ -25,46 +25,33 @@ export const handleNavigationKeyDown = (
       const newItem = items[newCursorIndex];
       const updatedLevel11Flags = checkLevel11Scouting(gameState, newItem);
 
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          cursorIndex: newCursorIndex,
-          previewScroll: 0,
-          usedDown: true,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-          level11Flags: updatedLevel11Flags,
-          lastActionIntensity: intensity,
-        },
-      });
+      dispatch({ type: 'SET_CURSOR', index: newCursorIndex });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'Down' });
+      if (updatedLevel11Flags) {
+        dispatch({
+          type: 'UPDATE_LEVEL_11_FLAGS',
+          flags: updatedLevel11Flags,
+        });
+      }
       return true;
     }
 
     case 'k':
     case 'ArrowUp':
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          cursorIndex:
-            gameState.cursorIndex <= 0 ? Math.max(0, items.length - 1) : gameState.cursorIndex - 1,
-          previewScroll: 0,
-          usedUp: true,
-          usedPreviewDown: false,
-          usedPreviewUp: false,
-          lastActionIntensity: intensity,
-        },
+        type: 'SET_CURSOR',
+        index:
+          gameState.cursorIndex <= 0 ? Math.max(0, items.length - 1) : gameState.cursorIndex - 1,
       });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'Up' });
       return true;
 
     case 'J':
       if (e.shiftKey) {
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            previewScroll: gameState.previewScroll + 5,
-            usedPreviewDown: true,
-          },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: gameState.previewScroll + 5 });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'PreviewDown' });
         return true;
       }
       break;
@@ -72,12 +59,10 @@ export const handleNavigationKeyDown = (
     case 'K':
       if (e.shiftKey) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            previewScroll: Math.max(0, gameState.previewScroll - 5),
-            usedPreviewUp: true,
-          },
+          type: 'SET_PREVIEW_SCROLL',
+          scroll: Math.max(0, gameState.previewScroll - 5),
         });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'PreviewUp' });
         return true;
       }
       break;
@@ -95,17 +80,9 @@ export const handleNavigationKeyDown = (
       try {
         const items = getVisibleItems(gameState) || [];
         const last = Math.max(0, items.length - 1);
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            cursorIndex: last,
-            previewScroll: 0,
-            usedG: true,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            lastActionIntensity: 1,
-          },
-        });
+        dispatch({ type: 'SET_CURSOR', index: last });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
       } catch {
         // ignore
       }
@@ -123,31 +100,16 @@ export const handleNavigationKeyDown = (
         if (itemPath && itemPath.length > 1) {
           const parentPath = itemPath.slice(0, -1);
           dispatch({ type: 'NAVIGATE', path: parentPath });
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: {
-              previewScroll: 0,
-              searchQuery: null,
-              searchResults: [],
-            },
-          });
+          dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+          dispatch({ type: 'SET_SEARCH', query: null, results: [] });
           return true;
         }
       }
 
       if (parent) {
         dispatch({ type: 'NAVIGATE', path: gameState.currentPath.slice(0, -1) });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            previewScroll: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            searchQuery: null,
-            searchResults: [],
-            lastActionIntensity: intensity,
-          },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+        dispatch({ type: 'SET_SEARCH', query: null, results: [] });
         return true;
       }
       break;
@@ -184,18 +146,8 @@ export const handleNavigationKeyDown = (
             const pathStr = resolvePath(gameState.fs, itemPath);
             dispatch({ type: 'NAVIGATE', path: itemPath });
             dispatch({ type: 'UPDATE_ZOXIDE', path: pathStr });
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                usedG: false,
-                usedGG: false,
-                usedPreviewDown: false,
-                usedPreviewUp: false,
-                previewScroll: 0,
-                searchQuery: null,
-                searchResults: [],
-              },
-            });
+            dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
             return true;
           }
         }
@@ -204,17 +156,7 @@ export const handleNavigationKeyDown = (
         const pathStr = resolvePath(gameState.fs, nextPath);
         dispatch({ type: 'NAVIGATE', path: nextPath });
         dispatch({ type: 'UPDATE_ZOXIDE', path: pathStr });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            usedG: false,
-            usedGG: false,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            previewScroll: 0,
-            lastActionIntensity: intensity,
-          },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
         return true;
       }
       break;
@@ -227,16 +169,9 @@ export const handleNavigationKeyDown = (
         }
         if (gameState.history.length === 0) return true;
         dispatch({ type: 'NAVIGATE_BACK' });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            previewScroll: 0,
-            usedHistoryBack: true,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            notification: { message: 'History Back' },
-          },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'HistoryBack' });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'History Back' });
         return true;
       }
       break;
@@ -248,16 +183,9 @@ export const handleNavigationKeyDown = (
         }
         if (gameState.future.length === 0) return true;
         dispatch({ type: 'NAVIGATE_FORWARD' });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            previewScroll: 0,
-            usedHistoryForward: true,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-            notification: { message: 'History Forward' },
-          },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'HistoryForward' });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'History Forward' });
         return true;
       }
       break;

@@ -26,10 +26,7 @@ export const handleClipboardKeyDown = (
     case ' ':
       if (currentItem) {
         dispatch({ type: 'TOGGLE_SELECTION', id: currentItem.id, itemCount: items.length });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { previewScroll: 0, lastActionIntensity: 1 },
-        });
+        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
         return true;
       }
       break;
@@ -39,7 +36,7 @@ export const handleClipboardKeyDown = (
         e.preventDefault();
         const allIds = items.map((item) => item.id);
         dispatch({ type: 'SET_SELECTION', ids: allIds });
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlA: true } });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'CtrlA' });
         showNotification(
           getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
           500
@@ -65,7 +62,7 @@ export const handleClipboardKeyDown = (
           const allIds = allPotentialItems.map((item) => item.id);
           const inverted = allIds.filter((id) => !gameState.selectedIds.includes(id));
           dispatch({ type: 'SET_SELECTION', ids: inverted });
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { usedCtrlR: true } });
+          dispatch({ type: 'MARK_ACTION_USED', actionId: 'CtrlR' });
           showNotification(
             getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
             500
@@ -74,8 +71,8 @@ export const handleClipboardKeyDown = (
         return true;
       } else if (gameState.selectedIds.length > 1) {
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { notification: { message: 'Batch rename not available in this version' } },
+          type: 'SET_NOTIFICATION',
+          message: 'Batch rename not available in this version',
         });
         return true;
       } else if (currentItem) {
@@ -91,10 +88,8 @@ export const handleClipboardKeyDown = (
           showNotification(`🔒 PROTECTED: ${protection}`, 4000);
           return true;
         }
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { mode: 'rename', inputBuffer: currentItem.name },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'rename' });
+        dispatch({ type: 'SET_INPUT_BUFFER', buffer: currentItem.name });
         return true;
       }
       break;
@@ -145,18 +140,16 @@ export const handleClipboardKeyDown = (
           action: e.key === 'x' ? 'cut' : 'yank',
           originalPath: gameState.currentPath,
         });
+        dispatch({ type: 'SET_SELECTION', ids: [] });
         dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            selectedIds: [],
-            usedY: gameState.usedY || e.key === 'y',
-            usedX: gameState.usedX || e.key === 'x',
-            notification: {
-              message:
-                getNarrativeAction(e.key) ||
-                `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
-            },
-          },
+          type: 'MARK_ACTION_USED',
+          actionId: e.key === 'y' ? 'Y' : 'X',
+        });
+        dispatch({
+          type: 'SET_NOTIFICATION',
+          message:
+            getNarrativeAction(e.key) ||
+            `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
         });
         return true;
       }
@@ -167,10 +160,7 @@ export const handleClipboardKeyDown = (
       if (e.shiftKey) {
         e.preventDefault();
         dispatch({ type: 'CLEAR_CLIPBOARD' });
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: { notification: { message: 'Clipboard Aborted' } },
-        });
+        dispatch({ type: 'SET_NOTIFICATION', message: 'Clipboard Aborted' });
         return true;
       }
       break;
@@ -198,14 +188,14 @@ export const handleClipboardKeyDown = (
         return true;
       }
       dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          mode: 'confirm-delete',
-          pendingDeleteIds: toDelete,
-          deleteType: e.key === 'D' ? 'permanent' : 'trash',
-          usedD: gameState.usedD || e.key === 'D',
-          usedTrashDelete: gameState.usedTrashDelete || e.key === 'd',
-        },
+        type: 'SET_DELETE_PENDING',
+        ids: toDelete,
+        deleteType: e.key === 'D' ? 'permanent' : 'trash',
+      });
+      dispatch({ type: 'SET_MODE', mode: 'confirm-delete' });
+      dispatch({
+        type: 'MARK_ACTION_USED',
+        actionId: e.key === 'D' ? 'D' : 'TrashDelete',
       });
       return true;
     }
@@ -267,16 +257,12 @@ export const handleClipboardKeyDown = (
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
             dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                notification: {
-                  message:
-                    getNarrativeAction('p') ||
-                    `Deployed ${gameState.clipboard?.nodes.length} assets`,
-                },
-                usedP: true,
-              },
+              type: 'SET_NOTIFICATION',
+              message:
+                getNarrativeAction('p') ||
+                `Deployed ${gameState.clipboard?.nodes.length} assets`,
             });
+            dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
           }
         } catch (err) {
           console.error(err);
@@ -361,15 +347,11 @@ export const handleClipboardKeyDown = (
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
             dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                notification: {
-                  message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
-                },
-                usedP: true,
-                usedShiftP: true,
-              },
+              type: 'SET_NOTIFICATION',
+              message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
             });
+            dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
+            dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
           }
         } catch (err) {
           console.error(err);

@@ -16,14 +16,8 @@ export const handleSystemParamsKeyDown = (
     case 'f':
       if (!e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            mode: 'filter',
-            inputBuffer: '',
-            usedFilter: true,
-          },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'filter' });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'Filter' });
         return true;
       }
       break;
@@ -31,20 +25,10 @@ export const handleSystemParamsKeyDown = (
     case 's':
       e.preventDefault();
       showNotification(getNarrativeAction('s') || 'Recursive search');
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: {
-          mode: 'search',
-          inputBuffer: '',
-          searchQuery: null,
-          searchResults: [],
-          usedSearch: true,
-        },
-      });
-      // Also need to clear filters? The original code had filters: {}
-      // But gameReducer clear_filter is per dirId.
-      // Let's use UPDATE_UI_STATE for now if we want to clear ALL filters.
-      dispatch({ type: 'UPDATE_UI_STATE', updates: { filters: {} } });
+      dispatch({ type: 'SET_MODE', mode: 'search' });
+      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'Search' });
+      dispatch({ type: 'CLEAR_ALL_FILTERS' });
       return true;
 
     case '.': {
@@ -56,10 +40,8 @@ export const handleSystemParamsKeyDown = (
     }
 
     case ',':
-      dispatch({
-        type: 'UPDATE_UI_STATE',
-        updates: { mode: 'sort' as const, acceptNextKeyForSort: true },
-      });
+      dispatch({ type: 'SET_MODE', mode: 'sort' });
+      dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: true });
       return true;
 
     case 'Z':
@@ -69,16 +51,8 @@ export const handleSystemParamsKeyDown = (
         }
         e.preventDefault();
         showNotification(getNarrativeAction('Z') || 'Zoxide jump');
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            mode: 'zoxide-jump',
-            inputBuffer: '',
-            fuzzySelectedIndex: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'zoxide-jump' });
+        dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
         return true;
       }
       break;
@@ -90,16 +64,8 @@ export const handleSystemParamsKeyDown = (
         }
         e.preventDefault();
         showNotification(getNarrativeAction('z') || 'FZF file search');
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            mode: 'fzf-current',
-            inputBuffer: '',
-            fuzzySelectedIndex: 0,
-            usedPreviewDown: false,
-            usedPreviewUp: false,
-          },
-        });
+        dispatch({ type: 'SET_MODE', mode: 'fzf-current' });
+        dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
         return true;
       }
       break;
@@ -123,7 +89,7 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'TOGGLE_INFO_PANEL' });
       if (currentItem) {
         const updatedLevel11Flags = checkLevel11Scouting(gameState, currentItem);
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { level11Flags: updatedLevel11Flags } });
+        dispatch({ type: 'UPDATE_LEVEL_11_FLAGS', flags: updatedLevel11Flags });
       }
       return true;
 
@@ -133,14 +99,8 @@ export const handleSystemParamsKeyDown = (
 
       if (gameState.searchQuery) {
         showNotification(getNarrativeAction('Escape') || 'Search cleared');
-        dispatch({
-          type: 'UPDATE_UI_STATE',
-          updates: {
-            searchQuery: null,
-            searchResults: [],
-            cursorIndex: 0,
-          },
-        });
+        dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+        dispatch({ type: 'SET_CURSOR', index: 0 });
       }
 
       // Also clear filter for current directory if it exists
