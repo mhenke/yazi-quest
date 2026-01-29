@@ -57,6 +57,7 @@ import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { checkFilterAndBlockNavigation, getActionIntensity } from './hooks/keyboard/utils';
 import { KEYBINDINGS } from './constants/keybindings';
+import { useGlobalInput } from './GlobalInputContext';
 import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
@@ -1949,237 +1950,189 @@ export default function App() {
     [handleSearchConfirm]
   );
 
-  // Global Key Down Handler
+  // Global Key Down Handler (Refactored to useGlobalInput)
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
-      // Only enter completion lockdown if the success toast is actually shown.
-      // If blocked by a protocol violation warning, we MUST allow keys through so the user can fix it.
-      if (tasksComplete && gameState.showSuccessToast) {
-        if (e.key === 'Enter' && e.shiftKey) {
-          e.preventDefault();
-          advanceLevel();
-        }
-        return; // Block all other keys
-      }
-
-      // If we're in an input mode and the target is an input element,
-      // don't process the key in the main handler to avoid interference
+  // 1. System Keys (Priority 2000)
+  useGlobalInput(
+    (e) => {
+      // Check input modes - allow inputs to handle their own keys
       if (
         ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
         e.target instanceof HTMLInputElement
       ) {
-        return; // Let the input element handle the key
+        return;
       }
 
-      // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
+      // Meta commands
       if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: { showHelp: !gameState.showHelp, showHint: false, showMap: false },
         });
-        return;
+        return true;
       }
-
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
         if (gameState.showHint) {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: { showHint: false, showHelp: false, showMap: false },
-          });
+          const nextStage = (gameState.hintStage + 1) % 3;
+          dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
         } else {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: { showHint: true, hintStage: 0, showHelp: false, showMap: false },
           });
         }
-        return;
+        return true;
       }
-
-      if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey) {
+      if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey && !e.shiftKey) {
         e.preventDefault();
         dispatch({
           type: 'UPDATE_UI_STATE',
           updates: { showMap: !gameState.showMap, showHelp: false, showHint: false },
         });
-        return;
+        return true;
       }
+    },
+    [gameState.showHelp, gameState.showHint, gameState.showMap, gameState.hintStage, gameState.mode],
+    { priority: 2000, captureInput: true }
+  );
 
-      // GLOBAL MODAL BLOCKING: If help/hint/map modals are open, block everything except Alt toggles and Shift+Enter.
-      if (gameState.showHelp) {
-        handleHelpModeKeyDown(e, gameState, () =>
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })
-        );
-        return;
+  // 2. Threat Alert (Priority 600)
+  useGlobalInput(
+    (e) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } });
+        return true;
       }
+      return true; // Block others
+    },
+    [gameState.showThreatAlert],
+    { priority: 600, enabled: gameState.showThreatAlert }
+  );
 
-      if (gameState.showMap) {
-        // Derive episodes for the handler
-        const episodeIcons = [Zap, Shield, Crown];
-        const episodes = EPISODE_LORE.map((lore, idx) => {
-          const color = lore.color ?? 'text-blue-500';
-          return {
-            ...lore,
-            levels: LEVELS.filter((l) => l.episodeId === lore.id),
-            border: color.replace('text-', 'border-') + '/30',
-            bg: color.replace('text-', 'bg-') + '/10',
-            color,
-            icon: episodeIcons[idx] || Shield,
-          };
-        });
+  // 3. Modals (Help, Map, Hint, InfoPanel) (Priority 500)
+  useGlobalInput(
+    (e) => {
+      handleHelpModeKeyDown(e, gameState, () =>
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })
+      );
+      return true;
+    },
+    [gameState.showHelp, gameState, handleHelpModeKeyDown],
+    { priority: 500, enabled: gameState.showHelp }
+  );
 
-        handleQuestMapModeKeyDown(
-          e,
-          gameState,
-          LEVELS,
-          episodes,
-          () => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } }),
-          (globalIdx: number) => {
-            const lvl = LEVELS[globalIdx];
-            let fs = cloneFS(INITIAL_FS);
-            if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
-            dispatch({
-              type: 'SET_LEVEL',
-              index: globalIdx,
-              fs,
-              path: lvl.initialPath || ['root', 'home', 'guest'],
-            });
-          }
-        );
-        return;
+  useGlobalInput(
+    (e) => {
+      const episodeIcons = [Zap, Shield, Crown];
+      const episodes = EPISODE_LORE.map((lore, idx) => {
+        const color = lore.color ?? 'text-blue-500';
+        return {
+          ...lore,
+          levels: LEVELS.filter((l) => l.episodeId === lore.id),
+          border: color.replace('text-', 'border-') + '/30',
+          bg: color.replace('text-', 'bg-') + '/10',
+          color,
+          icon: episodeIcons[idx] || Shield,
+        };
+      });
+
+      handleQuestMapModeKeyDown(
+        e,
+        gameState,
+        LEVELS,
+        episodes,
+        () => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } }),
+        (globalIdx: number) => {
+          const lvl = LEVELS[globalIdx];
+          let fs = cloneFS(INITIAL_FS);
+          if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
+          dispatch({
+            type: 'SET_LEVEL',
+            index: globalIdx,
+            fs,
+            path: lvl.initialPath || ['root', 'home', 'guest'],
+          });
+        }
+      );
+      return true;
+    },
+    [gameState.showMap, gameState, handleQuestMapModeKeyDown],
+    { priority: 500, enabled: gameState.showMap }
+  );
+
+  useGlobalInput(
+    (e) => {
+      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false } });
       }
+      return true;
+    },
+    [gameState.showHint],
+    { priority: 500, enabled: gameState.showHint }
+  );
 
-      if (gameState.showHint) {
-        // Standard close for Hint if Esc or Shift+Enter
-        if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false } });
-        }
-        return;
+  useGlobalInput(
+    (e) => {
+      if (e.key === 'Escape' || e.key === 'Tab') {
+        e.preventDefault();
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } });
       }
+      return true;
+    },
+    [gameState.showInfoPanel],
+    { priority: 500, enabled: gameState.showInfoPanel }
+  );
 
-      if (gameState.showThreatAlert) {
-        // If ThreatAlert is shown, it blocks everything except:
-        // 1. Shift+Enter to dismiss
-        // 2. Meta commands (handled above)
-        if (e.key === 'Enter' && e.shiftKey) {
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } });
-        }
-        return;
+  // 4. Warning Modals (Priority 600)
+  // Hidden Warning
+  useGlobalInput(
+    (e) => {
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
+      if (e.key === '.') {
+        dispatch({ type: 'TOGGLE_HIDDEN' });
       }
-
-      // If only the InfoPanel is open, block all emulator keys except Esc/Tab to close it
-      if (gameState.showInfoPanel) {
-        if (e.key === 'Escape' || e.key === 'Tab') {
-          e.preventDefault();
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } });
-        }
-        return;
-      }
-
-      // Allow meta commands even during booting, episode intro, game over, etc.
-      if (
-        (gameState.isBooting ||
-          gameState.showEpisodeIntro ||
-          isLastLevel ||
-          gameState.isGameOver ||
-          ['input-file', 'filter', 'rename'].includes(gameState.mode)) &&
-        ((e.key === '?' && e.altKey) || (e.key === 'h' && e.altKey) || (e.key === 'm' && e.altKey))
-      ) {
-        // Process the meta command
-        if (e.key === '?' && e.altKey) {
-          e.preventDefault();
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: true } });
-          return;
-        }
-
-        if (e.key === 'h' && e.altKey) {
-          e.preventDefault();
-          if (gameState.showHint) {
-            const nextStage = (gameState.hintStage + 1) % 3;
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
-          } else {
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: true, hintStage: 0 } });
-          }
-          return;
-        }
-
-        if (e.key === 'm' && e.altKey) {
-          e.preventDefault();
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: true } });
-          return;
-        }
-      }
-
-      if (
-        gameState.isBooting ||
-        gameState.showEpisodeIntro ||
-        isLastLevel ||
-        gameState.isGameOver ||
-        ['input-file', 'filter', 'rename'].includes(gameState.mode)
-      ) {
-        // Let specific components handle keys or ignore
-        return;
-      }
-
-      // Handle hidden files warning modal interception
-      if (gameState.showHiddenWarning) {
-        // Check if we can auto-fix (only last task)
-        if (e.key === '.') {
-          dispatch({ type: 'TOGGLE_HIDDEN' });
-        }
-        // Allow Shift+Enter to auto-fix ONLY if tasks are complete
-        if (e.key === 'Enter' && e.shiftKey) {
-          if (tasksComplete) {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: { showHidden: false, showHiddenWarning: false },
-            });
-          } else {
-            dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
-          }
-        }
-        // Allow Escape to dismiss the warning
-        if (e.key === 'Escape') {
+      if (e.key === 'Enter' && e.shiftKey) {
+        if (tasksComplete) {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: { showHidden: false, showHiddenWarning: false },
+          });
+        } else {
           dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
         }
-        return; // Block other inputs
       }
+      if (e.key === 'Escape') {
+        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHiddenWarning: false } });
+      }
+      return true;
+    },
+    [gameState.showHiddenWarning, currentLevel, checkAllTasksComplete],
+    { priority: 600, enabled: gameState.showHiddenWarning }
+  );
 
-      // If FilterWarning modal is shown, allow Escape to dismiss or Shift+Enter
-      if (gameState.mode === 'filter-warning') {
-        if (e.key === 'Enter' && e.shiftKey) {
-          if (tasksComplete) {
-            const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-            const newFilters = { ...gameState.filters };
-            if (currentDirNode) {
-              delete newFilters[currentDirNode.id];
-            }
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                mode: 'normal',
-                filters: newFilters,
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
-          } else {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                mode: 'normal',
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
+  // Filter Warning
+  useGlobalInput(
+    (e) => {
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
+      if (e.key === 'Enter' && e.shiftKey) {
+        if (tasksComplete) {
+          const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+          const newFilters = { ...gameState.filters };
+          if (currentDirNode) {
+            delete newFilters[currentDirNode.id];
           }
-          return;
-        }
-
-        if (e.key === 'Escape') {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              filters: newFilters,
+              acceptNextKeyForSort: false,
+              notification: null,
+            },
+          });
+        } else {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: {
@@ -2188,40 +2141,43 @@ export default function App() {
               notification: null,
             },
           });
-          return;
         }
-
-        return; // Block other inputs if filter warning is active
+        return true;
       }
+      if (e.key === 'Escape') {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          },
+        });
+        return true;
+      }
+      return true;
+    },
+    [gameState.mode, gameState.filters, currentLevel, checkAllTasksComplete],
+    { priority: 600, enabled: gameState.mode === 'filter-warning' }
+  );
 
-      // If SearchWarning modal is shown
-      if (gameState.mode === 'search-warning') {
-        if (e.key === 'Enter' && e.shiftKey) {
-          if (tasksComplete) {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                mode: 'normal',
-                searchQuery: null,
-                searchResults: [],
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
-          } else {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                mode: 'normal',
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
-          }
-          return;
-        }
-
-        if (e.key === 'Escape') {
+  // Search Warning
+  useGlobalInput(
+    (e) => {
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
+      if (e.key === 'Enter' && e.shiftKey) {
+        if (tasksComplete) {
+          dispatch({
+            type: 'UPDATE_UI_STATE',
+            updates: {
+              mode: 'normal',
+              searchQuery: null,
+              searchResults: [],
+              acceptNextKeyForSort: false,
+              notification: null,
+            },
+          });
+        } else {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: {
@@ -2230,68 +2186,44 @@ export default function App() {
               notification: null,
             },
           });
-          return;
         }
-
-        return; // Block other inputs if search warning is active
+        return true;
       }
+      if (e.key === 'Escape') {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          },
+        });
+        return true;
+      }
+      return true;
+    },
+    [gameState.mode, currentLevel, checkAllTasksComplete],
+    { priority: 600, enabled: gameState.mode === 'search-warning' }
+  );
 
-      // If SortWarningModal is visible
-      if (gameState.showSortWarning) {
-        const allowAutoFix = tasksComplete;
-
-        if (e.key === 'Enter' && e.shiftKey) {
-          if (allowAutoFix) {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                showSortWarning: false,
-                sortBy: 'natural',
-                sortDirection: 'asc',
-                mode: 'normal',
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
-          } else {
-            dispatch({
-              type: 'UPDATE_UI_STATE',
-              updates: {
-                showSortWarning: false,
-                mode: 'normal',
-                acceptNextKeyForSort: false,
-                notification: null,
-              },
-            });
-          }
-          return;
-        }
-
-        // Allow sort commands (like ',' and then 'n') to be processed
-        if (e.key === ',') {
-          dispatch({
-            type: 'UPDATE_UI_STATE',
-            updates: { mode: 'sort', acceptNextKeyForSort: true },
-          });
-          return;
-        }
-
-        if (gameState.acceptNextKeyForSort) {
-          handleSortModeKeyDown(e, gameState);
-          const pressed = e.key || '';
-          const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
+  // Sort Warning
+  useGlobalInput(
+    (e) => {
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
+      if (e.key === 'Enter' && e.shiftKey) {
+        if (tasksComplete) {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: {
-              showSortWarning: !isNatural,
-              acceptNextKeyForSort: false,
+              showSortWarning: false,
+              sortBy: 'natural',
+              sortDirection: 'asc',
               mode: 'normal',
+              acceptNextKeyForSort: false,
+              notification: null,
             },
           });
-          return; // Block other inputs
-        }
-
-        if (e.key === 'Escape') {
+        } else {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: {
@@ -2301,50 +2233,77 @@ export default function App() {
               notification: null,
             },
           });
-          return;
         }
-
-        return;
+        return true;
       }
+      if (e.key === ',') {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: { mode: 'sort', acceptNextKeyForSort: true },
+        });
+        return true;
+      }
+      if (gameState.acceptNextKeyForSort) {
+        handleSortModeKeyDown(e, gameState);
+        const pressed = e.key || '';
+        const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            showSortWarning: !isNatural,
+            acceptNextKeyForSort: false,
+            mode: 'normal',
+          },
+        });
+        return true;
+      }
+      if (e.key === 'Escape') {
+        dispatch({
+          type: 'UPDATE_UI_STATE',
+          updates: {
+            showSortWarning: false,
+            mode: 'normal',
+            acceptNextKeyForSort: false,
+            notification: null,
+          },
+        });
+        return true;
+      }
+      return true;
+    },
+    [
+      gameState.showSortWarning,
+      gameState.acceptNextKeyForSort,
+      currentLevel,
+      checkAllTasksComplete,
+      handleSortModeKeyDown,
+    ],
+    { priority: 600, enabled: gameState.showSortWarning }
+  );
 
-      // Count keystrokes (only if no blocking modal)
+  // 5. Game Loop (Priority 0)
+  useGlobalInput(
+    (e) => {
       if (
-        !isGamePaused &&
-        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())
-      ) {
-        // [IG_AUDIT] Episode III Weighted Noise Logic
-        let noise = 1;
-        if (currentLevel?.id >= 11) {
-          noise = getActionIntensity(e.key, e.ctrlKey);
-        }
-        dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
-      }
-
-      // Handle meta commands (Alt+M, Alt+H, Alt+?) - these should work even when other modals are active
-      if (e.key === '?' && e.altKey) {
-        e.preventDefault();
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: !gameState.showHelp } });
+        gameState.isBooting ||
+        gameState.showEpisodeIntro ||
+        isLastLevel ||
+        gameState.isGameOver
+      )
         return;
+
+      // Block game loop in input modes (though they are ignored by default if focus is in input)
+      if (['filter', 'input-file', 'rename'].includes(gameState.mode)) return;
+
+      // Completion Lockdown Logic
+      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
+      if (tasksComplete && gameState.showSuccessToast) {
+        // SuccessToast handles Shift+Enter with priority 700.
+        // We block everything else here.
+        return true;
       }
 
-      if (e.key === 'h' && e.altKey) {
-        e.preventDefault();
-        if (gameState.showHint) {
-          const nextStage = (gameState.hintStage + 1) % 3;
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { hintStage: nextStage } });
-        } else {
-          dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: true, hintStage: 0 } });
-        }
-        return;
-      }
-
-      if (e.key === 'm' && e.altKey && !e.shiftKey) {
-        e.preventDefault();
-        dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } });
-        return;
-      }
-
-      // Alt+Shift+M - Toggle sound (meta command)
+      // Sound Toggle
       if (e.key.toLowerCase() === 'm' && e.altKey && e.shiftKey && gameState.mode === 'normal') {
         e.preventDefault();
         dispatch({
@@ -2356,7 +2315,18 @@ export default function App() {
             },
           },
         });
-        return;
+        return true;
+      }
+
+      // Keystrokes counting (excluding modifiers/meta)
+      if (
+        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())
+      ) {
+        let noise = 1;
+        if (currentLevel?.id >= 11) {
+          noise = getActionIntensity(e.key, e.ctrlKey);
+        }
+        dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
       }
 
       // Mode dispatch
@@ -2387,7 +2357,7 @@ export default function App() {
           break;
         case 'zoxide-jump':
         case 'fzf-current':
-          handleFuzzyModeKeyDown(e as unknown as KeyboardEvent, gameState, dispatch);
+          handleFuzzyModeKeyDown(e, gameState, dispatch);
           break;
         case 'g-command':
           handleGCommandKeyDown(e, gameState, currentLevel);
@@ -2398,38 +2368,29 @@ export default function App() {
         case 'overwrite-confirm':
           handleOverwriteConfirmKeyDown(e, gameState);
           break;
-        case 'filter':
-        case 'input-file':
-        case 'rename':
-          // When in input modes, the InputModal handles all input
-          // Don't process any keys in the main handler to avoid interference
-          break;
-        default:
-          break;
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    gameState,
-    currentLevel,
-    isLastLevel,
-    handleNormalModeKeyDown,
-    handleSortModeKeyDown,
-    handleConfirmDeleteModeKeyDown,
-    handleFuzzyModeKeyDown,
-    handleZoxidePromptKeyDown,
-    handleOverwriteConfirmKeyDown,
-    handleGCommandKeyDown,
-    advanceLevel,
-    visibleItems,
-    currentItem,
-    parent,
-    handleSearchConfirm,
-    dispatch,
-  ]);
+    },
+    [
+      gameState,
+      currentLevel,
+      isLastLevel,
+      handleNormalModeKeyDown,
+      handleSortModeKeyDown,
+      handleConfirmDeleteModeKeyDown,
+      handleFuzzyModeKeyDown,
+      handleZoxidePromptKeyDown,
+      handleOverwriteConfirmKeyDown,
+      handleGCommandKeyDown,
+      advanceLevel,
+      visibleItems,
+      currentItem,
+      parent,
+      handleSearchConfirm,
+      dispatch,
+      checkAllTasksComplete
+    ],
+    { priority: 0 }
+  );
 
   if (gameState.isBooting) {
     return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount || 1} />;

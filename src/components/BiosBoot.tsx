@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useGlobalInput } from '../GlobalInputContext';
 
 interface BiosBootProps {
   onComplete: () => void;
@@ -84,20 +85,17 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
       window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
   }, [onComplete]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  useGlobalInput(
+    (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        e.stopPropagation();
         onComplete();
+        return true;
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onComplete]);
+    },
+    [onComplete],
+    { priority: 1000 }
+  );
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">

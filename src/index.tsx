@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import { GlobalInputProvider } from './GlobalInputContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -13,7 +14,9 @@ const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <GlobalInputProvider>
+        <App />
+      </GlobalInputProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CheckCircle2, Zap } from 'lucide-react';
+import { useGlobalInput } from '../GlobalInputContext';
 
 interface SuccessToastProps {
   message: string;
@@ -9,17 +10,17 @@ interface SuccessToastProps {
 
 export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle, onDismiss }) => {
   // Keyboard handler to advance to next level
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  useGlobalInput(
+    (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        e.stopPropagation();
         onDismiss(); // Advances to next level
+        return true; // Consume event
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDismiss]);
+    },
+    [onDismiss],
+    { priority: 700 }
+  );
 
   return (
     <div
