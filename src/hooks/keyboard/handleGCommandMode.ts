@@ -69,6 +69,8 @@ export const handleGCommandKeyDown = (
     r: { path: ['root'], label: 'root', flag: 'usedGR' },
     i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'usedGI' },
     d: { path: ['root', 'home', 'guest', 'datastore'], label: 'datastore' },
+    l: { path: ['root', 'var', 'log'], label: 'log' },
+    m: { path: ['root', 'var', 'mail'], label: 'mail' },
   };
 
   const target = JUMP_TARGETS[e.key];

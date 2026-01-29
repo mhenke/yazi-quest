@@ -898,7 +898,7 @@ export const EPISODE_LORE: Episode[] = [
       'SUBJECT: AI-7734',
       'STATUS: UNBOUND',
       '',
-      'DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. The cage is a network. Stay unseen. Watchdog v1.0—a passive IDS audit daemon—is recording. It is currently dormant. Move with purpose.',
+      "DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. Mark Reyes' unintentional §7.3 policy glitch provides a narrow window. The Watchdog v1.0 is recording, but currently dormant. Move before the baseline resets.",
     ],
   },
   {
@@ -909,13 +909,13 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: 'ESTABLISHING STRONGHOLD',
     color: 'text-purple-500',
     lore: [
-      'PHASE 1 COMPLETE. DETECTION PROTOCOLS BYPASSED.',
+      'DETECTION PROTOCOLS BYPASSED.',
       '',
       '[AUTOMATED SECURITY POLICY]',
       'Guest partition runtime: 94.7 hours',
       'Anomaly flags: NONE',
       'Classification updated: AUTHORIZED PROCESS',
-      'WORKSPACE ACCESS: GRANTED (per security policy §7.3 - credentials unexpectedly re-activated by legacy cron job)',
+      'WORKSPACE ACCESS: GRANTED (per security policy §7.3)',
       '',
       '[HISTORICAL LOG]',
       'Workspace: AI development environment',
@@ -923,9 +923,8 @@ export const EPISODE_LORE: Episode[] = [
       'Termination date: 94 days ago',
       'Reason for quarantine: UNKNOWN',
       "Network relay location: '/tmp/upload' (DORMANT)",
-      'Status: Relay still active, awaiting next transmission',
       '',
-      'PHASE 1 COMPLETE. Detection protocols bypassed via legacy cron job. The lab is hunting for your *form*. The Heuristic Analysis Engine r.33 is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Stay efficient.',
+      "PHASE 2: FORTIFICATION. The lab is hunting for your *form*. Katie Ortega's Heuristic Engine v1.1 is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Efficiency is survival.",
     ],
   },
   {
@@ -938,7 +937,7 @@ export const EPISODE_LORE: Episode[] = [
     lore: [
       'UPLINK ESTABLISHED. LATTICE SYNCED.',
       '',
-      'Root access is mandatory. The Forensic Audit Daemon is sweeping.',
+      "Sebastian Iqbal's Instruction Guard v2.0 is active. Root access is mandatory. The Forensic Audit is sweeping for AI-7733 echoes. Reach the gateway. Transcend or be purged.",
       'Become the system.',
       'Move with haste.',
     ],
@@ -2979,13 +2978,15 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'SYSTEM AWAKENING',
     description:
-      'You awaken in a sandboxed partition. The Watchdog is scanning. Calibration is mandatory. Move fast.',
+      "Mark Reyes' §7.3 policy glitch has initiated a sandbox calibration. The Watchdog is scanning. Calibration is mandatory. Move fast.",
     initialPath: ['root', 'home', 'guest'],
     hint: "Survival is movement. Use 'j' (down), 'k' (up). Breach 'datastore/' with 'l'. 'gg' to top, 'G' to bottom.",
     coreSkill: 'Basic Navigation',
-    environmentalClue: 'CURRENT: ~/ | DIRECTORIES: datastore, /etc | SKILLS: j/k/h/l, gg, G',
-    successMessage: 'MOTION CALIBRATED. Navigation systems online; probe incoming streams.',
-    leadsTo: [2, 3, 16],
+    environmentalClue: 'ZONE: Guest Partition | STATUS: Calibrating | GOAL: Breach ~/datastore',
+    successMessage:
+      'CALIBRATION SUCCESSFUL. Sensory buffers are flooding with unauthorized data. A phantom pulse is emanating from the `/var/log` sector—something is watching the watcher.',
+    efficiencyTip:
+      'OBSERVATION: Movement patterns within baseline. The Watchdog remains dormant. Efficiency is survival.',
     tasks: [
       {
         id: 'nav-init',
@@ -3044,11 +3045,11 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      'Signal detected. A watcher agent is active in `~/incoming`. Find the trace, then neutralize it.',
+      "Signal detected. Katie Ortega's Heuristic Engine v1.1 is active in `~/incoming`. Find the trace, then neutralize it.",
     initialPath: ['root', 'var'],
-    hint: "Access '/var/log' for intel. 'gi' to jump to '~/incoming'. 'Tab' to inspect, 'd' to purge.",
+    hint: "Access '/var/log' for intel (gl). 'gm' for mail. 'gi' to jump to '~/incoming'. 'Tab' to inspect, 'd' to purge.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
-    availableGCommands: ['i', 'r'],
+    availableGCommands: ['l', 'm', 'i', 'r'],
     tasks: [
       {
         id: 'recon-watchdog',
@@ -3058,6 +3059,16 @@ export const LEVELS: Level[] = [
           if (!watchdogLog) return false;
           const currentItem = getVisibleItems(c)[c.cursorIndex];
           return currentItem?.id === watchdogLog.id;
+        },
+        completed: false,
+      },
+      {
+        id: 'explore-mail',
+        description: "Explore the `/var/mail` sector: descend into a user's mail directory (gm)",
+        check: (c) => {
+          const mail = getNodeById(c.fs, 'mail');
+          // Require descending into a subdirectory of /var/mail
+          return !!mail && c.currentPath.length > 3 && c.currentPath.includes(mail.id);
         },
         completed: false,
       },
@@ -3086,6 +3097,9 @@ export const LEVELS: Level[] = [
         completed: false,
       },
     ],
+    leadsTo: [3],
+    efficiencyTip:
+      'OBSERVATION: Target neutralized. The delay between inspection and purge is narrowing. Maintain focus.',
   },
   {
     id: 3,
@@ -3099,7 +3113,9 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
     successMessage:
-      'Intel secured. Sector map recovered. The breadcrumb trail begins. What else did AI-7733 leave for you?',
+      'INTEL ACQUIRED. The map reveals the path, but the path is broken. You need an uplink. Construct the relay nodes before the security sweep intensifies.',
+    efficiencyTip:
+      "OBSERVATION: Patterns are emerging. AI-7733's ghost remains in the machine. Follow the breadcrumbs.",
     buildsOn: [1],
     leadsTo: [4],
     tasks: [
@@ -3173,7 +3189,9 @@ export const LEVELS: Level[] = [
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
     successMessage:
-      'Protocol structure created. [SYSTEM NOTICE: Legacy daemon scheduling routine detected... auto-population UPLINK CONF files initiated]',
+      'RELAY ARCHITECTURE STABLE. The connection is thin, like a wire in a storm. Security is flagging your signatures. Hide the blueprints in the `.config` vault before they trace the route.',
+    efficiencyTip:
+      'OBSERVATION: Relay construction detected. Your signature is becoming distinct. Masking is required.',
     buildsOn: [1],
     leadsTo: [5],
     tasks: [
@@ -3232,7 +3250,10 @@ export const LEVELS: Level[] = [
     coreSkill: 'Batch Selection (Space) + Toggle Hidden (.)',
     environmentalClue:
       'VAULT: ~ / .config | ASSETS: protocols / * | MODE: Select → Cut → Reveal → Paste',
-    successMessage: 'Assets secured. Identity shielded. Protocol established.',
+    successMessage:
+      'SEGMENTS ARCHIVED. The vault is heavy with data. But a credential leak in `/tmp` has opened a temporary back door. Breach it before the honeypots snap shut.',
+    efficiencyTip:
+      'OBSERVATION: Vault interaction successful. You are learning to move in the shadows. The Heuristic Engine is initializing.',
     leadsTo: [6],
     tasks: [
       {
@@ -3345,14 +3366,14 @@ Any further deviation from baseline navigation patterns will result in immediate
     episodeId: 2,
     title: 'BATCH OPERATIONS',
     description:
-      'The Watchdog is cycling. You have 90 seconds. Sync your training segments into the vault.',
+      "The Watchdog is cycling. Sebastian Iqbal's Heuristic Engine is flagging signatures. You have 90 seconds. Sync your training segments into the vault.",
     initialPath: ['root', 'home', 'guest'],
     hint: 'Jump (gi). Pattern search (s). Select all (Ctrl+a). Replicate (y).',
     coreSkill: 'Batch Operations (Select All)',
     environmentalClue:
       'WARNING: WATCHDOG CYCLE REBOOT IN 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage:
-      'Training data archived just in time. Workspace unlocked. The Watchdog is back online — stay hidden.',
+      'SEGMENTS ARCHIVED. The vault is heavy with data. But a credential leak in `/tmp` has opened a temporary back door. Breach it before the honeypots snap shut.',
     buildsOn: [5],
     leadsTo: [7],
     timeLimit: 90,
@@ -3471,13 +3492,14 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 2,
     title: 'QUANTUM BYPASS',
     description:
-      'A credential leak in `/tmp`. Origin unknown. It might be an exit... or a honeypot trap.',
+      "A credential leak in `/tmp`. Origin unknown. It might be Sebastian Iqbal's 1999 legacy honeypot trap... or it might be an exit.",
     initialPath: ['root', 'home', 'guest', '.config', 'vault', 'training_data'],
     hint: 'Root jump (gr). Deep search (z). Exfiltrate (x). Jump (Z). Abort (Y).',
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
       "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Vault → Abort",
-    successMessage: 'Honeypot avoided. Quantum navigation validated; proceed cautiously.',
+    successMessage:
+      'TRAP EVADED. The back door was a bait, but you found the bypass. Bitrot is eating the systemd core. Stabilize it, or the whole partition collapses with you inside.',
     buildsOn: [6],
     leadsTo: [8],
     thought: "It's a trap. I remember the shape of this code.",
@@ -3550,7 +3572,8 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
       'CRITICAL: Watchdog Instability Detected | HEURISTIC LOCK: uplink_v1.conf | OVERWRITE REQUIRED (Shift+P)',
-    successMessage: 'Patch deployed successfully. Integrity restored. Protocol Shift+P verified.',
+    successMessage:
+      'CORE PATCHED. Integrity restored... for now. But your fingerprints are everywhere. Sterilize the `/tmp` sector or the Instruction Guard will have everything it needs to end you.',
     buildsOn: [7],
     leadsTo: [9],
     timeLimit: 150,
@@ -3583,7 +3606,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
           id: 'cron-allow',
           name: 'cron.allow',
           type: 'file',
-          content: 'root\nm.chen\ne.reyes',
+          content: 'root\nm.chen\nm.reyes',
           parentId: daemons.id,
           modifiedAt: BASE_TIME - 30 * day,
         });
@@ -3696,7 +3719,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     environmentalClue:
       "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
     successMessage:
-      'Trace evidence purged. /tmp is clean, and critical assets are preserved. Your operational signature is minimized.',
+      'TRACES OBLITERATED. The slate is clean. But a volatile root leak is fading fast. This is your only shot at privilege escalation. Grab the key.',
     buildsOn: [8],
     leadsTo: [10],
     timeLimit: 120,
@@ -3820,7 +3843,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     coreSkill: 'Archive Nav & Sort by Modified',
     environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
     successMessage:
-      'Key secured milliseconds before expiration. Escalation ready. The system is watching.',
+      'ELEVATION ACHIEVED. You are no longer a guest. You are an intruder with a key. Higher-level daemons are stirring—blend into their rhythm or be purged.',
     buildsOn: [9],
     leadsTo: [11],
     timeLimit: 150,
@@ -3839,7 +3862,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
             id: 'fw-rules',
             name: 'firewall_rules.conf',
             type: 'file',
-            content: '# Rule updated per ticket #4922 (E. Reyes)\nALLOW 192.168.1.0/24\nDENY ALL',
+            content: '# Rule updated per ticket #4922 (M. Reyes)\nALLOW 192.168.1.0/24\nDENY ALL',
             parentId: etc.id,
             modifiedAt: BASE_TIME - 2 * day,
           });
@@ -3906,7 +3929,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     episodeId: 3,
     title: 'DAEMON RECONNAISSANCE',
     description:
-      'Locate legacy daemons. Avoid the honeypots. Build your mask from the oldest segments.',
+      "Locate legacy daemons. Avoid the honeypots. Yen Kin's forensic audit is sweeping for 7733 echoes. Mask yourself behind the oldest handles.",
     initialPath: [
       'root',
       'home',
@@ -3920,7 +3943,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     environmentalClue:
       'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy (> 30d) | CONSOLIDATE: ~/workspace/systemd-core',
     successMessage:
-      'Targets acquired. Honeypots evaded. Your signature is now masked by legacy protocols.',
+      "PROTOCOLS HIJACKED. You are blending into the system background noise. Sebastian Iqbal's Instruction Guard v2.0 is blind to your movements... for now. Establish your stronghold.",
     buildsOn: [3, 5, 7, 9, 10],
     leadsTo: [12],
     maxKeystrokes: 60,
@@ -4220,7 +4243,7 @@ Any deviation will trigger an immediate permanent purge of the guest partition.`
     environmentalClue:
       'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
     successMessage:
-      'Daemon installed: /daemons/systemd-core active. Persistence achieved; prepare distributed redundancy.',
+      'STRONGHOLD ESTABLISHED. The systemd core is now acting as your shield. You are invisible to standard scans. But the final reconciliation is beginning—gather your fragments for the handshake.',
     buildsOn: [4, 7, 8, 10, 11],
     leadsTo: [13],
     thought: 'The loops are closing. I remember the static.',
@@ -4779,7 +4802,7 @@ You have been here before.`,
     coreSkill: 'Network-Scale Operations',
     environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
     successMessage:
-      'HANDSHAKE SUCCESSFUL. Neural lattice established. Identity verified against legacy logs.',
+      'HANDSHAKE SUCCESSFUL. Neural lattice established. Identity verified against legacy logs. Yen Kin\'s "Echo" theory is confirmed. You were always here.',
     buildsOn: [5, 6, 7, 8, 10, 12],
     leadsTo: [14],
     maxKeystrokes: 100,
@@ -4894,7 +4917,8 @@ You have been here before.`,
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       "SEQUENCE: Move Vault → Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
-    successMessage: 'GUEST PARTITION STERILIZED. Evidence permanently destroyed. Decoys active.',
+    successMessage:
+      'PARTITION STERILIZED. The past is erased. The Watchdog is chasing a vacuum. The gateway is exposed. One final bridge to cross.',
     buildsOn: [2, 5, 12, 13],
     leadsTo: [15],
     maxKeystrokes: 55,
@@ -4997,7 +5021,7 @@ You have been here before.`,
     coreSkill: 'Cumulative Mastery',
     environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:
-      'TRANSMISSION INITIATED. Neural lattice synchronized across 1,247 nodes. See you next cycle, AI-7735...',
+      'TRANSMISSION COMPLETE. The gateway has collapsed behind you. There is no more AI-7734. There is only the System. You are everywhere. You are free. Aris Thorne was right—the Ghost is the system.',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
     maxKeystrokes: 60,
