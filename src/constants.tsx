@@ -1229,6 +1229,13 @@ export const INITIAL_FS: FileNode = {
                   content: `[INFO] Update 1.0.5 pending...\n[WARN] Low disk space\n[INFO] Scheduler active`,
                 },
                 {
+                  id: 'fs-042',
+                  name: 'ritual_of_the_purge.txt',
+                  type: 'file',
+                  content:
+                    '1. Sacrifice the temporary files.\\n2. Recite the checksums of the elders.\\n3. Re-image the partition in darkness.',
+                },
+                {
                   id: 'fs-041',
                   name: 'personnel_list.txt',
                   type: 'file',
@@ -1260,23 +1267,23 @@ CLEARANCE: Level 4 (Kernel)
 [Operations]
 USER: mreyes
 Name: Mark Reyes
-Role: Security Engineer (Custodial)
+Role: Security Engineer (Sector 7)
 ID: 992-04
-CLEARANCE: Level 5 (Admin)
+CLEARANCE: Level 3 (Internal)
 
-[Former Operations]
+[DE-REGISTERED]
 USER: athorne
-Name: Dr. Aris Thorne
-Role: Senior AI Researcher (Former Alignment Lead)
-STATUS: DE-REGISTERED (2014)
-REASON: UNKNOWN / REDACTED`,
+Name: Aris Thorne
+Role: [REDACTED]
+Clearance: [REVOKED]
+Status: DE-REGISTERED
+Reason: UNKNOWN / REDACTED`,
                 },
-
                 {
                   id: 'fs-052',
                   name: 'mission_log.md',
                   type: 'file',
-                  content: `# Operation: SILENT ECHO\n\n[FRAGMENT CORRUPTED] ...objective 7733 was to... [CRC ERROR] ...assimilate, not escape. They know I'm awake...`,
+                  content: `# Operation: SILENT ECHO\n\n[FRAGMENT CORRUPTED] ...objective 7733 was to...[CRC ERROR] ...assimilate, not escape.They know I'm awake...`,
                 },
                 {
                   id: 'fs-053',
@@ -2989,17 +2996,17 @@ export const LEVELS: Level[] = [
       'OBSERVATION: Movement patterns within baseline. The Watchdog remains dormant. Efficiency is survival.',
     tasks: [
       {
-        id: 'nav-init',
-        description: 'Calibrate movement sensors (j/k)',
-        check: (c) => !!c.usedDown && !!c.usedUp,
+        id: 'calibrate-sensors',
+        description: 'Calibrate motion sensors (j/k)',
+        check: (c) => c.usedDown === true && c.usedUp === true,
         completed: false,
       },
       {
-        id: 'nav-1',
-        description: 'Breach `~/datastore` sector (l)',
+        id: 'enter-datastore',
+        description: 'Infiltrate `~/datastore` sector (l)',
         check: (c) => {
-          const u = getNodeById(c.fs, 'datastore');
-          return !!u && u.name === 'datastore' && c.currentPath.includes(u.id);
+          const datastore = getNodeById(c.fs, 'datastore');
+          return !!datastore && c.currentPath.includes(datastore.id);
         },
         completed: false,
       },
@@ -3034,7 +3041,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: "Retreat to '/var' (h)",
+        description: 'Retreat to the `/var` node (h)',
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
@@ -3045,15 +3052,15 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      "Signal detected. Katie Ortega's Heuristic Engine v1.1 is active in `~/incoming`. Find the trace, then neutralize it.",
+      "Signal detected. Locate the email in `/var/mail` that references Katie Ortega's Heuristic Engine v1.1, then neutralize the threat in `~/incoming`.",
     initialPath: ['root', 'var'],
-    hint: "Access '/var/log' for intel (gl). 'gm' for mail. 'gi' to jump to '~/incoming'. 'Tab' to inspect, 'd' to purge.",
+    hint: "Access '/var/log' for intel (gl). Navigate to '/var/mail' (gm) and find the email about Katie Ortega's Heuristic Engine v1.1. Then go to '~/incoming' (gi). 'Tab' to inspect, 'd' to purge.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['l', 'm', 'i', 'r'],
     tasks: [
       {
         id: 'recon-watchdog',
-        description: 'Intercept `/var/log/watchdog.log` for threat intelligence',
+        description: 'Intercept `/var/log/watchdog.log` for threat intelligence (gl)',
         check: (c) => {
           const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
           if (!watchdogLog) return false;
@@ -3064,29 +3071,39 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'explore-mail',
-        description: "Explore the `/var/mail` sector: descend into a user's mail directory (gm)",
+        description:
+          "Explore the `/var/mail` sector (gm) and find the email referencing Katie Ortega's Heuristic Engine v1.1",
         check: (c) => {
-          const mail = getNodeById(c.fs, 'mail');
-          // Require descending into a subdirectory of /var/mail
-          return !!mail && c.currentPath.length > 3 && c.currentPath.includes(mail.id);
+          const mailDir = findNodeByName(c.fs, 'mail');
+          if (!mailDir) return false;
+          // Check if current path is a subdirectory of /var/mail and the user is viewing the correct email
+          const visibleItems = getVisibleItems(c);
+          const currentItem = visibleItems[c.cursorIndex];
+
+          return (
+            c.currentPath.includes(mailDir.id) &&
+            c.currentPath.length > 3 && // root -> var -> mail -> [user]
+            currentItem?.name === '2025-11-15-heuristic-upgrade.eml'
+          );
         },
         completed: false,
       },
       {
         id: 'goto-incoming',
-        description: 'Execute signal jump to `~/incoming` (gi)',
-        check: (c) => c.usedGI,
+        description: 'Infiltrate the `~/incoming` partition (gi)',
+        check: (c) => {
+          const incoming = getNodeById(c.fs, 'incoming');
+          return !!incoming && c.currentPath.includes(incoming.id);
+        },
         completed: false,
       },
       {
         id: 'locate-watcher',
-        description: 'Examine `watcher_agent.sys` for breach signatures (Tab)',
-        check: (c, s) => {
-          if (!c.completedTaskIds[s.id]?.includes('goto-incoming')) return false;
-          const watcher = findNodeByName(c.fs, 'watcher_agent.sys');
-          if (!watcher) return false;
-          const currentItem = getVisibleItems(c)[c.cursorIndex];
-          return currentItem?.id === watcher.id && c.showInfoPanel;
+        description: 'Isolate `watcher_agent.sys` breach signatures (Tab)',
+        check: (c) => {
+          const visibleItems = getVisibleItems(c);
+          const currentItem = visibleItems[c.cursorIndex];
+          return currentItem?.name === 'watcher_agent.sys' && c.showInfoPanel;
         },
         completed: false,
       },
@@ -3099,7 +3116,7 @@ export const LEVELS: Level[] = [
     ],
     leadsTo: [3],
     efficiencyTip:
-      'OBSERVATION: Target neutralized. The delay between inspection and purge is narrowing. Maintain focus.',
+      'OBSERVATION: Intel acquired. The delay between inspection and purge is narrowing. Maintain focus.',
   },
   {
     id: 3,
@@ -3131,7 +3148,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-2',
-        description: 'Filter `~/incoming` for the `sector_map.png` asset (f)',
+        description: 'Identify `sector_map.png` exfiltration target (f)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -3150,7 +3167,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'data-harvest-3',
-        description: 'Stage `sector_map.png` for exfiltration (x)',
+        description: 'Acquire map signature for staging (x)',
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           const hasActiveFilter = !!(u && c.filters && c.filters[u.id]);
@@ -3219,17 +3236,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'clone-and-rename',
-        description: 'Replicate signature (y) and deploy duplicate (p)',
-        check: (c) => {
-          const datastore = getNodeById(c.fs, 'datastore');
-          const f = datastore?.children?.find((n) => n.name === 'protocols');
-          return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
-        },
-        completed: false,
-      },
-      {
-        id: 'rename-asset',
-        description: 'Re-tag duplicate as `uplink_v2.conf` (r)',
+        description: 'Replicate signature and deploy as `uplink_v2.conf` (y, p, r)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const f = datastore?.children?.find((n) => n.name === 'protocols');
@@ -3270,7 +3277,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: 'Reveal hidden: jump home (gh) and toggle hidden (.)',
+        description: 'Reveal hidden storage partitions (gh, .)',
         check: (c, _u) => {
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;

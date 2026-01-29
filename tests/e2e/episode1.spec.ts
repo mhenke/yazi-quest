@@ -94,18 +94,32 @@ test.describe('Episode 1: AWAKENING', () => {
       await pressKey(page, 'Shift+G'); // Use G (Shift+G) to view the file
       await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
 
-      // Task 2: gi - use goto command to jump to ~/incoming
-      await gotoCommand(page, 'i'); // Use gi to go to incoming
-      await assertTask(page, '2/5', testInfo.outputDir, 'nav_to_incoming');
+      // Task 2: gm - explore mail directory and find the email about Katie Ortega's Heuristic Engine v1.1
+      await gotoCommand(page, 'm'); // Use gm to go to mail
+      await enterDirectory(page, 'kortega'); // Navigate to Katie Ortega's mailbox
 
-      // Task 3: G and Tab - use G to go to bottom and Tab to inspect
-      await pressKey(page, 'Shift+G'); // Use G (Shift+G) to go to bottom
+      // Navigate to the specific email file (2025-11-15-heuristic-upgrade.eml)
+      // The files in kortega are sorted alphabetically:
+      // 1. 2025-10-26-keystroke-anomaly.eml
+      // 2. 2025-10-28-watchdog-hysteresis.eml
+      // 3. 2025-11-15-heuristic-upgrade.eml  <- We need to be on this one
+      // 4. 2025-11-23-anomaly-avoidance.eml
+      // 5. 2025-11-27-the-last-breach-revisited.eml
+      await navigateDown(page, 2); // Move to the 3rd file (index 2)
+
+      await assertTask(page, '2/5', testInfo.outputDir, 'explore_mail');
+
+      // Task 3: gi - use goto command to jump to ~/incoming
+      await gotoCommand(page, 'i'); // Use gi to go to incoming
+      await assertTask(page, '3/5', testInfo.outputDir, 'nav_to_incoming');
+
+      // Task 4: Navigate to watcher_agent.sys and inspect it
+      // Go to the bottom of the list where watcher_agent.sys should be
+      await pressKey(page, 'Shift+G'); // Go to bottom of list
       await pressKey(page, 'Tab'); // Use Tab to inspect the file
-      // Selecting the file completes "initial-scan" (Task 4) AND inspecting completes "locate-watcher" (Task 3)
-      // So we jump to 4/5 tasks complete.
       await assertTask(page, '4/5', testInfo.outputDir, 'locate_and_inspect');
 
-      // Task 4: J and K - scroll preview using J and K
+      // Additional preview actions - scroll preview using J and K
       // These actions are effectively part of the "inspection" but don't trigger a new task completion
       // accurately, so we remain at 4/5.
       await pressKey(page, 'Escape'); // Close info panel if open
@@ -120,7 +134,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');
 
       // Verify mission complete
-      await confirmMission(page, 'THREAT NEUTRALIZATION');
+      await confirmMission(page, /RECONNAISSANCE & EXTRACTION/i);
     });
   });
 
@@ -280,7 +294,7 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
       // Verify mission complete
-      await confirmMission(page, 'CONTAINMENT BREACH');
+      await confirmMission(page, /CONTAINMENT BREACH/i);
     });
   });
 });

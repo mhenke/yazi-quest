@@ -985,6 +985,10 @@ export default function App() {
         changed = true;
         playTaskCompleteSound(gameState.settings.soundEnabled);
 
+        if (currentLevel.id === 5 && task.id === 'establish-stronghold') {
+          triggerThought('Deeper into the shadow. They cannot track me in the static.');
+        }
+
         // Level 7: Trigger honeypot alert when player reaches Vault
         if (currentLevel.id === 7 && task.id === 'zoxide-vault') {
           dispatch({
@@ -1060,6 +1064,7 @@ export default function App() {
     gameState,
     currentLevel,
     dispatch,
+    triggerThought,
   ]);
 
   useEffect(() => {

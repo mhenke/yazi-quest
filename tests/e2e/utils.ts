@@ -234,7 +234,7 @@ export async function ensureCleanState(page: Page): Promise<void> {
  */
 export async function gotoCommand(
   page: Page,
-  target: 'h' | 'c' | 'w' | 'd' | 'i' | 't' | 'r' | 'g'
+  target: 'h' | 'c' | 'w' | 'd' | 'i' | 't' | 'r' | 'g' | 'm' | 'l'
 ): Promise<void> {
   await pressKey(page, 'g');
   await pressKey(page, target);
