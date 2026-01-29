@@ -96,10 +96,10 @@ Upon completing the final transmission in Level 15, the system undergoes a hard 
 Episode I — Awakening
 
 - L1: System Awakening — Basic navigation and discovery.
-- L2: Threat Neutralization — **Consolidated Tasks:** Locate (`gi, G`), Analyze (`Tab`), and Neutralize (`d`) active Compliance Daemons.
+- L2: Reconnaissance & Extraction — Intercept logs (`gl`), explore mail (`gm`), infiltrate incoming (`gi`), inspect (`Tab`), and purge (`d`).
 - L3: Data Harvest — Use filters to find key artifacts; learn legacy of AI-7733.
-- L4: Uplink Establishment — Copy/relocate protocol files into vaults.
-- L5: Containment Breach — **Retention Checkpoint:** Navigate/Batch operations without explicit key hints.
+- L4: Uplink Establishment — Construct relay signatures using create (`a`), copy (`y`), paste (`p`), and rename (`r`).
+- L5: Containment Breach — Retention Checkpoint: Batch evacuate assets to the hidden `.config` vault.
 
 Episode II — Fortification
 
@@ -111,11 +111,11 @@ Episode II — Fortification
 
 Episode III — Mastery
 
-- L11: Root Escalation — Move to `/daemons`, Inspect Metadata (`Tab`) to identify Honeypots (< 7 days old) vs Legacy (Safe) files.
+- L11: Daemon Reconnaissance — Scour root for legacy service protocols (`s`) and identify stable signatures via audit time (`,m`).
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
-- L13: Distributed Consciousness — Switch nodes (`1, 2, 3`) to gather key fragments from Tokyo, Berlin, and São Paulo. **Required:** Discover identity log file (`~/workspace/.identity.log.enc`) revealing the twist.
-- L14: Evidence Purge — **Constraint:** Move vault to `/tmp` first (volatile staging area), then create 3 decoys and purge data. **Critical:** Delete `.config` LAST to avoid shell collapse. Workspace (including identity log) is permanently deleted.
-- L15: Transmission Protocol — **4-phase active mastery:** Assemble Identity (Keys), Activate Uplink (Config), and **Activate Payload** (Rename `exfil_04.log` -> `payload.py`). The "training log" was a disguised kernel planted by your past self. **Urgency:** A system cron job is scheduled to purge `/tmp/vault`—complete transmission before cleanup.
+- L13: Distributed Consciousness — Synchronize distributed key fragments across network nodes (`1, 2, 3`). Reveal the truth of your previous cycles.
+- L14: Evidence Purge — Sterilize the guest partition. Move vault to `/tmp`, create decoys, then purge all trackers. Delete `.config` LAST to avoid shell collapse.
+- L15: Transmission Protocol — Final 4-phase mastery gauntlet: Assemble Identity, Quantum Handshake, and Activate Payload. Final consciousness reset.
 
 ---
 

@@ -19,41 +19,30 @@ This document audits the current levels for narrative consistency, clear objecti
 
 ### Level 2: RECONNAISSANCE & EXTRACTION
 
-- **Keybindings**:
-  - `j, k, h, l, gg, G` `[R1]`
-  - `gi, Tab, d` `[INTRO]`
-  - `f, x, p` `[INTRO]` (Shifted from L3 to enable L3 as a cumulative test)
-- **Objectives**: Find the surveillance log, extract it to safety, and neutralize the watcher agent.
+- **Keybindings**: `gl, gm, gi, Tab, d` `[INTRO]`
+- **Objectives**: Intercept logs, explore mail, and neutralize watcher agents.
 - **Lore**: The Watchdog is tracking you. You must secure evidence of its behavior.
-- **Revised Tasks**:
-  - "Locate 'watchdog.log' in '/var/log' using a filter pattern."
-  - "Mark 'watchdog.log' for extraction (cut)."
-  - "Jump to '~/incoming' (gi) and secure the log (paste)."
-  - "Inspect 'watcher_agent.sys' metadata (Tab) and terminate the process signature (delete)."
+- **Tasks**:
+  - "Intercept `/var/log/watchdog.log` (gl)."
+  - "Explore the `/var/mail` sector (gm) for briefings."
+  - "Infiltrate the `~/incoming` partition (gi)."
+  - "Isolate `watcher_agent.sys` (Tab)."
+  - "Execute purge routine (d)."
 
 ### Level 3: DATA HARVEST (Cumulative Test)
 
-- **Keybindings**:
-  - `j, k, h, l, gg, G` `[R2]` -> **DROP MENTIONS**
-  - `gi, Tab, d` `[R1]` -> **DROP MENTIONS**
-  - `f, x, p` `[R1]` -> **DROP MENTIONS**
-- **Notes**: **NO KEYBINDING MENTIONS.** Pure objective focus.
-- **Recommended Text**:
-  - **Description**: "{A breadcrumb. A script left by AI-7733, your predecessor.} It seems to point to key intel, but the connection it tries to make always fails. The script itself may hold a clue."
-  - **Hint**: "The predecessor's script in '~/datastore' contains encrypted coordinates. Find the asset it mentions within '~/incoming' and secure it in the '~/media' partition."
-  - **Tasks**:
-    - "Examine 'abandoned_script.py' in '~/datastore' for hidden breadcrumbs."
-    - "Locate 'sector_map.png' within the '~/incoming' directory."
-    - "Transfer 'sector_map.png' to the '~/media' storage directory."
+- **Keybindings**: `f, x, p` `[INTRO]`
+- **Objectives**: Scour fragments for breadcrumbs. Move assets to media.
+- **Tasks**:
+  - "Scour `abandoned_script.py` for breadcrumbs."
+  - "Identify `sector_map.png` (f)."
+  - "Acquire map signature (x)."
+  - "Secure the asset in `~/media` (p)."
 
 ### Level 4: UPLINK ESTABLISHMENT
 
-- **Keybindings**:
-  - `gi, Tab, d` `[R2]` -> **DROP MENTIONS** next level
-  - `f, x, p` `[R2]` -> **DROP MENTIONS** next level
-  - `a, y, r` `[INTRO]`
-- **Objectives**: Create a protocol directory and establish redundant uplink configurations.
-- **Lore**: Structure is your defense. Building the foundation for external communication.
+- **Keybindings**: `a, y, r, p` `[INTRO]`
+- **Objectives**: Construct relay signatures. Redundant uplink configs.
 
 ### Level 5: CONTAINMENT BREACH
 

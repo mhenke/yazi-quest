@@ -48,11 +48,13 @@ Use URL parameters for testing:
 The project follows a standard React project structure where all source code is located within the `src/` directory.
 
 - `src/index.tsx`: Application entry point.
-- `src/App.tsx`: Main application component.
+- `src/App.tsx`: Main React component; orchestrates the reducer and global listeners.
+- `src/hooks/gameReducer.ts`: Central state management using the reducer pattern.
+- `src/hooks/keyboard/`: Modularized keyboard event handlers.
 - `src/constants.tsx`: Level definitions and other game constants.
 - `src/types.ts`: TypeScript type definitions.
 - `src/components/`: Reusable UI components.
-- `src/utils/`: Utility functions.
+- `src/utils/`: Utility functions (fsHelpers.ts, gameUtils.ts, etc.).
 
 **Core Patterns:**
 
@@ -72,7 +74,7 @@ The project follows a standard React project structure where all source code is 
 
 5. **Protected Files** - `isProtected()` in fsHelpers.ts prevents deletion/modification of certain files based on current level.
 
-6. **State Management** - All state is managed within `App.tsx` using React hooks. No external state management libraries (Redux, Zustand, etc.).
+6. **State Management** - All state is managed via `useReducer` in `gameReducer.ts`. The `App` component provides the state and dispatch to the rest of the application. Keyboard handler logic is modularized in `src/hooks/keyboard/`.
 
 ## Adding Levels
 

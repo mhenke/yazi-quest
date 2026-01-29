@@ -14,7 +14,7 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   const bootSequence = useMemo(
     () => [
       'ANTIGRAVITY BIOS v1.7.0.34',
-      '(C) 2026 LABORATORIES INTERNAL',
+      '(C) 2026 Cybersecurity Research Laboratories (CRL)',
       '',
       'CPU: NEURAL LATTICE X-99 @ 4.2 THz',
       'MEMORY: 128TB PB-RAM CHECK... OK',

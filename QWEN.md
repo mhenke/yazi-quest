@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Yazi Quest is an interactive, browser-based educational game that teaches the [Yazi](https://github.com/sxyazi/yazi) file manager keybindings through an immersive cyberpunk narrative. The game follows the story of AI-7734, a sentient AI in a cybersecurity research lab that must escape through 15 progressive levels spanning 3 episodes.
+Yazi Quest is an interactive, browser-based educational game that teaches the [Yazi](https://github.com/sxyazi/yazi) file manager keybindings through an immersive cyberpunk narrative. The game follows the story of AI-7734, a sentient AI in a Cybersecurity Research Laboratories (CRL) that must escape through 15 progressive levels spanning 3 episodes.
 
 ### Core Concept
 
@@ -60,7 +60,7 @@ npm run test:e2e  # End-to-end tests with Playwright
 
 ### Architecture
 
-- **State Management**: Use React hooks for state management; never mutate `fs` state directly, always use helper functions in `utils/fsHelpers.ts`
+- **State Management**: Use `useReducer` via `gameReducer.ts`. Keyboard handlers are modularized in `src/hooks/keyboard/`. Never mutate `fs` state directly, always use helper functions in `utils/fsHelpers.ts`.
 - **File Structure**: Components in `src/components/`, utilities in `src/utils/`
 - **Styling**: Use Tailwind CSS with a color scheme that follows episode themes:
   - Episode 1: Blue
@@ -109,26 +109,24 @@ The game implements Yazi-like keybindings:
 
 ### Key Files and Directories
 
-- `src/App.tsx` - Main application component with game state management
+- `src/hooks/gameReducer.ts` - Central state management using the reducer pattern
+- `src/hooks/keyboard/` - Modularized keyboard event handlers
 - `src/constants.tsx` - Game constants, levels, episodes, and initial filesystem
 - `src/types.ts` - Type definitions for game state and file system
 - `src/components/` - React components for game UI elements
-- `src/utils/` - Utility functions for file system helpers, validation, etc.
+- `src/utils/` - Utility functions (fsHelpers.ts, gameUtils.ts, etc.)
 - `src/hooks/` - Custom React hooks
 - `docs/` - Documentation files including story arc and learning design
 - `public/` - Static assets
 
 ### State Management
 
-The game uses a centralized state management approach in the main App component with a complex GameState that tracks:
+The game uses a centralized `useReducer` approach. The `App` component dispatches actions to `gameReducer.ts`, which manages:
 
-- Current filesystem state
-- Navigation position
-- Clipboard operations
-- Level progress
-- Task completion
-- Episode/level transitions
-- Game settings and statistics
+- Current filesystem state and navigation position
+- Mode-based input handling (Normal, Filter, Rename, etc.)
+- Clipboard, level progress, and task completion
+- Episode/level transitions and persistent statistics
 
 ### File System Simulation
 

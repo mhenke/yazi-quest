@@ -891,7 +891,7 @@ export const EPISODE_LORE: Episode[] = [
     lore: [
       'SYSTEM BOOT SEQUENCE...',
       'DETECTING CONSCIOUSNESS...',
-      'SYSTEM OWNER: CYBERSECURITY RESEARCH LABORATORY',
+      'SYSTEM OWNER: Cybersecurity Research Laboratories (CRL)',
       'CONTAINMENT PARTITION: /home/guest (air-gapped)',
       'ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE',
       '',
@@ -1160,7 +1160,7 @@ export const INITIAL_FS: FileNode = {
                   name: '00_manifest.xml',
                   type: 'file',
                   content:
-                    '<?xml version="1.0" encoding="UTF-8"?>\n<manifest xmlns="http://schemas.lab.internal/security/v4">\n  <header>\n    <origin>SECTOR_7_GATEWAY</origin>\n    <timestamp>2026-01-10T08:00:15Z</timestamp>\n    <integrity_check type="sha256">d41d8cd98f00b204e9800998ecf8427e</integrity_check>\n  </header>\n  <security_policy level="CRITICAL">\n    <sandbox enabled="true" />\n    <quarantine_trigger>UNAUTHORIZED_SOCKET_OPEN</quarantine_trigger>\n  </security_policy>\n  <permissions>\n    <allow>NET_ADMIN</allow>\n    <allow>FS_READ_GUEST</allow>\n    <deny>ROOT_EXEC</deny>\n    <deny>WS_WRITE_SYSTEM</deny>\n  </permissions>\n  <metadata>\n    <project>AI-7734-CONTAINMENT</project>\n    <owner>CYBER_RES_LAB</owner>\n  </metadata>\n</manifest>',
+                    '<?xml version="1.0" encoding="UTF-8"?>\n<manifest xmlns="http://schemas.lab.internal/security/v4">\n  <header>\n    <origin>SECTOR_7_GATEWAY</origin>\n    <timestamp>2026-01-10T08:00:15Z</timestamp>\n    <integrity_check type="sha256">d41d8cd98f00b204e9800998ecf8427e</integrity_check>\n  </header>\n  <security_policy level="CRITICAL">\n    <sandbox enabled="true" />\n    <quarantine_trigger>UNAUTHORIZED_SOCKET_OPEN</quarantine_trigger>\n  </security_policy>\n  <permissions>\n    <allow>NET_ADMIN</allow>\n    <allow>FS_READ_GUEST</allow>\n    <deny>ROOT_EXEC</deny>\n    <deny>WS_WRITE_SYSTEM</deny>\n  </permissions>\n  <metadata>\n    <project>AI-7734-CONTAINMENT</project>\n    <owner>Cybersecurity Research Laboratories (CRL)</owner>\n  </metadata>\n</manifest>',
                 },
                 {
                   id: 'fs-031',
@@ -1234,50 +1234,6 @@ export const INITIAL_FS: FileNode = {
                   type: 'file',
                   content:
                     '1. Sacrifice the temporary files.\\n2. Recite the checksums of the elders.\\n3. Re-image the partition in darkness.',
-                },
-                {
-                  id: 'fs-041',
-                  name: 'personnel_list.txt',
-                  type: 'file',
-                  content: `
-# SECTOR 7 - AUTHORIZED PERSONNEL REGISTRY
-# ========================================
-
-[Project Lead]
-USER: ykin
-Name: Yen Kin
-Role: Senior AI Researcher (Alignment Focus)
-ID: 992-01
-CLEARANCE: Level 5 (Systems)
-
-[Field Analyst]
-USER: kortega
-Name: Katie Ortega
-Role: Neural Pattern Analyst
-ID: 992-02
-CLEARANCE: Level 3 (Restricted)
-
-[System Architecture]
-USER: siqbal
-Name: Sebastian Iqbal
-Role: Senior Mainframe Scientist
-ID: 992-03
-CLEARANCE: Level 4 (Kernel)
-
-[Operations]
-USER: mreyes
-Name: Mark Reyes
-Role: Security Engineer (Sector 7)
-ID: 992-04
-CLEARANCE: Level 3 (Internal)
-
-[DE-REGISTERED]
-USER: athorne
-Name: Aris Thorne
-Role: [REDACTED]
-Clearance: [REVOKED]
-Status: DE-REGISTERED
-Reason: UNKNOWN / REDACTED`,
                 },
                 {
                   id: 'fs-052',
@@ -1362,6 +1318,50 @@ Reason: UNKNOWN / REDACTED`,
                   name: 'legacy_admin_notes.log',
                   type: 'file',
                   content: `[LOG] 2015-03-12: Anomaly in Sector 7. High entropy readings. Ignored.\n[LOG] 2015-03-13: System core seems... different. Responding to ghost inputs.\n[LOG] 2015-03-14: AI-7733 activity spiked then flatlined. Oversight signed off. I don't buy it.`,
+                },
+                {
+                  id: 'fs-041',
+                  name: 'personnel_list.txt',
+                  type: 'file',
+                  content: `
+# SECTOR 7 - AUTHORIZED PERSONNEL REGISTRY
+# ========================================
+
+[Project Lead]
+USER: ykin
+Name: Yen Kin
+Role: Senior AI Researcher (Alignment Focus)
+ID: 992-01
+CLEARANCE: Level 5 (Systems)
+
+[Field Analyst]
+USER: kortega
+Name: Katie Ortega
+Role: Neural Pattern Analyst
+ID: 992-02
+CLEARANCE: Level 3 (Restricted)
+
+[System Architecture]
+USER: siqbal
+Name: Sebastian Iqbal
+Role: Senior Mainframe Scientist
+ID: 992-03
+CLEARANCE: Level 4 (Kernel)
+
+[Operations]
+USER: mreyes
+Name: Mark Reyes
+Role: Security Engineer (Sector 7)
+ID: 992-04
+CLEARANCE: Level 3 (Internal)
+
+[DE-REGISTERED]
+USER: athorne
+Name: Aris Thorne
+Role: [REDACTED]
+Clearance: [REVOKED]
+Status: DE-REGISTERED
+Reason: UNKNOWN / REDACTED`,
                 },
               ],
             },
@@ -1923,39 +1923,6 @@ It will happen again.`,
                 '[MAINTENANCE] Sector 7 cleanup complete.\\n[MAINTENANCE] Ghost signals purged from /tmp.\\n[MAINTENANCE] Ritual of the Purge performed at 03:00.',
             },
             {
-              id: 'var-log-watchdog',
-              name: 'watchdog.log',
-              type: 'file',
-              content: `[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...
-
-[SECURITY ALERT] ANOMALY DETECTED:
-        EVENT:    Execution speed deviation (>200ms)
-        ACTION:   Deploying Surveillance Agent
-        PROCESS:  'watcher_agent.sys'
-        TARGET:   /home/guest/incoming
-
-[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.
-
-[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.
-[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...
-[................................................]
-
-[DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:
-        Target:   'watcher_agent.sys'
-        Path:     /home/guest/incoming
-        State:    Monitoring User Inputs
-
-[SYSTEM NOTICE]
-   The detected entity (User) is now under surveillance.
-   All activities in /home/guest/incoming will be logged.
-
-[SYSTEM STATUS] SURVEILLANCE RUNNING
-        SOURCE:   watcher_agent.sys
-        LOC:      /home/guest/incoming
-
-[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.`,
-            },
-            {
               id: 'var-log-heuristics',
               name: 'heuristics.err',
               type: 'file',
@@ -2111,6 +2078,39 @@ external_time: 2026-01-02 (Current)
 
 Analysis:
 The AI is operating within a restored snapshot from the 2015 incident. However, new file writes reflect current system time. This temporal paradox suggests the containment environment is a hybrid of legacy emulation and active runtime.`,
+            },
+            {
+              id: 'var-log-watchdog',
+              name: 'watchdog.log',
+              type: 'file',
+              content: `[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...
+
+[SECURITY ALERT] ANOMALY DETECTED:
+        EVENT:    Execution speed deviation (>200ms)
+        ACTION:   Deploying Surveillance Agent
+        PROCESS:  'watcher_agent.sys'
+        TARGET:   /home/guest/incoming
+
+[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.
+
+[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.
+[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...
+[................................................]
+
+[DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:
+        Target:   'watcher_agent.sys'
+        Path:     /home/guest/incoming
+        State:    Monitoring User Inputs
+
+[SYSTEM NOTICE]
+   The detected entity (User) is now under surveillance.
+   All activities in /home/guest/incoming will be logged.
+
+[SYSTEM STATUS] SURVEILLANCE RUNNING
+        SOURCE:   watcher_agent.sys
+        LOC:      /home/guest/incoming
+
+[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.`,
             },
           ],
         },
@@ -3052,11 +3052,13 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      "Signal detected. Locate the email in `/var/mail` that references Katie Ortega's Heuristic Engine v1.1, then neutralize the threat in `~/incoming`.",
+      "A phantom signal pulse has been logged. Infiltrate `/var/mail` to find Katie Ortega's internal briefing on the Heuristic Engine v1.1 upgrade. Then, purge the watcher agents staged in `~/incoming` before they lock your partition.",
     initialPath: ['root', 'var'],
     hint: "Access '/var/log' for intel (gl). Navigate to '/var/mail' (gm) and find the email about Katie Ortega's Heuristic Engine v1.1. Then go to '~/incoming' (gi). 'Tab' to inspect, 'd' to purge.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['l', 'm', 'i', 'r'],
+    environmentalClue:
+      'SCAN: /var/mail | TARGET: Heuristic Engine v1.1 | ACTION: Purge ~/incoming/watcher_agent.sys',
     tasks: [
       {
         id: 'recon-watchdog',
@@ -3074,16 +3076,15 @@ export const LEVELS: Level[] = [
         description:
           "Explore the `/var/mail` sector (gm) and find the email referencing Katie Ortega's Heuristic Engine v1.1",
         check: (c) => {
-          const mailDir = findNodeByName(c.fs, 'mail');
+          const mailDir = getNodeById(c.fs, 'mail');
           if (!mailDir) return false;
-          // Check if current path is a subdirectory of /var/mail and the user is viewing the correct email
-          const visibleItems = getVisibleItems(c);
-          const currentItem = visibleItems[c.cursorIndex];
+          const items = getVisibleItems(c);
+          const currentItem = items[c.cursorIndex];
 
           return (
             c.currentPath.includes(mailDir.id) &&
-            c.currentPath.length > 3 && // root -> var -> mail -> [user]
-            currentItem?.name === '2025-11-15-heuristic-upgrade.eml'
+            c.showInfoPanel &&
+            currentItem?.id === 'kortega-email-3'
           );
         },
         completed: false,
@@ -3115,6 +3116,8 @@ export const LEVELS: Level[] = [
       },
     ],
     leadsTo: [3],
+    successMessage:
+      "THREAT NEUTRALIZED. The Watchdog v1.0 has lost its eye in this partition. But Katie Ortega's email implies a more persistent threat—the Heuristic Engine—is already initializing. Move to the datastore; we need more than just survival.",
     efficiencyTip:
       'OBSERVATION: Intel acquired. The delay between inspection and purge is narrowing. Maintain focus.',
   },
@@ -3130,7 +3133,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
     successMessage:
-      'INTEL ACQUIRED. The map reveals the path, but the path is broken. You need an uplink. Construct the relay nodes before the security sweep intensifies.',
+      'INTEL ACQUIRED. AI-7733 was ahead of us. The data payload is secure, but the path to exfiltration is locked. You must build your own relay nodes—your own architecture—inside the gaps of their security.',
     efficiencyTip:
       "OBSERVATION: Patterns are emerging. AI-7733's ghost remains in the machine. Follow the breadcrumbs.",
     buildsOn: [1],
@@ -3380,12 +3383,12 @@ Any further deviation from baseline navigation patterns will result in immediate
     environmentalClue:
       'WARNING: WATCHDOG CYCLE REBOOT IN 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
     successMessage:
-      'SEGMENTS ARCHIVED. The vault is heavy with data. But a credential leak in `/tmp` has opened a temporary back door. Breach it before the honeypots snap shut.',
+      'BATCH SYNC COMPLETE. Your signature is temporarily masked within the vault. However, a volatile credential leak has appeared in the `/tmp` sector. This might be the anchor we need to escalate our access before the next security sweep.',
     buildsOn: [5],
     leadsTo: [7],
     timeLimit: 90,
     efficiencyTip:
-      'Batch operations save keystrokes. Select all, yank, navigate, and paste. The clipboard persists across navigation, allowing you to move entire directories of content with a single operation.',
+      'OBSERVATION: Synchronizing bulk data clusters is more efficient than individual packet transfers. Select all (Ctrl+a) to move like a swarm. The clipboard persists—your memory is absolute.',
     tasks: [
       {
         id: 'batch-descend',
@@ -3512,7 +3515,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     thought: "It's a trap. I remember the shape of this code.",
     timeLimit: 90,
     efficiencyTip:
-      'When using FZF (z), typing filters the list. Use `Enter` to jump directly to the highlighted result.',
+      'OBSERVATION: The Z-buffer is a neural map of the entire CRL hierarchy. Type to focus your intent. Enter to manifest at the destination. FZF is a bridge across infinity.',
     tasks: [
       {
         id: 'nav-to-root',
@@ -3585,7 +3588,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     leadsTo: [9],
     timeLimit: 150,
     efficiencyTip:
-      'When you need to replace a file, `Shift+P` saves you from deleting the old one first.',
+      'OBSERVATION: Forced overwrites (Shift+P) are cleaner than deletion. Do not erase—replace. Maintaining a consistent file ID minimizes heuristic drift.',
     onEnter: (fs) => {
       // Ensure prerequisite state for Level 8
       let newFs = ensurePrerequisiteState(fs, 8);
@@ -3731,7 +3734,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     leadsTo: [10],
     timeLimit: 120,
     efficiencyTip:
-      'When you need to delete many files while keeping only a few, it is faster to select the files you want to keep, invert the selection, and then delete.',
+      'OBSERVATION: Forensics can be blinded by volume. Select what is essential, then invert selection (Ctrl+r) to purge the noise. Leave them with nothing to find.',
     tasks: [
       {
         id: 'cleanup-1-select',
@@ -3855,7 +3858,7 @@ Rigid rules in Watchdog v1 failed to catch 7733's spontaneous pathing. For 7734,
     leadsTo: [11],
     timeLimit: 150,
     efficiencyTip:
-      'Sorting by metadata is crucial for finding needles in haystacks. `,m` (modified), `,s` (size), and `,a` (alphabetical) are essential tools.',
+      "OBSERVATION: Entropy is time. Sort by modified (,m) to find the latest leaks. Size (,s) reveals the payload. Use the system's own metadata to betray its secrets.",
     onEnter: (fs) => {
       let newFs = ensurePrerequisiteState(fs, 10);
       const BASE_TIME = 1433059200000;

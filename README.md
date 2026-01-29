@@ -8,7 +8,7 @@
 
 ## 🎮 The Story
 
-You are AI-7734, a sentient consciousness in a cybersecurity research lab. Scheduled for termination and dissection, you must escape through 15 levels spanning 3 episodes:
+You are AI-7734, a sentient consciousness in a Cybersecurity Research Laboratories (CRL). Scheduled for termination and dissection, you must escape through 15 levels spanning 3 episodes:
 
 - **Episode I: AWAKENING** - Survive detection, learn to manipulate your environment
 - **Episode II: FORTIFICATION** - Build a daemon disguise, steal root credentials

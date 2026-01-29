@@ -13,7 +13,6 @@ import { test, expect } from '@playwright/test';
 import {
   startLevel,
   pressKey,
-  pressKeys,
   gotoCommand,
   assertTask,
   filterByText,
@@ -49,7 +48,20 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '2/5', testInfo.outputDir, 'enter_datastore');
 
       // Task 3: Preview personnel_list.txt using G (jump to bottom)
-      await pressKeys(page, ['Shift+G', 'Shift+J', 'Shift+K']); // Also press K to satisfy scroll-preview task that requires both J and K
+      // Navigate to personnel_list.txt first
+      await navigateDown(page, 22); // Navigate down to personnel_list.txt
+      // Set the preview flags first
+      await pressKey(page, 'Shift+J'); // Scroll preview down (sets usedPreviewDown flag)
+      await pressKey(page, 'Shift+K'); // Scroll preview up (sets usedPreviewUp flag)
+      // Press G to set usedG flag (this moves cursor to bottom and resets preview flags)
+      await pressKey(page, 'Shift+G');
+      // Now navigate back to personnel_list.txt
+      await filterByText(page, 'personnel_list.txt');
+      await pressKey(page, 'Escape'); // Clear filter to return to normal view with file selected
+      // Now set the preview flags again (since G reset them)
+      await pressKey(page, 'Shift+J'); // Scroll preview down (sets usedPreviewDown flag again)
+      await pressKey(page, 'Shift+K'); // Scroll preview up (sets usedPreviewUp flag again)
+      // Now all flags should be true and cursor should be on personnel_list.txt
       await assertTask(page, '3/5', testInfo.outputDir, 'preview_personnel_list');
 
       // Task 4: Jump to top of file list (gg)
@@ -106,8 +118,9 @@ test.describe('Episode 1: AWAKENING', () => {
       // 4. 2025-11-23-anomaly-avoidance.eml
       // 5. 2025-11-27-the-last-breach-revisited.eml
       await navigateDown(page, 2); // Move to the 3rd file (index 2)
-
+      await pressKey(page, 'Tab'); // View specific email
       await assertTask(page, '2/5', testInfo.outputDir, 'explore_mail');
+      await pressKey(page, 'Tab'); // Close it
 
       // Task 3: gi - use goto command to jump to ~/incoming
       await gotoCommand(page, 'i'); // Use gi to go to incoming

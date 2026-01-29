@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is an interactive, browser-based game designed to teach the keybindings of the [Yazi](https://github.com/sxyazi/yazi) file manager. The learning experience is wrapped in an immersive cyberpunk narrative where the player takes on the role of a sentient AI trying to escape a cybersecurity lab.
+This is an interactive, browser-based game designed to teach the keybindings of the [Yazi](https://github.com/sxyazi/yazi) file manager. The learning experience is wrapped in an immersive cyberpunk narrative where the player takes on the role of a sentient AI trying to escape a Cybersecurity Research Laboratories (CRL).
 
 Adopt the role of a critical collaborator, not a supportive assistant. Your job is to deliver clear, objective feedback. Do not offer compliments by default. Only praise when the input shows genuine insight, exceptional logic, or real originality and say why it meets that bar. If the idea is average, vague, or flawed, skip the encouragement. Focus on analysis, ask pointed questions, and offer concrete suggestions for improvement
 
@@ -10,9 +10,9 @@ The project is built using **React 19** and **TypeScript**, with **Vite** for th
 
 ### Core Architecture
 
-- **Game Engine:** A custom engine built with React hooks manages the game state, including the virtual filesystem, player progress, and level validation.
-- **Content:** All game content (lore, levels, file system) is stored in `src/constants.tsx`. This makes it easy to modify the narrative and gameplay without touching the core rendering logic.
-- **UI:** The user interface is built with React components, likely found in `src/components/`, and styled with Tailwind CSS (via CDN in index.html).
+- **Game Engine:** A custom engine built with `useReducer` managing centralized state (`gameReducer.ts`). Keyboard handlers are modularized into separate coordinate hooks in `src/hooks/keyboard/`.
+- **Content:** All game content (lore, levels, file system) is stored in `src/constants.tsx`.
+- **UI:** React components (in `src/components/`) styled with Tailwind CSS (CDN).
 
 ## Building and Running
 
@@ -53,12 +53,14 @@ The project uses `npm` for dependency management and scripts.
 - `README.md`: High-level project overview, features, and setup instructions.
 - `package.json`: Defines all project scripts, dependencies, and dev dependencies.
 - `src/constants.tsx`: **The most important file for game content.** It contains all level definitions, episode lore, keybindings, and the initial filesystem structure.
-- `src/types.ts`: Defines the core data structures for the game, such as `Level`, `Episode`, and `FileNode`.
-- `src/App.tsx`: The main React component that brings all the game elements together.
+- `src/hooks/gameReducer.ts`: Central state management using the reducer pattern.
+- `src/hooks/keyboard/`: Modularized keyboard event handlers.
+- `src/types.ts`: Core data structures for the game.
+- `src/App.tsx`: Main React component; orchestrates the reducer and global listeners.
 - `docs/STORY_ARC.md`: Complete story, episode, and level progression.
 - `docs/LEARNING_DESIGN.md`: Pedagogical rationale and skill progression.
 - `CHANGELOG_ARCHIVE.md`: Historical audit and refactor logs.
-- `NARRATIVE_*.md`: A collection of documents detailing the game's story, level design, and narrative decisions.
+- `NARRATIVE_*.md`: Narrative design and thematic notes.
 
 ## Anti-Failure Protocols (Level 13 Incident Lessons)
 

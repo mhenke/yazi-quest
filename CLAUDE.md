@@ -31,11 +31,12 @@ Use URL parameters for testing:
 
 **File Structure:**
 
-- `src/App.tsx` - Main game component with state machine, keyboard handlers, and game loop
+- `src/hooks/gameReducer.ts` - Central state management using the reducer pattern
+- `src/hooks/keyboard/` - Modularized keyboard event handlers
 - `src/constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
 - `src/types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
-- `src/utils/fsHelpers.ts` - Immutable filesystem operations (clone, add, delete, rename, path resolution)
-- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar) - Styled with Tailwind CSS (via CDN in index.html)
+- `src/utils/fsHelpers.ts` - Immutable filesystem operations
+- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar) - Styled with Tailwind CSS (via CDN)
 
 **Core Patterns:**
 
@@ -49,7 +50,7 @@ Use URL parameters for testing:
 
 2. **Path Navigation** - Paths are arrays of node IDs (`string[]`), not names. Use `getNodeByPath()` to resolve.
 
-3. **Game Modes** - `gameState.mode` controls input handling: `'normal'`, `'filter'`, `'zoxide-jump'`, `'fzf-current'`, `'rename'`, `'confirm-delete'`, etc.
+3. **Game Modes & Keyboard Handles** - `gameState.mode` controls input handling. Logic is decoupled from `App.tsx` into `src/hooks/keyboard/` hooks (e.g. `handleNavigation.ts`). Mode transitions are handled via `UPDATE_UI_STATE` or specific action types.
 
 4. **Level Task System** - Each level has tasks with `check(gameState)` functions. Tasks auto-complete when conditions are met.
 
