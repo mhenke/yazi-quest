@@ -336,7 +336,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'GAME_OVER':
-      return { ...state, isGameOver: true, gameOverReason: action.reason };
+      return {
+        ...state,
+        isGameOver: true,
+        gameOverReason: action.reason,
+        notification: null,
+      };
 
     case 'RESET_LEVEL':
       return {
@@ -509,7 +514,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
               };
             }
           } else {
-            return { ...state, isGameOver: true, gameOverReason: 'time' };
+            return {
+              ...state,
+              isGameOver: true,
+              gameOverReason: 'time',
+              notification: null,
+            };
           }
         } else {
           nextState = { ...nextState, timeLeft: state.timeLeft - 1 };
