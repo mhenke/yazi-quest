@@ -159,3 +159,13 @@ The game implements a wide range of Yazi-like keybindings with contextual help a
 - Notification system for guidance
 - Multiple ways to accomplish tasks
 - Undo/redo capabilities through navigation history
+
+## Development Environment
+
+- **Development Server**: The Vite dev server runs on `http://localhost:3000`. Assume it is already running before executing tests.
+- **Testing**: When running Playwright tests, use a non-interactive reporter (e.g., `list`) to ensure the command terminates upon completion. Example: `npm run test:e2e -- --reporter=list`.
+
+## Codebase Navigation
+
+- **Content Searching**: Utilize `rg` (ripgrep) for high-speed, recursive content searches. It is preferred as it automatically respects `.gitignore` rules.
+- **File Finding**: Employ `fd` (`fdfind`) for a fast and user-friendly alternative to `find` when locating files and directories.

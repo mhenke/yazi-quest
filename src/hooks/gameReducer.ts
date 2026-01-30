@@ -571,7 +571,20 @@ export function gameReducer(state: GameState, action: Action): GameState {
       else if (newThreat < 80) newStatus = 'TRACING';
       else newStatus = 'BREACH';
 
-      return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
+      return { ...state, threatLevel: newThreat, threatStatus: newStatus };
+    }
+
+    case 'COMPLETE_TASK': {
+      const { levelId, taskIds } = action;
+      const currentCompleted = state.completedTaskIds[levelId] || [];
+      const newCompleted = [...new Set([...currentCompleted, ...taskIds])];
+      return {
+        ...state,
+        completedTaskIds: {
+          ...state.completedTaskIds,
+          [levelId]: newCompleted,
+        },
+      };
     }
 
     case 'SET_MODAL_VISIBILITY': {

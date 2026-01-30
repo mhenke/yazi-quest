@@ -509,14 +509,23 @@ export default function App() {
     const newlyCompleted: string[] = [];
 
     currentLevel.tasks.forEach((task) => {
-      if (!task.completed && task.check(gameState, currentLevel)) {
-        newlyCompleted.push(task.id);
-        changed = true;
-        playTaskCompleteSound(gameState.settings.soundEnabled);
-        // Narrative triggers moved to useNarrativeSystem
+      if (task.check(gameState, currentLevel)) {
+        if (!gameState.completedTaskIds[currentLevel.id]?.includes(task.id)) {
+          newlyCompleted.push(task.id);
+          changed = true;
+        }
       }
     });
 
+    // This is a dense block, so let's walk through it.
+    // We check every task on every render. If a task's `check` condition is met,
+    // we see if it's already in our list of completed tasks for this level.
+    // If it's NOT, we add it to a `newlyCompleted` array for this render cycle.
+    // This handles both completing a task for the first time and re-completing a task
+    // that might have been "undone" by a subsequent user action.
+
+    // After checking all tasks, if `changed` is true (meaning at least one new
+    // task was completed in this cycle), we dispatch the `COMPLETE_TASK` action.
     if (changed) {
       // 1. Mark tasks as complete
       dispatch({
@@ -524,6 +533,7 @@ export default function App() {
         levelId: currentLevel.id,
         taskIds: newlyCompleted,
       });
+      playTaskCompleteSound(gameState.settings.soundEnabled);
 
       // 2. Level 15 Gauntlet Logic
       if (currentLevel.id === 15) {

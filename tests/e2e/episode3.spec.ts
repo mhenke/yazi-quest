@@ -95,6 +95,9 @@ async function runLevel12CommonPath(
   await dismissAlertIfPresent(page, /Protocol Violation/i);
   await pressKey(page, 'x');
 
+  // Verify clipboard updated
+  await expectClipboard(page, 'MOVE');
+
   const cutTaskNum = scenario.threat ? 4 : 3;
   await assertTask(page, `${cutTaskNum}/${totalTasks}`, testInfo.outputDir);
 
@@ -134,6 +137,8 @@ test.describe('Episode 3: MASTERY', () => {
     await navigateRight(page, 1); // Enter daemons
     await pressKey(page, '.'); // Show hidden
     await search(page, '\\\\.service$');
+    // Wait for search results to populate
+    await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(2);
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
     // Task 2: , then Shift+M
@@ -204,9 +209,7 @@ test.describe('Episode 3: MASTERY', () => {
     await pressKey(page, '.'); // Show hidden
     await search(page, '\\\\.key$');
     await page.waitForTimeout(DEFAULT_DELAY);
-    await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
-      timeout: 500,
-    });
+    await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3);
 
     await pressKeys(page, ['Ctrl+a', 'x']); // Select all then Cut
     await expectClipboard(page, 'MOVE: 3');

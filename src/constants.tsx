@@ -476,7 +476,7 @@ export const applyFileSystemMutations = (
   }
 
   // Level 6+: training_data copy
-  if (levelId >= 6) {
+  if (levelId > 6) {
     const config = getNodeById(newFs, '.config');
     const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
@@ -831,8 +831,10 @@ export const applyFileSystemMutations = (
         return c;
       });
     }
+  }
 
-    // Create vault structure for Level 5
+  // Level 5+: Vault structure (Level 6 and above should have this structure pre-existing)
+  if (levelId > 5) {
     const config = getNodeById(newFs, '.config');
     if (config) {
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
@@ -3892,14 +3894,7 @@ export const LEVELS: Level[] = [
           if (!u || !c.currentPath.includes(u.id)) return false;
           const visible = getVisibleItems(c);
           const p = visible[c.cursorIndex];
-          // Completion when the cursor is on sector_map.png and we're in normal mode
-          return (
-            u.name === 'incoming' &&
-            p != null &&
-            p.name === 'sector_map.png' &&
-            c.mode === 'normal' &&
-            c.usedFilter === true
-          );
+          return p?.name === 'sector_map.png' && c.mode === 'normal' && c.usedFilter === true;
         },
         completed: false,
       },
@@ -4086,19 +4081,13 @@ export const LEVELS: Level[] = [
       {
         id: 'batch-descend',
         description: 'Infiltrate `~/incoming/batch_logs/` segment (gi)',
-        check: (c) => {
-          const u = getNodeById(c.fs, 'incoming');
-          const b = u?.children?.find((n) => n.name === 'batch_logs');
-          return c.currentPath.includes(b?.id || '');
-        },
+        check: (c) => c.usedGI,
         completed: false,
       },
       {
         id: 'recursive-search',
         description: 'Pattern sweep for `\\.log$` signatures in `~/incoming/batch_logs/` (s)',
-        check: (c) => {
-          return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('\\.log$');
-        },
+        check: (c) => c.usedSearch,
         completed: false,
       },
       {

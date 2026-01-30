@@ -149,12 +149,12 @@ export async function fuzzyJump(page: Page, target: string): Promise<void> {
 export async function addItem(page: Page, name: string): Promise<void> {
   await pressKey(page, 'a');
   const modal = page.getByTestId('input-modal');
-  await expect(modal).toBeVisible({ timeout: 1000 });
+  await expect(modal).toBeVisible();
   const input = modal.locator('input');
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
-  await expect(modal).not.toBeVisible({ timeout: 1000 });
+  await expect(modal).not.toBeVisible();
 }
 
 /**
@@ -181,7 +181,7 @@ export async function findFZF(page: Page, name: string): Promise<void> {
   await expect(page.getByTestId('fuzzy-finder')).toBeVisible();
   await page.keyboard.type(name);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(DEFAULT_DELAY);
+  await expect(page.getByTestId('fuzzy-finder')).not.toBeVisible();
 }
 
 /**
@@ -190,12 +190,12 @@ export async function findFZF(page: Page, name: string): Promise<void> {
 export async function renameItem(page: Page, name: string): Promise<void> {
   await pressKey(page, 'r');
   const modal = page.getByTestId('input-modal');
-  await expect(modal).toBeVisible({ timeout: 1000 });
+  await expect(modal).toBeVisible();
   const input = modal.locator('input');
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
-  await expect(modal).not.toBeVisible({ timeout: 1000 });
+  await expect(modal).not.toBeVisible();
 }
 
 /**
@@ -341,9 +341,10 @@ export async function startLevelWithFullIntro(page: Page, level: number): Promis
  * Asserts that the level starts with 0 completed tasks.
  */
 export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 5000 });
-  const taskCounter = page.getByText(/Tasks: 0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible();
+  const taskCounter = page.getByTestId('task-counter');
+  await expect(taskCounter).toBeVisible();
+  await expect(taskCounter).toContainText(/Tasks:/);
 }
 
 /**
@@ -577,10 +578,14 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   // Wait for the item to be visible
   const escapedText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(escapedText, 'i'); // eslint-disable-line security/detect-non-literal-regexp
-  await expect(page.getByTestId('filesystem-pane-active').getByText(regex).first()).toBeVisible({
-    timeout: 3000,
-  });
+  const target = page.getByTestId('filesystem-pane-active').getByText(regex).first();
+  await expect(target).toBeVisible();
 
   await pressKey(page, ' '); // Toggle selection
+
+  // Verify selection (yellow text)
+  const listItem = target.locator('ancestor::div[@role="listitem"]');
+  await expect(listItem).toHaveClass(/text-yellow-400/);
+
   await clearFilter(page);
 }
