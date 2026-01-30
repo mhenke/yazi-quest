@@ -867,7 +867,8 @@ export default function App() {
     const results = getRecursiveSearchResults(
       gameState.fs,
       gameState.inputBuffer,
-      gameState.showHidden
+      gameState.showHidden,
+      gameState.currentPath
     );
     dispatch({ type: 'CONFIRM_SEARCH', query: gameState.inputBuffer, results });
   }, [gameState, dispatch]);

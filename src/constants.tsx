@@ -4123,7 +4123,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'recursive-search',
-        description: 'Pattern sweep for `\\.log$` signatures in `~/incoming/batch_logs/` (s)',
+        description:
+          'Pattern sweep for log signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then enter)',
         check: (c) => c.usedSearch,
         completed: false,
       },
