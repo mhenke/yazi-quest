@@ -36,8 +36,9 @@ export const getSafeFilterRegex = (filter: string): RegExp | null => {
 export const getFilterRegex = (input: string): RegExp | null => {
   if (!input) return null;
 
-  // Smart-case: if filter contains any uppercase, make it case-sensitive
-  const isCaseSensitive = /[A-Z]/.test(input);
+  // Smart-case: if filter contains any uppercase, make it case-sensitive.
+  // Also treat patterns with escapes as case-sensitive, as they are intentionally specific.
+  const isCaseSensitive = /[A-Z]/.test(input) || input.includes('\\');
   const flags = isCaseSensitive ? '' : 'i';
 
   try {
