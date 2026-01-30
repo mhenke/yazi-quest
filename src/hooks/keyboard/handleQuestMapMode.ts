@@ -28,7 +28,7 @@ export const handleQuestMapModeKeyDown = (
   // For now, let's assume we can derive active episode based on questMapTab.
   // Actually, handleQuestMapState logic is simpler if we just manipulate indices.
 
-  const intensity = getActionIntensity(e.key, e.ctrlKey);
+  getActionIntensity(e.key, e.ctrlKey);
 
   // Helper to get lengths
   const currentTab = gameState.questMapTab || 0;
@@ -76,10 +76,7 @@ export const handleQuestMapModeKeyDown = (
       if (e.shiftKey) {
         dispatch({
           type: 'UPDATE_QUEST_MAP',
-          missionIdx: Math.min(
-            activeLevelsCount - 1,
-            (gameState.questMapMissionIdx || 0) + 5
-          ),
+          missionIdx: Math.min(activeLevelsCount - 1, (gameState.questMapMissionIdx || 0) + 5),
         });
       }
       break;

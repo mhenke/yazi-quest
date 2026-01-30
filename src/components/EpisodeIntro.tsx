@@ -7,7 +7,7 @@ import { useGlobalInput } from '../GlobalInputContext';
 
 interface EpisodeIntroProps {
   episode: Episode;
-  onComplete: () => void;
+  onComplete: (options?: { isSkip?: boolean }) => void;
 }
 
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete }) => {
@@ -107,12 +107,12 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   // Allow external skip via custom event so other intro screens (like BiosBoot)
   // can trigger the same completion behavior. Tests can also dispatch this event.
   useEffect(() => {
-    const handleSkipEvent = () => onComplete();
+    const handleSkipEvent = () => onComplete({ isSkip: true });
 
     // If tests set a global skip flag before the component mounts, honor it immediately.
     // This prevents races where tests dispatch the event before listeners are attached.
     if (window.__yaziQuestSkipIntroRequested) {
-      onComplete();
+      onComplete({ isSkip: true });
       return;
     }
 
@@ -323,7 +323,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
           {/* Right: initialize button shown only on last section */}
           {sectionIndex >= sections.length - 1 && (
             <button
-              onClick={onComplete}
+              onClick={() => onComplete()}
               className={`flex flex-col items-start gap-1 ${ep.color} hover:text-white transition-colors group text-lg font-bold tracking-widest uppercase`}
             >
               <span className={`text-xs ${ep.color} font-medium tracking-wide text-left`}>

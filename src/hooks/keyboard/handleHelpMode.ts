@@ -8,7 +8,7 @@ export const handleHelpModeKeyDown = (
   gameState: GameState,
   onClose: () => void
 ) => {
-  const intensity = getActionIntensity(e.key, e.ctrlKey);
+  getActionIntensity(e.key, e.ctrlKey);
 
   switch (e.key) {
     case 'j':

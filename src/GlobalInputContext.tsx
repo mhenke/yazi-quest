@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  ReactNode,
+} from 'react';
 
 type InputHandler = (e: KeyboardEvent) => boolean | void;
 
@@ -52,17 +59,17 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
 
         const result = h.handler(e);
         if (result === true || e.defaultPrevented) {
-           // If handler returned true, it consumed the event.
-           // e.defaultPrevented check allows handlers that called e.preventDefault() to be counted as consuming?
-           // No, usually return true is the explicit signal.
-           // But let's respect return true.
+          // If handler returned true, it consumed the event.
+          // e.defaultPrevented check allows handlers that called e.preventDefault() to be counted as consuming?
+          // No, usually return true is the explicit signal.
+          // But let's respect return true.
 
-           if (result === true) {
-             // Stop further processing
-             e.stopPropagation();
-             e.stopImmediatePropagation();
-             break;
-           }
+          if (result === true) {
+            // Stop further processing
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            break;
+          }
         }
       }
     };
@@ -88,7 +95,7 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
 
 export const useGlobalInput = (
   handler: InputHandler,
-  deps: any[],
+  deps: React.DependencyList,
   options: HandlerOptions
 ) => {
   const context = useContext(GlobalInputContext);
@@ -97,15 +104,19 @@ export const useGlobalInput = (
   }
 
   // Stable ID for this hook instance
-  const id = useRef(Math.random().toString(36).substr(2, 9));
+  const id = useRef<string | null>(null);
 
   useLayoutEffect(() => {
+    if (id.current === null) {
+      id.current = Math.random().toString(36).substr(2, 9);
+    }
+
     const opts = { ...options, enabled: options.enabled ?? true };
-    context.register(id.current, handler, opts);
+    const stableId = id.current;
+    context.register(stableId, handler, opts);
 
     return () => {
-      context.unregister(id.current);
+      context.unregister(stableId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, options.priority, options.enabled, options.captureInput]);
+  }, [context, handler, options, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
 };

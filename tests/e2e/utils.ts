@@ -81,8 +81,8 @@ export async function goParentCount(page: Page, count: number): Promise<void> {
  */
 export async function enterDirectory(page: Page, name: string): Promise<void> {
   await filterByText(page, name);
-  await navigateRight(page, 1);
   await clearFilter(page);
+  await navigateRight(page, 1);
 }
 
 /**

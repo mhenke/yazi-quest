@@ -34,7 +34,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '1/5', testInfo.outputDir, 'task1');
 
     // 3) Use robust search helper
-    await search(page, '\\.log');
+    await search(page, '\\\\.log$');
 
     // Wait for search results to populate (at least 4 logs expected)
     await page.waitForFunction(

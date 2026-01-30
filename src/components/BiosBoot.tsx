@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { useGlobalInput } from '../GlobalInputContext';
 
 interface BiosBootProps {
-  onComplete: () => void;
+  onComplete: (options?: { isSkip?: boolean }) => void;
   cycleCount: number;
 }
 
@@ -72,11 +72,11 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
 
   // Always listen for a global skip event so tests can bypass the boot at any time.
   useEffect(() => {
-    const handleSkipEvent = () => onComplete();
+    const handleSkipEvent = () => onComplete({ isSkip: true });
 
     // If tests pre-requested a skip before this listener was attached, honor it now.
     if (window.__yaziQuestSkipIntroRequested) {
-      onComplete();
+      onComplete({ isSkip: true });
       return;
     }
 

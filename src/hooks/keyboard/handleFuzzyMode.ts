@@ -1,14 +1,14 @@
 import React from 'react';
-import { GameState } from '../../types';
+import { GameState, calculateFrecency } from '../../types';
 import { Action } from '../gameReducer';
-import { calculateFrecency } from '../../types';
 import {
   getRecursiveContent,
   getAllDirectoriesWithPaths,
   resolvePath,
-  findPathById,
+  getNodeByPath,
 } from '../../utils/fsHelpers';
 import { LEVELS } from '../../constants';
+import { checkProtocolViolations } from './utils';
 
 // Helper to get candidates (duplicated from FuzzyFinder for logic consistency)
 const getFilteredCandidates = (gameState: GameState) => {
@@ -26,30 +26,32 @@ const getFilteredCandidates = (gameState: GameState) => {
 
     // Base items sorted by frecency
     const baseItems = dirs
-        .filter((path) => zKeys.includes(path))
-        .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
-        .sort((a, b) => {
-          const diff = b.score - a.score;
-          if (Math.abs(diff) > 0.0001) return diff;
-          return a.path.localeCompare(b.path);
-        });
+      .filter((path) => zKeys.includes(path))
+      .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+      .sort((a, b) => {
+        const diff = b.score - a.score;
+        if (Math.abs(diff) > 0.0001) return diff;
+        return a.path.localeCompare(b.path);
+      });
 
-    candidates = baseItems.map(b => ({ path: b.path, isZoxide: true }));
+    candidates = baseItems.map((b) => ({ path: b.path, isZoxide: true }));
   } else {
-    const items = getRecursiveContent(gameState.fs, gameState.currentPath, currentLevel)
-        .filter((c) => c.type === 'file' || c.type === 'archive');
+    const items = getRecursiveContent(gameState.fs, gameState.currentPath, currentLevel).filter(
+      (c) => c.type === 'file' || c.type === 'archive'
+    );
 
     candidates = items.map((c) => {
-          const display = (c as { display?: string; path?: string[] }).display;
-          const safePath = typeof display === 'string' && display
-              ? display
-              : String((c as { path?: string[] }).path || []).replace(/,/g, '/');
-          return { path: safePath, pathIds: (c as { path?: string[] }).path, isZoxide: false };
+      const display = (c as { display?: string; path?: string[] }).display;
+      const safePath =
+        typeof display === 'string' && display
+          ? display
+          : String((c as { path?: string[] }).path || []).replace(/,/g, '/');
+      return { path: safePath, pathIds: (c as { path?: string[] }).path, isZoxide: false };
     });
   }
 
   if (!query) return candidates;
-  return candidates.filter(c => c.path.toLowerCase().includes(query));
+  return candidates.filter((c) => c.path.toLowerCase().includes(query));
 };
 
 export const handleFuzzyModeKeyDown = (
@@ -58,11 +60,7 @@ export const handleFuzzyModeKeyDown = (
   dispatch: React.Dispatch<Action>
 ) => {
   // Navigation
-  if (
-    e.key === 'ArrowDown' ||
-    (e.ctrlKey && e.key === 'n') ||
-    (e.ctrlKey && e.key === 'j')
-  ) {
+  if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n') || (e.ctrlKey && e.key === 'j')) {
     e.preventDefault();
     const candidates = getFilteredCandidates(gameState);
     if (candidates.length === 0) return;
@@ -71,11 +69,7 @@ export const handleFuzzyModeKeyDown = (
     return;
   }
 
-  if (
-    e.key === 'ArrowUp' ||
-    (e.ctrlKey && e.key === 'p') ||
-    (e.ctrlKey && e.key === 'k')
-  ) {
+  if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p') || (e.ctrlKey && e.key === 'k')) {
     e.preventDefault();
     const candidates = getFilteredCandidates(gameState);
     if (candidates.length === 0) return;
@@ -91,36 +85,52 @@ export const handleFuzzyModeKeyDown = (
     const selected = candidates[gameState.fuzzySelectedIndex || 0];
 
     if (selected) {
-        if (selected.isZoxide) {
-             // Zoxide Jump
-             const currentLevel = LEVELS[gameState.levelIndex];
-             const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel);
-             const match = dirs.find(d => resolvePath(gameState.fs, d.path) === selected.path);
-             if (match) {
-                 dispatch({ type: 'NAVIGATE', path: match.path });
-                 dispatch({ type: 'SET_MODE', mode: 'normal' });
-                 dispatch({ type: 'INCREMENT_STAT', stat: 'fuzzyJumps' });
-             }
-        } else {
-             // FZF Select
-             if (selected.pathIds) {
-                 // Logic to navigate to parent and select file
-                 // selected.pathIds is the full path to the file.
-                 // We want to navigate to its parent.
-                 // Note: findPathById returns path including root.
-
-                 // If item is root (impossible for file), handle gracefully.
-                 if (selected.pathIds.length > 0) {
-                     const parentPath = selected.pathIds.slice(0, -1);
-                     const fileId = selected.pathIds[selected.pathIds.length - 1];
-
-                     dispatch({ type: 'NAVIGATE', path: parentPath });
-                     dispatch({ type: 'SET_SELECTION', ids: [fileId] });
-                     dispatch({ type: 'SET_MODE', mode: 'normal' });
-                     dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
-                 }
-             }
+      if (selected.isZoxide) {
+        // Zoxide Jump
+        const currentLevel = LEVELS[gameState.levelIndex];
+        const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel);
+        const match = dirs.find((d) => resolvePath(gameState.fs, d.path) === selected.path);
+        if (match) {
+          if (checkProtocolViolations(e, gameState, dispatch)) {
+            return;
+          }
+          dispatch({ type: 'SET_CURSOR', index: 0 }); // Reset cursor for directory jump
+          dispatch({ type: 'NAVIGATE', path: match.path });
+          dispatch({ type: 'SET_MODE', mode: 'normal' });
+          dispatch({ type: 'INCREMENT_STAT', stat: 'fuzzyJumps' });
         }
+      } else {
+        // FZF Select
+        if (selected.pathIds) {
+          // Logic to navigate to parent and select file
+          // selected.pathIds is the full path to the file.
+          // We want to navigate to its parent.
+          // Note: findPathById returns path including root.
+
+          // If item is root (impossible for file), handle gracefully.
+          if (selected.pathIds.length > 0) {
+            const parentPath = selected.pathIds.slice(0, -1);
+            const fileId = selected.pathIds[selected.pathIds.length - 1];
+
+            if (checkProtocolViolations(e, gameState, dispatch)) {
+              return;
+            }
+
+            const parentNode = getNodeByPath(gameState.fs, parentPath);
+            if (parentNode && parentNode.children) {
+              const idx = parentNode.children.findIndex((c) => c.id === fileId);
+              if (idx !== -1) {
+                dispatch({ type: 'SET_CURSOR', index: idx });
+              }
+            }
+
+            dispatch({ type: 'NAVIGATE', path: parentPath });
+            dispatch({ type: 'SET_SELECTION', ids: [fileId] });
+            dispatch({ type: 'SET_MODE', mode: 'normal' });
+            dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
+          }
+        }
+      }
     }
     return;
   }

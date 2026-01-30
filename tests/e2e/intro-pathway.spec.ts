@@ -130,7 +130,7 @@ test.describe('Intro Pathway Validation', () => {
       await skipViaMashShiftEnter(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
-      await assertTask(page, '0/4', testInfo.outputDir, 'lvl6_mash_shift_enter');
+      await assertTask(page, '0/5', testInfo.outputDir, 'lvl6_mash_shift_enter');
     });
 
     test('Scenario B: Click Skip Intro button lands in ~', async ({ page }, testInfo) => {
@@ -139,7 +139,7 @@ test.describe('Intro Pathway Validation', () => {
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
-      await assertTask(page, '0/4', testInfo.outputDir, 'lvl6_skip_button');
+      await assertTask(page, '0/5', testInfo.outputDir, 'lvl6_skip_button');
     });
 
     test('Scenario C: Hybrid skip lands in ~', async ({ page }, testInfo) => {
@@ -148,7 +148,7 @@ test.describe('Intro Pathway Validation', () => {
       await skipViaHybrid(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);
-      await assertTask(page, '0/4', testInfo.outputDir, 'lvl6_hybrid_skip');
+      await assertTask(page, '0/5', testInfo.outputDir, 'lvl6_hybrid_skip');
     });
   });
 

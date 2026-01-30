@@ -39,8 +39,6 @@ export interface Level {
   tasks: LevelTask[];
   initialPath?: string[] | null; // Path of IDs (null = stay in current)
   hint: string;
-  onEnter?: (fs: FileNode, gameState?: GameState) => FileNode; // Setup hook to modify FS before level starts
-  seedMode?: 'always' | 'fresh'; // 'fresh': only run on fresh initial filesystem, 'always': run whenever level is entered (default)
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
   efficiencyTip?: string; // Level-specific tip shown on game over (for timed/keystroke levels)

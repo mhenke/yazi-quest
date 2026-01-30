@@ -1,7 +1,7 @@
 import { GameState } from '../../types';
 import { Action } from '../gameReducer';
 import { getNodeByPath } from '../../utils/fsHelpers';
-import { KEYBINDINGS } from '../../constants/keybindings';
+import { KEYBINDINGS } from '../../constants';
 
 // Helper to get a random element from an array
 const getRandomElement = <T>(arr: T[]): T => {
@@ -45,18 +45,10 @@ export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  direction: 'forward' | 'backward' = 'backward'
+  dispatch: React.Dispatch<Action>
 ): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
   if (currentDirNode && gameState.filters[currentDirNode.id]) {
-    if (direction === 'forward') {
-      // When navigating INTO a subdirectory, clear the filter and allow navigation
-      e.preventDefault();
-      dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
-      return false; // Allow navigation after clearing filter
-    }
-    // Backward navigation with filter active - show warning
     e.preventDefault();
     dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
     return true; // Navigation blocked
@@ -75,4 +67,46 @@ export const checkSearchAndBlockNavigation = (
     return true; // Navigation blocked
   }
   return false; // Navigation allowed
+};
+
+export const checkSortAndBlockNavigation = (
+  e: KeyboardEvent,
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>
+): boolean => {
+  if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
+    e.preventDefault();
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
+    return true; // Navigation blocked
+  }
+  return false; // Navigation allowed
+};
+
+export const checkHiddenAndBlockNavigation = (
+  e: KeyboardEvent,
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>
+): boolean => {
+  if (gameState.showHidden) {
+    e.preventDefault();
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });
+    return true; // Navigation blocked
+  }
+  return false; // Navigation allowed
+};
+
+/**
+ * Unified protocol violation check for navigation.
+ * Order of priority: Filter > Search > Sort > Hidden
+ */
+export const checkProtocolViolations = (
+  e: KeyboardEvent,
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>
+): boolean => {
+  if (checkFilterAndBlockNavigation(e, gameState, dispatch)) return true;
+  if (checkSearchAndBlockNavigation(e, gameState, dispatch)) return true;
+  if (checkSortAndBlockNavigation(e, gameState, dispatch)) return true;
+  if (checkHiddenAndBlockNavigation(e, gameState, dispatch)) return true;
+  return false;
 };

@@ -6,22 +6,15 @@ import {
   ECHO_EPISODE_1_LORE,
   ensurePrerequisiteState,
 } from './constants';
-import type { GameState, ZoxideEntry, FileNode, FsError } from './types';
-import type { Action } from './hooks/gameReducer';
+import type { GameState, ZoxideEntry, FileNode } from './types';
 import { InputModal } from './components/InputModal';
-import { calculateFrecency } from './types';
 import {
   getNodeByPath,
   getParentNode,
   getNodeById,
-  renameNode,
   cloneFS,
-  createPath,
-  resolveAndCreatePath,
   getAllDirectoriesWithPaths,
   resolvePath,
-  getRecursiveContent,
-  isProtected,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
@@ -56,30 +49,12 @@ import { reportError } from './utils/error';
 import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
-import { checkFilterAndBlockNavigation, getActionIntensity } from './hooks/keyboard/utils';
-import { KEYBINDINGS } from './constants/keybindings';
+import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
 import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
-
-// Helper to get a random element from an array
-const getRandomElement = <T,>(arr: T[]): T => {
-  return arr[Math.floor(Math.random() * arr.length)];
-};
-
-// Find the narrative description for a given key
-const getNarrativeAction = (key: string): string | null => {
-  const binding = KEYBINDINGS.find((b) => b.keys.includes(key));
-  if (binding && binding.narrativeDescription) {
-    if (Array.isArray(binding.narrativeDescription)) {
-      return getRandomElement(binding.narrativeDescription);
-    }
-    return binding.narrativeDescription as string;
-  }
-  return null;
-};
 
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, null as unknown as GameState, () => {
@@ -223,7 +198,7 @@ export default function App() {
       }
     }
 
-    let fs = ensurePrerequisiteState(cloneFS(INITIAL_FS), initialLevel.id);
+    let fs = cloneFS(INITIAL_FS);
 
     // Inject Ghost File for Echo Cycle (Level 1 only)
     if (cycleCount > 1 && effectiveIndex === 0) {
@@ -243,28 +218,24 @@ export default function App() {
       }
     }
 
-    // Replay all onEnter hooks up to and including the target level
-    for (let i = 0; i <= effectiveIndex; i++) {
-      const level = LEVELS[i];
-      if (level.onEnter) {
-        try {
-          const partialGameState: Partial<GameState> = {
-            completedTaskIds,
-            levelIndex: i, // Use the loop index as current level context during replay
-            level11Flags: {
-              selectedModern: true, // Default to Modern/Hard path if jumping
-              triggeredHoneypot: false,
-              scoutedFiles: [],
-            },
-          };
-          fs = level.onEnter(fs, partialGameState as GameState);
-        } catch (err) {
-          try {
-            reportError(err, { phase: 'level.onEnter', level: level?.id });
-          } catch {
-            console.error(`Level ${level.id} onEnter failed`, err);
-          }
-        }
+    // Apply all filesystem mutations for the target level
+    // This replaces the onEnter hook functionality
+    try {
+      const targetGameState: Partial<GameState> = {
+        completedTaskIds,
+        levelIndex: effectiveIndex,
+        level11Flags: {
+          selectedModern: true, // Default to Modern/Hard path if jumping
+          triggeredHoneypot: false,
+          scoutedFiles: [],
+        },
+      };
+      fs = ensurePrerequisiteState(fs, effectiveIndex + 1, targetGameState as GameState);
+    } catch (err) {
+      try {
+        reportError(err, { phase: 'ensurePrerequisiteState', level: effectiveIndex + 1 });
+      } catch {
+        console.error(`Level ${effectiveIndex + 1} ensurePrerequisiteState failed`, err);
       }
     }
 
@@ -359,19 +330,19 @@ export default function App() {
   });
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
-  useEffect(() => {
-    const handleSkip = () => {
-      dispatch({ type: 'SET_EPISODE_INTRO', visible: false });
-      dispatch({ type: 'SET_BOOT_STATUS', isBooting: false });
-    };
+  const handleSkip = useCallback(() => {
+    window.__yaziQuestSkipIntroRequested = true;
+    dispatch({ type: 'COMPLETE_INTRO', isSkip: true });
+  }, [dispatch]);
 
+  useEffect(() => {
     if (window.__yaziQuestSkipIntroRequested) {
       handleSkip();
     }
 
     window.addEventListener('yazi-quest-skip-intro', handleSkip);
     return () => window.removeEventListener('yazi-quest-skip-intro', handleSkip);
-  }, [dispatch]);
+  }, [handleSkip]);
 
   // --- LOCALSTORAGE PERSISTENCE ---
   useEffect(() => {
@@ -495,9 +466,9 @@ export default function App() {
       // If a handler requests a thought, we dispatch SET_THOUGHT.
 
       if (isThought) {
-         // Direct dispatch
-         dispatch({ type: 'SET_THOUGHT', message, author });
-         return;
+        // Direct dispatch
+        dispatch({ type: 'SET_THOUGHT', message, author });
+        return;
       }
 
       if (notificationTimerRef.current) {
@@ -812,15 +783,14 @@ export default function App() {
     let fs = cloneFS(gameState.fs);
     let onEnterError: Error | null = null;
     try {
-      const isFresh = JSON.stringify(gameState.fs) === JSON.stringify(INITIAL_FS);
-      if (nextLevel.onEnter && (!nextLevel.seedMode || nextLevel.seedMode !== 'fresh' || isFresh)) {
-        fs = nextLevel.onEnter(fs, gameState);
-      }
+      // Apply filesystem mutations for the target level using the centralized function
+      // This replaces the onEnter hook functionality
+      fs = ensurePrerequisiteState(fs, nextLevel.id, gameState);
     } catch (err) {
       try {
-        reportError(err, { phase: 'nextLevel.onEnter', level: nextLevel?.id });
+        reportError(err, { phase: 'ensurePrerequisiteState', level: nextLevel?.id });
       } catch {
-        console.error('nextLevel.onEnter failed', err);
+        console.error('ensurePrerequisiteState failed', err);
       }
       onEnterError = err as Error;
     }
@@ -865,9 +835,12 @@ export default function App() {
     dispatch({ type: 'RESTART_CYCLE' });
   }, [dispatch]);
 
-  const handleBootComplete = useCallback(() => {
-    dispatch({ type: 'SET_BOOT_STATUS', isBooting: false });
-  }, [dispatch]);
+  const handleBootComplete = useCallback(
+    (options?: { isSkip?: boolean }) => {
+      dispatch({ type: 'COMPLETE_INTRO', isSkip: options?.isSkip });
+    },
+    [dispatch]
+  );
 
   const handleSearchConfirm = useCallback(() => {
     const query = gameState.inputBuffer.trim();
@@ -888,7 +861,7 @@ export default function App() {
       query,
       results,
     });
-  }, [gameState.inputBuffer, gameState.levelIndex, gameState.fs, gameState.currentPath, dispatch]);
+  }, [gameState, dispatch]);
 
   const handleInputConfirm = useCallback(() => {
     const name = gameState.inputBuffer.trim();
@@ -900,7 +873,6 @@ export default function App() {
     const parentNode = getNodeByPath(gameState.fs, gameState.currentPath);
     if (!parentNode) return;
 
-    // eslint-disable-next-line security/detect-non-literal-regexp
     if (parentNode.children?.some((c) => c.name === name.replace(/\/$/, ''))) {
       showNotification(`Error: "${name}" already exists`);
       return;
@@ -968,21 +940,7 @@ export default function App() {
       dispatch({ type: 'RENAME_NODE', oldId: id, newNode: node, newFs });
       showNotification(`Renamed to ${name}`);
     }
-  }, [
-    gameState.inputBuffer,
-    gameState.selectedIds,
-    gameState.cursorIndex,
-    gameState.sortBy,
-    gameState.sortDirection,
-    gameState.filters,
-    gameState.showHidden,
-    gameState.currentPath,
-    gameState.searchQuery,
-    gameState.searchResults,
-    gameState.fs,
-    dispatch,
-    showNotification,
-  ]);
+  }, [gameState, dispatch, showNotification]);
 
   const handleFuzzySelect = useCallback(
     (path: string, isZoxide: boolean, pathIds?: string[]) => {
@@ -1061,7 +1019,13 @@ export default function App() {
         return true;
       }
     },
-    [gameState.showHelp, gameState.showHint, gameState.showMap, gameState.hintStage, gameState.mode],
+    [
+      gameState.showHelp,
+      gameState.showHint,
+      gameState.showMap,
+      gameState.hintStage,
+      gameState.mode,
+    ],
     { priority: 2000, captureInput: true }
   );
 
@@ -1114,12 +1078,16 @@ export default function App() {
         (globalIdx: number) => {
           const lvl = LEVELS[globalIdx];
           let fs = cloneFS(INITIAL_FS);
-          if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
+          fs = ensurePrerequisiteState(fs, lvl.id, gameState);
           dispatch({
             type: 'SET_LEVEL',
             index: globalIdx,
             fs,
             path: lvl.initialPath || ['root', 'home', 'guest'],
+            showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
+            notification: null, // No specific notification on jump
+            timeLeft: lvl.timeLimit || null,
+            zoxideData: gameState.zoxideData,
           });
         }
       );
@@ -1299,12 +1267,7 @@ export default function App() {
   // 5. Game Loop (Priority 0)
   useGlobalInput(
     (e) => {
-      if (
-        gameState.isBooting ||
-        gameState.showEpisodeIntro ||
-        isLastLevel ||
-        gameState.isGameOver
-      )
+      if (gameState.isBooting || gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver)
         return;
 
       // Block game loop in input modes (though they are ignored by default if focus is in input)
@@ -1397,7 +1360,7 @@ export default function App() {
       parent,
       handleSearchConfirm,
       dispatch,
-      checkAllTasksComplete
+      checkAllTasksComplete,
     ],
     { priority: 0 }
   );
@@ -1422,14 +1385,7 @@ export default function App() {
             }
             return baseEpisode;
           })()}
-          onComplete={() => {
-            if (currentLevel.episodeId === 1) {
-              dispatch({ type: 'SET_BOOT_STATUS', isBooting: true });
-            }
-            dispatch({ type: 'SET_EPISODE_INTRO', visible: false });
-            dispatch({ type: 'NAVIGATE', path: [...currentLevel.initialPath] });
-            dispatch({ type: 'SET_CURSOR', index: 0 });
-          }}
+          onComplete={(options) => dispatch({ type: 'COMPLETE_INTRO', isSkip: options?.isSkip })}
         />
       )}
 
@@ -1553,10 +1509,18 @@ export default function App() {
             notification={null}
             thought={gameState.thought}
             onToggleHint={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: !gameState.showHint })
+              dispatch({
+                type: 'SET_MODAL_VISIBILITY',
+                modal: 'hint',
+                visible: !gameState.showHint,
+              })
             }
             onToggleHelp={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: !gameState.showHelp })
+              dispatch({
+                type: 'SET_MODAL_VISIBILITY',
+                modal: 'help',
+                visible: !gameState.showHelp,
+              })
             }
             isOpen={gameState.showMap}
             onClose={() => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })}
@@ -1566,12 +1530,16 @@ export default function App() {
             onJumpToLevel={(idx) => {
               const lvl = LEVELS[idx];
               let fs = cloneFS(INITIAL_FS);
-              if (lvl.onEnter) fs = lvl.onEnter(fs, gameState);
+              fs = ensurePrerequisiteState(fs, lvl.id, gameState);
               dispatch({
                 type: 'SET_LEVEL',
                 index: idx,
                 fs,
                 path: lvl.initialPath || ['root', 'home', 'guest'],
+                showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
+                notification: null, // No specific notification on jump
+                timeLeft: lvl.timeLimit || null,
+                zoxideData: gameState.zoxideData,
               });
             }}
             activeTab={gameState.questMapTab}
@@ -1732,22 +1700,16 @@ export default function App() {
             )}
 
             {gameState.mode === 'g-command' && (
-              <GCommandDialog
-                onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-              />
+              <GCommandDialog onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })} />
             )}
 
             {gameState.mode === 'input-file' && (
               <InputModal
                 label="Create"
                 value={gameState.inputBuffer}
-                onChange={(val) =>
-                  dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })
-                }
+                onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
                 onConfirm={handleInputConfirm}
-                onCancel={() =>
-                  dispatch({ type: 'SET_MODE', mode: 'normal' })
-                }
+                onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
                 borderColorClass="border-green-500"
                 testid="create-input"
               />
@@ -1786,13 +1748,9 @@ export default function App() {
               <InputModal
                 label="Rename"
                 value={gameState.inputBuffer}
-                onChange={(val) =>
-                  dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })
-                }
+                onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
                 onConfirm={handleRenameConfirm}
-                onCancel={() =>
-                  dispatch({ type: 'SET_MODE', mode: 'normal' })
-                }
+                onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
                 borderColorClass="border-cyan-500" // or green/cyan mix
                 testid="rename-input"
               />

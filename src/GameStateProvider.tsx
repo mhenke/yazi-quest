@@ -174,22 +174,17 @@ const createInitialState = (): GameState => {
     }
   }
 
-  for (let i = 0; i <= effectiveIndex; i++) {
-    const level = LEVELS[i];
-    if (level.onEnter) {
-      try {
-        const isFresh = JSON.stringify(fs) === JSON.stringify(INITIAL_FS);
-        if (!level.seedMode || level.seedMode !== 'fresh' || isFresh) {
-          const partialGameState: Partial<GameState> = {
-            completedTaskIds,
-            level11Flags: undefined,
-          };
-          fs = level.onEnter(fs, partialGameState as GameState);
-        }
-      } catch (err) {
-        reportError(err, { phase: 'level.onEnter', level: level?.id });
-      }
-    }
+  // Apply all filesystem mutations for the target level
+  // This replaces the onEnter hook functionality
+  try {
+    const targetGameState: Partial<GameState> = {
+      completedTaskIds,
+      levelIndex: effectiveIndex,
+      level11Flags: undefined,
+    };
+    fs = ensurePrerequisiteState(fs, effectiveIndex + 1, targetGameState as GameState);
+  } catch (err) {
+    reportError(err, { phase: 'ensurePrerequisiteState', level: effectiveIndex + 1 });
   }
 
   let levelNotification: { message: string; author?: string; isThought?: boolean } | null = null;

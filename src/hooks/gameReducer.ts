@@ -1,4 +1,12 @@
-import { GameState, GameStats, FileNode, SortBy, SortDirection, Linemode, ZoxideEntry } from '../types';
+import {
+  GameState,
+  GameStats,
+  FileNode,
+  SortBy,
+  SortDirection,
+  Linemode,
+  ZoxideEntry,
+} from '../types';
 import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
@@ -108,6 +116,7 @@ export type Action =
     }
   | { type: 'SET_PREVIEW_SCROLL'; scroll: number }
   | { type: 'SET_BOOT_STATUS'; isBooting: boolean }
+  | { type: 'COMPLETE_INTRO'; isSkip?: boolean }
   | { type: 'UPDATE_LEVEL_11_FLAGS'; flags: Partial<GameState['level11Flags']> }
   | {
       type: 'SET_DELETE_PENDING';
@@ -675,6 +684,64 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'SET_BOOT_STATUS':
       return { ...state, isBooting: action.isBooting };
 
+    case 'COMPLETE_INTRO': {
+      const isSkip = action.isSkip ?? false;
+      const currentLevel = LEVELS[state.levelIndex];
+      const initialPath = currentLevel?.initialPath || ['root', 'home', 'guest'];
+
+      const newCompletedTaskIds = { ...state.completedTaskIds };
+      if (currentLevel) {
+        newCompletedTaskIds[currentLevel.id] = [];
+      }
+
+      const newState = {
+        ...state,
+        showEpisodeIntro: false,
+        isBooting: false,
+        currentPath: [...initialPath],
+        cursorIndex: 0,
+        // Reset all action flags to prevent leakage from mashing during intro
+        usedG: false,
+        usedGI: false,
+        usedGC: false,
+        usedGR: false,
+        usedGH: false,
+        usedCtrlA: false,
+        usedCtrlR: false,
+        usedGG: false,
+        usedDown: false,
+        usedUp: false,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
+        usedP: false,
+        usedShiftP: false,
+        usedX: false,
+        usedD: false,
+        usedTrashDelete: false,
+        usedHistoryBack: false,
+        usedHistoryForward: false,
+        usedSortM: false,
+        usedY: false,
+        usedSearch: false,
+        usedFilter: false,
+        keystrokes: 0,
+        weightedKeystrokes: 0,
+        searchQuery: null,
+        searchResults: [],
+        filters: {},
+        selectedIds: [],
+        completedTaskIds: newCompletedTaskIds,
+        mode: 'normal' as const,
+      };
+
+      // Conditionally trigger boot sequence only for Episode 1 natural progression
+      if (!isSkip && state.showEpisodeIntro && state.levelIndex === 0) {
+        return { ...newState, isBooting: true };
+      }
+
+      return newState;
+    }
+
     case 'UPDATE_LEVEL_11_FLAGS':
       return {
         ...state,
@@ -730,10 +797,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         ...state,
         completedTaskIds: {
           ...state.completedTaskIds,
-          [action.levelId]: [
-            ...(state.completedTaskIds[action.levelId] || []),
-            ...action.taskIds,
-          ],
+          [action.levelId]: [...(state.completedTaskIds[action.levelId] || []), ...action.taskIds],
         },
       };
 

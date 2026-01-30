@@ -1,7 +1,7 @@
 import { GameState, Level } from '../../types';
 import { getNodeByPath, isProtected } from '../../utils/fsHelpers';
 import { getVisibleItems } from '../../utils/viewHelpers';
-import { checkSearchAndBlockNavigation } from './utils';
+import { checkProtocolViolations } from './utils';
 import { Action } from '../gameReducer';
 
 export const handleGCommandKeyDown = (
@@ -74,8 +74,8 @@ export const handleGCommandKeyDown = (
       dispatch({ type: 'MARK_ACTION_USED', actionId: 'GG' });
       dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
     } else {
-      // Check for active search - block navigation
-      if (checkSearchAndBlockNavigation(e, gameState, dispatch)) {
+      // Check for active protocol violations - block navigation
+      if (checkProtocolViolations(e, gameState, dispatch)) {
         return;
       }
       // Check for protection

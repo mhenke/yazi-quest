@@ -1,5 +1,5 @@
 import { GameState, FileNode, Level } from '../../types';
-import { getNarrativeAction, checkFilterAndBlockNavigation } from './utils';
+import { getNarrativeAction, checkProtocolViolations } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { isProtected, getNodeByPath } from '../../utils/fsHelpers';
 import { Action } from '../gameReducer';
@@ -46,7 +46,7 @@ export const handleSystemParamsKeyDown = (
 
     case 'Z':
       if (e.shiftKey) {
-        if (checkFilterAndBlockNavigation(e, gameState, dispatch)) {
+        if (checkProtocolViolations(e, gameState, dispatch)) {
           return true;
         }
         e.preventDefault();
@@ -59,7 +59,7 @@ export const handleSystemParamsKeyDown = (
 
     case 'z':
       if (!e.shiftKey) {
-        if (checkFilterAndBlockNavigation(e, gameState, dispatch)) {
+        if (checkProtocolViolations(e, gameState, dispatch)) {
           return true;
         }
         e.preventDefault();
