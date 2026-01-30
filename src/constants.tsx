@@ -476,7 +476,7 @@ export const applyFileSystemMutations = (
   }
 
   // Level 6+: training_data copy
-  if (levelId > 6) {
+  if (levelId >= 6) {
     const config = getNodeById(newFs, '.config');
     const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
@@ -522,8 +522,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 7+: access_token.key in /tmp
-  if (levelId > 7 && levelId < 13) {
+  // Level 8-12: access_token.key in /tmp
+  if (levelId >= 8 && levelId < 13) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
       if (!tmp.children) tmp.children = [];
@@ -555,8 +555,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 9+: /tmp cleanup
-  if (levelId > 9) {
+  // Level 10+: /tmp cleanup
+  if (levelId >= 10) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp?.children) {
       const filesToKeep = [
@@ -569,8 +569,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 10+: Credentials in systemd-core
-  if (levelId > 10) {
+  // Level 11+: Credentials in systemd-core
+  if (levelId >= 11) {
     const workspace = getNodeById(newFs, 'workspace');
     const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
     if (systemdCore) {
@@ -705,8 +705,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 12+: systemd-core moves from workspace to /daemons
-  if (levelId > 12) {
+  // Level 13+: systemd-core moves from workspace to /daemons
+  if (levelId >= 13) {
     const rootNode = getNodeById(newFs, 'root');
     const daemons = rootNode?.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
     const guestWorkspace = getNodeById(newFs, 'workspace');
@@ -727,8 +727,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 13+: central_relay directory in workspace (Pre-create only if we passed Level 13)
-  if (levelId > 13) {
+  // Level 14+: central_relay directory in workspace (Pre-create only if we passed Level 13)
+  if (levelId >= 14) {
     const workspace = getNodeById(newFs, 'workspace');
     if (workspace && !workspace.children?.find((c) => c.name === 'central_relay')) {
       if (!workspace.children) workspace.children = [];
@@ -742,8 +742,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 14+: Sterilize guest partition (Pre-sterilize only if we passed Level 14)
-  if (levelId > 14) {
+  // Level 15+: Sterilize guest partition (Pre-sterilize only if we passed Level 14)
+  if (levelId >= 15) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp) {
       let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
@@ -797,8 +797,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 15+: /tmp sterilization
-  if (levelId > 15) {
+  // Level 16+: /tmp sterilization
+  if (levelId >= 16) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp?.children) {
       const keptItems = ['upload', 'vault'];
@@ -830,6 +830,60 @@ export const applyFileSystemMutations = (
           return { ...c, content: UPLINK_V2_CONTENT, modifiedAt: BASE_TIME - 10 * day };
         return c;
       });
+    }
+
+    // Create vault structure for Level 5
+    const config = getNodeById(newFs, '.config');
+    if (config) {
+      let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
+      if (!vault) {
+        vault = {
+          id: 'vault',
+          name: 'vault',
+          type: 'dir',
+          protected: true,
+          children: [],
+          parentId: config.id,
+        };
+        if (!config.children) config.children = [];
+        config.children.push(vault);
+      }
+      let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
+      if (!active) {
+        active = {
+          id: 'active',
+          name: 'active',
+          type: 'dir',
+          protected: true,
+          children: [],
+          parentId: vault.id,
+        };
+        if (!vault.children) vault.children = [];
+        vault.children.push(active);
+      }
+      // Populate active with uplink files if they don't exist
+      if (!active.children?.find((f) => f.name === 'uplink_v1.conf')) {
+        if (!active.children) active.children = [];
+        active.children.push({
+          id: 'uplink-v1-prereq-lvl5',
+          name: 'uplink_v1.conf',
+          type: 'file',
+          content: UPLINK_V1_CONTENT,
+          parentId: active.id,
+          modifiedAt: BASE_TIME - 5 * day,
+        });
+      }
+      if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
+        if (!active.children) active.children = [];
+        active.children.push({
+          id: 'uplink-v2-prereq-lvl5',
+          name: 'uplink_v2.conf',
+          type: 'file',
+          content: UPLINK_V2_CONTENT,
+          parentId: active.id,
+          modifiedAt: BASE_TIME - 5 * day,
+        });
+      }
     }
   }
 
