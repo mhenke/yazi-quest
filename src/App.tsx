@@ -818,8 +818,6 @@ export default function App() {
       lastAccess: now,
     };
 
-    // Level-specific notifications logic removed (moved to Narrative System)
-
     // Hide the success toast before advancing to the next level
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
 

@@ -16,7 +16,7 @@ async function skipViaButton(page: Page): Promise<void> {
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
   for (let i = 0; i < 5; i++) {
     try {
-      await skipButton.click({ timeout: 2000 });
+      await skipButton.click({ timeout: 500 });
     } catch {
       break;
     }
@@ -30,7 +30,7 @@ async function skipViaMashShiftEnter(page: Page): Promise<void> {
   for (let i = 0; i < 10; i++) {
     await pressKey(page, 'Shift+Enter');
     const statusBar = page.locator('[data-testid="status-bar"]');
-    if (await statusBar.isVisible({ timeout: 2000 }).catch(() => false)) {
+    if (await statusBar.isVisible({ timeout: 500 }).catch(() => false)) {
       break;
     }
   }
@@ -49,7 +49,7 @@ async function skipViaHybrid(page: Page): Promise<void> {
  * Wait for the game UI to be ready (status bar visible).
  */
 async function waitForGameReady(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 2000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
   await page.waitForTimeout(DEFAULT_DELAY);
 }
 
@@ -58,7 +58,7 @@ async function waitForGameReady(page: Page): Promise<void> {
  */
 async function assertPath(page: Page, expectedPath: string): Promise<void> {
   const breadcrumb = page.locator('.breadcrumb');
-  await expect(breadcrumb).toContainText(expectedPath, { timeout: 2000 });
+  await expect(breadcrumb).toContainText(expectedPath, { timeout: 500 });
 }
 
 /**
@@ -66,17 +66,17 @@ async function assertPath(page: Page, expectedPath: string): Promise<void> {
  */
 async function assertTasksStartAtZero(page: Page): Promise<void> {
   const taskCounter = page.getByText(/Tasks:\s*0\/\d+/);
-  await expect(taskCounter).toBeVisible({ timeout: 2000 });
+  await expect(taskCounter).toBeVisible({ timeout: 500 });
 }
 
 /**
  * Assert that top and bottom bars are hidden.
  */
 async function assertBarsHidden(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible({ timeout: 2000 });
-  await expect(page.locator('.breadcrumb')).not.toBeVisible({ timeout: 2000 });
+  await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible({ timeout: 500 });
+  await expect(page.locator('.breadcrumb')).not.toBeVisible({ timeout: 500 });
   await expect(page.locator('[data-testid="level-progress-bar"]')).not.toBeVisible({
-    timeout: 2000,
+    timeout: 500,
   });
 }
 
@@ -84,9 +84,9 @@ async function assertBarsHidden(page: Page): Promise<void> {
  * Assert that top and bottom bars are visible.
  */
 async function assertBarsVisible(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 2000 });
-  await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 2000 });
-  await expect(page.locator('[data-testid="level-progress-bar"]')).toBeVisible({ timeout: 2000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="level-progress-bar"]')).toBeVisible({ timeout: 500 });
 }
 
 test.describe('Intro Pathway Validation', () => {

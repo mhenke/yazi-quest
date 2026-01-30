@@ -259,7 +259,9 @@ export async function startLevel(
 ): Promise<void> {
   const params = new URLSearchParams();
   params.set('lvl', level.toString());
-  if (!options.intro) params.set('intro', 'false');
+  if (!options.intro) {
+    params.set('intro', 'false');
+  }
   if (options.extraParams) {
     for (const [key, value] of Object.entries(options.extraParams)) {
       params.set(key, value);
@@ -269,29 +271,12 @@ export async function startLevel(
   await page.goto(`/?${params.toString()}`);
   await page.waitForLoadState('domcontentloaded');
 
-  // Skip intros
-  await page.evaluate(() => {
-    window.__yaziQuestSkipIntroRequested = true;
-    window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-  });
+  // Since `intro=false` is now the sole mechanism, we just need to wait for the game to be ready.
+  // The most reliable way is to wait for the status bar, which signals the main UI is rendered.
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 1000 });
 
-  try {
-    const skipBtn = page.getByRole('button', { name: 'Skip Intro' });
-    if (await skipBtn.isVisible({ timeout: 500 })) {
-      await skipBtn.click();
-    }
-  } catch {}
-
-  const introOverlay = page.locator('div.bg-black.absolute.inset-0');
-  if (await introOverlay.isVisible({ timeout: 500 })) {
-    await page.keyboard.press('Shift+Enter');
-    await page.keyboard.press('Shift+Enter');
-    await page.keyboard.press('Shift+Enter');
-  }
-
-  await page.waitForTimeout(DEFAULT_DELAY); // Standard post-load delay
-
-  // Assert level started incomplete
+  // Assert level started incomplete - this is now redundant if we wait for the status bar,
+  // but we keep it as a sanity check.
   await assertLevelStartedIncomplete(page);
 }
 

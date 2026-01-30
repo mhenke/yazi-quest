@@ -4208,7 +4208,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-token',
-        description: 'Conduct deep search for `/tmp/access_token.key` (z)',
+        description: 'Conduct deep search for `access_token.key` (z)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];

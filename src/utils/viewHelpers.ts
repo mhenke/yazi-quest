@@ -145,7 +145,7 @@ export const getRecursiveSearchResults = (
       if (!showHidden && item.node.name.startsWith('.')) {
         return false;
       }
-      return regex.test(item.node.name);
+      return regex.test(item.displayPath);
     })
     .map((item) => ({
       ...item.node,

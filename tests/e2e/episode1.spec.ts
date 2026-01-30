@@ -348,16 +348,13 @@ test.describe('Episode 1: AWAKENING', () => {
       await assertTask(page, '5/5', 'temp', 'navigate_to_var');
 
       // Wait for the mission complete dialog to appear
-      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
-
-      // Wait for the mission complete dialog to appear
-      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 1000 });
 
       // Use Shift+Enter to advance to the next level
       await page.keyboard.press('Shift+Enter');
 
       // Verify we've moved to Level 2 by checking for Level 2's initial conditions
-      await expect(page.getByText('THREAT NEUTRALIZATION')).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText('THREAT NEUTRALIZATION')).toBeVisible({ timeout: 1000 });
 
       // Verify that the mission complete dialog is no longer visible
       await expect(page.getByTestId('mission-complete')).not.toBeVisible();

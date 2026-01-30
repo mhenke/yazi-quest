@@ -73,15 +73,12 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test('Level 7: QUANTUM BYPASS - completes FZF find and clipboard abort', async ({
     page,
   }, testInfo) => {
-    await startLevel(page, 7);
+    await startLevel(page, 7, { intro: false });
 
-    // Task 1: Jump to Root (gr)
+    // Task 1: Go to root, then find access_token.key using fzf
     await gotoCommand(page, 'r');
-    // Verify Task 1 completion (1/4 visible tasks initially)
-    await assertTask(page, '1/4', testInfo.outputDir, 'jump_to_root');
-
-    // Task 2: Locate 'access_token.key' using FZF find (z)
-    await findFZF(page, 'access_token');
+    await findFZF(page, 'token');
+    await assertTask(page, '1/4', testInfo.outputDir, 'find_token');
 
     // Verify we actually landed on the file
     const selectedFile = page.locator('[aria-current="location"]');
