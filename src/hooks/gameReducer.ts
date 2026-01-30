@@ -112,7 +112,8 @@ export type Action =
         | 'SortM'
         | 'Y'
         | 'Search'
-        | 'Filter';
+        | 'Filter'
+        | 'SearchCleared';
     }
   | { type: 'SET_PREVIEW_SCROLL'; scroll: number }
   | { type: 'SET_BOOT_STATUS'; isBooting: boolean }
@@ -683,6 +684,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
           break;
         case 'Search':
           updates.usedSearch = true;
+          break;
+        case 'SearchCleared':
+          updates.usedSearchCleared = true;
           break;
         case 'Filter':
           updates.usedFilter = true;

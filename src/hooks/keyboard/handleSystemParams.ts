@@ -116,6 +116,7 @@ export const handleSystemParamsKeyDown = (
         showNotification(getNarrativeAction('Escape') || 'Search cleared');
         dispatch({ type: 'SET_SEARCH', query: null, results: [] });
         dispatch({ type: 'SET_CURSOR', index: 0 });
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'SearchCleared' });
       }
 
       // Also clear filter for current directory if it exists

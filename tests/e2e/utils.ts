@@ -154,6 +154,7 @@ export async function addItem(page: Page, name: string): Promise<void> {
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
+  await page.waitForTimeout(DEFAULT_DELAY);
   await expect(modal).not.toBeVisible();
 }
 
@@ -195,6 +196,7 @@ export async function renameItem(page: Page, name: string): Promise<void> {
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
+  await page.waitForTimeout(DEFAULT_DELAY);
   await expect(modal).not.toBeVisible();
 }
 
@@ -562,32 +564,32 @@ export async function isInfoPanelVisible(page: Page): Promise<boolean> {
  * Filter to find an item and select it (without navigating).
  * Leaves the filter active.
  */
-export async function filterAndSelect(page: Page, filterText: string): Promise<void> {
+export async function filterAndSelect(
+  page: Page,
+  filterText: string,
+  options: { exact?: boolean } = {}
+): Promise<void> {
   await pressKey(page, 'f');
   const input = page.getByTestId('filter-input');
-  await expect(input).toBeVisible({ timeout: 3000 }); // Increase timeout
+  await expect(input).toBeVisible({ timeout: 3000 });
   await input.focus();
   await input.fill(filterText);
-
-  // Verify that the input contains the expected text
   await expect(input).toHaveValue(filterText);
-
   await page.keyboard.press('Enter');
   await expect(input).not.toBeVisible();
 
-  // Wait for the item to be visible
-  const escapedText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(escapedText, 'i'); // eslint-disable-line security/detect-non-literal-regexp
-  const target = page.getByTestId('filesystem-pane-active').getByText(regex).first();
+  let target;
+  if (options.exact) {
+    target = page.getByTestId(`file-${filterText}`);
+  } else {
+    target = page
+      .getByTestId('filesystem-pane-active')
+      .locator('[role="listitem"]', { hasText: filterText });
+  }
   await expect(target).toBeVisible();
 
   await pressKey(page, ' '); // Toggle selection
-
-  // Verify selection (yellow text)
-  const listItem = page
-    .getByTestId('filesystem-pane-active')
-    .locator('[role="listitem"]', { hasText: filterText });
-  await expect(listItem).toHaveClass(/text-yellow-400/);
+  await expect(target).toHaveClass(/text-yellow-400/);
 
   await clearFilter(page);
 }

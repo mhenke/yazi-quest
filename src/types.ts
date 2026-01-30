@@ -238,6 +238,7 @@ export interface GameState {
   searchQuery: string | null; // Active recursive search query (null = no search)
   searchResults: FileNode[]; // Flattened results from recursive search
   usedSearch?: boolean; // Tracks if player used 's' for recursive search
+  usedSearchCleared?: boolean; // Tracks if player cleared a search
   usedFilter?: boolean; // Tracks if player used 'f' for filter mode
 
   // Lifted UI State (Centralized Input)

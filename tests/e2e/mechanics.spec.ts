@@ -60,7 +60,7 @@ test.describe('Game Mechanics & Failures', () => {
     await filterAndSelect(page, 'systemd-core');
     await navigateRight(page, 1);
 
-    await filterAndSelect(page, 'uplink_v1.conf');
+    await filterAndSelect(page, 'uplink_v1.conf', { exact: true });
 
     // 3. Overwrite (Shift+P)
     await pressKeys(page, ['Shift+P', 'y']); // Confirm overwrite

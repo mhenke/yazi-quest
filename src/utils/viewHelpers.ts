@@ -109,6 +109,7 @@ export const getRecursiveSearchResults = (
   startPath: string[] = ['root']
 ): FileNode[] => {
   if (!query || !rootNode) return [];
+
   const results: FileNode[] = [];
   const regex = getFilterRegex(query);
   if (!regex) return [];
@@ -116,34 +117,28 @@ export const getRecursiveSearchResults = (
   const startNode = getNodeByPath(rootNode, startPath);
   if (!startNode) return [];
 
-  const stack: { node: FileNode; pathPrefix: string; idPath: string[] }[] = [];
+  const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
+    if (!node.children) return;
 
-  if (startNode.children) {
-    for (const child of startNode.children) {
-      stack.push({ node: child, pathPrefix: '', idPath: startPath });
-    }
-  }
+    for (const child of node.children) {
+      if (!showHidden && child.name.startsWith('.')) continue;
 
-  while (stack.length > 0) {
-    const { node, pathPrefix, idPath } = stack.pop()!;
+      const newDisplayPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+      const newIdPath = [...idPath, child.id];
 
-    if (!showHidden && node.name.startsWith('.')) {
-      continue;
-    }
+      // If the child's name matches, add it to results.
+      if (regex.test(child.name)) {
+        results.push({ ...child, displayPath: newDisplayPath, path: newIdPath });
+      }
 
-    const newDisplayPath = pathPrefix ? `${pathPrefix}/${node.name}` : node.name;
-    const newIdPath = [...idPath, node.id];
-
-    if (regex.test(node.name)) {
-      results.push({ ...node, displayPath: newDisplayPath, path: newIdPath });
-    }
-
-    if ((node.type === 'dir' || node.type === 'archive') && node.children) {
-      for (const child of node.children) {
-        stack.push({ node: child, pathPrefix: newDisplayPath, idPath: newIdPath });
+      // ALWAYS recurse into directories, regardless of name match.
+      if (child.type === 'dir' || child.type === 'archive') {
+        searchRecursive(child, newDisplayPath, newIdPath);
       }
     }
-  }
+  };
 
+  // Start the search from the specified startNode.
+  searchRecursive(startNode, '', startPath);
   return results;
 };
