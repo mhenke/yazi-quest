@@ -15,6 +15,7 @@ import {
   cloneFS,
   getAllDirectoriesWithPaths,
   resolvePath,
+  resolveAndCreatePath,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
@@ -864,16 +865,11 @@ export default function App() {
     const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
     if (!currentDirNode) return;
     const results = getRecursiveSearchResults(
-      currentDirNode,
-      query,
-      gameState.showHidden,
-      gameState.currentPath
+      gameState.fs,
+      gameState.inputBuffer,
+      gameState.showHidden
     );
-    dispatch({
-      type: 'CONFIRM_SEARCH',
-      query,
-      results,
-    });
+    dispatch({ type: 'CONFIRM_SEARCH', query: gameState.inputBuffer, results });
   }, [gameState, dispatch]);
 
   const handleInputConfirm = useCallback(() => {
@@ -882,7 +878,29 @@ export default function App() {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
+    // Support nested path creation when the user supplies a path-like input
+    // e.g. `protocols/uplink_v1.conf` or `~/datastore/protocols/uplink_v1.conf`.
+    const looksLikePath = name.includes('/') || name.startsWith('~/') || name.startsWith('/');
 
+    if (looksLikePath) {
+      const res = resolveAndCreatePath(gameState.fs, gameState.currentPath, name);
+      if (res.error) {
+        showNotification(`Error: ${res.error}`);
+        return;
+      }
+      if (res.collision && res.collisionNode) {
+        showNotification(`Error: "${res.collisionNode.name}" already exists`);
+        return;
+      }
+      // Successful creation — update FS, close the input modal, clear buffer, and notify
+      dispatch({ type: 'UPDATE_FS', fs: res.fs });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+      showNotification(`Created ${name}`);
+      return;
+    }
+
+    // Fallback: single-name creation in current directory (existing behavior)
     const parentNode = getNodeByPath(gameState.fs, gameState.currentPath);
     if (!parentNode) return;
 

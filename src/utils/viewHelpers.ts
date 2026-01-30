@@ -109,37 +109,41 @@ export const getRecursiveSearchResults = (
   startPath: string[] = ['root']
 ): FileNode[] => {
   if (!query || !rootNode) return [];
-
   const results: FileNode[] = [];
   const regex = getFilterRegex(query);
-  const startNode = getNodeByPath(rootNode, startPath);
+  if (!regex) return [];
 
+  const startNode = getNodeByPath(rootNode, startPath);
   if (!startNode) return [];
 
-  const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
-    if (!node.children) return;
+  const stack: { node: FileNode; pathPrefix: string; idPath: string[] }[] = [];
 
-    for (const child of node.children) {
-      if (!showHidden && child.name.startsWith('.')) continue;
+  if (startNode.children) {
+    for (const child of startNode.children) {
+      stack.push({ node: child, pathPrefix: '', idPath: startPath });
+    }
+  }
 
-      const relativePath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
-      const currentIdPath = [...idPath, child.id];
-      const nameMatch = regex ? regex.test(child.name) : false;
+  while (stack.length > 0) {
+    const { node, pathPrefix, idPath } = stack.pop()!;
 
-      if (child.type === 'file' && nameMatch) {
-        results.push({ ...child, displayPath: relativePath, path: currentIdPath });
-      }
+    if (!showHidden && node.name.startsWith('.')) {
+      continue;
+    }
 
-      if (child.type === 'dir' || child.type === 'archive') {
-        const dirMatch = regex ? regex.test(child.name) : false;
-        if (dirMatch) {
-          results.push({ ...child, displayPath: relativePath, path: currentIdPath });
-        }
-        searchRecursive(child, relativePath, currentIdPath);
+    const newDisplayPath = pathPrefix ? `${pathPrefix}/${node.name}` : node.name;
+    const newIdPath = [...idPath, node.id];
+
+    if (regex.test(node.name)) {
+      results.push({ ...node, displayPath: newDisplayPath, path: newIdPath });
+    }
+
+    if ((node.type === 'dir' || node.type === 'archive') && node.children) {
+      for (const child of node.children) {
+        stack.push({ node: child, pathPrefix: newDisplayPath, idPath: newIdPath });
       }
     }
-  };
+  }
 
-  searchRecursive(startNode, '', startPath);
   return results;
 };

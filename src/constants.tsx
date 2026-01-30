@@ -3947,7 +3947,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-and-create-dir',
-        description: 'Establish `~/datastore/protocols/` relay node (a)',
+        description: "Establish `protocols/` directory relay node in '~/datastore/' (a)",
         check: (c) => {
           const s = getNodeById(c.fs, 'datastore');
           return !!s?.children?.find((r) => r.name === 'protocols' && r.type === 'dir');
@@ -3956,7 +3956,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'enter-and-create-v1',
-        description: 'Initialize `~/datastore/protocols/uplink_v1.conf` signature (a)',
+        description: 'Initialize `uplink_v1.conf` signature in `~/datastore/protocols/` (a)',
         check: (c) => {
           const datastore = getNodeById(c.fs, 'datastore');
           const r = datastore?.children?.find((n) => n.name === 'protocols');
@@ -4019,7 +4019,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'establish-stronghold',
-        description: 'Construct `~/.config/vault/active/` stronghold (a)',
+        description: 'Construct `active/` stronghold in `~/.config/vault/` (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -4098,14 +4098,14 @@ export const LEVELS: Level[] = [
             c.usedCtrlA === true &&
             c.clipboard?.action === 'yank' &&
             c.clipboard.nodes.length >= 4 && // At least 4 logs
-            c.searchQuery === null
+            c.mode === 'normal'
           );
         },
         completed: false,
       },
       {
         id: 'goto-config-vault',
-        description: 'Construct `~/.config/vault/training_data/` vault node (a)',
+        description: 'Construct `training_data/` vault node in `~/.config/vault/` (a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -4793,7 +4793,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-relay',
-        description: 'Instantiate `~/workspace/central_relay` secure sector (a)',
+        description: 'Instantiate `central_relay` secure sector in `~/workspace/` (a)',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
