@@ -227,6 +227,7 @@ test.describe('Episode 1: AWAKENING', () => {
 
       const activePane = page.getByTestId('filesystem-pane-active');
 
+      // Verify presence of uplink files
       await expect(
         page.getByTestId('filesystem-pane-active').getByText('uplink_v1.conf')
       ).toBeVisible();
@@ -237,19 +238,13 @@ test.describe('Episode 1: AWAKENING', () => {
       // Verify no selection initially
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(0);
 
-      // Verify presence of new passive policy file
-      await expect(
-        page.getByTestId('filesystem-pane-active').getByText('security_policy_v1.1.draft')
-      ).toBeVisible();
-
-      // Verify all 3 files are present (Policy + 2 Uplinks)
-      await expect(activePane.getByRole('listitem')).toHaveCount(3);
+      // Verify only 2 files are present (2 Uplinks)
+      await expect(activePane.getByRole('listitem')).toHaveCount(2);
 
       // Select Uplink V1 and V2 using manual sorting assumptions (User Walkthrough)
-      // List: security_policy (0), uplink_v1 (1), uplink_v2 (2)
+      // List: uplink_v1 (0), uplink_v2 (1)
 
-      // Move to uplink_v1 (Index 1)
-      await navigateDown(page, 1);
+      // Move to uplink_v1 (Index 0) - already at 0 initially
 
       // Select uplink_v1
       await pressKey(page, ' ');
@@ -257,7 +252,7 @@ test.describe('Episode 1: AWAKENING', () => {
       // Verify first selection worked
       await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
 
-      // Select uplink_v2 (Index 2) - Space should have auto-advanced cursor to 2
+      // Select uplink_v2 (Index 1) - Space should have auto-advanced cursor to 1
       await pressKey(page, ' ');
 
       // Verify second selection worked
@@ -354,7 +349,9 @@ test.describe('Episode 1: AWAKENING', () => {
       await page.keyboard.press('Shift+Enter');
 
       // Verify we've moved to Level 2 by checking for Level 2's initial conditions
-      await expect(page.getByText('THREAT NEUTRALIZATION')).toBeVisible({ timeout: 1000 });
+      await expect(page.getByText('RECONNAISSANCE & EXTRACTION').first()).toBeVisible({
+        timeout: 1000,
+      });
 
       // Verify that the mission complete dialog is no longer visible
       await expect(page.getByTestId('mission-complete')).not.toBeVisible();

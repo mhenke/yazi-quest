@@ -159,42 +159,8 @@ export const handleFuzzyModeKeyDown = (
 
   // Typing
   if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-    // Let the input field handle it? No, this is global handler.
-    // If input is focused, this might duplicate?
-    // App.tsx blocks game loop if 'input-file'/'rename'/'filter'.
-    // But 'zoxide-jump' and 'fzf-current' use a custom overlay component `FuzzyFinder` which has an input?
-    // Wait, `FuzzyFinder` component in `App.tsx` has an input that handles changes?
-    // `App.tsx`:
-    /*
-            {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-              <FuzzyFinder
-                gameState={gameState}
-                onSelect={handleFuzzySelect}
-                onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-              />
-            )}
-    */
-    // `FuzzyFinder` likely handles input focus.
-    // If `FuzzyFinder`'s input is focused, `useGlobalInput` might still receive events if not stopped.
-    // However, `useGlobalInput` in `App.tsx` logic for game loop (priority 0) calls `handleFuzzyModeKeyDown`.
-    // If the input stops propagation, this won't be called.
-    // BUT `FuzzyFinder` input probably calls `dispatch` on change.
-    // So `handleFuzzyModeKeyDown` handling typing here might be REDUNDANT or CONFLICTING if `FuzzyFinder` also does it.
-    // Let's check `FuzzyFinder` implementation?
-    // I can't see it now. But usually if an input is focused, we don't want global handler to process keys unless `captureInput` is true.
-    // Priority 0 handlers usually run if nothing else caught it.
-    // If `FuzzyFinder` input has focus, it consumes keys.
-    // So this typing logic here is likely for when focus is lost or if `FuzzyFinder` relies on global input?
-    // I'll keep it but use `preventDefault` to be safe, assuming it's needed.
-    // Actually, `App.tsx` shows `FuzzyFinder` is rendered.
-    // If `FuzzyFinder` uses an `<input autoFocus>`, that input will receive events.
-    // If `handleFuzzyModeKeyDown` is called, it means the event bubbled or was captured.
-    // I will stick to what was there but use correct actions.
-
-    // e.preventDefault(); // Original didn't prevent default for typing?
-    // "const newVal = gameState.inputBuffer + e.key;"
-
     const newVal = (gameState.inputBuffer || '') + e.key;
+    console.log(`FUZZY_MODE: Typing. New buffer: "${newVal}"`);
     dispatch({ type: 'SET_INPUT_BUFFER', buffer: newVal });
     dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
     return;

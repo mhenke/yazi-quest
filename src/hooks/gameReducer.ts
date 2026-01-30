@@ -25,7 +25,7 @@ export type ModalId =
 
 export type Action =
   | { type: 'SET_MODE'; mode: GameState['mode'] }
-  | { type: 'NAVIGATE'; path: string[] }
+  | { type: 'NAVIGATE'; path: string[]; cursorIndex?: number }
   | { type: 'NAVIGATE_BACK' }
   | { type: 'NAVIGATE_FORWARD' }
   | { type: 'SET_CURSOR'; index: number }
@@ -165,14 +165,19 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return newState;
     }
 
-    case 'NAVIGATE':
+    case 'NAVIGATE': {
+      const { path, cursorIndex } = action;
+      const nextHistory = [...state.history, state.currentPath];
       return {
         ...state,
-        currentPath: action.path,
-        cursorIndex: 0,
-        history: [...state.history, state.currentPath],
+        currentPath: path,
+        history: nextHistory,
         future: [],
+        cursorIndex: cursorIndex ?? 0,
+        searchResults: [],
+        searchQuery: null,
       };
+    }
 
     case 'NAVIGATE_BACK': {
       if (state.history.length === 0) return state;
@@ -572,7 +577,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       else if (newThreat < 80) newStatus = 'TRACING';
       else newStatus = 'BREACH';
 
-      return { ...state, threatLevel: newThreat, threatStatus: newStatus };
+      return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
     }
 
     case 'COMPLETE_TASK': {

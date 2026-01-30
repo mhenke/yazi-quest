@@ -21,6 +21,7 @@ import { sortNodes } from './utils/sortHelpers';
 import { isValidZoxideData } from './utils/validation';
 import { getVisibleItems, getRecursiveSearchResults, getFilterRegex } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
+import { CodropsGlitchSVG } from './components/CodropsGlitchSVG';
 import { checkAllTasksComplete } from './utils/gameUtils';
 // eslint-disable-next-line import/no-named-as-default
 import StatusBar from './components/StatusBar';
@@ -987,14 +988,29 @@ export default function App() {
         if (pathIds) {
           const parentPath = pathIds.slice(0, -1);
           const fileId = pathIds[pathIds.length - 1];
-          dispatch({ type: 'NAVIGATE', path: parentPath });
+
+          // Find the index of the file in the parent directory
+          // Find the index of the file in the parent directory, respecting current sort
+          const parentNode = getNodeByPath(gameState.fs, parentPath);
+          let cursorIndex = 0;
+          if (parentNode?.children) {
+            const sortedNodes = sortNodes(
+              parentNode.children,
+              gameState.sortBy,
+              gameState.sortDirection
+            );
+            cursorIndex = sortedNodes.findIndex((n) => n.id === fileId);
+            if (cursorIndex === -1) cursorIndex = 0;
+          }
+
+          dispatch({ type: 'NAVIGATE', path: parentPath, cursorIndex });
           dispatch({ type: 'SET_SELECTION', ids: [fileId] });
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
         }
       }
     },
-    [gameState.fs, gameState.levelIndex, dispatch]
+    [gameState.fs, gameState.levelIndex, gameState.sortBy, gameState.sortDirection, dispatch]
   );
 
   // Global Key Down Handler (Refactored to useGlobalInput)
@@ -1412,7 +1428,13 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative">
+    <div
+      className={`flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative ${
+        gameState.mode === 'auto-fix' ? 'animate-glitch' : ''
+      }`}
+      style={gameState.mode === 'auto-fix' ? { filter: 'url(#codrops-glitch)' } : {}}
+    >
+      <CodropsGlitchSVG />
       {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
         <EpisodeIntro
           episode={(() => {

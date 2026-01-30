@@ -41,71 +41,33 @@ export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
   return 1;
 };
 
-// Helper to check for active filter in the current directory and block navigation
-export const checkFilterAndBlockNavigation = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  allTasksComplete: boolean
-): boolean => {
-  if (!allTasksComplete) return false;
+// Helper to check for active filter in the current directory
+export const hasFilterViolation = (gameState: GameState): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-  if (currentDirNode && gameState.filters[currentDirNode.id]) {
-    e.preventDefault();
-    dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
-    return true; // Navigation blocked
-  }
-  return false; // Navigation allowed
+  return !!(currentDirNode && gameState.filters[currentDirNode.id]);
 };
 
-export const checkSearchAndBlockNavigation = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  allTasksComplete: boolean
-): boolean => {
-  if (!allTasksComplete) return false;
-  if (gameState.searchQuery && gameState.searchResults.length > 0) {
-    e.preventDefault();
-    dispatch({ type: 'SET_MODE', mode: 'search-warning' });
-    return true; // Navigation blocked
-  }
-  return false; // Navigation allowed
+// Helper to check for active search results
+export const hasSearchViolation = (gameState: GameState): boolean => {
+  return !!(gameState.searchQuery && gameState.searchResults.length > 0);
 };
 
-export const checkSortAndBlockNavigation = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  allTasksComplete: boolean
-): boolean => {
-  if (!allTasksComplete) return false;
-  if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-    e.preventDefault();
-    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
-    return true; // Navigation blocked
-  }
-  return false; // Navigation allowed
+// Helper to check for custom sort
+export const hasSortViolation = (gameState: GameState): boolean => {
+  return gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc';
 };
 
-export const checkHiddenAndBlockNavigation = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  allTasksComplete: boolean
-): boolean => {
-  if (!allTasksComplete) return false;
-  if (gameState.showHidden) {
-    e.preventDefault();
-    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });
-    return true; // Navigation blocked
-  }
-  return false; // Navigation allowed
+// Helper to check for hidden files visible
+export const hasHiddenViolation = (gameState: GameState): boolean => {
+  return gameState.showHidden;
 };
 
 /**
  * Unified protocol violation check for navigation.
  * Order of priority: Filter > Search > Sort > Hidden
+ *
+ * If tasks are NOT complete: Blocks and shows warning modal.
+ * If tasks ARE complete: Triggers auto-fix and blocks one press.
  */
 export const checkProtocolViolations = (
   e: KeyboardEvent,
@@ -113,9 +75,58 @@ export const checkProtocolViolations = (
   dispatch: React.Dispatch<Action>,
   allTasksComplete: boolean
 ): boolean => {
-  if (checkFilterAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
-  if (checkSearchAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
-  if (checkSortAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
-  if (checkHiddenAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
-  return false;
+  const filter = hasFilterViolation(gameState);
+  const search = hasSearchViolation(gameState);
+  const sort = hasSortViolation(gameState);
+  const hidden = hasHiddenViolation(gameState);
+
+  if (!filter && !search && !sort && !hidden) return false;
+
+  e.preventDefault();
+
+  if (allTasksComplete) {
+    // AUTO-FIX LOGIC
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: 'PROTOCOL BREACH DETECTED: AUTO-CORRECTING...',
+      duration: 3000,
+    });
+    // Trigger the glitch effect in App.tsx via a dedicated action or mode
+    dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
+
+    // Clear all violations
+    if (filter) {
+      const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+      if (currentDirNode) dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
+    }
+    if (search) {
+      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+    }
+    if (sort) {
+      dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
+    }
+    if (hidden) {
+      dispatch({ type: 'TOGGLE_HIDDEN' });
+    }
+
+    // After a delay, return to normal mode (the pulse/glitch effect)
+    setTimeout(() => {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+    }, 1000);
+
+    return true; // Navigation blocked for this press
+  }
+
+  // STANDARD WARNING MODALS (During tasks)
+  if (filter) {
+    dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
+  } else if (search) {
+    dispatch({ type: 'SET_MODE', mode: 'search-warning' });
+  } else if (sort) {
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
+  } else if (hidden) {
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });
+  }
+
+  return true;
 };

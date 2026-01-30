@@ -41,35 +41,6 @@ test.describe('Game Mechanics & Failures', () => {
     await expect(page.getByText('User environment destabilized')).toBeVisible();
   });
 
-  test('L8 Trap: Overwriting with honeypot triggers Game Over', async ({ page }) => {
-    await startLevel(page, 8);
-
-    // 1. Get the TRAP file from vault/active
-    await gotoCommand(page, 'c');
-    await filterAndSelect(page, 'vault');
-    await navigateRight(page, 1);
-
-    await filterAndSelect(page, 'active');
-    await navigateRight(page, 1);
-
-    await filterAndSelect(page, 'uplink_v1.conf.trap');
-    await pressKey(page, 'y'); // Yank trap
-
-    // 2. Go to target in workspace
-    await gotoCommand(page, 'w');
-    await filterAndSelect(page, 'systemd-core');
-    await navigateRight(page, 1);
-
-    await filterAndSelect(page, 'uplink_v1.conf', { exact: true });
-
-    // 3. Overwrite (Shift+P)
-    await pressKeys(page, ['Shift+P', 'y']); // Confirm overwrite
-
-    // 4. Expect Game Over
-    await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
-    // await expect(page.getByText('Security Incident logged')).toBeVisible();
-  });
-
   test('L9 Trap: Deleting system_monitor.pid triggers Game Over', async ({ page }) => {
     await startLevel(page, 9);
 

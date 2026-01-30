@@ -371,18 +371,6 @@ export const applyFileSystemMutations = (
         datastore.children.push(protocols);
       }
 
-      // Ensure specific files exist in protocols for later levels
-      if (!protocols.children?.find((c) => c.name === 'security_policy_v1.1.draft')) {
-        if (!protocols.children) protocols.children = [];
-        protocols.children.push({
-          id: 'lvl5-policy-update-prereq',
-          name: 'security_policy_v1.1.draft',
-          type: 'file',
-          content: SECURITY_POLICY_CONTENT,
-          parentId: protocols.id,
-          modifiedAt: BASE_TIME - 3 * day,
-        });
-      }
       if (!protocols.children?.find((c) => c.name === 'uplink_v1.conf')) {
         if (!protocols.children) protocols.children = [];
         protocols.children.push({
@@ -802,16 +790,6 @@ export const applyFileSystemMutations = (
     const datastore = getNodeById(newFs, 'datastore');
     const protocols = datastore?.children?.find((c) => c.name === 'protocols');
     if (protocols?.children) {
-      if (!protocols.children.find((c) => c.name === 'security_policy_v1.1.draft')) {
-        protocols.children.push({
-          id: 'lvl5-policy-update',
-          name: 'security_policy_v1.1.draft',
-          type: 'file',
-          content: SECURITY_POLICY_DRAFT_CONTENT,
-          parentId: protocols.id,
-          modifiedAt: BASE_TIME - 3 * day,
-        });
-      }
       protocols.children = protocols.children.map((c) => {
         if (c.name === 'uplink_v1.conf')
           return { ...c, content: UPLINK_V1_CONTENT, modifiedAt: BASE_TIME - 10 * day };
@@ -3002,6 +2980,21 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
                   type: 'file',
                   content:
                     'From: mreyes@lab.internal\nDate: 2025-11-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
+                },
+                {
+                  id: 'mreyes-email-5',
+                  name: '2015-05-30-quarantine-draft.eml',
+                  type: 'file',
+                  content: `From: mreyes@lab.internal
+Date: 2015-05-30 08:30
+To: Team
+Subject: DRAFT: Sector 7 Quarantine Protocols (UPDATE v1.1)
+
+Watchdog v1.1 (Heuristic) deployment confirmed. 
+Instruction Guard (IG) active on partition root. 
+Legacy protocols are being deprecated. 
+
+- Mark Reyes, Security Engineer`,
                 },
               ],
             },

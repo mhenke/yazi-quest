@@ -130,22 +130,28 @@ export const getRecursiveSearchResults = (
   showHidden: boolean = false,
   startPath: string[] = ['root']
 ): FileNode[] => {
-  if (!query || !rootNode) return [];
-
+  console.log('SEARCH DEBUG:', { query, rootNodeName: rootNode.name, startPath, showHidden });
   const regex = getFilterRegex(query);
+  console.log('SEARCH REGEX:', regex);
   if (!regex) return [];
 
   const startNode = getNodeByPath(rootNode, startPath);
+  console.log('SEARCH START NODE:', startNode?.name);
   if (!startNode) return [];
 
   const allDescendants = getAllFiles(startNode, '', startPath);
+  console.log('SEARCH TOTAL DESCENDANTS:', allDescendants.length);
 
   const results = allDescendants
     .filter((item) => {
       if (!showHidden && item.node.name.startsWith('.')) {
         return false;
       }
-      return regex.test(item.displayPath);
+      const matched = regex.test(item.displayPath);
+      if (item.node.name.endsWith('.log')) {
+        // console.log('LOG MATCH CHECK:', { path: item.displayPath, matched });
+      }
+      return matched;
     })
     .map((item) => ({
       ...item.node,
@@ -153,5 +159,6 @@ export const getRecursiveSearchResults = (
       path: item.path,
     }));
 
+  console.log('SEARCH RESULTS COUNT:', results.length);
   return results;
 };

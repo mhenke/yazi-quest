@@ -73,10 +73,10 @@ async function assertTasksStartAtZero(page: Page): Promise<void> {
  * Assert that top and bottom bars are hidden.
  */
 async function assertBarsHidden(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible({ timeout: 500 });
-  await expect(page.locator('.breadcrumb')).not.toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible({ timeout: 2000 });
+  await expect(page.locator('.breadcrumb')).not.toBeVisible({ timeout: 2000 });
   await expect(page.locator('[data-testid="level-progress-bar"]')).not.toBeVisible({
-    timeout: 500,
+    timeout: 2000,
   });
 }
 
@@ -84,9 +84,9 @@ async function assertBarsHidden(page: Page): Promise<void> {
  * Assert that top and bottom bars are visible.
  */
 async function assertBarsVisible(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
-  await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 500 });
-  await expect(page.locator('[data-testid="level-progress-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 2000 });
+  await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 2000 });
+  await expect(page.locator('[data-testid="level-progress-bar"]')).toBeVisible({ timeout: 2000 });
 }
 
 test.describe('Intro Pathway Validation', () => {

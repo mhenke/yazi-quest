@@ -136,7 +136,7 @@ test.describe('Episode 3: MASTERY', () => {
     await navigateDown(page, 1);
     await navigateRight(page, 1); // Enter daemons
     await pressKey(page, '.'); // Show hidden
-    await search(page, '\\\\.service$');
+    await search(page, '\\.service$');
     // Wait for search results to populate
     await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(2);
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
@@ -207,7 +207,7 @@ test.describe('Episode 3: MASTERY', () => {
     await clearFilter(page);
 
     await pressKey(page, '.'); // Show hidden
-    await search(page, '\\\\.key$');
+    await search(page, '\\.key$');
     await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3);
 

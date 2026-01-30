@@ -153,7 +153,8 @@ export interface GameState {
     | 'g-command'
     | 'z-prompt'
     | 'filter-warning'
-    | 'search-warning';
+    | 'search-warning'
+    | 'auto-fix';
   inputBuffer: string; // for typing filenames or search queries
   filters: Record<string, string>; // Directory-based filters map: dirId -> filterString
   sortBy: SortBy; // Global sticky sort setting
