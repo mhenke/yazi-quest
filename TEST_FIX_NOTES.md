@@ -140,6 +140,29 @@ This document contains a set of rules and patterns for diagnosing and fixing E2E
 - **DO** explicitly call `await dismissAlertIfPresent(page, /Protocol Violation/i)` in the test script immediately before the final wait.
 - **AVOID** relying on a single, blind `Shift+Enter` or hoping the `waitFor` utility will handle it.
 
+### Rule 2.5: Investigate silent errors before increasing timeouts.
+
+- **IF** a test fails because an element does not become visible, and increasing the timeout does not help.
+- **THEN** the timeout is a **red herring**. The true cause is likely a silent JavaScript error that occurs during a React re-render, which halts rendering and prevents the UI from ever appearing.
+- **DO** modify the failing test to capture browser console output and inspect it for uncaught exceptions.
+- **AVOID** reflexively increasing timeouts. Treat a timeout failure as a potential symptom of a runtime error.
+- **EXAMPLE**:
+
+  ```typescript
+  test('UI Bar Visibility', async ({ page }) => {
+    const messages: string[] = [];
+    page.on('console', (msg) => messages.push(msg.text()));
+
+    // ... test steps that lead to the failure ...
+
+    // Before the failing assertion, save the logs for inspection
+    const fs = require('fs');
+    fs.writeFileSync('console.log', messages.join('\n'));
+
+    await expect(page.getByTestId('status-bar')).toBeVisible();
+  });
+  ```
+
 ---
 
 ## 3. State Management & Game Logic
@@ -198,6 +221,13 @@ This document contains a set of rules and patterns for diagnosing and fixing E2E
 - **THEN** background network traffic is preventing `networkidle` from resolving reliably.
 - **DO** use `domcontentloaded` as the wait strategy, which is faster and less brittle. Follow it with assertions that wait for specific UI elements to appear.
 - **AVOID** `networkidle`.
+
+### Rule 4.4: Test validity requirement
+
+- **IF** running any test for validation or CI purposes.
+- **THEN** the test must be run with a non-interactive reporter to ensure proper termination.
+- **DO** use `--reporter=list` or similar non-interactive reporter when running tests. Example: `npm run test:e2e -- --reporter=list`
+- **AVOID** running tests without specifying a reporter, as this can lead to hanging processes and invalid results.
 
 ---
 

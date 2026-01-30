@@ -149,6 +149,7 @@ Key principles:
 
 - **Development Server**: The Vite dev server runs on `http://localhost:3000`. Assume it is already running before executing tests.
 - **Testing**: When running Playwright tests, use a non-interactive reporter (e.g., `list`) to ensure the command terminates upon completion. Example: `npm run test:e2e -- --reporter=list`.
+- **Test Validity**: Any test run without `--reporter=list` is considered invalid and should not be run in CI or for validation purposes.
 
 ## Codebase Navigation
 

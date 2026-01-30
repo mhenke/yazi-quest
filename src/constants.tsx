@@ -450,17 +450,6 @@ export const applyFileSystemMutations = (
           modifiedAt: BASE_TIME - 5 * day,
         });
       }
-      if (!active.children?.find((f) => f.name === 'uplink_v1.conf.trap')) {
-        if (!active.children) active.children = [];
-        active.children.push({
-          id: 'uplink-v1-trap-prereq-lvl5',
-          name: 'uplink_v1.conf.trap',
-          type: 'file',
-          content: UPLINK_TRAP_CONTENT,
-          parentId: active.id,
-          modifiedAt: BASE_TIME - 5 * day,
-        });
-      }
       if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
         if (!active.children) active.children = [];
         active.children.push({

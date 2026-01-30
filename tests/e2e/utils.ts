@@ -154,8 +154,7 @@ export async function addItem(page: Page, name: string): Promise<void> {
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(DEFAULT_DELAY);
-  await expect(modal).not.toBeVisible();
+  await expect(modal).not.toBeVisible({ timeout: 2000 }); // Wait for modal to disappear
 }
 
 /**
@@ -196,8 +195,7 @@ export async function renameItem(page: Page, name: string): Promise<void> {
   await input.focus();
   await input.fill(name);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(DEFAULT_DELAY);
-  await expect(modal).not.toBeVisible();
+  await expect(modal).not.toBeVisible({ timeout: 2000 }); // Wait for modal to disappear
 }
 
 /**
@@ -218,6 +216,7 @@ export async function deleteItem(
     const modal = page.locator('[role="alertdialog"]').first();
     await expect(modal).toBeVisible({ timeout: 1000 });
     await pressKey(page, 'y');
+    await expect(modal).not.toBeVisible({ timeout: 2000 }); // Wait for modal to disappear
   }
 }
 
