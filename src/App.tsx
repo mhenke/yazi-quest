@@ -1175,6 +1175,8 @@ export default function App() {
           // Note: Logic above in useEffect sets showHiddenWarning=false.
           // If we want to hide files too:
           if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
+          // After auto-fix, advance to next level
+          advanceLevel();
         } else {
           dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
         }
@@ -1200,6 +1202,8 @@ export default function App() {
           }
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+          // After auto-fix, advance to next level
+          advanceLevel();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1226,6 +1230,8 @@ export default function App() {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SEARCH', query: null, results: [] });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+          // After auto-fix, advance to next level
+          advanceLevel();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1253,6 +1259,8 @@ export default function App() {
           dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+          // After auto-fix, advance to next level
+          advanceLevel();
         } else {
           dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
           dispatch({ type: 'SET_MODE', mode: 'normal' });

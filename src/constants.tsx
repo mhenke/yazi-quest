@@ -4125,7 +4125,20 @@ export const LEVELS: Level[] = [
         id: 'recursive-search',
         description:
           'Pattern sweep for log signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then enter)',
-        check: (c) => c.usedSearch,
+        check: (c) => {
+          // Check that we're in the batch_logs directory and have search results
+          const batchLogsNode = getNodeById(c.fs, 'batch_logs');
+          const isInBatchLogs = c.currentPath.includes(batchLogsNode?.id || '');
+          const hasCorrectSearchResults = c.searchResults && c.searchResults.length >= 4;
+          // Check that search is active (results are displayed in the UI)
+          const isSearchActive = c.searchQuery !== null && c.searchResults.length > 0;
+          return (
+            isInBatchLogs &&
+            hasCorrectSearchResults &&
+            c.searchQuery === '\\.log$' &&
+            isSearchActive
+          );
+        },
         completed: false,
       },
       {
@@ -4143,7 +4156,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'goto-config-vault',
-        description: 'Construct `training_data/` vault node in `~/.config/vault/` (a)',
+        description: 'Construct `training_data/` vault node in `~/.config/vault/` (gc, a)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');

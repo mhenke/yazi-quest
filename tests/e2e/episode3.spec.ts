@@ -518,6 +518,9 @@ test.describe('Episode 3: MASTERY', () => {
       // Wait for the mission complete dialog to appear
       await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
 
+      // Wait for the mission complete dialog to appear
+      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
+
       // Use Shift+Enter to advance to the next level
       await page.keyboard.press('Shift+Enter');
 

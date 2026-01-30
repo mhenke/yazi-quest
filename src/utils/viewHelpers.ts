@@ -102,6 +102,27 @@ export const activeFilterMatches = (
  * Searches all files in the given directory and its subdirectories.
  * Returns flattened array of matching FileNodes with displayPath for full relative paths.
  */
+const getAllFiles = (
+  node: FileNode,
+  pathPrefix: string,
+  idPath: string[]
+): { node: FileNode; displayPath: string; path: string[] }[] => {
+  let files: { node: FileNode; displayPath: string; path: string[] }[] = [];
+
+  if (node.children) {
+    for (const child of node.children) {
+      const newDisplayPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+      const newIdPath = [...idPath, child.id];
+      files.push({ node: child, displayPath: newDisplayPath, path: newIdPath });
+
+      if (child.children) {
+        files = files.concat(getAllFiles(child, newDisplayPath, newIdPath));
+      }
+    }
+  }
+  return files;
+};
+
 export const getRecursiveSearchResults = (
   rootNode: FileNode,
   query: string,
@@ -110,35 +131,26 @@ export const getRecursiveSearchResults = (
 ): FileNode[] => {
   if (!query || !rootNode) return [];
 
-  const results: FileNode[] = [];
   const regex = getFilterRegex(query);
   if (!regex) return [];
 
   const startNode = getNodeByPath(rootNode, startPath);
   if (!startNode) return [];
 
-  const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
-    if (!node.children) return;
+  const allDescendants = getAllFiles(startNode, '', startPath);
 
-    for (const child of node.children) {
-      if (!showHidden && child.name.startsWith('.')) continue;
-
-      const newDisplayPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
-      const newIdPath = [...idPath, child.id];
-
-      // If the child's name matches, add it to results.
-      if (regex.test(child.name)) {
-        results.push({ ...child, displayPath: newDisplayPath, path: newIdPath });
+  const results = allDescendants
+    .filter((item) => {
+      if (!showHidden && item.node.name.startsWith('.')) {
+        return false;
       }
+      return regex.test(item.node.name);
+    })
+    .map((item) => ({
+      ...item.node,
+      displayPath: item.displayPath,
+      path: item.path,
+    }));
 
-      // ALWAYS recurse into directories, regardless of name match.
-      if (child.type === 'dir' || child.type === 'archive') {
-        searchRecursive(child, newDisplayPath, newIdPath);
-      }
-    }
-  };
-
-  // Start the search from the specified startNode.
-  searchRecursive(startNode, '', startPath);
   return results;
 };

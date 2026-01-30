@@ -1,346 +1,238 @@
-Test Failure Patterns & Anti-Patterns
-Documenting common pitfalls and patterns observed while fixing E2E tests for Yazi Quest.
+# Yazi Quest E2E Test Debugging Playbook
 
-1. Locator Fragility (DOM Flattening)
-   Symptom: element(s) not found when using chained getByText. Cause: Refactoring often flattens component structures.
+This document contains a set of rules and patterns for diagnosing and fixing E2E tests. Each rule is formatted as an actionable instruction for a developer or AI assistant.
 
-Before: <div data-testid="parent"><span>Text</span></div>
-After: <div data-testid="parent">Text</div> Fix: Avoid chaining getByText on a getByTestId if checking content.
-❌
+---
 
-expect(page.getByTestId('foo').getByText(/bar/)).toBeVisible()
-✅
+## 1. Locator & Selector Strategies
 
-expect(page.getByTestId('foo')).toHaveText(/bar/) 2. Text Content Assumptions (Case Sensitivity)
-Symptom: element(s) not found for text locators. Cause: UI changes to uppercase styling (CSS uppercase) or text rewrites.
+### Rule 1.1: Prefer `data-testid` for exact matches.
 
-Issue: Locator getByText('Watchdog:') fails against WATCHDOG or Watchdog. Fix: Use case-insensitive regex without strict punctuation unless necessary.
-❌ getByText('Watchdog:')
-✅ getByText(/WATCHDOG/i) 3. Strict Mode Violations
-Symptom: strict mode violation: resolved to 2 elements. Cause: Generic terms appearing in multiple context (e.g., "WATCHDOG" in the status bar AND in the intro narrative or logs). Fix:
-
-specific attributes: getByTestId('status-bar').getByText(...)
-.first() if the first occurrence is consistently the target.
-✅ getByText(/WATCHDOG/i).first() 4. Narrative Context Changes
-Symptom: Expectation mismatch on Game Over screens. Cause: Game logic changes strings based on Level ID (Context-Aware).
-
-Issue: Level 11 shows "IG KERNEL PANIC" instead of "HEURISTIC ANALYSIS COMPLETE". Fix: Check
-
-constants.tsx
-or component logic (
-
-GameOverModal.tsx
-) for level-specific conditional rendering. Do not assume strings are static literals across the entire game. 5. Task Logic Race Conditions
-Symptom: Test expected 3/5 tasks, but got 4/5. Cause: Efficient test actions (automating input) can trigger multiple completion conditions faster than the game UI updates, or sequentially complete dependent tasks in one "tick" of the test logic.
-
-Issue: "Select file" (Task A) + "Inspect file" (Task B). Doing both quickly means you never see the state where only Task A is done. Fix: Update test expectations to match the "bundled" state changes, or add delays if checking intermediate states is critical.
-
-6. Navigation Fragility (Sort Order Assumptions)
-   Symptom: Test fails to enter directory or opens wrong file. Cause: Using blind navigation (navigateRight(1) / 'l') assuming a specific sort order (e.g., "systemd-core" is first). If other files (like "notes.txt") sort alphabetically before it, the test fails.
-
-Issue: 'workspace/' contains 'notes.txt' and 'systemd-core'. 'notes.txt' comes first in 'natural' sort (n < s).
-Fix: Use robust navigation like enterDirectory('name') which uses explicit filtering to ensure the correct item is targeted regardless of sort order.
-❌ await gotoCommand(page, 'w'); await navigateRight(page, 1);
-✅ await gotoCommand(page, 'w'); await enterDirectory(page, 'systemd-core');
-
-7. Missing Initial Filesystem Artifacts
-   Symptom: Element(s) not found when tests expect specific files/directories to exist. Cause: Files or directories required for specific levels are not present in the initial filesystem state or are dynamically created only when entering specific levels.
-
-Issue: Tests for Level 8 fail because '~/workspace/systemd-core' doesn't exist when jumping directly to the level. Similarly, Level 9 tests fail because 'system_monitor.pid' is not in '/tmp' when expected.
-Fix: Ensure critical files/directories are present in the initial filesystem (INITIAL_FS) and marked as 'protected: true' to prevent accidental deletion. Remove dynamic creation logic from 'onEnter' functions when no longer needed.
-
-- Add required directories/files to INITIAL_FS in constants.tsx
-- Mark them as 'protected: true' to prevent user modification
-- Remove redundant creation logic from level 'onEnter' functions
-- Update ensurePrerequisiteState to not recreate files already in initial FS
-
-8. Honeypot Alert Precedence
-   Symptom: Selective guidance thoughts (from `useKeyboardHandlers`) are blocked by modal alerts (from `App.tsx`). Cause: Level-specific selection logic in `App.tsx` may trigger a `ThreatAlert` modal that traps focus/interaction before the narrative logic executes.
-
-Issue: In Level 11, selecting a honeypot triggers a `ThreatAlert`. Test expectations for `expectNarrativeThought` fail because the alert prevents the final "cut/yank" action, or because the modal obscures the guidance.
-Fix: Ensure tests handle and dismiss required alerts (`dismissAlertIfPresent`) before checking for narrative guidance. Align `App.tsx` global checks with specific episode narrative goals.
-
-9. Z-Index Interference with Modal Backdrop Clicks
-   Symptom: Modal backdrop clicks fail to close modals even though the modal is visible. Cause: Elements with higher z-index values intercept pointer events intended for modal backdrops.
-
-Issue: LevelProgress component has a persistent header with z-[100] which is higher than modal backdrops (z-[95]). When trying to click on modal backdrops (HelpModal or QuestMapModal), clicks are intercepted by the LevelProgress header.
-❌ await page.locator('[data-testid="help-modal"]').click({ position: { x: 10, y: 10 } });
-❌ await page.mouse.click(10, 10); // Still intercepted by higher z-index elements
-✅ await page.keyboard.press('Escape'); // Use keyboard shortcut instead of clicking backdrop
-✅ await page.keyboard.press('Shift+Enter'); // Alternative keyboard shortcut
-
-10. Regex Safety in Filter Implementation
-    Symptom: ESLint security warnings for non-literal arguments to RegExp constructor. Cause: Direct user input passed to RegExp without validation creates potential ReDoS or injection vulnerabilities.
-
-Issue: Using `new RegExp(filter, 'i')` with user-provided filter patterns triggers security/detect-non-literal-regexp warnings.
-Fix: Implement safety validation to ensure only safe regex patterns are processed: - Validate pattern contains only safe characters: `/^[\w().|$^[\]*+?{} ]+$/i` - Use try/catch blocks to handle invalid regex gracefully - Fall back to simple substring matching for unsafe patterns - Maintain functionality while preventing security vulnerabilities
-
-✅ // Safe implementation:
-const isSafeRegex = /^[\w().|$^[\]*+?{} ]+$/i.test(filter);
-if (isSafeRegex) {
-try {
-const regex = new RegExp(filter, 'i');
-// Process with regex
-} catch {
-// Fallback to substring matching
-}
-} else {
-// Use substring matching for unsafe patterns
-}
-
-11. Missing Prerequisite Logic in Level Definitions
-    Symptom: Navigation commands (gw) seem to fail or stay at root. Cause: The target level's `onEnter` hook failed to call `ensurePrerequisiteState`, leaving the filesystem incomplete (missing directories like `systemd-core`).
-
-    Issue: Level 8 expected `~/workspace/systemd-core` but didn't initialize it because `onEnter` only created `daemons`.
-    Fix: Always call `ensurePrerequisiteState(fs, CURRENT_LEVEL)` in `onEnter` and ensure `ensurePrerequisiteState` covers the specific level's requirements (e.g. `if (targetLevelId >= 8)`).
-
-    ✅
-    onEnter: (fs) => {
-    let newFs = ensurePrerequisiteState(fs, 8); // Added call
-    // ...
-    }
-
-12. Missing Action Flags in State Updates
-    Symptom: Task check requiring `c.usedD` or `c.usedP` fails even if the action is performed. Cause: The handler function (e.g., `confirmDelete`) updates the filesystem but forgets to set the tracking flag in `GameState`.
-
-    Issue: Level 9 deleted junk files successfully but failed completion because `usedD` was false.
-    Fix: Ensure all significant actions update their corresponding tracking flags in `setGameState`.
-
-    ✅ usedD: true, // in confirmDelete
-
-13. Incomplete Selection in Inversion Tests
-    Symptom: "Delete Junk" tasks fail because valid files are deleted. Cause: When using "Select Keepers -> Invert -> Delete Junk" pattern, the test must select ALL keepers. If one is missed, Invert leaves it unselected (junk), and it gets deleted.
-
-    Issue: Level 9 test missed `access_token.key`. Invert treated it as junk. It was deleted. Check failed.
-    Fix: Verify the full list of "Files to Keep" and ensure the test selects them all before inverting.
-
-14. Literal Character Escaping in Search/Filter Patterns
-    Symptom: Search or filter returns more results than expected (e.g., 13 items instead of 1). Cause: The game treats search/filter input as regex patterns, so literal characters like periods (.) are interpreted as wildcards matching any character.
-
-    Issue: Searching for '.identity.log.enc' matches files like 'aidentityblogcenc' because periods match any character.
-    Fix: Escape literal periods with backslashes when using search/filter functionality in tests.
-
-    ❌ await typeText(page, '.identity.log.enc'); // Periods match any character
-    ✅ await typeText(page, '\\.identity\\.log\\.enc'); // Periods are literal
-
-15. Search Results vs Directory View Task Completion
-    Symptom: Task completion fails even when target file is found via recursive search. Cause: Task completion logic checks game state against actual directory path, not search results view.
-
-    Issue: Using 's' (recursive search) finds the file but task doesn't complete because the game state isn't in the target directory.
-    Fix: Either use direct navigation to the target directory or ensure the task completion logic works with search results context.
-
-    ❌ // Using recursive search for task that requires being in specific directory
-    await pressKey(page, 's');
-    await typeText(page, 'target-file.txt');
-    await pressKey(page, 'Enter');
-    ✅ // Direct navigation to the directory containing the file
-    await gotoCommand(page, 'w'); // Go to workspace
-    await enterDirectory(page, 'subdir'); // Navigate to specific directory
-
-16. Deterministic Scenario Forcing via URL Params
-    Symptom: Level 12 tests fail inconsistently due to unexpected scenario activation.
-    Cause: E2E tests for multi-scenario levels rely on specific state, but the game might prioritize saved session flags over URL parameters.
-    Fix: In `constants.tsx`, ensure that manually passed URL parameters (`?scenario=scen-x`) always override `gameState` flags in onEnter/logic initializers.
-
-17. Ghost Entries and Selection Loops
-    Symptom: "Delete All" tasks fail because one matching instance of a file/dir remains.
-    Cause: Bugs in virtual filesystem logic can cause duplicate entries. A single `filterAndSelect` targets only one.
-    Fix: Use a counting loop in tests to detect and select _all_ matching elements (`data-testid^="file-..."`) before performing batch actions like Delete or Cut.
-
-18. Auto-Dismissal of "Security" Modals in Missions
-    Symptom: `waitForMissionComplete` timeouts because a "Protocol Violation" or "Security Alert" modal blocks the success screen.
-    Cause: Final game actions (like exfiltrating core data) often trigger security alerts simultaneously with mission success.
-    Fix: Update `waitForMissionComplete` to detect and dismiss (e.g. `page.keyboard.press('Shift+Enter')`) these modals if they appear during the wait window.
-
-19. Removal of Unreliable Scroll Requirements
-    Symptom: "Read File" tasks fail despite automated scrolling in the test.
-    Cause: `previewScroll` depth thresholds (e.g. `>= 25`) are brittle for short content or different viewport resolutions.
-    Fix: Remove numeric scroll requirements from completion checks in `constants.tsx` and rely on cursor placement as the primary completion trigger for stable E2E tests.
-
-20. Synthetic Events vs Native Keyboard Press in Inputs
-    Symptom: Tests fail to clear input fields using Ctrl+A + Backspace, resulting in appended text (e.g. "uplink_v1.confuplink_v2.conf") instead of replacement.
-    Cause: Synthetic events dispatching `Ctrl+A` or `Meta+A` do not trigger the browser's native "Select All" behavior in input fields for security/sandboxing reasons.
-
-    Issue: `pressKey(page, 'Ctrl+A')` dispatches a window event but doesn't select input text.
-    Fix: Use Playwright's native `page.keyboard.press('Control+A')` which correctly simulates the hardware interaction.
-
-    ❌ await pressKey(page, 'Ctrl+A'); // Synthetic dispatch
-    ✅ await page.keyboard.press('Control+A'); // Native Playwright event
-
-21. Flaky Search Input Interaction
-    Symptom: Tests fail to type search queries correctly, often typing into the void or missing characters, causing "Search returning too many items" or "Item not found" errors.
-    Cause: Tests assume the search input modal opens instantly after pressing 's', but rendering delays or race conditions can cause `typeText` to execute before focus is ready.
-    Issue: `await pressKey(page, 's'); await typeText(page, 'identity');` fails if modal isn't ready.
-    Fix: Explicitly assert visibility of the input modal before typing.
-
-    ❌ await pressKey(page, 's'); await typeText(page, 'identity');
-    ✅ await pressKey(page, 's'); await expect(page.getByTestId('input-modal')).toBeVisible(); await typeText(page, 'identity');
-
-22. Insufficient Scroll for "Read File" Tasks
-    Symptom: Tasks requiring "reading" a file (scrolling to the bottom) fail completion checks.
-    Cause: The logical definition of "read" (e.g. `c.previewScroll >= 25`) might require more keystrokes than assumed, depending on the scroll increment per key press.
-    Issue: Loop pressing `Shift+J` 10 times wasn't reaching the required scroll depth.
-    Fix: Calculate the required iterations conservatively (e.g. increase to 15) and add minor delays to ensure the UI updates the scroll state between keypresses.
-
-23. Missing State Updates in Action Handlers
-    Symptom: Game logic checks for flags like `usedD` (Delete) or `usedP` (Paste) to verify task completion, but the test fails even after performing the action.
-    Cause: The internal game hook might perform the file operation (updating FS) but fail to set the auxiliary state flag.
-    Issue: `Level 14` require `usedD` for completion.
-    Fix: Audit the action handlers (e.g. `confirmDelete` in `useKeyboardHandlers.ts`) to ensure they set the relevant state flags upon success.
-
-24. Aggressive Timeouts on Final State Transitions
-    Symptom: "Timeout waiting for mission complete" failures even when the mission seems to finish.
-    Cause: Using `Promise.race` with a short, hardcoded timeout (e.g., 500ms) for critical transitions like "Mission Complete" is flaky on slower CI/local environments.
-    Issue: `toBeVisible({ timeout: 500 })` is too aggressive for a major UI state change.
-    Fix: Rely on Playwright's default timeout (usually 5s-30s) or use a standard `DEFAULT_DELAY` constant, avoiding tight custom timeouts for critical success paths.
-
-### 25. Modal Overlay and Z-Index Conflicts (LevelProgress header vs. Dialogs)
-
-- **Symptom**: A button (like "Map") opens a modal, but cannot close it by re-clicking because the modal's backdrop (or the modal itself) has a higher z-index than the button's parent container, making the button unclickable.
-- **Root Cause**: The header container had `z-index: 150`, while the Quest Map modal backdrop had `z-index: 250`.
-- **Fix**: Elevate the interactive container (header) to a higher z-index (e.g., `300`) than the modal overlays to ensure buttons remain interactive.
-
-### 26. Modal Shortcut Toggle Logic vs. Hardcoded Visibility
-
-- **Symptom**: Pressing a shortcut (e.g., `Alt+M`) opens a modal, but pressing it again fails to close it, even if the user expects toggle behavior.
-- **Root Cause**: The keydown handler was hardcoded to `setGameState(p => ({ ...p, showMap: true }))` instead of toggling the state.
-- **Fix**: Ensure meta-command shortcuts (Help, Map, Hint) use toggle logic: `setGameState(p => ({ ...p, showMap: !p.showMap }))`.
-
-### 27. Directory Path Assertion Specificity (Regression Risk)
-
-- **Symptom**: Fixing one test by making assertions strict (e.g., `toHaveText` instead of `toContainText`) breaks other tests that rely on partial matching (e.g., asserting "tmp" while in "/tmp").
-- **Root Cause**: `expectCurrentDir` was changed to use `toHaveText` broadly to fix a root directory check failure (where "/" matched "~/datastore"), but this broke tests in Episode 3 and Persistence expecting partial matches.
-- **Fix**: Support optional strictness in the assertion helper, defaulting to partial match for backward compatibility, and opting-in to strict matching only where necessary (e.g., Root check).
-
+- **IF** a test fails with a "strict mode violation" (e.g., resolved to 2 elements).
+- **THEN** the locator is too broad and matching multiple elements (e.g., `uplink_v1.conf` and `uplink_v1.conf.snapshot`).
+- **DO** use `getByTestId('file-<filename>')` for an unambiguous, exact match. Update helpers like `filterAndSelect` to support an `exact: true` option that uses this strategy.
+- **AVOID** relying on `hasText` or regexes for exact matches, as they can be brittle.
+- **EXAMPLE**:
   ```typescript
-  // utils.ts
-  export async function expectCurrentDir(page: Page, dirName: string, exact: boolean = false) {
-    if (exact) await expect(page.locator('.breadcrumb')).toHaveText(dirName);
-    else await expect(page.locator('.breadcrumb')).toContainText(dirName);
+  // In a test helper like filterAndSelect
+  if (options.exact) {
+    target = page.getByTestId(`file-${filterText}`);
+  } else {
+    target = page.locator('[role="listitem"]', { hasText: filterText });
   }
+  // In a test file
+  await filterAndSelect(page, 'uplink_v1.conf', { exact: true });
+  ```
 
-  // episode1.spec.ts (Root check needs strictness)
+### Rule 1.2: Use case-insensitive regex for general text matching.
+
+- **IF** a test fails to find an element by its text content (e.g., `getByText('Watchdog:')`).
+- **THEN** the cause is likely a case-sensitivity mismatch due to CSS styling or content changes.
+- **DO** use a case-insensitive regex (`/text/i`) to locate the element.
+- **AVOID** matching exact strings with punctuation unless it's necessary for specificity.
+- **EXAMPLE**:
+  ```typescript
+  // ❌
+  await expect(page.getByText('Watchdog:')).toBeVisible();
+  // ✅
+  await expect(page.getByText(/watchdog/i)).toBeVisible();
+  ```
+
+### Rule 1.3: Do not chain `getByText` after `getByTestId` for content checks.
+
+- **IF** a test fails with `element not found` on a chained `getByText` call.
+- **THEN** the component's structure has likely been flattened (e.g., `<div><span>Text</span></div>` becomes `<div>Text</div>`).
+- **DO** use `toHaveText` directly on the parent locator.
+- **AVOID** creating brittle tests that depend on a specific DOM hierarchy.
+- **EXAMPLE**:
+  ```typescript
+  // ❌
+  await expect(page.getByTestId('foo').getByText(/bar/)).toBeVisible();
+  // ✅
+  await expect(page.getByTestId('foo')).toHaveText(/bar/);
+  ```
+
+### Rule 1.4: Use robust navigation helpers instead of blind key presses.
+
+- **IF** a test fails to enter a directory or select the correct file.
+- **THEN** it's likely assuming a specific sort order and using blind navigation (e.g., `navigateDown(2)`).
+- **DO** use robust helpers like `filterAndSelect('filename')` which explicitly target items by name.
+- **AVOID** sequences like `j`, `j`, `l` that are not resilient to changes in file order.
+- **EXAMPLE**:
+  ```typescript
+  // ❌
+  await gotoCommand(page, 'w');
+  await navigateDown(page, 2); // Assumes 'systemd-core' is the 3rd item
+  await navigateRight(page, 1);
+  // ✅
+  await gotoCommand(page, 'w');
+  await filterAndSelect(page, 'systemd-core'); // Robustly finds and selects
+  await navigateRight(page, 1);
+  ```
+
+### Rule 1.5: Make path assertions specific.
+
+- **IF** a test for the root directory (`/`) incorrectly passes when viewing a subdirectory (e.g., `~/datastore`).
+- **THEN** the assertion is likely using `toContainText`, which is too permissive.
+- **DO** create or use an assertion helper (`expectCurrentDir`) that supports an `exact: true` option, which uses `toHaveText` for strict checks.
+- **AVOID** changing all path assertions to be strict, as this will break tests that correctly rely on partial matches.
+- **EXAMPLE**:
+  ```typescript
+  // In utils.ts
+  export async function expectCurrentDir(page: Page, dirName: string, exact: boolean = false) {
+    const locator = page.locator('.breadcrumb');
+    if (exact) {
+      await expect(locator).toHaveText(dirName);
+    } else {
+      await expect(locator).toContainText(dirName);
+    }
+  }
+  // In test file for root
   await expectCurrentDir(page, '/', true);
   ```
 
-### 28. Robust Modal Dismissal before Mission Completion
+---
 
-- **Symptom**: `waitForMissionComplete` times out because "Mission Complete" text is obscured or blocked by a lingering "Protocol Violation" modal.
-- **Root Cause**: Relying on a single blind `Shift+Enter` or `waitForMissionComplete`'s internal auto-dismissal is flaky if the modal flickers or re-triggers (e.g. if Hidden files are still ON).
-- **Fix**: Explicitly use `dismissAlertIfPresent(page, /Protocol Violation/i)` in the test script _immediately before_ waiting for completion. Do not rely solely on the utility helper to clean up complex states.
+## 2. Timing, Race Conditions, and Asynchronous Operations
 
+### Rule 2.1: Add delays after actions that close modals.
+
+- **IF** a test fails, asserting that an input modal is still visible after the confirmation "Enter" press.
+- **THEN** the test is faster than React's state update and re-render cycle.
+- **DO** add a standard, small delay (`await page.waitForTimeout(DEFAULT_DELAY)`) in helper functions (`addItem`, `renameItem`) immediately after the action that closes the modal.
+- **AVOID** making assertions immediately after a state-changing action.
+- **EXAMPLE**:
   ```typescript
-  // Ensure we aggressively dismiss any blocking modals
-  await dismissAlertIfPresent(page, /Protocol Violation/i);
-  await dismissAlertIfPresent(page, /Security Alert/i);
-  await waitForMissionComplete(page);
+  // In addItem/renameItem helpers
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(DEFAULT_DELAY); // Give React time to update
+  await expect(modal).not.toBeVisible();
   ```
 
-### 29. Flaky URL Navigation Wait Strategy
+### Rule 2.2: Wait for input modals to be visible before interaction.
 
-- **Symptom**: Transients timeouts in tests that navigate to levels via URL (e.g. `goToLevel`), failing with `page.waitForLoadState('networkidle')`.
-- **Root Cause**: `networkidle` is discouraged in recent Playwright versions because it waits for _no network traffic_ for 500ms, which is brittle with background polling, analytical beacons, or slow asset loading.
-- **Fix**: Replace `networkidle` with `domcontentloaded` for the initial navigation waiter, and rely on explicit element-level assertions (wait for start screen or filesystem container) to confirm the app is truly interactive.
-
+- **IF** a test fails to type a search or filter query correctly.
+- **THEN** the test is likely trying to type before the input modal is rendered and focused.
+- **DO** explicitly assert the visibility of the input modal (`expect(page.getByTestId('input-modal')).toBeVisible()`) before attempting to type in it.
+- **AVOID** assuming modals appear instantly after a key press.
+- **EXAMPLE**:
   ```typescript
-  // utils.ts
-  await page.goto(url);
-  await page.waitForLoadState('domcontentloaded'); // Faster, less flaky
-  // ... subsequent steps wait for specific UI elements
+  // ❌
+  await pressKey(page, 's');
+  await typeText(page, 'query');
+  // ✅
+  await pressKey(page, 's');
+  await expect(page.getByTestId('input-modal')).toBeVisible();
+  await typeText(page, 'query');
   ```
 
-### 30. Native Keyboard API vs. window.dispatchEvent
+### Rule 2.3: Use robust waits for level/mission transitions.
 
-- **Symptom**: `Escape`, `Enter`, or modifiers like `Ctrl+R` fail to trigger handlers in tests, even when the key seems "pressed". Modals remain open, or selection inversion doesn't occur.
-- **Root Cause**: Custom `pressKey` helpers often use `window.dispatchEvent(new KeyboardEvent(...))`. These are **synthetic events**. While they trigger global listeners, they:
-  1.  **Do not handle focus correctly**: Browsers often ignore synthetic events on focused elements (like input fields) for security.
-  2.  **Do not bubble/queue naturally**: They bypass the browser's native event loop and focus-management logic.
-  3.  **Fail to trigger browser-native behaviors**: (e.g., `Escape` dismissing a native dialog or `Enter` submitting a form).
-- **Fix**: Replace all synthetic dispatch logic with Playwright's **native** API: `page.keyboard.press()`. This correctly simulates the OS-level hardware interaction, handles bubbling, and respects the currently focused element.
+- **IF** a test fails with "Timeout waiting for mission complete".
+- **THEN** a hardcoded, aggressive timeout (e.g., 500ms) is likely too short for the transition to complete on all environments.
+- **DO** use Playwright's default timeout or a generous standard delay. In `waitForMissionComplete`, `Promise.race` is used to wait for either a visibility change or a URL change, which is a robust pattern.
+- **AVOID** custom, short timeouts on critical state transitions.
 
+### Rule 2.4: Explicitly dismiss security modals before final assertions.
+
+- **IF** `waitForMissionComplete` times out, but a screenshot shows a "Protocol Violation" or "Security Alert" modal.
+- **THEN** the alert modal is blocking the "Mission Complete" screen.
+- **DO** explicitly call `await dismissAlertIfPresent(page, /Protocol Violation/i)` in the test script immediately before the final wait.
+- **AVOID** relying on a single, blind `Shift+Enter` or hoping the `waitFor` utility will handle it.
+
+---
+
+## 3. State Management & Game Logic
+
+### Rule 3.1: Use explicit action flags for race-prone task checks.
+
+- **IF** a task check is failing due to a race condition (e.g., checking `searchQuery === null` immediately after an `Escape` key press).
+- **THEN** the check is based on transient state that hasn't updated before the assertion runs.
+- **DO** create and dispatch an explicit action flag (e.g., `MARK_ACTION_USED` with `actionId: 'SearchCleared'`). The task check should then verify `actionsUsed.has('SearchCleared')`, which is a durable state change.
+- **AVOID** basing task completion on intermediate UI state during a rapid sequence of events.
+
+### Rule 3.2: Ensure handlers dispatch action flags.
+
+- **IF** a task fails to complete even though the action (e.g., deleting a file) was visibly performed.
+- **THEN** the action handler likely updated the primary state (e.g., the filesystem) but forgot to set the tracking flag (e.g., `usedD: true`).
+- **DO** audit the relevant action handler in the game's source code (e.g., `confirmDelete` in `useKeyboardHandlers.ts`) and ensure it dispatches the appropriate `MARK_ACTION_USED` or sets the flag in the reducer.
+
+### Rule 3.3: Reset level-specific state on level transitions.
+
+- **IF** a level or task completes instantly upon entry.
+- **THEN** state from a previous test run is leaking into the new level.
+- **DO** ensure the `SET_LEVEL` action in the game's reducer has a comprehensive reset block that explicitly clears all task-tracking booleans (`usedCtrlR`, `usedSearch`, `actionsUsed`, etc.).
+
+### Rule 3.4: Preserve cursor position across list mutations.
+
+- **IF** an action after filtering or searching affects the wrong item (e.g., cutting the first item in the list instead of the previously selected one).
+- **THEN** the `cursorIndex` was not correctly updated after the list of files changed.
+- **DO** implement logic in the reducer (`CLEAR_FILTER`, `CONFIRM_SEARCH`) to: 1) Save the `id` of the selected item. 2) Re-calculate the file list. 3) Find the item's new index in the new list and update `cursorIndex`.
+
+### Rule 3.5: Check against the correct view context.
+
+- **IF** a task requires finding a file, the file is visible in the search results, but the task does not complete.
+- **THEN** the task's completion logic likely requires the user to be _in the file's directory_, not in the search results view.
+- **DO** read the task description carefully. If it implies navigation, use navigation helpers (`gotoCommand`, `enterDirectory`) instead of search (`s`).
+
+---
+
+## 4. Test Environment & Configuration
+
+### Rule 4.1: Ensure filesystem prerequisites are met.
+
+- **IF** a test fails with `element not found` when it expects a certain file or directory to exist.
+- **THEN** the test might be jumping to a level without creating the necessary file structure that would have been built in previous levels.
+- **DO** ensure the level's `onEnter` function in `constants.tsx` calls a seeding utility (e.g., `applyFileSystemMutations`) that creates the required files/directories for that level.
+- **AVOID** assuming the `INITIAL_FS` is sufficient for all levels.
+
+### Rule 4.2: Use URL parameters to force deterministic scenarios.
+
+- **IF** a test for a multi-scenario level (like Level 12) is flaky or fails inconsistently.
+- **THEN** the game might be activating an unexpected scenario based on leftover state.
+- **DO** use a URL parameter (e.g., `?scenario=scen-b1`) in the `startLevel` helper to force a specific, deterministic scenario for the test. Ensure the game logic in `constants.tsx` prioritizes URL parameters over any `gameState` flags.
+
+### Rule 4.3: Use `domcontentloaded` for URL navigation.
+
+- **IF** a test that navigates via URL (`goToLevel`) is flaky and times out on `page.waitForLoadState('networkidle')`.
+- **THEN** background network traffic is preventing `networkidle` from resolving reliably.
+- **DO** use `domcontentloaded` as the wait strategy, which is faster and less brittle. Follow it with assertions that wait for specific UI elements to appear.
+- **AVOID** `networkidle`.
+
+---
+
+## 5. Input & Event Handling
+
+### Rule 5.1: Use Playwright's native keyboard API.
+
+- **IF** key presses in a test seem to have no effect (e.g., `Escape` not closing a modal, `Ctrl+A` not selecting text in an input).
+- **THEN** the test is likely using a synthetic `window.dispatchEvent`, which does not correctly simulate hardware events or handle focus.
+- **DO** use `page.keyboard.press()` for all key press simulations. This is the most reliable method.
+- **AVOID** custom `pressKey` helpers that use `dispatchEvent`.
+- **EXAMPLE**:
   ```typescript
-  // utils.ts Rewrite
-  export async function pressKey(page: Page, key: string): Promise<void> {
-    let pwKey = key;
-    if (key === ' ') pwKey = 'Space';
-    if (key.includes('+')) {
-      pwKey = key.replace('Ctrl+', 'Control+').replace('Alt+', 'Alt+').replace('Shift+', 'Shift+');
-    }
-    await page.keyboard.press(pwKey); // Reliable, Native
-    await page.waitForTimeout(DEFAULT_DELAY);
-  }
+  // ❌ In a helper
+  // page.evaluate(key => window.dispatchEvent(new KeyboardEvent(...)), key);
+  // ✅ In a helper
+  await page.keyboard.press('Control+A');
   ```
 
-  > [!IMPORTANT]
-  > Standardizing on `page.keyboard.press` resolved long-standing flakiness in Level 3 (Filter Escape), Level 9 (Selection Inversion), and Modal dismissal overall.
+### Rule 5.2: Stop event propagation in input modals.
 
-### 31. Cursor Persistence during List Mutations
+- **IF** typing in a filter or search modal triggers main UI keyboard shortcuts (e.g., typing `s` opens another search).
+- **THEN** key events from the input are bubbling up to the global keyboard handler.
+- **DO** ensure the `onKeyDown` handler for the `InputModal` component calls `e.stopPropagation()` for all keys to prevent them from reaching other listeners.
 
-- **Symptom**: Sequences like "Filter -> Escape -> Cut" cut the wrong file (e.g., cutting `batch_logs` instead of `sector_map.png`).
-- **Root Cause**: When a filter is cleared or a search is exited, the file list expands or changes completely. If `cursorIndex` remains static (e.g., at 0), it now points to whatever item rotated into that slot.
-- **Fix**: implemented logic in `gameReducer.ts` for `CLEAR_FILTER` and `SET_MODE` that:
-  1.  Captures the `id` of the current item before the state change.
-  2.  Calculates the new list.
-  3.  Re-finds the `id` in the new list and updates `cursorIndex` to match its new position.
+### Rule 5.3: Escape special characters in regex patterns.
 
-### 32. Cross-Level State Leakage
-
-- **Symptom**: Levels or tasks complete instantly upon entry if performed in a previous level run.
-- **Root Cause**: The `SET_LEVEL` action was retaining `used*` tracking flags (e.g., `usedCtrlR`, `usedSearch`) from the previous execution context.
-- **Fix**: Added a comprehensive reset block in the `SET_LEVEL` reducer case to explicitly clear all task-tracking booleans.
-
-### 33. Robust Input Focus & Interaction
-
-- **Symptom**: Text typed into search or filter modals leaking into the global filesystem listener (e.g., typing `s` starts another search).
-- **Root Cause**: React's `autoFocus` can sometimes be delayed or focus can be lost during re-renders. Playwright's `page.keyboard.type` sends keys to the "active element," which might revert to `body`.
-- **Fix**: Standardized `utils.ts` (e.g. `filterByText`, `renameItem`) to explicitly `locator.focus()`, `locator.fill('')`, and then interact with the input element directly.
-
-### 34. Input Mode Key Propagation & State Sync Issues
-
-- **Symptom**: Filter input field appears empty despite typing, only showing the last character, with UI flashing on each keystroke. Tests fail when trying to type into filter input.
-- **Root Cause**: Two issues: 1) Main keyboard handler was intercepting key events meant for input fields in input modes ('filter', 'input-file', 'rename'), preventing proper typing. 2) The filter's `onChange` handler was updating the filter state but not synchronizing the `inputBuffer` state that controls the input field's displayed value.
-- **Fix**:
-  1. Added a check in the main `handleKeyDown` function to return early if in an input mode and the event target is an input element:
-     ```typescript
-     if (
-       ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
-       e.target instanceof HTMLInputElement
-     ) {
-       return; // Let the input element handle the key
-     }
-     ```
-  2. Updated the filter InputModal's `onChange` handler to also update the `inputBuffer` state:
-     ```typescript
-     onChange={(val) => {
-       const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-       if (dir) {
-         dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
-       }
-       // Also update inputBuffer so the input field shows the typed text
-       dispatch({ type: 'UPDATE_UI_STATE', updates: { inputBuffer: val } });
-     }}
-     ```
-  3. Added verification in test utilities to ensure input fields contain expected text:
-     ```typescript
-     await expect(input).toHaveValue(text);
-     ```
-
-### 35. Input Modal Event Handling Consistency
-
-- **Symptom**: Input modals (filter, search, create) not properly handling key events, causing interference with main keyboard handlers.
-- **Root Cause**: InputModal's onKeyDown handler was only stopping propagation for Enter and Escape, allowing other keys to reach the main keyboard handler which would process them as navigation commands.
-- **Fix**: Updated InputModal's onKeyDown to stop propagation for all keys when in an input modal, ensuring that key events don't bubble up to the main handler:
+- **IF** a search or filter for a string with special characters (like `.`) returns unexpected or extra results.
+- **THEN** the special characters are being interpreted as regex operators (e.g., `.` matches any character).
+- **DO** ensure the input string is properly escaped before being used to construct a `RegExp`.
+- **AVOID** passing raw user-provided strings into a `new RegExp()` constructor.
+- **EXAMPLE**:
   ```typescript
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      onConfirm();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onCancel();
-    }
-    // Stop propagation for all keys when in an input modal
-    // to prevent the main keyboard handler from processing them
-    e.stopPropagation();
-  }}
+  // ❌
+  await search(page, '.identity.log.enc');
+  // ✅
+  await search(page, '\.identity\.log\.enc');
   ```
