@@ -106,36 +106,32 @@ export const getRecursiveSearchResults = (
   rootNode: FileNode,
   query: string,
   showHidden: boolean = false,
-  fullRootPath: string[] = ['root']
+  startPath: string[] = ['root']
 ): FileNode[] => {
   if (!query || !rootNode) return [];
 
   const results: FileNode[] = [];
   const regex = getFilterRegex(query);
+  const startNode = getNodeByPath(rootNode, startPath);
+
+  if (!startNode) return [];
 
   const searchRecursive = (node: FileNode, pathPrefix: string, idPath: string[]) => {
     if (!node.children) return;
 
     for (const child of node.children) {
-      // Skip hidden files unless showHidden is true
       if (!showHidden && child.name.startsWith('.')) continue;
 
-      // Build relative path for display
       const relativePath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
       const currentIdPath = [...idPath, child.id];
-
-      // Check if file matches query using regex
       const nameMatch = regex ? regex.test(child.name) : false;
 
       if (child.type === 'file' && nameMatch) {
-        // Clone node and add displayPath for showing full relative path
         results.push({ ...child, displayPath: relativePath, path: currentIdPath });
       }
 
-      // Recurse into directories and archives
       if (child.type === 'dir' || child.type === 'archive') {
         const dirMatch = regex ? regex.test(child.name) : false;
-
         if (dirMatch) {
           results.push({ ...child, displayPath: relativePath, path: currentIdPath });
         }
@@ -144,6 +140,6 @@ export const getRecursiveSearchResults = (
     }
   };
 
-  searchRecursive(rootNode, '', fullRootPath);
+  searchRecursive(startNode, '', startPath);
   return results;
 };

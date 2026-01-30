@@ -447,4 +447,85 @@ test.describe('Episode 3: MASTERY', () => {
 
     await waitForMissionComplete(page);
   });
+
+  test.describe('Level Advancement with Shift+Enter', () => {
+    test('verifies Shift+Enter properly advances from Level 14 to Level 15', async ({ page }) => {
+      // Start at Level 14 and complete it
+      await startLevel(page, 14, { intro: false });
+
+      // Complete all tasks for Level 14
+      await gotoCommand(page, 'h');
+      await assertTask(page, '1/5', 'temp', 'task1_home');
+
+      // Task 2: Move vault to /tmp
+      if (!(await areHiddenFilesVisible(page))) {
+        await pressKey(page, '.');
+      }
+      await expect(page.getByText('HIDDEN: ON')).toBeVisible();
+
+      await filterByText(page, '.config');
+      await navigateRight(page, 1);
+      await clearFilter(page);
+      await expectCurrentDir(page, '.config');
+
+      await filterByText(page, 'vault');
+      await expect(page.getByTestId('file-vault')).toBeVisible();
+      await pressKey(page, 'x');
+      await clearFilter(page);
+
+      await gotoCommand(page, 't');
+      await expectCurrentDir(page, 'tmp');
+      await pressKey(page, 'p');
+      await assertTask(page, '2/5', 'temp', 'task2_move_vault');
+
+      // Task 3: Create decoys
+      await gotoCommand(page, 'h');
+      await expectCurrentDir(page, '~');
+      await addItem(page, 'decoy_1/');
+      await addItem(page, 'decoy_2/');
+      await addItem(page, 'decoy_3/');
+      await assertTask(page, '3/5', 'temp', 'task3_decoys');
+
+      // Task 4: Delete original directories
+      if (!(await areHiddenFilesVisible(page))) {
+        await pressKey(page, '.');
+      }
+
+      const targets = ['incoming', 'media', 'workspace', 'datastore'];
+
+      for (const target of targets) {
+        await filterAndSelect(page, target);
+      }
+
+      await page.waitForTimeout(DEFAULT_DELAY * 2);
+      await deleteItem(page, { permanent: true, confirm: true });
+
+      await page.waitForTimeout(DEFAULT_DELAY);
+      for (const target of targets) {
+        await expect(page.getByTestId(`file-${target}`)).not.toBeVisible({ timeout: 1000 });
+      }
+
+      await assertTask(page, '4/5', 'temp', 'task4_purge_data');
+
+      // Task 5: Delete .config directory
+      await filterAndSelect(page, '.config');
+      await deleteItem(page, { permanent: true, confirm: true });
+      await assertTask(page, '5/5', 'temp', 'task5_purge_config');
+
+      // Dismiss any protocol violations to see the success toast
+      await dismissAlertIfPresent(page, /Protocol Violation/i);
+
+      // Wait for the mission complete dialog to appear
+      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
+
+      // Use Shift+Enter to advance to the next level
+      await page.keyboard.press('Shift+Enter');
+
+      // Verify we've moved to Level 15 by checking for Level 15's initial conditions
+      await expect(page.getByText('TRANSMISSION PROTOCOL')).toBeVisible({ timeout: 10000 });
+
+      // Verify that the mission complete dialog is no longer visible
+      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+    });
+  });
 });

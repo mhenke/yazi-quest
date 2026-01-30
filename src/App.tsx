@@ -819,6 +819,9 @@ export default function App() {
 
     // Level-specific notifications logic removed (moved to Narrative System)
 
+    // Hide the success toast before advancing to the next level
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
+
     dispatch({
       type: 'SET_LEVEL',
       index: nextIdx,

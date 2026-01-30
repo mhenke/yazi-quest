@@ -48,6 +48,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await pressKey(page, 'y');
     // Task 3 requires clearing the search (Escape) to be marked complete
     await page.keyboard.press('Escape');
+    await page.waitForTimeout(DEFAULT_DELAY); // Allow state to update
     await assertTask(page, '3/5', testInfo.outputDir, 'task3');
 
     // 5) gc (g then c) -- Escape is already pressed
@@ -274,5 +275,52 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await assertTask(page, '4/4', testInfo.outputDir, 'paste_key');
 
     await confirmMission(page, 'CREDENTIAL HEIST');
+  });
+
+  test.describe('Level Advancement with Shift+Enter', () => {
+    test('verifies Shift+Enter properly advances from Level 6 to Level 7', async ({ page }) => {
+      // Start at Level 6 and complete it
+      await startLevel(page, 6, { intro: false });
+
+      // Complete all tasks for Level 6
+      await gotoCommand(page, 'i');
+      await enterDirectory(page, 'batch_logs');
+      await assertTask(page, '1/5', 'temp', 'task1');
+
+      await search(page, '\\\\.log$');
+      await page.waitForFunction(
+        () => document.querySelectorAll('[data-testid^="file-"]').length >= 4
+      );
+      await assertTask(page, '2/5', 'temp', 'task2');
+
+      await pressKey(page, 'Ctrl+a');
+      await pressKey(page, 'y');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(DEFAULT_DELAY);
+      await assertTask(page, '3/5', 'temp', 'task3');
+
+      await gotoCommand(page, 'c');
+      await assertTask(page, '3/5', 'temp', 'after_gc');
+
+      await enterDirectory(page, 'vault');
+      await addItem(page, 'training_data/');
+      await assertTask(page, '4/5', 'temp', 'task4');
+
+      await enterDirectory(page, 'training_data');
+      await pressKey(page, 'p');
+      await assertTask(page, '5/5', 'temp', 'task5');
+
+      // Wait for the mission complete dialog to appear
+      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
+
+      // Use Shift+Enter to advance to the next level
+      await page.keyboard.press('Shift+Enter');
+
+      // Verify we've moved to Level 7 by checking for Level 7's initial conditions
+      await expect(page.getByText('QUANTUM BYPASS')).toBeVisible({ timeout: 10000 });
+
+      // Verify that the mission complete dialog is no longer visible
+      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+    });
   });
 });

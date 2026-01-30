@@ -584,7 +584,9 @@ export async function filterAndSelect(page: Page, filterText: string): Promise<v
   await pressKey(page, ' '); // Toggle selection
 
   // Verify selection (yellow text)
-  const listItem = target.locator('ancestor::div[@role="listitem"]');
+  const listItem = page
+    .getByTestId('filesystem-pane-active')
+    .locator('[role="listitem"]', { hasText: filterText });
   await expect(listItem).toHaveClass(/text-yellow-400/);
 
   await clearFilter(page);

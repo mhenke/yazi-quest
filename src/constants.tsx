@@ -3813,7 +3813,7 @@ export const LEVELS: Level[] = [
       {
         id: 'explore-mail',
         description:
-          "Explore `/var/mail` (gm) and locate the email referencing 'Heuristic Engine v1.1'",
+          "Explore `/var/mail` (gm) and locate the email referencing upgrading to 'Heuristic Engine v1.1'",
         check: (c) => {
           const mailDir = getNodeById(c.fs, 'mail');
           if (!mailDir) return false;
