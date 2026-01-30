@@ -4108,18 +4108,36 @@ export const LEVELS: Level[] = [
         description:
           'Pattern sweep for log signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then enter)',
         check: (c) => {
-          // Check that we're in the batch_logs directory and have search results
+          // Verify search results contain the correct specific files
           const batchLogsNode = getNodeById(c.fs, 'batch_logs');
           const isInBatchLogs = c.currentPath.includes(batchLogsNode?.id || '');
-          const hasCorrectSearchResults = c.searchResults && c.searchResults.length >= 4;
-          // Check that search is active (results are displayed in the UI)
-          const isSearchActive = c.searchQuery !== null && c.searchResults.length > 0;
-          return (
-            isInBatchLogs &&
-            hasCorrectSearchResults &&
-            c.searchQuery === '\\.log$' &&
-            isSearchActive
+
+          // Check that search is active and has results
+          const isSearchActive =
+            c.searchQuery !== null && c.searchResults && c.searchResults.length > 0;
+
+          // The 4 correct target files that should be found
+          const targetFiles = ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log'];
+
+          // Verify all 4 target files are in the search results
+          const foundTargets = targetFiles.filter((targetName) =>
+            c.searchResults?.some((node) => node.name === targetName)
           );
+          const hasCorrectFiles = foundTargets.length === 4;
+
+          // DEBUG LOGGING
+          console.log('Level 6 Task 2 Check:', {
+            isInBatchLogs,
+            isSearchActive,
+            searchQuery: c.searchQuery,
+            searchResultsCount: c.searchResults?.length,
+            searchResultNames: c.searchResults?.map((n) => n.name),
+            foundTargets,
+            hasCorrectFiles,
+            willPass: isInBatchLogs && isSearchActive && hasCorrectFiles,
+          });
+
+          return isInBatchLogs && isSearchActive && hasCorrectFiles;
         },
         completed: false,
       },

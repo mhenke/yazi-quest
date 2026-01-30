@@ -302,6 +302,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
           [LEVELS[action.index].id]: [],
         },
         zoxideData: action.zoxideData || state.zoxideData,
+        // Reset game over state when restarting/setting level
+        isGameOver: false,
+        gameOverReason: null,
         // Reset all tracking flags to prevent state leakage between levels
         usedG: false,
         usedGI: false,

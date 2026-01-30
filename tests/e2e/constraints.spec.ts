@@ -5,8 +5,8 @@ test.describe('Game Constraints', () => {
   test('Keystroke Limit: Exceeding maxKeystrokes triggers Game Over', async ({ page }) => {
     test.setTimeout(60000); // Increase to 60s because of pressKey delays
 
-    // Start Level 11 (maxKeystrokes: 60)
-    await startLevel(page, 11);
+    // Start Level 11 (maxKeystrokes: 60) - skip intro to get to gameplay
+    await startLevel(page, 11, { intro: false });
 
     // Mash keys to exceed 60 keystrokes
     // Use pressKey to ensure keystrokes are registered by the game logic hook properly
@@ -41,5 +41,40 @@ test.describe('Game Constraints', () => {
     // Expect Game Over Modal with correct text
     await expect(page.getByText(/WATCHDOG CYCLE COMPLETE/i)).toBeVisible();
     await expect(page.getByText(/Watchdog Timer Expired/i)).toBeVisible();
+  });
+
+  test('Game Over Dialog: Shift+Enter restarts the level', async ({ page }) => {
+    // Install clock before navigation
+    await page.clock.install();
+
+    await page.goto('/?lvl=6');
+    await page.waitForLoadState('networkidle');
+
+    // Skip intro
+    await page.evaluate(() => {
+      window.__yaziQuestSkipIntroRequested = true;
+      window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
+    });
+
+    // Wait for level to load
+    await expect(page.getByText(/BATCH OPERATIONS/i).first()).toBeVisible();
+
+    // Fast-forward to trigger game over
+    await page.clock.runFor(100000);
+
+    // Verify game over dialog appears
+    await expect(page.getByText(/WATCHDOG CYCLE COMPLETE/i)).toBeVisible();
+
+    // Press Shift+Enter to restart
+    await page.keyboard.press('Shift+Enter');
+
+    // Verify the level restarted (game over modal disappears)
+    await expect(page.getByText(/WATCHDOG CYCLE COMPLETE/i)).not.toBeVisible();
+
+    // Verify we're back at the level (level title is visible)
+    await expect(page.getByText(/BATCH OPERATIONS/i).first()).toBeVisible({ timeout: 5000 });
+
+    // Verify watchdog status is back (indicating timer is running)
+    await expect(page.getByText(/WATCHDOG/i).first()).toBeVisible({ timeout: 5000 });
   });
 });

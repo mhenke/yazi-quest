@@ -58,8 +58,9 @@ export const hasSortViolation = (gameState: GameState): boolean => {
 };
 
 // Helper to check for hidden files visible
-export const hasHiddenViolation = (gameState: GameState): boolean => {
-  return gameState.showHidden;
+// NOTE: Hidden files no longer block navigation as per game design requirements
+export const hasHiddenViolation = (_gameState: GameState): boolean => {
+  return false;
 };
 
 /**

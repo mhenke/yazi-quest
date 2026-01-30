@@ -37,28 +37,19 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
                 Corrective Action
               </p>
               <p className="text-zinc-300 text-xs font-mono">
-                Press{' '}
-                <span className="text-yellow-400 font-bold">
-                  {_allowAutoFix ? 'Shift+Enter' : '.'}
-                </span>{' '}
-                to {_allowAutoFix ? 'autofix' : 'conceal hidden files'}.
+                Press <span className="text-yellow-400 font-bold">Shift+Enter</span> to close
+                dialog.
               </p>
             </div>
           </div>
           <div className="w-full flex justify-center mt-4">
-            {_allowAutoFix ? (
-              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-                Press{' '}
-                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                  Shift+Enter
-                </span>
-                to continue...
-              </p>
-            ) : (
-              <p className="text-zinc-300 text-xs font-mono">
-                Press <span className="text-yellow-400 font-bold">.</span> to conceal hidden files.
-              </p>
-            )}
+            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+              Press{' '}
+              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                Shift+Enter
+              </span>
+              to continue...
+            </p>
           </div>
         </div>
       </div>

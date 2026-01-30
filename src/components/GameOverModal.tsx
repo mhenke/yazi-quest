@@ -84,7 +84,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
       }
     },
     [onRestart],
-    { priority: 800 }
+    { priority: 2500 } // Highest priority - game over restart must override everything
   );
 
   return (
