@@ -3,6 +3,7 @@ import { getNodeByPath, isProtected } from '../../utils/fsHelpers';
 import { getVisibleItems } from '../../utils/viewHelpers';
 import { checkProtocolViolations } from './utils';
 import { Action } from '../gameReducer';
+import { checkAllTasksComplete } from '../../utils/gameUtils';
 
 export const handleGCommandKeyDown = (
   e: KeyboardEvent,
@@ -75,7 +76,14 @@ export const handleGCommandKeyDown = (
       dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
     } else {
       // Check for active protocol violations - block navigation
-      if (checkProtocolViolations(e, gameState, dispatch)) {
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
         return;
       }
       // Check for protection

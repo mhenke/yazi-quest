@@ -623,7 +623,7 @@ export const applyFileSystemMutations = (
   }
 
   // Level 11+: /daemons directory
-  if (levelId > 11) {
+  if (levelId >= 11) {
     const rootNode = getNodeById(newFs, 'root');
     if (rootNode) {
       let daemons = rootNode.children?.find((c) => c.name === 'daemons' && c.type === 'dir');

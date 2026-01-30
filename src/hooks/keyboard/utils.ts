@@ -45,8 +45,10 @@ export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
 export const checkFilterAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  allTasksComplete: boolean
 ): boolean => {
+  if (!allTasksComplete) return false;
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
   if (currentDirNode && gameState.filters[currentDirNode.id]) {
     e.preventDefault();
@@ -59,8 +61,10 @@ export const checkFilterAndBlockNavigation = (
 export const checkSearchAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  allTasksComplete: boolean
 ): boolean => {
+  if (!allTasksComplete) return false;
   if (gameState.searchQuery && gameState.searchResults.length > 0) {
     e.preventDefault();
     dispatch({ type: 'SET_MODE', mode: 'search-warning' });
@@ -72,8 +76,10 @@ export const checkSearchAndBlockNavigation = (
 export const checkSortAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  allTasksComplete: boolean
 ): boolean => {
+  if (!allTasksComplete) return false;
   if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
     e.preventDefault();
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
@@ -85,8 +91,10 @@ export const checkSortAndBlockNavigation = (
 export const checkHiddenAndBlockNavigation = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  allTasksComplete: boolean
 ): boolean => {
+  if (!allTasksComplete) return false;
   if (gameState.showHidden) {
     e.preventDefault();
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });
@@ -102,11 +110,12 @@ export const checkHiddenAndBlockNavigation = (
 export const checkProtocolViolations = (
   e: KeyboardEvent,
   gameState: GameState,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  allTasksComplete: boolean
 ): boolean => {
-  if (checkFilterAndBlockNavigation(e, gameState, dispatch)) return true;
-  if (checkSearchAndBlockNavigation(e, gameState, dispatch)) return true;
-  if (checkSortAndBlockNavigation(e, gameState, dispatch)) return true;
-  if (checkHiddenAndBlockNavigation(e, gameState, dispatch)) return true;
+  if (checkFilterAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
+  if (checkSearchAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
+  if (checkSortAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
+  if (checkHiddenAndBlockNavigation(e, gameState, dispatch, allTasksComplete)) return true;
   return false;
 };

@@ -4,6 +4,7 @@ import { getVisibleItems } from '../../utils/viewHelpers';
 import { checkProtocolViolations } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { Action } from '../gameReducer';
+import { checkAllTasksComplete } from '../../utils/gameUtils';
 
 export const handleNavigationKeyDown = (
   e: KeyboardEvent,
@@ -88,7 +89,14 @@ export const handleNavigationKeyDown = (
 
     case 'h':
     case 'ArrowLeft': {
-      if (checkProtocolViolations(e, gameState, dispatch)) {
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
         return true;
       }
 
@@ -116,13 +124,20 @@ export const handleNavigationKeyDown = (
     case 'l':
     case 'Enter':
     case 'ArrowRight': {
-      const allComplete = currentLevel.tasks.every((t) => t.completed);
+      const allComplete = checkAllTasksComplete(gameState, currentLevel);
       if (allComplete && !gameState.showHidden && e.key === 'Enter' && e.shiftKey) {
         advanceLevel();
         return true;
       }
       if (currentItem && (currentItem.type === 'dir' || currentItem.type === 'archive')) {
-        if (checkProtocolViolations(e, gameState, dispatch)) {
+        if (
+          checkProtocolViolations(
+            e,
+            gameState,
+            dispatch,
+            checkAllTasksComplete(gameState, currentLevel)
+          )
+        ) {
           return true;
         }
         const protection = isProtected(
@@ -161,7 +176,14 @@ export const handleNavigationKeyDown = (
 
     case 'H':
       if (e.shiftKey) {
-        if (checkProtocolViolations(e, gameState, dispatch)) {
+        if (
+          checkProtocolViolations(
+            e,
+            gameState,
+            dispatch,
+            checkAllTasksComplete(gameState, currentLevel)
+          )
+        ) {
           return true;
         }
         if (gameState.history.length === 0) return true;
@@ -175,7 +197,14 @@ export const handleNavigationKeyDown = (
 
     case 'L':
       if (e.shiftKey) {
-        if (checkProtocolViolations(e, gameState, dispatch)) {
+        if (
+          checkProtocolViolations(
+            e,
+            gameState,
+            dispatch,
+            checkAllTasksComplete(gameState, currentLevel)
+          )
+        ) {
           return true;
         }
         if (gameState.future.length === 0) return true;

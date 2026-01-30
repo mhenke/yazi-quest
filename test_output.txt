@@ -1,0 +1,325 @@
+
+> yazi-quest@0.0.0 test:e2e
+> playwright test tests/e2e/episode3.spec.ts
+
+
+Running 10 tests using 6 workers
+
+[1A[2K[1/10] [chromium] › tests/e2e/episode3.spec.ts:128:3 › Episode 3: MASTERY › Level 11: DAEMON RECONNAISSANCE - completes reconnaissance
+[1A[2K[2/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a3 - completes successfully
+[1A[2K[3/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a2 - completes successfully
+[1A[2K[4/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b2 - completes successfully
+[1A[2K[5/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a1 - completes successfully
+[1A[2K[6/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b1 - completes successfully
+[1A[2K  1) [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a2 - completes successfully 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[role="alertdialog"]').first()
+    Expected: visible
+    Timeout: 1000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 1000ms[22m
+    [2m  - waiting for locator('[role="alertdialog"]').first()[22m
+
+
+       at utils.ts:217
+
+      215 |     // Wait for the confirmation modal to appear
+      216 |     const modal = page.locator('[role="alertdialog"]').first();
+    > 217 |     await expect(modal).toBeVisible({ timeout: 1000 });
+          |                         ^
+      218 |     await pressKey(page, 'y');
+      219 |   }
+      220 | }
+        at deleteItem (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:217:25)
+        at handleLevel12Threat (/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:50:5)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:180:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-5fcf8-a2---completes-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-5fcf8-a2---completes-successfully-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b1 - completes successfully 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[role="alertdialog"]').first()
+    Expected: visible
+    Timeout: 1000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 1000ms[22m
+    [2m  - waiting for locator('[role="alertdialog"]').first()[22m
+
+
+       at utils.ts:217
+
+      215 |     // Wait for the confirmation modal to appear
+      216 |     const modal = page.locator('[role="alertdialog"]').first();
+    > 217 |     await expect(modal).toBeVisible({ timeout: 1000 });
+          |                         ^
+      218 |     await pressKey(page, 'y');
+      219 |   }
+      220 | }
+        at deleteItem (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:217:25)
+        at handleLevel12Threat (/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:50:5)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:180:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-cc6bc-b1---completes-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-cc6bc-b1---completes-successfully-chromium/error-context.md
+
+
+[1A[2K  3) [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a1 - completes successfully 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('file-.identity.log.enc')
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByTestId('file-.identity.log.enc')[22m
+
+
+      75 |   await pressKey(page, '.'); // Show hidden
+      76 |   await filterByText(page, 'identity');
+    > 77 |   await expect(page.getByTestId('file-.identity.log.enc')).toBeVisible({ timeout: 2000 });
+         |                                                            ^
+      78 |   await page.waitForTimeout(DEFAULT_DELAY);
+      79 |   await pressKey(page, 'g');
+      80 |   await pressKey(page, 'g');
+        at runLevel12CommonPath (/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:77:60)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:182:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-3179b-a1---completes-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-3179b-a1---completes-successfully-chromium/error-context.md
+
+
+[1A[2K[7/10] [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b3 - completes successfully
+[1A[2K[8/10] [chromium] › tests/e2e/episode3.spec.ts:187:3 › Episode 3: MASTERY › Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys
+[1A[2K  4) [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b2 - completes successfully 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('filter-input')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 3000ms[22m
+    [2m  - waiting for getByTestId('filter-input')[22m
+
+
+       at utils.ts:101
+
+       99 |   await pressKey(page, 'f');
+      100 |   const input = page.getByTestId('filter-input');
+    > 101 |   await expect(input).toBeVisible({ timeout: 3000 }); // Increase timeout
+          |                       ^
+      102 |   await input.focus();
+      103 |   await input.fill(text);
+      104 |
+        at filterByText (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:101:23)
+        at handleLevel12Threat (/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:49:5)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:180:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-a7d8e-b2---completes-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-a7d8e-b2---completes-successfully-chromium/error-context.md
+
+
+[1A[2K  5) [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a3 - completes successfully 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('filter-input')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 3000ms[22m
+    [2m  - waiting for getByTestId('filter-input')[22m
+
+
+       at utils.ts:101
+
+       99 |   await pressKey(page, 'f');
+      100 |   const input = page.getByTestId('filter-input');
+    > 101 |   await expect(input).toBeVisible({ timeout: 3000 }); // Increase timeout
+          |                       ^
+      102 |   await input.focus();
+      103 |   await input.fill(text);
+      104 |
+        at filterByText (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:101:23)
+        at handleLevel12Threat (/home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:49:5)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:180:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-dbea4-a3---completes-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-dbea4-a3---completes-successfully-chromium/error-context.md
+
+
+[1A[2K[9/10] [chromium] › tests/e2e/episode3.spec.ts:257:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data
+[1A[2K[10/10] [chromium] › tests/e2e/episode3.spec.ts:341:3 › Episode 3: MASTERY › Level 15: TRANSMISSION PROTOCOL - completes the cycle
+[1A[2K  6) [chromium] › tests/e2e/episode3.spec.ts:128:3 › Episode 3: MASTERY › Level 11: DAEMON RECONNAISSANCE - completes reconnaissance 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[data-testid="status-clipboard"]')
+    Expected substring: [32m"MOVE: 2"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="status-clipboard"]')[22m
+
+
+       at utils.ts:484
+
+      482 |  */
+      483 | export async function expectClipboard(page: Page, text: string): Promise<void> {
+    > 484 |   await expect(page.locator('[data-testid="status-clipboard"]')).toContainText(text);
+          |                                                                  ^
+      485 | }
+      486 |
+      487 | /**
+        at expectClipboard (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:484:66)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:145:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-a5336----completes-reconnaissance-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-a5336----completes-reconnaissance-chromium/error-context.md
+
+
+[1A[2K  7) [chromium] › tests/e2e/episode3.spec.ts:187:3 › Episode 3: MASTERY › Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[data-testid^="file-"][data-testid$=".key"]')
+    Expected: [32m3[39m
+    Received: [31m0[39m
+    Timeout:  500ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 500ms[22m
+    [2m  - waiting for locator('[data-testid^="file-"][data-testid$=".key"]')[22m
+    [2m    4 × locator resolved to 0 elements[22m
+    [2m      - unexpected value "0"[22m
+
+
+      205 |     await search(page, '\\\\.key$');
+      206 |     await page.waitForTimeout(DEFAULT_DELAY);
+    > 207 |     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3, {
+          |                                                                               ^
+      208 |       timeout: 500,
+      209 |     });
+      210 |
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:207:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-35213----gathers-distributed-keys-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-35213----gathers-distributed-keys-chromium/error-context.md
+
+
+[1A[2K  8) [chromium] › tests/e2e/episode3.spec.ts:341:3 › Episode 3: MASTERY › Level 15: TRANSMISSION PROTOCOL - completes the cycle 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).not.[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('input-modal')
+    Expected: not visible
+    Received: visible
+    Timeout:  1000ms
+
+    Call log:
+    [2m  - Expect "not toBeVisible" with timeout 1000ms[22m
+    [2m  - waiting for getByTestId('input-modal')[22m
+    [2m    5 × locator resolved to <div role="dialog" aria-modal="true" data-testid="input-modal" class="pointer-events-auto bg-zinc-900/95 border border-cyan-500 shadow-2xl p-4 min-w-[400px] backdrop-blur-sm rounded-sm">…</div>[22m
+    [2m      - unexpected value "visible"[22m
+
+
+       at utils.ts:198
+
+      196 |   await input.fill(name);
+      197 |   await page.keyboard.press('Enter');
+    > 198 |   await expect(modal).not.toBeVisible({ timeout: 1000 });
+          |                           ^
+      199 | }
+      200 |
+      201 | /**
+        at renameItem (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:198:27)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:419:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-c101e-TOCOL---completes-the-cycle-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-c101e-TOCOL---completes-the-cycle-chromium/error-context.md
+
+
+[1A[2K  9) [chromium] › tests/e2e/episode3.spec.ts:257:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data 
+
+    Error: Timeout waiting for mission complete or advancement. TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at utils.ts:412
+
+      410 |     ),
+      411 |   ]).catch((e) => {
+    > 412 |     throw new Error(`Timeout waiting for mission complete or advancement. ${e}`);
+          |           ^
+      413 |   });
+      414 | }
+      415 |
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:412:11
+        at waitForMissionComplete (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:402:3)
+        at confirmMission (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:383:3)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:338:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/error-context.md
+
+
+[1A[2K  9 failed
+    [chromium] › tests/e2e/episode3.spec.ts:128:3 › Episode 3: MASTERY › Level 11: DAEMON RECONNAISSANCE - completes reconnaissance 
+    [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a1 - completes successfully 
+    [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a2 - completes successfully 
+    [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-a3 - completes successfully 
+    [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b1 - completes successfully 
+    [chromium] › tests/e2e/episode3.spec.ts:173:5 › Episode 3: MASTERY › Level 12: scen-b2 - completes successfully 
+    [chromium] › tests/e2e/episode3.spec.ts:187:3 › Episode 3: MASTERY › Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys 
+    [chromium] › tests/e2e/episode3.spec.ts:257:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data 
+    [chromium] › tests/e2e/episode3.spec.ts:341:3 › Episode 3: MASTERY › Level 15: TRANSMISSION PROTOCOL - completes the cycle 
+  1 passed (33.3s)
+
+[36m  Serving HTML report at http://localhost:33663. Press Ctrl+C to quit.[39m

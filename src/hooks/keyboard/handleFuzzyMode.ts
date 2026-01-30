@@ -9,6 +9,7 @@ import {
 } from '../../utils/fsHelpers';
 import { LEVELS } from '../../constants';
 import { checkProtocolViolations } from './utils';
+import { checkAllTasksComplete } from '../../utils/gameUtils';
 
 // Helper to get candidates (duplicated from FuzzyFinder for logic consistency)
 const getFilteredCandidates = (gameState: GameState) => {
@@ -59,6 +60,7 @@ export const handleFuzzyModeKeyDown = (
   gameState: GameState,
   dispatch: React.Dispatch<Action>
 ) => {
+  const currentLevel = LEVELS[gameState.levelIndex];
   // Navigation
   if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n') || (e.ctrlKey && e.key === 'j')) {
     e.preventDefault();
@@ -87,11 +89,17 @@ export const handleFuzzyModeKeyDown = (
     if (selected) {
       if (selected.isZoxide) {
         // Zoxide Jump
-        const currentLevel = LEVELS[gameState.levelIndex];
         const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel);
         const match = dirs.find((d) => resolvePath(gameState.fs, d.path) === selected.path);
         if (match) {
-          if (checkProtocolViolations(e, gameState, dispatch)) {
+          if (
+            checkProtocolViolations(
+              e,
+              gameState,
+              dispatch,
+              checkAllTasksComplete(gameState, currentLevel)
+            )
+          ) {
             return;
           }
           dispatch({ type: 'SET_CURSOR', index: 0 }); // Reset cursor for directory jump
@@ -112,7 +120,14 @@ export const handleFuzzyModeKeyDown = (
             const parentPath = selected.pathIds.slice(0, -1);
             const fileId = selected.pathIds[selected.pathIds.length - 1];
 
-            if (checkProtocolViolations(e, gameState, dispatch)) {
+            if (
+              checkProtocolViolations(
+                e,
+                gameState,
+                dispatch,
+                checkAllTasksComplete(gameState, currentLevel)
+              )
+            ) {
               return;
             }
 

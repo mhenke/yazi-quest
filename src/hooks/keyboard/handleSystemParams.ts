@@ -3,6 +3,7 @@ import { getNarrativeAction, checkProtocolViolations } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { isProtected, getNodeByPath } from '../../utils/fsHelpers';
 import { Action } from '../gameReducer';
+import { checkAllTasksComplete } from '../../utils/gameUtils';
 
 export const handleSystemParamsKeyDown = (
   e: KeyboardEvent,
@@ -46,7 +47,14 @@ export const handleSystemParamsKeyDown = (
 
     case 'Z':
       if (e.shiftKey) {
-        if (checkProtocolViolations(e, gameState, dispatch)) {
+        if (
+          checkProtocolViolations(
+            e,
+            gameState,
+            dispatch,
+            checkAllTasksComplete(gameState, currentLevel)
+          )
+        ) {
           return true;
         }
         e.preventDefault();
@@ -59,7 +67,14 @@ export const handleSystemParamsKeyDown = (
 
     case 'z':
       if (!e.shiftKey) {
-        if (checkProtocolViolations(e, gameState, dispatch)) {
+        if (
+          checkProtocolViolations(
+            e,
+            gameState,
+            dispatch,
+            checkAllTasksComplete(gameState, currentLevel)
+          )
+        ) {
           return true;
         }
         e.preventDefault();
