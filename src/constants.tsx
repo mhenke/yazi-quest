@@ -515,6 +515,14 @@ export const applyFileSystemMutations = (
     }
   }
 
+  // Level 13+: Remove access_token.key from /tmp (completed exfiltration from Level 7)
+  if (levelId >= 13) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
+    }
+  }
+
   // Level 8+: systemd-core corruption and cron.allow
   if (levelId >= 8) {
     newFs = getOrCreateWorkspaceSystemdCore(newFs, true);
@@ -2537,6 +2545,23 @@ It will happen again.`,
                   name: 'theme.toml',
                   type: 'file',
                   content: `[theme]\\nprimary = "#ff9900"\\nsecondary = "#3399ff"\\nerror = "#ff0000"\\ntext_normal = "#e0e0e0"\\ntext_muted = "#808080"\\n\\n[filetype]\\nrules = [\\n  { mime = "image/*", fg = "magenta" },\\n  { mime = "video/*", fg = "cyan" }\\n]`,
+                },
+                {
+                  id: 'vault-initial',
+                  name: 'vault',
+                  type: 'dir',
+                  protected: true,
+                  children: [
+                    {
+                      id: 'vault-active-initial',
+                      name: 'active',
+                      type: 'dir',
+                      protected: true,
+                      children: [],
+                      parentId: 'vault-initial',
+                    },
+                  ],
+                  parentId: '.config',
                 },
               ],
             },

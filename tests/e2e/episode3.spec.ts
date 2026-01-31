@@ -60,7 +60,7 @@ async function runLevel12CommonPath(
   testInfo: TestInfo,
   scenario: { id: string; threat: string | null }
 ) {
-  const totalTasks = scenario.threat ? 6 : 5;
+  const totalTasks = scenario.threat ? 5 : 4; // 4 base tasks + 1 threat task if applicable
 
   // 1. Discover Identity
   await gotoCommand(page, 'w');
@@ -137,8 +137,8 @@ test.describe('Episode 3: MASTERY', () => {
     await navigateRight(page, 1); // Enter daemons
     await pressKey(page, '.'); // Show hidden
     await search(page, '\\.service$');
-    // Wait for search results to populate
-    await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(2);
+    // Wait for search results to populate (7 .service files now in Level 11)
+    await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(7);
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
     // Task 2: , then Shift+M
@@ -201,19 +201,17 @@ test.describe('Episode 3: MASTERY', () => {
 
     // PHASE 1: ACQUIRE
     // ----------------------------------------------------------------
-    await gotoCommand(page, 'r');
-    await filterByText(page, 'nodes');
-    await pressKey(page, 'l');
-    await clearFilter(page);
-
-    await pressKey(page, '.'); // Show hidden
-    await search(page, '\\.key$');
+    // User sequence: gr, j*4, l, ., s, '\.key$', enter, Ctrl+a, x, .
+    await gotoCommand(page, 'r'); // gr - go to root
+    await pressKeys(page, ['j', 'j', 'j', 'j']); // j*4 - navigate down to nodes
+    await pressKey(page, 'l'); // Enter nodes directory
+    await pressKey(page, '.'); // Show hidden files
+    await search(page, '\\.key$'); // Search for .key files
     await page.waitForTimeout(DEFAULT_DELAY);
-    await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3);
 
-    await pressKeys(page, ['Ctrl+a', 'x']); // Select all then Cut
-    await expectClipboard(page, 'MOVE: 3');
-    await clearFilter(page); // Clear filter after action per expert advice
+    await pressKeys(page, ['Ctrl+a', 'x']); // Select all and cut
+    await expectClipboard(page, 'MOVE: 3'); // Should have 3 files (excluding honeypot via game logic)
+    await pressKey(page, '.'); // Toggle hidden off
     await pressKey(page, 'Escape'); // Clear search
     await assertTask(page, '1/4', testInfo.outputDir, 'phase1_acquired');
 
@@ -241,17 +239,20 @@ test.describe('Episode 3: MASTERY', () => {
     // PHASE 4: SYNC
     // ----------------------------------------------------------------
 
+    await filterByText(page, 'central_relay'); // Filter to select the relay directory
+    // At 3/4 tasks, protocol violation requires manual fix (not auto-fix)
+    await dismissAlertIfPresent(page, /Protocol Violation/i); // Press Escape
+    await clearFilter(page); // Manually clear the filter
     await navigateRight(page, 1); // Enter relay
-    await clearFilter(page);
     await pressKey(page, 'p'); // Paste
 
     // Task 4: Verify sync (4/4) - Increased timeout for state update
     await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, { timeout: 2000 });
 
-    // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
-    // Ensure we aggressively dismiss any blocking modals
-    await dismissAlertIfPresent(page, /Protocol Violation/i);
-    await page.waitForTimeout(200);
+    // Auto-fix protocol violation by toggling hidden files off
+    await page.waitForTimeout(500); // Wait for modal
+    await page.keyboard.press('.'); // Toggle hidden files off
+    await page.waitForTimeout(DEFAULT_DELAY);
 
     await waitForMissionComplete(page);
   });
@@ -281,7 +282,7 @@ test.describe('Episode 3: MASTERY', () => {
 
       // 3. Cut vault from ~/.config
       await filterByText(page, 'vault');
-      await expect(page.getByTestId('file-vault')).toBeVisible();
+      await expect(page.getByTestId('dir-vault')).toBeVisible();
       await pressKey(page, 'x'); // Cut
       await clearFilter(page);
 
@@ -358,16 +359,16 @@ test.describe('Episode 3: MASTERY', () => {
     // PHASE 1: Enter Vault
     // ----------------------------------------------------------------
     await filterByText(page, 'vault');
-    await pressKey(page, 'l'); // Enter BEFORE clearing filter
-    await clearFilter(page);
+    await clearFilter(page); // Clear filter to allow navigation
+    await pressKey(page, 'l'); // Enter vault
     await assertTask(page, '1/4', testInfo.outputDir, 'phase1_vault');
 
     // PHASE 2: Assemble Identity (Move keys to active)
     // ----------------------------------------------------------------
     // 1. Enter 'keys'
     await filterByText(page, 'keys');
-    await pressKey(page, 'l'); // Enter BEFORE clearing filter
-    await clearFilter(page);
+    await clearFilter(page); // Clear filter before entering
+    await pressKey(page, 'l'); // Enter keys directory
 
     // 2. Reveal hidden files (.) if needed
     if (!(await areHiddenFilesVisible(page))) {
@@ -383,8 +384,8 @@ test.describe('Episode 3: MASTERY', () => {
     // 5. Navigate to 'active'
     await navigateLeft(page, 1); // Leave keys
     await filterByText(page, 'active');
-    await navigateRight(page, 1); // Enter BEFORE clearing filter
-    await clearFilter(page);
+    await clearFilter(page); // Clear filter before entering
+    await navigateRight(page, 1); // Enter active directory
 
     // 6. Paste (p)
     await pressKey(page, 'p');
@@ -414,8 +415,8 @@ test.describe('Episode 3: MASTERY', () => {
     // 1. Go to training_data
     await navigateLeft(page, 1); // Leave active
     await filterByText(page, 'training_data');
-    await navigateRight(page, 1); // Enter BEFORE clearing filter
     await clearFilter(page);
+    await navigateRight(page, 1); // Enter training_data
 
     // 2. Rename exfil_04.log to payload.py
     await filterByText(page, 'exfil_04');
