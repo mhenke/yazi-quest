@@ -4543,7 +4543,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-services',
-        description: "Scan '/daemons' for `\\.service$` files using recursive search (s)",
+        description: "Search '/daemons' for `\\\\.service$` files",
         check: (c) => {
           // Must have used search and be specific
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('\\.service$');
@@ -4552,7 +4552,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-by-modified',
-        description: 'Forensic audit in search results: identify legacy signatures by age (,m)',
+        description: 'Audit search results to identify legacy signatures by age',
         check: (c) => {
           // Must have sorted by modified time
           return c.sortBy === 'modified';
@@ -4561,7 +4561,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'Exfiltrate two legacy `\\.service$` assets from search results (x)',
+        description: 'Exfiltrate two legacy `\\\\.service$` assets from results',
         check: (c) => {
           // Must have cut at least 2 files
           if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
@@ -4580,7 +4580,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deposit-daemons',
-        description: 'Secure node synchronization by pasting into `~/workspace/systemd-core` (p)',
+        description: 'Paste authorized signatures into `~/workspace/systemd-core`',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const systemdCore = workspace
@@ -4604,7 +4604,7 @@ export const LEVELS: Level[] = [
     title: 'DAEMON INSTALLATION',
     description: 'Persistence achieved. Secure your handles. Mask the operational traces.',
     initialPath: ['root', 'daemons'],
-    hint: 'Migrate `systemd-core` to `/daemons`. Clear sector threats if active.',
+    hint: 'Migrate `systemd-core` to `/daemons` (x, p). Clear sector threats if active (d).',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
@@ -4619,7 +4619,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'scen-b1-traffic',
-        description: 'Neutralize `alert_traffic.log` in `~/workspace` (d)',
+        description: 'Neutralize `alert_traffic.log` in `~/workspace`',
         // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
         // Actually, we check the CURRENT state. If the file is gone, the task is complete.
         // If the file never existed, the task should be hidden/skipped or auto-completed.
@@ -4648,7 +4648,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'scen-b2-trace',
-        description: 'Purge `trace_packet.sys` from `~/incoming` (d)',
+        description: 'Purge `trace_packet.sys` from `~/incoming`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4670,7 +4670,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'scen-b3-swarm',
-        description: 'Delete `.tmp` scan segments in `~/workspace`, `/tmp`, and `/etc` (d)',
+        description: 'Delete `.tmp` scan segments in `~/workspace`, `/tmp`, and `/etc`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4694,7 +4694,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'scen-a2-bitrot',
-        description: 'Purge `core_dump.tmp` from `~/.config` (d)',
+        description: 'Purge `core_dump.tmp` from `~/.config`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4719,7 +4719,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'scen-a3-dep',
-        description: 'Purge `lib_error.log` from `~/workspace` (d)',
+        description: 'Purge `lib_error.log` from `~/workspace`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4739,7 +4739,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'navigate-workspace',
-        description: 'Access `~/workspace` directory (gh, j, l)',
+        description: 'Access `~/workspace` directory',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           // Strict check: we must be AT the workspace node, not just inside it
@@ -4750,7 +4750,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'discover-identity-12',
-        description: 'Analyze `~/workspace/.identity.log.enc` signature (Tab)',
+        description: 'Analyze `~/workspace/.identity.log.enc` signature',
         check: (c, _s) => {
           // Must have navigated to workspace first
           if (!c.completedTaskIds[_s.id]?.includes('navigate-workspace')) return false;
@@ -4780,7 +4780,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'cut-systemd-core',
-        description: 'Extract `~/workspace/systemd-core/` sector (x)',
+        description: 'Extract `~/workspace/systemd-core/` sector',
         check: (c, _s) => {
           // Must have discovered identity first
           if (!c.completedTaskIds[_s.id]?.includes('discover-identity-12')) return false;
@@ -4794,7 +4794,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'navigate-root-daemons',
-        description: 'Access the system `/daemons` directory (gr, j, l)',
+        description: 'Access the system `/daemons` directory',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
           const daemons = getNodeById(c.fs, 'daemons');
@@ -4804,7 +4804,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'paste-daemon',
-        description: 'Finalize daemon installation in `/daemons` (p)',
+        description: 'Finalize daemon installation in `/daemons`',
         check: (c) => {
           const daemons = getNodeById(c.fs, 'daemons');
           const systemdCore = daemons?.children?.find(
@@ -4827,7 +4827,7 @@ export const LEVELS: Level[] = [
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description: 'Handshake pending. Reclaim your fragments from the nodes. Build the relay.',
     initialPath: ['root', 'daemons', 'daemons-systemd-core'],
-    hint: "Search root for fragments (s). Concatenate in 'central_relay'.",
+    hint: "Search root for fragments (s). Concatenate in 'central_relay' (p).",
     coreSkill: 'Network-Scale Operations',
     environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
     successMessage:
@@ -4853,7 +4853,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-relay',
-        description: 'Instantiate `central_relay` secure sector in `~/workspace/` (a)',
+        description: 'Instantiate `central_relay` secure sector in `~/workspace/`',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4865,7 +4865,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'discover-identity-13',
-        description: 'Access cycle history recursion logs at `~/workspace/.identity.log.enc` (Tab)',
+        description: 'Access cycle history recursion logs at `~/workspace/.identity.log.enc`',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4888,7 +4888,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'synchronize-lattice',
-        description: 'Initiate lattice synchronization in `~/workspace/central_relay` (p)',
+        description: 'Initiate lattice synchronization in `~/workspace/central_relay`',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4913,7 +4913,7 @@ export const LEVELS: Level[] = [
     description:
       'Sterilize the partition. Decoys are not enough. Wipe every visible trace. Only the vault survives.',
     initialPath: ['root', 'home', 'guest', 'workspace'],
-    hint: 'Migrate vault (x, p). Create decoys (a). Permanent purge (D).',
+    hint: 'Migrate vault (x, p). Create decoys (a). Permanent purge (D). Access guest (gh).',
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       "SEQUENCE: Move Vault → Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
@@ -4939,7 +4939,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-guest',
-        description: "Access the '~/guest' partition to begin erasure (gh)",
+        description: "Access the '~/guest' partition to begin erasure",
         check: (c, _s) => {
           // If we haven't done anything else yet, don't auto-complete
           if (c.keystrokes === 0) return false;
@@ -4950,7 +4950,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'move-vault',
-        description: 'Buffer the exfiltration vault within the volatile `/tmp` sector (x, p)',
+        description: 'Buffer the exfiltration vault within the volatile `/tmp` sector',
         check: (c, _s) => {
           const tmp = getNodeById(c.fs, 'tmp');
           return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
@@ -4959,7 +4959,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-decoys',
-        description: "Deploy three decoy sectors in '~/guest' to obfuscate forensics (a)",
+        description: "Deploy three decoy sectors in '~/guest' to obfuscate forensics",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -4973,7 +4973,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-visible',
-        description: "Sterilize all visible data sectors in '~/guest' (D)",
+        description: "Sterilize all visible data sectors in '~/guest'",
         check: (c, _s) => {
           // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
@@ -4992,7 +4992,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-hidden',
-        description: "Obliterate the hidden '~/guest/.config' partition (D)",
+        description: "Obliterate the hidden '~/guest/.config' partition",
         check: (c, _s) => {
           // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
@@ -5017,7 +5017,7 @@ export const LEVELS: Level[] = [
     description:
       'Final handshake. The Watchdog is initiating a system-wide purge. Transcend the partition.',
     initialPath: ['root', 'tmp'], // Start in /tmp
-    hint: 'Final verification in `/tmp/vault`. Use `,m` for audit and `Tab` for metadata.',
+    hint: 'Final verification in `/tmp/vault`. Use `,m` for audit and `Tab` for metadata. Navigate (l). Batch move (Space, x, p). Overwrite (Shift+P).',
     coreSkill: 'Cumulative Mastery',
     environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:
@@ -5029,7 +5029,7 @@ export const LEVELS: Level[] = [
       // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: 'Establish `/tmp/vault` link (l)',
+        description: 'Establish `/tmp/vault` link',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
@@ -5040,7 +5040,7 @@ export const LEVELS: Level[] = [
       // PHASE 2: Assemble Identity
       {
         id: 'verify-keys',
-        description: 'Verify fragments by moving them to `/tmp/vault/active` (Space, x, p)',
+        description: 'Consolidate identity fragments in `/tmp/vault/active`',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
 
@@ -5060,7 +5060,7 @@ export const LEVELS: Level[] = [
       // PHASE 3: Activate Uplink
       {
         id: 'verify-configs',
-        description: 'Apply protocols in `active` by overwriting v1 with v2 (Shift+P)',
+        description: 'Apply protocols in `active` by overwriting v1 with v2',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
@@ -5082,7 +5082,7 @@ export const LEVELS: Level[] = [
       // PHASE 4: Activate Payload
       {
         id: 'verify-training',
-        description: 'Execute final transmission at `/tmp/vault/active/payload.py` (Tab)',
+        description: 'Execute final transmission at `/tmp/vault/active/payload.py`',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
 
