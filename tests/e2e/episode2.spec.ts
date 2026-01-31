@@ -77,7 +77,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Task 1: Go to root, then find access_token.key using fzf
     await gotoCommand(page, 'r');
-    await findFZF(page, 'token');
+    await findFZF(page, '.key'); // Search for .key which should uniquely match access_token.key
     await assertTask(page, '1/4', testInfo.outputDir, 'find_token');
 
     // Verify we actually landed on the file
@@ -317,7 +317,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
       await page.keyboard.press('Shift+Enter');
 
       // Verify we've moved to Level 7 by checking for Level 7's initial conditions
-      await expect(page.getByText('QUANTUM BYPASS')).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText('QUANTUM BYPASS').first()).toBeVisible({ timeout: 10000 });
 
       // Verify that the mission complete dialog is no longer visible
       await expect(page.getByTestId('mission-complete')).not.toBeVisible();

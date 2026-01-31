@@ -175,11 +175,17 @@ export async function pressKeys(page: Page, keys: string[]): Promise<void> {
 /**
  * Utility to find an item using fzf (z command).
  */
-export async function findFZF(page: Page, name: string): Promise<void> {
+export async function findFZF(page: Page, name: string, downPresses: number = 0): Promise<void> {
   await pressKey(page, 'z');
   // FuzzyFinder doesn't use a real input element, it captures global keys
   await expect(page.getByTestId('fuzzy-finder')).toBeVisible();
   await page.keyboard.type(name);
+
+  // Navigate down through results if needed
+  for (let i = 0; i < downPresses; i++) {
+    await page.keyboard.press('ArrowDown');
+  }
+
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('fuzzy-finder')).not.toBeVisible();
 }

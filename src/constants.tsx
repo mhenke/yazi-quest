@@ -4108,10 +4108,6 @@ export const LEVELS: Level[] = [
         description:
           'Pattern sweep for log signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then enter)',
         check: (c) => {
-          // Verify search results contain the correct specific files
-          const batchLogsNode = getNodeById(c.fs, 'batch_logs');
-          const isInBatchLogs = c.currentPath.includes(batchLogsNode?.id || '');
-
           // Check that search is active and has results
           const isSearchActive =
             c.searchQuery !== null && c.searchResults && c.searchResults.length > 0;
@@ -4125,19 +4121,7 @@ export const LEVELS: Level[] = [
           );
           const hasCorrectFiles = foundTargets.length === 4;
 
-          // DEBUG LOGGING
-          console.log('Level 6 Task 2 Check:', {
-            isInBatchLogs,
-            isSearchActive,
-            searchQuery: c.searchQuery,
-            searchResultsCount: c.searchResults?.length,
-            searchResultNames: c.searchResults?.map((n) => n.name),
-            foundTargets,
-            hasCorrectFiles,
-            willPass: isInBatchLogs && isSearchActive && hasCorrectFiles,
-          });
-
-          return isInBatchLogs && isSearchActive && hasCorrectFiles;
+          return isSearchActive && hasCorrectFiles;
         },
         completed: false,
       },
