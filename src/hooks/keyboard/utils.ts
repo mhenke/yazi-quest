@@ -58,9 +58,8 @@ export const hasSortViolation = (gameState: GameState): boolean => {
 };
 
 // Helper to check for hidden files visible
-// NOTE: Hidden files no longer block navigation as per game design requirements
-export const hasHiddenViolation = (_gameState: GameState): boolean => {
-  return false;
+export const hasHiddenViolation = (gameState: GameState): boolean => {
+  return gameState.showHidden;
 };
 
 /**
@@ -68,7 +67,7 @@ export const hasHiddenViolation = (_gameState: GameState): boolean => {
  * Order of priority: Filter > Search > Sort > Hidden
  *
  * If tasks are NOT complete: Blocks and shows warning modal.
- * If tasks ARE complete: Triggers auto-fix and blocks one press.
+ * If tasks ARE complete: Blocks and allows Shift+Enter auto-fix via UI/App.
  */
 export const checkProtocolViolations = (
   e: KeyboardEvent,
@@ -81,48 +80,26 @@ export const checkProtocolViolations = (
   const sort = hasSortViolation(gameState);
   const hidden = hasHiddenViolation(gameState);
 
-  if (!filter && !search && !sort && !hidden) return false;
+  // Determine if there is a blocking violation right now
+  // Hidden files only block navigation if ALL tasks for the level are complete.
+  // Filters, search results, and custom sorting ALWAYS block navigation.
+  const isBlockingViolation = filter || search || sort || (hidden && allTasksComplete);
 
+  if (!isBlockingViolation) return false;
+
+  // Prevent default action (navigation)
   e.preventDefault();
 
-  if (allTasksComplete) {
-    // AUTO-FIX LOGIC
-    dispatch({
-      type: 'SET_NOTIFICATION',
-      message: 'PROTOCOL BREACH DETECTED: AUTO-CORRECTING...',
-      duration: 3000,
-    });
-    // Trigger the glitch effect in App.tsx via a dedicated action or mode
-    dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
+  // Prevent default action (navigation)
+  e.preventDefault();
 
-    // Clear all violations
-    if (filter) {
-      const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-      if (currentDirNode) dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
-    }
-    if (search) {
-      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-    }
-    if (sort) {
-      dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-    }
-    if (hidden) {
-      dispatch({ type: 'TOGGLE_HIDDEN' });
-    }
-
-    // After a delay, return to normal mode (the pulse/glitch effect)
-    setTimeout(() => {
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-    }, 1000);
-
-    return true; // Navigation blocked for this press
-  }
-
-  // STANDARD WARNING MODALS (During tasks)
+  // Show the appropriate warning modal.
+  // Note: During tasks, hidden files do NOT block (isBlockingViolation was false).
+  // After tasks, we show the respective modal.
   if (filter) {
-    dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: true });
   } else if (search) {
-    dispatch({ type: 'SET_MODE', mode: 'search-warning' });
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: true });
   } else if (sort) {
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
   } else if (hidden) {

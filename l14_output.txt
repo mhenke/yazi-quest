@@ -1,0 +1,47 @@
+
+> yazi-quest@0.0.0 test:e2e
+> playwright test tests/e2e/episode3.spec.ts -g Level 14: --reporter=list
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/episode3.spec.ts:256:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data (8.1s)
+
+
+  1) [chromium] › tests/e2e/episode3.spec.ts:256:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data › Task 2: Move vault to /tmp 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.breadcrumb')
+    Expected substring: [32m".config"[39m
+    Received string:    [31m"~"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.breadcrumb')[22m
+    [2m    9 × locator resolved to <header class="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 breadcrumb">…</header>[22m
+    [2m      - unexpected value "~"[22m
+
+
+       at utils.ts:509
+
+      507 |     await expect(page.locator('.breadcrumb')).toHaveText(dirName);
+      508 |   } else {
+    > 509 |     await expect(page.locator('.breadcrumb')).toContainText(dirName);
+          |                                               ^
+      510 |   }
+      511 | }
+      512 |
+        at expectCurrentDir (/home/mhenke/Projects/yazi-quest/tests/e2e/utils.ts:509:47)
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:276:13
+        at /home/mhenke/Projects/yazi-quest/tests/e2e/episode3.spec.ts:265:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/episode3-Episode-3-MASTERY-e7754-ently-deletes-all-user-data-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/episode3.spec.ts:256:3 › Episode 3: MASTERY › Level 14: EVIDENCE PURGE - permanently deletes all user data 

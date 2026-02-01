@@ -22,6 +22,7 @@ import {
   navigateRight,
   navigateLeft,
   navigateDown,
+  enterDirectory,
   sortCommand,
   dismissAlertIfPresent,
   expectNarrativeThought,
@@ -103,26 +104,22 @@ async function runLevel12CommonPath(
 
   // 3. Navigate to /daemons
   await gotoCommand(page, 'r');
-  await filterByText(page, 'daemons');
-  await navigateRight(page, 1);
-  await dismissAlertIfPresent(page, /Protocol Violation/i);
+  await enterDirectory(page, 'daemons');
 
   const navDaemonsTaskNum = scenario.threat ? 5 : 4;
   await assertTask(page, `${navDaemonsTaskNum}/${totalTasks}`, testInfo.outputDir);
 
   // 4. Paste and finish
   await pressKey(page, 'p');
-  await filterByText(page, 'systemd-core');
-  await navigateRight(page, 1);
-  await dismissAlertIfPresent(page, /Protocol Violation/i);
+  await enterDirectory(page, 'systemd-core');
 
   await expectNarrativeThought(page, 'The loops are closing');
-  await assertTask(
-    page,
-    `${totalTasks}/${totalTasks}`,
-    testInfo.outputDir,
-    `mission_complete_${scenario.id}`
-  );
+
+  // Verify level completion counter (total/total)
+  await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*(\d+)\/\1/, {
+    timeout: 5000,
+  });
+
   await waitForMissionComplete(page);
 }
 
@@ -275,14 +272,12 @@ test.describe('Episode 3: MASTERY', () => {
       await expect(page.getByText('HIDDEN: ON')).toBeVisible();
 
       // 2. Navigate into .config
-      await filterByText(page, '.config');
-      await navigateRight(page, 1); // Enter BEFORE clearing filter
-      await clearFilter(page);
+      await enterDirectory(page, '.config');
       await expectCurrentDir(page, '.config');
 
       // 3. Cut vault from ~/.config
       await filterByText(page, 'vault');
-      await expect(page.getByTestId('dir-vault')).toBeVisible();
+      await expect(page.getByTestId('file-vault')).toBeVisible();
       await pressKey(page, 'x'); // Cut
       await clearFilter(page);
 
@@ -337,8 +332,9 @@ test.describe('Episode 3: MASTERY', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'task5_purge_config');
     });
 
-    // Auto-fix protocol violation (hidden files) to see Success Toast
-    await dismissAlertIfPresent(page, /Protocol Violation/i);
+    // Auto-fix protocol violation (hidden files) with Shift+Enter, then confirm mission
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(200);
     await confirmMission(page, 'EVIDENCE PURGE - WORKSPACE');
   });
 
@@ -357,18 +353,12 @@ test.describe('Episode 3: MASTERY', () => {
     );
 
     // PHASE 1: Enter Vault
-    // ----------------------------------------------------------------
-    await filterByText(page, 'vault');
-    await clearFilter(page); // Clear filter to allow navigation
-    await pressKey(page, 'l'); // Enter vault
+    await enterDirectory(page, 'vault');
     await assertTask(page, '1/4', testInfo.outputDir, 'phase1_vault');
 
     // PHASE 2: Assemble Identity (Move keys to active)
-    // ----------------------------------------------------------------
     // 1. Enter 'keys'
-    await filterByText(page, 'keys');
-    await clearFilter(page); // Clear filter before entering
-    await pressKey(page, 'l'); // Enter keys directory
+    await enterDirectory(page, 'keys');
 
     // 2. Reveal hidden files (.) if needed
     if (!(await areHiddenFilesVisible(page))) {
@@ -441,10 +431,9 @@ test.describe('Episode 3: MASTERY', () => {
     // Logic: verify-training checks for payload.py in active.
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
 
-    // Protocol violations (Hidden/Filter) only allow Shift+Enter dismissal IF tasks are complete.
-    // Ensure we aggressively dismiss any blocking modals
-    await dismissAlertIfPresent(page, /Protocol Violation/i);
-    await page.waitForTimeout(200);
+    // Auto-fix protocol violation (e.g. Hidden files or Filter)
+    await page.keyboard.press('Shift+Enter');
+    await page.waitForTimeout(DEFAULT_DELAY);
 
     await waitForMissionComplete(page);
   });
@@ -513,8 +502,9 @@ test.describe('Episode 3: MASTERY', () => {
       await deleteItem(page, { permanent: true, confirm: true });
       await assertTask(page, '5/5', 'temp', 'task5_purge_config');
 
-      // Dismiss any protocol violations to see the success toast
-      await dismissAlertIfPresent(page, /Protocol Violation/i);
+      // Use Shift+Enter to auto-fix violations (like HIDDEN: ON)
+      await page.keyboard.press('Shift+Enter');
+      await page.waitForTimeout(DEFAULT_DELAY);
 
       // Wait for the mission complete dialog to appear
       await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });

@@ -31,6 +31,17 @@ export const handleGCommandKeyDown = (
 
   // Handle Shift+G (Jump to bottom) specially
   if (e.key === 'G') {
+    if (
+      checkProtocolViolations(
+        e,
+        gameState,
+        dispatch,
+        checkAllTasksComplete(gameState, currentLevel)
+      )
+    ) {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      return;
+    }
     e.preventDefault();
     try {
       const items = getVisibleItems(gameState) || [];
@@ -70,6 +81,17 @@ export const handleGCommandKeyDown = (
   if (target) {
     // Special case for 'gg' (top of list) - doesn't change path
     if (e.key === 'g') {
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        return;
+      }
       dispatch({ type: 'SET_CURSOR', index: 0 });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'MARK_ACTION_USED', actionId: 'GG' });

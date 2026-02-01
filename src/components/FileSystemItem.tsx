@@ -192,7 +192,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
           )}
         </div>
 
-        {(item.type === 'dir' || item.type === 'archive') && !isGrid && (
+        {item.type === 'dir' && !isGrid && (
           <span className="text-zinc-700 shrink-0">
             <ChevronRight size={12} strokeWidth={3} />
           </span>

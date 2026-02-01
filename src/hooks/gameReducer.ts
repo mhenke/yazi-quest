@@ -214,8 +214,23 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, cursorIndex: newIndex };
     }
 
-    case 'TOGGLE_HIDDEN':
-      return { ...state, showHidden: !state.showHidden, cursorIndex: 0 };
+    case 'TOGGLE_HIDDEN': {
+      // Maintain cursor position on same file if possible
+      const visibleItemsBefore = getVisibleItems(state);
+      const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
+
+      const newState = { ...state, showHidden: !state.showHidden };
+
+      if (currentItemId) {
+        const visibleItemsAfter = getVisibleItems(newState);
+        const newIndex = visibleItemsAfter.findIndex((item) => item.id === currentItemId);
+        if (newIndex !== -1) {
+          return { ...newState, cursorIndex: newIndex };
+        }
+      }
+
+      return { ...newState, cursorIndex: 0 };
+    }
 
     case 'TOGGLE_INFO_PANEL':
       return { ...state, showInfoPanel: !state.showInfoPanel };
@@ -499,48 +514,50 @@ export function gameReducer(state: GameState, action: Action): GameState {
       const isComplete = action.tasks.every((t) => completedIds.includes(t.id));
 
       if (!(isComplete && !state.showHidden)) {
-        if (state.timeLeft === null || state.timeLeft <= 0) {
-          // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
-          if (action.currentLevelId === 15) {
-            const nextPhase = (state.gauntletPhase || 0) + 1;
-            const isFinished = nextPhase >= 8;
+        if (state.timeLeft !== null) {
+          if (state.timeLeft <= 0) {
+            // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
+            if (action.currentLevelId === 15) {
+              const nextPhase = (state.gauntletPhase || 0) + 1;
+              const isFinished = nextPhase >= 8;
 
-            if (isFinished) {
-              const score = state.gauntletScore || 0;
-              if (score < 6) {
-                return {
-                  ...state,
-                  isGameOver: true,
-                  gameOverReason: 'time',
-                  notification: { message: `MASTERY FAILED: Score ${score}/8.` },
+              if (isFinished) {
+                const score = state.gauntletScore || 0;
+                if (score < 6) {
+                  return {
+                    ...state,
+                    isGameOver: true,
+                    gameOverReason: 'time',
+                    notification: { message: `MASTERY FAILED: Score ${score}/8.` },
+                  };
+                }
+                nextState = {
+                  ...nextState,
+                  completedTaskIds: {
+                    ...state.completedTaskIds,
+                    [15]: action.tasks.map((t) => t.id),
+                  },
+                  notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
+                };
+              } else {
+                nextState = {
+                  ...nextState,
+                  gauntletPhase: nextPhase,
+                  timeLeft: 20,
+                  notification: { message: `PHASE FAILED! Next Phase...` },
                 };
               }
-              nextState = {
-                ...nextState,
-                completedTaskIds: {
-                  ...state.completedTaskIds,
-                  [15]: action.tasks.map((t) => t.id),
-                },
-                notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
-              };
             } else {
-              nextState = {
-                ...nextState,
-                gauntletPhase: nextPhase,
-                timeLeft: 20,
-                notification: { message: `PHASE FAILED! Next Phase...` },
+              return {
+                ...state,
+                isGameOver: true,
+                gameOverReason: 'time',
+                notification: null,
               };
             }
           } else {
-            return {
-              ...state,
-              isGameOver: true,
-              gameOverReason: 'time',
-              notification: null,
-            };
+            nextState = { ...nextState, timeLeft: state.timeLeft - 1 };
           }
-        } else {
-          nextState = { ...nextState, timeLeft: state.timeLeft - 1 };
         }
       }
 

@@ -928,6 +928,48 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
+  // Level 7 specific: ensure training_data in vault and access_token.key exists
+  if (levelId >= 7) {
+    const config = getNodeById(newFs, '.config');
+    const vault = config?.children?.find((c) => c.name === 'vault');
+    if (vault) {
+      if (!vault.children) vault.children = [];
+      if (!vault.children.find((c) => c.name === 'training_data')) {
+        vault.children.push({
+          id: 'vault-training-data',
+          name: 'training_data',
+          type: 'dir',
+          parentId: vault.id,
+          children: [
+            {
+              id: 'uplink-v1-pasted',
+              name: 'uplink_v1.conf',
+              type: 'file',
+              content: UPLINK_V1_CONTENT,
+              parentId: 'vault-training-data',
+              modifiedAt: BASE_TIME - 30 * day,
+            },
+          ],
+        });
+      }
+    }
+
+    // Ensure access_token.key exists (needed for Level 7 task)
+    // It's typically found in /tmp. Let's put it there.
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
+      if (!tmp.children) tmp.children = [];
+      tmp.children.push({
+        id: 'access-token-key',
+        name: 'access_token.key',
+        type: 'file',
+        content: 'ACCESS_TOKEN=0x7734_KEY',
+        parentId: tmp.id,
+        modifiedAt: BASE_TIME - 1 * day,
+      });
+    }
+  }
+
   // Level 8 specific: ensure daemons, add cron.allow, corrupt systemd-core
   if (levelId >= 8) {
     const root = getNodeById(newFs, 'root');
@@ -2546,23 +2588,6 @@ It will happen again.`,
                   type: 'file',
                   content: `[theme]\\nprimary = "#ff9900"\\nsecondary = "#3399ff"\\nerror = "#ff0000"\\ntext_normal = "#e0e0e0"\\ntext_muted = "#808080"\\n\\n[filetype]\\nrules = [\\n  { mime = "image/*", fg = "magenta" },\\n  { mime = "video/*", fg = "cyan" }\\n]`,
                 },
-                {
-                  id: 'vault-initial',
-                  name: 'vault',
-                  type: 'dir',
-                  protected: true,
-                  children: [
-                    {
-                      id: 'vault-active-initial',
-                      name: 'active',
-                      type: 'dir',
-                      protected: true,
-                      children: [],
-                      parentId: 'vault-initial',
-                    },
-                  ],
-                  parentId: '.config',
-                },
               ],
             },
             {
@@ -4067,7 +4092,8 @@ export const LEVELS: Level[] = [
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
-          return !!vault?.children?.find((p) => p.name === 'active' && p.type === 'dir');
+          const active = vault?.children?.find((p) => p.name === 'active' && p.type === 'dir');
+          return !!active;
         },
         completed: false,
       },
@@ -4256,7 +4282,8 @@ export const LEVELS: Level[] = [
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const config = getNodeById(c.fs, '.config');
           const vault = config?.children?.find((n) => n.name === 'vault');
-          return c.stats.fuzzyJumps >= 1 && c.currentPath.includes(vault?.id || '');
+          // Allow Zoxide OR standard navigation to .config (gc)
+          return (c.stats.fuzzyJumps >= 1 || c.usedGC) && c.currentPath.includes(vault?.id || '');
         },
         completed: false,
       },

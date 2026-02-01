@@ -21,6 +21,17 @@ export const handleNavigationKeyDown = (
   switch (e.key) {
     case 'j':
     case 'ArrowDown': {
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
+        return true;
+      }
+
       const newCursorIndex =
         gameState.cursorIndex >= items.length - 1 ? 0 : gameState.cursorIndex + 1;
       const newItem = items[newCursorIndex];
@@ -40,6 +51,16 @@ export const handleNavigationKeyDown = (
 
     case 'k':
     case 'ArrowUp':
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
+        return true;
+      }
       dispatch({
         type: 'SET_CURSOR',
         index:
@@ -74,6 +95,16 @@ export const handleNavigationKeyDown = (
       return true;
 
     case 'G': {
+      if (
+        checkProtocolViolations(
+          e,
+          gameState,
+          dispatch,
+          checkAllTasksComplete(gameState, currentLevel)
+        )
+      ) {
+        return true;
+      }
       e.preventDefault();
       try {
         const items = getVisibleItems(gameState) || [];
@@ -129,17 +160,12 @@ export const handleNavigationKeyDown = (
         advanceLevel();
         return true;
       }
-      if (currentItem && (currentItem.type === 'dir' || currentItem.type === 'archive')) {
-        if (
-          checkProtocolViolations(
-            e,
-            gameState,
-            dispatch,
-            checkAllTasksComplete(gameState, currentLevel)
-          )
-        ) {
-          return true;
-        }
+
+      if (checkProtocolViolations(e, gameState, dispatch, allComplete)) {
+        return true;
+      }
+
+      if (currentItem && currentItem.type === 'dir') {
         const protection = isProtected(
           gameState.fs,
           gameState.currentPath,

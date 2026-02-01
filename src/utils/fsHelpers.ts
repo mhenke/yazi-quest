@@ -135,6 +135,9 @@ export function getAllDirectoriesWithPaths(
 
     // We check for children and add them to the stack
     if (n.children) {
+      // FIX: Do not recurse into archives.
+      if (n.type === 'archive') continue;
+
       for (const child of n.children) {
         stack.push({ node: child, path: [...p, child.id] });
       }
@@ -187,6 +190,9 @@ export function getRecursiveContent(
     }
 
     if (n.children) {
+      // FIX: Do not recurse into archives. They are opaque to search/fzf.
+      if (n.type === 'archive') continue;
+
       for (const c of n.children) {
         stack.push({ node: c, pathIds: [...pathIds, c.id] });
       }
@@ -325,34 +331,27 @@ export function resolveAndCreatePath(
   collisionNode?: FileNode | null;
 } {
   let newRoot = cloneFS(root);
-  let effectiveParentPath: string[] = []; // This will hold the IDs of the path to the current parent
+  let effectiveParentPath: string[] = [];
   let pathSegmentsToCreate: string[] = [];
 
   if (inputPath.startsWith('~/')) {
-    // Resolve "~" to root node ID (Flattened FS)
-    const rootNode = getNodeById(newRoot, 'root');
-
-    if (!rootNode) {
-      return {
-        fs: newRoot,
-        error: 'Root node not found',
-        targetNode: undefined,
-      };
+    // Correctly resolve "~/" to /home/guest
+    // We expect the standard "root -> home -> guest" structure
+    const guestNode = getNodeByPath(newRoot, ['root', 'home', 'guest']);
+    if (!guestNode) {
+      return { fs: newRoot, error: 'Home directory (~/) not found', targetNode: undefined };
     }
-    effectiveParentPath = [rootNode.id];
+    effectiveParentPath = ['root', 'home', 'guest'];
     pathSegmentsToCreate = inputPath.substring(2).split('/').filter(Boolean);
   } else if (inputPath.startsWith('/')) {
-    // Start from the actual root of the game's filesystem
-    effectiveParentPath = [newRoot.id]; // The root FileNode itself
+    effectiveParentPath = ['root'];
     pathSegmentsToCreate = inputPath.substring(1).split('/').filter(Boolean);
   } else {
-    // Relative path from currentPath
     effectiveParentPath = [...currentPath];
     pathSegmentsToCreate = inputPath.split('/').filter(Boolean);
   }
 
   let currentWorkingNode: FileNode | undefined = getNodeByPath(newRoot, effectiveParentPath);
-
   if (!currentWorkingNode) {
     return { fs: newRoot, error: 'Starting path not found or invalid', targetNode: undefined };
   }
@@ -362,76 +361,72 @@ export function resolveAndCreatePath(
   for (let i = 0; i < pathSegmentsToCreate.length; i++) {
     const segment = pathSegmentsToCreate[i];
     const isLastSegment = i === pathSegmentsToCreate.length - 1;
-    const wantDir = !isLastSegment || inputPath.endsWith('/');
 
-    // Find an existing child that matches both name and expected type
-    let sameTypeChild: FileNode | undefined = undefined;
-    let anySameName: FileNode | undefined = undefined;
+    // Determine if this segment needs to be a directory
+    // Intermediate segments MUST be directories to contain the next segment.
+    // The last segment is a directory ONLY if the input path ended with '/'.
+    const needDir = !isLastSegment || inputPath.endsWith('/');
 
-    if (currentWorkingNode.children) {
-      if (wantDir) {
-        sameTypeChild = currentWorkingNode.children.find(
-          (c) => c.name === segment && (c.type === 'dir' || c.type === 'archive')
-        );
-      } else {
-        sameTypeChild = currentWorkingNode.children.find(
-          (c) => c.name === segment && c.type === 'file'
-        );
+    const existingNode = currentWorkingNode.children?.find((c) => c.name === segment);
+
+    if (existingNode) {
+      // COLLISION CHECK
+
+      // Case 1: We need a directory, but found a file.
+      // E.g. trying to create `a/b` but `a` is a file.
+      // Or trying to create `a/` but `a` is a file.
+      if (needDir && existingNode.type === 'file') {
+        return {
+          fs: newRoot,
+          error: `Cannot create directory in file path: ${segment}`,
+          targetNode: undefined,
+        };
       }
-      anySameName = currentWorkingNode.children.find((c) => c.name === segment);
-    }
 
-    // If a same-type child exists, use it (and treat as collision on last segment)
-    if (sameTypeChild) {
+      // Case 2: We need a file, but found a directory.
+      // E.g. trying to create `a` (file) but `a` (dir) exists.
+      // Yazi likely treats this as just "item exists".
+      // We will flag it as collision.
+
+      // Case 3: We need a dir, found a dir. (Descend)
+      // Case 4: We need a file, found a file. (Collision)
+
       if (isLastSegment) {
         return {
           fs: newRoot,
-          targetNode: sameTypeChild,
+          targetNode: existingNode,
           error: null,
           collision: true,
-          collisionNode: sameTypeChild,
+          collisionNode: existingNode,
         };
       }
-      currentWorkingNode = sameTypeChild;
-      effectiveParentPath.push(currentWorkingNode.id);
-      continue;
-    }
 
-    // No same-type child. If any node with same name exists but different type, we allow coexistence.
-    // For non-last segments we need a directory to traverse into; create one if necessary.
-    if (!sameTypeChild) {
-      if (!anySameName) {
-        // Nothing with that name exists — create the desired node
-        const newNode: FileNode = {
-          id: id(),
-          name: segment,
-          type: wantDir ? 'dir' : 'file',
-          parentId: currentWorkingNode.id,
-        } as FileNode;
-        if (wantDir) newNode.children = [];
-        currentWorkingNode.children = currentWorkingNode.children || [];
-        currentWorkingNode.children.push(newNode);
-        if (isLastSegment) finalTargetNode = newNode;
-        currentWorkingNode = newNode;
-        effectiveParentPath.push(currentWorkingNode.id);
-        continue;
-      } else {
-        // A node with the same name but different type exists. We allow coexistence by creating the desired node.
-        const newNode: FileNode = {
-          id: id(),
-          name: segment,
-          type: wantDir ? 'dir' : 'file',
-          parentId: currentWorkingNode.id,
-        } as FileNode;
-        if (wantDir) newNode.children = [];
-        currentWorkingNode.children = currentWorkingNode.children || [];
-        currentWorkingNode.children.push(newNode);
-        if (isLastSegment) finalTargetNode = newNode;
-        currentWorkingNode = newNode;
+      // If strict dir needed and we have a dir (or archive which acts as dir), descend.
+      if (existingNode.type === 'dir' || existingNode.type === 'archive') {
+        currentWorkingNode = existingNode;
         effectiveParentPath.push(currentWorkingNode.id);
         continue;
       }
     }
+
+    // NO EXISTING NODE - CREATE ONE
+    const newType = needDir ? 'dir' : 'file';
+
+    const newNode: FileNode = {
+      id: id(),
+      name: segment,
+      type: newType,
+      parentId: currentWorkingNode.id,
+    } as FileNode;
+
+    if (newType === 'dir') newNode.children = [];
+
+    currentWorkingNode.children = currentWorkingNode.children || [];
+    currentWorkingNode.children.push(newNode);
+
+    if (isLastSegment) finalTargetNode = newNode;
+    currentWorkingNode = newNode;
+    effectiveParentPath.push(currentWorkingNode.id);
   }
 
   return {

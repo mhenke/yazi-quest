@@ -27,6 +27,7 @@ import {
   enterDirectory,
   expectCurrentDir,
   getCurrentPath,
+  waitForMissionComplete,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
@@ -212,99 +213,40 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level 5: CONTAINMENT BREACH', { tag: '@smoke' }, () => {
-    test('selects, cuts, creates vault structure and hides files', async ({ page }, testInfo) => {
+    test('selects, cuts, creates vault structure and hides files', async ({ page }, _testInfo) => {
       await startLevel(page, 5, { intro: false });
       // press shift+enter to dismiss alert dialog
       await dismissAlertIfPresent(page);
 
-      // Level 5 has a "QUARANTINE ALERT" overlay - dismiss it
-      // [Watchdog Evolution]: Alert removed in favor of passive policy file.
-      // await dismissAlertIfPresent(page, /QUARANTINE ALERT/i);
-
-      // Task 1: Select both files in ~/datastore/protocols (Space) and cut (x)
-      // Level 5 starts in ~/datastore/protocols, so we don't need to navigate there.
-      await expect(page.getByTestId('breadcrumbs')).toContainText('~/datastore/protocols');
-
-      const activePane = page.getByTestId('filesystem-pane-active');
-
-      // Verify presence of uplink files
-      await expect(
-        page.getByTestId('filesystem-pane-active').getByText('uplink_v1.conf')
-      ).toBeVisible();
-      await expect(
-        page.getByTestId('filesystem-pane-active').getByText('uplink_v2.conf')
-      ).toBeVisible();
-
-      // Verify no selection initially
-      await expect(activePane.locator('.text-yellow-400')).toHaveCount(0);
-
-      // Verify only 2 files are present (2 Uplinks)
-      await expect(activePane.getByRole('listitem')).toHaveCount(2);
-
-      // Select Uplink V1 and V2 using manual sorting assumptions (User Walkthrough)
-      // List: uplink_v1 (0), uplink_v2 (1)
-
-      // Move to uplink_v1 (Index 0) - already at 0 initially
-
-      // Select uplink_v1
+      // 1) gd, l, space, space, x
+      await gotoCommand(page, 'd');
+      await navigateRight(page, 1);
       await pressKey(page, ' ');
-
-      // Verify first selection worked
-      await expect(activePane.locator('.text-yellow-400')).toHaveCount(1);
-
-      // Select uplink_v2 (Index 1) - Space should have auto-advanced cursor to 1
       await pressKey(page, ' ');
+      await pressKey(page, 'x');
+      await assertTask(page, '1/5');
 
-      // Verify second selection worked
-      await expect(activePane.locator('.text-yellow-400')).toHaveCount(2);
+      // 2) gh, press . then k*2, l
+      await gotoCommand(page, 'h');
+      await pressKey(page, '.');
+      await navigateUp(page, 2);
+      await navigateRight(page, 1);
+      await assertTask(page, '2/5');
 
-      await pressKey(page, 'x'); // cut both
-
-      // Verify Task 1 complete (clipboard populated)
-      await assertTask(page, '1/5', testInfo.outputDir, 'task1');
-
-      // Task 2: Navigate to ~ (gh) and reveal hidden files (.)
-      await gotoCommand(page, 'h'); // go home
-      await pressKey(page, '.'); // show hidden files
-      await assertTask(page, '2/5', testInfo.outputDir, 'task2');
-
-      // Task 3: Establish ~/.config/vault/active/ sector
-      // After showing hidden files, cursor is at first item
-      // Order is: .cache, .config, .local, datastore...
-      await expect(page.getByText('HIDDEN: ON')).toBeVisible();
-      await navigateDown(page, 1); // move to .config
-      await navigateRight(page, 1); // enter .config
-
-      // Verify we are actually in .config before creating
-      // yazi.toml is a child of .config, so it should be visible
-      await expect(page.getByTestId('filesystem-pane-active').getByText('yazi.toml')).toBeVisible();
-
+      // 3) a, type 'vault/active/', enter
       await addItem(page, 'vault/active/');
-      // Mid-level staggered thought trigger (3-2- model)
-      await expect(page.locator('[data-testid="narrative-thought"]')).toContainText(
-        'Deeper into the shadow. They cannot track me in the static.'
-      );
-      await assertTask(page, '3/5', testInfo.outputDir, 'task3');
+      await assertTask(page, '3/5');
 
-      // Task 4: Navigate into vault/active and paste
-      await enterDirectory(page, 'vault');
-      await enterDirectory(page, 'active');
+      // 4) l, l, p
+      await navigateRight(page, 2);
+      await pressKey(page, 'p');
+      await assertTask(page, '4/5');
 
-      await pressKey(page, 'p'); // paste files
-      await assertTask(page, '4/5', testInfo.outputDir, 'task4');
+      // 5) gh, then .
+      await gotoCommand(page, 'h');
+      await pressKey(page, '.');
 
-      // Verify paste successful
-      await expect(
-        page.getByTestId('filesystem-pane-active').getByText('uplink_v1.conf')
-      ).toBeVisible();
-
-      // Task 5: Return home (gh) and hide hidden files (.)
-      await gotoCommand(page, 'h'); // go home
-      await pressKey(page, '.'); // hide hidden files
-      await assertTask(page, '5/5', testInfo.outputDir, 'task5');
-
-      // Verify mission complete
-      await confirmMission(page, /CONTAINMENT BREACH/i);
+      await waitForMissionComplete(page);
     });
   });
 

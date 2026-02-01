@@ -117,6 +117,8 @@ const getAllFiles = (
       files.push({ node: child, displayPath: newDisplayPath, path: newIdPath });
 
       if (child.children) {
+        // FIX: Do not recurse into archives. They are opaque to search.
+        if (child.type === 'archive') continue;
         files = files.concat(getAllFiles(child, newDisplayPath, newIdPath));
       }
     }

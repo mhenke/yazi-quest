@@ -10,6 +10,7 @@ import {
 import { LEVELS } from '../../constants';
 import { checkProtocolViolations } from './utils';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
+import { sortNodes } from '../../utils/sortHelpers';
 
 // Helper to get candidates (duplicated from FuzzyFinder for logic consistency)
 const getFilteredCandidates = (gameState: GameState) => {
@@ -132,15 +133,18 @@ export const handleFuzzyModeKeyDown = (
             }
 
             const parentNode = getNodeByPath(gameState.fs, parentPath);
+            let idx = 0;
             if (parentNode && parentNode.children) {
-              const idx = parentNode.children.findIndex((c) => c.id === fileId);
-              if (idx !== -1) {
-                dispatch({ type: 'SET_CURSOR', index: idx });
-              }
+              const sortedNodes = sortNodes(
+                parentNode.children,
+                gameState.sortBy,
+                gameState.sortDirection
+              );
+              idx = sortedNodes.findIndex((c) => c.id === fileId);
             }
 
-            dispatch({ type: 'NAVIGATE', path: parentPath });
-            dispatch({ type: 'SET_SELECTION', ids: [fileId] });
+            // We do NOT set selection. We just want to land on the file.
+            dispatch({ type: 'NAVIGATE', path: parentPath, cursorIndex: idx !== -1 ? idx : 0 });
             dispatch({ type: 'SET_MODE', mode: 'normal' });
             dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
           }

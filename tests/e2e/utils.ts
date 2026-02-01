@@ -89,7 +89,30 @@ export async function enterDirectory(page: Page, name: string): Promise<void> {
  * Clears an active filter by pressing Escape.
  */
 export async function clearFilter(page: Page): Promise<void> {
+  // If a violation modal is present, dismiss it first
+  await dismissViolation(page);
+
+  // Press Escape once to clear the filter.
+  // Do NOT press it twice as it might clear visual selections.
   await page.keyboard.press('Escape');
+  await page.waitForTimeout(DEFAULT_DELAY);
+}
+
+/**
+ * Dismisses a protocol violation modal if it exists.
+ * Uses Escape to close without triggering auto-fix.
+ */
+export async function dismissViolation(page: Page): Promise<void> {
+  try {
+    const modal = page.locator('div:has-text("Protocol Violation")').first();
+    if (await modal.isVisible({ timeout: 500 })) {
+      // Use Escape to close modal without triggering auto-fix
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(DEFAULT_DELAY);
+    }
+  } catch {
+    // Ignore timeout error
+  }
 }
 
 /**
@@ -108,15 +131,7 @@ export async function filterByText(page: Page, text: string): Promise<void> {
   await page.keyboard.press('Enter');
 
   // Handle distinct Protocol Violation modal that may appear
-  try {
-    const modal = page.locator('div:has-text("Protocol Violation")').first();
-    if (await modal.isVisible({ timeout: 500 })) {
-      await page.keyboard.press('Escape'); // Dismiss modal
-      await page.waitForTimeout(200);
-    }
-  } catch {
-    // Ignore timeout
-  }
+  await dismissViolation(page);
 }
 
 /**
@@ -273,6 +288,10 @@ export async function startLevel(
       params.set(key, value);
     }
   }
+
+  // Ensure clean state by clearing localStorage
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
 
   await page.goto(`/?${params.toString()}`);
   await page.waitForLoadState('domcontentloaded');

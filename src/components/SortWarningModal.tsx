@@ -23,7 +23,7 @@ export const SortWarningModal: React.FC<SortWarningModalProps> = ({
             <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
               Protocol Violation
             </h2>
-            <p className="text-zinc-400 font-mono text-sm">Active sort order detected.</p>
+            <p className="text-zinc-400 font-mono text-sm">Custom sorting active.</p>
             <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
               <p className="text-yellow-300 font-mono text-sm font-semibold">
                 Note: sort order is global and persists with Yazi across sessions.
@@ -50,13 +50,13 @@ export const SortWarningModal: React.FC<SortWarningModalProps> = ({
                 Press{' '}
                 <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
                   Shift+Enter
-                </span>
+                </span>{' '}
                 to continue...
               </p>
             ) : (
               <p className="text-zinc-500 text-sm font-mono tracking-wide">
-                Press <span className="font-bold text-zinc-300">Esc</span> to dismiss and fix
-                manually.
+                Press <span className="font-bold text-zinc-300">Shift+Enter</span> to close, then
+                apply fix manually.
               </p>
             )}
           </div>

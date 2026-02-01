@@ -23,9 +23,7 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
             <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
               Protocol Violation
             </h2>
-            <p className="text-zinc-400 font-mono text-sm">
-              System traces visible. Secure environment required.
-            </p>
+            <p className="text-zinc-400 font-mono text-sm">Hidden files are visible.</p>
           </div>
 
           <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
@@ -43,13 +41,20 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
             </div>
           </div>
           <div className="w-full flex justify-center mt-4">
-            <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-              Press{' '}
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
-                Shift+Enter
-              </span>
-              to continue...
-            </p>
+            {_allowAutoFix ? (
+              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
+                Press{' '}
+                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                  Shift+Enter
+                </span>{' '}
+                to auto-fix baseline.
+              </p>
+            ) : (
+              <p className="text-zinc-500 text-sm font-mono tracking-wide">
+                Press <span className="font-bold text-zinc-300">Shift+Enter</span> to close, then
+                apply fix manually.
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -31,6 +31,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
   const triggerThought = useTriggerThought(dispatch);
   const shownInitialAlertForLevelRef = useRef<number | null>(null);
   const shownThoughtForLevelRef = useRef<number | null>(null);
+  const shownNotificationForLevelRef = useRef<string | null>(null); // Track message + level
   const prevLevelIndex = useRef<number>(gameState.levelIndex);
 
   // --- Level Entry Narrative ---
@@ -45,6 +46,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
     if (prevLevelIndex.current !== levelIndex) {
       shownInitialAlertForLevelRef.current = null;
       shownThoughtForLevelRef.current = null;
+      shownNotificationForLevelRef.current = null;
       prevLevelIndex.current = levelIndex;
     }
 
@@ -121,13 +123,16 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
           shownThoughtForLevelRef.current = currentLevel.id;
         }
       } else {
-        if (gameState.notification?.message !== levelNotification.message) {
+        // Only trigger if this specific level-based notification hasn't been shown yet
+        const notificationKey = `${currentLevel.id}:${levelNotification.message}`;
+        if (shownNotificationForLevelRef.current !== notificationKey) {
           dispatch({
             type: 'SET_NOTIFICATION',
             message: levelNotification.message,
             author: levelNotification.author,
             isThought: false,
           });
+          shownNotificationForLevelRef.current = notificationKey;
         }
       }
     }

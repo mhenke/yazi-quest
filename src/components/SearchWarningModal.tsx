@@ -51,13 +51,13 @@ export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({
                 Press{' '}
                 <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
                   Shift+Enter
-                </span>
-                to continue...
+                </span>{' '}
+                to auto-fix baseline.
               </p>
             ) : (
               <p className="text-zinc-500 text-sm font-mono tracking-wide">
-                Press <span className="font-bold text-zinc-300">Esc</span> to dismiss and exit
-                search manually.
+                Press <span className="font-bold text-zinc-300">Shift+Enter</span> to close, then
+                apply fix manually.
               </p>
             )}
           </div>

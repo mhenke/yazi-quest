@@ -112,6 +112,12 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
 
+      // Dismiss all protocol violation modals
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: false });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
+
       if (gameState.searchQuery) {
         showNotification(getNarrativeAction('Escape') || 'Search cleared');
         dispatch({ type: 'SET_SEARCH', query: null, results: [] });

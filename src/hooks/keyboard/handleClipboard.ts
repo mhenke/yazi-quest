@@ -13,6 +13,35 @@ import { getNarrativeAction } from './utils';
 import { getLevel11LegacyThought } from './handleNarrativeTriggers';
 import { Action } from '../gameReducer';
 
+/**
+ * Helper to check if a specific clipboard action is requested/required by the current level logic.
+ * This looks at the hint, description, keys, and tasks to see if the action is explicitly mentioned.
+ */
+const isActionRequested = (action: 'cut' | 'yank', level: Level): boolean => {
+  // 1. Check if both are requested (some levels like Level 3 or 4 might imply both for different tasks)
+  // or if neither is specifically restricted.
+  // We can look for explicit usage in the level's metadata.
+
+  // Regex heuristic:
+  // For CUT: look for 'x', 'cut', 'move'
+  // For YANK: look for 'y', 'yank', 'replicate', 'copy'
+  // Use word boundaries \b to avoid partial matches (like 'context' matching 'x')
+
+  const regex = action === 'cut' ? /\b(x|cut|move)\b/i : /\b(y|yank|replicate|copy)\b/i;
+
+  const textToSearch = [
+    level.hint,
+    level.description,
+    level.environmentalClue,
+    ...level.tasks.map((t) => t.description),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const hasKey = regex.test(textToSearch);
+  return hasKey;
+};
+
 export const handleClipboardKeyDown = (
   e: KeyboardEvent,
   gameState: GameState,
@@ -96,6 +125,35 @@ export const handleClipboardKeyDown = (
 
     case 'x':
     case 'y': {
+      // Restriction Logic
+      const isCut = e.key === 'x';
+      const isYank = e.key === 'y';
+
+      const cutRequested = isActionRequested('cut', currentLevel);
+      const yankRequested = isActionRequested('yank', currentLevel);
+
+      // Rule:
+      // If CUT is requested but YANK is NOT -> Block YANK
+      // If YANK is requested but CUT is NOT -> Block CUT
+      // If BOTH are requested -> Allow BOTH
+      // If NEITHER are requested -> Allow BOTH (default behavior for non-specific levels)
+
+      if (cutRequested && !yankRequested && isYank) {
+        showNotification(
+          '🚫 PROTOCOL VIOLATION: Yank (y) blocked. Use Cut (x) for exfiltration.',
+          4000
+        );
+        return true;
+      }
+
+      if (yankRequested && !cutRequested && isCut) {
+        showNotification(
+          '🚫 PROTOCOL VIOLATION: Cut (x) blocked. Use Yank (y) for this objective.',
+          4000
+        );
+        return true;
+      }
+
       let nodesToGrab: FileNode[] = [];
       if (gameState.selectedIds.length > 0) {
         nodesToGrab = gameState.selectedIds
@@ -259,8 +317,7 @@ export const handleClipboardKeyDown = (
             dispatch({
               type: 'SET_NOTIFICATION',
               message:
-                getNarrativeAction('p') ||
-                `Deployed ${gameState.clipboard?.nodes.length} assets`,
+                getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`,
             });
             dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
           }

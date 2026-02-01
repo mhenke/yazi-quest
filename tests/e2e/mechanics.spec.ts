@@ -90,7 +90,7 @@ test.describe('Game Mechanics & Failures', () => {
     await navigateDown(page, 1);
     await navigateRight(page, 1); // Enter daemons
     await pressKey(page, '.'); // Show hidden
-    await search(page, '.service');
+    await search(page, '\\.service$');
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
     // 2. Sort by modified (Shift+M)
@@ -113,5 +113,34 @@ test.describe('Game Mechanics & Failures', () => {
 
     // 6. Verify narrative thought appeared (triggered by useKeyboardHandlers.ts)
     await expectNarrativeThought(page, /too recent/i);
+  });
+
+  test('Toggling hidden files preserves cursor position', async ({ page }) => {
+    await startLevel(page, 1, { intro: false });
+
+    // Ensure the game is ready
+    await expect(page.getByTestId('status-bar')).toBeVisible();
+
+    // 1. Navigate down to the 3rd item (index 2)
+    await navigateDown(page, 2);
+
+    // 2. Identify current file via data-testid
+    const currentFile = page.locator('[aria-current="location"]');
+    const fileName = await currentFile.getAttribute('data-testid');
+    expect(fileName).toBeTruthy();
+
+    // 3. Toggle hidden files ('.')
+    await pressKey(page, '.');
+
+    // 4. Verify cursor is still on the same file
+    const postToggleFile = page.locator('[aria-current="location"]');
+    await expect(postToggleFile).toHaveAttribute('data-testid', fileName!);
+
+    // 5. Toggle hidden files back
+    await pressKey(page, '.');
+    await expect(page.locator('[aria-current="location"]')).toHaveAttribute(
+      'data-testid',
+      fileName!
+    );
   });
 });

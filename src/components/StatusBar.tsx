@@ -39,7 +39,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   // Filter out hidden tasks (matching PreviewPane.tsx logic)
   const visibleTasks = level.tasks.filter((task) => !task.hidden || !task.hidden(state, level));
-  const completedTasks = visibleTasks.filter((t) => t.completed).length;
+  const completedTaskIds = state.completedTaskIds[level.id] || [];
+  const completedTasks = visibleTasks.filter((t) => completedTaskIds.includes(t.id)).length;
   const totalTasks = visibleTasks.length;
 
   // Calculate items for stats (these are visible items in middle pane)
@@ -115,7 +116,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         {state.notification && (
           <div
             className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full max-w-[55%] ${
-              state.notification.message.startsWith('🔒')
+              state.notification.message.startsWith('🔒') ||
+              state.notification.message.startsWith('🚫')
                 ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
                 : 'bg-zinc-900/40 text-zinc-300'
             }`}
@@ -170,11 +172,38 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       {/* 4. Watchdog Status Block (Context-Aware) */}
       <div className="flex h-full bg-zinc-800">
         {(() => {
+          // Check for any protocol violations in Audit Mode
+          const currentDir = getNodeByPath(state.fs, state.currentPath);
+          const hasFilter = !!(currentDir && state.filters[currentDir.id]);
+          const hasSearch = !!(state.searchQuery && state.searchResults.length > 0);
+          const hasSort = state.sortBy !== 'natural';
+          const hasHidden = state.showHidden;
+
+          if (allTasksComplete && (hasFilter || hasSearch || hasSort || hasHidden)) {
+            return (
+              <div className="flex items-center gap-3 px-4 bg-yellow-900 border-l border-yellow-700 animate-pulse h-full">
+                <ShieldAlert size={16} className="text-yellow-400" />
+                <div className="flex flex-col justify-center">
+                  <span className="text-[10px] text-yellow-500 uppercase tracking-tighter leading-none mb-1">
+                    PROTOCOL VIOLATION DETECTED
+                  </span>
+                  <span className="text-xs font-bold text-white font-mono tracking-wide leading-none">
+                    PRESS{' '}
+                    <span className="bg-yellow-500 text-black px-1 rounded mx-1">
+                      SHIFT + ENTER
+                    </span>{' '}
+                    TO AUTO-FIX
+                  </span>
+                </div>
+              </div>
+            );
+          }
+
           let label = 'LAB STATUS';
           let statusText = 'SAFE';
           let statusColor = 'text-blue-400';
 
-          // Define Watchdog Phases
+          // ... rest of existing logic ...
           let icon = null;
           let urgentClass = '';
 
