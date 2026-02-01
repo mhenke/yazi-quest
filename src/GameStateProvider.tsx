@@ -198,13 +198,13 @@ const createInitialState = (): GameState => {
   } else if (nextLevel.id === 8) {
     levelNotification = {
       message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
-      author: 'm.chen',
+      author: 'Mark Reyes',
     };
   } else if (nextLevel.id === 12) {
     levelNotification = {
       message:
         '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
-      author: 'e.reyes',
+      author: 'Yen Kin',
     };
   } else if (nextLevel.id === 14) {
     levelNotification = {

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   startLevel,
+  pressKey,
   gotoCommand,
   assertTask,
   enterDirectory,
@@ -26,7 +27,7 @@ test.describe('Level 6 Honeypot Verification', () => {
     expect(count).toBeGreaterThan(0);
 
     // Clear the search
-    await page.keyboard.press('Escape');
+    await pressKey(page, 'Escape');
     await page.waitForTimeout(DEFAULT_DELAY);
 
     // Now navigate into batch_logs and perform the same search
@@ -41,7 +42,7 @@ test.describe('Level 6 Honeypot Verification', () => {
     expect(count2).toBeGreaterThan(0);
 
     // Clear the search
-    await page.keyboard.press('Escape');
+    await pressKey(page, 'Escape');
 
     // The idea is that searching from parent directory yields more irrelevant results
     // due to the additional .log-related files in the parent directory
@@ -69,7 +70,7 @@ test.describe('Level 6 Honeypot Verification', () => {
     await page.waitForTimeout(DEFAULT_DELAY);
 
     // Clear the search to allow task completion to register
-    await page.keyboard.press('Escape');
+    await pressKey(page, 'Escape');
     await page.waitForTimeout(DEFAULT_DELAY);
 
     // The task should be completed following the intended path

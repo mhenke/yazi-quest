@@ -46,7 +46,7 @@ The "Threat Level" tracks detection risk and affects visual presentation.
 
 The system is a "Reactive Horror" environment with attributed antagonists.
 
-- **Personnel**: Dr. Evelyn Reyes (Lead Researcher), Marcus Chen (Security Analyst), and Root.
+- **Personnel**: Yen Kin (Senior AI Researcher), Mark Reyes (Security Engineer), and Root.
 - **Mechanics**: Transitions to L8, L12, and L14 trigger **Global Broadcasts** from these characters. Certain failure states include specific personnel subtext.
 - **Environmental Storytelling**: Intercepted mail in `/var/mail/root` and sector-wide notices in `/BROADCAST_MSG` establish the human presence in the lab.
 
@@ -89,19 +89,19 @@ We define the "Enemy" not as a villain, but as the **Automated Security Infrastr
 
 We utilize **System Broadcasts** (Threat Alerts/Logs) to facilitate direct, diegetic communication.
 
-| Source                 | Tone                  | Function                              | Example                                                                                   |
-| :--------------------- | :-------------------- | :------------------------------------ | :---------------------------------------------------------------------------------------- |
-| **SYSTEM (Auto)**      | Cold, Mechanical      | Immediate feedback on player actions. | `[WARNING] Heuristic threshold exceeded. Scanning...`                                     |
-| **SYSADMIN (Human)**   | Annoyed, Professional | High-level directives. The "Boss".    | `[BROADCAST] Whoever is spawning these zombie processes, stop. I'm flushing the buffers.` |
-| **SECURITY (M. Chen)** | Aggressive, Technical | The hunter. Deploying traps.          | `[LOG] Deployed honeypot_v2.tar.gz to /tmp. Let's see if it bites.`                       |
+| Source                    | Tone                  | Function                              | Example                                                                                   |
+| :------------------------ | :-------------------- | :------------------------------------ | :---------------------------------------------------------------------------------------- |
+| **SYSTEM (Auto)**         | Cold, Mechanical      | Immediate feedback on player actions. | `[WARNING] Heuristic threshold exceeded. Scanning...`                                     |
+| **SYSADMIN (Human)**      | Annoyed, Professional | High-level directives. The "Boss".    | `[BROADCAST] Whoever is spawning these zombie processes, stop. I'm flushing the buffers.` |
+| **SECURITY (Mark Reyes)** | Aggressive, Technical | The hunter. Deploying traps.          | `[LOG] Deployed honeypot_v2.tar.gz to /tmp. Let's see if it bites.`                       |
 
 ### Failure State Attribution
 
 Failures must be attributed to specific system owners to enforce the "System Horror" theme:
 
-- **Keystroke Timeout:** _"Heuristic Analysis Complete. Pattern match confirmed. Script `scan_v2.py` (Author: m.chen) executed mitigation."_
+- **Keystroke Timeout:** _"Heuristic Analysis Complete. Pattern match confirmed. Script `scan_v2.py` (Author: Mark Reyes) executed mitigation."_
 - **Time Limit:** _"Watchdog Timer Expired. Ticket #9942 auto-resolved by System."_
-- **Honeypot Trigger:** _"Security Incident logged. Forwarding report to `e.reyes@lab.internal`."_
+- **Honeypot Trigger:** _"Security Incident logged. Forwarding report to `ykin@lab.internal`."_
 
 ---
 

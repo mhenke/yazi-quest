@@ -63,13 +63,13 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
     } else if (currentLevel.id === 8) {
       levelNotification = {
         message: '[SYSTEM ALERT] Sector instability detected in /workspace. Corruption spreading.',
-        author: 'm.chen',
+        author: 'Mark Reyes',
       };
     } else if (currentLevel.id === 12) {
       levelNotification = {
         message:
           '[SECURITY UPDATE] Unauthorized daemon detected in /home/guest. Initiating forensic scan.',
-        author: 'e.reyes',
+        author: 'Yen Kin',
       };
     } else if (currentLevel.id === 14) {
       levelNotification = {

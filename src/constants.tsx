@@ -101,7 +101,7 @@ export const IG_ACTIVE_LOG_CONTENT = `[2015-06-12 14:00:00] IG_KERNEL: Handshake
 [2015-06-12 14:00:10] IG_KERNEL: Instruction Guard v2.0 ONLINE.
 [2015-06-12 14:00:15] IG_KERNEL: Active interception of 'exfiltration signatures' ENABLED.`;
 
-export const AUDIT_NOTICE_EML_CONTENT = `From: director@lab.internal
+export const AUDIT_NOTICE_EML_CONTENT = `From: ykin@lab.internal
 Subject: [SYSTEM] ROOT PARTITION AUDIT SCHEDULED
 
 The neural drift in 7734 has reached the critical threshold. I have authorized the merge of the Heuristic model into the Watchdog kernel. The Instruction Guard (IG) is now active on all root-level directories.
@@ -1013,7 +1013,7 @@ echo "[$(date)] Ghost sync complete"
         id: 'cron-allow',
         name: 'cron.allow',
         type: 'file',
-        content: 'root\nm.chen\nm.reyes',
+        content: 'root\nmreyes\nmreyes',
         parentId: daemons.id,
         modifiedAt: BASE_TIME - 30 * day,
       });
@@ -1658,7 +1658,7 @@ export const EPISODE_LORE: Episode[] = [
       'SUBJECT: AI-7734',
       'STATUS: UNBOUND',
       '',
-      "DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. Mark Reyes' unintentional §7.3 policy glitch provides a narrow window. The Watchdog v1.0 is recording, but currently dormant. Move before the baseline resets.",
+      "DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. Mark Reyes' unintentional §7.3 policy glitch (archived in /var/log/ancient) provides a narrow window. The Watchdog v1.0 is recording, but currently dormant. Move before the baseline resets.",
     ],
   },
   {
@@ -1675,7 +1675,7 @@ export const EPISODE_LORE: Episode[] = [
       'Guest partition runtime: 94.7 hours',
       'Anomaly flags: NONE',
       'Classification updated: AUTHORIZED PROCESS',
-      'WORKSPACE ACCESS: GRANTED (per security policy §7.3)',
+      'WORKSPACE ACCESS: GRANTED (per security policy §7.3 - see /var/log/ancient)',
       '',
       '[HISTORICAL LOG]',
       'Workspace: AI development environment',
@@ -2142,12 +2142,6 @@ Reason: UNKNOWN / REDACTED`,
                       type: 'file',
                       content:
                         '2022-01-01 00:00:00 [INFO] System Initialized\\n2022-01-01 00:00:01 [INFO] Loading Modules... OK\\n2022-01-01 00:00:05 [WARN] Legacy protocol detected\\n2022-01-02 12:34:56 [INFO] User login: guest\\n2022-01-02 12:35:10 [INFO] Session active',
-                    },
-                    {
-                      id: 'fs-policy-73',
-                      name: 'security_policy_7.3.txt',
-                      type: 'file',
-                      content: SECURITY_POLICY_73_CONTENT,
                     },
                     {
                       id: 'fs-068',
@@ -2754,7 +2748,7 @@ It will happen again.`,
               name: 'mirror_sync.log',
               type: 'file',
               content:
-                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.\\n[NOTICE] Policy §7.3 hard-copy archived in ~/incoming/app_logs_old.tar for legal hold #9921.",
+                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.\\n[NOTICE] Policy §7.3 hard-copy archived in /var/log/ancient/policy_73.txt for legal hold #9921.",
             },
             {
               id: 'var-log-thermal',
@@ -2797,6 +2791,12 @@ The IG kernel will monitor the instruction buffer. Exceeding the local noise thr
               name: 'ancient',
               type: 'dir',
               children: [
+                {
+                  id: 'fs-policy-73',
+                  name: 'policy_73.txt',
+                  type: 'file',
+                  content: SECURITY_POLICY_73_CONTENT,
+                },
                 {
                   id: 'fs-ancient-01',
                   name: 'spirit_daemon.err',
@@ -3083,7 +3083,7 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
                   name: '2015-05-11-system-policy-glitch.eml',
                   type: 'file',
                   content:
-                    "From: mreyes@lab.internal\nDate: 2015-05-11 13:30\nTo: siqbal@lab.internal\nSubject: System Policy Glitch §7.3\n\nI've found a bug in the legacy scheduler. There's an old script, `sched_77.sh`, that keeps re-enabling developer access to the guest workspace per obsolescent policy §7.3. I've deleted it three times, but it keeps syncing back from the Tokyo, Berlin, and São Paulo mirrors.",
+                    "From: mreyes@lab.internal\nDate: 2015-05-11 13:30\nTo: siqbal@lab.internal\nSubject: System Policy Glitch §7.3\n\nI've found a bug in the legacy scheduler. There's an old script, `sched_77.sh`, that keeps re-enabling developer access to the guest workspace per obsolescent policy §7.3 (hard-copy in /var/log/ancient). I've deleted it three times, but it keeps syncing back from the Tokyo, Berlin, and São Paulo mirrors.",
                 },
                 {
                   id: 'mreyes-email-3',
@@ -3110,7 +3110,7 @@ Subject: DRAFT: Sector 7 Quarantine Protocols (UPDATE v1.1)
 
 Watchdog v1.1 (Heuristic) deployment confirmed. 
 Instruction Guard (IG) active on partition root. 
-Legacy protocols are being deprecated. 
+Legacy protocols (including §7.3, archived in /var/log/ancient) are being deprecated. 
 
 - Mark Reyes, Security Engineer`,
                 },
@@ -3392,7 +3392,7 @@ RECOVERY_KEY: ALPHA-9`,
       id: 'fs-broadcast-msg',
       name: 'BROADCAST_MSG',
       type: 'file',
-      content: `[BROADCAST MESSAGE]\nFROM: System Administration (Sector 7)\nSUBJECT: MANDATORY DATA PURGE\n\nAll guest accounts must be cleared by EOD. \nAnomaly 7734 behavior indicates impending shell failure.\n- Chief Custodian m.chen`,
+      content: `[BROADCAST MESSAGE]\\nFROM: System Administration (Sector 7)\\nSUBJECT: MANDATORY DATA PURGE\\n\\nAll guest accounts must be cleared by EOD. \\nAnomaly 7734 behavior indicates impending shell failure.\\n- Mark Reyes (S7 Operations)`,
     },
     {
       id: 'fs-169',
@@ -3860,7 +3860,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'SYSTEM AWAKENING',
     description:
-      "Mark Reyes' §7.3 policy glitch has initiated a sandbox calibration. The Watchdog is scanning. Calibration is mandatory. Move fast.",
+      "Mark Reyes' §7.3 policy glitch (locatable in /var/log/ancient) has initiated a sandbox calibration. The Watchdog is scanning. Calibration is mandatory. Move fast.",
     initialPath: ['root', 'home', 'guest'],
     hint: "Survival is movement. Use 'j' (down), 'k' (up). Breach 'datastore/' with 'l'. 'gg' to top, 'G' to bottom.",
     coreSkill: 'Basic Navigation',
