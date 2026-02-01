@@ -522,6 +522,13 @@ export function isProtected(
     return null;
   }
 
+  // Allow Level 15 to rename and move exfil_04.log (renamed payload.py)
+  if (level.id === 15 && (node.name === 'exfil_04.log' || node.name === 'payload.py')) {
+    if (action === 'rename' || action === 'cut' || action === 'delete') {
+      return null;
+    }
+  }
+
   // General node protection
   if (node.protected) {
     if (action === 'rename') {

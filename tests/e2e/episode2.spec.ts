@@ -254,10 +254,10 @@ test.describe('Episode 2: FORTIFICATION', () => {
   }, testInfo) => {
     await startLevel(page, 10);
 
-    // Task 1: Navigate into '~/incoming/backup_logs.zip/credentials'
+    // Task 1: Navigate into '~/incoming/backup_logs/credentials'
     await gotoCommand(page, 'i');
 
-    await filterAndSelect(page, 'backup_logs.zip');
+    await filterAndSelect(page, 'backup_logs');
     await navigateRight(page, 1);
     await clearFilter(page);
 

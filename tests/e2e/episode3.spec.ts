@@ -124,6 +124,10 @@ async function runLevel12CommonPath(
 }
 
 test.describe('Episode 3: MASTERY', () => {
+  test.beforeEach(async ({ page: _page }) => {
+    // Enable console logging for debugging
+    _page.on('console', (msg) => console.log('BROWSER:', msg.text()));
+  });
   // Level 11: DAEMON RECONNAISSANCE
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
     await startLevel(page, 11, { intro: false });
@@ -426,8 +430,7 @@ test.describe('Episode 3: MASTERY', () => {
 
     // 4. Navigate to 'active'
     await navigateLeft(page, 1); // Leave training_data
-    await filterByText(page, 'active');
-    await navigateRight(page, 1); // Enter BEFORE clearing filter
+    await filterAndSelect(page, 'active');
     await clearFilter(page);
 
     // 5. Paste (p)
@@ -438,6 +441,7 @@ test.describe('Episode 3: MASTERY', () => {
     await assertTask(page, '4/4', testInfo.outputDir, 'phase4_payload_active');
 
     // Auto-fix protocol violation (e.g. Hidden files or Filter)
+    await page.waitForTimeout(500);
     await page.keyboard.press('Shift+Enter');
     await page.waitForTimeout(DEFAULT_DELAY);
 
@@ -459,8 +463,7 @@ test.describe('Episode 3: MASTERY', () => {
       }
       await expect(page.getByText('HIDDEN: ON')).toBeVisible();
 
-      await filterByText(page, '.config');
-      await navigateRight(page, 1);
+      await filterAndSelect(page, '.config');
       await clearFilter(page);
       await expectCurrentDir(page, '.config');
 
@@ -508,18 +511,9 @@ test.describe('Episode 3: MASTERY', () => {
       await deleteItem(page, { permanent: true, confirm: true });
       await assertTask(page, '5/5', 'temp', 'task5_purge_config');
 
-      // Use Shift+Enter to auto-fix violations (like HIDDEN: ON)
+      // Use Shift+Enter to auto-fix violations (like HIDDEN: ON) and advance
       await page.keyboard.press('Shift+Enter');
       await page.waitForTimeout(DEFAULT_DELAY);
-
-      // Wait for the mission complete dialog to appear
-      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
-
-      // Wait for the mission complete dialog to appear
-      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 10000 });
-
-      // Use Shift+Enter to advance to the next level
-      await page.keyboard.press('Shift+Enter');
 
       // Verify we've moved to Level 15 by checking for Level 15's initial conditions
       await expect(page.getByText('TRANSMISSION PROTOCOL')).toBeVisible({ timeout: 10000 });

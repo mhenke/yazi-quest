@@ -7,6 +7,7 @@ import {
   expectCurrentDir,
   assertTask,
   filterAndSelect,
+  filterByText,
   deleteItem,
   navigateDown,
   sortCommand,
@@ -98,14 +99,7 @@ test.describe('Game Mechanics & Failures', () => {
     await page.waitForTimeout(500); // Wait for mode transition
 
     // 3. Select 'security-audit.service' (the honeypot - very recent)
-    const visibleItems = await page.$$eval('[data-testid^="file-"]', (els) =>
-      els.map((e) => e.textContent)
-    );
-    console.log('VISIBLE ITEMS:', visibleItems);
-    const currentSelection = await page.locator('[aria-current="location"]').textContent();
-    console.log('CURRENT SELECTION:', currentSelection);
-
-    await filterAndSelect(page, 'security-audit.service');
+    await filterByText(page, 'security-audit.service');
 
     // Level 11 triggers a Threat Alert when selecting a honeypot in content.
     // We must dismiss it to continue the test flow.

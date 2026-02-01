@@ -64,7 +64,7 @@ export const getLevel11LegacyThought = (nodes: FileNode[], levelIndex: number): 
 
   const BASE_TIME = 1433059200000;
   const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
-  const hasRecent = nodes.some((n) => (n.modifiedAt || 0) > thirtyDaysAgo && !n.isHoneypot);
+  const hasRecent = nodes.some((n) => (n.modifiedAt || 0) > thirtyDaysAgo);
 
   if (hasRecent) {
     return 'SCAN: This signature is too recent. Forensics will trace the delta. I need something older... something legacy.';

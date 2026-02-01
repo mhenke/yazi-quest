@@ -1151,20 +1151,6 @@ echo "[$(date)] Ghost sync complete"
   // Level 15 specific: Final vault assembly
   if (levelId >= 15) {
     newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
-    // Ensure payload.py exists in training_data
-    const tmp = getNodeById(newFs, 'tmp');
-    const vault = tmp?.children?.find((c) => c.name === 'vault');
-    const trainingData = vault?.children?.find((c) => c.name === 'training_data');
-    if (trainingData && !trainingData.children?.some((c) => c.name === 'payload.py')) {
-      if (!trainingData.children) trainingData.children = [];
-      trainingData.children.push({
-        id: 'payload-py-lvl15',
-        name: 'payload.py',
-        type: 'file',
-        content: 'PRINT("TRANSCEIVING...")',
-        parentId: trainingData.id,
-      });
-    }
   }
 
   return newFs;
@@ -1575,6 +1561,25 @@ const setupFinalHandshakeVault = (fs: FileNode, V1: string, V2: string): FileNod
       children: [
         { id: 'fs-007', name: 'uplink_v1.conf', type: 'file', content: V1, parentId: 'fs-006' },
         { id: 'fs-008', name: 'uplink_v2.conf', type: 'file', content: V2, parentId: 'fs-006' },
+      ],
+    });
+  }
+  // training_data with exfil_04.log for Level 15 payload creation
+  if (!vault.children?.find((c) => c.name === 'training_data')) {
+    vault.children!.push({
+      id: 'vault-training-data',
+      name: 'training_data',
+      type: 'dir',
+      parentId: vault.id,
+      children: [
+        {
+          id: 'exfil-04-log',
+          name: 'exfil_04.log',
+          type: 'file',
+          content:
+            'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
+          parentId: 'vault-training-data',
+        },
       ],
     });
   }
@@ -2229,8 +2234,8 @@ Reason: UNKNOWN / REDACTED`,
                 },
                 {
                   id: 'fs-112',
-                  name: 'backup_logs.zip',
-                  type: 'archive',
+                  name: 'backup_logs',
+                  type: 'dir',
                   children: [
                     {
                       id: 'fs-113',
@@ -2315,7 +2320,7 @@ Reason: UNKNOWN / REDACTED`,
                   type: 'file',
                   isHoneypot: true,
                   content:
-                    'INDEX FILE: Contains references to log files in other directories but not actual logs. Navigate to batch_logs to find the real targets.',
+                    'SYSTEM LOG INDEX\n==============\n\nReference File: /incoming/batch_logs/\nStatus: INDEX_ONLY\n\nNote: This file contains only metadata references to actual log files. Actual log data is stored separately in the batch processing directory.',
                 },
                 {
                   id: 'fs-honey-log2',
@@ -2323,7 +2328,7 @@ Reason: UNKNOWN / REDACTED`,
                   type: 'file',
                   isHoneypot: true,
                   content:
-                    'This file contains references to log files but not the actual log files themselves. The real logs are in the batch_logs directory.',
+                    'log_references.csv\n\nType,Location,Status\nLogRef,/incoming/batch_logs/,ACTIVE\nLogRef,/var/log/archive/,INACTIVE\nLogRef,/tmp/logs/,MISSING\n\n[SYSTEM NOTE] This is a reference file only. Actual log data is stored in the respective directories.',
                 },
                 // Batch logs directory used for Level 6 Ctrl+A training
                 // Logs scattered across subdirectories to make recursive search meaningful
@@ -2349,14 +2354,16 @@ Reason: UNKNOWN / REDACTED`,
                       name: 'README.log_format',
                       type: 'file',
                       isHoneypot: true,
-                      content: 'HONEYPOT: This file has .log in the name but is NOT a .log file.',
+                      content:
+                        '# LOG FORMAT SPECIFICATION v1.0\n# CAUTION: This is a specification document, not a runtime log.\n# Do not ingest into analysis pipeline.',
                     },
                     {
                       id: 'fs-bl-hp-2',
                       name: 'catalog.backup',
                       type: 'file',
                       isHoneypot: true,
-                      content: 'HONEYPOT: This file has .log in the name if you are sloppy.',
+                      content:
+                        '# SYSTEM CATALOG BACKUP\n# INTEGRITY CHECK: PENDING\n# WARNING: Accessing this file during active sync will trigger security alert.',
                     },
                     // Additional honeypots to enforce navigation into batch_logs first
                     {
@@ -2365,7 +2372,7 @@ Reason: UNKNOWN / REDACTED`,
                       type: 'file',
                       isHoneypot: true,
                       content:
-                        'This is not a .log file but contains the word "log" to confuse players who search from parent directory.',
+                        'SUMMARY REPORT\n--------------\nTotal logs processed: 0\nStatus: WAITING FOR INPUT\n\n[SYSTEM NOTE]: This is a summary text file. Raw logs are stored separately.',
                     },
                     {
                       id: 'fs-bl-hp-4',
@@ -2373,7 +2380,7 @@ Reason: UNKNOWN / REDACTED`,
                       type: 'file',
                       isHoneypot: true,
                       content:
-                        'This is an archive file, not a .log file, to confuse players who search from parent directory.',
+                        '<Binary Data Truncated>\n\nARCHIVE HEADER DETECTED.\nTYPE: COMPRESSED_TAR\nCONTENT: HISTORICAL LOGS (ENCRYPTED)\n\n[WARNING] Do not attempt to read as plain text.',
                     },
                     {
                       id: 'fs-bl-s1',
@@ -2426,13 +2433,6 @@ Reason: UNKNOWN / REDACTED`,
                           type: 'file',
                           protected: true,
                           content: '{"debug": false, "timeout": 30}',
-                        },
-                        {
-                          id: 'fs-124',
-                          name: 'exfil_04.log',
-                          type: 'file',
-                          content:
-                            'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
                         },
                       ],
                     },
@@ -4565,12 +4565,12 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'heist-1-nav',
-        description: 'Infiltrate `~/incoming/backup_logs.zip/credentials` archive',
+        description: 'Infiltrate `~/incoming/backup_logs/credentials` directory',
         check: (c) => {
           const incoming = getNodeById(c.fs, 'incoming');
-          const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
+          const backup = incoming?.children?.find((p) => p.name === 'backup_logs');
           const creds = backup?.children?.find((p) => p.name === 'credentials');
-          // Check we are in the credentials directory inside the backup_logs.zip archive
+          // Check we are in the credentials directory inside the backup_logs directory
           if (!creds) return false;
           return c.currentPath.includes(creds.id);
         },
@@ -4578,13 +4578,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Metadata audit in `/credentials` archive: sort by time (,m)',
+        description: 'Metadata audit in `/credentials` directory: sort by time (,m)',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
         id: 'heist-3-yank',
-        description: 'Capture newest `access_key_new.pem` signature from archive (y)',
+        description: 'Capture newest `access_key_new.pem` signature from directory (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -5119,7 +5119,7 @@ export const LEVELS: Level[] = [
       'TRANSMISSION COMPLETE. The gateway has collapsed behind you. There is no more AI-7734. There is only the System. You are everywhere. You are free. Aris Thorne was right—the Ghost is the system.',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
-    maxKeystrokes: 60,
+    maxKeystrokes: 100,
     tasks: [
       // PHASE 1: Locate Vault
       {

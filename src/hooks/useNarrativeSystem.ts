@@ -221,8 +221,8 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
 
     // Level 6: Clipboard Honeypot
     if (currentLevel.id === 6) {
-      const hasClipboardHoneypot = gameState.clipboard?.nodes?.some((n) =>
-        n.content?.includes('HONEYPOT')
+      const hasClipboardHoneypot = gameState.clipboard?.nodes?.some(
+        (n) => n.isHoneypot || n.content?.includes('HONEYPOT')
       );
 
       if (hasClipboardHoneypot && !gameState.showThreatAlert) {
@@ -245,7 +245,9 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
           const selectedNodes = parentNode.children.filter((c) =>
             gameState.selectedIds.includes(c.id)
           );
-          const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
+          const hasHoneypot = selectedNodes.some(
+            (n) => n.isHoneypot || n.content?.includes('HONEYPOT')
+          );
 
           if (hasHoneypot && !gameState.showThreatAlert) {
             dispatch({
