@@ -2207,8 +2207,8 @@ Reason: UNKNOWN / REDACTED`,
                 },
                 {
                   id: 'fs-112',
-                  name: 'backup_logs.zip',
-                  type: 'archive',
+                  name: 'backup_logs',
+                  type: 'dir',
                   protected: true,
                   children: [
                     {
@@ -2287,6 +2287,23 @@ Reason: UNKNOWN / REDACTED`,
                     },
                   ],
                 },
+                // Honeypot files in incoming directory to discourage searching from parent
+                {
+                  id: 'fs-honey-log1',
+                  name: 'system_logs_index.txt',
+                  type: 'file',
+                  isHoneypot: true,
+                  content:
+                    'INDEX FILE: Contains references to log files in other directories but not actual logs. Navigate to batch_logs to find the real targets.',
+                },
+                {
+                  id: 'fs-honey-log2',
+                  name: 'log_references.csv',
+                  type: 'file',
+                  isHoneypot: true,
+                  content:
+                    'This file contains references to log files but not the actual log files themselves. The real logs are in the batch_logs directory.',
+                },
                 // Batch logs directory used for Level 6 Ctrl+A training
                 // Logs scattered across subdirectories to make recursive search meaningful
                 {
@@ -2319,6 +2336,23 @@ Reason: UNKNOWN / REDACTED`,
                       type: 'file',
                       isHoneypot: true,
                       content: 'HONEYPOT: This file has .log in the name if you are sloppy.',
+                    },
+                    // Additional honeypots to enforce navigation into batch_logs first
+                    {
+                      id: 'fs-bl-hp-3',
+                      name: 'log_summary.txt',
+                      type: 'file',
+                      isHoneypot: true,
+                      content:
+                        'This is not a .log file but contains the word "log" to confuse players who search from parent directory.',
+                    },
+                    {
+                      id: 'fs-bl-hp-4',
+                      name: 'log_archive.tar.gz',
+                      type: 'file',
+                      isHoneypot: true,
+                      content:
+                        'This is an archive file, not a .log file, to confuse players who search from parent directory.',
                     },
                     {
                       id: 'fs-bl-s1',
@@ -2372,28 +2406,12 @@ Reason: UNKNOWN / REDACTED`,
                           protected: true,
                           content: '{"debug": false, "timeout": 30}',
                         },
-                      ],
-                    },
-                    {
-                      id: 'fs-bl-arc',
-                      name: 'archive',
-                      type: 'dir',
-                      protected: true,
-                      children: [
                         {
                           id: 'fs-124',
                           name: 'exfil_04.log',
                           type: 'file',
-                          protected: true,
                           content:
                             'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
-                        },
-                        {
-                          id: 'fs-bl-n3',
-                          name: 'README.txt',
-                          type: 'file',
-                          protected: true,
-                          content: 'Old log archive - do not modify',
                         },
                       ],
                     },
@@ -4163,6 +4181,11 @@ export const LEVELS: Level[] = [
           const isSearchActive =
             c.searchQuery !== null && c.searchResults && c.searchResults.length > 0;
 
+          // Check that the current directory is batch_logs
+          const currentDirId = c.currentPath[c.currentPath.length - 1];
+          const currentDirNode = getNodeById(c.fs, currentDirId);
+          const isInBatchLogs = currentDirNode?.name === 'batch_logs';
+
           // The 4 correct target files that should be found
           const targetFiles = ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log'];
 
@@ -4172,7 +4195,7 @@ export const LEVELS: Level[] = [
           );
           const hasCorrectFiles = foundTargets.length === 4;
 
-          return isSearchActive && hasCorrectFiles;
+          return isSearchActive && isInBatchLogs && hasCorrectFiles;
         },
         completed: false,
       },
@@ -4497,12 +4520,12 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'heist-1-nav',
-        description: 'Infiltrate `~/incoming/backup_logs.zip/credentials` archive',
+        description: 'Infiltrate `~/incoming/backup_logs/credentials` directory',
         check: (c) => {
           const incoming = getNodeById(c.fs, 'incoming');
-          const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
+          const backup = incoming?.children?.find((p) => p.name === 'backup_logs');
           const creds = backup?.children?.find((p) => p.name === 'credentials');
-          // Check we are in the credentials directory inside the backup_logs.zip archive
+          // Check we are in the credentials directory inside the backup_logs directory
           if (!creds) return false;
           return c.currentPath.includes(creds.id);
         },
@@ -4510,13 +4533,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Metadata audit in `/credentials` archive: sort by time (,m)',
+        description: 'Metadata audit in `/credentials` directory: sort by time (,m)',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
         id: 'heist-3-yank',
-        description: 'Capture newest `access_key_new.pem` signature from archive (y)',
+        description: 'Capture newest `access_key_new.pem` signature from directory (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
