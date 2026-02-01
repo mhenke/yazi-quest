@@ -112,6 +112,9 @@ export default function App() {
     // 5. Setup Initial State
     const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
     const initialLevel = LEVELS[effectiveIndex];
+    console.log(
+      `[DEBUG] URL Params: lvl=${lvlParam}, targetIndex=${targetIndex}, effectiveIndex=${effectiveIndex}, LevelID=${initialLevel.id}`
+    );
     const isDevOverride = !!debugParam;
 
     const isEpisodeStart =
@@ -257,7 +260,7 @@ export default function App() {
       showMap: false,
       showHint: false,
       hintStage: 0,
-      showHidden: false,
+      showHidden: initialLevel.id === 14 || initialLevel.id === 15,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
@@ -318,6 +321,13 @@ export default function App() {
     window.__yaziQuestSkipIntroRequested = true;
     dispatch({ type: 'COMPLETE_INTRO', isSkip: true });
   }, [dispatch]);
+
+  // --- DEBUG: LOG PATH CHANGES ---
+  useEffect(() => {
+    console.log(
+      `[DEBUG] currentPath CHANGED: ${gameState.currentPath.join(' -> ')} (Level: ${gameState.levelIndex})`
+    );
+  }, [gameState.currentPath, gameState.levelIndex]);
 
   useEffect(() => {
     if (window.__yaziQuestSkipIntroRequested) {
@@ -408,9 +418,18 @@ export default function App() {
 
         // Logic matched to StatusBar.tsx for consistency
         const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-        if (!currentDir || !currentDir.children) return [];
+
+        if (!currentDir || !currentDir.children) {
+          console.log(
+            `[DEBUG] visibleItems: currentDir not found or no children. Path: ${gameState.currentPath.join('/')}`
+          );
+          return [];
+        }
 
         let items = [...currentDir.children];
+        console.log(
+          `[DEBUG] visibleItems: currentDir=${currentDir.name} (${currentDir.id}), rawChildCount=${items.length}`
+        );
 
         if (!gameState.showHidden) {
           items = items.filter((c) => !c.name.startsWith('.'));

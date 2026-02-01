@@ -152,7 +152,10 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
   for (let i = 0; i < path.length; i++) {
     const id = path[i];
     const n = getNodeById(root, id);
-    if (!n) continue;
+    if (!n) {
+      console.log(`[DEBUG] resolvePath failed for segment: ${id}`);
+      continue;
+    }
     // Skip the root node's name so paths render as '/bin' instead of '//bin'
     if (i === 0 && n.id === root.id) continue;
     names.push(n.name);

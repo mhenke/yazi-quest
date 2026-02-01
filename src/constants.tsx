@@ -799,59 +799,60 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
-  // Level 14+: central_relay in workspace, .purge_lock in home
-  // Level 14+: central_relay in workspace, .purge_lock in home (Player creates central_relay in Level 13)
-  if (levelId > 13) {
+  // Level 14+: central_relay setup
+  if (levelId >= 14) {
     const workspace = getNodeById(newFs, 'workspace');
     if (workspace) {
-      // Ensure workspace is moved from datastore (or anywhere else) to guest
       const guest = getNodeById(newFs, 'guest');
-      if (guest && workspace.parentId !== guest.id) {
+      // Ensure workspace is in guest (relocation if needed)
+      if (guest && !guest.children?.some((c) => c.id === 'workspace')) {
         workspace.parentId = guest.id;
-        // 2. Add to guest if not already present
         if (!guest.children) guest.children = [];
-        if (!guest.children.some((c) => c.id === workspace.id)) {
-          guest.children.push(workspace);
-        }
+        guest.children.push(workspace);
+      }
+
+      // Ensure central_relay exists in workspace
+      let relay = workspace.children?.find((c) => c.name === 'central_relay');
+      if (!relay) {
+        relay = {
+          id: 'central-relay-prereq',
+          name: 'central_relay',
+          type: 'dir',
+          children: [],
+          parentId: workspace.id,
+        };
+        if (!workspace.children) workspace.children = [];
+        workspace.children.push(relay);
+      }
+
+      // Populate keys (Visible names to fix "missing" report)
+      if (relay) {
+        const keys = [
+          { id: 'k-a-14', name: 'key_tokyo.key', content: 'KEY_FRAGMENT_A=0x7734TOKYO' },
+          { id: 'k-b-14', name: 'key_berlin.key', content: 'KEY_FRAGMENT_B=0x7734BERLIN' },
+          { id: 'k-c-14', name: 'key_saopaulo.key', content: 'KEY_FRAGMENT_C=0x7734SAOPAULO' },
+        ];
+        if (!relay.children) relay.children = [];
+        keys.forEach((k) => {
+          if (!relay!.children!.some((c) => c.name === k.name)) {
+            relay!.children!.push({
+              ...k,
+              type: 'file',
+              parentId: relay!.id,
+              modifiedAt: BASE_TIME + 2 * day,
+            });
+          }
+        });
       }
     }
-    if (workspace && !workspace.children?.find((c) => c.name === 'central_relay')) {
-      if (!workspace.children) workspace.children = [];
-      const relay: FileNode = {
-        id: 'central-relay-prereq',
-        name: 'central_relay',
-        type: 'dir',
-        children: [],
-        parentId: workspace.id,
-      };
-      // Inject keys into central_relay as prerequisites for L14
-      relay.children = [
-        {
-          id: 'k-a-prereq',
-          name: '.key_tokyo.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_A=0x7734TOKYO',
-          parentId: relay.id,
-        },
-        {
-          id: 'k-b-prereq',
-          name: '.key_berlin.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_B=0x7734BERLIN',
-          parentId: relay.id,
-        },
-        {
-          id: 'k-c-prereq',
-          name: '.key_saopaulo.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
-          parentId: relay.id,
-        },
-      ];
-      workspace.children.push(relay);
-    }
+
     const guest = getNodeById(newFs, 'guest');
-    if (guest && !guest.children?.find((c) => c.name === '.purge_lock')) {
+    if (guest) {
+      console.log(
+        `[DEBUG] GUEST CHILDREN IDs: ${guest.children?.map((c) => `${c.name}:${c.id}`).join(', ')}`
+      );
+    }
+    if (guest && !guest.children?.some((c) => c.name === '.purge_lock')) {
       if (!guest.children) guest.children = [];
       guest.children.push({
         id: 'purge-lock',
@@ -865,88 +866,87 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
-  // Level 15+: vault move to /tmp, upload directory creation, GUEST STERILIZATION
+  // Level 15+: vault move to /tmp, upload directory, and sterilization
   if (levelId >= 15) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp) {
-      let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
+      // 1. Move vault from .config to /tmp
+      const config = getNodeById(newFs, '.config');
+      const vaultNode = config?.children?.find((c) => c.name === 'vault');
+      if (vaultNode) {
+        if (config?.children) config.children = config.children.filter((c) => c.name !== 'vault');
+        if (!tmp.children?.some((c) => c.name === 'vault')) {
+          vaultNode.parentId = tmp.id;
+          if (!tmp.children) tmp.children = [];
+          tmp.children.push(vaultNode);
+        }
+      }
+
+      // 2. Setup vault contents (Final Handshake)
+      newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
+
+      // 3. Ensure keys are in vault (Visible names)
+      const vault = tmp.children?.find((c) => c.name === 'vault');
+      if (vault) {
+        const keys = [
+          { id: 'vk-a-15', name: 'key_tokyo.key', content: 'KEY_FRAGMENT_A=0x7734TOKYO' },
+          { id: 'vk-b-15', name: 'key_berlin.key', content: 'KEY_FRAGMENT_B=0x7734BERLIN' },
+          { id: 'vk-c-15', name: 'key_saopaulo.key', content: 'KEY_FRAGMENT_C=0x7734SAOPAULO' },
+        ];
+        if (!vault.children) vault.children = [];
+        keys.forEach((k) => {
+          if (!vault!.children!.some((c) => c.name === k.name)) {
+            vault!.children!.push({
+              ...k,
+              type: 'file',
+              parentId: vault!.id,
+              modifiedAt: BASE_TIME + 2 * day,
+            });
+          }
+        });
+      }
+
+      // 4. Create upload and sync systemd-core
+      let upload = tmp.children?.find((c) => c.name === 'upload');
       if (!upload) {
         upload = {
-          id: 'fs-017-upload',
+          id: 'tmp-upload',
           name: 'upload',
           type: 'dir',
           children: [],
           parentId: tmp.id,
         };
-        if (!tmp.children) tmp.children = [];
-        tmp.children.push(upload);
+        tmp.children!.push(upload);
       }
-      const rootNode = getNodeById(newFs, 'root');
-      const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
-      const systemdCore = daemons?.children?.find((c) => c.name === 'systemd-core');
-      if (systemdCore?.children && upload.children?.length === 0) {
-        const copyChildren = (children: FileNode[], parentId: string): FileNode[] =>
-          children.map(
-            (child) =>
-              ({
-                ...child,
-                id: `upload-copy-${child.id}`,
-                parentId: parentId,
-                children: child.children
-                  ? copyChildren(child.children, `upload-copy-${child.id}`)
-                  : undefined,
-              }) as FileNode
-          );
-        upload.children = copyChildren(systemdCore.children, upload.id);
-      }
-      const config = getNodeById(newFs, '.config');
-      const vault = config?.children?.find((c) => c.name === 'vault');
-      if (vault) {
-        if (config?.children) config.children = config.children.filter((c) => c.name !== 'vault');
-        if (!tmp.children?.some((c) => c.name === 'vault')) {
-          vault.parentId = tmp.id;
-          if (!tmp.children) tmp.children = [];
-          tmp.children.push(vault);
-        }
-      }
-    }
-    newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
 
-    // Level 15 Prerequisites: Ensure keys are in the vault (moved by player in L14)
-    if (levelId >= 15) {
-      const tmp = getNodeById(newFs, 'tmp');
-      const vault = tmp?.children?.find((c) => c.name === 'vault');
-      if (vault && !vault.children?.some((c) => c.name?.endsWith('.key'))) {
-        if (!vault.children) vault.children = [];
-        vault.children.push(
-          {
-            id: 'vk-tokyo-15',
-            name: '.key_tokyo.key',
-            type: 'file',
-            content: 'KEY_A',
-            parentId: vault.id,
-          },
-          {
-            id: 'vk-berlin-15',
-            name: '.key_berlin.key',
-            type: 'file',
-            content: 'KEY_B',
-            parentId: vault.id,
-          },
-          {
-            id: 'vk-saopaulo-15',
-            name: '.key_saopaulo.key',
-            type: 'file',
-            content: 'KEY_C',
-            parentId: vault.id,
-          }
-        );
+      const core = getNodeById(newFs, 'systemd-core'); // Recursive find
+      if (core && upload && upload.children?.length === 0) {
+        upload.children = JSON.parse(JSON.stringify(core.children || []));
+        upload.children?.forEach((c) => (c.parentId = upload!.id));
       }
     }
 
+    // STERILIZATION: Selective wipe for Level 15+ (simulate Level 14 completion)
+    // 1. Remove original visible directories + .config (Task: delete-visible, delete-hidden)
     const guest = getNodeById(newFs, 'guest');
-    if (guest?.children) {
-      guest.children = [];
+    if (guest && guest.children) {
+      const toDelete = ['workspace', 'media', 'datastore', 'incoming', '.config'];
+      guest.children = guest.children.filter((c) => !toDelete.includes(c.name));
+
+      // 2. Add Decoys (Task: create-decoys - checking for existence first)
+      const decoyNames = ['decoy_1', 'decoy_2', 'decoy_3'];
+      decoyNames.forEach((name) => {
+        if (!guest.children!.some((c) => c.name === name)) {
+          guest.children!.push({
+            id: `fs-${name}`,
+            name: name,
+            type: 'dir',
+            children: [],
+            parentId: guest.id,
+            modifiedAt: BASE_TIME + 2 * day,
+          });
+        }
+      });
     }
   }
 

@@ -108,8 +108,19 @@ export const handleGCommandKeyDown = (
       ) {
         return;
       }
-      // Check for protection
       const targetNode = getNodeByPath(gameState.fs, target.path);
+
+      // Check if target exists (fix for gw on Level 15)
+      if (!targetNode) {
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        dispatch({
+          type: 'SET_NOTIFICATION',
+          message: `Directory not found: ${target.label}`,
+        });
+        return;
+      }
+
+      // Check for protection
       if (targetNode) {
         const protection = isProtected(
           gameState.fs,
