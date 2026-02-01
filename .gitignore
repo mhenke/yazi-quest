@@ -32,7 +32,7 @@ Screenshot*.png
 # Playwright artifacts
 playwright-report/
 playwright-report/**/data/
-
+test-results/
 .playwright/
 videos/
 screenshots/

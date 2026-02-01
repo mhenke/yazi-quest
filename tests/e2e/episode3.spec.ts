@@ -122,10 +122,6 @@ async function runLevel12CommonPath(
 }
 
 test.describe('Episode 3: MASTERY', () => {
-  test.beforeEach(async ({ page: _page }) => {
-    // Enable console logging for debugging
-    _page.on('console', (msg) => console.log('BROWSER:', msg.text()));
-  });
   // Level 11: DAEMON RECONNAISSANCE
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
     await startLevel(page, 11, { intro: false });

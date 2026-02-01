@@ -1,6 +1,6 @@
 import { FileNode, Level, Episode, GameState } from './types';
 import { getVisibleItems } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName, getNodeById, id, resolvePath } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, getNodeById, id } from './utils/fsHelpers';
 
 const cloneFS = (fs: FileNode): FileNode => JSON.parse(JSON.stringify(fs));
 
@@ -807,14 +807,6 @@ echo "[$(date)] Ghost sync complete"
       // Ensure workspace is moved from datastore (or anywhere else) to guest
       const guest = getNodeById(newFs, 'guest');
       if (guest && workspace.parentId !== guest.id) {
-        // 1. Find and remove from current parent if not guest
-        if (workspace.parentId) {
-          const oldParent = getNodeById(newFs, workspace.parentId);
-          if (oldParent?.children) {
-            oldParent.children = oldParent.children.filter((c) => c.id !== workspace.id);
-          }
-        }
-
         workspace.parentId = guest.id;
         // 2. Add to guest if not already present
         if (!guest.children) guest.children = [];
@@ -4817,7 +4809,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'secure-fragments',
-        description: 'Calibrate 3 identity keys into `~/.config/vault`',
+        description: 'Move 3 identity keys into `~/.config/vault` from `~/workspace/central_relay`',
         check: (c, _s) => {
           // Robust name-based lookup for config/vault
           const findVault = (root: FileNode) => {
@@ -4834,19 +4826,12 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'nav-guest',
-        description: 'Infiltrate `~` (Home) to prepare for sterilization',
+        id: 'combined-nav-vault',
+        description:
+          'Infiltrate `~` (Home) to prepare for sterilization and construct `vault` anchor in `/tmp`',
         check: (c, _s) => {
-          if (c.keystrokes === 0) return false;
-          const currentPathStr = resolvePath(c.fs, c.currentPath);
-          return currentPathStr === '/home/guest';
-        },
-        completed: false,
-      },
-      {
-        id: 'move-vault',
-        description: 'Construct `vault` anchor in `/tmp`',
-        check: (c, _s) => {
+          // Task is complete when vault is successfully moved to /tmp
+          // The "infiltrate home" part is part of the sequence of actions needed to get to this point
           const tmp = getNodeById(c.fs, 'tmp');
           return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
         },
@@ -4856,7 +4841,7 @@ export const LEVELS: Level[] = [
         id: 'create-decoys',
         description: 'Construct 3 decoy directories in `~`',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
+          if (!c.completedTaskIds[_s.id]?.includes('combined-nav-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
           if (!guest || !guest.children) return false;
           const decoys = guest.children.filter(
