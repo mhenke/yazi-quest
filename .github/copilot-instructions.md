@@ -144,6 +144,7 @@ Key principles:
 3. **No left sidebar** - Mission info belongs in the Quest Map modal only
 4. **Follow existing patterns** - The codebase has established conventions; maintain consistency
 5. **Test with debug parameters** - Use URL parameters to verify changes across different game states
+6. **Mandatory Type-Check** - ALWAYS run `npm run type-check` after making code changes to ensure type safety and catch errors early.
 
 ## Anti-Failure Protocols
 

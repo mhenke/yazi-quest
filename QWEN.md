@@ -173,6 +173,8 @@ The game implements a wide range of Yazi-like keybindings with contextual help a
 
 ### Simulation Integrity
 
+- **Mandatory Type-Check**: ALWAYS run `npm run type-check` after making code changes. This is a non-negotiable step to maintain system integrity.
+
 - **No "Magic Injections"**: Do not implement level-specific mutations that pre-solve tasks for the player (e.g., automatically deleting a file the player is tasked to purge). Player agency and manual reinforcement of keybindings is paramount. System changes should only occur as a direct result of player actions or specific narrative triggers.
 
 - **Development Server**: The Vite dev server runs on `http://localhost:3000`. Assume it is already running before executing tests.

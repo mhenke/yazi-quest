@@ -51,6 +51,7 @@ The project uses `npm` for dependency management and scripts.
   npm run format
   npm run type-check
   ```
+  **Running `npm run type-check` is MANDATORY after every change.**
 
 ## Development Conventions
 

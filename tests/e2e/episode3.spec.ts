@@ -318,9 +318,9 @@ test.describe('Episode 3: MASTERY', () => {
       // We are in /tmp. Task says "in ~".
       await gotoCommand(page, 'h'); // Back to Home
       await expectCurrentDir(page, '~');
-      await addItem(page, 'decoy_1/');
-      await addItem(page, 'decoy_2/');
-      await addItem(page, 'decoy_3/');
+      await addItem(page, 'sys_cache_dump/');
+      await addItem(page, 'project_chimera/');
+      await addItem(page, 'neural_training_set/');
       await assertTask(page, '3/5', testInfo.outputDir, 'task3_decoys');
     });
 

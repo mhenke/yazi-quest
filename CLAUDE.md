@@ -27,6 +27,10 @@ Use URL parameters for testing:
 - `?intro=false` - Skip episode intro cinematic
 - `?debug=outro` - Skip directly to outro sequence
 
+## Mandatory Workflow
+
+- **Type Safety**: ALWAYS run `npm run type-check` after making any code changes to ensure integrity and catch regressions.
+
 ## Architecture
 
 **File Structure:**
