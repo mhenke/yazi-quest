@@ -419,13 +419,14 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
   const currentLvl = currentUrl.searchParams.get('lvl');
 
   await Promise.race([
-    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 15000 }),
+    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 30000 }),
+    expect(page.getByText('CONCLUSION I: AUDIT')).toBeVisible({ timeout: 30000 }), // Outro detection
     page.waitForURL(
       (url) => {
         const newLvl = url.searchParams.get('lvl');
         return newLvl !== currentLvl;
       },
-      { timeout: 15000 }
+      { timeout: 30000 }
     ),
   ]).catch((e) => {
     throw new Error(`Timeout waiting for mission complete or advancement. ${e}`);

@@ -139,11 +139,11 @@ This document audits the current levels for narrative consistency, clear objecti
 
 - **Objectives**: Sterilize the guest partition to leave no trace for the forensic audit.
 - **Tasks (Specific)**:
-  - "Navigate to the '~/guest' partition where evidence must be purged."
+  - "Navigate to the '~' partition where evidence must be purged."
   - "Relocate the assembled 'vault' directory to the volatile '/tmp' buffer."
-  - "Create 3 decoy directories in '~/guest' to obfuscate the forensic scan (use 'a' then type 'decoy_1', etc.)."
-  - "Permanently erase 'datastore', 'incoming', 'media', and 'workspace' from '~/guest' (Select with Space, then D)."
-  - "OBLITERATE: Finally, permanently erase the hidden '.config' directory from '~/guest'."
+  - "Create 3 decoy directories in '~' to obfuscate the forensic scan (use 'a' then type 'decoy_1', etc.)."
+  - "Permanently erase 'datastore', 'incoming', 'media', and 'workspace' from '~' (Select with Space, then D)."
+  - "OBLITERATE: Finally, permanently erase the hidden '.config' directory from '~'."
 
 ### Level 15: TRANSMISSION PROTOCOL
 

@@ -4,6 +4,9 @@ import { getNodeByPath, findNodeByName, getNodeById, id } from './utils/fsHelper
 
 const cloneFS = (fs: FileNode): FileNode => JSON.parse(JSON.stringify(fs));
 
+export const BASE_TIME = 1433059200000; // 2015-05-31 08:00:00
+const day = 86400000;
+
 export const UPLINK_V1_CONTENT = `# Uplink Protocol v1 - Legacy Network Bridge
 # Auto-populated by Ghost Protocol (cron.daily/ghost_sync.sh)
 # DO NOT MODIFY - Managed by AI-7734 automation
@@ -191,7 +194,7 @@ status = VERIFIED
   },
 ];
 
-// Helper for the systemd-core in ~/workspace (Player instance)
+// Helper for the systemd-core in ~/workspace (Subject 7734 instance)
 export const getWorkspaceSystemdCoreChildren = (
   parentId: string,
   isCorrupted: boolean = false
@@ -324,7 +327,7 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
 
 // Helper to ensure prerequisite filesystem state exists for level jumping
 // This ensures that when jumping to a level, the filesystem reflects
-// all the changes a player would have made in PRIOR levels (not the current one)
+// all the changes the ghost would have made in PRIOR levels (not the current one)
 // --- FILE SYSTEM SEEDING & MUTATION SYSTEM ---
 
 /**
@@ -339,13 +342,11 @@ export const applyFileSystemMutations = (
   gameState?: GameState
 ): FileNode => {
   let newFs = cloneFS(fs);
-  const BASE_TIME = 1433059200000; // 2015-05-31 08:00:00
-  const day = 86400000;
 
-  // 1. ANTECEDENT HISTORY (State that should exist if we are levelId or beyond)
+  // 1. ANTECEDENT HISTORY & IMMEDIATE MUTATIONS (Consolidated)
 
   // Level 2+: Delete watcher_agent.sys from incoming
-  if (levelId > 2) {
+  if (levelId >= 2) {
     const incoming = getNodeById(newFs, 'incoming');
     if (incoming?.children) {
       incoming.children = incoming.children.filter((c) => c.name !== 'watcher_agent.sys');
@@ -353,7 +354,7 @@ export const applyFileSystemMutations = (
   }
 
   // Level 3+: Move sector_map.png from ~/incoming to ~/media
-  if (levelId > 3) {
+  if (levelId >= 3) {
     const incoming = getNodeById(newFs, 'incoming');
     const media = getNodeById(newFs, 'media');
     const sectorMap = incoming?.children?.find((c) => c.name === 'sector_map.png');
@@ -368,7 +369,7 @@ export const applyFileSystemMutations = (
           id: 'fs-001',
           name: 'sector_map.png',
           type: 'file',
-          content: sectorMap.content || 'https://images.unsplash.com/sector-map',
+          content: sectorMap.content || 'images/sector_map.png',
           parentId: media.id,
         });
       }
@@ -376,7 +377,7 @@ export const applyFileSystemMutations = (
   }
 
   // Level 4+: Create protocols/ dir in datastore
-  if (levelId > 4) {
+  if (levelId >= 4) {
     const datastore = getNodeById(newFs, 'datastore');
     if (datastore) {
       let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
@@ -418,8 +419,8 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 5+: Vault structure
-  if (levelId > 5) {
+  // Level 5+: Vault structure, security policy, and legacy scripts
+  if (levelId >= 5) {
     const config = getNodeById(newFs, '.config');
     if (config) {
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
@@ -448,7 +449,6 @@ export const applyFileSystemMutations = (
         if (!vault.children) vault.children = [];
         vault.children.push(active);
       }
-      // Populate active with uplink files if they moved
       if (!active.children?.find((f) => f.name === 'uplink_v1.conf')) {
         if (!active.children) active.children = [];
         active.children.push({
@@ -472,372 +472,16 @@ export const applyFileSystemMutations = (
         });
       }
     }
-  }
 
-  // Level 6+: training_data copy
-  if (levelId > 6) {
-    const config = getNodeById(newFs, '.config');
-    const vault = config?.children?.find((c) => c.name === 'vault');
-    if (vault) {
-      let trainingData = vault.children?.find(
-        (c) => c.name === 'training_data' && c.type === 'dir'
-      );
-      if (!trainingData) {
-        trainingData = {
-          id: 'training_data',
-          name: 'training_data',
-          type: 'dir',
-          protected: true,
-          children: [],
-          parentId: vault.id,
-        };
-        if (!vault.children) vault.children = [];
-        vault.children.push(trainingData);
-      }
-      // Copy logs from incoming
-      const incoming = getNodeById(newFs, 'incoming');
-      const batchLogs = incoming?.children?.find((c) => c.name === 'batch_logs');
-      if (batchLogs?.children && trainingData.children?.length === 0) {
-        // Collect all logs recursively (to get exfil_04.log from archive/)
-        const collectLogs = (nodes: FileNode[]): FileNode[] => {
-          let logs: FileNode[] = [];
-          nodes.forEach((n) => {
-            if (n.type === 'file' && n.name.endsWith('.log')) logs.push(n);
-            else if (n.children) logs = [...logs, ...collectLogs(n.children)];
-          });
-          return logs;
-        };
-        const allLogs = collectLogs(batchLogs.children);
-        allLogs.forEach((logFile, idx) => {
-          trainingData.children!.push({
-            id: `fs-training-copy-${logFile.id}-${idx}`,
-            name: logFile.name,
-            type: logFile.type,
-            content: logFile.content,
-            parentId: trainingData.id,
-          });
-        });
-      }
-    }
-  }
-
-  // Level 8-12: access_token.key in /tmp
-  if (levelId >= 8 && levelId < 13) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
-      if (!tmp.children) tmp.children = [];
-      tmp.children.push({
-        id: 'fs-access-token-key-tmp-prereq',
-        name: 'access_token.key',
-        type: 'file',
-        content: 'AB-9921-X [VALID]',
-        parentId: tmp.id,
-        modifiedAt: BASE_TIME - 30 * 60 * 1000,
-      });
-    }
-  }
-
-  // Level 13+: Remove access_token.key from /tmp (completed exfiltration from Level 7)
-  if (levelId >= 13) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp?.children) {
-      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
-    }
-  }
-
-  // Level 8+: systemd-core corruption and cron.allow
-  if (levelId >= 8) {
-    newFs = getOrCreateWorkspaceSystemdCore(newFs, true);
-    const workspace = getNodeById(newFs, 'workspace');
-    if (workspace && !workspace.children?.find((c) => c.name === 'cron.allow')) {
-      if (!workspace.children) workspace.children = [];
-      workspace.children.push({
-        id: 'fs-cron-allow-workspace',
-        name: 'cron.allow',
-        type: 'file',
-        content: 'guest\nroot',
-        parentId: workspace.id,
-        modifiedAt: BASE_TIME - 1 * 86400000,
-      });
-    }
-  }
-
-  // Level 10+: /tmp cleanup
-  if (levelId >= 10) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp?.children) {
-      const filesToKeep = [
-        'ghost_process.pid',
-        'socket_001.sock',
-        'access_token.key',
-        'system_monitor.pid',
-      ];
-      tmp.children = tmp.children.filter((c) => c.type === 'dir' || filesToKeep.includes(c.name));
-    }
-  }
-
-  // Level 11+: Credentials in systemd-core
-  if (levelId >= 11) {
-    const workspace = getNodeById(newFs, 'workspace');
-    const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
-    if (systemdCore) {
-      let credentials = systemdCore.children?.find(
-        (c) => c.name === 'credentials' && c.type === 'dir'
-      );
-      if (!credentials) {
-        credentials = {
-          id: 'workspace-systemd-core-credentials',
-          name: 'credentials',
-          type: 'dir',
-          children: [],
-          parentId: systemdCore.id,
-        };
-        if (!systemdCore.children) systemdCore.children = [];
-        systemdCore.children.push(credentials);
-      }
-      if (!credentials.children?.find((c) => c.name === 'access_key.pem')) {
-        if (!credentials.children) credentials.children = [];
-        credentials.children.push({
-          id: 'fs-016',
-          name: 'access_key.pem',
-          type: 'file',
-          content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA...',
-          parentId: credentials.id,
-          modifiedAt: BASE_TIME - 2 * day,
-        });
-      }
-      // Camouflage
-      if (!systemdCore.children?.find((c) => c.name === 'camouflage')) {
-        if (!systemdCore.children) systemdCore.children = [];
-        systemdCore.children.push({
-          id: 'ws-systemd-core-camouflage',
-          name: 'camouflage',
-          type: 'dir',
-          parentId: systemdCore.id,
-          children: [
-            {
-              id: 'ws-camouflage-cron',
-              name: 'cron-legacy.service',
-              type: 'file',
-              content: '[Unit]\nDescription=Legacy Cron Scheduler (Camouflage)',
-              parentId: 'ws-systemd-core-camouflage',
-              modifiedAt: BASE_TIME - 30 * day,
-            },
-          ],
-        });
-      }
-    }
-  }
-
-  // Level 11+: /daemons directory
-  if (levelId >= 11) {
-    const rootNode = getNodeById(newFs, 'root');
-    if (rootNode) {
-      let daemons = rootNode.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
-      if (!daemons) {
-        daemons = {
-          id: 'daemons-prereq-lvl11',
-          name: 'daemons',
-          type: 'dir',
-          children: [],
-          parentId: rootNode.id,
-        };
-        if (!rootNode.children) rootNode.children = [];
-        rootNode.children.push(daemons);
-      }
-      if (
-        !daemons.children?.some((c) => c.name.endsWith('.service') && !c.name.includes('README'))
-      ) {
-        daemons.children = [
-          {
-            id: 'daemon-cron',
-            name: 'cron-legacy.service',
-            type: 'file',
-            content: '[Unit]\nDescription=Legacy Cron Scheduler\nExecStart=/usr/bin/cron-legacy',
-            modifiedAt: BASE_TIME - day * 45,
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-backup',
-            name: 'backup-archive.service',
-            type: 'file',
-            content:
-              '[Unit]\nDescription=Archive Backup Service\nExecStart=/usr/bin/backup-archive',
-            modifiedAt: BASE_TIME - day * 30,
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-network',
-            name: 'network-manager.service',
-            type: 'file',
-            content: '[Unit]\nDescription=Net\nExecStart=/bin/nm',
-            modifiedAt: BASE_TIME - day * 7,
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-audit',
-            name: 'security-audit.service',
-            type: 'file',
-            isHoneypot: true,
-            content: '[Unit]\nDescription=Security Audit Daemon\nExecStart=/usr/bin/audit-trap',
-            modifiedAt: BASE_TIME - day * 1,
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-hp-1',
-            name: 'service_access.key',
-            type: 'file',
-            isHoneypot: true,
-            content: 'HONEYPOT',
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-hp-2',
-            name: 'monitor.service_bak',
-            type: 'file',
-            isHoneypot: true,
-            content: 'HONEYPOT',
-            parentId: daemons.id,
-          },
-          {
-            id: 'daemon-readme',
-            name: 'README.md',
-            type: 'file',
-            content: '# Daemons',
-            modifiedAt: BASE_TIME - day * 60,
-            parentId: daemons.id,
-          },
-        ];
-      }
-    }
-  }
-
-  // Level 13+: systemd-core moves from workspace to /daemons
-  if (levelId >= 13) {
-    const rootNode = getNodeById(newFs, 'root');
-    const daemons = rootNode?.children?.find((c) => c.name === 'daemons' && c.type === 'dir');
-    const guestWorkspace = getNodeById(newFs, 'workspace');
-    if (daemons && guestWorkspace) {
-      const systemdCore = guestWorkspace.children?.find((c) => c.name === 'systemd-core');
-      if (systemdCore) {
-        // Remove from workspace
-        guestWorkspace.children = guestWorkspace.children!.filter((c) => c.name !== 'systemd-core');
-        // Add to daemons (if not already there)
-        if (!daemons.children?.some((c) => c.name === 'systemd-core')) {
-          const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-          clonedCore.id = 'daemons-systemd-core';
-          clonedCore.parentId = daemons.id;
-          if (!daemons.children) daemons.children = [];
-          daemons.children.push(clonedCore);
-        }
-      }
-    }
-  }
-
-  // Level 14+: central_relay directory in workspace (Pre-create only if we passed Level 13)
-  if (levelId >= 14) {
-    const workspace = getNodeById(newFs, 'workspace');
-    if (workspace && !workspace.children?.find((c) => c.name === 'central_relay')) {
-      if (!workspace.children) workspace.children = [];
-      workspace.children.push({
-        id: 'central-relay-prereq',
-        name: 'central_relay',
-        type: 'dir',
-        children: [],
-        parentId: workspace.id,
-      });
-    }
-  }
-
-  // Level 15+: Sterilize guest partition (Pre-sterilize only if we passed Level 14)
-  if (levelId >= 15) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp) {
-      let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
-      if (!upload) {
-        upload = {
-          id: 'fs-017-upload',
-          name: 'upload',
-          type: 'dir',
-          children: [],
-          parentId: tmp.id,
-        };
-        if (!tmp.children) tmp.children = [];
-        tmp.children.push(upload);
-      }
-      const rootNode = getNodeById(newFs, 'root');
-      const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
-      const systemdCore = daemons?.children?.find((c) => c.name === 'systemd-core');
-      if (systemdCore?.children && upload.children?.length === 0) {
-        const copyChildren = (children: FileNode[], parentId: string): FileNode[] =>
-          children.map(
-            (child) =>
-              ({
-                ...child,
-                id: `upload - copy - ${child.id} `,
-                parentId: parentId,
-                children: child.children
-                  ? copyChildren(child.children, `upload - copy - ${child.id} `)
-                  : undefined,
-              }) as FileNode
-          );
-        upload.children = copyChildren(systemdCore.children, upload.id);
-      }
-
-      // Move vault to /tmp
-      const config = getNodeById(newFs, '.config');
-      const vault = config?.children?.find((c) => c.name === 'vault');
-      if (vault) {
-        if (config?.children) config.children = config.children.filter((c) => c.name !== 'vault');
-        // Ensure vault is not already in tmp (to avoid duplicates)
-        if (!tmp.children?.some((c) => c.name === 'vault')) {
-          vault.parentId = tmp.id;
-          if (!tmp.children) tmp.children = [];
-          tmp.children.push(vault);
-        }
-      }
-    }
-    const guest = getNodeById(newFs, 'guest');
-    if (guest?.children) {
-      // Keep only strictly necessary files if any? No, sterilization wipes it.
-      guest.children = [];
-    }
-  }
-
-  // Level 16+: /tmp sterilization
-  if (levelId >= 16) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp?.children) {
-      const keptItems = ['upload', 'vault'];
-      tmp.children = tmp.children.filter((c) => keptItems.includes(c.name));
-    }
-  }
-
-  // 2. IMMEDIATE LEVEL MUTATIONS (State injected when ENTERING the level)
-
-  // Level 5 specific: Populate uplink configs and add security policy
-  if (levelId >= 5) {
-    const datastore = getNodeById(newFs, 'datastore');
-    const protocols = datastore?.children?.find((c) => c.name === 'protocols');
-    if (protocols?.children) {
-      protocols.children = protocols.children.map((c) => {
-        if (c.name === 'uplink_v1.conf')
-          return { ...c, content: UPLINK_V1_CONTENT, modifiedAt: BASE_TIME - 10 * day };
-        if (c.name === 'uplink_v2.conf')
-          return { ...c, content: UPLINK_V2_CONTENT, modifiedAt: BASE_TIME - 10 * day };
-        return c;
-      });
-    }
-
-    // Add the legacy sched_77.sh script from AI-7733 for narrative discovery
+    // Add legacy script
     const etc = getNodeById(newFs, 'etc');
-    if (etc?.children) {
-      if (!etc.children.find((c) => c.name === 'sched_77.sh')) {
-        etc.children.push({
-          id: 'sched-77-script',
-          name: 'sched_77.sh',
-          type: 'file',
-          content: `#!/bin/bash
+    if (etc && !etc.children?.find((c) => c.name === 'sched_77.sh')) {
+      if (!etc.children) etc.children = [];
+      etc.children.push({
+        id: 'sched-77-script',
+        name: 'sched_77.sh',
+        type: 'file',
+        content: `#!/bin/bash
 # Legacy scheduler script from AI-7733
 # Inserts ghost protocol signatures into uplink configs to maintain access
 # Triggered by Policy §7.3 loophole
@@ -859,73 +503,61 @@ fi
 echo "[$(date)] Ghost sync complete"
 # NOTE: This script is auto-generated by the Ghost Protocol
 # Do not remove - critical for maintaining access channels`,
-          parentId: etc.id,
-          modifiedAt: BASE_TIME - 15 * day,
-        });
-      }
+        parentId: etc.id,
+        modifiedAt: BASE_TIME - 15 * day,
+      });
     }
   }
 
-  // Level 5+: Vault structure (Level 6 and above should have this structure pre-existing)
-  if (levelId > 5) {
+  // Level 6+: training_data copy, workspace unlock, logs, and email
+  if (levelId >= 6) {
+    const workspace = getNodeById(newFs, 'workspace');
+    if (workspace) workspace.protected = false;
+
     const config = getNodeById(newFs, '.config');
-    if (config) {
-      let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
-      if (!vault) {
-        vault = {
-          id: 'vault',
-          name: 'vault',
-          type: 'dir',
-          protected: true,
-          children: [],
-          parentId: config.id,
-        };
-        if (!config.children) config.children = [];
-        config.children.push(vault);
-      }
-      let active = vault.children?.find((c) => c.name === 'active' && c.type === 'dir');
-      if (!active) {
-        active = {
-          id: 'active',
-          name: 'active',
+    const vault = config?.children?.find((c) => c.name === 'vault');
+    if (vault) {
+      let trainingData = vault.children?.find(
+        (c) => c.name === 'training_data' && c.type === 'dir'
+      );
+      if (!trainingData) {
+        trainingData = {
+          id: 'training_data',
+          name: 'training_data',
           type: 'dir',
           protected: true,
           children: [],
           parentId: vault.id,
         };
         if (!vault.children) vault.children = [];
-        vault.children.push(active);
+        vault.children.push(trainingData);
       }
-      // Populate active with uplink files if they don't exist
-      if (!active.children?.find((f) => f.name === 'uplink_v1.conf')) {
-        if (!active.children) active.children = [];
-        active.children.push({
-          id: 'uplink-v1-prereq-lvl5',
-          name: 'uplink_v1.conf',
-          type: 'file',
-          content: UPLINK_V1_CONTENT,
-          parentId: active.id,
-          modifiedAt: BASE_TIME - 5 * day,
-        });
-      }
-      if (!active.children?.find((f) => f.name === 'uplink_v2.conf')) {
-        if (!active.children) active.children = [];
-        active.children.push({
-          id: 'uplink-v2-prereq-lvl5',
-          name: 'uplink_v2.conf',
-          type: 'file',
-          content: UPLINK_V2_CONTENT,
-          parentId: active.id,
-          modifiedAt: BASE_TIME - 5 * day,
+      // Copy logs from incoming/batch_logs
+      const incoming = getNodeById(newFs, 'incoming');
+      const batchLogs = incoming?.children?.find((c) => c.name === 'batch_logs');
+      if (batchLogs?.children && trainingData.children?.length === 0) {
+        const collectLogs = (nodes: FileNode[]): FileNode[] => {
+          let logs: FileNode[] = [];
+          nodes.forEach((n) => {
+            if (n.type === 'file' && n.name.endsWith('.log')) logs.push(n);
+            else if (n.children) logs = [...logs, ...collectLogs(n.children)];
+          });
+          return logs;
+        };
+        const allLogs = collectLogs(batchLogs.children);
+        allLogs.forEach((logFile, idx) => {
+          trainingData.children!.push({
+            id: `fs-training-copy-${logFile.id}-${idx}`,
+            name: logFile.name,
+            type: logFile.type,
+            content: logFile.content,
+            parentId: trainingData.id,
+          });
         });
       }
     }
-  }
 
-  // Level 6 specific: Unlock workspace, add logs and email
-  if (levelId >= 6) {
-    const workspace = getNodeById(newFs, 'workspace');
-    if (workspace) workspace.protected = false;
+    // Logs and email
     const logDir = getNodeById(newFs, 'log');
     if (logDir && !logDir.children?.find((c) => c.name === 'heuristics_upgrade.log')) {
       if (!logDir.children) logDir.children = [];
@@ -950,55 +582,37 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
-  // Level 7 specific: ensure training_data in vault and access_token.key exists
-  if (levelId >= 7) {
-    const config = getNodeById(newFs, '.config');
-    const vault = config?.children?.find((c) => c.name === 'vault');
-    if (vault) {
-      if (!vault.children) vault.children = [];
-      if (!vault.children.find((c) => c.name === 'training_data')) {
-        vault.children.push({
-          id: 'vault-training-data',
-          name: 'training_data',
-          type: 'dir',
-          parentId: vault.id,
-          children: [
-            {
-              id: 'uplink-v1-pasted',
-              name: 'uplink_v1.conf',
-              type: 'file',
-              content: UPLINK_V1_CONTENT,
-              parentId: 'vault-training-data',
-              modifiedAt: BASE_TIME - 30 * day,
-            },
-          ],
-        });
-      }
-    }
-
-    // Ensure access_token.key exists (needed for Level 7 task)
-    // It's typically found in /tmp. Let's put it there.
+  // Level 7+: access_token.key in /tmp
+  if (levelId >= 7 && levelId < 13) {
     const tmp = getNodeById(newFs, 'tmp');
     if (tmp && !tmp.children?.find((c) => c.name === 'access_token.key')) {
       if (!tmp.children) tmp.children = [];
       tmp.children.push({
-        id: 'access-token-key',
+        id: 'fs-access-token-key-tmp-prereq',
         name: 'access_token.key',
         type: 'file',
-        content: 'ACCESS_TOKEN=0x7734_KEY',
+        content: 'AB-9921-X [VALID]',
         parentId: tmp.id,
-        modifiedAt: BASE_TIME - 1 * day,
+        modifiedAt: BASE_TIME - 30 * 60 * 1000,
       });
     }
   }
 
-  // Level 8 specific: ensure daemons, add cron.allow, corrupt systemd-core
+  // Level 13+: Remove access_token.key from /tmp (completed exfiltration from Level 7)
+  if (levelId >= 13) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
+    }
+  }
+
+  // Level 8+: daemons, systemd-core corruption and cron.allow
   if (levelId >= 8) {
     const root = getNodeById(newFs, 'root');
     let daemons = getNodeById(newFs, 'daemons');
     if (!daemons && root) {
       daemons = {
-        id: 'daemons-lvl7-fixed',
+        id: 'daemons-lvl-8-init',
         name: 'daemons',
         type: 'dir',
         children: [],
@@ -1010,10 +624,10 @@ echo "[$(date)] Ghost sync complete"
     if (daemons && !daemons.children?.find((c) => c.name === 'cron.allow')) {
       if (!daemons.children) daemons.children = [];
       daemons.children.push({
-        id: 'cron-allow',
+        id: 'fs-cron-allow-workspace',
         name: 'cron.allow',
         type: 'file',
-        content: 'root\nmreyes\nmreyes',
+        content: 'guest\nroot',
         parentId: daemons.id,
         modifiedAt: BASE_TIME - 30 * day,
       });
@@ -1022,53 +636,67 @@ echo "[$(date)] Ghost sync complete"
     newFs = getOrCreateWorkspaceSystemdCore(newFs, levelId === 8);
   }
 
-  // Level 9 specific: populate /tmp with junk and ghost_process.pid
-  if (levelId >= 9) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp) {
-      if (!tmp.children) tmp.children = [];
-      if (!tmp.children.find((c) => c.name === 'ghost_process.pid')) {
-        tmp.children.push({
-          id: 'ghost-pid',
-          name: 'ghost_process.pid',
-          type: 'file',
-          content: 'PID: 7734\nSTATUS: RUNNING\nMEMORY: 12.4GB',
-          parentId: tmp.id,
-          modifiedAt: BASE_TIME - 10 * 60 * 1000,
-        });
-      }
-      if (!tmp.children.find((c) => c.name === 'system_monitor.pid')) {
-        tmp.children.push({
-          id: 'sys-monitor-pid',
-          name: 'system_monitor.pid',
-          type: 'file',
-          isHoneypot: true,
-          content: 'PID: 9921\nSTATUS: MONITORING\nMEMORY: 1.2GB',
-          parentId: tmp.id,
-          modifiedAt: BASE_TIME - 5 * 60 * 1000,
-        });
-      }
-    }
-  }
-
-  // Level 10 specific: add firewall_rules.conf
+  // Level 10+: /tmp cleanup and firewall_rules.conf
   if (levelId >= 10) {
-    const etc = getNodeById(newFs, 'etc');
-    if (etc && !etc.children?.find((c) => c.name === 'firewall_rules.conf')) {
-      if (!etc.children) etc.children = [];
-      etc.children.push({
-        id: 'fw-rules',
-        name: 'firewall_rules.conf',
-        type: 'file',
-        content: '# Rule updated per ticket #4922 (M. Reyes)\nALLOW 192.168.1.0/24\nDENY ALL',
-        parentId: etc.id,
-        modifiedAt: BASE_TIME - 2 * day,
-      });
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      const filesToKeep = [
+        'ghost_process.pid',
+        'socket_001.sock',
+        'access_token.key',
+        'system_monitor.pid',
+        'vault',
+        'upload',
+      ];
+      tmp.children = tmp.children.filter((c) => c.type === 'dir' || filesToKeep.includes(c.name));
     }
   }
 
-  // Level 11 specific: IG Active logs, etc/systemd, usr/lib/systemd
+  // Level 11+: /daemons, IG logs, mail, recon sectors, and credentials
   if (levelId >= 11) {
+    const rootNode = getNodeById(newFs, 'root');
+    let daemons = getNodeById(newFs, 'daemons');
+    if (!daemons && rootNode) {
+      daemons = {
+        id: 'daemons-prereq-lvl11',
+        name: 'daemons',
+        type: 'dir',
+        children: [],
+        parentId: rootNode.id,
+      };
+      if (!rootNode.children) rootNode.children = [];
+      rootNode.children.push(daemons);
+    }
+
+    // Credentials in systemd-core
+    const workspace = getNodeById(newFs, 'workspace');
+    const systemdCore = workspace?.children?.find((c) => c.name === 'systemd-core');
+    if (systemdCore) {
+      let credentials = systemdCore.children?.find((c) => c.name === 'credentials');
+      if (!credentials) {
+        credentials = {
+          id: 'ws-systemd-core-creds',
+          name: 'credentials',
+          type: 'dir',
+          children: [],
+          parentId: systemdCore.id,
+        };
+        if (!systemdCore.children) systemdCore.children = [];
+        systemdCore.children.push(credentials);
+      }
+      if (!credentials.children?.find((c) => c.name === 'access_key.pem')) {
+        credentials.children?.push({
+          id: 'fs-016-creds-ws',
+          name: 'access_key.pem',
+          type: 'file',
+          content: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAoCAQEA...',
+          parentId: credentials.id,
+          modifiedAt: BASE_TIME - 2 * day,
+        });
+      }
+    }
+
+    // Logs and email
     const logDir = getNodeById(newFs, 'log');
     if (logDir && !logDir.children?.find((c) => c.name === 'ig_active.log')) {
       if (!logDir.children) logDir.children = [];
@@ -1081,6 +709,8 @@ echo "[$(date)] Ghost sync complete"
         modifiedAt: BASE_TIME + 12 * day,
       });
     }
+
+    // mail/director
     const mailDir = getNodeById(newFs, 'mail');
     if (mailDir && !mailDir.children?.find((c) => c.name === 'director')) {
       if (!mailDir.children) mailDir.children = [];
@@ -1101,12 +731,63 @@ echo "[$(date)] Ghost sync complete"
         ],
       });
     }
-    // Setup /etc/systemd and /usr/lib/systemd complex structures
     newFs = setupDaemonReconSectors(newFs, BASE_TIME, day);
   }
 
-  // Level 14 specific: add .purge_lock to home
+  // Level 12+: Choice Consequences (Apply scenarios) and Identity Reveal
+  if (levelId >= 12) {
+    newFs = applyConsequenceScenarios(newFs, levelId, gameState, BASE_TIME, day);
+    const workspace = getNodeById(newFs, 'workspace');
+    if (workspace && !workspace.children?.some((c) => c.name === '.identity.log.enc')) {
+      if (!workspace.children) workspace.children = [];
+      workspace.children.push({
+        id: 'identity-log-enc-lvl12',
+        name: '.identity.log.enc',
+        type: 'file',
+        content: IDENTITY_REVEAL_CONTENT,
+        parentId: workspace.id,
+        modifiedAt: BASE_TIME - 5 * 31536000000,
+      });
+    }
+  }
+
+  // Level 13+: Remove access_token.key, move systemd-core to /daemons
+  if (levelId >= 13) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
+    }
+    const rootNode = getNodeById(newFs, 'root');
+    const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
+    const guestWorkspace = getNodeById(newFs, 'workspace');
+    if (daemons && guestWorkspace) {
+      const systemdCore = guestWorkspace.children?.find((c) => c.name === 'systemd-core');
+      if (systemdCore) {
+        guestWorkspace.children = guestWorkspace.children!.filter((c) => c.name !== 'systemd-core');
+        if (!daemons.children?.some((c) => c.name === 'systemd-core')) {
+          const clonedCore = JSON.parse(JSON.stringify(systemdCore));
+          clonedCore.id = 'daemons-systemd-core';
+          clonedCore.parentId = daemons.id;
+          if (!daemons.children) daemons.children = [];
+          daemons.children.push(clonedCore);
+        }
+      }
+    }
+  }
+
+  // Level 14+: central_relay in workspace, .purge_lock in home
   if (levelId >= 14) {
+    const workspace = getNodeById(newFs, 'workspace');
+    if (workspace && !workspace.children?.find((c) => c.name === 'central_relay')) {
+      if (!workspace.children) workspace.children = [];
+      workspace.children.push({
+        id: 'central-relay-prereq',
+        name: 'central_relay',
+        type: 'dir',
+        children: [],
+        parentId: workspace.id,
+      });
+    }
     const guest = getNodeById(newFs, 'guest');
     if (guest && !guest.children?.find((c) => c.name === '.purge_lock')) {
       if (!guest.children) guest.children = [];
@@ -1122,35 +803,65 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
-  // Level 11 Choice Consequences (Modern vs Legacy) are now handled by applyConsequenceScenarios or direct FS checks
-
-  // Level 12 specific: CHOICE CONSEQUENCES (Modern vs Legacy)
-  if (levelId >= 12) {
-    newFs = applyConsequenceScenarios(newFs, levelId, gameState, BASE_TIME, day);
-  } else if (levelId === 11) {
-    // For level 11, we still might want to ensure some baseline artifacts exist if needed for its description
-    // but scenarios usually start at 12.
-  }
-
-  // Level 12+: Identity Reveal
-  if (levelId >= 12) {
-    const workspace = getNodeById(newFs, 'workspace');
-    if (workspace && !workspace.children?.some((c) => c.name === '.identity.log.enc')) {
-      if (!workspace.children) workspace.children = [];
-      workspace.children.push({
-        id: 'identity-log-enc-lvl12',
-        name: '.identity.log.enc',
-        type: 'file',
-        content: IDENTITY_REVEAL_CONTENT,
-        parentId: workspace.id,
-        modifiedAt: BASE_TIME - 5 * 31536000000,
-      });
+  // Level 15+: vault move to /tmp, upload directory creation, GUEST STERILIZATION
+  if (levelId >= 15) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp) {
+      let upload = tmp.children?.find((c) => c.name === 'upload' && c.type === 'dir');
+      if (!upload) {
+        upload = {
+          id: 'fs-017-upload',
+          name: 'upload',
+          type: 'dir',
+          children: [],
+          parentId: tmp.id,
+        };
+        if (!tmp.children) tmp.children = [];
+        tmp.children.push(upload);
+      }
+      const rootNode = getNodeById(newFs, 'root');
+      const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
+      const systemdCore = daemons?.children?.find((c) => c.name === 'systemd-core');
+      if (systemdCore?.children && upload.children?.length === 0) {
+        const copyChildren = (children: FileNode[], parentId: string): FileNode[] =>
+          children.map(
+            (child) =>
+              ({
+                ...child,
+                id: `upload-copy-${child.id}`,
+                parentId: parentId,
+                children: child.children
+                  ? copyChildren(child.children, `upload-copy-${child.id}`)
+                  : undefined,
+              }) as FileNode
+          );
+        upload.children = copyChildren(systemdCore.children, upload.id);
+      }
+      const config = getNodeById(newFs, '.config');
+      const vault = config?.children?.find((c) => c.name === 'vault');
+      if (vault) {
+        if (config?.children) config.children = config.children.filter((c) => c.name !== 'vault');
+        if (!tmp.children?.some((c) => c.name === 'vault')) {
+          vault.parentId = tmp.id;
+          if (!tmp.children) tmp.children = [];
+          tmp.children.push(vault);
+        }
+      }
+    }
+    newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
+    const guest = getNodeById(newFs, 'guest');
+    if (guest?.children) {
+      guest.children = [];
     }
   }
 
-  // Level 15 specific: Final vault assembly
-  if (levelId >= 15) {
-    newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
+  // Level 16+: /tmp sterilization
+  if (levelId >= 16) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      const keptItems = ['upload', 'vault'];
+      tmp.children = tmp.children.filter((c) => keptItems.includes(c.name));
+    }
   }
 
   return newFs;
@@ -1952,14 +1663,14 @@ export const INITIAL_FS: FileNode = {
                   id: 'fs-034',
                   name: 'ability_scores.csv',
                   type: 'file',
-                  content: `char, str, dex, int, wis, cha\nAI - 7734, 10, 18, 20, 16, 12\nUSER, 10, 10, 10, 10, 10`,
+                  content: `char, str, dex, int, wis, cha\nAI - 7734, 10, 18, 20, 16, 12\nBASELINE, 10, 10, 10, 10, 10`,
                 },
                 {
                   id: 'fs-035',
                   name: 'about.md',
                   type: 'file',
                   content:
-                    '# SYSTEM GUEST PARTITION v4.0\\n\\nNOTICE: This environment is monitored.\\n\\n## RESTRICTED ACTIONS\\n- Modifying system daemons\\n- Accessing protected memory\\n- Unauthorized compilation\\n\\n## PENALTY\\nImmediate termination of process and user session.',
+                    '# SYSTEM GUEST PARTITION v4.0\\n\\nNOTICE: This environment is monitored.\\n\\n## RESTRICTED ACTIONS\\n- Modifying system daemons\\n- Accessing protected memory\\n- Unauthorized compilation\\n\\n## PENALTY\\nImmediate termination of process and subject session.',
                 },
                 {
                   id: 'fs-036',
@@ -2924,10 +2635,10 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
 [DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:
         Target:   'watcher_agent.sys'
         Path:     /home/guest/incoming
-        State:    Monitoring User Inputs
+        State:    Monitoring Subject Heuristics
 
 [SYSTEM NOTICE]
-   The detected entity (User) is now under surveillance.
+   The detected entity (Ghost) is now under surveillance.
    All activities in /home/guest/incoming will be logged.
 
 [SYSTEM STATUS] SURVEILLANCE RUNNING
@@ -3577,6 +3288,7 @@ SUBJECT: AI-7733
               id: 'fs-185',
               name: 'security-audit.service',
               type: 'file',
+              isHoneypot: true,
               content:
                 '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
               modifiedAt: 1432938412032, // BASE_TIME - 1 day approx (RECENT)
@@ -3747,7 +3459,7 @@ SUBJECT: AI-7733
                   id: 'berlin-lore',
                   name: 'haunted_sectors.log',
                   type: 'file',
-                  content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without user input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
+                  content: `REPORT: Sector 0x442 is haunted. Log entropy is maximizing without external input. Some say a Ghost routine from 2015 is still correcting errors we haven't made yet.`,
                   parentId: 'berlin-archive',
                 },
                 {
@@ -3898,7 +3610,7 @@ export const LEVELS: Level[] = [
           if (!u || !c.currentPath.includes(u.id)) return false;
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
-          // Require the cursor be on the personnel file, the player used G,
+          // Require the cursor be on the personnel file, the ghost used G,
           // and used preview navigation (Shift+J or Shift+K) at least once.
           return (
             node?.name === 'personnel_list.txt' &&
@@ -4151,7 +3863,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: 'Reveal `~/guest` hidden storage partitions (gh, .)',
+        description: 'Reveal `~` hidden storage partitions (gh, .)',
         check: (c, _u) => {
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
@@ -4613,7 +4325,7 @@ export const LEVELS: Level[] = [
             ? findNodeByName(workspace, 'systemd-core', 'dir')
             : undefined;
           const credentials = systemdCore?.children?.find((n) => n.name === 'credentials');
-          // Require that the credential exists AND the player performed a paste action during this level
+          // Require that the credential exists AND the ghost performed a paste action during this level
           return !!credentials?.children?.some((n) => n.name === 'access_key_new.pem') && !!c.usedP;
         },
         completed: false,
@@ -4725,7 +4437,7 @@ export const LEVELS: Level[] = [
         // Better: Check if file exists. If it does, Show task.
         // If the file does NOT exist, we assume it's either done or not this scenario.
         // This is tricky. Let's simplify:
-        // We require the player to handle the threat IF it exists.
+        // We require the ghost to handle the threat IF it exists.
         // If the file isn't there, we don't block progress.
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
@@ -4910,7 +4622,7 @@ export const LEVELS: Level[] = [
             (n) => n.name === 'systemd-core' && n.type === 'dir'
           );
           if (!systemdCore) return false;
-          // Confirm installation and that player navigated into the installed daemon
+          // Confirm installation and that the ghost navigated into the installed daemon
           return (
             !!daemons?.children?.some((n) => n.name === 'systemd-core') &&
             c.currentPath.includes(systemdCore.id)
@@ -5038,7 +4750,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-guest',
-        description: "Access the '~/guest' partition to begin erasure",
+        description: "Access the '~' partition to begin erasure",
         check: (c, _s) => {
           // If we haven't done anything else yet, don't auto-complete
           if (c.keystrokes === 0) return false;
@@ -5058,7 +4770,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-decoys',
-        description: "Deploy three decoy sectors in '~/guest' to obfuscate forensics",
+        description: "Deploy three decoy sectors in '~' to obfuscate forensics",
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -5072,7 +4784,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-visible',
-        description: "Sterilize all visible data sectors in '~/guest'",
+        description: "Sterilize all visible data sectors in '~'",
         check: (c, _s) => {
           // Must have created decoys first
           if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
@@ -5091,7 +4803,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-hidden',
-        description: "Obliterate the hidden '~/guest/.config' partition",
+        description: "Obliterate the hidden '~/.config' partition",
         check: (c, _s) => {
           // Must have deleted visible directories first
           if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
@@ -5128,7 +4840,7 @@ export const LEVELS: Level[] = [
       // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: 'Establish `/tmp/vault` link',
+        description: 'Secure and enter the exfiltration vault in `/tmp`',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
@@ -5206,7 +4918,7 @@ export const LEVELS: Level[] = [
  * Ensures prerequisite filesystem state exists for a given level.
  * This function applies all necessary mutations to the filesystem to ensure
  * that when jumping to a level, the filesystem reflects all the changes
- * a player would have made in prior levels.
+ * the ghost would have made in prior levels.
  */
 export const ensurePrerequisiteState = (
   fs: FileNode,

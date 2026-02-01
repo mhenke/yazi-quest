@@ -522,6 +522,11 @@ export function isProtected(
     return null;
   }
 
+  // Allow Level 14 to cut vault from .config (game objective)
+  if (level.id === 14 && action === 'cut' && node.name === 'vault') {
+    return null;
+  }
+
   // Allow Level 15 to rename and move exfil_04.log (renamed payload.py)
   if (level.id === 15 && (node.name === 'exfil_04.log' || node.name === 'payload.py')) {
     if (action === 'rename' || action === 'cut' || action === 'delete') {

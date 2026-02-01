@@ -1,5 +1,9 @@
 import { GameState, FileNode } from '../../types';
 import { Action } from '../gameReducer';
+// import { BASE_TIME } from '../../constants'; // Avoid circular dependency
+
+// May 31, 2015 - Midnight
+const BASE_TIME = 1433059200000;
 
 /**
  * Level 13: Async Distributed Node Switching
@@ -62,7 +66,6 @@ export const getLevel11LegacyThought = (nodes: FileNode[], levelIndex: number): 
   // Level 11 is index 10
   if (levelIndex !== 10) return null;
 
-  const BASE_TIME = 1433059200000;
   const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
   const hasRecent = nodes.some((n) => (n.modifiedAt || 0) > thirtyDaysAgo);
 

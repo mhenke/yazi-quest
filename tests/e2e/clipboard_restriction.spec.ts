@@ -43,7 +43,7 @@ test.describe('Clipboard Level Restrictions', () => {
     await page.goto('http://localhost:3000/?level=6&skipIntro=true');
     await expect(page.getByText('L6', { exact: true })).toBeVisible();
 
-    // Level 6 starts at ~/guest
+    // Level 6 starts at ~ (which is /home/guest)
     // Select something by moving cursor and pressing Space
     await page.keyboard.press('j');
     await page.keyboard.press(' '); // Select the item
