@@ -936,6 +936,7 @@ export default function App() {
 
       node.name = name;
       dispatch({ type: 'RENAME_NODE', oldId: id, newNode: node, newFs });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
       showNotification(`Renamed to ${name}`);
     }
   }, [gameState, dispatch, showNotification]);

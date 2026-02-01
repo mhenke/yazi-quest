@@ -37,8 +37,8 @@ export const getFilterRegex = (input: string): RegExp | null => {
   if (!input) return null;
 
   // Smart-case: if filter contains any uppercase, make it case-sensitive.
-  // Also treat patterns with escapes as case-sensitive, as they are intentionally specific.
-  const isCaseSensitive = /[A-Z]/.test(input) || input.includes('\\');
+  // We do NOT treat escapes as case-sensitive triggers, because the user might just be escaping a dot.
+  const isCaseSensitive = /[A-Z]/.test(input);
   const flags = isCaseSensitive ? '' : 'i';
 
   try {
@@ -55,7 +55,23 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
   if (state.searchQuery) {
     // If a search is active, return the sorted search results
     // We must apply sorting here to match what the user sees in the UI
-    return sortNodes(state.searchResults, state.sortBy, state.sortDirection);
+    let items = [...state.searchResults];
+
+    // Apply active filter if present (allows filtering within search results)
+    const currentDir = getNodeByPath(state.fs, state.currentPath);
+    if (currentDir) {
+      const filter = state.filters[currentDir.id] || '';
+      if (filter) {
+        const regex = getFilterRegex(filter);
+        if (regex) {
+          items = items.filter((c) => regex.test(c.name));
+        } else {
+          items = [];
+        }
+      }
+    }
+
+    return sortNodes(items, state.sortBy, state.sortDirection);
   }
 
   const currentDir = getNodeByPath(state.fs, state.currentPath);

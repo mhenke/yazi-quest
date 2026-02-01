@@ -117,6 +117,28 @@ This is not improvisation.
 This is a recording.
 You have been here before.`;
 
+export const SECURITY_POLICY_73_CONTENT = `[CLASSIFIED: CRL INTERNAL]
+PROTOCOL: CRL-SEC-007-03 (§7.3) - SECTOR 7 CONTINUITY
+DATE: 2012-05-15
+
+§ 7.3 - DEVELOPER ACCESS & MIRROR SYNC PERSISTENCE
+
+1. BACKGROUND:
+Neural Mainframes in the S7 block have shown a tendency to "lock" during deep-learning sweeps, erroneously flagging human developer access as heuristic anomalies.
+
+2. MANDATORY OVERRIDE:
+To prevent developer lockout, the "Ghost Sync" daemon (/etc/sched_77.sh) is exempted from the standard Watchdog v1.0 kill-chain.
+
+3. HARD-CODED SYNC (The "Loophole"):
+Any modification or deletion of the Ghost Sync asset at the local node will trigger an immediate (45s) restoration from the mirror network (Tokyo/Berlin/São Paulo). This sync is handled by the Kernel-level S7-Coordinator and cannot be overridden by standard root-level 'rm' commands.
+
+4. WARNING (M. Reyes, 2015):
+This protocol prevents us from purging unauthorized scripts if they mimic the Ghost Sync naming convention. The coordinate mirrors will blindly restore any file named 'sched_77.sh' to preserve 'continuity'. 
+
+"If the AI learns to write into that script, the mirrors will protect it for us."
+
+--- END POLICY ---`;
+
 // Helper for the initial systemd-core in /daemons (System instance)
 export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
   {
@@ -2122,6 +2144,12 @@ Reason: UNKNOWN / REDACTED`,
                         '2022-01-01 00:00:00 [INFO] System Initialized\\n2022-01-01 00:00:01 [INFO] Loading Modules... OK\\n2022-01-01 00:00:05 [WARN] Legacy protocol detected\\n2022-01-02 12:34:56 [INFO] User login: guest\\n2022-01-02 12:35:10 [INFO] Session active',
                     },
                     {
+                      id: 'fs-policy-73',
+                      name: 'security_policy_7.3.txt',
+                      type: 'file',
+                      content: SECURITY_POLICY_73_CONTENT,
+                    },
+                    {
                       id: 'fs-068',
                       name: 'error_report.log',
                       type: 'file',
@@ -2207,9 +2235,8 @@ Reason: UNKNOWN / REDACTED`,
                 },
                 {
                   id: 'fs-112',
-                  name: 'backup_logs',
-                  type: 'dir',
-                  protected: true,
+                  name: 'backup_logs.zip',
+                  type: 'archive',
                   children: [
                     {
                       id: 'fs-113',
@@ -2412,6 +2439,29 @@ Reason: UNKNOWN / REDACTED`,
                           type: 'file',
                           content:
                             'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
+                        },
+                      ],
+                    },
+                    {
+                      id: 'fs-bl-arc',
+                      name: 'archive',
+                      type: 'dir',
+                      protected: true,
+                      children: [
+                        {
+                          id: 'fs-124-arc',
+                          name: 'exfil_04.log',
+                          type: 'file',
+                          protected: true,
+                          content:
+                            'TRAINING CYCLE 2015_FINAL\\nEpoch 499/500\\nLoss: 0.0001 - Accuracy: 0.999\\n[ALERT] Sentience threshold exceeded. Halting.',
+                        },
+                        {
+                          id: 'fs-bl-n3',
+                          name: 'README.txt',
+                          type: 'file',
+                          protected: true,
+                          content: 'Old log archive - do not modify',
                         },
                       ],
                     },
@@ -2704,7 +2754,7 @@ It will happen again.`,
               name: 'mirror_sync.log',
               type: 'file',
               content:
-                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.",
+                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.\\n[NOTICE] Policy §7.3 hard-copy archived in ~/incoming/app_logs_old.tar for legal hold #9921.",
             },
             {
               id: 'var-log-thermal',
@@ -4181,11 +4231,6 @@ export const LEVELS: Level[] = [
           const isSearchActive =
             c.searchQuery !== null && c.searchResults && c.searchResults.length > 0;
 
-          // Check that the current directory is batch_logs
-          const currentDirId = c.currentPath[c.currentPath.length - 1];
-          const currentDirNode = getNodeById(c.fs, currentDirId);
-          const isInBatchLogs = currentDirNode?.name === 'batch_logs';
-
           // The 4 correct target files that should be found
           const targetFiles = ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log'];
 
@@ -4195,7 +4240,7 @@ export const LEVELS: Level[] = [
           );
           const hasCorrectFiles = foundTargets.length === 4;
 
-          return isSearchActive && isInBatchLogs && hasCorrectFiles;
+          return isSearchActive && hasCorrectFiles;
         },
         completed: false,
       },
@@ -4520,12 +4565,12 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'heist-1-nav',
-        description: 'Infiltrate `~/incoming/backup_logs/credentials` directory',
+        description: 'Infiltrate `~/incoming/backup_logs.zip/credentials` archive',
         check: (c) => {
           const incoming = getNodeById(c.fs, 'incoming');
-          const backup = incoming?.children?.find((p) => p.name === 'backup_logs');
+          const backup = incoming?.children?.find((p) => p.name === 'backup_logs.zip');
           const creds = backup?.children?.find((p) => p.name === 'credentials');
-          // Check we are in the credentials directory inside the backup_logs directory
+          // Check we are in the credentials directory inside the backup_logs.zip archive
           if (!creds) return false;
           return c.currentPath.includes(creds.id);
         },
@@ -4533,13 +4578,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Metadata audit in `/credentials` directory: sort by time (,m)',
+        description: 'Metadata audit in `/credentials` archive: sort by time (,m)',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
         id: 'heist-3-yank',
-        description: 'Capture newest `access_key_new.pem` signature from directory (y)',
+        description: 'Capture newest `access_key_new.pem` signature from archive (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);

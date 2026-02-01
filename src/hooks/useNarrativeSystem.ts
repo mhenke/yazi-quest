@@ -159,7 +159,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       dispatch({
         type: 'SET_ALERT_MESSAGE',
         message:
-          '🚨 QUARANTINE ALERT - Active UPLINK configurations detected. Watchdog v2.0 has identified AI-7733 signatures. Evacuate assets immediately.',
+          '🚨 QUARANTINE ALERT - Active UPLINK configurations detected. Upgraded and activated Watchdog v2.0 has identified AI-7733 signatures. Evacuate assets immediately.',
       });
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
     }

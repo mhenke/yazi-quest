@@ -9,10 +9,10 @@ import {
   filterAndSelect,
   deleteItem,
   navigateDown,
-  navigateRight,
   sortCommand,
   search,
   expectNarrativeThought,
+  enterDirectory,
   dismissAlertIfPresent,
 } from './utils';
 
@@ -86,19 +86,25 @@ test.describe('Game Mechanics & Failures', () => {
     await startLevel(page, 11, { intro: false });
 
     // 1. gr, j, l, . then s, type ".service", enter
+    // 1. Enter daemons and search
     await gotoCommand(page, 'r');
-    await navigateDown(page, 1);
-    await navigateRight(page, 1); // Enter daemons
+    await enterDirectory(page, 'daemons');
     await pressKey(page, '.'); // Show hidden
-    await search(page, '\\.service$');
+    await search(page, '\\\\.service$');
     await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
 
     // 2. Sort by modified (Shift+M)
     await sortCommand(page, 'Shift+M');
     await page.waitForTimeout(500); // Wait for mode transition
-    await pressKey(page, 'Escape'); // Ensure normal mode just in case
 
     // 3. Select 'security-audit.service' (the honeypot - very recent)
+    const visibleItems = await page.$$eval('[data-testid^="file-"]', (els) =>
+      els.map((e) => e.textContent)
+    );
+    console.log('VISIBLE ITEMS:', visibleItems);
+    const currentSelection = await page.locator('[aria-current="location"]').textContent();
+    console.log('CURRENT SELECTION:', currentSelection);
+
     await filterAndSelect(page, 'security-audit.service');
 
     // Level 11 triggers a Threat Alert when selecting a honeypot in content.

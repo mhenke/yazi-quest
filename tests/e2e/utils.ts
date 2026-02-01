@@ -213,10 +213,17 @@ export async function renameItem(page: Page, name: string): Promise<void> {
   const modal = page.getByTestId('input-modal');
   await expect(modal).toBeVisible();
   const input = modal.locator('input');
-  await input.focus();
+  await input.click();
   await input.fill(name);
   await page.keyboard.press('Enter');
-  await expect(modal).not.toBeVisible({ timeout: 2000 }); // Wait for modal to disappear
+
+  try {
+    await expect(modal).not.toBeVisible({ timeout: 1000 });
+  } catch {
+    // Retry Enter if modal is still visible
+    await page.keyboard.press('Enter');
+    await expect(modal).not.toBeVisible({ timeout: 5000 });
+  }
 }
 
 /**

@@ -402,6 +402,11 @@ test.describe('Episode 3: MASTERY', () => {
 
     // PHASE 4: Activate Payload (Rename & Move)
     // ----------------------------------------------------------------
+    // Disable hidden files if active to prevent protocol violations during rename
+    if (await areHiddenFilesVisible(page)) {
+      await pressKey(page, '.');
+    }
+
     // 1. Go to training_data
     await navigateLeft(page, 1); // Leave active
     await filterByText(page, 'training_data');
@@ -415,6 +420,7 @@ test.describe('Episode 3: MASTERY', () => {
 
     // 3. Select payload.py and Cut (x)
     await filterByText(page, 'payload.py');
+    await pressKey(page, 'Space');
     await pressKey(page, 'x');
     await clearFilter(page);
 
