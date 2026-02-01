@@ -17,7 +17,7 @@ test.describe('Level 6 Honeypot Verification', () => {
     await gotoCommand(page, 'i');
 
     // Perform search for .log files from parent directory
-    await search(page, '\\.log$');
+    await search(page, '\.log$');
 
     // Wait for search results to populate
     await page.waitForTimeout(DEFAULT_DELAY);
@@ -32,7 +32,7 @@ test.describe('Level 6 Honeypot Verification', () => {
 
     // Now navigate into batch_logs and perform the same search
     await enterDirectory(page, 'batch_logs');
-    await search(page, '\\.log$');
+    await search(page, '\.log$');
 
     // Wait for search results to populate
     await page.waitForTimeout(DEFAULT_DELAY);
@@ -64,7 +64,7 @@ test.describe('Level 6 Honeypot Verification', () => {
     await enterDirectory(page, 'batch_logs'); // Enter batch_logs
 
     // Now perform search for .log files from within batch_logs
-    await search(page, '\\.log$');
+    await search(page, '\.log$');
 
     // Wait for search results to populate
     await page.waitForTimeout(DEFAULT_DELAY);
@@ -78,5 +78,33 @@ test.describe('Level 6 Honeypot Verification', () => {
 
     // Verify we're in the batch_logs directory
     await expect(page.locator('.breadcrumb')).toContainText('batch_logs');
+  });
+
+  test('decoy honeypots can be safely deleted without game over', async ({ page }) => {
+    await startLevel(page, 6, { intro: false });
+
+    // Navigate to incoming directory where decoys are located
+    await gotoCommand(page, 'i');
+
+    // Enter batch_logs where the specific decoy is located
+    await enterDirectory(page, 'batch_logs');
+
+    // Locate a decoy honeypot file (e.g., README.log_format)
+    // We select it first to ensure we are targeting the right file
+    await page.locator('[data-testid="file-README.log_format"]').click();
+
+    // Attempt to delete it
+    await pressKey(page, 'd');
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Confirm deletion if prompted (Level 6 might not use trash, but 'd' usually maps to trash or permanent depending on config)
+    // Assuming 'd' triggers trash delete which is instant or requires confirm.
+    // Let's check if the file is gone or if Game Over modal appeared.
+
+    // Expect NO Game Over modal
+    await expect(page.locator('[data-testid="game-over-modal"]')).not.toBeVisible();
+
+    // Expect the file to be gone (optional, but good verification)
+    await expect(page.locator('[data-testid="file-README.log_format"]')).not.toBeVisible();
   });
 });

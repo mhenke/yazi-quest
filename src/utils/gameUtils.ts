@@ -66,7 +66,7 @@ export const checkHoneypotTriggered = (
   // 2. Persistent Honeypots (isHoneypot flag)
   const triggeredHoneypot = pendingDeleteIds.find((id) => {
     const node = items.find((n) => n.id === id);
-    return node?.isHoneypot;
+    return node?.isHoneypot && !node?.isDecoy;
   });
 
   if (triggeredHoneypot) {
@@ -201,7 +201,10 @@ export const validateDeletions = (
  */
 export const checkGrabbingHoneypot = (nodes: FileNode[]): boolean => {
   return nodes.some(
-    (n) => n.isHoneypot || n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
+    (n) =>
+      (n.isHoneypot && !n.isDecoy) ||
+      n.content?.includes('HONEYPOT') ||
+      n.name === 'access_token.key'
   );
 };
 
@@ -224,7 +227,10 @@ export const checkPastingHoneypot = (
 
   // Standard honeypots
   const hasHoneypot = nodes.some(
-    (n) => n.isHoneypot || n.content?.includes('HONEYPOT') || n.name === 'access_token.key'
+    (n) =>
+      (n.isHoneypot && !n.isDecoy) ||
+      n.content?.includes('HONEYPOT') ||
+      n.name === 'access_token.key'
   );
 
   if (hasHoneypot) {

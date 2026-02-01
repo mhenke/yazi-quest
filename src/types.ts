@@ -12,6 +12,7 @@ export interface FileNode {
   createdAt?: number; // Unix timestamp
   protected?: boolean;
   isHoneypot?: boolean;
+  isDecoy?: boolean; // If true, this honeypot is safe to delete/move (won't trigger game over)
   // Runtime helpers (added dynamically by utilities)
   path?: string[];
   display?: string;
