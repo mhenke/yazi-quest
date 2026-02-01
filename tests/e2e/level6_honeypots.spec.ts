@@ -89,22 +89,31 @@ test.describe('Level 6 Honeypot Verification', () => {
     // Enter batch_logs where the specific decoy is located
     await enterDirectory(page, 'batch_logs');
 
-    // Locate a decoy honeypot file (e.g., README.log_format)
-    // We select it first to ensure we are targeting the right file
-    await page.locator('[data-testid="file-README.log_format"]').click();
+    // Robustly find the file by navigating down until it is selected
+    const fileLocator = page.locator('[data-testid="file-README.log_format"]');
+    for (let i = 0; i < 10; i++) {
+      const isSelected = await fileLocator.getAttribute('aria-current');
+      if (isSelected === 'location') {
+        break;
+      }
+      await pressKey(page, 'j');
+      await page.waitForTimeout(100);
+    }
+
+    // Verify correct file is selected (has cursor)
+    await expect(fileLocator).toHaveAttribute('aria-current', 'location');
 
     // Attempt to delete it
     await pressKey(page, 'd');
+
+    // Confirm deletion with 'y' as per the game's confirmation pattern
+    await pressKey(page, 'y');
     await page.waitForTimeout(DEFAULT_DELAY);
 
-    // Confirm deletion if prompted (Level 6 might not use trash, but 'd' usually maps to trash or permanent depending on config)
-    // Assuming 'd' triggers trash delete which is instant or requires confirm.
-    // Let's check if the file is gone or if Game Over modal appeared.
-
-    // Expect NO Game Over modal
+    // Expect NO Game Over modal (since this is a decoy, it should be safe to delete)
     await expect(page.locator('[data-testid="game-over-modal"]')).not.toBeVisible();
 
-    // Expect the file to be gone (optional, but good verification)
+    // Expect the file to be gone (verification that deletion worked)
     await expect(page.locator('[data-testid="file-README.log_format"]')).not.toBeVisible();
   });
 });
