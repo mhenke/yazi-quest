@@ -300,7 +300,11 @@ export async function startLevel(
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
 
+  // Dump console logs to stdout for debugging
+  page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
   await page.goto(`/?${params.toString()}`);
+  await page.waitForLoadState('networkidle');
   await page.waitForLoadState('domcontentloaded');
 
   // Since `intro=false` is now the sole mechanism, we just need to wait for the game to be ready.

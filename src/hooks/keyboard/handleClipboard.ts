@@ -61,6 +61,7 @@ export const handleClipboardKeyDown = (
       break;
 
     case 'a':
+    case 'A':
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const allIds = items.map((item) => item.id);

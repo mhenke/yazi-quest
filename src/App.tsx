@@ -5,6 +5,7 @@ import {
   EPISODE_LORE,
   ECHO_EPISODE_1_LORE,
   ensurePrerequisiteState,
+  applyFileSystemMutations,
 } from './constants';
 import type { GameState, ZoxideEntry } from './types';
 import { InputModal } from './components/InputModal';
@@ -201,6 +202,8 @@ export default function App() {
     }
 
     let fs = cloneFS(INITIAL_FS);
+    // Apply level-specific mutations to ensure correct state from the start
+    fs = applyFileSystemMutations(fs, initialLevel.id, { completedTaskIds } as GameState);
 
     // Inject Ghost File for Echo Cycle (Level 1 only)
     if (cycleCount > 1 && effectiveIndex === 0) {
@@ -217,27 +220,6 @@ export default function App() {
           content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7734`,
           parentId: workspace.id,
         });
-      }
-    }
-
-    // Apply all filesystem mutations for the target level
-    // This replaces the onEnter hook functionality
-    try {
-      const targetGameState: Partial<GameState> = {
-        completedTaskIds,
-        levelIndex: effectiveIndex,
-        level11Flags: {
-          selectedModern: true, // Default to Modern/Hard path if jumping
-          triggeredHoneypot: false,
-          scoutedFiles: [],
-        },
-      };
-      fs = ensurePrerequisiteState(fs, effectiveIndex + 1, targetGameState as GameState);
-    } catch (err) {
-      try {
-        reportError(err, { phase: 'ensurePrerequisiteState', level: effectiveIndex + 1 });
-      } catch {
-        console.error(`Level ${effectiveIndex + 1} ensurePrerequisiteState failed`, err);
       }
     }
 
@@ -819,9 +801,7 @@ export default function App() {
     }
 
     const now = Date.now();
-    const targetPath = isNewEp
-      ? nextLevel.initialPath || gameState.currentPath
-      : gameState.currentPath;
+    const targetPath = nextLevel.initialPath || gameState.currentPath;
     const pathStr = resolvePath(fs, targetPath);
 
     let newZoxideData = { ...gameState.zoxideData };
@@ -1104,6 +1084,11 @@ export default function App() {
           const lvl = LEVELS[globalIdx];
           let fs = cloneFS(INITIAL_FS);
           fs = ensurePrerequisiteState(fs, lvl.id, gameState);
+          // Log statements as requested
+          console.log(
+            `[DEBUG] SET_LEVEL: lvlId = ${lvl.id}, idx = ${globalIdx}, path =`,
+            lvl.initialPath || ['root', 'home', 'guest']
+          );
           dispatch({
             type: 'SET_LEVEL',
             index: globalIdx,

@@ -88,7 +88,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   );
 
   return (
-    <div className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+    <div
+      data-testid="game-over-modal"
+      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300"
+    >
       <div className="w-full max-w-md bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-8 text-center relative overflow-hidden">
         {/* Scanline bg */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20" />
@@ -102,6 +105,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             <h2
               className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text"
               data-text={getFailureTitle(reason, level?.id)}
+              data-testid="game-over-title"
             >
               {getFailureTitle(reason, level?.id)}
             </h2>

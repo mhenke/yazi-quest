@@ -43,16 +43,13 @@ test.describe('Game Constraints', () => {
     await page.clock.runFor(100000);
     await page.waitForTimeout(2000);
 
-    // Expect Game Over Modal with relaxed locator
-    await expect(page.getByText('WATCHDOG', { exact: false }).first()).toBeVisible({
-      timeout: 20000,
-    });
+    // Expect Game Over Modal with robust test-id locators
+    await expect(page.getByTestId('game-over-modal')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('game-over-title')).toContainText('WATCHDOG');
     await expect(page.getByText(/Timer Expired/i).first()).toBeVisible();
   });
 
   test('Game Over Dialog: Shift+Enter restarts the level', async ({ page }) => {
-    test.setTimeout(60000); // Give enough time for clock simulation
-
     // Install clock before navigation
     await page.clock.install();
 
@@ -63,23 +60,21 @@ test.describe('Game Constraints', () => {
     await page.waitForTimeout(1000);
 
     // Fast-forward to trigger game over
-    await page.clock.runFor(100000);
+    await page.clock.runFor(160000);
     await page.waitForTimeout(2000);
 
-    // Verify game over dialog appears
-    await expect(page.getByText('WATCHDOG', { exact: false }).first()).toBeVisible({
-      timeout: 20000,
-    });
+    // Verify game over dialog appears via test-id
+    await expect(page.getByTestId('game-over-modal')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('game-over-title')).toContainText('WATCHDOG');
 
     // Press Shift+Enter to restart
     await page.keyboard.press('Shift+Enter');
 
-    // We might need to resume the clock or uninstall it to see the UI update
-    // if the restart depends on regular timing, but SET_LEVEL should be immediate.
-    await page.waitForTimeout(DEFAULT_DELAY);
+    // Advancing the clock slightly to allow any pending timers/effects to run
+    await page.clock.runFor(DEFAULT_DELAY);
 
     // Verify the level restarted (game over modal disappears)
-    await expect(page.getByText(/WATCHDOG CYCLE COMPLETE/i)).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('game-over-modal')).not.toBeVisible({ timeout: 10000 });
 
     // Verify we're back at the level
     await expect(page.getByText(/BATCH OPERATIONS/i).first()).toBeVisible();

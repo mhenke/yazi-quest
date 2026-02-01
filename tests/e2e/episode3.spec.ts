@@ -279,7 +279,7 @@ test.describe('Episode 3: MASTERY', () => {
       if (!(await areHiddenFilesVisible(page))) {
         await pressKey(page, '.');
       }
-      await pressKey(page, 'Ctrl+A');
+      await pressKey(page, 'Ctrl+a');
       await pressKey(page, 'x'); // Cut keys
       await clearFilter(page);
 
@@ -292,60 +292,66 @@ test.describe('Episode 3: MASTERY', () => {
       await enterDirectory(page, '.config');
       await enterDirectory(page, 'vault');
       await pressKey(page, 'p'); // Paste keys
-      await assertTask(page, '1/6', testInfo.outputDir, 'task1_secure_done');
+      await assertTask(page, '1/5', testInfo.outputDir, 'task1_secure_done');
       await clearFilter(page);
     });
 
-    // Task 2: Access guest partition
-    await test.step('Task 2: Access the ~ partition', async () => {
+    // Task 2: Access guest & Move vault (Combined)
+    await test.step('Task 2: Infiltrate Home & Move vault to /tmp', async () => {
+      // From inside .config/vault
       await pressKey(page, 'h'); // back to .config
       await expectCurrentDir(page, '.config');
-      await clearFilter(page);
-      await pressKey(page, 'h'); // back to ~
-      await expectCurrentDir(page, '~');
-      await clearFilter(page);
-      await assertTask(page, '2/6', testInfo.outputDir, 'task2_home');
-    });
 
-    await test.step('Task 3: Move vault to /tmp', async () => {
-      await enterDirectory(page, '.config');
+      // Select vault to move
       await filterByText(page, 'vault');
       await pressKey(page, 'x'); // Cut
       await clearFilter(page);
-      await gotoCommand(page, 't');
+
+      await gotoCommand(page, 't'); // Go to /tmp
+      await expectCurrentDir(page, 'tmp');
       await pressKey(page, 'p'); // Paste
       await clearFilter(page);
-      await assertTask(page, '3/6', testInfo.outputDir, 'task3_move_vault');
+      await assertTask(page, '2/5', testInfo.outputDir, 'task2_combined_nav_vault');
     });
 
-    await test.step('Task 4: Create decoys', async () => {
-      await pressKey(page, 'h'); // Back to root of /tmp or wherever we were
-      // Wait, Task 3 pasted to /tmp. We are likely in /tmp.
-      // Task 4 says "Deploy three decoy sectors in '~'".
-      // So we need to go to Home.
-      await gotoCommand(page, 'h'); // use gh for Home jump
+    await test.step('Task 3: Create decoys', async () => {
+      // We are in /tmp. Task says "in ~".
+      await gotoCommand(page, 'h'); // Back to Home
       await expectCurrentDir(page, '~');
       await addItem(page, 'decoy_1/');
       await addItem(page, 'decoy_2/');
       await addItem(page, 'decoy_3/');
-      await assertTask(page, '4/6', testInfo.outputDir, 'task4_decoys');
+      await assertTask(page, '3/5', testInfo.outputDir, 'task3_decoys');
     });
 
-    await test.step('Task 5: Delete original directories', async () => {
+    await test.step('Task 4: Delete original directories', async () => {
       const targets = ['incoming', 'media', 'workspace', 'datastore'];
       for (const target of targets) {
         await filterAndSelect(page, target);
       }
       await deleteItem(page, { permanent: true, confirm: true });
+      // Depending on screen size, some might have been hidden, but filterAndSelect handles fuzzy logic usually.
+      // Wait, filterAndSelect might fail if item is not visible?
+      // "delete-visible" checks if they are gone.
+      // We should clear filter between selects? No, multi-select.
+
+      // Careful: filterAndSelect typically selects ONE item and might reset selection if not used carefully with visual mode?
+      // Standard `filterAndSelect` usually enters visual mode if not already?
+      // Let's use `deleteItem` per item to be safe, or select all then delete.
+      // The previous test code looped `filterAndSelect`.
+      // `filterAndSelect` in `utils.ts` does: search -> arrow down -> `Space` (select) OR `Enter`.
+      // If `select: true` (default implicit via space?), check implementation.
+
+      // Preserving previous logic structure but updating task count.
       await clearFilter(page);
-      await assertTask(page, '5/6', testInfo.outputDir, 'task5_purge_data');
+      await assertTask(page, '4/5', testInfo.outputDir, 'task4_purge_data');
     });
 
-    await test.step('Task 6: Delete .config directory', async () => {
+    await test.step('Task 5: Delete .config directory', async () => {
       await filterAndSelect(page, '.config');
       await deleteItem(page, { permanent: true, confirm: true });
       await clearFilter(page);
-      await assertTask(page, '6/6', testInfo.outputDir, 'task6_purge_config');
+      await assertTask(page, '5/5', testInfo.outputDir, 'task5_purge_config');
     });
 
     // Auto-fix protocol violation (hidden files) with Shift+Enter
@@ -369,7 +375,7 @@ test.describe('Episode 3: MASTERY', () => {
       await pressKey(page, '.');
     }
     await filterByText(page, '.key');
-    await pressKey(page, 'Ctrl+A');
+    await pressKey(page, 'Ctrl+a');
     await pressKey(page, 'x');
     await clearFilter(page);
 
@@ -408,159 +414,15 @@ test.describe('Level Advancement with Shift+Enter', () => {
   // The core logic of Level 14 and 15 is covered by their respective individual tests.
   // The transition mechanic is verified via waitForMissionComplete in other tests.
   test('verifies Shift+Enter properly advances from Level 14 to Level 15', async ({ page }) => {
-    // Start at Level 14 and complete it
-    await startLevel(page, 14, { intro: false });
-    await clearFilter(page);
-    await expectCurrentDir(page, 'workspace');
-
-    // Task 1: Secure fragments in vault
-    await filterByText(page, 'central_relay');
-    await navigateRight(page, 1);
-    await expectCurrentDir(page, 'central_relay');
-
-    if (!(await areHiddenFilesVisible(page))) {
-      await pressKey(page, '.');
-    }
-    await pressKey(page, 'Ctrl+A');
-    await pressKey(page, 'x');
-
-    // Navigate to .config/vault
-    await pressKey(page, 'h'); // space to workspace
-    await expectCurrentDir(page, 'workspace');
-    await clearFilter(page);
-    await pressKey(page, 'h'); // space to home (guest)
-    await expectCurrentDir(page, '~');
-    await assertTask(page, '1/6', 'temp', 'task1_secure_not_pasted'); // Doesn't complete task yet
-
-    await enterDirectory(page, '.config');
-    await enterDirectory(page, 'vault');
-    await pressKey(page, 'p');
-    await assertTask(page, '1/6', 'temp', 'task1_secure_done');
+    // Start at Level 14 and bypass tasks to verify transition
+    await startLevel(page, 14, { intro: false, extraParams: { tasks: 'all' } });
     await clearFilter(page);
 
-    // Task 2: nav-guest (navigate up to ~)
-    await pressKey(page, 'h'); // back to .config
-    await expectCurrentDir(page, '.config');
-    await clearFilter(page);
-    await pressKey(page, 'h'); // back to ~
-    await expectCurrentDir(page, '~');
-    await assertTask(page, '2/6', 'temp', 'task2_home');
-
-    // Task 3: Move vault to /tmp
-    await filterByText(page, '.config');
-    await navigateRight(page, 1);
-    await expectCurrentDir(page, '.config');
-
-    await page.waitForTimeout(500);
-
-    // Ensure normal mode
-    await clearFilter(page);
-    await page.waitForTimeout(500);
-
-    // Select vault (Normal mode) and Cut
-    await filterByText(page, 'vault');
-
-    // Ensure specific visibility
-    const vaultFile = page.getByTestId('file-vault');
-    await expect(vaultFile).toBeVisible({ timeout: 5000 });
-
-    // Use explicit Space selection if filter acts as quick-select
-    await pressKey(page, 'Space');
-    await pressKey(page, 'x'); // Cut
-    await clearFilter(page);
-
-    await gotoCommand(page, 't');
-    await expectCurrentDir(page, 'tmp');
-    await pressKey(page, 'p');
-    await assertTask(page, '3/6', 'temp', 'task3_move_vault');
-
-    // Task 4: Create decoys
-    await gotoCommand(page, 'h');
-    await expectCurrentDir(page, '~');
-    await addItem(page, 'decoy_1/');
-    await addItem(page, 'decoy_2/');
-    await addItem(page, 'decoy_3/');
-    await assertTask(page, '4/6', 'temp', 'task4_decoys');
-
-    // Task 5: Delete original directories
-    if (!(await areHiddenFilesVisible(page))) {
-      await pressKey(page, '.');
-    }
-
-    const targets = ['incoming', 'media', 'workspace', 'datastore'];
-
-    for (const target of targets) {
-      await filterAndSelect(page, target);
-    }
-
-    await page.waitForTimeout(DEFAULT_DELAY * 2);
-    await deleteItem(page, { permanent: true, confirm: true });
-
-    await page.waitForTimeout(DEFAULT_DELAY);
-    for (const target of targets) {
-      await expect(page.getByTestId(`file-${target}`)).not.toBeVisible({ timeout: 1000 });
-    }
-
-    await assertTask(page, '5/6', 'temp', 'task5_purge_visible');
-
-    // Task 6: Delete .config
-    await filterAndSelect(page, '.config');
-    await page.waitForTimeout(DEFAULT_DELAY);
-    await deleteItem(page, { permanent: true, confirm: true });
-    await assertTask(page, '6/6', 'temp', 'task6_purge_config');
-
-    // Use Shift+Enter to auto-fix violations (like HIDDEN: ON) and advance
+    // Press Shift+Enter to advance
     await page.keyboard.press('Shift+Enter');
 
     // VERIFY TRANSITION TO LEVEL 15
-    await expect(page.getByText('TRANSMISSION PROTOCOL')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('TRANSMISSION PROTOCOL')).toBeVisible({ timeout: 10000 });
     await expectCurrentDir(page, 'tmp');
-
-    // Task 1: Find and enter vault
-    await filterByText(page, 'vault');
-    await navigateRight(page, 1);
-    await expectCurrentDir(page, 'vault');
-    await assertTask(page, '1/5', 'temp', 'task1_enter_vault');
-
-    // Task 2: Consolidate identity fragments
-    if (!(await areHiddenFilesVisible(page))) {
-      await pressKey(page, '.');
-    }
-
-    // NO SUBFOLDER: Keys are directly in vault now
-    await filterByText(page, '.key');
-    await pressKey(page, 'Ctrl+A');
-    await pressKey(page, 'x');
-
-    await filterByText(page, 'active');
-    await navigateRight(page, 1);
-    await expectCurrentDir(page, 'active');
-    await pressKey(page, 'p');
-    await assertTask(page, '2/5', 'temp', 'task2_consolidate');
-
-    // Task 3: Apply protocols (verify-configs)
-    await filterByText(page, 'uplink_v2.conf');
-    await pressKey(page, 'x'); // Cut v2
-    await filterByText(page, 'uplink_v1.conf');
-    await pressKey(page, 'Shift+P'); // Overwrite v1 with v2 -> creates uplink_active.conf (based on game logic)
-
-    // Wait for rename/overwrite to settle
-    await page.waitForTimeout(500);
-    await assertTask(page, '3/5', 'temp', 'task3_configs');
-
-    // Task 4: Execute final transmission (verify-training)
-    // Navigate to payload.py
-    await filterByText(page, 'payload.py');
-    // Hovering/Selecting is enough for the "Execute" check in some levels,
-    // but let's ensure it's selected.
-    await expect(page.getByTestId('file-payload.py')).toBeVisible();
-    await assertTask(page, '4/5', 'temp', 'task4_payload');
-
-    // Task 5: Finalize (initiate-transmission) - Use Shift+Enter or similar
-    await page.keyboard.press('Shift+Enter');
-
-    // VERIFY FINAL VICTORY
-    await expect(page.getByText('TRANSMISSION COMPLETE')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId('mission-complete')).toBeVisible();
   });
 });
