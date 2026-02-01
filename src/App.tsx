@@ -593,33 +593,45 @@ export default function App() {
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
+      // --- Logic for Warnings vs Success ---
+      let warningActive = false;
+
+      // 1. Hidden Files Warning
       if (gameState.showHidden) {
-        dispatch({
-          type: 'SET_MODAL_VISIBILITY',
-          modal: 'hiddenWarning',
-          visible: true,
-        });
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
-      } else if (!isSortDefault) {
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
-      } else if (!isFilterClear) {
+        warningActive = true;
+        if (!gameState.showHiddenWarning) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });
+        }
+      } else if (gameState.showHiddenWarning) {
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
+      }
+
+      // 2. Sort Warning
+      if (!isSortDefault) {
+        warningActive = true;
+        if (!gameState.showSortWarning) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
+        }
+      } else if (gameState.showSortWarning) {
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+      }
+
+      // 3. Filter Warning
+      if (!isFilterClear) {
+        warningActive = true;
         if (gameState.mode !== 'filter-warning') {
           dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
         }
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
-      } else {
-        dispatch({
-          type: 'SET_MODAL_VISIBILITY',
-          modal: 'hiddenWarning',
-          visible: false,
-        });
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
+      } else if (gameState.mode === 'filter-warning') {
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+      }
 
-        if (gameState.mode === 'filter-warning') {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
+      // 4. Success Modal State
+      if (warningActive) {
+        if (gameState.showSuccessToast) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
         }
-
+      } else {
         if (!gameState.showSuccessToast && !gameState.showEpisodeIntro) {
           playSuccessSound(gameState.settings.soundEnabled);
           dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: true });
@@ -643,25 +655,24 @@ export default function App() {
       if (isFilterClear && gameState.mode === 'filter-warning') {
         dispatch({ type: 'SET_MODE', mode: 'normal' });
       }
-    }
 
-    // Level 11: Specific Logic for Reconnaissance
-    // Scouted files tracking remains here as it's game mechanic state logic
-    if (currentLevel.id === 11) {
-      if (gameState.showInfoPanel && currentItem) {
-        const scouted = gameState.level11Flags?.scoutedFiles || [];
-        if (!scouted.includes(currentItem.id)) {
-          dispatch({
-            type: 'UPDATE_LEVEL_11_FLAGS',
-            flags: { scoutedFiles: [...scouted, currentItem.id] },
-          });
+      // Level 11: Specific Logic for Reconnaissance
+      // Scouted files tracking remains here as it's game mechanic state logic
+      if (currentLevel.id === 11) {
+        if (gameState.showInfoPanel && currentItem) {
+          const scouted = gameState.level11Flags?.scoutedFiles || [];
+          if (!scouted.includes(currentItem.id)) {
+            dispatch({
+              type: 'UPDATE_LEVEL_11_FLAGS',
+              flags: { scoutedFiles: [...scouted, currentItem.id] },
+            });
+          }
         }
+        // Honeypot triggers moved to Narrative System
       }
-      // Honeypot triggers moved to Narrative System
+
+      // Level 6 & 12 Honeypot triggers moved to Narrative System
     }
-
-    // Level 6 & 12 Honeypot triggers moved to Narrative System
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     gameState.mode,

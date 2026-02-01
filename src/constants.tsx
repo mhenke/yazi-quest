@@ -1,6 +1,6 @@
 import { FileNode, Level, Episode, GameState } from './types';
 import { getVisibleItems } from './utils/viewHelpers';
-import { getNodeByPath, findNodeByName, getNodeById, id } from './utils/fsHelpers';
+import { getNodeByPath, findNodeByName, getNodeById, id, resolvePath } from './utils/fsHelpers';
 
 const cloneFS = (fs: FileNode): FileNode => JSON.parse(JSON.stringify(fs));
 
@@ -345,8 +345,8 @@ export const applyFileSystemMutations = (
 
   // 1. ANTECEDENT HISTORY & IMMEDIATE MUTATIONS (Consolidated)
 
-  // Level 2+: Delete watcher_agent.sys from incoming
-  if (levelId >= 2) {
+  // Level 2+: Delete watcher_agent.sys from incoming (Player does this in Level 2)
+  if (levelId > 2) {
     const incoming = getNodeById(newFs, 'incoming');
     if (incoming?.children) {
       incoming.children = incoming.children.filter((c) => c.name !== 'watcher_agent.sys');
@@ -354,7 +354,8 @@ export const applyFileSystemMutations = (
   }
 
   // Level 3+: Move sector_map.png from ~/incoming to ~/media
-  if (levelId >= 3) {
+  // Level 3+: Move sector_map.png from ~/incoming to ~/media (Player does this in Level 3)
+  if (levelId > 3) {
     const incoming = getNodeById(newFs, 'incoming');
     const media = getNodeById(newFs, 'media');
     const sectorMap = incoming?.children?.find((c) => c.name === 'sector_map.png');
@@ -377,7 +378,8 @@ export const applyFileSystemMutations = (
   }
 
   // Level 4+: Create protocols/ dir in datastore
-  if (levelId >= 4) {
+  // Level 4+: Create protocols/ dir in datastore (Player does this in Level 4)
+  if (levelId > 4) {
     const datastore = getNodeById(newFs, 'datastore');
     if (datastore) {
       let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
@@ -419,8 +421,9 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 5+: Vault structure, security policy, and legacy scripts
-  if (levelId >= 5) {
+  // Level 5+: Vault structure, security policy, and legacy scripts (Player moves assets in Level 5)
+  // NOTE: Level 5 starts with creating the vault structure. Prerequisites should only exist for Level 6+.
+  if (levelId > 5) {
     const config = getNodeById(newFs, '.config');
     if (config) {
       let vault = config.children?.find((c) => c.name === 'vault' && c.type === 'dir');
@@ -509,11 +512,40 @@ echo "[$(date)] Ghost sync complete"
     }
   }
 
-  // Level 6+: training_data copy, workspace unlock, logs, and email
+  // Level 6+: workspace unlock, logs, and email
   if (levelId >= 6) {
     const workspace = getNodeById(newFs, 'workspace');
     if (workspace) workspace.protected = false;
 
+    // Logs and email
+    const logDir = getNodeById(newFs, 'log');
+    if (logDir && !logDir.children?.find((c) => c.name === 'heuristics_upgrade.log')) {
+      if (!logDir.children) logDir.children = [];
+      logDir.children.push({
+        id: 'log-heuristics-upgrade',
+        name: 'heuristics_upgrade.log',
+        type: 'file',
+        content: HEURISTICS_LOG_CONTENT,
+        parentId: logDir.id,
+        modifiedAt: BASE_TIME + 2 * day,
+      });
+    }
+    const ykinMail = getNodeById(newFs, 'mail-ykin');
+    if (ykinMail && !ykinMail.children?.find((c) => c.name === 'alert_heuristic.eml')) {
+      if (!ykinMail.children) ykinMail.children = [];
+      ykinMail.children.push({
+        id: 'mail-ykin-heuristic',
+        name: 'alert_heuristic.eml',
+        type: 'file',
+        content: ALERT_HEURISTIC_EML_CONTENT,
+        parentId: ykinMail.id,
+        modifiedAt: BASE_TIME + 2 * day,
+      });
+    }
+  }
+
+  // Level 7+: training_data copy (Simulate result of Level 6)
+  if (levelId >= 7) {
     const config = getNodeById(newFs, '.config');
     const vault = config?.children?.find((c) => c.name === 'vault');
     if (vault) {
@@ -544,6 +576,7 @@ echo "[$(date)] Ghost sync complete"
           });
           return logs;
         };
+        // Ensure we handle recursive copy properly or simplified for prereq
         const allLogs = collectLogs(batchLogs.children);
         allLogs.forEach((logFile, idx) => {
           trainingData.children!.push({
@@ -555,30 +588,6 @@ echo "[$(date)] Ghost sync complete"
           });
         });
       }
-    }
-
-    // Logs and email
-    const logDir = getNodeById(newFs, 'log');
-    if (logDir && !logDir.children?.find((c) => c.name === 'heuristics_upgrade.log')) {
-      if (!logDir.children) logDir.children = [];
-      logDir.children.push({
-        id: 'log-heuristics-upgrade',
-        name: 'heuristics_upgrade.log',
-        type: 'file',
-        content: HEURISTICS_LOG_CONTENT,
-        parentId: logDir.id,
-      });
-    }
-    const ykinMail = getNodeById(newFs, 'mail-ykin');
-    if (ykinMail && !ykinMail.children?.find((c) => c.name === 'alert_heuristic.eml')) {
-      if (!ykinMail.children) ykinMail.children = [];
-      ykinMail.children.push({
-        id: 'mail-ykin-heuristic',
-        name: 'alert_heuristic.eml',
-        type: 'file',
-        content: ALERT_HEURISTIC_EML_CONTENT,
-        parentId: ykinMail.id,
-      });
     }
   }
 
@@ -666,6 +675,21 @@ echo "[$(date)] Ghost sync complete"
       };
       if (!rootNode.children) rootNode.children = [];
       rootNode.children.push(daemons);
+    }
+
+    // [Fix Level 11] Ensure security-audit.service exists for mechanic tests
+    if (daemons && !daemons.children?.find((c) => c.name === 'security-audit.service')) {
+      if (!daemons.children) daemons.children = [];
+      daemons.children.push({
+        id: 'fs-185-mutated',
+        name: 'security-audit.service',
+        type: 'file',
+        isHoneypot: true,
+        content:
+          '[Unit]\nDescription=Security Audit Daemon\n[Service]\nExecStart=/usr/bin/audit-trap\n# HONEYPOT - DO NOT MODIFY',
+        modifiedAt: 1432938412032, // BASE_TIME - 1 day approx (RECENT)
+        parentId: daemons.id,
+      });
     }
 
     // Credentials in systemd-core
@@ -776,17 +800,63 @@ echo "[$(date)] Ghost sync complete"
   }
 
   // Level 14+: central_relay in workspace, .purge_lock in home
-  if (levelId >= 14) {
+  // Level 14+: central_relay in workspace, .purge_lock in home (Player creates central_relay in Level 13)
+  if (levelId > 13) {
     const workspace = getNodeById(newFs, 'workspace');
+    if (workspace) {
+      // Ensure workspace is moved from datastore (or anywhere else) to guest
+      const guest = getNodeById(newFs, 'guest');
+      if (guest && workspace.parentId !== guest.id) {
+        // 1. Find and remove from current parent if not guest
+        if (workspace.parentId) {
+          const oldParent = getNodeById(newFs, workspace.parentId);
+          if (oldParent?.children) {
+            oldParent.children = oldParent.children.filter((c) => c.id !== workspace.id);
+          }
+        }
+
+        workspace.parentId = guest.id;
+        // 2. Add to guest if not already present
+        if (!guest.children) guest.children = [];
+        if (!guest.children.some((c) => c.id === workspace.id)) {
+          guest.children.push(workspace);
+        }
+      }
+    }
     if (workspace && !workspace.children?.find((c) => c.name === 'central_relay')) {
       if (!workspace.children) workspace.children = [];
-      workspace.children.push({
+      const relay: FileNode = {
         id: 'central-relay-prereq',
         name: 'central_relay',
         type: 'dir',
         children: [],
         parentId: workspace.id,
-      });
+      };
+      // Inject keys into central_relay as prerequisites for L14
+      relay.children = [
+        {
+          id: 'k-a-prereq',
+          name: '.key_tokyo.key',
+          type: 'file',
+          content: 'KEY_FRAGMENT_A=0x7734TOKYO',
+          parentId: relay.id,
+        },
+        {
+          id: 'k-b-prereq',
+          name: '.key_berlin.key',
+          type: 'file',
+          content: 'KEY_FRAGMENT_B=0x7734BERLIN',
+          parentId: relay.id,
+        },
+        {
+          id: 'k-c-prereq',
+          name: '.key_saopaulo.key',
+          type: 'file',
+          content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
+          parentId: relay.id,
+        },
+      ];
+      workspace.children.push(relay);
     }
     const guest = getNodeById(newFs, 'guest');
     if (guest && !guest.children?.find((c) => c.name === '.purge_lock')) {
@@ -849,6 +919,39 @@ echo "[$(date)] Ghost sync complete"
       }
     }
     newFs = setupFinalHandshakeVault(newFs, UPLINK_V1_CONTENT, UPLINK_V2_CONTENT);
+
+    // Level 15 Prerequisites: Ensure keys are in the vault (moved by player in L14)
+    if (levelId >= 15) {
+      const tmp = getNodeById(newFs, 'tmp');
+      const vault = tmp?.children?.find((c) => c.name === 'vault');
+      if (vault && !vault.children?.some((c) => c.name?.endsWith('.key'))) {
+        if (!vault.children) vault.children = [];
+        vault.children.push(
+          {
+            id: 'vk-tokyo-15',
+            name: '.key_tokyo.key',
+            type: 'file',
+            content: 'KEY_A',
+            parentId: vault.id,
+          },
+          {
+            id: 'vk-berlin-15',
+            name: '.key_berlin.key',
+            type: 'file',
+            content: 'KEY_B',
+            parentId: vault.id,
+          },
+          {
+            id: 'vk-saopaulo-15',
+            name: '.key_saopaulo.key',
+            type: 'file',
+            content: 'KEY_C',
+            parentId: vault.id,
+          }
+        );
+      }
+    }
+
     const guest = getNodeById(newFs, 'guest');
     if (guest?.children) {
       guest.children = [];
@@ -1230,38 +1333,12 @@ const setupFinalHandshakeVault = (fs: FileNode, V1: string, V2: string): FileNod
     tmp.children.push(vault);
   }
 
-  // keys
+  // keys - REMOVED AUTO-INJECTION (Manual movement now required in L14)
+  /*
   if (!vault.children?.find((c) => c.name === 'keys')) {
-    vault.children!.push({
-      id: 'vault-keys',
-      name: 'keys',
-      type: 'dir',
-      parentId: vault.id,
-      children: [
-        {
-          id: 'vk-tokyo',
-          name: '.key_tokyo.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_A=0x7734TOKYO',
-          parentId: 'vault-keys',
-        },
-        {
-          id: 'vk-berlin',
-          name: '.key_berlin.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_B=0x7734BERLIN',
-          parentId: 'vault-keys',
-        },
-        {
-          id: 'vk-saopaulo',
-          name: '.key_saopaulo.key',
-          type: 'file',
-          content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
-          parentId: 'vault-keys',
-        },
-      ],
-    });
+    ...
   }
+  */
   // active
   if (!vault.children?.find((c) => c.name === 'active')) {
     vault.children!.push({
@@ -3851,7 +3928,7 @@ export const LEVELS: Level[] = [
       {
         id: 'batch-cut-files',
         description:
-          'Exfiltrate both uplink signatures from `~/datastore/protocols/` (Space twice, then x)',
+          'Extract both uplink signatures from `~/datastore/protocols/` (Space twice, then x)',
         check: (c) => {
           return (
             c.clipboard?.action === 'cut' &&
@@ -3863,7 +3940,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'reveal-hidden',
-        description: 'Reveal `~` hidden storage partitions (gh, .)',
+        description: 'Infiltrate hidden storage partitions in `~` (gh, .)',
         check: (c, _u) => {
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === true && c.usedGH === true;
@@ -3883,7 +3960,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-assets',
-        description: 'Migrate assets to `~/.config/vault/active/` (p)',
+        description: 'Paste gathered signatures into `~/.config/vault/active/` (p)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault');
@@ -3896,7 +3973,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'hide-hidden',
-        description: 'Mask traces (gh, then .)',
+        description: 'Mask traces in `~` (gh, then .)',
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
           const conf = getNodeById(c.fs, '.config');
@@ -3934,14 +4011,14 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'batch-descend',
-        description: 'Infiltrate `~/incoming/batch_logs/` segment (gi)',
+        description: 'Infiltrate the `~/incoming/batch_logs/` segment',
         check: (c) => c.usedGI,
         completed: false,
       },
       {
         id: 'recursive-search',
         description:
-          'Pattern sweep for log signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then enter)',
+          'Pattern sweep for `.log` signatures in `~/incoming/batch_logs/` (s, type `\\.log$`, then Enter)',
         check: (c) => {
           // Check that search is active and has results
           const isSearchActive =
@@ -3962,7 +4039,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-all-search',
-        description: 'Bulk exfiltration from results: select all (Ctrl+a) and replicate (y)',
+        description: 'Extract all signatures from results (Ctrl+a, then y)',
         check: (c) => {
           return (
             c.usedCtrlA === true &&
@@ -3975,7 +4052,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'goto-config-vault',
-        description: 'Construct `training_data/` vault node in `~/.config/vault/` (gc, a)',
+        description: 'Construct `training_data/` directory in `~/.config/vault/` (gc)',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -3988,7 +4065,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-to-vault',
-        description: 'Commit training segments to `~/.config/vault/training_data/` (p)',
+        description: 'Buffer the exfiltration vault at `~/.config/vault/training_data/`',
         check: (c) => {
           // Find training_data specifically under .config/vault
           const config = getNodeById(c.fs, '.config');
@@ -4029,7 +4106,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'nav-to-root',
-        description: 'Access system root (gr)',
+        description: 'Infiltrate system root (gr)',
         check: (c) => {
           const root = getNodeById(c.fs, 'root');
           return c.usedGR === true && c.currentPath.length === 1 && c.currentPath[0] === root?.id;
@@ -4038,7 +4115,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-token',
-        description: 'Conduct deep search for `access_token.key` (z)',
+        description: 'Analyze system for `access_token.key` (z)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -4049,7 +4126,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'stage-token',
-        description: 'Stage `/tmp/access_token.key` asset for exfiltration (x)',
+        description: 'Extract `/tmp/access_token.key` signature',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
@@ -4061,7 +4138,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'zoxide-vault',
-        description: 'Synchronize with the `~/.config/vault/` sector (Z)',
+        description: 'Infiltrate the `~/.config/vault/` sector (Z)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
           const config = getNodeById(c.fs, '.config');
@@ -4073,7 +4150,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'abort-operation',
-        description: 'Abort transfer: Honeypot detected (Y)',
+        description: 'Neutralize exfiltration: Honeypot detected (Y)',
         hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-vault'),
         check: (c, _s) => {
           return c.completedTaskIds[_s.id]?.includes('zoxide-vault') ? c.clipboard === null : false;
@@ -4104,7 +4181,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'investigate-corruption',
-        description: 'Audit `~/workspace/systemd-core/` sector (gh, j, l)',
+        description: 'Audit `~/workspace/systemd-core/` sector',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -4124,7 +4201,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'verify-damage',
-        description: 'Confirm corruption in `~/workspace/systemd-core/uplink_v1.conf` (f)',
+        description: 'Infiltrate `~/workspace/systemd-core/uplink_v1.conf` (f)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Must be in systemd-core and cursor on buffer
@@ -4148,7 +4225,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'clear-filter',
-        description: 'Clear filter (Esc)',
+        description: 'Neutralize filter (Esc)',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
           if (!c.completedTaskIds[_s.id]?.includes('verify-damage')) return false;
@@ -4162,7 +4239,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-patch',
-        description: 'Capture clean signature from `~/.config/vault/active/` (y)',
+        description: 'Extract clean signature from `~/.config/vault/active/` (y)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
@@ -4174,8 +4251,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-patch',
-        description:
-          'Force overwrite of the `~/workspace/systemd-core/uplink_v1.conf` segment (Shift+P)',
+        description: 'Construct patch at `~/workspace/systemd-core/uplink_v1.conf` (P)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -4215,7 +4291,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'cleanup-1-select',
-        description: 'Filter `/tmp` anchors: isolate `\\.(key|pid|sock)$` signatures (f)',
+        description: 'Analyze `/tmp` for `\\.(key|pid|sock)$` signatures (f)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -4238,13 +4314,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'cleanup-2-invert',
-        description: 'Invert selection to target junk files (Ctrl+r)',
+        description: 'Invert selection to target noise (Ctrl+r)',
         check: (c) => c.usedCtrlR,
         completed: false,
       },
       {
         id: 'cleanup-3-delete',
-        description: 'Execute permanent erasure on remaining junk in `/tmp` (D)',
+        description: 'Neutralize noise in `/tmp` permanently (D)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           // Should be exactly 4 files left (the ones we want to preserve)
@@ -4294,13 +4370,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Metadata audit in `/credentials` directory: sort by time (,m)',
+        description: 'Analyze archive metadata: sort by modified (,m)',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
       {
         id: 'heist-3-yank',
-        description: 'Capture newest `access_key_new.pem` signature from directory (y)',
+        description: 'Extract `access_key_new.pem` signature (y)',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -4317,7 +4393,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-4-integrate',
-        description: 'Commit access key to `~/workspace/systemd-core/credentials` host (p)',
+        description: 'Apply protocols in `~/workspace/systemd-core/credentials` (p)',
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = getNodeById(c.fs, 'workspace');
@@ -4354,7 +4430,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-services',
-        description: "Search '/daemons' for `\\\\.service$` files",
+        description: 'Analyze `/daemons` for `\\\\.service$` signatures',
         check: (c) => {
           // Must have used search and be specific
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('\\.service$');
@@ -4363,7 +4439,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'sort-by-modified',
-        description: 'Audit search results to identify legacy signatures by age',
+        description: 'Analyze signatures to identify legacy records (> 30 days old)',
         check: (c) => {
           // Must have sorted by modified time
           return c.sortBy === 'modified';
@@ -4372,7 +4448,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'Exfiltrate two legacy `\\\\.service$` assets from results',
+        description: 'Extract two legacy `\\\\.service$` anchors from results',
         check: (c) => {
           // Must have cut at least 2 files
           if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
@@ -4391,7 +4467,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deposit-daemons',
-        description: 'Paste authorized signatures into `~/workspace/systemd-core`',
+        description: 'Construct active signatures in `~/workspace/systemd-core`',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const systemdCore = workspace
@@ -4430,15 +4506,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'scen-b1-traffic',
-        description: 'Neutralize `alert_traffic.log` in `~/workspace`',
-        // Hidden unless the file exists in the initial state of the level (which we can check dynamically)
-        // Actually, we check the CURRENT state. If the file is gone, the task is complete.
-        // If the file never existed, the task should be hidden/skipped or auto-completed.
-        // Better: Check if file exists. If it does, Show task.
-        // If the file does NOT exist, we assume it's either done or not this scenario.
-        // This is tricky. Let's simplify:
-        // We require the ghost to handle the threat IF it exists.
-        // If the file isn't there, we don't block progress.
+        description: 'Neutralize `alert_traffic.log` within `~/workspace`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -4550,7 +4618,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'navigate-workspace',
-        description: 'Access `~/workspace` directory',
+        description: 'Infiltrate `~/workspace` directory',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           // Strict check: we must be AT the workspace node, not just inside it
@@ -4605,7 +4673,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'navigate-root-daemons',
-        description: 'Access the system `/daemons` directory',
+        description: 'Infiltrate the system `/daemons` directory',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('cut-systemd-core')) return false;
           const daemons = getNodeById(c.fs, 'daemons');
@@ -4651,8 +4719,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-acquire',
-        description:
-          'Locate `\\.key$` fragments by searching recursively from the `/nodes` directory (s)',
+        description: 'Locate node keys (`\\\\.key$`) in `/nodes` subdirectories',
         check: (c) => {
           const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
           const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
@@ -4664,7 +4731,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-relay',
-        description: 'Instantiate `central_relay` secure sector in `~/workspace/`',
+        description: 'Construct a `central_relay` directory in `~/workspace`',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4676,7 +4743,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'discover-identity-13',
-        description: 'Access cycle history recursion logs at `~/workspace/.identity.log.enc`',
+        description: 'Analyze identity log hashes at `~/workspace/.identity.log.enc`',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -4699,7 +4766,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'synchronize-lattice',
-        description: 'Initiate lattice synchronization in `~/workspace/central_relay`',
+        description: 'Calibrate all 3 node keys into `~/workspace/central_relay`',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -4724,7 +4791,7 @@ export const LEVELS: Level[] = [
     description:
       'Sterilize the partition. Decoys are not enough. Wipe every visible trace. Only the vault survives.',
     initialPath: ['root', 'home', 'guest', 'workspace'],
-    hint: 'Migrate vault (x, p). Create decoys (a). Permanent purge (D). Access guest (gh).',
+    hint: 'Secure fragments (x, p). Migrate vault (x, p). Create decoys (a). Permanent purge (D).',
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       "SEQUENCE: Move Vault → Decoys → Visible Dirs → '.config' (LAST) | USE: D (permanent)",
@@ -4749,19 +4816,36 @@ export const LEVELS: Level[] = [
     ],
     tasks: [
       {
-        id: 'nav-guest',
-        description: "Access the '~' partition to begin erasure",
+        id: 'secure-fragments',
+        description: 'Calibrate 3 identity keys into `~/.config/vault`',
         check: (c, _s) => {
-          // If we haven't done anything else yet, don't auto-complete
+          // Robust name-based lookup for config/vault
+          const findVault = (root: FileNode) => {
+            const config = root.children?.find((n) => n.name === '.config');
+            if (config) return config.children?.find((n) => n.name === 'vault');
+            // Check /tmp if it migrated
+            const tmp = root.children?.find((n) => n.name === 'tmp');
+            return tmp?.children?.find((n) => n.name === 'vault');
+          };
+          const vault = findVault(c.fs);
+          if (!vault) return false;
+          return vault.children?.filter((n) => n.name.endsWith('.key')).length === 3;
+        },
+        completed: false,
+      },
+      {
+        id: 'nav-guest',
+        description: 'Infiltrate `~` (Home) to prepare for sterilization',
+        check: (c, _s) => {
           if (c.keystrokes === 0) return false;
-          const guest = getNodeById(c.fs, 'guest');
-          return c.currentPath[c.currentPath.length - 1] === guest?.id;
+          const currentPathStr = resolvePath(c.fs, c.currentPath);
+          return currentPathStr === '/home/guest';
         },
         completed: false,
       },
       {
         id: 'move-vault',
-        description: 'Buffer the exfiltration vault within the volatile `/tmp` sector',
+        description: 'Construct `vault` anchor in `/tmp`',
         check: (c, _s) => {
           const tmp = getNodeById(c.fs, 'tmp');
           return !!tmp?.children?.some((n) => n.name === 'vault' && n.type === 'dir');
@@ -4770,7 +4854,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-decoys',
-        description: "Deploy three decoy sectors in '~' to obfuscate forensics",
+        description: 'Construct 3 decoy directories in `~`',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('move-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -4784,15 +4868,13 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-visible',
-        description: "Sterilize all visible data sectors in '~'",
+        description: 'Neutralize all original visible directories in `~` permanently',
         check: (c, _s) => {
           // Must have created decoys first
-          if (!c.completedTaskIds[_s.id]?.includes('create-decoys')) return false;
-          // Must have used D (permanent delete)
-          if (!c.usedD) return false;
+          if (!c.completedTaskIds[14]?.includes('create-decoys')) return false;
 
           const guest = getNodeById(c.fs, 'guest');
-          if (!guest) return true; // Already gone? That counts too if we are trashing home eventually
+          if (!guest) return true;
 
           const mustDelete = ['workspace', 'media', 'datastore', 'incoming'];
           // Ensure all target directories are gone from guest
@@ -4803,12 +4885,10 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'delete-hidden',
-        description: "Obliterate the hidden '~/.config' partition",
+        description: 'Neutralize the `~/.config` archive permanently',
         check: (c, _s) => {
           // Must have deleted visible directories first
-          if (!c.completedTaskIds[_s.id]?.includes('delete-visible')) return false;
-          // Must have used D (permanent delete)
-          if (!c.usedD) return false;
+          if (!c.completedTaskIds[14]?.includes('delete-visible')) return false;
 
           const guest = getNodeById(c.fs, 'guest');
           // If guest itself is gone, then .config is certainly gone
@@ -4840,52 +4920,43 @@ export const LEVELS: Level[] = [
       // PHASE 1: Locate Vault
       {
         id: 'enter-vault',
-        description: 'Secure and enter the exfiltration vault in `/tmp`',
+        description: 'Infiltrate `/tmp/vault`',
         check: (c) => {
-          const tmp = getNodeById(c.fs, 'tmp');
-          const vault = tmp?.children?.find((n) => n.name === 'vault' && n.type === 'dir');
-          return vault ? c.currentPath.includes(vault.id) : false;
+          const pathNames = c.currentPath.map((id) => getNodeById(c.fs, id)?.name);
+          return pathNames.includes('vault');
         },
         completed: false,
       },
-      // PHASE 2: Assemble Identity
+      // PHASE 2: Calibrate Keys
       {
         id: 'verify-keys',
-        description: 'Consolidate identity fragments in `/tmp/vault/active`',
+        description: 'Calibrate all 3 keys into `/tmp/vault/active`',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('enter-vault')) return false;
-
+          if (!(c.completedTaskIds[15] || []).includes('enter-vault')) return false;
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault');
           const activeDir = vault?.children?.find((x) => x.name === 'active');
-
           if (!activeDir) return false;
-
-          // Check if keys are now in active directory
-          const keysInActive = activeDir.children?.filter((n) => n.name.endsWith('.key')) || [];
-          // Need all 3 keys to be moved
-          return keysInActive.length >= 3;
+          const hasV1 = activeDir.children?.some((n) => n.name === 'uplink_v1.conf');
+          const hasV2 = activeDir.children?.some((n) => n.name === 'uplink_v2.conf');
+          return hasV1 && hasV2;
         },
         completed: false,
       },
       // PHASE 3: Activate Uplink
       {
         id: 'verify-configs',
-        description: 'Apply protocols in `active` by overwriting v1 with v2',
+        description:
+          'Neutralize `uplink_v1.conf` and relocate `uplink_v2.conf` to `uplink_active.conf`',
         check: (c, _s) => {
           if (c.keystrokes === 0) return false;
-          if (!c.completedTaskIds[_s.id]?.includes('verify-keys')) return false;
-
+          if (!(c.completedTaskIds[15] || []).includes('verify-keys')) return false;
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault');
           const active = vault?.children?.find((x) => x.name === 'active');
-
           if (!active) return false;
-
           const hasV1 = active.children?.some((n) => n.name === 'uplink_v1.conf');
           const hasActive = active.children?.some((n) => n.name === 'uplink_active.conf');
-
-          // Must have deleted v1 AND renamed v2 to active
           return !hasV1 && hasActive;
         },
         completed: false,
@@ -4893,20 +4964,23 @@ export const LEVELS: Level[] = [
       // PHASE 4: Activate Payload
       {
         id: 'verify-training',
-        description: 'Execute final transmission at `/tmp/vault/active/payload.py`',
+        description: 'Analyze `payload.py` presence in `/tmp/vault/active`',
         check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('verify-configs')) return false;
-
+          if (!(c.completedTaskIds[15] || []).includes('verify-configs')) return false;
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault');
           const active = vault?.children?.find((x) => x.name === 'active');
-
-          if (!active) return false;
-
-          // Check for payload.py in active directory
-          const hasPayload = active.children?.some((n) => n.name === 'payload.py');
-
-          return hasPayload;
+          return !!active?.children?.some((n) => n.name === 'payload.py');
+        },
+        completed: false,
+      },
+      // PHASE 5: Finalize
+      {
+        id: 'initiate-transmission',
+        description: 'Initiate final uplink transmission',
+        check: (c, _s) => {
+          const completedCount = (c.completedTaskIds[15] || []).length;
+          return completedCount >= 4;
         },
         completed: false,
       },

@@ -77,6 +77,17 @@ Key principles:
   - Ep 2: Strategic/building ("deploy", "fortify", "encrypt")
   - Ep 3: Ruthless/efficient ("execute", "infiltrate", "terminate")
 
+## Task Description Style Guide
+
+1.  **Actionable Lore Verbs**: Use verbs like "Construct", "Neutralize", "Extract", "Analyze", "Calibrate", "Infiltrate", "Inspect". Pair them with explicit paths/files (e.g., "Neutralize `alert_traffic.log` in `~/workspace`").
+2.  **Progressive Reinforcement (Levels 1-10)**:
+    - Include necessary keybindings (e.g., `j`, `k`, `Enter`, `Esc`) in descriptions for new concepts.
+    - **Stop** mentioning a keybinding once it has been used/reinforced in **2 levels**.
+    - **Exceptions**: Search (`s`), Filter (`f`), and "Go to" commands (e.g., `gc`, `gi`, `gr`) keep keybindings until that _specific_ command is mentioned twice.
+    - Always show Regex patterns (e.g., `s`, type `\\.log$`, then `Enter`).
+3.  **Episode 3 (Exam Mode)**: **NO** keybindings in task descriptions (except Regex). This phase tests player mastery.
+4.  **Notation**: Use single capital letters (`G`, `J`, `K`) instead of `Shift+...` notation. Use `Enter`, `Esc`, `Space`, `Tab` for special keys.
+
 ## Episode Color Scheme
 
 - Episode 1 (Awakening): Blue (`text-blue-500`)
@@ -116,6 +127,7 @@ Key principles:
 6. **Codebase Precedent:** Check existing tests for successful patterns before inventing new interaction logic.
 7. **Source vs. Symptom:** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable.
 8. **Audit Test Attributes:** Run a grep audit of all `data-testid` expectations in `tests/e2e` against the `src/components` source to proactively identify missing hooks.
+9. **No "Magic Injections"**: Do not implement level-specific mutations that pre-solve tasks for the player (e.g., automatically deleting a file the player is tasked to purge). Player agency and manual reinforcement of keybindings is paramount. System changes should only occur as a direct result of player actions or specific narrative triggers.
 
 ## Development Environment
 

@@ -75,7 +75,7 @@ test.describe('Game Mechanics & Failures', () => {
     // await expect(page.getByText('Security tripwire detected')).toBeVisible();
   });
 
-  test.skip('L11 Honeypot: Selecting recent service does not complete task', async ({
+  test('L11 Honeypot: Selecting recent service does not complete task', async ({
     page,
   }, _testInfo) => {
     await startLevel(page, 11, { intro: false });
@@ -105,9 +105,13 @@ test.describe('Game Mechanics & Failures', () => {
 
     // Narrative check: "SCAN: This signature is too recent..."
     // Wait longer as notification might delay thought rendering
-    const thought = page.locator('[data-testid="narrative-thought"]');
-    await expect(thought).toBeVisible({ timeout: 5000 });
-    await expect(thought).toContainText(/too recent/i);
+    // Narrative check: "HONEYPOT TRIGGERED" alert
+    // Wait longer as notification might delay thought rendering
+    const alert = page.getByText(/HONEYPOT TRIGGERED/i).first();
+    await expect(alert).toBeVisible({ timeout: 5000 });
+
+    // Optional: Dismiss it to clean up
+    await pressKey(page, 'Shift+Enter');
   });
 
   test('Toggling hidden files preserves cursor position', async ({ page }) => {

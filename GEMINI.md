@@ -14,6 +14,17 @@ The project is built using **React 19** and **TypeScript**, with **Vite** for th
 - **Content:** All game content (lore, levels, file system) is stored in `src/constants.tsx`.
 - **UI:** React components (in `src/components/`) styled with Tailwind CSS (CDN).
 
+## Task Description Style Guide
+
+1.  **Actionable Lore Verbs**: Use verbs like "Construct", "Neutralize", "Extract", "Analyze", "Calibrate", "Infiltrate", "Inspect". Pair them with explicit paths/files (e.g., "Neutralize `alert_traffic.log` in `~/workspace`").
+2.  **Progressive Reinforcement (Levels 1-10)**:
+    - Include necessary keybindings (e.g., `j`, `k`, `Enter`, `Esc`) in descriptions for new concepts.
+    - **Stop** mentioning a keybinding once it has been used/reinforced in **2 levels**.
+    - **Exceptions**: Search (`s`), Filter (`f`), and "Go to" commands (e.g., `gc`, `gi`, `gr`) keep keybindings until that _specific_ command is mentioned twice.
+    - Always show Regex patterns (e.g., `s`, type `\\.log$`, then `Enter`).
+3.  **Episode 3 (Exam Mode)**: **NO** keybindings in task descriptions (except Regex). This phase tests player mastery.
+4.  **Notation**: Use single capital letters (`G`, `J`, `K`) instead of `Shift+...` notation. Use `Enter`, `Esc`, `Space`, `Tab` for special keys.
+
 ## Building and Running
 
 The project uses `npm` for dependency management and scripts.
@@ -72,6 +83,7 @@ The project uses `npm` for dependency management and scripts.
 6. **Codebase Precedent (The "Reinvention" Trap):** Before implementing a complex interaction, grep existing tests for successful patterns. Do not reinvent methods that are already solved in the codebase.
 7. **Source vs. Symptom (The "Patching" Trap):** Fix the Source, Don't Patch the Test. If game logic (e.g., RNG) inhibits testing, modify the game code to be testable (e.g., mocks/flags/removal) rather than writing complex, brittle test logic.
 8. **Audit Test Attributes:** Run a grep audit of all `data-testid` expectations in `tests/e2e` against the `src/components` source to proactively identify missing hooks.
+9. **No "Magic Injections"**: Do not implement level-specific mutations that pre-solve tasks for the player (e.g., automatically deleting a file the player is tasked to purge). Player agency and manual reinforcement of keybindings is paramount. System changes should only occur as a direct result of player actions or specific narrative triggers.
 
 ## Development Environment
 

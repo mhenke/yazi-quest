@@ -75,6 +75,17 @@ npm run test:e2e  # End-to-end tests with Playwright
 - Ensure hints reference specific keybindings
 - Level-scoped filesystem exceptions are defined on the Level object via `allowedDeletePaths` in `src/constants.tsx`
 
+## Task Description Style Guide
+
+1.  **Actionable Lore Verbs**: Use verbs like "Construct", "Neutralize", "Extract", "Analyze", "Calibrate", "Infiltrate", "Inspect". Pair them with explicit paths/files (e.g., "Neutralize `alert_traffic.log` in `~/workspace`").
+2.  **Progressive Reinforcement (Levels 1-10)**:
+    - Include necessary keybindings (e.g., `j`, `k`, `Enter`, `Esc`) in descriptions for new concepts.
+    - **Stop** mentioning a keybinding once it has been used/reinforced in **2 levels**.
+    - **Exceptions**: Search (`s`), Filter (`f`), and "Go to" commands (e.g., `gc`, `gi`, `gr`) keep keybindings until that _specific_ command is mentioned twice.
+    - Always show Regex patterns (e.g., `s`, type `\\.log$`, then `Enter`).
+3.  **Episode 3 (Exam Mode)**: **NO** keybindings in task descriptions (except Regex). This phase tests player mastery.
+4.  **Notation**: Use single capital letters (`G`, `J`, `K`) instead of `Shift+...` notation. Use `Enter`, `Esc`, `Space`, `Tab` for special keys.
+
 ### Testing Requirements
 
 - All interactive components must include `data-testid` attributes to support Playwright E2E suite
@@ -160,7 +171,9 @@ The game implements a wide range of Yazi-like keybindings with contextual help a
 - Multiple ways to accomplish tasks
 - Undo/redo capabilities through navigation history
 
-## Development Environment
+### Simulation Integrity
+
+- **No "Magic Injections"**: Do not implement level-specific mutations that pre-solve tasks for the player (e.g., automatically deleting a file the player is tasked to purge). Player agency and manual reinforcement of keybindings is paramount. System changes should only occur as a direct result of player actions or specific narrative triggers.
 
 - **Development Server**: The Vite dev server runs on `http://localhost:3000`. Assume it is already running before executing tests.
 - **Testing**: When running Playwright tests, use a non-interactive reporter (e.g., `list`) to ensure the command terminates upon completion. Example: `npm run test:e2e -- --reporter=list`.
