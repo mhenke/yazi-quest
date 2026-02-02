@@ -41,27 +41,8 @@ export const checkHoneypotTriggered = (
   const items = getVisibleItems(gameState);
 
   // 1. Level-Specific Conditional Logic
-  // Level 14 honeypot check: if deleting .purge_lock before decoys are created
-  if (currentLevel.id === 14) {
-    const decoysCreated = gameState.completedTaskIds[14]?.includes('create-decoys');
-    const deletingHoneypot = pendingDeleteIds.some((id) => {
-      const node = items.find((n) => n.id === id);
-      // Fallback to name/id check for safety during transition, but prefer isHoneypot
-      return node?.isHoneypot || node?.name === '.purge_lock' || node?.id === 'purge-lock-honeypot';
-    });
-    if (deletingHoneypot && !decoysCreated) {
-      return {
-        triggered: true,
-        reason: 'honeypot',
-        message:
-          '🚨 HONEYPOT TRIGGERED! Security tripwire detected. Create decoy directories FIRST to mask your deletion pattern.',
-      };
-    }
-    // If decoys are created, we allow deleting the honeypot (it's no longer a trap for the player)
-    if (deletingHoneypot && decoysCreated) {
-      return { triggered: false };
-    }
-  }
+  // Level 14 honeypot check: Removed to simplify sequence.
+  // We rely on isProtected for critical files and general isHoneypot flags.
 
   // 2. Persistent Honeypots (isHoneypot flag)
   const triggeredHoneypot = pendingDeleteIds.find((id) => {
@@ -103,7 +84,7 @@ export const checkHoneypotTriggered = (
     return node?.content?.includes('HONEYPOT') || node?.content?.includes('audit-trap');
   });
 
-  if (contentTrap) {
+  if (contentTrap && currentLevel.id !== 14) {
     const node = items.find((n) => n.id === contentTrap);
 
     // Level 9: Allow deletion of decoy files even if they have content traps

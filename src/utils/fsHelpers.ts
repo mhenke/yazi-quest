@@ -153,7 +153,6 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
     const id = path[i];
     const n = getNodeById(root, id);
     if (!n) {
-      console.log(`[DEBUG] resolvePath failed for segment: ${id}`);
       continue;
     }
     // Skip the root node's name so paths render as '/bin' instead of '//bin'
@@ -481,9 +480,14 @@ export function isProtected(
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === 'delete') {
-    // Use the policy attached to the Level definition, if provided.
-    const allowed = level.allowedDeletePaths;
+    // Broad rule for Level 14: allow deleting anything directly inside the guest home
+    // (except the guest home itself, though that's usually not listed)
+    if (node.parentId === 'guest') {
+      return null;
+    }
 
+    // Fallback to designated allowed paths policy
+    const allowed = level.allowedDeletePaths;
     const getNodeByNamePath = (rootNode: FileNode, names: string[]): FileNode | undefined => {
       let current: FileNode | undefined = rootNode;
       for (const n of names) {
@@ -496,12 +500,11 @@ export function isProtected(
       return current;
     };
 
-    if (allowed && action === 'delete') {
+    if (allowed) {
       for (const entry of allowed) {
         const namePath = entry.path;
         const requiredTask = entry.requiresTaskId;
 
-        // If the rule requires a task to be completed, check runtime state
         if (requiredTask) {
           const levelTaskIds = completedTaskIds?.[level.id] || [];
           if (!levelTaskIds.includes(requiredTask)) continue;

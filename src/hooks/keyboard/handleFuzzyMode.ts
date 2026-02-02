@@ -164,7 +164,6 @@ export const handleFuzzyModeKeyDown = (
   // Typing
   if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
     const newVal = (gameState.inputBuffer || '') + e.key;
-    console.log(`FUZZY_MODE: Typing. New buffer: "${newVal}"`);
     dispatch({ type: 'SET_INPUT_BUFFER', buffer: newVal });
     dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
     return;

@@ -1,3 +1,5 @@
+import type { Action } from './hooks/gameReducer';
+
 export type NodeType = 'file' | 'dir' | 'archive';
 
 export interface FileNode {
@@ -58,6 +60,7 @@ export interface Level {
   // this level. Each entry may optionally require a task id to be
   // completed (requiresTaskId) before the rule applies.
   allowedDeletePaths?: { path: string[]; requiresTaskId?: string }[];
+  postTasks?: { triggerTaskId: string; action: (gameState: GameState, level: Level) => Action }[];
 }
 
 export interface Episode {
@@ -189,6 +192,7 @@ export interface GameState {
   showThreatAlert?: boolean;
   alertMessage?: string;
   showSuccessToast?: boolean;
+  toast?: { message: string; duration?: number };
   isBooting: boolean; // Flag for the BIOS boot sequence overlay
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Raw keystrokes (Ep 1 & 2)
@@ -247,6 +251,15 @@ export interface GameState {
   helpScrollPosition?: number; // Scroll offset for HelpModal
   questMapTab?: number; // Active episode tab index (0-2)
   questMapMissionIdx?: number; // Selected mission index in current tab
+  alerts: GameAlert[]; // Active system alerts
+}
+
+export interface GameAlert {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'info' | 'warning' | 'error' | 'success';
+  timestamp: number;
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

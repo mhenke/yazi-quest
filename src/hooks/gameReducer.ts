@@ -6,8 +6,9 @@ import {
   SortDirection,
   Linemode,
   ZoxideEntry,
+  GameAlert,
 } from '../types';
-import { INITIAL_FS, LEVELS } from '../constants';
+import { INITIAL_FS, LEVELS, populateDecoys } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 
@@ -134,6 +135,7 @@ export type Action =
   | { type: 'COMPLETE_TASK'; levelId: number; taskIds: string[] }
   | { type: 'SET_HELP_SCROLL'; scroll: number }
   | { type: 'UPDATE_QUEST_MAP'; tab?: number; missionIdx?: number }
+  | { type: 'ADD_ALERT'; payload: GameAlert }
   | { type: 'SET_ALERT_MESSAGE'; message: string }
   | {
       type: 'UPDATE_GAUNTLET';
@@ -142,10 +144,22 @@ export type Action =
       timeLeft?: number;
       notification?: GameState['notification'];
     }
+  | { type: 'POPULATE_DECOYS' }
+  | { type: 'SHOW_TOAST'; message: string; duration?: number }
+  | { type: 'HIDE_TOAST' }
   | { type: 'ADVANCE_TO_OUTRO' };
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
+    case 'SHOW_TOAST':
+      return { ...state, toast: { message: action.message, duration: action.duration } };
+    case 'HIDE_TOAST':
+      return { ...state, toast: undefined };
+    case 'POPULATE_DECOYS': {
+      // This is a placeholder. The actual implementation will be in a future step.
+      const newFs = populateDecoys(state.fs);
+      return { ...state, fs: newFs };
+    }
     case 'SET_MODE': {
       // Find current item ID to maintain cursor position if list changes
       const visibleItemsBefore = getVisibleItems(state);
@@ -295,6 +309,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         future: [],
         clipboard: null,
         selectedIds: [],
+        alerts: [],
         mode: 'normal',
         showEpisodeIntro: action.showIntro ?? false,
         notification: action.notification ?? null,
@@ -354,6 +369,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         fs: cloneFS(INITIAL_FS),
         currentPath: ['root', 'home', 'guest'],
         isGameOver: false,
+        alerts: [],
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
@@ -834,15 +850,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         settings: { ...state.settings, soundEnabled: !state.settings.soundEnabled },
       };
 
-    case 'COMPLETE_TASK':
-      return {
-        ...state,
-        completedTaskIds: {
-          ...state.completedTaskIds,
-          [action.levelId]: [...(state.completedTaskIds[action.levelId] || []), ...action.taskIds],
-        },
-      };
-
     case 'SET_HELP_SCROLL':
       return { ...state, helpScrollPosition: action.scroll };
 
@@ -851,6 +858,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
         ...state,
         questMapTab: action.tab ?? state.questMapTab,
         questMapMissionIdx: action.missionIdx ?? state.questMapMissionIdx,
+      };
+
+    case 'ADD_ALERT':
+      return {
+        ...state,
+        alerts: [...state.alerts, action.payload],
       };
 
     case 'SET_ALERT_MESSAGE':

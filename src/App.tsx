@@ -37,6 +37,7 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { SuccessToast } from './components/SuccessToast';
 import { ThreatAlert } from './components/ThreatAlert';
+import { SystemAlerts } from './components/SystemAlerts';
 import { HiddenFilesWarningModal } from './components/HiddenFilesWarningModal';
 import { SortWarningModal } from './components/SortWarningModal';
 import { FilterWarningModal } from './components/FilterWarningModal';
@@ -109,12 +110,21 @@ export default function App() {
       }
     }
 
+    // 5. Handle startAtTask parameter
+    const startAtTaskParam = params.get('startAtTask');
+    if (startAtTaskParam && targetIndex < LEVELS.length) {
+      const levelId = LEVELS[targetIndex].id;
+      const startAtTaskNum = parseInt(startAtTaskParam, 10);
+      if (!isNaN(startAtTaskNum) && startAtTaskNum > 0) {
+        // Complete tasks up to (but not including) the specified task number
+        const tasksToComplete = LEVELS[targetIndex].tasks.slice(0, startAtTaskNum - 1);
+        completedTaskIds[levelId] = tasksToComplete.map((t) => t.id);
+      }
+    }
+
     // 5. Setup Initial State
     const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
     const initialLevel = LEVELS[effectiveIndex];
-    console.log(
-      `[DEBUG] URL Params: lvl=${lvlParam}, targetIndex=${targetIndex}, effectiveIndex=${effectiveIndex}, LevelID=${initialLevel.id}`
-    );
     const isDevOverride = !!debugParam;
 
     const isEpisodeStart =
@@ -240,6 +250,7 @@ export default function App() {
       linemode: 'size',
       history: [],
       future: [],
+      alerts: [],
       previewScroll: 0,
       zoxideData: initialZoxide,
       levelIndex: targetIndex,
@@ -260,7 +271,7 @@ export default function App() {
       showMap: false,
       showHint: false,
       hintStage: 0,
-      showHidden: initialLevel.id === 14 || initialLevel.id === 15,
+      showHidden: false,
       showInfoPanel: false,
       showEpisodeIntro: showIntro,
       timeLeft: initialLevel.timeLimit || null,
@@ -323,11 +334,7 @@ export default function App() {
   }, [dispatch]);
 
   // --- DEBUG: LOG PATH CHANGES ---
-  useEffect(() => {
-    console.log(
-      `[DEBUG] currentPath CHANGED: ${gameState.currentPath.join(' -> ')} (Level: ${gameState.levelIndex})`
-    );
-  }, [gameState.currentPath, gameState.levelIndex]);
+  useEffect(() => {}, [gameState.currentPath, gameState.levelIndex]);
 
   useEffect(() => {
     if (window.__yaziQuestSkipIntroRequested) {
@@ -352,6 +359,26 @@ export default function App() {
   useNarrativeSystem(gameState, dispatch);
 
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- Toast Notification Handler ---
+  useEffect(() => {
+    if (gameState.toast) {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+      toastTimerRef.current = setTimeout(() => {
+        dispatch({ type: 'HIDE_TOAST' });
+        toastTimerRef.current = null;
+      }, gameState.toast.duration || 3000);
+    }
+    // Cleanup on unmount
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, [gameState.toast]);
 
   const isGamePaused =
     gameState.showHelp ||
@@ -420,16 +447,10 @@ export default function App() {
         const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
 
         if (!currentDir || !currentDir.children) {
-          console.log(
-            `[DEBUG] visibleItems: currentDir not found or no children. Path: ${gameState.currentPath.join('/')}`
-          );
           return [];
         }
 
         let items = [...currentDir.children];
-        console.log(
-          `[DEBUG] visibleItems: currentDir=${currentDir.name} (${currentDir.id}), rawChildCount=${items.length}`
-        );
 
         if (!gameState.showHidden) {
           items = items.filter((c) => !c.name.startsWith('.'));
@@ -536,9 +557,33 @@ export default function App() {
         levelId: currentLevel.id,
         taskIds: newlyCompleted,
       });
+
+      // 2. Check for post-task actions
+      newlyCompleted.forEach((taskId) => {
+        currentLevel.postTasks?.forEach((postTask) => {
+          if (postTask.triggerTaskId === taskId) {
+            dispatch(postTask.action(gameState, currentLevel));
+          }
+        });
+      });
+
       playTaskCompleteSound(gameState.settings.soundEnabled);
 
-      // 2. Level 15 Gauntlet Logic
+      // Level 11 Detection Alert
+      if (currentLevel.id === 11) {
+        dispatch({
+          type: 'ADD_ALERT',
+          payload: {
+            id: 'daemon-recon-alert',
+            title: 'SYSTEM ANOMALY',
+            message: 'New system daemons detected in /daemons. Investigation Protocol Active.',
+            severity: 'warning',
+            timestamp: Date.now(),
+          },
+        });
+      }
+
+      // 3. Level 15 Gauntlet Logic
       if (currentLevel.id === 15) {
         const nextPhase = (gameState.gauntletPhase || 0) + 1;
         const currentScore = (gameState.gauntletScore || 0) + 1;
@@ -583,6 +628,43 @@ export default function App() {
     currentLevel,
     dispatch,
   ]);
+
+  useEffect(() => {
+    // Determine level ID
+    const levelId = currentLevel.id;
+
+    // Check Level 6 Alert (Write Access)
+    if (levelId === 6) {
+      if (!gameState.alerts.some((a) => a.id === 'write-access-l6')) {
+        dispatch({
+          type: 'ADD_ALERT',
+          payload: {
+            id: 'write-access-l6',
+            title: 'WRITE ACCESS GRANTED',
+            message: 'Security protocols lifted for workspace. Modification enabled.',
+            severity: 'info',
+            timestamp: Date.now(),
+          },
+        });
+      }
+    }
+
+    // Check Level 14 Alert (Safety Interlocks)
+    if (levelId === 14) {
+      if (!gameState.alerts.some((a) => a.id === 'safety-fail-l14')) {
+        dispatch({
+          type: 'ADD_ALERT',
+          payload: {
+            id: 'safety-fail-l14',
+            title: 'SAFETY INTERLOCKS DISABLED',
+            message: 'CRITICAL FAILURE: User data protection offline.',
+            severity: 'error',
+            timestamp: Date.now(),
+          },
+        });
+      }
+    }
+  }, [currentLevel.id, gameState.alerts, dispatch]);
 
   useEffect(() => {
     // Check if everything is complete (including just finished ones)
@@ -1103,11 +1185,6 @@ export default function App() {
           const lvl = LEVELS[globalIdx];
           let fs = cloneFS(INITIAL_FS);
           fs = ensurePrerequisiteState(fs, lvl.id, gameState);
-          // Log statements as requested
-          console.log(
-            `[DEBUG] SET_LEVEL: lvlId = ${lvl.id}, idx = ${globalIdx}, path =`,
-            lvl.initialPath || ['root', 'home', 'guest']
-          );
           dispatch({
             type: 'SET_LEVEL',
             index: globalIdx,
@@ -1592,6 +1669,14 @@ export default function App() {
         />
       )}
 
+      {gameState.toast && (
+        <SuccessToast
+          message={gameState.toast.message}
+          levelTitle=""
+          onDismiss={() => dispatch({ type: 'HIDE_TOAST' })}
+        />
+      )}
+
       {gameState.showSuccessToast && (
         <>
           {/* <CelebrationConfetti /> */}
@@ -1653,6 +1738,8 @@ export default function App() {
           }
         />
       )}
+      {/* Render System Alerts (Top Right) */}
+      <SystemAlerts alerts={gameState.alerts} />
 
       <div className="flex flex-col flex-1 h-full min-w-0">
         {!gameState.showEpisodeIntro && (

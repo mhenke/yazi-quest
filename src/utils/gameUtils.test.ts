@@ -35,6 +35,7 @@ describe('gameUtils', () => {
     it('should return false for non-critical file deletion', () => {
       const gameState: GameState = {
         currentPath: ['root', 'home', 'guest'],
+        alerts: [],
         // Add other required properties as needed
       } as GameState;
       const pendingDeleteIds = ['some-file-id'];
@@ -46,6 +47,7 @@ describe('gameUtils', () => {
     it('should return true for critical system folder deletion at root', () => {
       const gameState: GameState = {
         currentPath: ['root'], // At root level
+        alerts: [],
         // Add other required properties as needed
       } as GameState;
       const pendingDeleteIds = ['bin-item']; // Would need to mock the items to have a 'bin' folder
@@ -60,6 +62,7 @@ describe('gameUtils', () => {
   describe('validateDeletions', () => {
     it('should return ok: true when no protections are violated', () => {
       const gameState: GameState = {
+        alerts: [],
         // Mock game state
       } as GameState;
       const pendingDeleteIds: string[] = [];
@@ -292,6 +295,7 @@ describe('gameUtils', () => {
         future: [],
         previewScroll: 0,
         isBooting: false,
+        alerts: [],
       };
 
       const level: Level = {
@@ -385,6 +389,7 @@ describe('gameUtils', () => {
         future: [],
         previewScroll: 0,
         isBooting: false,
+        alerts: [],
       };
 
       const level: Level = {
@@ -478,6 +483,7 @@ describe('gameUtils', () => {
         future: [],
         previewScroll: 0,
         isBooting: false,
+        alerts: [],
       };
 
       const level: Level = {

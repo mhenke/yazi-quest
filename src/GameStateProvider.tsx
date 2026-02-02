@@ -72,6 +72,18 @@ const createInitialState = (): GameState => {
     }
   }
 
+  // 5. Handle startAtTask parameter
+  const startAtTaskParam = params.get('startAtTask');
+  if (startAtTaskParam && targetIndex < LEVELS.length) {
+    const levelId = LEVELS[targetIndex].id;
+    const startAtTaskNum = parseInt(startAtTaskParam, 10);
+    if (!isNaN(startAtTaskNum) && startAtTaskNum > 0) {
+      // Complete tasks up to (but not including) the specified task number
+      const tasksToComplete = LEVELS[targetIndex].tasks.slice(0, startAtTaskNum - 1);
+      completedTaskIds[levelId] = tasksToComplete.map((t) => t.id);
+    }
+  }
+
   // 5. Setup Initial State
   const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
   const initialLevel = LEVELS[effectiveIndex];
@@ -241,6 +253,7 @@ const createInitialState = (): GameState => {
   }
 
   return {
+    alerts: [],
     currentPath: initialPath,
     cursorIndex: 0,
     clipboard: null,
