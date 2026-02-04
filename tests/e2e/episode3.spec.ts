@@ -290,7 +290,7 @@ test.describe('Episode 3: MASTERY', () => {
       await pressKey(page, 'p'); // Paste vault
       await page.waitForTimeout(DEFAULT_DELAY);
 
-      await assertTask(page, '2/4', testInfo.outputDir, 'task2_vault_moved');
+      await assertTask(page, '2/5', testInfo.outputDir, 'task2_vault_moved');
     });
 
     // Task 3: gh, a sys_cache_dump/, a project_chimera/, a neural_training_set/
@@ -301,35 +301,52 @@ test.describe('Episode 3: MASTERY', () => {
       await addItem(page, 'project_chimera/');
       await addItem(page, 'neural_training_set/');
 
-      await assertTask(page, '3/4', testInfo.outputDir, 'task3_decoys');
+      await assertTask(page, '3/5', testInfo.outputDir, 'task3_decoys');
     });
 
-    // Task 4: gh, j*3, space*3, press . then ctrl+r, shift+D
+    // Task 4: Delete visible directories (workspace, media, datastore, incoming)
     await test.step('Task 4: Delete all directories', async () => {
       await gotoCommand(page, 'h');
       await clearFilter(page);
 
-      // Select the 3 decoys reliably
-      const decoys = ['sys_cache_dump', 'project_chimera', 'neural_training_set'];
-      for (const decoy of decoys) {
-        await filterByText(page, decoy);
-        await page.waitForTimeout(200); // Wait for filter
-        await pressKey(page, ' '); // Select (Space)
-        await clearFilter(page);
+      // Select only the original visible directories to delete (NOT decoys or hidden files)
+      // Task requires deleting: workspace, media, datastore, incoming
+      // Use keepFilter=true on ALL to preserve selections (Escape clears both filter AND selections)
+      const toDelete = ['workspace', 'media', 'datastore', 'incoming'];
+      for (const dir of toDelete) {
+        await filterAndSelect(page, dir, { keepFilter: true });
       }
 
-      await pressKey(page, '.'); // Toggle hidden
-      await page.waitForTimeout(500); // Increased delay for state sync
-
-      await pressKeys(page, ['Control+r']); // Invert
+      // Delete without clearing filter first (Escape would clear selections)
+      await pressKey(page, 'Shift+D'); // Permanent delete
+      await page.waitForTimeout(500);
+      await pressKey(page, 'y'); // Confirm
       await page.waitForTimeout(DEFAULT_DELAY);
+
+      await assertTask(page, '4/5', testInfo.outputDir, 'task4_delete_visible');
+    });
+
+    // Task 5: Delete hidden .config directory
+    await test.step('Task 5: Delete hidden directories', async () => {
+      await gotoCommand(page, 'h');
+      await clearFilter(page);
+
+      // Toggle hidden files to make .config visible
+      await pressKey(page, '.');
+      await page.waitForTimeout(DEFAULT_DELAY);
+
+      // Select and delete .config
+      await filterByText(page, '.config');
+      await page.waitForTimeout(200);
+      await pressKey(page, ' '); // Select
+      await clearFilter(page);
 
       await pressKey(page, 'Shift+D'); // Permanent delete
       await page.waitForTimeout(500);
       await pressKey(page, 'y'); // Confirm
       await page.waitForTimeout(DEFAULT_DELAY);
 
-      await assertTask(page, '4/4', testInfo.outputDir, 'task4_delete_all');
+      await assertTask(page, '5/5', testInfo.outputDir, 'task5_delete_hidden');
 
       await page.keyboard.press('Shift+Enter');
       await page.waitForTimeout(1000);

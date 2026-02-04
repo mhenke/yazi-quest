@@ -221,31 +221,34 @@ test.describe('Episode 2: FORTIFICATION', () => {
       'The corruption felt... familiar. Like a half-remembered dream.'
     );
 
-    // Task 1: Navigate to '/tmp' (gt) and select 'ghost_process.pid' and 'socket_001.sock'
+    // Task 1: Navigate to '/tmp' (gt) and select the 4 files to KEEP
     await gotoCommand(page, 't');
-
-    // Verify we are in /tmp (Task 1 won't complete until selection is done, so we check breadcrumb/path)
     await expectCurrentDir(page, '/tmp');
 
-    // Pattern: Filter with Regex -> Select All -> Invert -> Delete
-    // Use the intended solution regex to robustly select all 4 target files at once
+    // In authentic Yazi, Escape clears both filter AND selections.
+    // So we use filter + Ctrl+A to select all filtered items, then invert.
+    // The invert (Ctrl+R) works against ALL files in directory, not just filtered ones.
+
+    // Filter to show only the keeper files
     await filterByText(page, '\\.(key|pid|sock)$');
+    await page.waitForTimeout(DEFAULT_DELAY);
 
-    // Select All Visible (Robustly selects the 4 filtered items)
-    await pressKey(page, 'Ctrl+a'); // Select all
-
-    await page.keyboard.press('Escape'); // Dismiss active filter
+    // Ctrl+A to select all visible (filtered) keeper files
+    await pressKey(page, 'Ctrl+a');
+    await page.waitForTimeout(DEFAULT_DELAY);
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
-    // Task 2: Invert the selection (Ctrl+R)
+    // Task 2: Invert the selection (Ctrl+R) - now junk files are selected
+    // Ctrl+R inverts against ALL files in directory, so even while filtered,
+    // the junk files become selected
     await pressKey(page, 'Ctrl+r');
     await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
 
     // Task 3: Permanently delete the selected junk files (D)
+    // DO NOT clear filter - Escape clears selections in authentic Yazi behavior.
+    // Delete works on selected items regardless of filter visibility.
     await deleteItem(page, { permanent: true, confirm: true });
-
-    // Allow time for task completion to register
     await page.waitForTimeout(DEFAULT_DELAY);
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');

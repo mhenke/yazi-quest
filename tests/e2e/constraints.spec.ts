@@ -50,33 +50,31 @@ test.describe('Game Constraints', () => {
   });
 
   test('Game Over Dialog: Shift+Enter restarts the level', async ({ page }) => {
-    // Install clock before navigation
-    await page.clock.install();
+    test.setTimeout(90000);
 
-    await startLevel(page, 6, { intro: false });
+    // Use keystroke-based Game Over (Level 11, maxKeystrokes: 60)
+    // This avoids fake clock issues that cause browser crashes
+    await startLevel(page, 11, { intro: false });
 
-    // Wait for level to load and timer to initialize
-    await expect(page.getByText(/BATCH OPERATIONS/i).first()).toBeVisible();
-    await page.waitForTimeout(1000);
+    // Mash keys to exceed 60 keystrokes and trigger Game Over
+    for (let i = 0; i < 70; i++) {
+      await pressKey(page, 'j');
+    }
 
-    // Fast-forward to trigger game over
-    await page.clock.runFor(160000);
-    await page.waitForTimeout(2000);
-
-    // Verify game over dialog appears via test-id
-    await expect(page.getByTestId('game-over-modal')).toBeVisible({ timeout: 20000 });
-    await expect(page.getByTestId('game-over-title')).toContainText('WATCHDOG');
+    // Verify game over dialog appears
+    await expect(page.getByTestId('game-over-modal')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('game-over-title')).toContainText('IG KERNEL PANIC');
 
     // Press Shift+Enter to restart
     await page.keyboard.press('Shift+Enter');
-
-    // Advancing the clock slightly to allow any pending timers/effects to run
-    await page.clock.runFor(DEFAULT_DELAY);
+    await page.waitForTimeout(DEFAULT_DELAY);
 
     // Verify the level restarted (game over modal disappears)
     await expect(page.getByTestId('game-over-modal')).not.toBeVisible({ timeout: 10000 });
 
-    // Verify we're back at the level
-    await expect(page.getByText(/BATCH OPERATIONS/i).first()).toBeVisible();
+    // Verify we're back at Level 11
+    await expect(page.getByText(/DAEMON RECONNAISSANCE/i).first()).toBeVisible();
+    // Verify task counter reset to 0
+    await expect(page.getByTestId('task-counter')).toContainText('Tasks: 0/');
   });
 });

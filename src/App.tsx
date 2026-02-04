@@ -480,7 +480,7 @@ export default function App() {
 
   // Helper to show notification with auto-clear
   const showNotification = useCallback(
-    (message: string, duration: number = 2000, isThought: boolean = false, author?: string) => {
+    (message: string, duration: number = 5000, isThought: boolean = false, author?: string) => {
       // If used for thoughts, we still dispatch SET_NOTIFICATION?
       // Wait, triggerThought logic was moved.
       // But showNotification is used by Input handlers via callbacks.

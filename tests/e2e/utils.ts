@@ -585,7 +585,7 @@ export async function isInfoPanelVisible(page: Page): Promise<boolean> {
 export async function filterAndSelect(
   page: Page,
   filterText: string,
-  options: { exact?: boolean } = {}
+  options: { exact?: boolean; keepFilter?: boolean } = {}
 ): Promise<void> {
   await pressKey(page, 'f');
   const input = page.getByTestId('filter-input');
@@ -609,5 +609,9 @@ export async function filterAndSelect(
   await pressKey(page, ' '); // Toggle selection
   await expect(target).toHaveClass(/text-yellow-400/);
 
-  await clearFilter(page);
+  // Only clear filter if not keeping it (default behavior)
+  // Note: In Yazi, Escape clears BOTH filter AND selections
+  if (!options.keepFilter) {
+    await clearFilter(page);
+  }
 }

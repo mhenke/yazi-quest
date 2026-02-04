@@ -216,7 +216,7 @@ export const handleNavigationKeyDown = (
         dispatch({ type: 'NAVIGATE_BACK' });
         dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
         dispatch({ type: 'MARK_ACTION_USED', actionId: 'HistoryBack' });
-        dispatch({ type: 'SET_NOTIFICATION', message: 'History Back' });
+        showNotification('History Back', 4000);
         return true;
       }
       break;
@@ -237,7 +237,7 @@ export const handleNavigationKeyDown = (
         dispatch({ type: 'NAVIGATE_FORWARD' });
         dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
         dispatch({ type: 'MARK_ACTION_USED', actionId: 'HistoryForward' });
-        dispatch({ type: 'SET_NOTIFICATION', message: 'History Forward' });
+        showNotification('History Forward', 4000);
         return true;
       }
       break;

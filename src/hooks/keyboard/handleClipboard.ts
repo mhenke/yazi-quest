@@ -69,7 +69,7 @@ export const handleClipboardKeyDown = (
         dispatch({ type: 'MARK_ACTION_USED', actionId: 'CtrlA' });
         showNotification(
           getNarrativeAction('Ctrl+A') || `Selected all (${allIds.length} items)`,
-          500
+          4000
         );
         return true;
       } else {
@@ -95,7 +95,7 @@ export const handleClipboardKeyDown = (
           dispatch({ type: 'MARK_ACTION_USED', actionId: 'CtrlR' });
           showNotification(
             getNarrativeAction('Ctrl+R') || `Inverted selection (${inverted.length} items)`,
-            500
+            4000
           );
         }
         return true;
@@ -217,12 +217,11 @@ export const handleClipboardKeyDown = (
           type: 'MARK_ACTION_USED',
           actionId: e.key === 'y' ? 'Y' : 'X',
         });
-        dispatch({
-          type: 'SET_NOTIFICATION',
-          message:
-            getNarrativeAction(e.key) ||
+        showNotification(
+          getNarrativeAction(e.key) ||
             `${nodesWithPaths.length} item(s) ${e.key === 'x' ? 'cut' : 'yanked'}`,
-        });
+          4000
+        );
         return true;
       }
       break;
@@ -232,7 +231,7 @@ export const handleClipboardKeyDown = (
       if (e.shiftKey) {
         e.preventDefault();
         dispatch({ type: 'CLEAR_CLIPBOARD' });
-        dispatch({ type: 'SET_NOTIFICATION', message: 'Clipboard Aborted' });
+        showNotification('Clipboard Aborted', 4000);
         return true;
       }
       break;
@@ -256,7 +255,7 @@ export const handleClipboardKeyDown = (
             ? [currentItem.id]
             : [];
       if (toDelete.length === 0) {
-        showNotification('Nothing to delete', 500);
+        showNotification('Nothing to delete', 4000);
         return true;
       }
       dispatch({
@@ -328,11 +327,10 @@ export const handleClipboardKeyDown = (
             showNotification(`Paste failed for "${errorNodeName}": ${error}`, 4000);
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
-            dispatch({
-              type: 'SET_NOTIFICATION',
-              message:
-                getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`,
-            });
+            showNotification(
+              getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`,
+              4000
+            );
             dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
           }
         } catch (err) {
@@ -417,10 +415,10 @@ export const handleClipboardKeyDown = (
             showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
           } else {
             dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
-            dispatch({
-              type: 'SET_NOTIFICATION',
-              message: `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
-            });
+            showNotification(
+              `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
+              4000
+            );
             dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
             dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
           }

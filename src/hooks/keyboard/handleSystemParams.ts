@@ -25,7 +25,7 @@ export const handleSystemParamsKeyDown = (
 
     case 's':
       e.preventDefault();
-      showNotification(getNarrativeAction('s') || 'Recursive search');
+      showNotification(getNarrativeAction('s') || 'Recursive search', 4000);
       dispatch({ type: 'SET_MODE', mode: 'search' });
       dispatch({ type: 'SET_SEARCH', query: null, results: [] });
       dispatch({ type: 'MARK_ACTION_USED', actionId: 'Search' });
@@ -35,7 +35,7 @@ export const handleSystemParamsKeyDown = (
     case '.': {
       const narrative = getNarrativeAction('.');
       const message = gameState.showHidden ? `Cloaking Engaged` : `Revealing Hidden Traces`;
-      showNotification(narrative || message);
+      showNotification(narrative || message, 4000);
       dispatch({ type: 'TOGGLE_HIDDEN' });
       return true;
     }
@@ -58,7 +58,7 @@ export const handleSystemParamsKeyDown = (
           return true;
         }
         e.preventDefault();
-        showNotification(getNarrativeAction('Z') || 'Zoxide jump');
+        showNotification(getNarrativeAction('Z') || 'Zoxide jump', 4000);
         dispatch({ type: 'SET_MODE', mode: 'zoxide-jump' });
         dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
         return true;
@@ -78,7 +78,7 @@ export const handleSystemParamsKeyDown = (
           return true;
         }
         e.preventDefault();
-        showNotification(getNarrativeAction('z') || 'FZF file search');
+        showNotification(getNarrativeAction('z') || 'FZF file search', 4000);
         dispatch({ type: 'SET_MODE', mode: 'fzf-current' });
         dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
         return true;
@@ -111,6 +111,11 @@ export const handleSystemParamsKeyDown = (
     case 'Escape': {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+
+      // Yazi behavior: Esc clears selections AND exits filter/search in one press
+      if (gameState.selectedIds.length > 0) {
+        showNotification('Selection cleared', 4000);
+      }
       dispatch({ type: 'SET_SELECTION', ids: [] });
 
       // Dismiss all protocol violation modals
@@ -120,7 +125,7 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
 
       if (gameState.searchQuery) {
-        showNotification(getNarrativeAction('Escape') || 'Search cleared');
+        showNotification(getNarrativeAction('Escape') || 'Search cleared', 4000);
         dispatch({ type: 'SET_SEARCH', query: null, results: [] });
         dispatch({ type: 'SET_CURSOR', index: 0 });
         dispatch({ type: 'MARK_ACTION_USED', actionId: 'SearchCleared' });
@@ -130,6 +135,7 @@ export const handleSystemParamsKeyDown = (
       const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
       if (currentDirNode && gameState.filters[currentDirNode.id]) {
         dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
+        showNotification('Filter cleared', 4000);
       }
       return true;
     }

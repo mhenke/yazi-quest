@@ -41,8 +41,11 @@ export const checkHoneypotTriggered = (
   const items = getVisibleItems(gameState);
 
   // 1. Level-Specific Conditional Logic
-  // Level 14 honeypot check: Removed to simplify sequence.
-  // We rely on isProtected for critical files and general isHoneypot flags.
+  // Level 14 (STERILIZATION): Allow deleting ALL files including honeypots.
+  // The narrative requires purging everything to "sterilize" the partition.
+  if (currentLevel.id === 14) {
+    return { triggered: false };
+  }
 
   // 2. Persistent Honeypots (isHoneypot flag)
   const triggeredHoneypot = pendingDeleteIds.find((id) => {
