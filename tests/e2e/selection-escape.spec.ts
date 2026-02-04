@@ -33,9 +33,75 @@ test.describe('Escape Key Behavior', () => {
 
     // 5. Verify Selections Cleared (Status bar not VIS)
     await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+  });
 
-    // Verify "Search cleared" notification might appear
-    // await expect(page.getByText('Search cleared')).toBeVisible(); // This might be flaky if notification times out
+  test('Esc in Filter + Select All should exit filter and clear selections', async ({ page }) => {
+    await startLevel(page, 2);
+
+    // 1. Enter Filter mode (f)
+    await pressKey(page, 'f');
+    await expect(page.getByTestId('filter-input')).toBeVisible();
+
+    // 2. Type filter query
+    await page.keyboard.type('log');
+    await pressKey(page, 'Enter');
+    await expect(page.getByTestId('filter-input')).not.toBeVisible();
+
+    // Verify filter is active in breadcrumbs
+    await expect(page.locator('[data-testid="breadcrumbs"]')).toContainText('filter: log');
+
+    // 3. Select All (Ctrl+A)
+    await pressKeys(page, ['Control+a']);
+
+    // Verify selection (Status bar VIS)
+    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).toBeVisible();
+
+    // 4. Press Esc
+    await pressKey(page, 'Escape');
+
+    // 5. Verify Filter Exited (Breadcrumb should NOT have "filter: log")
+    await expect(page.locator('[data-testid="breadcrumbs"]')).not.toContainText('filter: log');
+
+    // 6. Verify Selections Cleared (Status bar NOR)
+    await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+  });
+
+  test('Esc in Search + Filter + Select All should clear everything', async ({ page }) => {
+    await startLevel(page, 2);
+
+    // 1. Enter Search mode
+    await pressKey(page, 's');
+    await page.keyboard.type('log');
+    await pressKey(page, 'Enter');
+    await expect(page.locator('[data-testid="breadcrumbs"]')).toContainText('search: log');
+
+    // 2. Apply Filter on top of search results
+    await pressKey(page, 'f');
+    await expect(page.getByTestId('filter-input')).toBeVisible();
+    await page.keyboard.type('watch');
+    await pressKey(page, 'Enter');
+
+    // Verify both search and filter are active
+    // Breadcrumb format: "~ ... (search: log) (filter: watch)"
+    await expect(page.locator('[data-testid="breadcrumbs"]')).toContainText('search: log');
+    await expect(page.locator('[data-testid="breadcrumbs"]')).toContainText('filter: watch');
+
+    // 3. Select All (Ctrl+A)
+    await pressKeys(page, ['Control+a']);
+    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).toBeVisible();
+
+    // 4. Press Esc
+    await pressKey(page, 'Escape');
+
+    // 5. Verify Clean State
+    // Breadcrumb should be clean
+    await expect(page.locator('[data-testid="breadcrumbs"]')).not.toContainText('search: log');
+    await expect(page.locator('[data-testid="breadcrumbs"]')).not.toContainText('filter: exfil');
+
+    // Status bar should be NOR (not VIS)
+    await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
   });
 
   test('Esc in Normal Mode with selections should clear selections', async ({ page }) => {
