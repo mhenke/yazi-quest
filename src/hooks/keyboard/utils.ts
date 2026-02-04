@@ -83,7 +83,11 @@ export const checkProtocolViolations = (
   // Determine if there is a blocking violation right now
   // Hidden files only block navigation if ALL tasks for the level are complete.
   // Filters, search results, and custom sorting ALWAYS block navigation.
-  const isBlockingViolation = filter || search || sort || (hidden && allTasksComplete);
+  // EXCEPTION: Vertical navigation (j, k, G, gg) is allowed during Sort.
+  const isVerticalNav = ['j', 'k', 'ArrowUp', 'ArrowDown', 'G', 'g'].includes(e.key);
+  const isSortBlocking = sort && !isVerticalNav;
+
+  const isBlockingViolation = filter || search || isSortBlocking || (hidden && allTasksComplete);
 
   if (!isBlockingViolation) return false;
 
