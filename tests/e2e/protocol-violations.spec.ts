@@ -55,11 +55,63 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
     await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('h2:has-text("Protocol Violation")')).not.toBeVisible();
 
+    // Verify G (Shift+g) is allowed
+    await page.keyboard.press('G');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).not.toBeVisible();
+
+    // Verify gg (g then g) is allowed
+    await page.keyboard.press('g');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await page.keyboard.press('g');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).not.toBeVisible();
+
     // Verify horizontal navigation (l) is still blocked
     await page.keyboard.press('l');
     await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('text=Custom sorting active.')).toBeVisible();
+    await page.keyboard.press('Escape'); // Dismiss modal
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Verify H (Shift+h) is blocked
+    // Note: We must explicitly use Shift+H for Playwright to set e.shiftKey=true, which the handler checks
+    await page.keyboard.press('Shift+H');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Custom sorting active.')).toBeVisible();
+    await page.keyboard.press('Escape'); // Dismiss modal
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Verify L (Shift+l) is blocked
+    await page.keyboard.press('Shift+L');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Custom sorting active.')).toBeVisible();
+    await page.keyboard.press('Escape'); // Dismiss modal
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Verify z (fzf) is blocked
+    await page.keyboard.press('z');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Custom sorting active.')).toBeVisible();
+    await page.keyboard.press('Escape'); // Dismiss modal
+    await page.waitForTimeout(DEFAULT_DELAY);
+
+    // Verify gh (goto home) is blocked
+    // g itself is allowed (for gg), but the next key (h) should be blocked or handled as a violation
+    // Actually, g enters g-command mode. Then h attempts jump.
+    // The violation check happens on h inside g-command handler.
+    await page.keyboard.press('g');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    // Check if we are in g-command mode? (not easily visible, but status bar changes)
+    await page.keyboard.press('h');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Custom sorting active.')).toBeVisible();
+    await page.keyboard.press('Escape'); // Dismiss modal
   });
 
   test('blocks navigation when search is active during tasks', async ({ page }) => {
