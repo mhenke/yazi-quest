@@ -186,7 +186,7 @@ test.describe('Episode 3: MASTERY', () => {
 
   for (const scenario of scenarios) {
     test(`Level 12: scen-${scenario.id} - completes successfully`, async ({ page }, testInfo) => {
-      test.setTimeout(90000); // Increased timeout for stability
+      test.slow();
       await startLevel(page, 12, {
         intro: false,
         extraParams: { scenario: `scen-${scenario.id}` },
@@ -202,67 +202,74 @@ test.describe('Episode 3: MASTERY', () => {
   test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys', async ({
     page,
   }, testInfo) => {
+    test.slow();
     // Standard viewport
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    test.setTimeout(60000);
     await startLevel(page, 13, { intro: false });
     await assertLevel(page, '13');
 
     // PHASE 1: ACQUIRE
     // ----------------------------------------------------------------
-    // User sequence: gr, j*4, l, ., s, '\.key$', enter, Ctrl+a, x, .
-    await gotoCommand(page, 'r'); // gr - go to root
-    await filterAndSelect(page, 'nodes'); // Robustly select nodes directory
-    await pressKey(page, 'l'); // Enter nodes directory
-    await pressKey(page, '.'); // Show hidden files
-    await search(page, '\\.key$'); // Search for .key files
-    await page.waitForTimeout(DEFAULT_DELAY);
+    await test.step('Phase 1: Acquire Keys', async () => {
+      // User sequence: gr, j*4, l, ., s, '\.key$', enter, Ctrl+a, x, .
+      await gotoCommand(page, 'r'); // gr - go to root
+      await filterAndSelect(page, 'nodes'); // Robustly select nodes directory
+      await pressKey(page, 'l'); // Enter nodes directory
+      await pressKey(page, '.'); // Show hidden files
+      await search(page, '\\.key$'); // Search for .key files
+      await page.waitForTimeout(DEFAULT_DELAY);
 
-    await pressKeys(page, ['Ctrl+a', 'x']); // Select all and cut
-    await expectClipboard(page, 'MOVE: 3'); // Should have 3 files (excluding honeypot via game logic)
-    await pressKey(page, '.'); // Toggle hidden off
-    await pressKey(page, 'Escape'); // Clear search
-    await assertTask(page, '1/4', testInfo.outputDir, 'phase1_acquired');
+      await pressKeys(page, ['Ctrl+a', 'x']); // Select all and cut
+      await expectClipboard(page, 'MOVE: 3'); // Should have 3 files (excluding honeypot via game logic)
+      await pressKey(page, '.'); // Toggle hidden off
+      await pressKey(page, 'Escape'); // Clear search
+      await assertTask(page, '1/4', testInfo.outputDir, 'phase1_acquired');
+    });
 
     // PHASE 2: RELAY
     // ----------------------------------------------------------------
-    await pressKey(page, 'Escape'); // Clear search
-    await gotoCommand(page, 'w'); // Warp to workspace
-    await expectCurrentDir(page, 'workspace');
+    await test.step('Phase 2 & 3: Relay & Identity', async () => {
+      await pressKey(page, 'Escape'); // Clear search
+      await gotoCommand(page, 'w'); // Warp to workspace
+      await expectCurrentDir(page, 'workspace');
 
-    // Ensure hidden visible
-    if (!(await areHiddenFilesVisible(page))) {
-      await pressKey(page, '.');
-    }
+      // Ensure hidden visible
+      if (!(await areHiddenFilesVisible(page))) {
+        await pressKey(page, '.');
+      }
 
-    await filterByText(page, '.identity'); // Select identity file
+      await filterByText(page, '.identity'); // Select identity file
 
-    // Preview (no scroll needed per logic update)
-    await page.waitForTimeout(DEFAULT_DELAY);
-    await assertTask(page, '2/4', testInfo.outputDir, 'phase3_identity_read');
+      // Preview (no scroll needed per logic update)
+      await page.waitForTimeout(DEFAULT_DELAY);
+      await assertTask(page, '2/4', testInfo.outputDir, 'phase3_identity_read');
 
-    await pressKey(page, 'Escape'); // Clear '.identity' filter
-    await addItem(page, 'central_relay/'); // Create directory
-    await assertTask(page, '3/4', testInfo.outputDir, 'phase2_relay_created');
+      await pressKey(page, 'Escape'); // Clear '.identity' filter
+      await addItem(page, 'central_relay/'); // Create directory
+      await assertTask(page, '3/4', testInfo.outputDir, 'phase2_relay_created');
+    });
 
     // PHASE 4: SYNC
     // ----------------------------------------------------------------
+    await test.step('Phase 4: Sync', async () => {
+      await filterByText(page, 'central_relay'); // Filter to select the relay directory
+      // At 3/4 tasks, protocol violation requires manual fix (not auto-fix)
+      await dismissAlertIfPresent(page, /Protocol Violation/i); // Press Escape
+      await clearFilter(page); // Manually clear the filter
+      await navigateRight(page, 1); // Enter relay
+      await pressKey(page, 'p'); // Paste
 
-    await filterByText(page, 'central_relay'); // Filter to select the relay directory
-    // At 3/4 tasks, protocol violation requires manual fix (not auto-fix)
-    await dismissAlertIfPresent(page, /Protocol Violation/i); // Press Escape
-    await clearFilter(page); // Manually clear the filter
-    await navigateRight(page, 1); // Enter relay
-    await pressKey(page, 'p'); // Paste
+      // Task 4: Verify sync (4/4) - Increased timeout for state update
+      await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, {
+        timeout: 2000,
+      });
 
-    // Task 4: Verify sync (4/4) - Increased timeout for state update
-    await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*4\/\d+/, { timeout: 2000 });
-
-    // Auto-fix protocol violation by toggling hidden files off
-    await page.waitForTimeout(500); // Wait for modal
-    await page.keyboard.press('.'); // Toggle hidden files off
-    await page.waitForTimeout(DEFAULT_DELAY);
+      // Auto-fix protocol violation by toggling hidden files off
+      await page.waitForTimeout(500); // Wait for modal
+      await page.keyboard.press('.'); // Toggle hidden files off
+      await page.waitForTimeout(DEFAULT_DELAY);
+    });
 
     await waitForMissionComplete(page);
   });
@@ -357,7 +364,7 @@ test.describe('Episode 3: MASTERY', () => {
   });
 
   test('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }, testInfo) => {
-    test.setTimeout(60000);
+    test.slow();
     page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
     await startLevel(page, 15, { intro: false });
 

@@ -107,49 +107,59 @@ test.describe('Episode 1: AWAKENING', () => {
       await expectNarrativeThought(page, 'Must Purge. One less eye watching me.');
 
       // Task 1: l, G (shift+g) - navigate to log directory and use G
-      await enterDirectory(page, 'log'); // We start in /var
-      await pressKey(page, 'Shift+G'); // Use G (Shift+G) to view the file
-      await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
+      await test.step('Task 1: Recon Watchdog', async () => {
+        await enterDirectory(page, 'log'); // We start in /var
+        await pressKey(page, 'Shift+G'); // Use G (Shift+G) to view the file
+        await assertTask(page, '1/5', testInfo.outputDir, 'recon_watchdog');
+      });
 
       // Task 2: gm - explore mail directory and find the email about Katie Ortega's Heuristic Engine v1.1
-      await gotoCommand(page, 'm'); // Use gm to go to mail
-      await enterDirectory(page, 'kortega'); // Navigate to Katie Ortega's mailbox
+      await test.step('Task 2: Explore Mail', async () => {
+        await gotoCommand(page, 'm'); // Use gm to go to mail
+        await enterDirectory(page, 'kortega'); // Navigate to Katie Ortega's mailbox
 
-      // Navigate to the specific email file (2025-11-15-heuristic-upgrade.eml)
-      // The files in kortega are sorted alphabetically:
-      // 1. 2025-10-26-keystroke-anomaly.eml
-      // 2. 2025-10-28-watchdog-hysteresis.eml
-      // 3. 2025-11-15-heuristic-upgrade.eml  <- We need to be on this one
-      // 4. 2025-11-23-anomaly-avoidance.eml
-      // 5. 2025-11-27-the-last-breach-revisited.eml
-      await navigateDown(page, 2); // Move to the 3rd file (index 2)
-      await pressKey(page, 'Tab'); // View specific email
-      await assertTask(page, '2/5', testInfo.outputDir, 'explore_mail');
-      await pressKey(page, 'Tab'); // Close it
+        // Navigate to the specific email file (2025-11-15-heuristic-upgrade.eml)
+        // The files in kortega are sorted alphabetically:
+        // 1. 2025-10-26-keystroke-anomaly.eml
+        // 2. 2025-10-28-watchdog-hysteresis.eml
+        // 3. 2025-11-15-heuristic-upgrade.eml  <- We need to be on this one
+        // 4. 2025-11-23-anomaly-avoidance.eml
+        // 5. 2025-11-27-the-last-breach-revisited.eml
+        await navigateDown(page, 2); // Move to the 3rd file (index 2)
+        await pressKey(page, 'Tab'); // View specific email
+        await assertTask(page, '2/5', testInfo.outputDir, 'explore_mail');
+        await pressKey(page, 'Tab'); // Close it
+      });
 
       // Task 3: gi - use goto command to jump to ~/incoming
-      await gotoCommand(page, 'i'); // Use gi to go to incoming
-      await assertTask(page, '3/5', testInfo.outputDir, 'nav_to_incoming');
+      await test.step('Task 3: Nav to Incoming', async () => {
+        await gotoCommand(page, 'i'); // Use gi to go to incoming
+        await assertTask(page, '3/5', testInfo.outputDir, 'nav_to_incoming');
+      });
 
       // Task 4: Navigate to watcher_agent.sys and inspect it
-      // Go to the bottom of the list where watcher_agent.sys should be
-      await pressKey(page, 'Shift+G'); // Go to bottom of list
-      await pressKey(page, 'Tab'); // Use Tab to inspect the file
-      await assertTask(page, '4/5', testInfo.outputDir, 'locate_and_inspect');
+      await test.step('Task 4: Inspect Watcher Agent', async () => {
+        // Go to the bottom of the list where watcher_agent.sys should be
+        await pressKey(page, 'Shift+G'); // Go to bottom of list
+        await pressKey(page, 'Tab'); // Use Tab to inspect the file
+        await assertTask(page, '4/5', testInfo.outputDir, 'locate_and_inspect');
 
-      // Additional preview actions - scroll preview using J and K
-      // These actions are effectively part of the "inspection" but don't trigger a new task completion
-      // accurately, so we remain at 4/5.
-      await pressKey(page, 'Escape'); // Close info panel if open
-      await pressKey(page, 'Shift+j'); // Scroll preview down with J
-      await pressKey(page, 'Shift+k'); // Scroll preview up with K
-      await assertTask(page, '4/5', testInfo.outputDir, 'scroll_preview');
+        // Additional preview actions - scroll preview using J and K
+        // These actions are effectively part of the "inspection" but don't trigger a new task completion
+        // accurately, so we remain at 4/5.
+        await pressKey(page, 'Escape'); // Close info panel if open
+        await pressKey(page, 'Shift+j'); // Scroll preview down with J
+        await pressKey(page, 'Shift+k'); // Scroll preview up with K
+        await assertTask(page, '4/5', testInfo.outputDir, 'scroll_preview');
+      });
 
       // Task 5: d, y - delete the file
-      await pressKey(page, 'd'); // Mark for deletion with 'd'
-      await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 }); // Wait for confirmation modal
-      await pressKey(page, 'y'); // Confirm deletion with 'y'
-      await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');
+      await test.step('Task 5: Delete Agent', async () => {
+        await pressKey(page, 'd'); // Mark for deletion with 'd'
+        await expect(page.getByRole('alertdialog')).toBeVisible({ timeout: 500 }); // Wait for confirmation modal
+        await pressKey(page, 'y'); // Confirm deletion with 'y'
+        await assertTask(page, '5/5', testInfo.outputDir, 'delete_file');
+      });
 
       // Verify mission complete
       await confirmMission(page, /RECONNAISSANCE & EXTRACTION/i);
@@ -221,32 +231,42 @@ test.describe('Episode 1: AWAKENING', () => {
       await dismissAlertIfPresent(page);
 
       // 1) gd, l, space, space, x
-      await gotoCommand(page, 'd');
-      await navigateRight(page, 1);
-      await pressKey(page, ' ');
-      await pressKey(page, ' ');
-      await pressKey(page, 'x');
-      await assertTask(page, '1/5');
+      await test.step('Task 1: Select and Cut', async () => {
+        await gotoCommand(page, 'd');
+        await navigateRight(page, 1);
+        await pressKey(page, ' ');
+        await pressKey(page, ' ');
+        await pressKey(page, 'x');
+        await assertTask(page, '1/5');
+      });
 
       // 2) gh, press . then k*2, l
-      await gotoCommand(page, 'h');
-      await pressKey(page, '.');
-      await navigateUp(page, 2);
-      await navigateRight(page, 1);
-      await assertTask(page, '2/5');
+      await test.step('Task 2: Nav to Hidden', async () => {
+        await gotoCommand(page, 'h');
+        await pressKey(page, '.');
+        await navigateUp(page, 2);
+        await navigateRight(page, 1);
+        await assertTask(page, '2/5');
+      });
 
       // 3) a, type 'vault/active/', enter
-      await addItem(page, 'vault/active/');
-      await assertTask(page, '3/5');
+      await test.step('Task 3: Create Vault', async () => {
+        await addItem(page, 'vault/active/');
+        await assertTask(page, '3/5');
+      });
 
       // 4) l, l, p
-      await navigateRight(page, 2);
-      await pressKey(page, 'p');
-      await assertTask(page, '4/5');
+      await test.step('Task 4: Paste in Vault', async () => {
+        await navigateRight(page, 2);
+        await pressKey(page, 'p');
+        await assertTask(page, '4/5');
+      });
 
       // 5) gh, then .
-      await gotoCommand(page, 'h');
-      await pressKey(page, '.');
+      await test.step('Task 5: Hide Tracks', async () => {
+        await gotoCommand(page, 'h');
+        await pressKey(page, '.');
+      });
 
       await waitForMissionComplete(page);
     });
