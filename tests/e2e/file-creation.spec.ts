@@ -16,6 +16,13 @@ test.describe('File and Folder Creation (add command)', () => {
     await expect(page.getByTestId('status-bar')).toBeVisible();
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('Add a simple file', async ({ page }) => {
     await pressKey(page, 'a');
     await expect(page.getByTestId('input-modal')).toBeVisible();

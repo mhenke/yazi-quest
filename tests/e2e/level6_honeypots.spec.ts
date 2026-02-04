@@ -10,9 +10,18 @@ import {
 } from './utils';
 
 test.describe('Level 6 Honeypot Verification', () => {
-  test('searching from parent directory encounters more irrelevant results', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await startLevel(page, 6, { intro: false });
+  });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
+  test('searching from parent directory encounters more irrelevant results', async ({ page }) => {
     // Navigate to incoming directory (parent of batch_logs)
     await gotoCommand(page, 'i');
 
@@ -57,8 +66,6 @@ test.describe('Level 6 Honeypot Verification', () => {
   });
 
   test('demonstrates intended navigation pattern for Level 6', async ({ page }, testInfo) => {
-    await startLevel(page, 6, { intro: false });
-
     // Follow the intended path: navigate to batch_logs first
     await gotoCommand(page, 'i'); // Go to incoming
     await enterDirectory(page, 'batch_logs'); // Enter batch_logs
@@ -81,8 +88,6 @@ test.describe('Level 6 Honeypot Verification', () => {
   });
 
   test('decoy honeypots can be safely deleted without game over', async ({ page }) => {
-    await startLevel(page, 6, { intro: false });
-
     // Navigate to incoming directory where decoys are located
     await gotoCommand(page, 'i');
 

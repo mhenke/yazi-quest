@@ -1,21 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { startLevel } from './utils';
 
 test.describe('Clipboard Level Restrictions', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clear state before each test
-    await page.goto('http://localhost:3000');
-    await page.evaluate(() => {
-      localStorage.clear();
-      window.localStorage.setItem('yazi-quest-skip-intro', 'true');
-    });
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
   });
 
   test('Level 3 blocks yank (y) and allows cut (x)', async ({ page }) => {
-    // Jump to Level 3 using URL param
-    await page.goto('http://localhost:3000/?level=3&skipIntro=true');
-
-    // Wait for game to load (check level indicator)
-    await expect(page.getByText('L3', { exact: true })).toBeVisible();
+    await startLevel(page, 3, { intro: false });
 
     // Level 3 starts at ~/incoming
     await page.keyboard.press('j'); // Move down to select something if not already on it
@@ -39,10 +34,9 @@ test.describe('Clipboard Level Restrictions', () => {
   });
 
   test('Level 6 blocks cut (x) and allows yank (y)', async ({ page }) => {
-    // Level 6: BATCH OPERATIONS. Hint: '... Replicate (y).'
-    await page.goto('http://localhost:3000/?level=6&skipIntro=true');
-    await expect(page.getByText('L6', { exact: true })).toBeVisible();
+    await startLevel(page, 6, { intro: false });
 
+    // Level 6: BATCH OPERATIONS. Hint: '... Replicate (y).'
     // Level 6 starts at ~ (which is /home/guest)
     // Select something by moving cursor and pressing Space
     await page.keyboard.press('j');
@@ -68,9 +62,7 @@ test.describe('Clipboard Level Restrictions', () => {
     // This explicitly lists 'x'. So 'x' should be allowed.
     // It does NOT list 'y'. So 'y' should be blocked.
 
-    await page.goto('http://localhost:3000/?level=15&skipIntro=true');
-    // Wait for L15 text, might be "L15" or title
-    await expect(page.getByText('L15')).toBeVisible();
+    await startLevel(page, 15, { intro: false });
 
     // Need to find a file first, start in /tmp
     // /tmp has vault dir and some files
@@ -93,8 +85,7 @@ test.describe('Clipboard Level Restrictions', () => {
 
   test('Level with mixed requirements allows both', async ({ page }) => {
     // Level 4 hint: "Replicate (y), exfiltrate (x)."
-    await page.goto('http://localhost:3000/?level=4&skipIntro=true');
-    await expect(page.getByText('L4')).toBeVisible();
+    await startLevel(page, 4, { intro: false });
 
     await page.keyboard.press('j');
     await page.keyboard.press(' '); // Select the item
