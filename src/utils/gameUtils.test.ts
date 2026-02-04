@@ -137,6 +137,24 @@ describe('gameUtils', () => {
       expect(result.severity).toBe('notification');
     });
 
+    it('should return modal severity for honeypot in Level 6', () => {
+      const nodes: FileNode[] = [
+        {
+          id: 'file1',
+          name: 'active_log_sync.lock',
+          type: 'file',
+          parentId: 'parent1',
+          isHoneypot: true,
+        },
+      ];
+
+      // Level 6 is index 5
+      const result = checkGrabbingHoneypot(nodes, 5);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('modal');
+      expect(result.message).toContain('PROTOCOL VIOLATION');
+    });
+
     it('should return modal severity for access_token.key in Level 7', () => {
       const nodes: FileNode[] = [
         {

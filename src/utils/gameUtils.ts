@@ -186,6 +186,20 @@ export const checkGrabbingHoneypot = (
 ): { triggered: boolean; severity: 'notification' | 'modal' | 'gameover'; message?: string } => {
   const levelId = levelIndex + 1;
 
+  // Level 6: Clipboard Honeypot (active_log_sync.lock)
+  if (levelId === 6) {
+    const hasHoneypot = nodes.some(
+      (n) => (n.isHoneypot && !n.isDecoy) || n.content?.includes('HONEYPOT')
+    );
+    if (hasHoneypot) {
+      return {
+        triggered: true,
+        severity: 'modal',
+        message: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
+      };
+    }
+  }
+
   // Level 7: Sticky Trap
   if (levelId === 7) {
     const hasToken = nodes.some((n) => n.name === 'access_token.key');
