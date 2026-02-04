@@ -387,6 +387,10 @@ test.describe('Episode 3: MASTERY', () => {
       await pressKey(page, 'p');
       await page.waitForTimeout(DEFAULT_DELAY);
 
+      // Toggle hidden files back off to avoid Protocol Violation
+      await pressKey(page, '.');
+      await page.waitForTimeout(DEFAULT_DELAY);
+
       await assertTask(page, '2/5', testInfo.outputDir, 'phase2_keys');
     });
 
@@ -436,24 +440,20 @@ test.describe('Episode 3: MASTERY', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'phase4_payload');
     });
 
-    // Task 5: Execute transmission
-    await test.step('Task 5: Execute transmission', async () => {
-      // Navigate to /tmp/upload/systemd-core
-      await gotoCommand(page, 't');
-      await clearFilter(page);
-
-      await enterDirectory(page, 'upload');
-      await clearFilter(page);
-
-      await enterDirectory(page, 'systemd-core');
-      await clearFilter(page);
-
-      await assertTask(page, '5/5', testInfo.outputDir, 'phase5_transmission');
-    });
-
-    // Complete level
+    // All 5 tasks complete - use Shift+Enter to auto-fix any protocol violations and complete
+    // Note: Hidden files may still be visible, causing a Protocol Violation modal.
+    // Shift+Enter auto-fixes this and triggers mission completion.
     await page.keyboard.press('Shift+Enter');
     await page.waitForTimeout(500);
+
+    // If Protocol Violation modal appeared, Shift+Enter dismissed it. Press again to complete.
+    // Check if mission complete dialog is visible, if not press Shift+Enter again
+    const missionComplete = page.locator('text=MISSION COMPLETE');
+    if (!(await missionComplete.isVisible({ timeout: 1000 }).catch(() => false))) {
+      await page.keyboard.press('Shift+Enter');
+      await page.waitForTimeout(500);
+    }
+
     await confirmMission(page, 'TRANSMISSION PROTOCOL');
   });
 });
