@@ -166,11 +166,24 @@ export const handleClipboardKeyDown = (
 
       const uniqueNodes = Array.from(new Map(nodesToGrab.map((n) => [n.id, n])).values());
 
-      if (checkGrabbingHoneypot(uniqueNodes)) {
-        showNotification(
-          '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
-          4000
-        );
+      const honeypotCheck = checkGrabbingHoneypot(uniqueNodes, gameState.levelIndex);
+      if (honeypotCheck.triggered) {
+        if (honeypotCheck.severity === 'gameover') {
+          dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
+          return true;
+        } else if (honeypotCheck.severity === 'modal') {
+          dispatch({
+            type: 'SET_ALERT_MESSAGE',
+            message: honeypotCheck.message || '🚨 HONEYPOT DETECTED!',
+          });
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
+        } else {
+          showNotification(
+            honeypotCheck.message ||
+              '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
+            4000
+          );
+        }
       }
 
       const legacyThought = getLevel11LegacyThought(uniqueNodes, gameState.levelIndex);

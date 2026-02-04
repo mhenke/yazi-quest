@@ -91,6 +91,11 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await expect(selectedFile).toContainText('access_token.key');
 
     await pressKey(page, 'x'); // cut the file
+
+    // New behavior: Honeypot alert triggers immediately on cut
+    // We must dismiss it to continue navigation
+    await dismissAlertIfPresent(page);
+
     // Verify Task 3 completion (Stage Token)
     await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
 
