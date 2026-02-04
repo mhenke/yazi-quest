@@ -12,6 +12,10 @@ import {
 } from './utils';
 
 test.describe('Protocol Violations and Navigation Blocking', () => {
+  test.beforeEach(async ({ page }) => {
+    await startLevel(page, 6, { intro: false });
+  });
+
   test.afterEach(async ({ page }, testInfo) => {
     if (testInfo.status !== testInfo.expectedStatus) {
       const screenshotPath = `/home/mhenke/.gemini/antigravity/brain/fcf9e7e6-cd6f-4bb3-a244-0ef3d21013fe/${testInfo.title.replace(/\s+/g, '_')}_fail.png`;
@@ -20,8 +24,6 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
   });
 
   test('blocks navigation when filter is active during tasks', async ({ page }) => {
-    await startLevel(page, 6, { intro: false });
-
     // Apply a filter
     await filterByText(page, 'batch');
 
@@ -35,8 +37,6 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
   });
 
   test('allows vertical navigation when sort is active during tasks', async ({ page }) => {
-    await startLevel(page, 6, { intro: false });
-
     // Apply a custom sort (sort by size: ,s)
     await page.keyboard.press(',');
     await page.keyboard.press('s');
@@ -115,8 +115,6 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
   });
 
   test('blocks navigation when search is active during tasks', async ({ page }) => {
-    await startLevel(page, 6, { intro: false });
-
     // Start a search
     await search(page, 'log');
 
@@ -135,8 +133,6 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
   test('triggers auto-fix when navigation is attempted after tasks are complete', async ({
     page,
   }) => {
-    await startLevel(page, 6, { intro: false });
-
     // --- COMPLETE LEVEL 6 TASKS 1-4, THEN CREATE VIOLATION, THEN COMPLETE TASK 5 ---
     // 1. gi
     await gotoCommand(page, 'i');

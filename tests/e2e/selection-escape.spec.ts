@@ -2,10 +2,12 @@ import { test, expect } from '@playwright/test';
 import { startLevel, pressKey, pressKeys } from './utils';
 
 test.describe('Escape Key Behavior', () => {
-  test('Esc in Search + Select All should exit search and clear selections', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     // Start Level 2 (general sandbox)
     await startLevel(page, 2);
+  });
 
+  test('Esc in Search + Select All should exit search and clear selections', async ({ page }) => {
     // 1. Enter search mode and search for something
     await pressKey(page, 's');
     await expect(page.getByText('Recursive search')).toBeVisible();
@@ -36,8 +38,6 @@ test.describe('Escape Key Behavior', () => {
   });
 
   test('Esc in Filter + Select All should exit filter and clear selections', async ({ page }) => {
-    await startLevel(page, 2);
-
     // 1. Enter Filter mode (f)
     await pressKey(page, 'f');
     await expect(page.getByTestId('filter-input')).toBeVisible();
@@ -68,8 +68,6 @@ test.describe('Escape Key Behavior', () => {
   });
 
   test('Esc in Search + Filter + Select All should clear everything', async ({ page }) => {
-    await startLevel(page, 2);
-
     // 1. Enter Search mode
     await pressKey(page, 's');
     await page.keyboard.type('log');
@@ -105,8 +103,6 @@ test.describe('Escape Key Behavior', () => {
   });
 
   test('Esc in Normal Mode with selections should clear selections', async ({ page }) => {
-    await startLevel(page, 2);
-
     // 1. Select a file (Space)
     await pressKey(page, 'Space');
     // Verify selection (Status bar VIS)
