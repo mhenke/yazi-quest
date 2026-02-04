@@ -111,6 +111,7 @@ export const handleSystemParamsKeyDown = (
     case 'Escape': {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+      dispatch({ type: 'SET_SELECTION', ids: [] });
 
       // Dismiss all protocol violation modals
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false });

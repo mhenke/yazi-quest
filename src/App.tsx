@@ -1801,10 +1801,10 @@ export default function App() {
           >
             <div className="font-mono text-sm text-zinc-400" data-testid="breadcrumbs">
               {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
+              {gameState.searchQuery && (
+                <span className="text-green-400"> (search: {gameState.searchQuery})</span>
+              )}
               {(() => {
-                if (gameState.searchQuery) {
-                  return <span className="text-green-400"> (search: {gameState.searchQuery})</span>;
-                }
                 const dir = getNodeByPath(gameState.fs, gameState.currentPath);
                 const filter = dir ? gameState.filters[dir.id] : null;
                 return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
