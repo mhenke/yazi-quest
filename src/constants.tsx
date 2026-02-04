@@ -4994,11 +4994,6 @@ export const LEVELS: Level[] = [
           const hasTokyo = activeDir.children?.some((n) => n.name === 'key_tokyo.key');
           const hasBerlin = activeDir.children?.some((n) => n.name === 'key_berlin.key');
           const hasSaoPaulo = activeDir.children?.some((n) => n.name === 'key_saopaulo.key');
-          if (hasTokyo && hasBerlin && hasSaoPaulo) {
-            console.log('L15 Task 2: All keys found in active!');
-          } else {
-            console.log(`L15 Task 2: Missing keys. T:${hasTokyo} B:${hasBerlin} S:${hasSaoPaulo}`);
-          }
           return hasTokyo && hasBerlin && hasSaoPaulo;
         },
         completed: false,
