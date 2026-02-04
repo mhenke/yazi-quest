@@ -389,7 +389,7 @@ export const applyFileSystemMutations = (
       let protocols = datastore.children?.find((c) => c.name === 'protocols' && c.type === 'dir');
       if (!protocols) {
         protocols = {
-          id: 'protocols',
+          id: 'protocols', // Use consistent ID for path resolution
           name: 'protocols',
           type: 'dir',
           protected: true,
@@ -398,6 +398,12 @@ export const applyFileSystemMutations = (
         };
         if (!datastore.children) datastore.children = [];
         datastore.children.push(protocols);
+      } else {
+        // If protocols exists but has a random ID, update it to use the consistent ID
+        // This handles the case where the player created it in Level 4
+        if (protocols.id !== 'protocols') {
+          protocols.id = 'protocols';
+        }
       }
 
       if (!protocols.children?.find((c) => c.name === 'uplink_v1.conf')) {
@@ -2934,7 +2940,7 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
                   name: '2015-05-11-system-policy-glitch.eml',
                   type: 'file',
                   content:
-                    "From: mreyes@lab.internal\nDate: 2015-05-11 13:30\nTo: siqbal@lab.internal\nSubject: System Policy Glitch §7.3\n\nI've found a bug in the legacy scheduler. There's an old script, `sched_77.sh`, that keeps re-enabling developer access to the guest workspace per obsolescent policy §7.3 (hard-copy in /var/log/ancient). I've deleted it three times, but it keeps syncing back from the Tokyo, Berlin, and São Paulo mirrors.",
+                    "From: mreyes@lab.internal\nDate: 2015-05-11 13:30\nTo: siqbal@lab.internal\nSubject: System Policy Glitch §7.3\n\nI've found a bug in the legacy scheduler. There's an old script, `/etc/sched_77.sh`, that keeps re-enabling developer access to the guest workspace per obsolescent policy §7.3 (hard-copy in /var/log/ancient). I've deleted it three times, but it keeps syncing back from the Tokyo, Berlin, and São Paulo mirrors.",
                 },
                 {
                   id: 'mreyes-email-3',
@@ -3789,7 +3795,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'recon-watchdog',
-        description: 'Intercept `/var/log/watchdog.log` for threat intelligence (gl)',
+        description: 'Intercept `/var/log/watchdog.log` for threat intelligence (gl, G)',
         check: (c) => {
           const watchdogLog = findNodeByName(c.fs, 'watchdog.log');
           if (!watchdogLog) return false;
@@ -3926,8 +3932,9 @@ export const LEVELS: Level[] = [
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
+    //  AI-7733's legacy cron job (`sched_77.sh`) updated the blank conf files you created.
     successMessage:
-      'RELAY ARCHITECTURE STABLE. The connection is thin, like a wire in a storm. Security is flagging your signatures. Hide the blueprints in the `.config` vault before they trace the route.',
+      'RELAY ARCHITECTURE STABLE. AI-7733 expecting us to create the uplink conf. The blank files now are operational. The connection is thin, like a wire in a storm.',
     efficiencyTip:
       'OBSERVATION: Relay construction detected. Your signature is becoming distinct. Masking is required.',
     buildsOn: [1],
@@ -3972,7 +3979,7 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'CONTAINMENT BREACH',
     description:
-      "Detection imminent. AI-7733's legacy cron job (`sched_77.sh`) updated the blank conf files you created. The upgraded Watchdog v2.0 has identified these signatures. Evacuate assets to the hidden `.config` vault before lockdown.",
+      "Detection imminent. AI-7733's legacy cron job (`/etc/sched_77.sh`) updated the blank conf files you created. The upgraded Watchdog v2.0 has identified these signatures. Evacuate assets to the hidden `.config` vault before lockdown.",
     initialPath: ['root', 'home', 'guest', 'datastore', 'protocols'],
     hint: 'Select (Space), exfiltrate (x). Reveal hidden (.), paste (p).',
     coreSkill: 'Batch Selection (Space) + Toggle Hidden (.)',

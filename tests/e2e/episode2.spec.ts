@@ -33,43 +33,53 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await startLevel(page, 6, { intro: false });
 
     // 2) gi (g then i), then l (enter batch_logs)
-    await gotoCommand(page, 'i');
-    await enterDirectory(page, 'batch_logs');
-    await assertTask(page, '1/5', testInfo.outputDir, 'task1');
+    await test.step('Navigate to batch_logs', async () => {
+      await gotoCommand(page, 'i');
+      await enterDirectory(page, 'batch_logs');
+      await assertTask(page, '1/5', testInfo.outputDir, 'task1');
+    });
 
     // 3) Use robust search helper
-    await search(page, '\\.log$');
+    await test.step('Recursive Search', async () => {
+      await search(page, '\\.log$');
 
-    // Wait for search results to populate (at least 4 logs expected)
-    await page.waitForFunction(
-      () => document.querySelectorAll('[data-testid^="file-"]').length >= 4
-    );
+      // Wait for search results to populate (at least 4 logs expected)
+      await page.waitForFunction(
+        () => document.querySelectorAll('[data-testid^="file-"]').length >= 4
+      );
 
-    await assertTask(page, '2/5', testInfo.outputDir, 'task2');
+      await assertTask(page, '2/5', testInfo.outputDir, 'task2');
+    });
 
     // 4) ctrl+a, then y
-    await pressKey(page, 'Ctrl+a');
-    await pressKey(page, 'y');
-    // Task 3 requires clearing the search (Escape) to be marked complete
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(DEFAULT_DELAY); // Allow state to update
-    await assertTask(page, '3/5', testInfo.outputDir, 'task3');
+    await test.step('Batch Select & Yank', async () => {
+      await pressKey(page, 'Ctrl+a');
+      await pressKey(page, 'y');
+      // Task 3 requires clearing the search (Escape) to be marked complete
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(DEFAULT_DELAY); // Allow state to update
+      await assertTask(page, '3/5', testInfo.outputDir, 'task3');
+    });
 
     // 5) gc (g then c) -- Escape is already pressed
-    await gotoCommand(page, 'c');
-    await filterAndSelect(page, 'vault');
-    await navigateRight(page, 1);
-    await clearFilter(page);
-    await addItem(page, 'training_data/');
-    await assertTask(page, '4/5', testInfo.outputDir, 'task4');
+    await test.step('Navigate to Vault & Add Training Data', async () => {
+      await gotoCommand(page, 'c');
+      await filterAndSelect(page, 'vault');
+      await navigateRight(page, 1);
+      await clearFilter(page);
+      await addItem(page, 'training_data/');
+      await assertTask(page, '4/5', testInfo.outputDir, 'task4');
+    });
 
     // 7) l (enter training_data) then p
-    await enterDirectory(page, 'training_data');
-    await pressKey(page, 'p');
-    await assertTask(page, '5/5', testInfo.outputDir, 'task5');
+    await test.step('Paste Data', async () => {
+      await enterDirectory(page, 'training_data');
+      await pressKey(page, 'p');
+      await assertTask(page, '5/5', testInfo.outputDir, 'task5');
 
-    // Wait for mission complete dialog to appear
-    await confirmMission(page, 'BATCH OPERATIONS');
+      // Wait for mission complete dialog to appear
+      await confirmMission(page, 'BATCH OPERATIONS');
+    });
   });
 
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
@@ -79,55 +89,51 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await startLevel(page, 7, { intro: false });
 
     // Task 1: Go to root, then find access_token.key using fzf
-    await gotoCommand(page, 'r');
-    // Task 1 (nav-to-root) is complete here (1/4)
+    await test.step('Task 1 & 2: Locate Token', async () => {
+      await gotoCommand(page, 'r');
+      // Task 1 (nav-to-root) is complete here (1/4)
 
-    await findFZF(page, 'access_token'); // Search for access_token explicitly
-    // Task 2 (locate-token) is complete here (2/4)
+      await findFZF(page, 'access_token'); // Search for access_token explicitly
+      // Task 2 (locate-token) is complete here (2/4)
 
-    // Verify we have 2/4 tasks complete
-    await assertTask(page, '2/4', testInfo.outputDir, 'locate_token');
+      // Verify we have 2/4 tasks complete
+      await assertTask(page, '2/4', testInfo.outputDir, 'locate_token');
 
-    // Verify we actually landed on the file
-    const selectedFile = page.locator('[aria-current="location"]');
-    await expect(selectedFile).toContainText('access_token.key');
+      // Verify we actually landed on the file
+      const selectedFile = page.locator('[aria-current="location"]');
+      await expect(selectedFile).toContainText('access_token.key');
+    });
 
-    await pressKey(page, 'x'); // cut the file
+    await test.step('Task 3: Cut & Handle Honeypot', async () => {
+      await pressKey(page, 'x'); // cut the file
 
-    // New behavior: Honeypot alert triggers immediately on cut
-    // We must dismiss it to continue navigation
-    await dismissAlertIfPresent(page);
+      // New behavior: Honeypot alert triggers immediately on cut
+      // We must dismiss it to continue navigation
+      await dismissAlertIfPresent(page);
 
-    // Verify Task 3 completion (Stage Token)
-    await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
+      // Verify Task 3 completion (Stage Token)
+      await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
+    });
 
     // Task 4: Jump to vault using `gc` and `l` (User Expert Steps)
-    await gotoCommand(page, 'c');
-    // We assume 'vault' is selected or we need to select it.
-    // In .config, vault might not be first.
-    // But per user instruction "gc, l", we assume it works.
-    // Let's ensure we are on 'vault' just in case to avoid flakiness,
-    // or trust the user's implicit state.
-    // Given the test failure "Tasks: 2/4", we know FZF worked.
-    // Let's use filter to ensure we hit vault if we are in config
-    // Actually, `gc` goes to `~/.config`.
-    // We can try typing 'vault' to filter or fuzzy find?
-    // User said "gc, l".
-    // I will try just 'l'. If it fails to enter vault, I'll debug.
-    // But validation first: Task 4 might fail if it demands Zoxide.
-    // I'll update constants.tsx to allow GC too.
-    await pressKey(page, 'l');
+    await test.step('Task 4: Jump to Vault & Fall into Trap', async () => {
+      await gotoCommand(page, 'c');
+      // We assume 'vault' is selected or we need to select it.
+      await pressKey(page, 'l');
 
-    // Task 4 complete -> hidden Task 5 appears, so count becomes 4/5
-    await expectNarrativeThought(page, "It's a trap. I remember the shape of this code.");
-    await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
+      // Task 4 complete -> hidden Task 5 appears, so count becomes 4/5
+      await expectNarrativeThought(page, "It's a trap. I remember the shape of this code.");
+      await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
+    });
 
-    await dismissAlertIfPresent(page); // Dismiss alert
-    await page.keyboard.press('Shift+Y'); // Abort operation (Y)
+    await test.step('Task 5: Abort Operation', async () => {
+      await dismissAlertIfPresent(page); // Dismiss alert
+      await page.keyboard.press('Shift+Y'); // Abort operation (Y)
 
-    await assertTask(page, '5/5', testInfo.outputDir, 'abort_operation');
+      await assertTask(page, '5/5', testInfo.outputDir, 'abort_operation');
 
-    await confirmMission(page, 'QUANTUM BYPASS');
+      await confirmMission(page, 'QUANTUM BYPASS');
+    });
   });
 
   // Level 8: DAEMON DISGUISE CONSTRUCTION - Force Overwrite (Shift+P)
@@ -172,7 +178,6 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // Objective 2: Preview 'uplink_v1.conf' to confirm corruption (f -> type 'uplink')
     // Check if uplink_v1.conf exists in the systemd-core directory
     await clearFilter(page); // Clear any filters from navigation
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     const uplinkLocator = page
       .getByTestId('filesystem-pane-active')
@@ -183,7 +188,6 @@ test.describe('Episode 2: FORTIFICATION', () => {
     if (!uplinkExists) {
       // Create the uplink_v1.conf file with corrupted content if it doesn't exist
       await addItem(page, 'uplink_v1.conf');
-      await page.waitForTimeout(DEFAULT_DELAY);
     }
 
     await filterByText(page, 'uplink_v1');
@@ -233,11 +237,9 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Filter to show only the keeper files
     await filterByText(page, '\\.(key|pid|sock)$');
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     // Ctrl+A to select all visible (filtered) keeper files
     await pressKey(page, 'Ctrl+a');
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
@@ -251,7 +253,6 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // DO NOT clear filter - Escape clears selections in authentic Yazi behavior.
     // Delete works on selected items regardless of filter visibility.
     await deleteItem(page, { permanent: true, confirm: true });
-    await page.waitForTimeout(DEFAULT_DELAY);
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
 

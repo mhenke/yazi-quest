@@ -6,6 +6,8 @@ import {
   ECHO_EPISODE_1_LORE,
   ensurePrerequisiteState,
   applyFileSystemMutations,
+  UPLINK_V1_CONTENT,
+  UPLINK_V2_CONTENT,
 } from './constants';
 import type { GameState, ZoxideEntry } from './types';
 import { InputModal } from './components/InputModal';
@@ -670,6 +672,13 @@ export default function App() {
     // Check if everything is complete (including just finished ones)
     const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
 
+    // DEBUG: Trace completion logic
+    if (gameState.levelIndex === 4 && tasksComplete) {
+      console.error(
+        `[DEBUG-GLOBAL] Level 4 Tasks Complete! ShowToast: ${gameState.showSuccessToast}, Intro: ${gameState.showEpisodeIntro}`
+      );
+    }
+
     // Check for Protocol Violations - ONLY on final task completion
     if (tasksComplete) {
       const isSortDefault = gameState.sortBy === 'natural' && gameState.sortDirection === 'asc';
@@ -716,6 +725,39 @@ export default function App() {
         }
       } else {
         if (!gameState.showSuccessToast && !gameState.showEpisodeIntro) {
+          // Level 4 Special Logic: Mutate blank files to full content before success
+          if (currentLevel.id === 4) {
+            console.error('[DEBUG] Level 4 completion detected. Checking for mutation...');
+            const newFs = cloneFS(gameState.fs);
+            const datastore = getNodeById(newFs, 'datastore');
+            const protocols = datastore?.children?.find((c) => c.name === 'protocols');
+            if (protocols?.children) {
+              const v1 = protocols.children.find((c) => c.name === 'uplink_v1.conf');
+              const v2 = protocols.children.find((c) => c.name === 'uplink_v2.conf');
+              let mutated = false;
+
+              if (v1 && v1.content !== UPLINK_V1_CONTENT) {
+                console.error('[DEBUG] Mutating uplink_v1.conf');
+                v1.content = UPLINK_V1_CONTENT;
+                mutated = true;
+              }
+              if (v2 && v2.content !== UPLINK_V2_CONTENT) {
+                console.error('[DEBUG] Mutating uplink_v2.conf');
+                v2.content = UPLINK_V2_CONTENT;
+                mutated = true;
+              }
+
+              if (mutated) {
+                console.error('[DEBUG] Dispatching UPDATE_FS');
+                dispatch({ type: 'UPDATE_FS', fs: newFs });
+              } else {
+                console.error('[DEBUG] No mutation needed (files already updated or missing)');
+              }
+            } else {
+              console.error('[DEBUG] protocols directory not found or empty');
+            }
+          }
+
           playSuccessSound(gameState.settings.soundEnabled);
           dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: true });
         }

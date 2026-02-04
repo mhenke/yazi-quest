@@ -1,12 +1,7 @@
-import { test, expect } from '@playwright/test';
-import { startLevel, pressKey, pressKeys } from './utils';
+import { test, expect } from './fixtures';
+import { pressKey, pressKeys } from './utils';
 
 test.describe('Escape Key Behavior', () => {
-  test.beforeEach(async ({ page }) => {
-    // Start Level 2 (general sandbox)
-    await startLevel(page, 2);
-  });
-
   test.afterEach(async ({ page }, testInfo) => {
     if (testInfo.status !== testInfo.expectedStatus) {
       const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
@@ -14,7 +9,9 @@ test.describe('Escape Key Behavior', () => {
     }
   });
 
-  test('Esc in Search + Select All should exit search and clear selections', async ({ page }) => {
+  test('Esc in Search + Select All should exit search and clear selections', async ({
+    level2Page: page,
+  }) => {
     // 1. Enter search mode and search for something
     await pressKey(page, 's');
     await expect(page.getByText('Recursive search')).toBeVisible();
@@ -41,10 +38,14 @@ test.describe('Escape Key Behavior', () => {
     await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
 
     // 5. Verify Selections Cleared (Status bar not VIS)
-    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+    await expect(
+      page.getByTestId('status-bar').getByText('VIS', { exact: true })
+    ).not.toBeVisible();
   });
 
-  test('Esc in Filter + Select All should exit filter and clear selections', async ({ page }) => {
+  test('Esc in Filter + Select All should exit filter and clear selections', async ({
+    level2Page: page,
+  }) => {
     // 1. Enter Filter mode (f)
     await pressKey(page, 'f');
     await expect(page.getByTestId('filter-input')).toBeVisible();
@@ -71,10 +72,14 @@ test.describe('Escape Key Behavior', () => {
 
     // 6. Verify Selections Cleared (Status bar NOR)
     await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
-    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+    await expect(
+      page.getByTestId('status-bar').getByText('VIS', { exact: true })
+    ).not.toBeVisible();
   });
 
-  test('Esc in Search + Filter + Select All should clear everything', async ({ page }) => {
+  test('Esc in Search + Filter + Select All should clear everything', async ({
+    level2Page: page,
+  }) => {
     // 1. Enter Search mode
     await pressKey(page, 's');
     await page.keyboard.type('log');
@@ -106,10 +111,14 @@ test.describe('Escape Key Behavior', () => {
 
     // Status bar should be NOR (not VIS)
     await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
-    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+    await expect(
+      page.getByTestId('status-bar').getByText('VIS', { exact: true })
+    ).not.toBeVisible();
   });
 
-  test('Esc in Normal Mode with selections should clear selections', async ({ page }) => {
+  test('Esc in Normal Mode with selections should clear selections', async ({
+    level2Page: page,
+  }) => {
     // 1. Select a file (Space)
     await pressKey(page, 'Space');
     // Verify selection (Status bar VIS)
@@ -120,6 +129,8 @@ test.describe('Escape Key Behavior', () => {
 
     // 3. Verify selection cleared (Status bar NOR)
     await expect(page.getByTestId('status-bar').getByText('NOR', { exact: true })).toBeVisible();
-    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).not.toBeVisible();
+    await expect(
+      page.getByTestId('status-bar').getByText('VIS', { exact: true })
+    ).not.toBeVisible();
   });
 });
