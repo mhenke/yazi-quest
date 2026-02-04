@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test';
 import { startLevel, gotoCommand, expectCurrentDir, DEFAULT_DELAY, pressKey } from './utils';
 
 test.describe('Persistence & State Survival', () => {
+  test.beforeEach(async ({ page }) => {
+    // Ensure clean state before each test
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+  });
+
   test('localStorage persists zoxide history across reloads', async ({ page }) => {
     // 1. Start Level 2 (Level 1 blocks 'gr' shortcut)
     await startLevel(page, 2, { intro: false });
@@ -49,7 +55,7 @@ test.describe('Persistence & State Survival', () => {
 
   test('Cycle count persists in localStorage', async ({ page }) => {
     // 1. Manually set cycle count in localStorage
-    await page.goto('/');
+    // Note: We already cleared it in beforeEach, but now we set specific state.
     await page.evaluate(() => {
       localStorage.setItem('yazi-quest-cycle', '5');
     });
