@@ -52,28 +52,8 @@ test.describe('Game Mechanics & Failures', () => {
     await expect(page.getByRole('heading', { name: /TRAP ACTIVATED/i })).toBeVisible();
   });
 
-  test('L14 Honeypot: Deleting visible data before decoys triggers Game Over', async ({ page }) => {
-    await startLevel(page, 14);
-
-    // 1. Return to home (starts in ~/workspace)
-    await gotoCommand(page, 'h');
-    await expectCurrentDir(page, '~');
-
-    // 2. Show hidden files to find .purge_lock
-    await pressKey(page, '.');
-
-    // 3. Find and select .purge_lock in home
-    await filterAndSelect(page, '.purge_lock');
-
-    // 4. Attempt to delete it before creating decoys
-    await pressKeys(page, ['Shift+D', 'y']);
-
-    // 5. Expect Game Over with HONEYPOT message (or IG HONEYPOT ALERT title if custom message fails)
-    await expect(
-      page.getByText('HONEYPOT TRIGGERED').or(page.getByText('IG HONEYPOT ALERT')).first()
-    ).toBeVisible();
-    // await expect(page.getByText('Security tripwire detected')).toBeVisible();
-  });
+  // Note: L14 Honeypot test removed - Level 14 (STERILIZATION) now bypasses all honeypots
+  // to allow "purging everything" as the narrative requires.
 
   test('L11 Honeypot: Selecting recent service does not complete task', async ({
     page,

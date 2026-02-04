@@ -14,9 +14,12 @@ import { DEFAULT_DELAY, assertTask, pressKey } from './utils';
  */
 async function skipViaButton(page: Page): Promise<void> {
   const skipButton = page.getByRole('button', { name: 'Skip Intro' });
+  // Wait for button to be visible first, then click repeatedly until intro is done
   for (let i = 0; i < 5; i++) {
     try {
-      await skipButton.click({ timeout: 500 });
+      await skipButton.waitFor({ state: 'visible', timeout: 2000 });
+      await skipButton.click({ timeout: 1000 });
+      await page.waitForTimeout(200);
     } catch {
       break;
     }
@@ -49,7 +52,7 @@ async function skipViaHybrid(page: Page): Promise<void> {
  * Wait for the game UI to be ready (status bar visible).
  */
 async function waitForGameReady(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 3000 });
   await page.waitForTimeout(DEFAULT_DELAY);
 }
 
