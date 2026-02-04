@@ -34,7 +34,7 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
     await expect(page.locator('text=Active filters detected.')).toBeVisible();
   });
 
-  test('blocks navigation when sort is active during tasks', async ({ page }) => {
+  test('allows vertical navigation when sort is active during tasks', async ({ page }) => {
     await startLevel(page, 6, { intro: false });
 
     // Apply a custom sort (sort by size: ,s)
@@ -42,11 +42,22 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
     await page.keyboard.press('s');
     await page.waitForTimeout(DEFAULT_DELAY);
 
-    // Attempt to navigate (k)
+    // Attempt to navigate (k) - should succeed
     await page.keyboard.press('k');
     await page.waitForTimeout(DEFAULT_DELAY);
 
-    // Verify sort warning modal appeared
+    // Verify sort warning modal did NOT appear
+    await expect(page.locator('h2:has-text("Protocol Violation")')).not.toBeVisible();
+    await expect(page.locator('text=Custom sorting active.')).not.toBeVisible();
+
+    // Verify we can still navigate down (j)
+    await page.keyboard.press('j');
+    await page.waitForTimeout(DEFAULT_DELAY);
+    await expect(page.locator('h2:has-text("Protocol Violation")')).not.toBeVisible();
+
+    // Verify horizontal navigation (l) is still blocked
+    await page.keyboard.press('l');
+    await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.locator('h2:has-text("Protocol Violation")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('text=Custom sorting active.')).toBeVisible();
   });
