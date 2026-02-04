@@ -7,6 +7,13 @@ test.describe('Persistence & State Survival', () => {
     await page.evaluate(() => localStorage.clear());
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('localStorage persists zoxide history across reloads', async ({ page }) => {
     // 1. Start Level 2 (Level 1 blocks 'gr' shortcut)
     await startLevel(page, 2, { intro: false });

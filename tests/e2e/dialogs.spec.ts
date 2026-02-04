@@ -6,6 +6,13 @@ test.describe('Dialogs Functionality', () => {
     await startLevel(page, 1, { intro: false });
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('should open and close Help modal with Alt+? and Escape', async ({ page }) => {
     // Initially, Help modal should not be visible
     await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();

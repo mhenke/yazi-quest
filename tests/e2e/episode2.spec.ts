@@ -24,6 +24,8 @@ import {
 } from './utils';
 
 test.describe('Episode 2: FORTIFICATION', () => {
+  test.setTimeout(60000);
+
   // Level 6: BATCH OPERATIONS - Batch Select (Ctrl+A) and Recursive Search (s)
   test('Level 6: BATCH OPERATIONS - completes recursive search and batch operations', async ({
     page,

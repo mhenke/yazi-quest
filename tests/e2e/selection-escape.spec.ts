@@ -7,6 +7,13 @@ test.describe('Escape Key Behavior', () => {
     await startLevel(page, 2);
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('Esc in Search + Select All should exit search and clear selections', async ({ page }) => {
     // 1. Enter search mode and search for something
     await pressKey(page, 's');

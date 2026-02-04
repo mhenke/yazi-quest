@@ -14,6 +14,13 @@ test.describe('Level 6 Honeypot Verification', () => {
     await startLevel(page, 6, { intro: false });
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('searching from parent directory encounters more irrelevant results', async ({ page }) => {
     // Navigate to incoming directory (parent of batch_logs)
     await gotoCommand(page, 'i');

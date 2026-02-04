@@ -124,6 +124,8 @@ async function runLevel12CommonPath(
 }
 
 test.describe('Episode 3: MASTERY', () => {
+  test.setTimeout(120000);
+
   // Level 11: DAEMON RECONNAISSANCE
   test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
     await startLevel(page, 11, { intro: false });

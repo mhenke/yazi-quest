@@ -2,6 +2,13 @@ import { test, expect } from '@playwright/test';
 import { startLevel } from './utils';
 
 test.describe('Clipboard Level Restrictions', () => {
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('Level 3 blocks yank (y) and allows cut (x)', async ({ page }) => {
     await startLevel(page, 3, { intro: false });
 

@@ -18,8 +18,8 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
 
   test.afterEach(async ({ page }, testInfo) => {
     if (testInfo.status !== testInfo.expectedStatus) {
-      const screenshotPath = `/home/mhenke/.gemini/antigravity/brain/fcf9e7e6-cd6f-4bb3-a244-0ef3d21013fe/${testInfo.title.replace(/\s+/g, '_')}_fail.png`;
-      await page.screenshot({ path: screenshotPath });
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
     }
   });
 

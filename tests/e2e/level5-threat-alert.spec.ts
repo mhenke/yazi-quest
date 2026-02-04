@@ -6,6 +6,13 @@ test.describe('Level 5 ThreatAlert Dialog Functionality', () => {
     await startLevel(page, 5, { intro: false });
   });
 
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    }
+  });
+
   test('should allow meta commands (Alt+M, Alt+H, Alt+?) even when ThreatAlert is active on Level 5 - modals should overlay alert', async ({
     page,
   }) => {

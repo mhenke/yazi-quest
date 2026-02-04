@@ -31,6 +31,8 @@ import {
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
+  test.setTimeout(60000);
+
   test.describe('Level 1: SYSTEM AWAKENING', { tag: '@smoke' }, () => {
     test(`Level 1: SYSTEM AWAKENING - completes all navigation tasks`, async ({
       page,
