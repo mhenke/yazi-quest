@@ -193,15 +193,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
         triggerThought('Deeper into the shadow. They cannot track me in the static.');
       }
 
-      // Level 7: Zoxide Vault (Honeypot Alert)
-      if (currentLevel.id === 7 && newTasks.includes('zoxide-vault')) {
-        dispatch({
-          type: 'SET_ALERT_MESSAGE',
-          message:
-            "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
-        });
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
-      }
     }
 
     prevCompletedTasksRef.current = gameState.completedTaskIds;
@@ -234,33 +225,8 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       }
     }
 
-    // Level 12: Selection Honeypot
+    // Level 12: Anomaly Alerts (Scenario specific)
     if (currentLevel.id === 12) {
-      if (gameState.selectedIds.length > 0) {
-        const parentNode = getNodeById(
-          gameState.fs,
-          gameState.currentPath[gameState.currentPath.length - 1]
-        );
-        if (parentNode && parentNode.children) {
-          const selectedNodes = parentNode.children.filter((c) =>
-            gameState.selectedIds.includes(c.id)
-          );
-          const hasHoneypot = selectedNodes.some(
-            (n) => n.isHoneypot || n.content?.includes('HONEYPOT')
-          );
-
-          if (hasHoneypot && !gameState.showThreatAlert) {
-            dispatch({
-              type: 'SET_ALERT_MESSAGE',
-              message:
-                '⚠️ CAUTION: You have selected a valid SYSTEM FILE (Honeypot). Deselect immediately or risk protocol violation.',
-            });
-            dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
-          }
-        }
-      }
-
-      // Level 12: Anomaly Alerts (Scenario specific)
       const workspace = getNodeById(gameState.fs, 'workspace');
       const incoming = getNodeById(gameState.fs, 'incoming');
       const config = getNodeById(gameState.fs, '.config');
@@ -290,31 +256,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       }
     }
 
-    // Level 11: Reconnaissance Logic
-    if (currentLevel.id === 11) {
-      if (gameState.selectedIds.length > 0) {
-        const parentNode = getNodeById(
-          gameState.fs,
-          gameState.currentPath[gameState.currentPath.length - 1]
-        );
-        if (parentNode && parentNode.children) {
-          const selectedNodes = parentNode.children.filter((c) =>
-            gameState.selectedIds.includes(c.id)
-          );
-          const hasHoneypot = selectedNodes.some((n) => n.content?.includes('HONEYPOT'));
-
-          if (hasHoneypot && !gameState.level11Flags?.triggeredHoneypot) {
-            dispatch({
-              type: 'SET_ALERT_MESSAGE',
-              message:
-                '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
-            });
-            dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
-            dispatch({ type: 'UPDATE_LEVEL_11_FLAGS', flags: { triggeredHoneypot: true } });
-          }
-        }
-      }
-    }
   }, [
     gameState.clipboard,
     gameState.selectedIds,

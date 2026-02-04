@@ -180,13 +180,57 @@ export const validateDeletions = (
 /**
  * Checks if any of the nodes being yanked/cut are honeypots.
  */
-export const checkGrabbingHoneypot = (nodes: FileNode[]): boolean => {
-  return nodes.some(
+export const checkGrabbingHoneypot = (
+  nodes: FileNode[],
+  levelIndex: number
+): { triggered: boolean; severity: 'notification' | 'modal' | 'gameover'; message?: string } => {
+  const levelId = levelIndex + 1;
+
+  // Level 7: Sticky Trap
+  if (levelId === 7) {
+    const hasToken = nodes.some((n) => n.name === 'access_token.key');
+    if (hasToken) {
+      return {
+        triggered: true,
+        severity: 'modal',
+        message:
+          "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
+      };
+    }
+  }
+
+  // Level 11 & 12: Honeypots
+  if (levelId === 11 || levelId === 12) {
+    const hasHoneypot = nodes.some(
+      (n) => (n.isHoneypot && !n.isDecoy) || n.content?.includes('HONEYPOT')
+    );
+    if (hasHoneypot) {
+      return {
+        triggered: true,
+        severity: 'modal',
+        message: '🚨 HONEYPOT TRIGGERED! Security trace initiated. This will have consequences.',
+      };
+    }
+  }
+
+  // General Honeypot
+  const hasHoneypot = nodes.some(
     (n) =>
       (n.isHoneypot && !n.isDecoy) ||
       n.content?.includes('HONEYPOT') ||
       n.name === 'access_token.key'
   );
+
+  if (hasHoneypot) {
+    return {
+      triggered: true,
+      severity: 'notification',
+      message:
+        '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
+    };
+  }
+
+  return { triggered: false, severity: 'notification' };
 };
 
 /**

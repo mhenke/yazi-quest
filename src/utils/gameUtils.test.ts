@@ -20,7 +20,6 @@ describe('gameUtils', () => {
     it('should return undefined for empty array', () => {
       const arr: string[] = [];
       // Note: The function as written would cause an error for empty array
-      // This highlights the need for defensive programming
       expect(() => getRandomElement(arr)).toThrow();
     });
 
@@ -87,8 +86,8 @@ describe('gameUtils', () => {
         },
       ];
 
-      const result = checkGrabbingHoneypot(nodes);
-      expect(result).toBe(false);
+      const result = checkGrabbingHoneypot(nodes, 0);
+      expect(result.triggered).toBe(false);
     });
 
     it('should return true for files with isHoneypot flag', () => {
@@ -102,8 +101,9 @@ describe('gameUtils', () => {
         },
       ];
 
-      const result = checkGrabbingHoneypot(nodes);
-      expect(result).toBe(true);
+      const result = checkGrabbingHoneypot(nodes, 0);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('notification');
     });
 
     it('should return true for files with HONEYPOT in content', () => {
@@ -117,8 +117,9 @@ describe('gameUtils', () => {
         },
       ];
 
-      const result = checkGrabbingHoneypot(nodes);
-      expect(result).toBe(true);
+      const result = checkGrabbingHoneypot(nodes, 0);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('notification');
     });
 
     it('should return true for access_token.key file', () => {
@@ -131,8 +132,44 @@ describe('gameUtils', () => {
         },
       ];
 
-      const result = checkGrabbingHoneypot(nodes);
-      expect(result).toBe(true);
+      const result = checkGrabbingHoneypot(nodes, 0);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('notification');
+    });
+
+    it('should return modal severity for access_token.key in Level 7', () => {
+      const nodes: FileNode[] = [
+        {
+          id: 'file1',
+          name: 'access_token.key',
+          type: 'file',
+          parentId: 'parent1',
+        },
+      ];
+
+      // Level 7 is index 6
+      const result = checkGrabbingHoneypot(nodes, 6);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('modal');
+      expect(result.message).toContain('access_token.key');
+    });
+
+    it('should return modal severity for honeypot in Level 11', () => {
+      const nodes: FileNode[] = [
+        {
+          id: 'file1',
+          name: 'some.service',
+          type: 'file',
+          parentId: 'parent1',
+          isHoneypot: true,
+        },
+      ];
+
+      // Level 11 is index 10
+      const result = checkGrabbingHoneypot(nodes, 10);
+      expect(result.triggered).toBe(true);
+      expect(result.severity).toBe('modal');
+      expect(result.message).toContain('HONEYPOT TRIGGERED');
     });
   });
 
