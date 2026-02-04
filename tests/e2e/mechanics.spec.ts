@@ -12,6 +12,12 @@ import {
 } from './utils';
 
 test.describe('Game Mechanics & Failures', () => {
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const screenshotPath = `/home/mhenke/.gemini/antigravity/brain/${testInfo.title.replace(/\s+/g, '_')}_fail.png`;
+      await page.screenshot({ path: screenshotPath });
+    }
+  });
   test('Shell Collapse: Deleting critical system directory triggers Game Over', async ({
     page,
   }, _testInfo) => {

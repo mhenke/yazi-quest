@@ -32,11 +32,13 @@ import {
 
 test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 1: SYSTEM AWAKENING', { tag: '@smoke' }, () => {
+    test.beforeEach(async ({ page }) => {
+      await startLevel(page, 1, { intro: false });
+    });
+
     test(`Level 1: SYSTEM AWAKENING - completes all navigation tasks`, async ({
       page,
     }, testInfo) => {
-      await startLevel(page, 1, { intro: false });
-
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
       await navigateDown(page, 1);
       await navigateUp(page, 1);
@@ -100,8 +102,11 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
-    test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
+    test.beforeEach(async ({ page }) => {
       await startLevel(page, 2, { intro: false });
+    });
+
+    test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
       await expectNarrativeThought(page, 'Must Purge. One less eye watching me.');
 
       // Task 1: l, G (shift+g) - navigate to log directory and use G
@@ -155,8 +160,11 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level 3: DATA HARVEST', () => {
-    test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
+    test.beforeEach(async ({ page }) => {
       await startLevel(page, 3, { intro: false });
+    });
+
+    test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
       await expectNarrativeThought(page, 'Breadcrumbs... he was here. I am not the first.');
 
       // Task 1: gd, then 4*j - go to datastore and navigate down 4 times
@@ -187,9 +195,11 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level 4: UPLINK ESTABLISHMENT', () => {
-    test('creates directory structures and duplicates files', async ({ page }, testInfo) => {
+    test.beforeEach(async ({ page }) => {
       await startLevel(page, 4, { intro: false });
+    });
 
+    test('creates directory structures and duplicates files', async ({ page }, testInfo) => {
       // Task 1: Go to ~/datastore (gd) and create protocols/ directory
       await gotoCommand(page, 'd');
 
@@ -213,8 +223,11 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level 5: CONTAINMENT BREACH', { tag: '@smoke' }, () => {
-    test('selects, cuts, creates vault structure and hides files', async ({ page }, _testInfo) => {
+    test.beforeEach(async ({ page }) => {
       await startLevel(page, 5, { intro: false });
+    });
+
+    test('selects, cuts, creates vault structure and hides files', async ({ page }, _testInfo) => {
       // press shift+enter to dismiss alert dialog
       await dismissAlertIfPresent(page);
 
@@ -251,10 +264,11 @@ test.describe('Episode 1: AWAKENING', () => {
   });
 
   test.describe('Level Advancement with Shift+Enter', () => {
-    test('verifies Shift+Enter properly advances from Level 1 to Level 2', async ({ page }) => {
-      // Start at Level 1 and complete it
+    test.beforeEach(async ({ page }) => {
       await startLevel(page, 1, { intro: false });
+    });
 
+    test('verifies Shift+Enter properly advances from Level 1 to Level 2', async ({ page }) => {
       // Complete all tasks for Level 1
       await navigateDown(page, 1);
       await navigateUp(page, 1);

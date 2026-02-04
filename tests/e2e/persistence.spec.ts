@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 import { startLevel, gotoCommand, expectCurrentDir, DEFAULT_DELAY, pressKey } from './utils';
 
 test.describe('Persistence & State Survival', () => {
+  test.beforeEach(async ({ page }) => {
+    // Ensure a clean localStorage state for each persistence test
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+  });
   test('localStorage persists zoxide history across reloads', async ({ page }) => {
     // 1. Start Level 2 (Level 1 blocks 'gr' shortcut)
     await startLevel(page, 2, { intro: false });

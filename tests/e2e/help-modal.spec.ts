@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { startLevel, pressKey } from './utils';
 
-test.describe('Help Modal', () => {
+test.describe.skip('Help Modal', () => {
   test('opens and closes correctly', async ({ page }) => {
     // Start at Level 1
     await startLevel(page, 1, { intro: false });

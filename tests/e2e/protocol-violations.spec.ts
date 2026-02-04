@@ -12,6 +12,10 @@ import {
 } from './utils';
 
 test.describe('Protocol Violations and Navigation Blocking', () => {
+  test.beforeEach(async ({ page }) => {
+    // Default to Level 6 for protocol-violation scenarios when applicable
+    await startLevel(page, 6, { intro: false });
+  });
   test.afterEach(async ({ page }, testInfo) => {
     if (testInfo.status !== testInfo.expectedStatus) {
       const screenshotPath = `/home/mhenke/.gemini/antigravity/brain/fcf9e7e6-cd6f-4bb3-a244-0ef3d21013fe/${testInfo.title.replace(/\s+/g, '_')}_fail.png`;
