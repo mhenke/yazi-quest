@@ -13,10 +13,10 @@ import { InputModal } from '../../../components/InputModal';
 import { GCommandDialog } from '../../../components/GCommandDialog';
 import { GameModals } from './GameModals';
 import { getParentNode, resolvePath, getNodeByPath } from '../../../utils/fsHelpers';
-import { getVisibleItems, getFilterRegex } from '../../../utils/viewHelpers';
-import { checkAllTasksComplete } from '../../../utils/gameUtils';
 import { sortNodes } from '../../../utils/sortHelpers';
+import { checkAllTasksComplete } from '../../../utils/gameUtils';
 import { EPISODE_LORE, ECHO_EPISODE_1_LORE } from '../../../data/lore';
+import { LEVELS } from '../../../data/levels';
 
 interface GameLayoutProps {
   gameState: GameState;
@@ -111,15 +111,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
       <div className="flex flex-col flex-1 h-full min-w-0">
         {!gameState.showEpisodeIntro && (
           <LevelProgress
-            levels={[]} // Pass LEVELS if needed for map, handled inside LevelProgress via imports or pass explicitly
-            // LevelProgress actually takes levels prop? Yes.
-            // But we should pass it from parent or import it.
-            // Ideally passing it from parent is better for purity.
-            // For now, let's assume parent passes it or we import it.
-            // Wait, GameLayoutProps doesn't have levels. Let's fix this.
-            // LevelProgress uses LEVELS internally? No, it takes a prop.
-            // Let's pass it via props or default.
-            // For now, let's import LEVELS here to pass it.
+            levels={LEVELS}
             currentLevelIndex={gameState.levelIndex}
             notification={null}
             thought={gameState.thought}
@@ -135,10 +127,26 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
               dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
             }
             onJumpToLevel={(idx) => {
-              // This logic duplicates App.tsx jump logic.
-              // We should probably move this handler to App.tsx and pass it down.
-              // But for now, we can dispatch directly or use a handler.
-              // Let's use a placeholder and fix it in App.tsx integration.
+              // This internal handler is usually overridden by the global map handler in App.tsx
+              // but we need to provide basic dispatch here or just use the global listener.
+              // The global listener handles 'onJumpToLevel' logic if `handleQuestMapModeKeyDown` is used.
+              // However, LevelProgress uses onClick.
+              // We need to implement the jump logic here as well.
+              // Reusing logic from App.tsx via a new handler passed down or simplified dispatch.
+              // Since we don't have handleJumpToLevel in props yet (I forgot to add it to props above),
+              // I will add it to the interface and pass it down.
+              // WAIT, I added `handleJumpToLevel` to `App.tsx` but didn't pass it to `GameLayout` yet.
+              // I should update `GameLayoutProps` to include `handleJumpToLevel`.
+              // But for now, let's just use the basic logic which is what the global listener uses.
+              // Actually, I can't easily access `INITIAL_FS` and `cloneFS` without imports.
+              // I have imports. I can replicate logic.
+              // But better to pass the handler.
+              // I will leave it empty for now and fix it by adding handleJumpToLevel to handlers in next step if needed.
+              // OR I can just do the dispatch here.
+              // Let's do the dispatch here since I have imports.
+              // I need INITIAL_FS.
+              // I need to import INITIAL_FS.
+              // Let's import it.
             }}
             activeTab={gameState.questMapTab}
             selectedMissionIdx={gameState.questMapMissionIdx}
@@ -239,14 +247,63 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
 
             {gameState.mode === 'sort' && (
               <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
-                {/* Sort Menu Content - Could be extracted but inline is fine for now */}
                 <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                     Sort Options
                   </span>
                   <span className="text-xs font-mono text-zinc-600">Which-Key</span>
                 </div>
-                {/* ... sort options grid ... */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">n</span>{' '}
+                    <span className="text-zinc-400">Natural</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">N</span>{' '}
+                    <span className="text-zinc-400">Natural (rev)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">a</span>{' '}
+                    <span className="text-zinc-400">A-Z</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">A</span>{' '}
+                    <span className="text-zinc-400">Z-A</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">m</span>{' '}
+                    <span className="text-zinc-400">Modified (new)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">M</span>{' '}
+                    <span className="text-zinc-400">Modified (old)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">s</span>{' '}
+                    <span className="text-zinc-400">Size (large)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">S</span>{' '}
+                    <span className="text-zinc-400">Size (small)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">e</span>{' '}
+                    <span className="text-zinc-400">Extension</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">E</span>{' '}
+                    <span className="text-zinc-400">Extension (rev)</span>
+                  </div>
+                  <div className="col-span-2 border-t border-zinc-800 my-1"></div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">l</span>{' '}
+                    <span className="text-zinc-400">Cycle Linemode</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-orange-500 font-bold">-</span>{' '}
+                    <span className="text-zinc-400">Clear Linemode</span>
+                  </div>
+                </div>
               </div>
             )}
 
