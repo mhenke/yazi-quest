@@ -724,9 +724,6 @@ export default function App() {
   // Zoxide Prompt Handler (Restored)
   const handleZoxidePromptKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Use ref to access current gameState in listener to avoid staleness if not using dependency array properly,
-      // but here we are using dependency array with gameState.
-      // However, since we are moving to ref-based listener, we should use gameStateRef.current.
       const currentGameState = gameStateRef.current;
 
       switch (e.key) {
@@ -926,20 +923,6 @@ export default function App() {
       // Use REF for state access to avoid re-binding
       const currentGameState = gameStateRef.current;
 
-      // Need currentLevel for checks...
-      // currentLevel is derived from gameState, so we can re-derive it or use another ref.
-      // Ideally we shouldn't duplicate logic.
-      // But calculating currentLevel is cheap.
-      // Let's recalculate it or depend on the memoized one (which might cause re-bind if it changes).
-      // Actually, if we use refs, we should use refs for everything that changes frequently (like time).
-      // currentLevel changes only on level advance. That is fine to trigger re-bind.
-      // BUT `tasks` in currentLevel might update? No, tasks completion is in `completedTaskIds` in state.
-      // So `currentLevel` memo depends on `completedTaskIds`.
-      // `gameState` changes every tick due to `timeLeft`.
-      // `completedTaskIds` changes rarely.
-      // So `currentLevel` is relatively stable.
-      // So we can capture `currentLevel` in closure without issues, AS LONG AS we don't depend on `gameState` directly in dependency array.
-
       const tasksComplete = checkAllTasksComplete(currentGameState, currentLevel);
 
       if (tasksComplete && currentGameState.showSuccessToast) {
@@ -953,6 +936,23 @@ export default function App() {
       if (
         ['filter', 'input-file', 'rename'].includes(currentGameState.mode) &&
         e.target instanceof HTMLInputElement
+      ) {
+        return;
+      }
+
+      // Check for Meta keys overrides FIRST - these should work even when blocked
+      const isMetaKey = (e.key === '?' && e.altKey) ||
+                        (e.key.toLowerCase() === 'h' && e.altKey) ||
+                        (e.key.toLowerCase() === 'm' && e.altKey);
+
+      // BLOCKING CHECK for Intro/Booting/GameOver
+      if (
+        (currentGameState.isBooting ||
+        currentGameState.showEpisodeIntro ||
+        isLastLevel ||
+        currentGameState.isGameOver ||
+        ['input-file', 'filter', 'rename'].includes(currentGameState.mode)) &&
+        !isMetaKey // Allow meta keys through
       ) {
         return;
       }
@@ -1061,31 +1061,10 @@ export default function App() {
 
       switch (currentGameState.mode) {
         case 'normal':
-          // Re-calculate derived state for handlers
-          // This is a bit expensive but necessary if we don't pass them in.
-          // Or we can assume `visibleItems` etc are up to date via refs if we ref them too.
-          // But `visibleItems` is Memoized.
-          // The `handleNormalModeKeyDown` in `useKeyboardHandlers` uses `gameState` passed to it?
-          // No, it takes `gameState` as arg.
-          // We must pass `currentGameState`.
-
           handleNormalModeKeyDown(
             e,
             currentGameState,
-            visibleItems, // These are from closure, might be stale if they depend on gameState which changes often?
-            // visibleItems depends on gameState.
-            // If we don't include visibleItems in dependency array, it will be stale.
-            // But visibleItems updates on every render.
-            // We want to avoid re-binding listener on every render.
-            // So we should use a Ref for visibleItems too?
-            // Or just re-bind when visibleItems changes (which is often).
-            // Actually, `visibleItems` changes when: cursor, path, filter, sort changes.
-            // It DOES NOT change when `timeLeft` changes.
-            // `gameState` changes when `timeLeft` changes.
-            // So `useEffect` dep array: `[visibleItems, currentItem, parent, currentLevel]` is fine!
-            // We just remove `gameState` from dep array and use `gameStateRef`.
-            // This is the optimization!
-
+            visibleItems,
             parent,
             currentItem,
             currentLevel,
@@ -1170,6 +1149,7 @@ export default function App() {
         advanceLevel,
         confirmDelete,
         cancelDelete,
+        handleJumpToLevel,
       }}
     />
   );

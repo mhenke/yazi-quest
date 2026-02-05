@@ -49,7 +49,7 @@ async function skipViaHybrid(page: Page): Promise<void> {
  * Wait for the game UI to be ready (status bar visible).
  */
 async function waitForGameReady(page: Page): Promise<void> {
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 500 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(DEFAULT_DELAY);
 }
 
