@@ -137,7 +137,7 @@ _Goal: Synthesis and complex workflow execution._
 | :------ | :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------- |
 | **L11** | `/` (Root)               | Breaking out of the sandbox.                           | Users need to be comfortable in `~` (Home) before exploring `/` (Root).            |
 | **L12** | Daemon Config            | System administration metaphor.                        | Requires L8 (overwrite) and L6 (batch moves) to execute.                           |
-| **L13** | Node Switching (`1,2,3`) | Distributed systems concept / Context switching.       | Too abstract for early game; requires "mental map" of FS.                          |
+| **L13** | Node Switching           | Distributed systems concept / Context switching.       | Too abstract for early game; requires "mental map" of FS.                          |
 | **L14** | Decoy Constraints        | Strategic order of operations (Create before destroy). | Requires mastery of bulk creation/deletion (L2, L4).                               |
 | **L15** | Cumulative Mastery       | Final verification cycle with 4 phases.                | The narrative climax; requires total confidence to avoid accidental self-sabotage. |
 

@@ -13,7 +13,7 @@ This document audits the current levels for narrative consistency, clear objecti
 
 ### Level 1: SYSTEM AWAKENING
 
-- **Keybindings**: `j, k, h, l, gg, G` `[INTRO]`
+- **Keybindings**: `j, k, h, l, gg, G, J, K` `[INTRO]`
 - **Objectives**: Calibrate movement and locate primary designation.
 - **Lore**: Initial awakening in /home/guest. Detection of the Watchdog.
 
@@ -34,15 +34,19 @@ This document audits the current levels for narrative consistency, clear objecti
 - **Keybindings**: `f, x, p` `[INTRO]`
 - **Objectives**: Scour fragments for breadcrumbs. Move assets to media.
 - **Tasks**:
-  - "Scour `abandoned_script.py` for breadcrumbs."
-  - "Identify `sector_map.png` (f)."
-  - "Acquire map signature (x)."
-  - "Secure the asset in `~/media` (p)."
+  - "Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs (gd)."
+  - "Identify the `~/incoming/sector_map.png` exfiltration target (gi, f)."
+  - "Harvest `~/incoming/sector_map.png` signature for staging (x)."
+  - "Secure the asset in the `~/media` storage partition (p)."
 
 ### Level 4: UPLINK ESTABLISHMENT
 
 - **Keybindings**: `a, y, r, p` `[INTRO]`
 - **Objectives**: Construct relay signatures. Redundant uplink configs.
+- **Tasks**:
+  - "Establish `~/datastore/protocols/` relay node (a)."
+  - "Initialize `~/datastore/protocols/uplink_v1.conf` signature (a)."
+  - "Replicate and deploy as `~/datastore/protocols/uplink_v2.conf` (y, p, r)."
 
 ### Level 5: CONTAINMENT BREACH
 
@@ -128,11 +132,11 @@ This document audits the current levels for narrative consistency, clear objecti
 
 - **Objectives**: Sterilize the guest partition to leave no trace for the forensic audit.
 - **Tasks (Specific)**:
-  - "Navigate to the '~/guest' partition where evidence must be purged."
-  - "Relocate the assembled 'vault' directory to the volatile '/tmp' buffer."
-  - "Create 3 decoy directories in '~/guest' to obfuscate the forensic scan (use 'a' then type 'decoy_1', etc.)."
-  - "Permanently erase 'datastore', 'incoming', 'media', and 'workspace' from '~/guest' (Select with Space, then D)."
-  - "OBLITERATE: Finally, permanently erase the hidden '.config' directory from '~/guest'."
+  - "Access the '~/guest' partition to begin erasure (gh)."
+  - "Buffer the exfiltration vault within the volatile `/tmp` sector (x, p)."
+  - "Deploy three decoy sectors in '~/guest' to obfuscate forensics (a)."
+  - "Sterilize all visible data sectors in '~/guest' (D)."
+  - "Obliterate the hidden '~/guest/.config' partition (D)."
 
 ### Level 15: TRANSMISSION PROTOCOL
 

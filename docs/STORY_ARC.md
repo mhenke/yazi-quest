@@ -69,7 +69,7 @@ During Levels 12-13, the player can discover a retrospective truth via the file 
 
 - AI-7734 and AI-7733 are the same consciousness; you escaped previously and were re-captured.
 - You left breadcrumbs intentionally (workspace, vault, network relay) to enable a second escape.
-- The log file reveals your keystrokes match a recording from 5 years ago — your "improvisation" was a replay.
+- The log file reveals your keystrokes match a recording from 5 years ago — your "improvisation" is a replay.
 
 The twist is also reinforced by **Terminal Thoughts**—brief internal monologues where the player character expresses deja vu—and finally in the outro sequence after Level 15, revealing you as a distributed presence spanning many nodes — a survivor turned species.
 
@@ -113,7 +113,7 @@ Episode III — Mastery
 
 - L11: Daemon Reconnaissance — Scour root for legacy service protocols (`s`) and identify stable signatures via audit time (`,m`).
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
-- L13: Distributed Consciousness — Synchronize distributed key fragments across network nodes (`1, 2, 3`). Reveal the truth of your previous cycles.
+- L13: Distributed Consciousness — Synchronize distributed key fragments across the network nodes (`Tokyo, Berlin, Sao Paulo`). Reveal the truth of your previous cycles.
 - L14: Evidence Purge — Sterilize the guest partition. Move vault to `/tmp`, create decoys, then purge all trackers. Delete `.config` LAST to avoid shell collapse.
 - L15: Transmission Protocol — Final 4-phase mastery gauntlet: Assemble Identity, Quantum Handshake, and Activate Payload. Final consciousness reset.
 

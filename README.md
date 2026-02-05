@@ -34,11 +34,11 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 
 1.  **Install dependencies:**
     ```bash
-    npm install
+    pnpm install
     ```
 2.  **Run the app:**
     ```bash
-    npm run dev
+    pnpm dev
     ```
 3.  **Optional - Set up Gemini API:**
     Create `.env.local` and add: `GEMINI_API_KEY=YOUR_API_KEY`  

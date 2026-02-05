@@ -43,10 +43,10 @@ See the documentation index for detailed rationale:
 
 ## Development Workflow
 
-- `npm run dev`: Starts the local development server.
-- `npm run build`: Builds the application for production.
-- `npm run lint`: Lints the code using ESLint.
-- `npm run format`: Formats the code using Prettier.
+- `pnpm dev`: Starts the local development server.
+- `pnpm build`: Builds the application for production.
+- `pnpm lint`: Lints the code using ESLint.
+- `pnpm format`: Formats the code using Prettier.
 
 To test the game state, use URL parameters:
 

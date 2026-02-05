@@ -16,29 +16,29 @@ The project is built using **React 19** and **TypeScript**, with **Vite** for th
 
 ## Building and Running
 
-The project uses `npm` for dependency management and scripts.
+The project uses `pnpm` for dependency management and scripts.
 
 - **Install Dependencies:**
   ```bash
-  npm install
+  pnpm install
   ```
 - **Run Development Server:**
   ```bash
-  npm run dev
+  pnpm dev
   ```
 - **Build for Production:**
   ```bash
-  npm run build
+  pnpm build
   ```
 - **Run Tests:**
   ```bash
-  npm run test
+  pnpm test
   ```
 - **Lint, Format, and Type-Check:**
   ```bash
-  npm run lint
-  npm run format
-  npm run type-check
+  pnpm lint
+  pnpm format
+  pnpm type-check
   ```
 
 ## Development Conventions

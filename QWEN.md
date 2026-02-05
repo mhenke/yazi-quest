@@ -30,27 +30,27 @@ Yazi Quest is an interactive, browser-based educational game that teaches the [Y
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run the app in development mode
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 
 # Preview production build
-npm run preview
+pnpm preview
 
 # Run tests
-npm run test:e2e  # End-to-end tests with Playwright
+pnpm test:e2e  # End-to-end tests with Playwright
 ```
 
 ### Additional Scripts
 
-- `npm run lint` - Lint code using ESLint
-- `npm run format` - Format code using Prettier
-- `npm run type-check` - Type check with TypeScript
-- `npm run prepush` - Runs lint, type-check, build, and e2e tests
+- `pnpm lint` - Lint code using ESLint
+- `pnpm format` - Format code using Prettier
+- `pnpm type-check` - Type check with TypeScript
+- `pnpm prepush` - Runs lint, type-check, build, and e2e tests
 
 ### Environment Configuration
 
