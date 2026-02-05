@@ -37,6 +37,7 @@ interface GameLayoutProps {
     advanceLevel: () => void;
     confirmDelete: (visibleItems: FileNode[], level: Level, state: GameState) => void;
     cancelDelete: () => void;
+    handleJumpToLevel: (levelIndex: number) => void;
   };
 }
 
@@ -60,6 +61,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
     advanceLevel,
     confirmDelete,
     cancelDelete,
+    handleJumpToLevel,
   } = handlers;
 
   if (gameState.isBooting) {
@@ -126,28 +128,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
             onToggleMap={() =>
               dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: !gameState.showMap } })
             }
-            onJumpToLevel={(idx) => {
-              // This internal handler is usually overridden by the global map handler in App.tsx
-              // but we need to provide basic dispatch here or just use the global listener.
-              // The global listener handles 'onJumpToLevel' logic if `handleQuestMapModeKeyDown` is used.
-              // However, LevelProgress uses onClick.
-              // We need to implement the jump logic here as well.
-              // Reusing logic from App.tsx via a new handler passed down or simplified dispatch.
-              // Since we don't have handleJumpToLevel in props yet (I forgot to add it to props above),
-              // I will add it to the interface and pass it down.
-              // WAIT, I added `handleJumpToLevel` to `App.tsx` but didn't pass it to `GameLayout` yet.
-              // I should update `GameLayoutProps` to include `handleJumpToLevel`.
-              // But for now, let's just use the basic logic which is what the global listener uses.
-              // Actually, I can't easily access `INITIAL_FS` and `cloneFS` without imports.
-              // I have imports. I can replicate logic.
-              // But better to pass the handler.
-              // I will leave it empty for now and fix it by adding handleJumpToLevel to handlers in next step if needed.
-              // OR I can just do the dispatch here.
-              // Let's do the dispatch here since I have imports.
-              // I need INITIAL_FS.
-              // I need to import INITIAL_FS.
-              // Let's import it.
-            }}
+            onJumpToLevel={handleJumpToLevel}
             activeTab={gameState.questMapTab}
             selectedMissionIdx={gameState.questMapMissionIdx}
           />
