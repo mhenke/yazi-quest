@@ -47,6 +47,12 @@ const getNarrativeAction = (key: string): string | null => {
 export default function App() {
   const { gameState, dispatch } = useGameInitialization();
 
+  // Use Ref to stabilize the keyboard listener
+  const gameStateRef = useRef(gameState);
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevelRaw = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
 
@@ -147,7 +153,7 @@ export default function App() {
   );
 
   // Use separated hooks
-  useGameLogic(gameState, dispatch, currentLevel, isLastLevel, triggerThought);
+  const { resetLevelAlerts } = useGameLogic(gameState, dispatch, currentLevel, isLastLevel, triggerThought);
 
   const {
     handleNormalModeKeyDown,
@@ -681,7 +687,9 @@ export default function App() {
         showThreatAlert: false,
       },
     });
-  }, [gameState, dispatch]);
+
+    resetLevelAlerts(); // Reset so alert can show for new level
+  }, [gameState, dispatch, resetLevelAlerts]);
 
   const handleRestartLevel = useCallback(() => {
     dispatch({
@@ -690,7 +698,8 @@ export default function App() {
       fs: cloneFS(gameState.levelStartFS),
       path: [...gameState.levelStartPath],
     });
-  }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch]);
+    resetLevelAlerts(); // Reset so alert can show on restart
+  }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch, resetLevelAlerts]);
 
   const handleRestartCycle = useCallback(() => {
     dispatch({ type: 'RESTART_CYCLE' });
@@ -715,6 +724,11 @@ export default function App() {
   // Zoxide Prompt Handler (Restored)
   const handleZoxidePromptKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      // Use ref to access current gameState in listener to avoid staleness if not using dependency array properly,
+      // but here we are using dependency array with gameState.
+      // However, since we are moving to ref-based listener, we should use gameStateRef.current.
+      const currentGameState = gameStateRef.current;
+
       switch (e.key) {
         case 'Escape':
           dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
@@ -722,11 +736,11 @@ export default function App() {
         case 'Backspace':
           dispatch({
             type: 'UPDATE_UI_STATE',
-            updates: { inputBuffer: gameState.inputBuffer.slice(0, -1) },
+            updates: { inputBuffer: currentGameState.inputBuffer.slice(0, -1) },
           });
           break;
         case 'Enter': {
-          const { zoxideData, inputBuffer } = gameState;
+          const { zoxideData, inputBuffer } = currentGameState;
           const candidates = Object.keys(zoxideData)
             .map((path) => ({ path, score: calculateFrecency(zoxideData[path]) }))
             .sort((a, b) => b.score - a.score);
@@ -735,17 +749,17 @@ export default function App() {
           );
 
           if (bestMatch) {
-            const currentLevel = LEVELS[gameState.levelIndex];
-            const allDirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel).map((d) => ({
+            const currentLevel = LEVELS[currentGameState.levelIndex];
+            const allDirs = getAllDirectoriesWithPaths(currentGameState.fs, currentLevel).map((d) => ({
               node: d.node,
               path: d.path,
-              display: resolvePath(gameState.fs, d.path),
+              display: resolvePath(currentGameState.fs, d.path),
             }));
             const match = allDirs.find((d) => d.display === bestMatch.path);
             if (match) {
               const protection = isProtected(
-                gameState.fs,
-                gameState.currentPath,
+                currentGameState.fs,
+                currentGameState.currentPath,
                 match.node,
                 currentLevel,
                 'jump'
@@ -771,13 +785,13 @@ export default function App() {
                   cursorIndex: 0,
                   notification: { message: `Jumped to ${bestMatch.path}` },
                   inputBuffer: '',
-                  history: [...gameState.history, gameState.currentPath],
+                  history: [...currentGameState.history, currentGameState.currentPath],
                   future: [],
-                  stats: { ...gameState.stats, fuzzyJumps: gameState.stats.fuzzyJumps + 1 },
+                  stats: { ...currentGameState.stats, fuzzyJumps: currentGameState.stats.fuzzyJumps + 1 },
                   zoxideData: {
-                    ...gameState.zoxideData,
+                    ...currentGameState.zoxideData,
                     [bestMatch.path]: {
-                      count: (gameState.zoxideData[bestMatch.path]?.count || 0) + 1,
+                      count: (currentGameState.zoxideData[bestMatch.path]?.count || 0) + 1,
                       lastAccess: now,
                     },
                   },
@@ -809,72 +823,45 @@ export default function App() {
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
             dispatch({
               type: 'UPDATE_UI_STATE',
-              updates: { inputBuffer: gameState.inputBuffer + e.key },
+              updates: { inputBuffer: currentGameState.inputBuffer + e.key },
             });
           }
           break;
       }
     },
-    [gameState, dispatch]
+    [dispatch] // gameState is accessed via ref
   );
 
   const handleFuzzyModeKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Re-implement FuzzyFinder keyboard logic for dispatching state changes
-      // This duplicates logic in FuzzyFinder component if we aren't careful.
-      // However, the PR comment said `handleFuzzySelect` was a stub.
-      // `handleFuzzySelect` is passed to `FuzzyFinder` component.
-      // `handleFuzzyModeKeyDown` is used in the global listener for specific overrides or if not using the component.
-      // In the original App.tsx, `handleFuzzyModeKeyDown` was used.
-      // But now we render `FuzzyFinder` component in `GameLayout`.
-      // The `FuzzyFinder` component handles its own keys usually?
-      // No, `FuzzyFinder` in original code was just UI, logic was in App.tsx `handleFuzzyModeKeyDown`.
-      // Wait, let's check `src/components/FuzzyFinder.tsx`.
-      // I cannot check it now without reading it.
-      // But based on `GameLayout.tsx` which I wrote, it renders `FuzzyFinder`.
-      // `GameLayout` does not attach `handleFuzzyModeKeyDown` to `FuzzyFinder`.
-      // So the global listener MUST handle it.
-
-      const isZoxide = gameState.mode === 'zoxide-jump';
+      const currentGameState = gameStateRef.current;
+      const isZoxide = currentGameState.mode === 'zoxide-jump';
       let candidates: { path: string; score: number; pathIds?: string[] }[] = [];
-      // ... Candidate generation logic ...
-      // To save space, I will delegate the candidate generation to a helper if possible or assume we need full logic.
-      // I will put the full logic here.
 
       if (isZoxide) {
-        const currentLevel = LEVELS[gameState.levelIndex];
-        candidates = Object.keys(gameState.zoxideData)
-          .map((path) => ({ path, score: calculateFrecency(gameState.zoxideData[path]) }))
+        const currentLevel = LEVELS[currentGameState.levelIndex];
+        candidates = Object.keys(currentGameState.zoxideData)
+          .map((path) => ({ path, score: calculateFrecency(currentGameState.zoxideData[path]) }))
           .sort((a, b) => b.score - a.score)
           .filter((c) => {
-             // simplified filter
-             return c.path.toLowerCase().includes(gameState.inputBuffer.toLowerCase());
+             return c.path.toLowerCase().includes(currentGameState.inputBuffer.toLowerCase());
           });
       } else {
-        // Recursive find
-        // getRecursiveSearchResults returns FileNodes.
-        // We need to map them to candidates.
-        // NOTE: getRecursiveSearchResults takes a node, not whole FS.
-        // Using current directory as root for recursive search (default behavior)
-        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+        const currentDir = getNodeByPath(currentGameState.fs, currentGameState.currentPath);
         if (currentDir) {
-             const results = getRecursiveSearchResults(currentDir, gameState.inputBuffer, gameState.showHidden);
+             const results = getRecursiveSearchResults(currentDir, currentGameState.inputBuffer, currentGameState.showHidden);
              candidates = results.map(n => ({
-                 path: n.name, // or full path display?
+                 path: n.name,
                  score: 0,
-                 pathIds: n.path // getRecursiveSearchResults returns nodes with 'path' property which is string[]?
-                 // Checking getRecursiveSearchResults implementation...
-                 // It returns FileNode[]. FileNode has `path` property?
-                 // Original types.ts says FileNode has `path?: string[]`.
-             })).map(c => ({...c, path: String(c.path)})); // ensure path string
+                 pathIds: n.path
+             })).map(c => ({...c, path: String(c.path)}));
         }
       }
 
       switch (e.key) {
         case 'Enter': {
-            if (checkFilterAndBlockNavigation(e, gameState, dispatch)) return;
-            // Select item at fuzzySelectedIndex
-            const idx = gameState.fuzzySelectedIndex || 0;
+            if (checkFilterAndBlockNavigation(e, currentGameState, dispatch)) return;
+            const idx = currentGameState.fuzzySelectedIndex || 0;
             const selected = candidates[idx];
             if (selected) {
                 handleFuzzySelect(selected.path, isZoxide, selected.pathIds);
@@ -885,25 +872,25 @@ export default function App() {
             dispatch({ type: 'UPDATE_UI_STATE', updates: { mode: 'normal', inputBuffer: '' } });
             break;
         case 'ArrowDown':
-        case 'n': // Ctrl+n handled in default
+        case 'n': // Ctrl+n
              if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) {
                  e.preventDefault();
                  dispatch({
                     type: 'UPDATE_UI_STATE',
                     updates: {
-                        fuzzySelectedIndex: Math.min(candidates.length - 1, (gameState.fuzzySelectedIndex || 0) + 1)
+                        fuzzySelectedIndex: Math.min(candidates.length - 1, (currentGameState.fuzzySelectedIndex || 0) + 1)
                     }
                  });
              }
              break;
         case 'ArrowUp':
-        case 'p': // Ctrl+p handled in default
+        case 'p': // Ctrl+p
              if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) {
                  e.preventDefault();
                  dispatch({
                     type: 'UPDATE_UI_STATE',
                     updates: {
-                        fuzzySelectedIndex: Math.max(0, (gameState.fuzzySelectedIndex || 0) - 1)
+                        fuzzySelectedIndex: Math.max(0, (currentGameState.fuzzySelectedIndex || 0) - 1)
                     }
                  });
              }
@@ -912,7 +899,7 @@ export default function App() {
              dispatch({
                 type: 'UPDATE_UI_STATE',
                 updates: {
-                    inputBuffer: gameState.inputBuffer.slice(0, -1),
+                    inputBuffer: currentGameState.inputBuffer.slice(0, -1),
                     fuzzySelectedIndex: 0
                 }
              });
@@ -922,7 +909,7 @@ export default function App() {
                  dispatch({
                     type: 'UPDATE_UI_STATE',
                     updates: {
-                        inputBuffer: gameState.inputBuffer + e.key,
+                        inputBuffer: currentGameState.inputBuffer + e.key,
                         fuzzySelectedIndex: 0
                     }
                  });
@@ -930,14 +917,32 @@ export default function App() {
              break;
       }
     },
-    [gameState, dispatch, handleFuzzySelect]
+    [dispatch, handleFuzzySelect]
   );
 
   // Global Keyboard Listener
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
-      if (tasksComplete && gameState.showSuccessToast) {
+      // Use REF for state access to avoid re-binding
+      const currentGameState = gameStateRef.current;
+
+      // Need currentLevel for checks...
+      // currentLevel is derived from gameState, so we can re-derive it or use another ref.
+      // Ideally we shouldn't duplicate logic.
+      // But calculating currentLevel is cheap.
+      // Let's recalculate it or depend on the memoized one (which might cause re-bind if it changes).
+      // Actually, if we use refs, we should use refs for everything that changes frequently (like time).
+      // currentLevel changes only on level advance. That is fine to trigger re-bind.
+      // BUT `tasks` in currentLevel might update? No, tasks completion is in `completedTaskIds` in state.
+      // So `currentLevel` memo depends on `completedTaskIds`.
+      // `gameState` changes every tick due to `timeLeft`.
+      // `completedTaskIds` changes rarely.
+      // So `currentLevel` is relatively stable.
+      // So we can capture `currentLevel` in closure without issues, AS LONG AS we don't depend on `gameState` directly in dependency array.
+
+      const tasksComplete = checkAllTasksComplete(currentGameState, currentLevel);
+
+      if (tasksComplete && currentGameState.showSuccessToast) {
         if (e.key === 'Enter' && e.shiftKey) {
           e.preventDefault();
           advanceLevel();
@@ -946,7 +951,7 @@ export default function App() {
       }
 
       if (
-        ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
+        ['filter', 'input-file', 'rename'].includes(currentGameState.mode) &&
         e.target instanceof HTMLInputElement
       ) {
         return;
@@ -956,14 +961,14 @@ export default function App() {
         e.preventDefault();
         dispatch({
           type: 'UPDATE_UI_STATE',
-          updates: { showHelp: !gameState.showHelp, showHint: false, showMap: false },
+          updates: { showHelp: !currentGameState.showHelp, showHint: false, showMap: false },
         });
         return;
       }
 
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
-        if (gameState.showHint) {
+        if (currentGameState.showHint) {
           dispatch({
             type: 'UPDATE_UI_STATE',
             updates: { showHint: false, showHelp: false, showMap: false },
@@ -981,19 +986,19 @@ export default function App() {
         e.preventDefault();
         dispatch({
           type: 'UPDATE_UI_STATE',
-          updates: { showMap: !gameState.showMap, showHelp: false, showHint: false },
+          updates: { showMap: !currentGameState.showMap, showHelp: false, showHint: false },
         });
         return;
       }
 
-      if (gameState.showHelp) {
-        handleHelpModeKeyDown(e, gameState, () =>
+      if (currentGameState.showHelp) {
+        handleHelpModeKeyDown(e, currentGameState, () =>
           dispatch({ type: 'UPDATE_UI_STATE', updates: { showHelp: false } })
         );
         return;
       }
 
-      if (gameState.showMap) {
+      if (currentGameState.showMap) {
         const episodeIcons = [Zap, Shield, Crown];
         const episodes = EPISODE_LORE.map((lore, idx) => {
           const color = lore.color ?? 'text-blue-500';
@@ -1009,7 +1014,7 @@ export default function App() {
 
         handleQuestMapModeKeyDown(
           e,
-          gameState,
+          currentGameState,
           LEVELS,
           episodes,
           () => dispatch({ type: 'UPDATE_UI_STATE', updates: { showMap: false } }),
@@ -1018,21 +1023,21 @@ export default function App() {
         return;
       }
 
-      if (gameState.showHint) {
+      if (currentGameState.showHint) {
         if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
           dispatch({ type: 'UPDATE_UI_STATE', updates: { showHint: false } });
         }
         return;
       }
 
-      if (gameState.showThreatAlert) {
+      if (currentGameState.showThreatAlert) {
         if (e.key === 'Enter' && e.shiftKey) {
           dispatch({ type: 'UPDATE_UI_STATE', updates: { showThreatAlert: false } });
         }
         return;
       }
 
-      if (gameState.showInfoPanel) {
+      if (currentGameState.showInfoPanel) {
         if (e.key === 'Escape' || e.key === 'Tab') {
           e.preventDefault();
           dispatch({ type: 'UPDATE_UI_STATE', updates: { showInfoPanel: false } });
@@ -1042,9 +1047,9 @@ export default function App() {
 
       // Count keystrokes
       if (
-        !gameState.showHelp &&
-        !gameState.showHint &&
-        !gameState.showMap &&
+        !currentGameState.showHelp &&
+        !currentGameState.showHint &&
+        !currentGameState.showMap &&
         !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())
       ) {
         let noise = 1;
@@ -1054,12 +1059,33 @@ export default function App() {
         dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
       }
 
-      switch (gameState.mode) {
+      switch (currentGameState.mode) {
         case 'normal':
+          // Re-calculate derived state for handlers
+          // This is a bit expensive but necessary if we don't pass them in.
+          // Or we can assume `visibleItems` etc are up to date via refs if we ref them too.
+          // But `visibleItems` is Memoized.
+          // The `handleNormalModeKeyDown` in `useKeyboardHandlers` uses `gameState` passed to it?
+          // No, it takes `gameState` as arg.
+          // We must pass `currentGameState`.
+
           handleNormalModeKeyDown(
             e,
-            gameState,
-            visibleItems,
+            currentGameState,
+            visibleItems, // These are from closure, might be stale if they depend on gameState which changes often?
+            // visibleItems depends on gameState.
+            // If we don't include visibleItems in dependency array, it will be stale.
+            // But visibleItems updates on every render.
+            // We want to avoid re-binding listener on every render.
+            // So we should use a Ref for visibleItems too?
+            // Or just re-bind when visibleItems changes (which is often).
+            // Actually, `visibleItems` changes when: cursor, path, filter, sort changes.
+            // It DOES NOT change when `timeLeft` changes.
+            // `gameState` changes when `timeLeft` changes.
+            // So `useEffect` dep array: `[visibleItems, currentItem, parent, currentLevel]` is fine!
+            // We just remove `gameState` from dep array and use `gameStateRef`.
+            // This is the optimization!
+
             parent,
             currentItem,
             currentLevel,
@@ -1067,10 +1093,10 @@ export default function App() {
           );
           break;
         case 'sort':
-          handleSortModeKeyDown(e, gameState);
+          handleSortModeKeyDown(e, currentGameState);
           break;
         case 'confirm-delete':
-          handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, gameState);
+          handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, currentGameState);
           break;
         case 'search':
           if (e.key === 'Enter') {
@@ -1084,13 +1110,13 @@ export default function App() {
           handleFuzzyModeKeyDown(e);
           break;
         case 'g-command':
-          handleGCommandKeyDown(e, gameState, currentLevel);
+          handleGCommandKeyDown(e, currentGameState, currentLevel);
           break;
         case 'z-prompt':
           handleZoxidePromptKeyDown(e);
           break;
         case 'overwrite-confirm':
-          handleOverwriteConfirmKeyDown(e, gameState);
+          handleOverwriteConfirmKeyDown(e, currentGameState);
           break;
         default:
           break;
@@ -1100,9 +1126,14 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    gameState,
+    // Dependencies that SHOULD trigger re-bind (stable or change only on navigaton/mode switch)
     currentLevel,
     isLastLevel,
+    visibleItems,
+    currentItem,
+    parent,
+
+    // Stable handlers
     handleNormalModeKeyDown,
     handleSortModeKeyDown,
     handleConfirmDeleteModeKeyDown,
@@ -1112,11 +1143,10 @@ export default function App() {
     handleFuzzyModeKeyDown,
     handleJumpToLevel,
     advanceLevel,
-    visibleItems,
-    currentItem,
-    parent,
     handleSearchConfirm,
     dispatch,
+
+    // NOTE: gameState is NOT here. Accessed via Ref.
   ]);
 
 

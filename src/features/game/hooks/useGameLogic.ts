@@ -349,5 +349,6 @@ export const useGameLogic = (
     dispatch,
   ]);
 
-  return { shownInitialAlertForLevelRef };
+  const resetLevelAlerts = () => { shownInitialAlertForLevelRef.current = null; shownThoughtForLevelRef.current = null; };
+  return { resetLevelAlerts };
 };
