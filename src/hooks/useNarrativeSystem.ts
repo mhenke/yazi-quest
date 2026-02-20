@@ -206,14 +206,18 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       );
 
       if (allTasksComplete && !shownLevelCompletionThoughtRef.current.has(currentLevel.id)) {
-        // Trigger level completion thought
-        triggerThought(`Level ${currentLevel.id} complete. Protocol executed successfully.`);
         shownLevelCompletionThoughtRef.current.add(currentLevel.id);
 
-        // Trigger efficient completion thought if keystrokes are under threshold
-        const optimalKeystrokes = currentLevel.maxKeystrokes || 50;
-        if (gameState.keystrokes < optimalKeystrokes * 1.2) {
-          triggerThought('Efficient navigation. Minimal footprint detected.');
+        if (currentLevel.thought) {
+          // Use level-specific completion thought if defined
+          triggerThought(currentLevel.thought);
+        } else {
+          // Generic completion thoughts
+          triggerThought(`Level ${currentLevel.id} complete. Protocol executed successfully.`);
+          const optimalKeystrokes = currentLevel.maxKeystrokes || 50;
+          if (gameState.keystrokes < optimalKeystrokes * 1.2) {
+            triggerThought('Efficient navigation. Minimal footprint detected.');
+          }
         }
       }
     }

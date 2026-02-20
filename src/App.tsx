@@ -1881,7 +1881,12 @@ export default function App() {
               threatLevel={gameState.threatLevel}
               mode={gameState.mode}
               currentPath={gameState.currentPath}
+              fs={gameState.fs}
               filterQuery={gameState.inputBuffer}
+              confirmedFilter={(() => {
+                const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                return dir ? gameState.filters[dir.id] : undefined;
+              })()}
               searchQuery={gameState.searchQuery}
               searchResults={gameState.searchResults}
               cycleCount={gameState.cycleCount}

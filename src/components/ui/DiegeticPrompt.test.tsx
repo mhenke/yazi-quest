@@ -7,7 +7,7 @@ describe('DiegeticPrompt', () => {
     render(
       <DiegeticPrompt threatLevel={10} mode="normal" currentPath={['root', 'home', 'guest']} />
     );
-    const prompt = screen.getByTestId('diegetic-prompt');
+    const prompt = screen.getByTestId('breadcrumbs');
     expect(prompt.textContent).toMatch(/AI-7734@guest:~/);
   });
 
@@ -20,15 +20,15 @@ describe('DiegeticPrompt', () => {
         filterQuery="*.log"
       />
     );
-    const prompt = screen.getByTestId('diegetic-prompt');
-    expect(prompt.textContent).toMatch(/AI-7734@guest:~\[FILTER: \*\.log\]/);
+    const prompt = screen.getByTestId('breadcrumbs');
+    expect(prompt.textContent).toMatch(/\[FILTER: \*\.log\]/);
   });
 
   it('should show BREACH status at high threat', () => {
     render(
       <DiegeticPrompt threatLevel={85} mode="normal" currentPath={['root', 'home', 'guest']} />
     );
-    const prompt = screen.getByTestId('diegetic-prompt');
+    const prompt = screen.getByTestId('breadcrumbs');
     expect(prompt.textContent).toMatch(/AI-7734@\[COMPROMISED\]:\[BREACH\]~/);
   });
 });

@@ -1,11 +1,14 @@
 import React from 'react';
 import { FileNode, GameState } from '../../types';
+import { resolvePath } from '../../utils/fsHelpers';
 
 interface DiegeticPromptProps {
   threatLevel: number;
   mode: GameState['mode'];
   currentPath: string[];
+  fs?: FileNode;
   filterQuery?: string;
+  confirmedFilter?: string;
   searchQuery?: string;
   searchResults?: FileNode[];
   cycleCount?: number;
@@ -15,7 +18,9 @@ export function DiegeticPrompt({
   threatLevel,
   mode,
   currentPath,
+  fs,
   filterQuery,
+  confirmedFilter,
   searchQuery,
   searchResults,
   cycleCount = 0,
@@ -52,11 +57,18 @@ export function DiegeticPrompt({
   };
 
   const getPath = () => {
-    // Return ~ when at guest home directory (root/home/guest)
+    if (fs) {
+      const resolved = resolvePath(fs, currentPath);
+      // Map /home/guest to ~
+      if (resolved === '/home/guest') return '~';
+      if (resolved.startsWith('/home/guest/')) return '~' + resolved.slice('/home/guest'.length);
+      return resolved;
+    }
+    // Fallback without fs
     if (currentPath.length >= 3 && currentPath.slice(-3).join('/') === 'root/home/guest') {
       return '~';
     }
-    if (currentPath.length <= 1) return '~';
+    if (currentPath.length <= 1) return '/';
     const last = currentPath[currentPath.length - 1];
     return `/${last}`;
   };
@@ -68,15 +80,17 @@ export function DiegeticPrompt({
   const path = getPath();
 
   return (
-    <div className="diegetic-prompt font-mono text-sm" data-testid="diegetic-prompt">
+    <div className="diegetic-prompt font-mono text-sm" data-testid="breadcrumbs">
       <span className={status === 'BREACH' ? 'text-red-500' : 'text-green-500'}>
         {designation}@{hostname}:
       </span>
       {(status === 'TRACING' || status === 'BREACH') && (
         <span className="text-red-500">[{status}]</span>
       )}
-      <span className="text-blue-400">{path}</span>
-      {modeIndicator && <span className="text-yellow-500">{modeIndicator}</span>}
+      <span className="breadcrumb text-blue-400">{path}</span>
+      {searchQuery && <span className="text-yellow-400"> (search: {searchQuery})</span>}
+      {confirmedFilter && <span className="text-yellow-400"> (filter: {confirmedFilter})</span>}
+      {modeIndicator && <span className="text-yellow-500"> {modeIndicator}</span>}
     </div>
   );
 }
