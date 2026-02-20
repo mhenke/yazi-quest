@@ -46,6 +46,7 @@ import { FilterWarningModal } from './components/FilterWarningModal';
 import { SearchWarningModal } from './components/SearchWarningModal';
 import { InfoPanel } from './components/InfoPanel';
 import { GCommandDialog } from './components/GCommandDialog';
+import { DiegeticPrompt } from './components/ui/DiegeticPrompt';
 import { Zap, Shield, Crown } from 'lucide-react';
 import { gameReducer } from './hooks/gameReducer';
 import { FuzzyFinder } from './components/FuzzyFinder';
@@ -493,7 +494,7 @@ export default function App() {
 
       if (isThought) {
         // Direct dispatch
-        dispatch({ type: 'SET_THOUGHT', payload: { text: message, author } });
+        dispatch({ type: 'SET_THOUGHT', message, author });
         return;
       }
 
@@ -1830,29 +1831,15 @@ export default function App() {
         )}
 
         {!gameState.showEpisodeIntro && (
-          <header
-            className="bg-zinc-900 border-b border-zinc-800 px-3 py-1.5 transition-opacity duration-200 breadcrumb"
-            style={{
-              opacity:
-                gameState.mode === 'zoxide-jump' ||
-                gameState.mode === 'fzf-current' ||
-                gameState.mode === 'z-prompt'
-                  ? 0.3
-                  : 1,
-            }}
-          >
-            <div className="font-mono text-sm text-zinc-400" data-testid="breadcrumbs">
-              {resolvePath(gameState.fs, gameState.currentPath).replace('/home/guest', '~')}
-              {gameState.searchQuery && (
-                <span className="text-green-400"> (search: {gameState.searchQuery})</span>
-              )}
-              {(() => {
-                const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                const filter = dir ? gameState.filters[dir.id] : null;
-                return filter ? <span className="text-cyan-400"> (filter: {filter})</span> : null;
-              })()}
-            </div>
-          </header>
+          <DiegeticPrompt
+            threatLevel={gameState.threatLevel}
+            mode={gameState.mode}
+            currentPath={gameState.currentPath}
+            filterQuery={gameState.inputBuffer}
+            searchQuery={gameState.searchQuery}
+            searchResults={gameState.searchResults}
+            cycleCount={gameState.cycleCount}
+          />
         )}
 
         <div className="flex flex-1 min-h-0 relative">
