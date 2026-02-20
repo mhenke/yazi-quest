@@ -9,7 +9,8 @@ interface UseTerminalThoughtsProps {
 }
 
 export function useTerminalThoughts({ gameState, dispatch }: UseTerminalThoughtsProps) {
-  const currentPhase = Math.ceil((gameState.levelIndex + 1) / 5) as 1 | 2 | 3;
+  const calculatedPhase = Math.ceil((gameState.levelIndex + 1) / 5);
+  const currentPhase = Math.min(Math.max(calculatedPhase, 1), 3) as 1 | 2 | 3;
 
   const triggerThought = useCallback(
     (triggerCondition: string) => {

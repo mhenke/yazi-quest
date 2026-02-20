@@ -178,6 +178,11 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
   const prevCompletedTasksRef = useRef<Record<number, string[]>>(gameState.completedTaskIds);
   const shownLevelCompletionThoughtRef = useRef<Set<number>>(new Set());
 
+  // Clear shownLevelCompletionThoughtRef when cycle changes (New Game+ support)
+  useEffect(() => {
+    shownLevelCompletionThoughtRef.current.clear();
+  }, [gameState.cycleCount]);
+
   useEffect(() => {
     const currentLevel = LEVELS[gameState.levelIndex];
     if (!currentLevel || gameState.isGameOver) return;
