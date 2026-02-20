@@ -377,8 +377,11 @@ export async function assertLevel(page: Page, levelId: string): Promise<void> {
  * Get the current directory path shown in the UI.
  */
 export async function getCurrentPath(page: Page): Promise<string> {
-  const pathElement = page.locator('.breadcrumb').first();
-  return (await pathElement.textContent()) || '';
+  const breadcrumb = page.locator('.breadcrumb').first();
+  // Wait a bit longer for the breadcrumb to become available in slower CI/dev
+  await expect(breadcrumb).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(100);
+  return (await breadcrumb.textContent()) || '';
 }
 
 /**

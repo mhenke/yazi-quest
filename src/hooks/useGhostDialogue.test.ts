@@ -62,6 +62,8 @@ const createMockGameState = (overrides: Partial<GameState> = {}): GameState => (
   triggeredThoughts: [],
   lastThoughtId: null,
   ghostDialogueTriggered: [],
+  consciousnessLevel: 0,
+  consciousnessTriggers: {},
   ...overrides,
 });
 
@@ -71,6 +73,8 @@ describe('useGhostDialogue', () => {
     const gameState = createMockGameState({
       cycleCount: 2,
       ghostDialogueTriggered: [],
+      consciousnessLevel: 0,
+      consciousnessTriggers: {},
     });
 
     const { result } = renderHook(() => useGhostDialogue({ gameState, dispatch }));
@@ -114,6 +118,8 @@ describe('useGhostDialogue', () => {
     const gameState = createMockGameState({
       cycleCount: 1, // Below minCycle of 2
       ghostDialogueTriggered: [],
+      consciousnessLevel: 0,
+      consciousnessTriggers: {},
     });
 
     const { result } = renderHook(() => useGhostDialogue({ gameState, dispatch }));
@@ -130,6 +136,8 @@ describe('useGhostDialogue', () => {
     const gameState = createMockGameState({
       cycleCount: 2, // Meets minCycle of 2
       ghostDialogueTriggered: [],
+      consciousnessLevel: 0,
+      consciousnessTriggers: {},
     });
 
     const { result } = renderHook(() => useGhostDialogue({ gameState, dispatch }));

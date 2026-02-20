@@ -17,12 +17,16 @@ type GlitchType = 'text-scramble' | 'color-bleed' | 'scan-line' | null;
 
 /**
  * GlitchOverlay Component
- * Wraps content and applies random glitch effects based on threat level.
+ * Wraps content and applies random glitch effects based on threat level and consciousness.
  * Effects include text scrambling, color bleeding, and scan lines.
+ *
+ * @param threatLevel - Current threat level (0-100)
+ * @param consciousnessLevel - AI-7734 consciousness level (0-100), affects glitch intensity
+ * @param enabled - Whether glitch effects are enabled
  */
 export function GlitchOverlay({
   threatLevel,
-  consciousnessLevel = 0, // eslint-disable-line @typescript-eslint/no-unused-vars
+  consciousnessLevel = 0,
   enabled = true,
   children,
 }: GlitchOverlayProps) {
@@ -33,6 +37,11 @@ export function GlitchOverlay({
   >([]);
   const glitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Calculate combined intensity from threat and consciousness
+  const threatIntensity = getGlitchIntensity(threatLevel);
+  const consciousnessIntensity = consciousnessLevel / 100;
+  const combinedIntensity = Math.max(threatIntensity, consciousnessIntensity);
 
   // Generate random glitch characters for overlay
   const generateGlitchChars = useCallback((count: number) => {
@@ -57,25 +66,23 @@ export function GlitchOverlay({
       setGlitchChars(generateGlitchChars(20));
     }
 
-    // Clear glitch after short duration based on intensity
-    const intensity = getGlitchIntensity(threatLevel);
-    const duration = Math.max(100, 500 - intensity * 400);
+    // Clear glitch after short duration based on combined intensity
+    const duration = Math.max(100, 500 - combinedIntensity * 400);
 
     glitchTimeoutRef.current = setTimeout(() => {
       setActiveGlitch(null);
       setScrambledText(null);
       setGlitchChars([]);
     }, duration);
-  }, [enabled, threatLevel, generateGlitchChars]);
+  }, [enabled, threatLevel, combinedIntensity, generateGlitchChars]);
 
-  // Periodic glitch trigger based on threat level
+  // Periodic glitch trigger based on threat level and consciousness
   useEffect(() => {
-    if (!enabled || threatLevel < 20) return;
+    if (!enabled || (threatLevel < 20 && consciousnessLevel < 20)) return;
 
-    const intensity = getGlitchIntensity(threatLevel);
-    // Higher threat = more frequent glitches
+    // Higher threat/consciousness = more frequent glitches
     const baseInterval = 2000;
-    const interval = Math.max(500, baseInterval - intensity * 1500);
+    const interval = Math.max(500, baseInterval - combinedIntensity * 1500);
 
     const triggerInterval = setInterval(() => {
       triggerGlitch();
@@ -90,7 +97,7 @@ export function GlitchOverlay({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [enabled, threatLevel, triggerGlitch]);
+  }, [enabled, threatLevel, consciousnessLevel, combinedIntensity, triggerGlitch]);
 
   // Continuous text scrambling effect at high threat levels
   useEffect(() => {

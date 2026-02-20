@@ -354,6 +354,8 @@ describe('gameUtils', () => {
         triggeredThoughts: [],
         lastThoughtId: null,
         ghostDialogueTriggered: [],
+        consciousnessLevel: 0,
+        consciousnessTriggers: {},
       };
 
       const level: Level = {
@@ -451,6 +453,8 @@ describe('gameUtils', () => {
         triggeredThoughts: [],
         lastThoughtId: null,
         ghostDialogueTriggered: [],
+        consciousnessLevel: 0,
+        consciousnessTriggers: {},
       };
 
       const level: Level = {
@@ -548,6 +552,8 @@ describe('gameUtils', () => {
         triggeredThoughts: [],
         lastThoughtId: null,
         ghostDialogueTriggered: [],
+        consciousnessLevel: 0,
+        consciousnessTriggers: {},
       };
 
       const level: Level = {

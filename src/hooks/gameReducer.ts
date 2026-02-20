@@ -46,6 +46,7 @@ export type Action =
   | { type: 'MARK_THOUGHT_TRIGGERED'; payload: string }
   | { type: 'SET_GHOST_MESSAGE'; payload: { text: string; signature: string } }
   | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string }
+  | { type: 'UPDATE_CONSCIOUSNESS'; payload: number }
   | { type: 'SET_CLIPBOARD'; nodes: FileNode[]; action: 'yank' | 'cut'; originalPath: string[] }
   | { type: 'CLEAR_CLIPBOARD' }
   | { type: 'TOGGLE_HELP' }
@@ -289,6 +290,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         ghostDialogueTriggered: [...state.ghostDialogueTriggered, action.payload],
+      };
+    }
+
+    case 'UPDATE_CONSCIOUSNESS': {
+      return {
+        ...state,
+        consciousnessLevel: action.payload,
       };
     }
 

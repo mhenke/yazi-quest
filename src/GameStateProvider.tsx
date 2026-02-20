@@ -338,6 +338,8 @@ const createInitialState = (): GameState => {
     triggeredThoughts: [],
     lastThoughtId: null,
     ghostDialogueTriggered: [],
+    consciousnessLevel: 0,
+    consciousnessTriggers: {},
   };
 };
 
