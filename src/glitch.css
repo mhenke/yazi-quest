@@ -169,3 +169,273 @@ h1 {
 .boot-sequence {
   text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
 }
+
+/* ============================================
+   GlitchOverlay Component Styles
+   UI Corruption Effects for Threat System
+   ============================================ */
+
+/* Main glitch container */
+.glitch-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-content {
+  position: relative;
+  z-index: 1;
+}
+
+.glitch-content.glitching {
+  animation: flicker 0.15s infinite;
+}
+
+/* Scan Lines Effect */
+.scan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 10;
+  animation: scanline-move 2s linear infinite;
+}
+
+@keyframes scanline-move {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(10px);
+  }
+}
+
+/* Color Bleed Effect */
+.color-bleed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: screen;
+  animation: colorBleed 0.3s ease-in-out infinite;
+}
+
+.color-bleed::before,
+.color-bleed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.color-bleed::before {
+  background: rgba(255, 0, 193, 0.3);
+  transform: translateX(calc(-1 * var(--glitch-offset, 2px)));
+  animation: colorBleedLeft 0.2s ease-in-out infinite;
+}
+
+.color-bleed::after {
+  background: rgba(0, 255, 249, 0.3);
+  transform: translateX(var(--glitch-offset, 2px));
+  animation: colorBleedRight 0.2s ease-in-out infinite;
+}
+
+@keyframes colorBleed {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes colorBleedLeft {
+  0%,
+  100% {
+    transform: translateX(calc(-1 * var(--glitch-offset, 2px)));
+  }
+  50% {
+    transform: translateX(calc(-1 * var(--glitch-offset, 2px) * 1.5));
+  }
+}
+
+@keyframes colorBleedRight {
+  0%,
+  100% {
+    transform: translateX(var(--glitch-offset, 2px));
+  }
+  50% {
+    transform: translateX(var(--glitch-offset, 2px) * 1.5);
+  }
+}
+
+/* Text Scramble Effect */
+.scramble-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.scramble-overlay .glitch-char {
+  position: absolute;
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+  animation: glitch-char-flicker 0.1s infinite;
+}
+
+.scramble-overlay .scrambled-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  color: #ff0000;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  white-space: nowrap;
+  animation: text-scramble-pulse 0.2s infinite;
+}
+
+@keyframes glitch-char-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes text-scramble-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+/* Flicker Animation */
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  20% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  40% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+}
+
+/* Glitch intensity variations */
+.glitch-text-scramble .glitch-content {
+  filter: blur(0.5px);
+}
+
+.glitch-color-bleed .glitch-content {
+  filter: hue-rotate(90deg) saturate(2);
+}
+
+.glitch-scan-line .glitch-content {
+  filter: contrast(1.2);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .scan-lines,
+  .color-bleed,
+  .scramble-overlay,
+  .glitch-content.glitching {
+    animation: none;
+  }
+
+  .scan-lines {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .color-bleed,
+  .scramble-overlay {
+    display: none;
+  }
+
+  .glitch-content.glitching {
+    animation: none;
+    opacity: 0.9;
+  }
+
+  .scramble-overlay .glitch-char,
+  .scramble-overlay .scrambled-text {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .scan-lines {
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.3),
+      rgba(0, 0, 0, 0.3) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  }
+
+  .color-bleed::before {
+    background: rgba(255, 0, 193, 0.5);
+  }
+
+  .color-bleed::after {
+    background: rgba(0, 255, 249, 0.5);
+  }
+}
