@@ -45,7 +45,11 @@ export function DiegeticPrompt({
   };
 
   const getDesignation = () => `AI-${7734 + cycleCount}`;
-  const getHostname = () => 'guest';
+  const getHostname = () => {
+    const status = getThreatStatus();
+    if (status === 'BREACH') return '[COMPROMISED]';
+    return 'guest';
+  };
 
   const getPath = () => {
     // Return ~ when at guest home directory (root/home/guest)

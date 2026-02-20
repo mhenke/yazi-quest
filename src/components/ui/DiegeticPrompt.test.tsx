@@ -18,6 +18,6 @@ describe('DiegeticPrompt', () => {
   it('should show BREACH status at high threat', () => {
     render(<DiegeticPrompt threatLevel={85} mode="normal" currentPath={['root', 'home', 'guest']} />);
     const prompt = screen.getByTestId('diegetic-prompt');
-    expect(prompt.textContent).toMatch(/AI-7734@guest:\[BREACH\]~\$/);
+    expect(prompt.textContent).toMatch(/AI-7734@\[COMPROMISED\]:\[BREACH\]~\$/);
   });
 });
