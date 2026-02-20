@@ -1,0 +1,65 @@
+/* Glitch Overlay Effects */
+.glitch-container {
+  position: relative;
+}
+
+.scramble-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  color: #ef4444;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  animation: flicker 0.2s ease-in-out;
+  z-index: 50;
+}
+
+.scan-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: 40;
+}
+
+.color-bleed {
+  animation: colorBleed 2s ease-in-out infinite;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes colorBleed {
+  0%,
+  100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(10deg);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .scramble-overlay,
+  .scan-lines,
+  .color-bleed {
+    animation: none;
+    display: none;
+  }
+}
