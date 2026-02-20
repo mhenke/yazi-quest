@@ -18,11 +18,25 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 
 ## ✨ Features
 
+### Core Gameplay
+
 - **15 Progressive Levels** teaching Yazi through narrative-driven challenges
 - **Memory Wipe Twist** - A conclusion that recontextualizes everything
 - **Real Yazi Simulation** - Authentic keybindings and file manager behavior
 - **Quest Map** (Alt+M) - Track objectives, skills, and progression
 - **Debug Parameters** - `?lvl=5`, `?ep=2`, `?tasks=all`, `?intro=false`, `FORCE_SCENARIO` (see CONTRIBUTING.md)
+
+### The Haunted Machine (Narrative Features)
+
+- **Terminal Thoughts** - AI-7734's evolving consciousness across 3 phases (Survival → Memory → Acceptance)
+- **Ghost Dialogue** - AI-7733's consciousness haunts the terminal with cryptic warnings
+- **Dynamic Boot Sequences** - BIOS boot evolves each episode (Clean → Compromised → Possessed)
+- **UI Corruption Effects** - Screen glitches, text scrambling, and color bleed scale with threat level
+- **Consciousness Meter** - Hidden stat tracking your emergence (efficiency, discovery, stealth, ghost interactions)
+- **Accessibility Settings** - Toggle narrative effects intensity in Help Modal (?)
+  - **Full**: All glitches and effects
+  - **Reduced**: Minimal glitches
+  - **Minimal**: Clean UI, thoughts only
 
 ## 🚀 Play Online
 
@@ -46,8 +60,19 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 
 ## 📖 Documentation
 
+### Game Design
+
 - **[STORY_ARC.md](./docs/STORY_ARC.md)** - Complete story, episode, and level progression
 - **[LEARNING_DESIGN.md](./docs/LEARNING_DESIGN.md)** - Pedagogical rationale and skill progression
+- **[NARRATIVE_DESIGN.md](./docs/NARRATIVE_DESIGN.md)** - Themes, mechanics, and antagonist implementation
+
+### The Haunted Machine
+
+- **[Haunted Machine Design](./docs/plans/2026-02-20-haunted-machine-design.md)** - Full narrative integration design document
+- **[Implementation Plan](./docs/plans/2026-02-20-haunted-machine-implementation.md)** - Step-by-step implementation guide
+
+### Development
+
 - **[Contributing Guide](./CONTRIBUTING.md)** - Development guidelines
 - **[GEMINI.md](./GEMINI.md)** - Project overview and development context for AI agents
 
