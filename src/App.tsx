@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useMemo, useReducer } from 'react';
+import React, { useEffect, useCallback, useRef, useMemo, useReducer, useState } from 'react';
 import {
   LEVELS,
   INITIAL_FS,
@@ -34,6 +34,7 @@ import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { OutroSequence } from './components/OutroSequence';
 import { BiosBoot } from './components/BiosBoot';
+import { BootSequence } from './components/narrative/BootSequence';
 import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { OverwriteModal } from './components/OverwriteModal';
@@ -330,6 +331,10 @@ export default function App() {
     } as GameState;
   });
 
+  // Boot sequence state for episode transitions
+  const [showBoot, setShowBoot] = useState(false);
+  const [currentEpisode, setCurrentEpisode] = useState(1);
+
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   const handleSkip = useCallback(() => {
     window.__yaziQuestSkipIntroRequested = true;
@@ -357,6 +362,15 @@ export default function App() {
       console.error('Failed to save state to localStorage', e);
     }
   }, [gameState.zoxideData, gameState.cycleCount]);
+
+  // Show boot sequence on episode change
+  useEffect(() => {
+    const episode = Math.ceil((gameState.levelIndex + 1) / 5);
+    if (episode !== currentEpisode && !gameState.showEpisodeIntro) {
+      setCurrentEpisode(episode);
+      setShowBoot(true);
+    }
+  }, [gameState.levelIndex, currentEpisode, gameState.showEpisodeIntro]);
 
   // Use the Narrative System hook to handle thoughts and notifications
   useNarrativeSystem(gameState, dispatch);
@@ -1660,6 +1674,8 @@ export default function App() {
           onComplete={(options) => dispatch({ type: 'COMPLETE_INTRO', isSkip: options?.isSkip })}
         />
       )}
+
+      {showBoot && <BootSequence episode={currentEpisode} onComplete={() => setShowBoot(false)} />}
 
       {gameState.isGameOver && (
         <GameOverModal

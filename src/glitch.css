@@ -152,3 +152,20 @@ h1 {
     transform: skew(0deg);
   }
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.boot-sequence {
+  text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+}
