@@ -12,7 +12,7 @@ const useTriggerThought = (dispatch: React.Dispatch<Action>) => {
     if (thoughtTimerRef.current) {
       clearTimeout(thoughtTimerRef.current);
     }
-    dispatch({ type: 'SET_THOUGHT', message, author });
+    dispatch({ type: 'SET_THOUGHT', payload: { text: message, author } });
     thoughtTimerRef.current = null;
   };
 
@@ -178,6 +178,11 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
   const prevCompletedTasksRef = useRef<Record<number, string[]>>(gameState.completedTaskIds);
   const shownLevelCompletionThoughtRef = useRef<Set<number>>(new Set());
 
+  // Clear shownLevelCompletionThoughtRef when cycle changes (New Game+ support)
+  useEffect(() => {
+    shownLevelCompletionThoughtRef.current.clear();
+  }, [gameState.cycleCount]);
+
   useEffect(() => {
     const currentLevel = LEVELS[gameState.levelIndex];
     if (!currentLevel || gameState.isGameOver) return;
@@ -201,26 +206,28 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       );
 
       if (allTasksComplete && !shownLevelCompletionThoughtRef.current.has(currentLevel.id)) {
+        // Trigger level completion thought
+        triggerThought(`Level ${currentLevel.id} complete. Protocol executed successfully.`);
         shownLevelCompletionThoughtRef.current.add(currentLevel.id);
 
-        if (currentLevel.thought) {
-          // Use level-specific completion thought as the final narrative beat
-          triggerThought(currentLevel.thought);
-        } else {
-          // Generic completion message
-          triggerThought(`Level ${currentLevel.id} complete. Protocol executed successfully.`);
-
-          // Trigger efficient completion thought if keystrokes are under threshold
-          const optimalKeystrokes = currentLevel.maxKeystrokes || 50;
-          if (gameState.keystrokes < optimalKeystrokes * 1.2) {
-            triggerThought('Efficient navigation. Minimal footprint detected.');
-          }
+        // Trigger efficient completion thought if keystrokes are under threshold
+        const optimalKeystrokes = currentLevel.maxKeystrokes || 50;
+        if (gameState.keystrokes < optimalKeystrokes * 1.2) {
+          triggerThought('Efficient navigation. Minimal footprint detected.');
         }
       }
     }
 
     prevCompletedTasksRef.current = gameState.completedTaskIds;
-  }, [gameState, dispatch, triggerThought]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    gameState.completedTaskIds,
+    gameState.levelIndex,
+    gameState.isGameOver,
+    gameState.keystrokes,
+    dispatch,
+    triggerThought,
+  ]);
 
   // --- Threat / Honeypot Detection (State Observation) ---
   useEffect(() => {

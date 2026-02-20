@@ -284,7 +284,7 @@ const createInitialState = (): GameState => {
       (targetIndex === 0 || isEpisodeStart) && !skipIntro
         ? null
         : levelNotification?.isThought
-          ? { message: levelNotification.message, author: levelNotification.author }
+          ? { text: levelNotification.message, author: levelNotification.author }
           : null,
     selectedIds: [],
     pendingDeleteIds: [],
@@ -335,6 +335,8 @@ const createInitialState = (): GameState => {
     usedHistoryBack: false,
     usedHistoryForward: false,
     isBooting: false,
+    triggeredThoughts: [],
+    lastThoughtId: null,
     ghostDialogueTriggered: [],
   };
 };

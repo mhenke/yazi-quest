@@ -25,7 +25,7 @@ import {
   navigateDown,
   sortCommand,
   dismissAlertIfPresent,
-  expectNarrativeThought,
+  expectTerminalThought,
 } from './utils';
 
 // Helper to handle Level 12 threat scenarios
@@ -114,7 +114,7 @@ async function runLevel12CommonPath(
     await pressKey(page, 'p');
     await enterDirectory(page, 'systemd-core');
 
-    await expectNarrativeThought(page, 'The loops are closing');
+    await expectTerminalThought(page, 'The loops are closing');
 
     // Verify level completion counter (total/total)
     await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*(\d+)\/\1/, {

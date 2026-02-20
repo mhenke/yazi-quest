@@ -1,12 +1,10 @@
 import React from 'react';
 import { FileNode, GameState } from '../../types';
-import { resolvePath } from '../../utils/fsHelpers';
 
 interface DiegeticPromptProps {
   threatLevel: number;
   mode: GameState['mode'];
   currentPath: string[];
-  fs: FileNode;
   filterQuery?: string;
   searchQuery?: string;
   searchResults?: FileNode[];
@@ -17,7 +15,6 @@ export function DiegeticPrompt({
   threatLevel,
   mode,
   currentPath,
-  fs,
   filterQuery,
   searchQuery,
   searchResults,
@@ -31,27 +28,37 @@ export function DiegeticPrompt({
   };
 
   const getModeIndicator = () => {
-    const parts: string[] = [];
-    if (searchQuery) {
-      const count = searchResults ? ` (${searchResults.length})` : '';
-      parts.push(`search: ${searchQuery}${count}`);
+    switch (mode) {
+      case 'filter':
+        return filterQuery ? `[FILTER: ${filterQuery}]` : '[FILTER]';
+      case 'search':
+        return searchQuery
+          ? `[SEARCH: ${searchQuery}]${searchResults ? `→ ${searchResults.length} results` : ''}`
+          : '[SEARCH]';
+      case 'zoxide-jump':
+        return '[ZOXIDE]';
+      case 'rename':
+        return '[RENAME]';
+      default:
+        return '';
     }
-    if (filterQuery) {
-      parts.push(`filter: ${filterQuery}`);
-    }
-    if (mode === 'zoxide-jump') parts.push('(zoxide)');
-    if (mode === 'rename') parts.push('(rename)');
-    return parts.join(' ');
   };
 
   const getDesignation = () => `AI-${7734 + cycleCount}`;
-  const getHostname = () => 'guest';
+  const getHostname = () => {
+    const status = getThreatStatus();
+    if (status === 'BREACH') return '[COMPROMISED]';
+    return 'guest';
+  };
 
   const getPath = () => {
-    const fullPath = resolvePath(fs, currentPath);
-    if (fullPath === '/home/guest') return '~';
-    if (fullPath.startsWith('/home/guest/')) return '~' + fullPath.slice('/home/guest'.length);
-    return fullPath;
+    // Return ~ when at guest home directory (root/home/guest)
+    if (currentPath.length >= 3 && currentPath.slice(-3).join('/') === 'root/home/guest') {
+      return '~';
+    }
+    if (currentPath.length <= 1) return '~';
+    const last = currentPath[currentPath.length - 1];
+    return `/${last}`;
   };
 
   const status = getThreatStatus();
@@ -61,16 +68,15 @@ export function DiegeticPrompt({
   const path = getPath();
 
   return (
-    <div className="diegetic-prompt font-mono text-sm" data-testid="breadcrumbs">
+    <div className="diegetic-prompt font-mono text-sm" data-testid="diegetic-prompt">
       <span className={status === 'BREACH' ? 'text-red-500' : 'text-green-500'}>
         {designation}@{hostname}:
       </span>
       {(status === 'TRACING' || status === 'BREACH') && (
         <span className="text-red-500">[{status}]</span>
       )}
-      <span className="breadcrumb text-blue-400">{path}</span>
+      <span className="text-blue-400">{path}</span>
       {modeIndicator && <span className="text-yellow-500">{modeIndicator}</span>}
-      <span className="text-gray-400">$</span>
     </div>
   );
 }

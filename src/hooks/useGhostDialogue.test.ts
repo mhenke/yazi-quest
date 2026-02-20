@@ -59,6 +59,8 @@ const createMockGameState = (overrides: Partial<GameState> = {}): GameState => (
   usedSearch: false,
   usedFilter: false,
   alerts: [],
+  triggeredThoughts: [],
+  lastThoughtId: null,
   ghostDialogueTriggered: [],
   ...overrides,
 });

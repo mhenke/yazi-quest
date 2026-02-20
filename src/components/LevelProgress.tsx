@@ -9,7 +9,7 @@ interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
   notification: { message: string; isThought?: boolean; author?: string } | null;
-  thought: { message: string; author?: string } | null;
+  thought: { text: string; author?: string } | null;
   onToggleHint: () => void;
   onToggleHelp: () => void;
   isOpen: boolean;
@@ -164,12 +164,15 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           {thought && (
             <div
               data-testid="terminal-thought"
-              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
-              data-message={thought.message}
+              className="thought-display glitch-thought"
+              data-message={thought.text}
             >
-              <span className="base-text">{thought.message}</span>
-              <span className="white-text">{thought.message}</span>
-              <span className="orange-text">{thought.message}</span>
+              {thought.author && <span className="thought-author">{thought.author}:</span>}
+              <span className="thought-text glitch-content">
+                <span className="base-text">{thought.text}</span>
+                <span className="white-text">{thought.text}</span>
+                <span className="orange-text">{thought.text}</span>
+              </span>
             </div>
           )}
         </div>

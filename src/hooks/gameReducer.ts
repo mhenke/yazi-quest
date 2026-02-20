@@ -41,8 +41,11 @@ export type Action =
       duration?: number;
     }
   | { type: 'CLEAR_NOTIFICATION' }
-  | { type: 'SET_THOUGHT'; message: string; author?: string }
+  | { type: 'SET_THOUGHT'; payload: { text: string; author?: string } }
   | { type: 'CLEAR_THOUGHT' }
+  | { type: 'MARK_THOUGHT_TRIGGERED'; payload: string }
+  | { type: 'SET_GHOST_MESSAGE'; payload: { text: string; signature: string } }
+  | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string }
   | { type: 'SET_CLIPBOARD'; nodes: FileNode[]; action: 'yank' | 'cut'; originalPath: string[] }
   | { type: 'CLEAR_CLIPBOARD' }
   | { type: 'TOGGLE_HELP' }
@@ -147,12 +150,7 @@ export type Action =
   | { type: 'POPULATE_DECOYS' }
   | { type: 'SHOW_TOAST'; message: string; duration?: number }
   | { type: 'HIDE_TOAST' }
-  | { type: 'ADVANCE_TO_OUTRO' }
-  | {
-      type: 'SET_GHOST_MESSAGE';
-      payload: { text: string; signature: string };
-    }
-  | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string };
+  | { type: 'ADVANCE_TO_OUTRO' };
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -268,10 +266,31 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, notification: null };
 
     case 'SET_THOUGHT':
-      return { ...state, thought: { message: action.message, author: action.author } };
+      return { ...state, thought: { text: action.payload.text, author: action.payload.author } };
 
     case 'CLEAR_THOUGHT':
       return { ...state, thought: null };
+
+    case 'MARK_THOUGHT_TRIGGERED': {
+      return {
+        ...state,
+        triggeredThoughts: [...state.triggeredThoughts, action.payload],
+        lastThoughtId: action.payload,
+      };
+    }
+
+    case 'SET_GHOST_MESSAGE':
+      return {
+        ...state,
+        thought: { text: action.payload.text, author: `AI-7733 ${action.payload.signature}` },
+      };
+
+    case 'MARK_GHOST_DIALOGUE_TRIGGERED': {
+      return {
+        ...state,
+        ghostDialogueTriggered: [...state.ghostDialogueTriggered, action.payload],
+      };
+    }
 
     case 'SET_CLIPBOARD':
       return {
@@ -364,7 +383,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
         usedY: false,
         usedSearch: false,
         usedFilter: false,
-        ghostDialogueTriggered: [],
+        // Reset terminal thoughts tracking
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
     case 'RESTART_CYCLE':
@@ -379,7 +400,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
-        ghostDialogueTriggered: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
     case 'INCREMENT_KEYSTROKES':
@@ -887,23 +909,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case 'ADVANCE_TO_OUTRO':
       return { ...state, levelIndex: LEVELS.length };
-
-    case 'SET_GHOST_MESSAGE': {
-      return {
-        ...state,
-        thought: {
-          message: action.payload.text,
-          author: `AI-7733 ${action.payload.signature}`,
-        },
-      };
-    }
-
-    case 'MARK_GHOST_DIALOGUE_TRIGGERED': {
-      return {
-        ...state,
-        ghostDialogueTriggered: [...state.ghostDialogueTriggered, action.payload],
-      };
-    }
 
     default:
       return state;

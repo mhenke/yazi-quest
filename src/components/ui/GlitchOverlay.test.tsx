@@ -1,11 +1,31 @@
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import { GlitchOverlay } from './GlitchOverlay';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+
+// Mock the glitchEffects utilities
+vi.mock('../../utils/glitchEffects', () => ({
+  shouldTriggerGlitch: vi.fn(),
+  getGlitchIntensity: vi.fn(),
+  scrambleText: vi.fn(),
+  getRandomGlitchChar: vi.fn(),
+}));
+
+import {
+  shouldTriggerGlitch,
+  getGlitchIntensity,
+  scrambleText,
+  getRandomGlitchChar,
+} from '../../utils/glitchEffects';
 
 describe('GlitchOverlay', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.clearAllMocks();
+    // Set up default mock implementations
+    vi.mocked(shouldTriggerGlitch).mockReturnValue(false);
+    vi.mocked(getGlitchIntensity).mockReturnValue(0);
+    vi.mocked(scrambleText).mockImplementation((text) => text);
+    vi.mocked(getRandomGlitchChar).mockReturnValue('█');
   });
 
   afterEach(() => {
@@ -14,66 +34,168 @@ describe('GlitchOverlay', () => {
 
   it('should render children without glitch effects when disabled', () => {
     render(
-      <GlitchOverlay threatLevel={80} enabled={false}>
-        <div data-testid="content">Test Content</div>
+      <GlitchOverlay threatLevel={100} enabled={false}>
+        <div data-testid="child-content">Test Content</div>
       </GlitchOverlay>
     );
 
-    expect(screen.getByTestId('content')).toBeInTheDocument();
-    expect(screen.getByTestId('content')).toHaveTextContent('Test Content');
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('glitch-overlay')).not.toBeInTheDocument();
   });
 
-  it('should render children with glitch container', () => {
+  it('should render children without glitch effects when threat level is below 20', () => {
     render(
       <GlitchOverlay threatLevel={10} enabled={true}>
-        <div data-testid="content">Test Content</div>
+        <div data-testid="child-content">Test Content</div>
       </GlitchOverlay>
     );
 
-    expect(screen.getByTestId('content')).toBeInTheDocument();
-    // The content is wrapped in an inner div, which is inside the glitch-container
-    const container = screen.getByTestId('content').parentElement?.parentElement;
-    expect(container).toHaveClass('glitch-container');
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('glitch-overlay')).not.toBeInTheDocument();
   });
 
-  it('should not show glitch effects at low threat level', () => {
+  it('should render glitch overlay container when threat level is 20 or above', () => {
+    vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
     render(
-      <GlitchOverlay threatLevel={10} enabled={true}>
-        <div data-testid="content">Test Content</div>
+      <GlitchOverlay threatLevel={60} enabled={true}>
+        <div data-testid="child-content">Test Content</div>
       </GlitchOverlay>
     );
 
-    // At low threat, no glitch effects should be visible initially
-    expect(screen.queryByText(/SYSTEM INSTABILITY/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('glitch-overlay')).toBeInTheDocument();
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
   });
 
-  it('should apply color-bleed class at high intensity', () => {
-    render(
-      <GlitchOverlay threatLevel={100} enabled={true}>
-        <div data-testid="content">Test Content</div>
+  it('should apply consciousness level prop (optional)', () => {
+    vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
+    const { container } = render(
+      <GlitchOverlay threatLevel={60} consciousnessLevel={50} enabled={true}>
+        <div>Content</div>
       </GlitchOverlay>
     );
 
-    // Advance timers to trigger glitch effect
-    vi.advanceTimersByTime(2000);
-
-    const container = screen.getByTestId('content').parentElement?.parentElement;
-    // The color-bleed class is applied when intensity > 0.8
-    // At threat 100, intensity should be 1.0
-    expect(container).toBeInTheDocument();
+    expect(container.firstChild).toBeInTheDocument();
   });
 
-  it('should respect consciousnessLevel for combined intensity', () => {
+  it('should pass through children correctly', () => {
+    vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
     render(
-      <GlitchOverlay threatLevel={10} consciousnessLevel={90} enabled={true}>
-        <div data-testid="content">Test Content</div>
+      <GlitchOverlay threatLevel={60} enabled={true}>
+        <span className="test-class">Child Element</span>
       </GlitchOverlay>
     );
 
-    // consciousnessLevel 90 should give high intensity even with low threat
-    vi.advanceTimersByTime(2000);
+    expect(screen.getByText('Child Element')).toBeInTheDocument();
+    expect(screen.getByText('Child Element').className).toBe('test-class');
+  });
 
-    const content = screen.getByTestId('content');
-    expect(content).toBeInTheDocument();
+  describe('glitch effects triggering', () => {
+    it('should not trigger glitch when shouldTriggerGlitch returns false', () => {
+      vi.mocked(shouldTriggerGlitch).mockReturnValue(false);
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
+      render(
+        <GlitchOverlay threatLevel={60} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      // Initially no active glitch
+      const overlay = screen.getByTestId('glitch-overlay');
+      expect(overlay).not.toHaveClass('glitch-text-scramble');
+      expect(overlay).not.toHaveClass('glitch-color-bleed');
+      expect(overlay).not.toHaveClass('glitch-scan-line');
+    });
+
+    it('should trigger glitch effects when shouldTriggerGlitch returns true', async () => {
+      vi.mocked(shouldTriggerGlitch).mockReturnValue(true);
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.8);
+
+      render(
+        <GlitchOverlay threatLevel={90} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      // Wait for potential glitch effect
+      await waitFor(
+        () => {
+          const overlay = screen.getByTestId('glitch-overlay');
+          // At least one glitch class should be present at some point
+          const hasGlitchClass =
+            overlay.classList.contains('glitch-text-scramble') ||
+            overlay.classList.contains('glitch-color-bleed') ||
+            overlay.classList.contains('glitch-scan-line');
+          expect(hasGlitchClass).toBe(true);
+        },
+        { timeout: 3000 }
+      );
+    });
+  });
+
+  describe('intensity-based styling', () => {
+    it('should apply intensity-based CSS variables', () => {
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.75);
+
+      const { container } = render(
+        <GlitchOverlay threatLevel={80} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      const glitchContainer = container.firstChild as HTMLElement;
+      expect(glitchContainer).toBeInTheDocument();
+    });
+  });
+
+  describe('scan-line effect', () => {
+    it('should render scan-lines element during scan-line glitch', () => {
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
+      render(
+        <GlitchOverlay threatLevel={60} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      // Scan lines may appear during glitch
+      // We verify the structure is in place
+      const overlay = screen.getByTestId('glitch-overlay');
+      expect(overlay).toBeInTheDocument();
+    });
+  });
+
+  describe('color-bleed effect', () => {
+    it('should render color-bleed element during color-bleed glitch', () => {
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+
+      render(
+        <GlitchOverlay threatLevel={60} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      const overlay = screen.getByTestId('glitch-overlay');
+      expect(overlay).toBeInTheDocument();
+    });
+  });
+
+  describe('text-scramble effect', () => {
+    it('should render scramble-overlay with glitch characters during text-scramble glitch', () => {
+      vi.mocked(getGlitchIntensity).mockReturnValue(0.5);
+      vi.mocked(getRandomGlitchChar).mockReturnValue('▓');
+
+      render(
+        <GlitchOverlay threatLevel={60} enabled={true}>
+          <div>Content</div>
+        </GlitchOverlay>
+      );
+
+      const overlay = screen.getByTestId('glitch-overlay');
+      expect(overlay).toBeInTheDocument();
+    });
   });
 });

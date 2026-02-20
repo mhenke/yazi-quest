@@ -190,8 +190,7 @@ export const handleClipboardKeyDown = (
       if (legacyThought) {
         dispatch({
           type: 'SET_THOUGHT',
-          message: legacyThought,
-          author: 'AI-7734',
+          payload: { text: legacyThought, author: 'AI-7734' },
         });
       }
 

@@ -351,6 +351,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
         ghostDialogueTriggered: [],
       };
 
@@ -446,6 +448,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
         ghostDialogueTriggered: [],
       };
 
@@ -541,6 +545,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
         ghostDialogueTriggered: [],
       };
 

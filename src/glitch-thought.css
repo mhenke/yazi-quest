@@ -42,6 +42,26 @@
   z-index: 2;
 }
 
+/* Thought Display Container - Cyberpunk Styling */
+.thought-display {
+  @apply text-gray-400 italic border-l-2 border-gray-600 pl-4 py-2 my-4;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.thought-author {
+  @apply font-semibold text-gray-500 mr-2;
+}
+
+.thought-text {
+  @apply text-gray-300;
+}
+
+/* Glitch content wrapper to position glitch layers correctly */
+.glitch-content {
+  position: relative;
+  display: inline-block;
+}
+
 /* Keyframes for the glitch effect */
 @keyframes glitch1 {
   0% {
@@ -164,5 +184,16 @@
     text-shadow:
       0 0 3px rgba(255, 170, 0, 0.6),
       0 0 8px rgba(255, 170, 0, 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
