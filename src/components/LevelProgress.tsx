@@ -163,13 +163,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         <div className="flex-1 text-center px-4 flex items-center justify-center">
           {thought && (
             <div
-              data-testid="narrative-thought"
-              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
+              data-testid="terminal-thought"
+              className="thought-display glitch-thought"
               data-message={thought.text}
             >
-              <span className="base-text">{thought.text}</span>
-              <span className="white-text">{thought.text}</span>
-              <span className="orange-text">{thought.text}</span>
+              {thought.author && <span className="thought-author">{thought.author}:</span>}
+              <span className="thought-text glitch-content">
+                <span className="base-text">{thought.text}</span>
+                <span className="white-text">{thought.text}</span>
+                <span className="orange-text">{thought.text}</span>
+              </span>
             </div>
           )}
         </div>

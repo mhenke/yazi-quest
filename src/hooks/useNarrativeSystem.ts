@@ -176,6 +176,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
 
   // --- Task Completion Narrative ---
   const prevCompletedTasksRef = useRef<Record<number, string[]>>(gameState.completedTaskIds);
+  const shownLevelCompletionThoughtRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const currentLevel = LEVELS[gameState.levelIndex];
@@ -192,13 +193,33 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       if (currentLevel.id === 5 && newTasks.includes('establish-stronghold')) {
         triggerThought('Deeper into the shadow. They cannot track me in the static.');
       }
+
+      // --- Level Completion Thought Triggers ---
+      // Check if all tasks are now complete for this level
+      const allTasksComplete = currentLevel.tasks.every(
+        (t) => currTasks.includes(t.id) || (t.hidden && t.hidden(gameState, currentLevel))
+      );
+
+      if (allTasksComplete && !shownLevelCompletionThoughtRef.current.has(currentLevel.id)) {
+        // Trigger level completion thought
+        triggerThought(`Level ${currentLevel.id} complete. Protocol executed successfully.`);
+        shownLevelCompletionThoughtRef.current.add(currentLevel.id);
+
+        // Trigger efficient completion thought if keystrokes are under threshold
+        const optimalKeystrokes = currentLevel.maxKeystrokes || 50;
+        if (gameState.keystrokes < optimalKeystrokes * 1.2) {
+          triggerThought('Efficient navigation. Minimal footprint detected.');
+        }
+      }
     }
 
     prevCompletedTasksRef.current = gameState.completedTaskIds;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     gameState.completedTaskIds,
     gameState.levelIndex,
     gameState.isGameOver,
+    gameState.keystrokes,
     dispatch,
     triggerThought,
   ]);
