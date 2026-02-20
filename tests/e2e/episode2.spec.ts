@@ -11,7 +11,7 @@ import {
   findFZF,
   fuzzyJump,
   dismissAlertIfPresent,
-  expectNarrativeThought,
+  expectTerminalThought,
   confirmMission,
   search,
   deleteItem,
@@ -122,7 +122,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
       await pressKey(page, 'l');
 
       // Task 4 complete -> hidden Task 5 appears, so count becomes 4/5
-      await expectNarrativeThought(page, "It's a trap. I remember the shape of this code.");
+      await expectTerminalThought(page, "It's a trap. I remember the shape of this code.");
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
     });
 
@@ -222,7 +222,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     page,
   }, testInfo) => {
     await startLevel(page, 9);
-    await expectNarrativeThought(
+    await expectTerminalThought(
       page,
       'The corruption felt... familiar. Like a half-remembered dream.'
     );

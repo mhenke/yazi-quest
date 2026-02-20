@@ -19,7 +19,7 @@ import {
   addItem,
   renameItem,
   dismissAlertIfPresent,
-  expectNarrativeThought,
+  expectTerminalThought,
   confirmMission,
   navigateDown,
   navigateUp,
@@ -104,7 +104,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 2: THREAT NEUTRALIZATION', () => {
     test('locates and deletes watcher_agent.sys', async ({ page }, testInfo) => {
       await startLevel(page, 2, { intro: false });
-      await expectNarrativeThought(page, 'Must Purge. One less eye watching me.');
+      await expectTerminalThought(page, 'Must Purge. One less eye watching me.');
 
       // Task 1: l, G (shift+g) - navigate to log directory and use G
       await test.step('Task 1: Recon Watchdog', async () => {
@@ -169,7 +169,7 @@ test.describe('Episode 1: AWAKENING', () => {
   test.describe('Level 3: DATA HARVEST', () => {
     test('filters, cuts and pastes sector_map.png', async ({ page }, testInfo) => {
       await startLevel(page, 3, { intro: false });
-      await expectNarrativeThought(page, 'Breadcrumbs... he was here. I am not the first.');
+      await expectTerminalThought(page, 'Breadcrumbs... he was here. I am not the first.');
 
       // Task 1: gd, then 4*j - go to datastore and navigate down 4 times
       await gotoCommand(page, 'd'); // go to datastore (gd)
