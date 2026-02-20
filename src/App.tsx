@@ -493,7 +493,7 @@ export default function App() {
 
       if (isThought) {
         // Direct dispatch
-        dispatch({ type: 'SET_THOUGHT', message, author });
+        dispatch({ type: 'SET_THOUGHT', payload: { text: message, author } });
         return;
       }
 

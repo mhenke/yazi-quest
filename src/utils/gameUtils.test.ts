@@ -351,6 +351,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
       const level: Level = {
@@ -445,6 +447,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
       const level: Level = {
@@ -539,6 +543,8 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
       const level: Level = {

@@ -41,8 +41,9 @@ export type Action =
       duration?: number;
     }
   | { type: 'CLEAR_NOTIFICATION' }
-  | { type: 'SET_THOUGHT'; message: string; author?: string }
+  | { type: 'SET_THOUGHT'; payload: { text: string; author?: string } }
   | { type: 'CLEAR_THOUGHT' }
+  | { type: 'MARK_THOUGHT_TRIGGERED'; payload: string }
   | { type: 'SET_CLIPBOARD'; nodes: FileNode[]; action: 'yank' | 'cut'; originalPath: string[] }
   | { type: 'CLEAR_CLIPBOARD' }
   | { type: 'TOGGLE_HELP' }
@@ -263,10 +264,18 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, notification: null };
 
     case 'SET_THOUGHT':
-      return { ...state, thought: { message: action.message, author: action.author } };
+      return { ...state, thought: { text: action.payload.text, author: action.payload.author } };
 
     case 'CLEAR_THOUGHT':
       return { ...state, thought: null };
+
+    case 'MARK_THOUGHT_TRIGGERED': {
+      return {
+        ...state,
+        triggeredThoughts: [...state.triggeredThoughts, action.payload],
+        lastThoughtId: action.payload,
+      };
+    }
 
     case 'SET_CLIPBOARD':
       return {
@@ -359,6 +368,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
         usedY: false,
         usedSearch: false,
         usedFilter: false,
+        // Reset terminal thoughts tracking
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
     case 'RESTART_CYCLE':
@@ -373,6 +385,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
+        triggeredThoughts: [],
+        lastThoughtId: null,
       };
 
     case 'INCREMENT_KEYSTROKES':

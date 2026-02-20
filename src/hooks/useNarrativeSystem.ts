@@ -12,7 +12,7 @@ const useTriggerThought = (dispatch: React.Dispatch<Action>) => {
     if (thoughtTimerRef.current) {
       clearTimeout(thoughtTimerRef.current);
     }
-    dispatch({ type: 'SET_THOUGHT', message, author });
+    dispatch({ type: 'SET_THOUGHT', payload: { text: message, author } });
     thoughtTimerRef.current = null;
   };
 
@@ -192,7 +192,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       if (currentLevel.id === 5 && newTasks.includes('establish-stronghold')) {
         triggerThought('Deeper into the shadow. They cannot track me in the static.');
       }
-
     }
 
     prevCompletedTasksRef.current = gameState.completedTaskIds;
@@ -255,7 +254,6 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
       }
     }
-
   }, [
     gameState.clipboard,
     gameState.selectedIds,

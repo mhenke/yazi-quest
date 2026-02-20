@@ -173,7 +173,7 @@ export interface GameState {
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   levelStartPath: string[]; // Path at start of level (for reset)
   notification: { message: string; author?: string; isThought?: boolean } | null;
-  thought: { message: string; author?: string } | null;
+  thought: { text: string; author?: string } | null;
   selectedIds: string[]; // IDs of currently selected files
   pendingDeleteIds: string[]; // IDs waiting for deletion confirmation
   deleteType: 'trash' | 'permanent' | null; // Type of delete for confirmation modal
@@ -252,6 +252,10 @@ export interface GameState {
   questMapTab?: number; // Active episode tab index (0-2)
   questMapMissionIdx?: number; // Selected mission index in current tab
   alerts: GameAlert[]; // Active system alerts
+
+  // Terminal Thoughts tracking
+  triggeredThoughts: string[]; // All triggered thought IDs
+  lastThoughtId: string | null; // Prevent duplicates
 }
 
 export interface GameAlert {
