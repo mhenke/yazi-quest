@@ -438,7 +438,7 @@ export async function waitForMissionComplete(page: Page): Promise<void> {
  * Asserts that a specified narrative thought appears on screen.
  */
 export async function expectNarrativeThought(page: Page, text: string | RegExp): Promise<void> {
-  const thought = page.locator('[data-testid="narrative-thought"]');
+  const thought = page.locator('[data-testid="terminal-thought"]');
   await expect(thought).toBeVisible({ timeout: 1000 });
   await expect(thought).toContainText(text);
 }

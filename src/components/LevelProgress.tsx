@@ -163,7 +163,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         <div className="flex-1 text-center px-4 flex items-center justify-center">
           {thought && (
             <div
-              data-testid="narrative-thought"
+              data-testid="terminal-thought"
               className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
               data-message={thought.message}
             >
