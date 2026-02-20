@@ -247,6 +247,9 @@ export interface GameState {
   usedSearchCleared?: boolean; // Tracks if player cleared a search
   usedFilter?: boolean; // Tracks if player used 'f' for filter mode
 
+  // Ghost dialogue system (AI-7733 consciousness)
+  ghostDialogueTriggered: string[]; // IDs of triggered ghost dialogues
+
   // Lifted UI State (Centralized Input)
   helpScrollPosition?: number; // Scroll offset for HelpModal
   questMapTab?: number; // Active episode tab index (0-2)

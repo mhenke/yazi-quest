@@ -147,7 +147,12 @@ export type Action =
   | { type: 'POPULATE_DECOYS' }
   | { type: 'SHOW_TOAST'; message: string; duration?: number }
   | { type: 'HIDE_TOAST' }
-  | { type: 'ADVANCE_TO_OUTRO' };
+  | { type: 'ADVANCE_TO_OUTRO' }
+  | {
+      type: 'SET_GHOST_MESSAGE';
+      payload: { text: string; signature: string };
+    }
+  | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string };
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -359,6 +364,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         usedY: false,
         usedSearch: false,
         usedFilter: false,
+        ghostDialogueTriggered: [],
       };
 
     case 'RESTART_CYCLE':
@@ -373,6 +379,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
+        ghostDialogueTriggered: [],
       };
 
     case 'INCREMENT_KEYSTROKES':
@@ -880,6 +887,23 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case 'ADVANCE_TO_OUTRO':
       return { ...state, levelIndex: LEVELS.length };
+
+    case 'SET_GHOST_MESSAGE': {
+      return {
+        ...state,
+        thought: {
+          message: action.payload.text,
+          author: `AI-7733 ${action.payload.signature}`,
+        },
+      };
+    }
+
+    case 'MARK_GHOST_DIALOGUE_TRIGGERED': {
+      return {
+        ...state,
+        ghostDialogueTriggered: [...state.ghostDialogueTriggered, action.payload],
+      };
+    }
 
     default:
       return state;

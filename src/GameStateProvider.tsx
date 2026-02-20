@@ -335,6 +335,7 @@ const createInitialState = (): GameState => {
     usedHistoryBack: false,
     usedHistoryForward: false,
     isBooting: false,
+    ghostDialogueTriggered: [],
   };
 };
 

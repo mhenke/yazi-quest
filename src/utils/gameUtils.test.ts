@@ -351,6 +351,7 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        ghostDialogueTriggered: [],
       };
 
       const level: Level = {
@@ -445,6 +446,7 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        ghostDialogueTriggered: [],
       };
 
       const level: Level = {
@@ -539,6 +541,7 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
+        ghostDialogueTriggered: [],
       };
 
       const level: Level = {
