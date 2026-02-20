@@ -129,6 +129,7 @@ export function calculateFrecency(
 
 export interface GameSettings {
   soundEnabled: boolean;
+  narrativeEffects: 'full' | 'reduced' | 'minimal';
 }
 
 export type SortBy = 'natural' | 'alphabetical' | 'modified' | 'size' | 'extension';

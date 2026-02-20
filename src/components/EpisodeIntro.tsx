@@ -145,7 +145,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       up.includes('CORE DIRECTIVE') ||
       up.includes('FALLBACK OBJECTIVE') ||
       up.startsWith('ANOMALY PROTOCOLS') ||
-      up.startsWith('SCHEDULED ACTION')
+      up.startsWith('SCHEDULED ACTION') ||
+      up.startsWith('DIRECTIVE CORRUPTED')
     ) {
       return 'text-zinc-300';
     }
@@ -164,6 +165,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     'AI-7734': { className: 'text-orange-400 font-bold' },
     'AI-7733': { className: 'text-blue-400 font-bold' },
     'AI-7735': { className: 'text-yellow-400 font-bold' },
+    'DIRECTIVE CORRUPTED': { className: 'text-red-500 font-bold', glitch: true },
     SURVIVE: { className: 'text-orange-400 font-bold', glitch: true },
     SURVIVAL: { className: 'text-orange-400 font-bold', glitch: true },
     'GUEST PARTITION IS A CAGE': { className: 'text-blue-500 font-bold' },

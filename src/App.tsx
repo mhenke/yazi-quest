@@ -1662,7 +1662,7 @@ export default function App() {
     <GlitchOverlay
       threatLevel={gameState.threatLevel}
       consciousnessLevel={consciousnessLevel}
-      enabled={true}
+      enabled={gameState.settings.narrativeEffects !== 'minimal'}
     >
       <div
         className={`flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative ${
@@ -1709,6 +1709,8 @@ export default function App() {
               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
             }
             scrollPosition={gameState.helpScrollPosition || 0}
+            dispatch={dispatch}
+            narrativeEffects={gameState.settings.narrativeEffects}
           />
         )}
 

@@ -304,7 +304,7 @@ const createInitialState = (): GameState => {
     isGameOver: false,
     gameOverReason: undefined,
     stats: { fuzzyJumps: 0, fzfFinds: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
-    settings: { soundEnabled: true },
+    settings: { soundEnabled: true, narrativeEffects: 'full' },
     fuzzySelectedIndex: 0,
     usedG: false,
     usedGI: false,

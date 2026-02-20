@@ -24,7 +24,7 @@ interface UseConsciousnessProps {
  * Updates on level completion and significant game state changes
  */
 export function useConsciousness({ gameState, dispatch }: UseConsciousnessProps) {
-  const ghostCount = gameState.ghostDialogueTriggered.length;
+  const ghostCount = (gameState.ghostDialogueTriggered ?? []).length;
 
   /**
    * Update consciousness metrics

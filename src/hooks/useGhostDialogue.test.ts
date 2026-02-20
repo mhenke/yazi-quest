@@ -41,7 +41,7 @@ const createMockGameState = (overrides: Partial<GameState> = {}): GameState => (
   startTime: Date.now(),
   isGameOver: false,
   stats: { fuzzyJumps: 0, fzfFinds: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
-  settings: { soundEnabled: true },
+  settings: { soundEnabled: true, narrativeEffects: 'full' },
   usedG: false,
   usedGG: false,
   usedDown: false,

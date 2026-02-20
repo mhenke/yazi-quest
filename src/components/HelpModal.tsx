@@ -6,11 +6,18 @@ import { KEYBINDINGS, META_KEYBINDINGS } from '../constants';
 interface HelpModalProps {
   onClose: () => void;
   scrollPosition: number;
+  dispatch?: React.Dispatch<unknown>;
+  narrativeEffects?: 'full' | 'reduced' | 'minimal';
 }
 
 const LINE_HEIGHT = 20; // Approximate line height in pixels
 
-export const HelpModal: React.FC<HelpModalProps> = ({ onClose, scrollPosition }) => {
+export const HelpModal: React.FC<HelpModalProps> = ({
+  onClose,
+  scrollPosition,
+  dispatch,
+  narrativeEffects = 'full',
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,6 +101,38 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose, scrollPosition })
             </div>
           </div>
         </div>
+
+        {dispatch && (
+          <div className="mt-6 border-t border-zinc-800 pt-4">
+            <h3 className="text-sm font-bold text-purple-400 mb-2">Accessibility Settings</h3>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="narrative-effects-select" className="text-sm text-zinc-400">
+                Narrative Effects (glitches, screen effects)
+              </label>
+              <select
+                id="narrative-effects-select"
+                value={narrativeEffects}
+                onChange={(e) => {
+                  dispatch({
+                    type: 'UPDATE_SETTINGS',
+                    payload: { narrativeEffects: e.target.value as 'full' | 'reduced' | 'minimal' },
+                  });
+                }}
+                className="w-full max-w-xs bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-300 text-sm"
+                data-testid="narrative-effects-select"
+                aria-label="Select narrative effects intensity level"
+              >
+                <option value="full">Full (All glitches and effects)</option>
+                <option value="reduced">Reduced (Minimal glitches)</option>
+                <option value="minimal">Minimal (Clean UI, thoughts only)</option>
+              </select>
+              <p className="text-xs text-zinc-600">
+                Controls intensity of narrative UI effects like screen glitches and corruption
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
           Query command reference (?) • Press Shift+Enter or Escape to close
         </div>

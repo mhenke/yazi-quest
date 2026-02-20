@@ -7,6 +7,7 @@ import {
   Linemode,
   ZoxideEntry,
   GameAlert,
+  GameSettings,
 } from '../types';
 import { INITIAL_FS, LEVELS, populateDecoys } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
@@ -47,6 +48,7 @@ export type Action =
   | { type: 'SET_GHOST_MESSAGE'; payload: { text: string; signature: string } }
   | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string }
   | { type: 'UPDATE_CONSCIOUSNESS'; payload: number }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> }
   | { type: 'SET_CLIPBOARD'; nodes: FileNode[]; action: 'yank' | 'cut'; originalPath: string[] }
   | { type: 'CLEAR_CLIPBOARD' }
   | { type: 'TOGGLE_HELP' }
@@ -885,6 +887,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         settings: { ...state.settings, soundEnabled: !state.settings.soundEnabled },
+      };
+
+    case 'UPDATE_SETTINGS':
+      return {
+        ...state,
+        settings: { ...state.settings, ...action.payload },
       };
 
     case 'SET_HELP_SCROLL':
