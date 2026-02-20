@@ -1675,7 +1675,13 @@ export default function App() {
         />
       )}
 
-      {showBoot && <BootSequence episode={currentEpisode} onComplete={() => setShowBoot(false)} />}
+      {showBoot && (
+        <BootSequence
+          key={currentEpisode}
+          episode={currentEpisode}
+          onComplete={() => setShowBoot(false)}
+        />
+      )}
 
       {gameState.isGameOver && (
         <GameOverModal

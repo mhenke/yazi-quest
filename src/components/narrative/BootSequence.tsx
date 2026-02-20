@@ -6,6 +6,13 @@ interface BootSequenceProps {
   onComplete?: () => void;
 }
 
+/**
+ * BootSequence component displays animated boot messages for each episode.
+ *
+ * Note: When using this component, pass a `key` prop equal to `episode` to ensure
+ * the component remounts on episode change, preventing state leakage:
+ * <BootSequence key={episode} episode={episode} onComplete={...} />
+ */
 export function BootSequence({ episode, onComplete }: BootSequenceProps) {
   const [sequence] = useState(() => getBootSequenceForEpisode(episode));
   const [visibleLines, setVisibleLines] = useState<string[]>([]);
@@ -32,7 +39,7 @@ export function BootSequence({ episode, onComplete }: BootSequenceProps) {
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
     };
-  }, [sequence, onComplete]);
+  }, [sequence, onComplete, episode]);
 
   return (
     <div className="boot-sequence fixed inset-0 bg-black text-green-500 font-mono p-8 z-50">
