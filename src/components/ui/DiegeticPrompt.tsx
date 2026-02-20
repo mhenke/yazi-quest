@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState } from '../../types';
+import { FileNode, GameState } from '../../types';
 
 interface DiegeticPromptProps {
   threatLevel: number;
@@ -7,7 +7,7 @@ interface DiegeticPromptProps {
   currentPath: string[];
   filterQuery?: string;
   searchQuery?: string;
-  searchResults?: any[];
+  searchResults?: FileNode[];
   cycleCount?: number;
 }
 
@@ -77,7 +77,6 @@ export function DiegeticPrompt({
       )}
       <span className="text-blue-400">{path}</span>
       {modeIndicator && <span className="text-yellow-500">{modeIndicator}</span>}
-      <span className="text-gray-400">$</span>
     </div>
   );
 }
