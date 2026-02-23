@@ -480,13 +480,7 @@ export function isProtected(
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
   if (level.id === 14 && action === 'delete') {
-    // Broad rule for Level 14: allow deleting anything directly inside the guest home
-    // (except the guest home itself, though that's usually not listed)
-    if (node.parentId === 'guest') {
-      return null;
-    }
-
-    // Fallback to designated allowed paths policy
+    // Fallback to designated allowed paths policy (check explicit entries first)
     const allowed = level.allowedDeletePaths;
     const getNodeByNamePath = (rootNode: FileNode, names: string[]): FileNode | undefined => {
       let current: FileNode | undefined = rootNode;
@@ -505,21 +499,39 @@ export function isProtected(
         const namePath = entry.path;
         const requiredTask = entry.requiresTaskId;
 
-        if (requiredTask) {
-          const levelTaskIds = completedTaskIds?.[level.id] || [];
-          if (!levelTaskIds.includes(requiredTask)) continue;
-        }
-
         const targetRoot = getNodeByNamePath(root, namePath);
         if (!targetRoot) continue;
-        if (targetRoot.id === node.id) return null;
+
+        // If this allowed entry targets the node (or an ancestor), enforce requiresTaskId if present
         const stack: FileNode[] = [targetRoot];
+        let matched = false;
         while (stack.length) {
           const n = stack.pop()!;
-          if (n.id === node.id) return null;
+          if (n.id === node.id) {
+            matched = true;
+            break;
+          }
           if (n.children) stack.push(...n.children);
         }
+
+        if (!matched) continue;
+
+        if (requiredTask) {
+          const levelTaskIds = completedTaskIds?.[level.id] || [];
+          if (!levelTaskIds.includes(requiredTask)) {
+            return `PROTECTED: ${node.name} cannot be purged.`;
+          }
+          return null;
+        }
+
+        return null;
       }
+    }
+
+    // Broad rule for Level 14: allow deleting anything directly inside the guest home
+    // (except the guest home itself, though that's usually not listed)
+    if (node.parentId === 'guest') {
+      return null;
     }
   }
 
