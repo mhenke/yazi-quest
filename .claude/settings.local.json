@@ -18,7 +18,20 @@
       "Bash(npx tsc:*)",
       "WebFetch(domain:github.com)",
       "Bash(git rm:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(sed -n '1460,1465p' /home/mhenke/Projects/yazi-quest/src/constants.tsx)",
+      "Bash(git *)",
+      "Bash(sed *)",
+      "Bash(mv /tmp/protocols.ts.tmp src/constants/protocols.ts)",
+      "Bash(sed \"130s/'continuity'\\\\\\\\.$/'continuity'. /\")",
+      "Bash(npm run *)",
+      "Bash(sed -n '1464,1709p' src/constants.tsx)",
+      "Read(//tmp/**)",
+      "Bash(head -179 /home/mhenke/Projects/yazi-quest/src/constants/narrative.ts)",
+      "Bash(mv /tmp/narrative_clean.ts /home/mhenke/Projects/yazi-quest/src/constants/narrative.ts)",
+      "Bash(awk *)",
+      "Bash(xargs -I {} bash -c \"grep 'from.*protocols' src/constants/filesystem.ts | grep -o '[A-Z_]*_CONTENT' | sort -u\")"
     ]
   }
 }
