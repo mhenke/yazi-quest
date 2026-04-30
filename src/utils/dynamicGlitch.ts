@@ -1,8 +1,9 @@
-export function applyDynamicGlitch(el: HTMLElement) {
+type GlitchElement = HTMLElement & { __dynamicGlitchApplied?: boolean };
+
+export function applyDynamicGlitch(el: GlitchElement) {
   if (!el) return;
   // If already applied, skip
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((el as any).__dynamicGlitchApplied) return;
+  if (el.__dynamicGlitchApplied) return;
 
   const uid = Math.random().toString(36).slice(2, 9);
   const beforeName = `glitch_before_${uid}`;
@@ -42,12 +43,10 @@ export function applyDynamicGlitch(el: HTMLElement) {
   el.style.setProperty('--glitch-dur-before', `${(1.2 + Math.random() * 1.2).toFixed(2)}s`);
   el.style.setProperty('--glitch-dur-after', `${(0.9 + Math.random() * 0.9).toFixed(2)}s`);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (el as any).__dynamicGlitchApplied = true;
+  el.__dynamicGlitchApplied = true;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const triggerScreenShake = (element: any) => {
+export const triggerScreenShake = (element: HTMLElement) => {
   if (!element) return;
   // Reset animation
   element.style.animation = 'none';

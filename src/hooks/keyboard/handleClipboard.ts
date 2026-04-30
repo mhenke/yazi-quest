@@ -306,6 +306,7 @@ export const handleClipboardKeyDown = (
               }
             }
 
+            // Strip transient clipboard/search properties — these must not persist to the filesystem
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
 
@@ -378,6 +379,7 @@ export const handleClipboardKeyDown = (
               newFs = deleteResult.value;
             }
 
+            // Strip transient clipboard/search properties — these must not persist to the filesystem
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
 
