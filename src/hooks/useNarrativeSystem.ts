@@ -223,7 +223,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
     }
 
     prevCompletedTasksRef.current = gameState.completedTaskIds;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit full gameState; t.hidden() uses it but we only want to re-run on task/level changes
   }, [
     gameState.completedTaskIds,
     gameState.levelIndex,
