@@ -4,6 +4,7 @@ import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 import { Episode } from '../types';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 import { useGlobalInput } from '../GlobalInputContext';
+import { getSkipIntroRequested, setSkipIntroRequested } from '../utils/skipIntroFlag';
 
 interface EpisodeIntroProps {
   episode: Episode;
@@ -111,7 +112,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
     // If tests set a global skip flag before the component mounts, honor it immediately.
     // This prevents races where tests dispatch the event before listeners are attached.
-    if (window.__yaziQuestSkipIntroRequested) {
+    if (getSkipIntroRequested()) {
       onComplete({ isSkip: true });
       return;
     }
@@ -343,7 +344,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         <div className="absolute top-4 right-4">
           <button
             onClick={() => {
-              window.__yaziQuestSkipIntroRequested = true;
+              setSkipIntroRequested();
               window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
             }}
             className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-orange-500 rounded backdrop-blur-sm shadow-lg"

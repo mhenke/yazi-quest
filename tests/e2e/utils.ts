@@ -321,7 +321,6 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
 
   await page.evaluate(() => {
-    window.__yaziQuestSkipIntroRequested = true;
     window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
   });
 

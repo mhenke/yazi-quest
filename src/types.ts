@@ -87,12 +87,6 @@ export interface GameStats {
   archivesEntered: number;
 }
 
-declare global {
-  interface Window {
-    __yaziQuestSkipIntroRequested?: boolean;
-  }
-}
-
 // Zoxide frecency tracking - matches real zoxide algorithm
 export interface ZoxideEntry {
   count: number; // Visit count (base score)

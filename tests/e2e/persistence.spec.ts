@@ -39,7 +39,6 @@ test.describe('Persistence & State Survival', () => {
 
     // Unified intro skip logic
     await page.evaluate(() => {
-      window.__yaziQuestSkipIntroRequested = true;
       window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
     });
 
@@ -71,7 +70,6 @@ test.describe('Persistence & State Survival', () => {
 
     // Skip intro
     await page.evaluate(() => {
-      window.__yaziQuestSkipIntroRequested = true;
       window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
     });
 

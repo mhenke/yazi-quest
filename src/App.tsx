@@ -61,6 +61,11 @@ import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
 import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
+import {
+  getSkipIntroRequested,
+  setSkipIntroRequested,
+  resetSkipIntroRequested,
+} from './utils/skipIntroFlag';
 import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
@@ -81,7 +86,7 @@ function createInitialState(): GameState {
   const skipIntro =
     params.get('intro') === 'false' ||
     params.get('skipIntro') === 'true' ||
-    window.__yaziQuestSkipIntroRequested === true;
+    getSkipIntroRequested();
 
   // 3. Determine Target Level
   let targetIndex = 0;
@@ -340,12 +345,12 @@ export default function App() {
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   const handleSkip = useCallback(() => {
-    window.__yaziQuestSkipIntroRequested = true;
+    setSkipIntroRequested();
     dispatch({ type: 'COMPLETE_INTRO', isSkip: true });
   }, [dispatch]);
 
   useEffect(() => {
-    if (window.__yaziQuestSkipIntroRequested) {
+    if (getSkipIntroRequested()) {
       handleSkip();
     }
 
@@ -936,6 +941,7 @@ export default function App() {
 
   // Handle the end of the final level - trigger restart sequence
   const handleRestartCycle = useCallback(() => {
+    resetSkipIntroRequested();
     dispatch({ type: 'RESTART_CYCLE' });
   }, [dispatch]);
 
