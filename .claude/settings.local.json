@@ -31,7 +31,8 @@
       "Bash(head -179 /home/mhenke/Projects/yazi-quest/src/constants/narrative.ts)",
       "Bash(mv /tmp/narrative_clean.ts /home/mhenke/Projects/yazi-quest/src/constants/narrative.ts)",
       "Bash(awk *)",
-      "Bash(xargs -I {} bash -c \"grep 'from.*protocols' src/constants/filesystem.ts | grep -o '[A-Z_]*_CONTENT' | sort -u\")"
+      "Bash(xargs -I {} bash -c \"grep 'from.*protocols' src/constants/filesystem.ts | grep -o '[A-Z_]*_CONTENT' | sort -u\")",
+      "Bash(npm test *)"
     ]
   }
 }
