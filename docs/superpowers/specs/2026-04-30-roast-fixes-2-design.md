@@ -148,7 +148,6 @@ interface GameInputContextValue {
   handleSearchConfirm: () => void;
   handleFuzzySelect: (item: FileNode) => void;
   handleBootComplete: (opts?: { isSkip?: boolean }) => void;
-  // Keyboard handler callbacks (from useKeyboardHandlers)
   // Keyboard handler callbacks (from useKeyboardHandlers — exact signatures match those hooks)
   handleNormalModeKeyDown: (e: KeyboardEvent) => boolean | void;
   handleSortModeKeyDown: (e: KeyboardEvent) => void;
