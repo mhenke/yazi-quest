@@ -2,11 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { HELP_KEYBINDINGS, HELP_META_KEYBINDINGS } from '../constants/keybindings';
+import type { Action } from '../hooks/gameReducer';
 
 interface HelpModalProps {
   onClose: () => void;
   scrollPosition: number;
-  dispatch?: React.Dispatch<unknown>;
+  dispatch?: React.Dispatch<Action>;
   narrativeEffects?: 'full' | 'reduced' | 'minimal';
 }
 

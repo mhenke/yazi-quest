@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { GameState } from '../types';
+import type { Action } from './gameReducer';
 import {
   updateConsciousness,
   calculateEfficiencyScore,
@@ -9,7 +10,7 @@ import {
 
 interface UseConsciousnessProps {
   gameState: GameState;
-  dispatch: React.Dispatch<unknown>;
+  dispatch: React.Dispatch<Action>;
 }
 
 /**
