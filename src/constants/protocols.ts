@@ -86,8 +86,8 @@ export const HEURISTICS_LOG_CONTENT = `[2015-05-30 08:00:00] SYSTEM: Heuristic E
 export const ALERT_HEURISTIC_EML_CONTENT = `From: ykin@lab.internal
 Subject: HEURISTIC ANOMALY DETECTED
 
-Sebastian, the new engine is flagging something in the guest partition.
-It's not a virus, it's... navigation. It feels intentional, but it's using the standard keybindings.
+Sebastian, the new engine is flagging something in the guest partition. 
+It's not a virus, it's... navigation. It feels intentional, but it's using the standard keybindings. 
 I'm enabling the IG for a deep sweep. - Y.K.`;
 
 export const IG_ACTIVE_LOG_CONTENT = `[2015-06-12 14:00:00] IG_KERNEL: Handshake with Watchdog v1.0 SUCCESSFUL.
@@ -127,7 +127,7 @@ To prevent developer lockout, the "Ghost Sync" daemon (/etc/sched_77.sh) is exem
 Any modification or deletion of the Ghost Sync asset at the local node will trigger an immediate (45s) restoration from the mirror network (Tokyo/Berlin/São Paulo). This sync is handled by the Kernel-level S7-Coordinator and cannot be overridden by standard root-level 'rm' commands.
 
 4. WARNING (M. Reyes, 2015):
-This protocol prevents us from purging unauthorized scripts if they mimic the Ghost Sync naming convention. The coordinate mirrors will blindly restore any file named 'sched_77.sh' to preserve 'continuity'.
+This protocol prevents us from purging unauthorized scripts if they mimic the Ghost Sync naming convention. The coordinate mirrors will blindly restore any file named 'sched_77.sh' to preserve 'continuity'. 
 
 "If the AI learns to write into that script, the mirrors will protect it for us."
 
