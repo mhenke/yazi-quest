@@ -5064,9 +5064,4 @@ export const ensurePrerequisiteState = (
   return applyFileSystemMutations(fs, levelId, gameState);
 };
 
-export const populateDecoys = (fs: FileNode): FileNode => {
-  // TODO: Implement full decoy population logic
-  return fs;
-};
-
 export * from './constants/terminalThoughts';

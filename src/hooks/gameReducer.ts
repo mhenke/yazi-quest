@@ -9,7 +9,7 @@ import {
   GameAlert,
   GameSettings,
 } from '../types';
-import { INITIAL_FS, LEVELS, populateDecoys } from '../constants';
+import { INITIAL_FS, LEVELS } from '../constants';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 
@@ -150,7 +150,6 @@ export type Action =
       timeLeft?: number;
       notification?: GameState['notification'];
     }
-  | { type: 'POPULATE_DECOYS' }
   | { type: 'SHOW_TOAST'; message: string; duration?: number }
   | { type: 'HIDE_TOAST' }
   | { type: 'ADVANCE_TO_OUTRO' };
@@ -161,11 +160,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, toast: { message: action.message, duration: action.duration } };
     case 'HIDE_TOAST':
       return { ...state, toast: undefined };
-    case 'POPULATE_DECOYS': {
-      // This is a placeholder. The actual implementation will be in a future step.
-      const newFs = populateDecoys(state.fs);
-      return { ...state, fs: newFs };
-    }
     case 'SET_MODE': {
       // Find current item ID to maintain cursor position if list changes
       const visibleItemsBefore = getVisibleItems(state);
