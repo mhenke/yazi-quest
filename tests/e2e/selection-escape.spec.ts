@@ -14,7 +14,7 @@ test.describe('Escape Key Behavior', () => {
   }) => {
     // 1. Enter search mode and search for something
     await pressKey(page, 's');
-    await expect(page.getByText('Recursive search')).toBeVisible();
+    await expect(page.getByText('Search via fd:')).toBeVisible();
 
     // Type query matching some files (e.g., "log")
     await page.keyboard.type('log');
