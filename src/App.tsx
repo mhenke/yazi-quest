@@ -56,6 +56,7 @@ import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
+import { useGameTimer } from './hooks/useGameTimer';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
 import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
@@ -850,63 +851,17 @@ export default function App() {
   // to avoid the modal immediately disappearing because the issue was fixed.
 
   // --- Timer & Game Over Logic ---
-  useEffect(() => {
-    // Filter out hidden tasks before checking completion (allows truly optional tasks)
-    const visibleTasks = currentLevel.tasks.filter(
-      (task) => !task.hidden || !task.hidden(gameState, currentLevel)
-    );
-    const allTasksComplete = visibleTasks.every((t) => t.completed);
-    if (allTasksComplete && !gameState.showHidden) return; // Pause timer only if completely finished
-
-    if (
-      !currentLevel.timeLimit ||
-      isLastLevel ||
-      gameState.showEpisodeIntro ||
-      gameState.isGameOver ||
-      isGamePaused
-    )
-      return;
-
-    const timer = setInterval(() => {
-      dispatch({
-        type: 'TICK',
-        currentLevelId: currentLevel.id,
-        tasks: currentLevel.tasks.map((t) => ({ id: t.id, completed: t.completed })),
-        episodeId: currentLevel.episodeId,
-        timeLimit: currentLevel.timeLimit,
-        maxKeystrokes: currentLevel.maxKeystrokes,
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentLevel.id,
-    currentLevel.timeLimit,
-    currentLevel.maxKeystrokes,
-    currentLevel.tasks,
-    currentLevel.episodeId,
+  useGameTimer({
+    currentLevel,
+    allTasksComplete: checkAllTasksComplete(gameState, currentLevel),
     isLastLevel,
-    gameState.showEpisodeIntro,
-    gameState.isGameOver,
-    gameState.showHidden,
     isGamePaused,
+    showEpisodeIntro: gameState.showEpisodeIntro,
+    isGameOver: gameState.isGameOver,
+    showHidden: gameState.showHidden,
+    keystrokes: gameState.keystrokes,
     dispatch,
-  ]);
-
-  useEffect(() => {
-    if (!currentLevel.maxKeystrokes || isLastLevel || gameState.isGameOver) return;
-
-    if (gameState.keystrokes > currentLevel.maxKeystrokes) {
-      dispatch({ type: 'GAME_OVER', reason: 'keystrokes' });
-    }
-  }, [
-    gameState.keystrokes,
-    currentLevel.maxKeystrokes,
-    isLastLevel,
-    gameState.isGameOver,
-    dispatch,
-  ]);
+  });
 
   // Initial Level Alert (Level 5) removed (moved to Narrative System)
   // Level 12 Anomaly Alerts removed (moved to Narrative System)
