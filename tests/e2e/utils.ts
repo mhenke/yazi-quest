@@ -315,28 +315,12 @@ export async function startLevel(
 
 /**
  * Navigates to a specific level, handling intro screens appropriately.
+ * Uses `?intro=false` URL param so the skip is race-free — it is read
+ * at initialization time before any component mounts.
  */
 export async function goToLevel(page: Page, level: number): Promise<void> {
-  await page.goto(`/?lvl=${level}`);
+  await page.goto(`/?lvl=${level}&intro=false`);
   await page.waitForLoadState('domcontentloaded');
-
-  await page.evaluate(() => {
-    window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-  });
-
-  try {
-    const skipBtn = page.getByRole('button', { name: 'Skip Intro' });
-    if (await skipBtn.isVisible({ timeout: 500 })) {
-      await skipBtn.click();
-    }
-  } catch {}
-
-  const introOverlay = page.locator('div.bg-black.absolute.inset-0');
-  if (await introOverlay.isVisible({ timeout: 500 })) {
-    await page.keyboard.press('Shift+Enter');
-    await page.keyboard.press('Shift+Enter');
-  }
-
   await page.waitForFunction(() => !!document.querySelector('[data-testid="status-bar"]'));
   await page.waitForTimeout(DEFAULT_DELAY);
 }

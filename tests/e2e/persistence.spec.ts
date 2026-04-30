@@ -33,14 +33,9 @@ test.describe('Persistence & State Survival', () => {
     await gotoCommand(page, 't'); // Jump to tmp (guaranteed to exist and be tracked)
     await expectCurrentDir(page, 'tmp');
 
-    // 3. Reload page
-    await page.reload();
+    // 3. Reload page with intro=false so the skip is read at init time
+    await page.goto('/?lvl=2&intro=false');
     await page.waitForLoadState('domcontentloaded');
-
-    // Unified intro skip logic
-    await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-    });
 
     // Wait for game ready
     await expect(page.locator('[data-testid="status-bar"]')).toBeVisible();
@@ -65,13 +60,9 @@ test.describe('Persistence & State Survival', () => {
       localStorage.setItem('yazi-quest-cycle', '5');
     });
 
-    // 2. Reload to pick up state
-    await page.reload();
-
-    // Skip intro
-    await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-    });
+    // 2. Reload to pick up state, with intro=false so skip is race-free
+    await page.goto('/?intro=false');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Verify Cycle 5 effects
     // Level 1: "AI-7738 INITIALIZATION" (7733 + 5)
