@@ -1,7 +1,7 @@
 import { GameState } from '../../types';
 import { Action } from '../gameReducer';
 import { getNodeByPath } from '../../utils/fsHelpers';
-import { KEYBINDINGS } from '../../constants';
+import { KEYBINDINGS } from '../../constants/keybindings';
 
 // Helper to get a random element from an array
 const getRandomElement = <T>(arr: T[]): T => {

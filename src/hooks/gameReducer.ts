@@ -9,7 +9,8 @@ import {
   GameAlert,
   GameSettings,
 } from '../types';
-import { INITIAL_FS, LEVELS } from '../constants';
+import { INITIAL_FS } from '../constants/filesystem';
+import { LEVELS } from '../constants/levels';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 

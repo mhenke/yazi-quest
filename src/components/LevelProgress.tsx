@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
 import { Level } from '../types';
-import { EPISODE_LORE } from '../constants';
+import { EPISODE_LORE } from '../constants/narrative';
 
 interface LevelProgressProps {
   levels: Level[];

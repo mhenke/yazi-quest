@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { GameState } from '../types';
 import { Action } from './gameReducer';
-import { LEVELS } from '../constants';
+import { LEVELS } from '../constants/levels';
 import { getNodeById } from '../utils/fsHelpers';
 
 // Helper to trigger thought with auto-clear logic management

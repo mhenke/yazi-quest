@@ -7,7 +7,7 @@ import {
   resolvePath,
   getNodeByPath,
 } from '../../utils/fsHelpers';
-import { LEVELS } from '../../constants';
+import { LEVELS } from '../../constants/levels';
 import { checkProtocolViolations } from './utils';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
 import { sortNodes } from '../../utils/sortHelpers';

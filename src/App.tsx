@@ -1,14 +1,12 @@
 import React, { useEffect, useCallback, useRef, useMemo, useReducer, useState } from 'react';
+import { LEVELS } from './constants/levels';
 import {
-  LEVELS,
   INITIAL_FS,
-  EPISODE_LORE,
-  ECHO_EPISODE_1_LORE,
   ensurePrerequisiteState,
   applyFileSystemMutations,
-  UPLINK_V1_CONTENT,
-  UPLINK_V2_CONTENT,
-} from './constants';
+} from './constants/filesystem';
+import { EPISODE_LORE, ECHO_EPISODE_1_LORE } from './constants/narrative';
+import { UPLINK_V1_CONTENT, UPLINK_V2_CONTENT } from './constants/protocols';
 import type { GameState, ZoxideEntry } from './types';
 import { InputModal } from './components/InputModal';
 import {

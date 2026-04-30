@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Terminal, Signal, UploadCloud, ArrowRight, Zap, Shield, Crown } from 'lucide-react';
 
-import { CONCLUSION_DATA, CONCLUSION_PARTS, EPISODE_LORE, CREDITS_DATA } from '../constants';
+import {
+  CONCLUSION_DATA,
+  CONCLUSION_PARTS,
+  EPISODE_LORE,
+  CREDITS_DATA,
+} from '../constants/narrative';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 import { useGlobalInput } from '../GlobalInputContext';

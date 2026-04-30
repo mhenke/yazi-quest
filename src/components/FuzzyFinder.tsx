@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 
 import { calculateFrecency, GameState } from '../types';
-import { LEVELS } from '../constants';
+import { LEVELS } from '../constants/levels';
 import {
   getRecursiveContent,
   getNodeByPath,

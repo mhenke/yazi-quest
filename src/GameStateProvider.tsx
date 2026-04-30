@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, ReactNode } from 'react';
-import { LEVELS, INITIAL_FS, ensurePrerequisiteState } from './constants';
+import { INITIAL_FS, ensurePrerequisiteState } from './constants/filesystem';
+import { LEVELS } from './constants/levels';
 import { GameState, ZoxideEntry } from './types';
 
 type GameStateAction =

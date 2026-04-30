@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { KEYBINDINGS, META_KEYBINDINGS } from '../constants';
+import { HELP_KEYBINDINGS, HELP_META_KEYBINDINGS } from '../constants/keybindings';
 
 interface HelpModalProps {
   onClose: () => void;
@@ -62,7 +62,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
           <div>
             <h3 className="text-sm font-bold text-orange-400 mb-2">Core Yazi Commands</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-              {KEYBINDINGS.map((binding, idx) => (
+              {HELP_KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
                   <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
                   <div className="flex gap-1">
@@ -83,7 +83,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
           <div>
             <h3 className="text-sm font-bold text-yellow-400 mb-2">Game Meta Commands</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2">
-              {META_KEYBINDINGS.map((binding, idx) => (
+              {HELP_META_KEYBINDINGS.map((binding, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-1 rounded">
                   <span className="text-zinc-400">{getDisplayDescription(binding)}</span>
                   <div className="flex gap-1">
