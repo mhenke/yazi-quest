@@ -121,11 +121,11 @@ Void Black and Console Zinc anchor the working environment; brighter colors iden
 
 ## Typography
 
-File rows, status information, keycaps, and many control labels use a system monospace stack. The frontmatter captures the observed row and label roles, not an invented global type scale. Metadata also uses small custom sizes, while cinematic headings are larger and tightly tracked.
+File rows, status information, keycaps, and many control labels use a system monospace stack. Working file data remains 14px; functional labels and metadata use a 12px floor. Cinematic headings retain their larger, tightly tracked treatment.
 
 There is an implementation mismatch: `index.html` imports and declares JetBrains Mono, `src/glitch.css` overrides the body to Montserrat/sans-serif, and explicit utility classes restore system monospace on operational elements. Computed styles confirm this split; they do not prove Montserrat is downloaded. Do not describe the current app as consistently using JetBrains Mono.
 
-Uppercase labels, compact spacing, and tabular metadata support the terminal character. Treat tiny labels and muted text as reviewable implementation choices, not immutable brand requirements.
+Uppercase labels, compact spacing, and tabular metadata support the terminal character. Functional metadata uses the lighter text hierarchy rather than the dim decorative tones; inactive parent-pane opacity must also be considered when checking contrast.
 
 ## Layout
 

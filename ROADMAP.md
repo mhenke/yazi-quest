@@ -61,15 +61,15 @@ Based on the [Architectural Analysis](ARCHITECTURAL_ANALYSIS.md) and current sou
 
 1. **Missing Unit Tests**: No specific unit tests exist for the new keyboard handler modules (`handle*.ts` files). The codebase still relies primarily on E2E tests rather than fast unit tests for verifying complex logic.
 
-3. **Weak State Machine**: No formal validation of state transitions exists. Modes can still be set ad-hoc without validating if the transition is legitimate (e.g., from `search` to `sort`).
+2. **Weak State Machine**: No formal validation of state transitions exists. Modes can still be set ad-hoc without validating if the transition is legitimate (e.g., from `search` to `sort`).
 
-4. **Narrative Logic Coupling**: Some narrative triggers are still hardcoded inside input handlers rather than being separated into a dedicated system.
+3. **Narrative Logic Coupling**: Some narrative triggers are still hardcoded inside input handlers rather than being separated into a dedicated system.
 
 ### Recommendations:
 
 1. **Testing**: Add unit tests for the keyboard handler modules to enable faster verification of complex logic.
-3. **State Validation**: Introduce formal state transition validation to prevent invalid mode combinations.
-4. **Narrative Separation**: Consider moving narrative triggers to a separate engine that observes state changes.
+2. **State Validation**: Introduce formal state transition validation to prevent invalid mode combinations.
+3. **Narrative Separation**: Consider moving narrative triggers to a separate engine that observes state changes.
 
 ## 🧪 Test Status
 

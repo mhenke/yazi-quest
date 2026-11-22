@@ -42,6 +42,9 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 
 [Play Yazi Quest](https://mhenke.github.io/yazi-quest/)
 
+Designed for desktop browsers with a physical keyboard. Touch-only mobile gameplay
+is outside the current scope; desktop zoom and narrow windows remain in scope.
+
 ## Run Locally
 
 **Prerequisites:** Node.js

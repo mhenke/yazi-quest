@@ -32,11 +32,14 @@ The public game is available at https://mhenke.github.io/yazi-quest/. It runs cl
 - The filesystem, protected assets, traps, and security threats are simulated game content, not access to the player's real files.
 - Completing an objective and advancing a level are distinct steps. A new narrative cycle is different from retrying a failed level; canonical terms are in `GLOSSARY.md`.
 - Only zoxide-style directory history and the narrative cycle count currently survive a reload. Full level progress and settings are not saved.
-- Touch-only play and specific accessibility conformance targets are not confirmed product requirements. Do not claim support or conformance without verifying it.
+- Target desktop browsers with a physical keyboard. Touch-only mobile gameplay is outside the current scope; desktop zoom and narrow-window usability remain in scope.
+- Specific accessibility conformance targets remain unconfirmed. Do not claim conformance without verifying it.
 
 ## Brand Commitments
 
 Keep the Yazi Quest name and the cyberpunk AI-escape premise. File-manager actions carry narrative meaning, but the learning task must remain understandable and executable. This record does not select a new visual direction.
+
+Preserve mission verbs such as Calibrate, Intercept, Analyze, Infiltrate, and Extract, along with narrative terms such as threat intelligence. Add concise operational clarification where needed; do not replace the game's voice with generic interface instructions.
 
 ## Evidence on Hand
 
