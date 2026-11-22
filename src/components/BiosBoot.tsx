@@ -5,9 +5,10 @@ import { SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTyp
 interface BiosBootProps {
   onComplete: (options?: { isSkip?: boolean }) => void;
   cycleCount: number;
+  reduceMotion?: boolean;
 }
 
-export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) => {
+export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, reduceMotion }) => {
   const subjectId = 7734 + (cycleCount > 0 ? cycleCount : 0);
 
   const bootSequence = useMemo(
@@ -46,6 +47,7 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
   const { lines, showContinue } = useTypewriter(bootSequence, {
     speed: 100,
     key: cycleCount,
+    immediate: reduceMotion,
   });
 
   useSkipIntro(onComplete);
@@ -83,8 +85,8 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
       </div>
 
       {showContinue && (
-        <div className="mt-8 text-zinc-500 font-mono text-sm animate-pulse flex items-center gap-2">
-          <span className="w-2 h-2 bg-zinc-500 rounded-full" />
+        <div className="mt-8 text-zinc-300 font-mono text-sm flex items-center gap-2">
+          <span className="w-2 h-2 bg-zinc-400 animate-pulse rounded-full" />
           Press Shift+Enter to continue...
         </div>
       )}

@@ -119,33 +119,35 @@ export function GlitchOverlay({
     };
   }, [enabled, threatLevel, activeGlitch]);
 
-  // Calculate CSS variables based on intensity
-  const intensity = getGlitchIntensity(threatLevel);
-  const glitchStyle: React.CSSProperties = {
-    '--glitch-intensity': intensity,
-    '--glitch-offset': `${intensity * 5}px`,
-    '--glitch-color-1': `rgba(255, 0, 193, ${intensity * 0.5})`,
-    '--glitch-color-2': `rgba(0, 255, 249, ${intensity * 0.5})`,
-  } as React.CSSProperties;
-
-  if (!enabled || threatLevel < 20) {
-    return <>{children}</>;
-  }
+  const effectsAvailable = enabled && threatLevel >= 20;
+  const visibleGlitch = effectsAvailable ? activeGlitch : null;
+  const glitchStyle = effectsAvailable
+    ? ({
+        '--glitch-intensity': threatIntensity,
+        '--glitch-offset': `${threatIntensity * 5}px`,
+        '--glitch-color-1': `rgba(255, 0, 193, ${threatIntensity * 0.5})`,
+        '--glitch-color-2': `rgba(0, 255, 249, ${threatIntensity * 0.5})`,
+      } as React.CSSProperties)
+    : undefined;
 
   return (
     <div
-      className={`glitch-container ${activeGlitch ? `glitch-${activeGlitch}` : ''}`}
+      className={
+        effectsAvailable
+          ? `glitch-container ${visibleGlitch ? `glitch-${visibleGlitch}` : ''}`
+          : undefined
+      }
       style={glitchStyle}
-      data-testid="glitch-overlay"
+      data-testid={effectsAvailable ? 'glitch-overlay' : undefined}
     >
       {/* Scan line overlay */}
-      {activeGlitch === 'scan-line' && <div className="scan-lines" aria-hidden="true" />}
+      {visibleGlitch === 'scan-line' && <div className="scan-lines" aria-hidden="true" />}
 
       {/* Color bleed overlay */}
-      {activeGlitch === 'color-bleed' && <div className="color-bleed" aria-hidden="true" />}
+      {visibleGlitch === 'color-bleed' && <div className="color-bleed" aria-hidden="true" />}
 
       {/* Text scramble overlay */}
-      {activeGlitch === 'text-scramble' && (
+      {visibleGlitch === 'text-scramble' && (
         <div className="scramble-overlay" aria-hidden="true">
           {glitchChars.map((item, i) => (
             <span
@@ -165,7 +167,13 @@ export function GlitchOverlay({
       )}
 
       {/* Main content */}
-      <div className={`glitch-content ${activeGlitch ? 'glitching' : ''}`}>{children}</div>
+      <div
+        className={
+          effectsAvailable ? `glitch-content ${visibleGlitch ? 'glitching' : ''}` : undefined
+        }
+      >
+        {children}
+      </div>
     </div>
   );
 }

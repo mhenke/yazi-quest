@@ -137,7 +137,6 @@ export async function search(page: Page, query: string): Promise<void> {
  */
 export async function fuzzyJump(page: Page, target: string): Promise<void> {
   await pressKey(page, 'Shift+Z');
-  // FuzzyFinder doesn't use a real input element, it captures global keys
   await expect(page.getByTestId('fuzzy-finder')).toBeVisible();
   await page.keyboard.type(target);
   await page.keyboard.press('Enter');
@@ -178,7 +177,6 @@ export async function pressKeys(page: Page, keys: string[]): Promise<void> {
  */
 export async function findFZF(page: Page, name: string, downPresses: number = 0): Promise<void> {
   await pressKey(page, 'z');
-  // FuzzyFinder doesn't use a real input element, it captures global keys
   await expect(page.getByTestId('fuzzy-finder')).toBeVisible();
   await page.keyboard.type(name);
 
@@ -290,7 +288,7 @@ export async function startLevel(
   await page.waitForLoadState('networkidle');
   await page.waitForLoadState('domcontentloaded');
 
-  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 1000 });
+  await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 3000 });
   await assertLevelStartedIncomplete(page);
 }
 
@@ -473,7 +471,7 @@ export async function filterAndSelect(
   } else {
     target = page
       .getByTestId('filesystem-pane-active')
-      .locator('[role="listitem"]', { hasText: filterText });
+      .locator('[role="listitem"], [role="option"]', { hasText: filterText });
   }
   await expect(target).toBeVisible();
 

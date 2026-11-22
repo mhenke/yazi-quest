@@ -1,5 +1,6 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useId } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 export interface WarningModalProps {
   allowAutoFix: boolean;
@@ -13,15 +14,28 @@ export interface WarningModalProps {
 
 export const WarningModal: React.FC<WarningModalProps> = ({
   allowAutoFix,
+  onDismiss,
   detectedText,
   note,
   icon,
   correctiveAction,
   autoFixText = 'to auto-fix baseline.',
 }) => {
+  const panelRef = useOverlayFocus();
+  const id = useId();
   return (
-    <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-8 max-w-md text-center relative overflow-hidden rounded-lg">
+    <div
+      className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm animate-in fade-in duration-200"
+      onKeyDown={containOverlayTab}
+    >
+      <div
+        ref={panelRef}
+        role="alertdialog"
+        aria-labelledby={`${id}-title`}
+        aria-describedby={`${id}-description`}
+        tabIndex={-1}
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-4 sm:p-8 text-center relative rounded-lg"
+      >
         <div className="absolute inset-0 bg-yellow-900/10 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col items-center gap-6">
@@ -30,10 +44,15 @@ export const WarningModal: React.FC<WarningModalProps> = ({
           </div>
 
           <div className="space-y-3 w-full">
-            <h2 className="text-2xl font-bold text-white tracking-widest uppercase">
+            <h2
+              id={`${id}-title`}
+              className="text-2xl font-bold text-white tracking-widest uppercase"
+            >
               Protocol Violation
             </h2>
-            <p className="text-zinc-400 font-mono text-sm">{detectedText}</p>
+            <p id={`${id}-description`} className="text-zinc-400 font-mono text-sm">
+              {detectedText}
+            </p>
             {note && (
               <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
                 <p className="text-yellow-300 font-mono text-sm font-semibold">{note}</p>
@@ -67,6 +86,15 @@ export const WarningModal: React.FC<WarningModalProps> = ({
               </p>
             )}
           </div>
+          {onDismiss && (
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="text-sm text-zinc-300 hover:text-white"
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -133,7 +133,7 @@ The working surface fills the viewport with a top progression/control bar, a pat
 
 The parent pane is hidden below the large breakpoint. The preview remains alongside the active pane; the source does not establish a fully redesigned phone workflow. The page hides outer overflow and relies on internal scrolling. Do not turn those facts into a claim of complete mobile support.
 
-The top bar is approximately 57px tall in the observed desktop state; the bottom bar is 48px. Parent context uses a 256px width on large screens. Mission-log content uses a minimum height and a proportion of the preview; input overlays currently have a 400px minimum width. These constraints describe the implementation, including limits the critique may identify.
+The top bar is approximately 57px tall before wrapping; the bottom bar is 48px. Parent context uses a 256px width on large screens. Mission-log content uses a minimum height and a proportion of the preview. Utility overlays shrink to the available width without changing the file-manager layout.
 
 ## Elevation & Depth
 
@@ -141,7 +141,7 @@ Flat working surfaces are separated by tone and thin borders. Overlays use dark 
 
 **The Working Plane Rule.** Reserve depth for overlays and active signals; keep the file-manager working plane flat.
 
-Glitch slices, flicker, scan lines, and color offsets carry narrative pressure. Existing reduced-motion rules and the narrative-effects setting are present, but their effectiveness must be checked per effect rather than assumed globally.
+Glitch slices, flicker, scan lines, and color offsets carry narrative pressure. Respect the OS reduced-motion preference and the in-game Minimal preset with static text and state cues. The Reduced preset removes the background scanline and automatic gameplay glitches while keeping cinematic pacing.
 
 ## Shapes
 
@@ -149,7 +149,7 @@ The dominant geometry is rectangular: contiguous panes, square file rows, thin d
 
 ## Components
 
-- **Toolbar buttons:** Compact icon controls, muted at rest; hover introduces a raised tone, stronger border, and role-specific signal color. Focus treatment is inconsistent in current source, so there is no system-wide focus-ring token to extract.
+- **Toolbar buttons:** Compact icon controls, muted at rest, with visible focus. Shift+Tab from the file browser reaches the toolbar; Tab in the file browser remains file inspection.
 - **Text fields:** Monospaced, raised backgrounds, light text, thin borders, and operation-specific border color. Dialogs focus their input; this behavior belongs to the application, not the static sidecar preview.
 - **Episode navigation:** Compact uppercase tabs with active color and a bottom border. Top-bar progress uses smaller nodes and connectors. Preserve chapter identity across both forms.
 - **Current file row:** Flat raised highlight with light text; marked, cut, and yanked states add distinct color/icon/opacity treatments. Current position and marked selection are separate states.
@@ -173,4 +173,4 @@ The sidecar contains self-contained visual specimens of these six patterns. They
 - **Don't** replace the file-manager composition with a generic card dashboard.
 - **Don't** introduce a left mission sidebar; retain the established navigation model.
 - **Don't** treat tiny dim text, missing focus cues, or clipped narrow layouts as binding brand rules.
-- **Don't** claim a unified font system or complete reduced-motion/mobile support without verification.
+- **Don't** treat narrow desktop reflow checks as touch gameplay support or accessibility conformance.

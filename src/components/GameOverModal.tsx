@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Zap } from 'lucide-react';
 import { useGlobalInput } from '../GlobalInputContext';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
@@ -75,6 +76,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   level,
   customMessage,
 }) => {
+  const panelRef = useOverlayFocus(true, '[data-restart-level]');
   useGlobalInput(
     (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
@@ -90,9 +92,16 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   return (
     <div
       data-testid="game-over-modal"
-      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 backdrop-blur-sm animate-in fade-in duration-300"
+      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 px-4 backdrop-blur-sm animate-in fade-in duration-300"
+      onKeyDown={containOverlayTab}
     >
-      <div className="w-full max-w-md bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-8 text-center relative overflow-hidden">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-labelledby="game-over-title"
+        tabIndex={-1}
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-4 sm:p-8 text-center relative"
+      >
         {/* Scanline bg */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20" />
 
@@ -103,6 +112,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           <div>
             <h2
+              id="game-over-title"
               className="text-3xl font-bold text-red-500 tracking-widest uppercase mb-2 glitch-text"
               data-text={getFailureTitle(reason, level?.id)}
               data-testid="game-over-title"
@@ -124,9 +134,14 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </p>
           </div>
 
-          <div className="text-red-500/70 font-mono uppercase tracking-widest mt-2">
-            Press Shift+Enter to reinitialize
-          </div>
+          <button
+            type="button"
+            onClick={onRestart}
+            data-restart-level
+            className="border border-red-600 px-3 py-2 text-sm text-red-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          >
+            Reinitialize (Shift+Enter)
+          </button>
         </div>
       </div>
     </div>

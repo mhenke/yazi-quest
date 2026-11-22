@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useId } from 'react';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface InputModalProps {
   label: string;
@@ -21,35 +22,37 @@ export const InputModal: React.FC<InputModalProps> = ({
   testid,
   placeholder,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-focus on mount
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
+  const labelId = useId();
+  const panelRef = useOverlayFocus(true, 'input');
 
   return (
-    <div className="absolute bottom-6 left-4 z-50 flex items-start justify-center pointer-events-none">
+    <div
+      className="absolute bottom-4 inset-x-4 z-50 flex justify-center pointer-events-none sm:bottom-6"
+      onKeyDown={containOverlayTab}
+    >
       <div
-        className={`pointer-events-auto bg-zinc-900/95 border ${borderColorClass} shadow-2xl p-4 min-w-[400px] backdrop-blur-sm rounded-sm`}
+        ref={panelRef}
+        className={`pointer-events-auto w-full max-w-md bg-zinc-900/95 border ${borderColorClass} shadow-2xl p-4 backdrop-blur-sm rounded-sm`}
         role="dialog"
-        aria-modal="true"
+        aria-labelledby={`${labelId}-label`}
+        tabIndex={-1}
         data-testid="input-modal"
       >
-        <div
-          className={`text-sm font-mono mb-2 font-bold uppercase tracking-widest ${borderColorClass.replace('border-', 'text-')}`}
+        <label
+          id={`${labelId}-label`}
+          htmlFor={labelId}
+          className={`block text-sm font-mono mb-2 font-bold uppercase tracking-widest ${borderColorClass.replace('border-', 'text-')}`}
         >
           {label}:
-        </div>
+        </label>
         <input
-          ref={inputRef}
+          id={labelId}
           data-testid={testid || 'input-modal-input'}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === 'Enter') {
               e.preventDefault();
               onConfirm();
@@ -57,16 +60,9 @@ export const InputModal: React.FC<InputModalProps> = ({
               e.preventDefault();
               onCancel();
             }
-            // Stop propagation for all keys when in an input modal
-            // to prevent the main keyboard handler from processing them
-            e.stopPropagation();
+            if (e.key !== 'Tab') e.stopPropagation();
           }}
-          className={`w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:${borderColorClass}`}
-          autoFocus
-          onBlur={(e) => {
-            // Keep focus unless we are unmounting or user explicitly tabbed away (which shouldn't happen much in this game)
-            e.target.focus();
-          }}
+          className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
           placeholder={placeholder}
         />
       </div>

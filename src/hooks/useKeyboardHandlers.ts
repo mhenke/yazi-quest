@@ -49,8 +49,8 @@ export const useKeyboardHandlers = (
   );
 
   const handleOverwriteConfirmKeyDownCallback = useCallback(
-    (e: KeyboardEvent, gameState: GameState) => {
-      handleOverwriteConfirmKeyDown(e, dispatch, gameState);
+    (key: string, gameState: GameState) => {
+      handleOverwriteConfirmKeyDown(key, dispatch, gameState);
     },
     [dispatch]
   );

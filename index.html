@@ -235,6 +235,12 @@
         pointer-events: none;
         animation: scanline 8s linear infinite;
       }
+      @media (prefers-reduced-motion: reduce) {
+        .scanline {
+          animation: none;
+          display: none;
+        }
+      }
       @keyframes urgent-pulse {
         0%,
         100% {

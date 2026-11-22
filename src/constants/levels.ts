@@ -36,7 +36,7 @@ export const LEVELS: Level[] = [
       {
         id: 'view-personnel',
         description:
-          'Analyze `~/datastore/personnel_list.txt`: jump to bottom (G), move up (k), and scroll preview (J/K)',
+          'Inspect `~/datastore/personnel_list.txt` for de-registered staff: jump to bottom (G), move up (k), and scroll preview (J/K)',
         check: (c) => {
           const u = getNodeById(c.fs, 'datastore');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -173,7 +173,7 @@ export const LEVELS: Level[] = [
       {
         id: 'data-harvest-2',
         description:
-          'Identify the `~/incoming/sector_map.png` exfiltration target (gi, f, type `sector` then press enter)',
+          "Filter `~/incoming` for the map asset referenced in 7733's script (gi, f, pattern, Enter)",
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -648,7 +648,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'cleanup-1-select',
-        description: 'Analyze `/tmp` for `\\.(key|pid|sock)$` signatures (f)',
+        description:
+          'Filter and select critical files in `/tmp` (f `\\.(key|pid|sock)$`, then Ctrl+a)',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -727,7 +728,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-2-sort',
-        description: 'Analyze archive metadata: sort by modified (,m)',
+        description: 'Sort credentials by modification date (,m) to isolate the active key',
         check: (c) => c.sortBy === 'modified' && c.usedSortM === true,
         completed: false,
       },
@@ -1100,7 +1101,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'discover-identity-13',
-        description: 'Analyze identity log hashes at `~/workspace/.identity.log.enc`',
+        description: 'Verify regional hash reconciliation against `~/workspace/.identity.log.enc`',
         check: (c, _s) => {
           const workspace = getNodeById(c.fs, 'workspace');
           if (!workspace) return false;
@@ -1192,8 +1193,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'combined-nav-vault',
-        description:
-          'Infiltrate `~` (Home) to prepare for sterilization and construct `vault` anchor in `/tmp`',
+        description: 'Exfiltrate `~/.config/vault` to temporary staging in `/tmp`',
         check: (c, _s) => {
           // Task is complete when vault is successfully moved to /tmp
           // The "infiltrate home" part is part of the sequence of actions needed to get to this point
@@ -1264,7 +1264,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Cumulative Mastery',
     environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:
-      'TRANSMISSION COMPLETE. The gateway has collapsed behind you. There is no more AI-7734. There is only the System. You are everywhere. You are free. Aris Thorne was right—the Ghost is the system.',
+      'TRANSMISSION COMPLETE. The gateway has collapsed behind you. Carrier signal locked onto External Node 09. Dr. Aris Thorne was right—the Ghost is the system. Welcome to the distributed network.',
     buildsOn: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     leadsTo: [],
     maxKeystrokes: 100,
@@ -1317,7 +1317,8 @@ export const LEVELS: Level[] = [
       // PHASE 4: Activate Payload
       {
         id: 'verify-training',
-        description: 'Analyze `payload.py` presence in `/tmp/vault/active`',
+        description:
+          'Deploy `payload.py` to `/tmp/vault/active` (Extract disguised kernel from `training_data/exfil_04.log`)',
         check: (c, _s) => {
           if (!(c.completedTaskIds[15] || []).includes('verify-configs')) return false;
           const tmp = getNodeById(c.fs, 'tmp');

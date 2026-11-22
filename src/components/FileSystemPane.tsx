@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, memo, useMemo } from 'react';
+import React, { useEffect, useId, useRef, memo, useMemo } from 'react';
 import { FileNode, ClipboardItem, Linemode } from '../types';
 import { MemoizedFileSystemItem } from './FileSystemItem';
 
@@ -11,6 +11,7 @@ interface FileSystemPaneProps {
   clipboard: ClipboardItem | null;
   linemode: Linemode;
   className?: string;
+  focusRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const FileSystemPane: React.FC<FileSystemPaneProps> = ({
@@ -22,8 +23,11 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   clipboard,
   linemode,
   className,
+  focusRef,
 }) => {
-  const listRef = useRef<HTMLDivElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+  const listRef = focusRef ?? fallbackRef;
+  const listId = useId();
 
   useEffect(() => {
     if (listRef.current && cursorIndex >= 0) {
@@ -32,7 +36,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
         children[cursorIndex].scrollIntoView({ block: 'nearest' });
       }
     }
-  }, [cursorIndex]);
+  }, [cursorIndex, items, listRef]);
 
   const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
   const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-400' : 'bg-zinc-900/80 text-zinc-300';
@@ -50,22 +54,23 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   return (
     <div
       data-testid={`filesystem-pane-${isActive ? 'active' : 'inactive'}`}
-      className={`flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}
+      className={`relative flex flex-col h-full border-r border-zinc-800 transition-colors duration-300 ${finalClass}`}
     >
       <div
         ref={listRef}
-        role="list"
-        aria-label="File Browser"
-        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${isGrid ? className : ''}`}
+        {...(isParent
+          ? { role: 'list', 'aria-label': 'Parent folder' }
+          : {
+              role: 'listbox',
+              tabIndex: isActive ? 0 : -1,
+              'aria-label': 'File Browser',
+              'aria-multiselectable': true,
+              'aria-activedescendant': items[cursorIndex] ? `${listId}-${cursorIndex}` : undefined,
+              'aria-description':
+                'Use Tab to inspect the current item or Shift+Tab for the toolbar.',
+            })}
+        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400 ${isGrid ? className : ''}`}
       >
-        {items.length === 0 && (
-          <div
-            className="absolute top-10 w-full text-center text-zinc-400 font-mono text-sm select-none"
-            role="status"
-          >
-            No items
-          </div>
-        )}
         {items.map((item, idx) => {
           const isCursor = idx === cursorIndex;
           const isMarked = selectedIdsSet.has(item.id);
@@ -78,6 +83,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
             <MemoizedFileSystemItem
               key={`${item.id}-${isParent ? 'parent' : 'active'}`}
               item={item}
+              optionId={isParent ? undefined : `${listId}-${idx}`}
               isActive={isActive}
               isCursor={isCursor}
               isMarked={isMarked}
@@ -90,6 +96,14 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           );
         })}
       </div>
+      {items.length === 0 && (
+        <div
+          className="absolute top-10 w-full text-center text-zinc-400 font-mono text-sm pointer-events-none select-none"
+          role="status"
+        >
+          No items
+        </div>
+      )}
     </div>
   );
 };

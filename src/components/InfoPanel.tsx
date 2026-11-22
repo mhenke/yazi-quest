@@ -1,13 +1,15 @@
 import React from 'react';
 
 import { FileNode } from '../types';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface InfoPanelProps {
   file: FileNode | null;
   onClose: () => void;
 }
 
-export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose }) => {
+export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
+  const panelRef = useOverlayFocus(Boolean(file));
   if (!file) return null;
 
   // Compute approximate byte-size for a node (files, dirs, archives)
@@ -106,11 +108,34 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
   const modified = formatDate(file.modifiedAt);
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 shadow-2xl rounded-lg overflow-hidden">
+    <div
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      onKeyDown={(event) => {
+        if (event.shiftKey) containOverlayTab(event);
+      }}
+    >
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-labelledby="file-info-title"
+        tabIndex={-1}
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 shadow-2xl rounded-lg outline-none"
+      >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Info</h2>
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950">
+          <h2
+            id="file-info-title"
+            className="text-sm font-bold text-white uppercase tracking-wider"
+          >
+            Info
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs text-zinc-300 hover:text-white"
+          >
+            Close
+          </button>
         </div>
 
         {/* Content */}
@@ -123,7 +148,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
               >
                 {isDir ? 'Folder' : isArchive ? 'Archive' : 'File'}
               </div>
-              <div className="text-sm font-bold text-white">{file.name}</div>
+              <div className="min-w-0 break-words text-sm font-bold text-white">{file.name}</div>
             </div>
             <div className="text-xs text-zinc-300 font-mono mb-3">
               <span className="text-zinc-400">{isDir ? 'Items:' : 'Size:'}</span> {size}

@@ -4,6 +4,7 @@ import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } f
 
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants/narrative';
+import { useOverlayFocus } from './useOverlayFocus';
 
 interface LevelProgressProps {
   levels: Level[];
@@ -35,7 +36,8 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   activeTab = 0,
   selectedMissionIdx = 0,
 }) => {
-  const missionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const missionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const mapRef = useOverlayFocus(isOpen);
 
   // Derived Data (same as before)
   const episodeIcons = [Zap, Shield, Crown];
@@ -65,14 +67,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   // Auto-scroll to selected mission
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        missionRefs.current[selectedMissionIdx]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 50);
-    }
+    if (isOpen) missionRefs.current[selectedMissionIdx]?.scrollIntoView({ block: 'nearest' });
   }, [selectedMissionIdx, isOpen, activeTab]);
 
   return (
@@ -91,7 +86,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             // Since we lifted state, 'onClose' is strictly checking the prop.
             // But verify: App.tsx usually passes () => set(p => !p) for toggles.
             // Let's assume onClose is the toggle action provided by parent.
-            className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus:outline-none shrink-0"
+            className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white shrink-0"
             title="Quest Map (Alt+M)"
           >
             <Map
@@ -160,16 +155,21 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           </div>
         </div>
         {/* Center: Notification Area (Thoughts only) */}
-        <div className="flex-1 text-center px-4 flex items-center justify-center">
+        <div className="flex-1 min-w-0 text-center px-2 sm:px-4 flex items-center justify-center">
           {thought && (
             <div
               data-testid="terminal-thought"
-              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought"
+              className="font-mono text-sm animate-in fade-in slide-in-from-top-1 duration-200 glitch-thought max-sm:!w-full max-sm:!overflow-hidden max-sm:whitespace-nowrap"
               data-message={thought.text}
+              title={thought.text}
             >
-              <span className="base-text">{thought.text}</span>
-              <span className="white-text">{thought.text}</span>
-              <span className="orange-text">{thought.text}</span>
+              <span className="base-text max-sm:truncate">{thought.text}</span>
+              <span className="white-text max-sm:truncate" aria-hidden="true">
+                {thought.text}
+              </span>
+              <span className="orange-text max-sm:truncate" aria-hidden="true">
+                {thought.text}
+              </span>
             </div>
           )}
         </div>
@@ -183,7 +183,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             </span>
           </div>
           {/* Badges */}
-          <div className="flex items-center gap-3 sm:gap-6 px-3 sm:px-6 border-l border-r border-zinc-800">
+          <div className="hidden sm:flex items-center gap-6 px-6 border-l border-r border-zinc-800">
             {episodes.map((ep, idx) => {
               const isComplete = completionStatus[idx];
               const Icon = ep.icon;
@@ -238,43 +238,62 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         createPortal(
           <div
             data-testid="quest-map-modal"
-            className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={onClose} // Close when clicking on the backdrop
+            className="fixed inset-x-0 bottom-0 top-16 z-[250] flex items-center justify-center bg-black/80 px-4 pb-4 backdrop-blur-sm"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) onClose();
+            }}
           >
             <div
-              className="w-full max-w-2xl bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+              ref={mapRef}
+              role="dialog"
+              aria-labelledby="quest-map-title"
+              tabIndex={-1}
+              className="w-full max-w-2xl max-h-full bg-zinc-950 border border-zinc-700 shadow-2xl flex flex-col overflow-hidden outline-none"
             >
               {/* Header */}
-              <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900">
-                <div className="flex items-center gap-3 justify-between">
+              <div className="px-4 sm:px-6 py-4 border-b border-zinc-800 bg-zinc-900">
+                <div className="flex items-center gap-3 justify-between flex-wrap">
                   <div className="flex items-center gap-3">
                     <Map className="text-zinc-400" size={20} />
-                    <h2 className="text-xl font-bold text-white tracking-widest uppercase">
+                    <h2
+                      id="quest-map-title"
+                      className="text-xl font-bold text-white tracking-widest uppercase"
+                    >
                       Quest Map
                     </h2>
                   </div>
-                  <div className="text-xs text-zinc-400 font-mono">
-                    h/l: episodes • j/k: missions • Enter: jump • Shift+Enter or Escape: close
-                  </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="min-h-6 px-2 text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                  >
+                    Close
+                  </button>
                 </div>
+                <p className="mt-2 text-xs text-zinc-400 font-mono">
+                  h/l: episodes • j/k: missions • Enter: jump • Shift+Enter or Escape: close
+                </p>
               </div>
 
               {/* Episode Tabs */}
               <div className="flex border-b border-zinc-800 bg-black/50">
                 {episodes.map((ep, idx) => (
-                  <button
+                  <span
                     key={idx}
                     data-testid="episode-tab"
-                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-col items-center gap-1
-                            ${activeTab === idx ? `${ep.color} ${ep.bg} border-current` : 'text-zinc-600 border-transparent hover:text-zinc-400 hover:bg-zinc-900'}
+                    aria-current={activeTab === idx ? 'true' : undefined}
+                    className={`flex-1 min-w-0 px-1 py-3 break-words text-center text-[11px] sm:text-xs font-bold uppercase sm:tracking-wider border-b-2
+                            ${activeTab === idx ? `${ep.color} ${ep.bg} border-current` : 'text-zinc-400 border-transparent'}
                         `}
                   >
-                    <span>{ep.shortTitle}</span>
+                    <span className="block">{ep.shortTitle}</span>
                     <span className="text-xs">{ep.levels.length} Levels</span>
-                  </button>
+                  </span>
                 ))}
               </div>
+              <p className="sr-only" aria-live="polite">
+                {activeEpisode.title}: {activeEpisode.levels[selectedMissionIdx]?.title}
+              </p>
 
               {/* List Content - Simple Table of Contents */}
               <div className="flex-1 overflow-y-auto bg-black/20">
@@ -292,13 +311,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                     const isKeyboardSelected = missionIdx === selectedMissionIdx;
 
                     return (
-                      <div
+                      <button
+                        type="button"
+                        disabled={status === 'locked' || !onJumpToLevel}
+                        aria-current={status === 'active' ? 'step' : undefined}
                         key={level.id}
                         ref={(el) => {
                           missionRefs.current[missionIdx] = el;
                         }}
                         className={`
-                            px-6 py-4 flex items-center gap-4 transition-all duration-200 cursor-pointer
+                            w-full text-left px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white
                             ${status === 'active' ? `bg-zinc-900/50 border-l-4 ${activeEpisode.border}` : ''}
                             ${status === 'completed' ? 'opacity-50 hover:opacity-100' : ''}
                             ${status === 'locked' ? 'opacity-30' : ''}
@@ -312,7 +334,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         }}
                       >
                         {/* Status Icon */}
-                        <div
+                        <span
                           className={`
                                 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0
                                 ${status === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : ''}
@@ -321,34 +343,34 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                             `}
                         >
                           {status === 'completed' ? <Check size={14} strokeWidth={3} /> : level.id}
-                        </div>
+                        </span>
 
                         {/* Level Title */}
-                        <div className="flex-1">
-                          <h3
-                            className={`font-bold text-sm tracking-wide ${status === 'active' ? 'text-white' : status === 'completed' ? 'text-zinc-400' : 'text-zinc-600'}`}
+                        <span className="flex-1 min-w-0">
+                          <span
+                            className={`block break-words font-bold text-sm tracking-wide ${status === 'active' ? 'text-white' : status === 'completed' ? 'text-zinc-400' : 'text-zinc-600'}`}
                           >
                             {level.title}
-                          </h3>
+                          </span>
                           {level.coreSkill && (
-                            <p className="text-xs text-zinc-400 font-mono mt-0.5">
+                            <span className="block text-xs text-zinc-400 font-mono mt-0.5">
                               {level.coreSkill}
-                            </p>
+                            </span>
                           )}
-                        </div>
+                        </span>
 
                         {/* Status Badge */}
                         {status === 'active' && (
-                          <div className="flex items-center gap-1 text-xs text-orange-400 font-mono">
-                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                          <span className="flex items-center gap-1 text-xs text-orange-400 font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                             <span className="text-xs uppercase tracking-wider">Active</span>
-                          </div>
+                          </span>
                         )}
                         {status === 'completed' && (
                           <Check size={16} className="text-green-500" strokeWidth={2} />
                         )}
                         {status === 'locked' && <Lock size={14} className="text-zinc-700" />}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

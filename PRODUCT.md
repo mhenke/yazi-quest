@@ -33,7 +33,7 @@ The public game is available at https://mhenke.github.io/yazi-quest/. It runs cl
 - The filesystem, protected assets, traps, and security threats are simulated game content, not access to the player's real files.
 - Completing an objective and advancing a level are distinct steps. A new narrative cycle is different from retrying a failed level; canonical terms are in `GLOSSARY.md`.
 - Only zoxide-style directory history and the narrative cycle count currently survive a reload. Full level progress and settings are not saved.
-- Target desktop browsers with a physical keyboard. Touch-only mobile gameplay is outside the current scope; desktop zoom and narrow-window usability remain in scope.
+- Target desktop browsers with a physical keyboard. Players must be able to play and use game controls without a pointer. Touch-only gameplay is outside scope; desktop zoom and narrow windows remain in scope.
 - Specific accessibility conformance targets remain unconfirmed. Do not claim conformance without verifying it.
 
 ## Brand Commitments

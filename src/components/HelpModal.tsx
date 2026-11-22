@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 import { HELP_KEYBINDINGS, HELP_META_KEYBINDINGS } from '../constants/keybindings';
 import type { Action } from '../hooks/gameReducer';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface HelpModalProps {
   onClose: () => void;
@@ -13,23 +14,13 @@ interface HelpModalProps {
 
 const LINE_HEIGHT = 20; // Approximate line height in pixels
 
-const FOCUSABLE_SELECTOR =
-  'button, select, input, textarea, [href], [tabindex]:not([tabindex="-1"])';
-
 export const HelpModal: React.FC<HelpModalProps> = ({
   onClose,
   scrollPosition,
   dispatch,
   narrativeEffects = 'full',
 }) => {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  // Focus the dialog when it opens; restore the caller's focus when it closes.
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
-    return () => previous?.focus?.();
-  }, []);
+  const panelRef = useOverlayFocus();
 
   // scrollPosition (driven by j/k/J/K from the global help-mode handler) maps to
   // the panel, which is the element that actually scrolls.
@@ -37,7 +28,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
     if (panelRef.current) {
       panelRef.current.scrollTop = scrollPosition * LINE_HEIGHT;
     }
-  }, [scrollPosition]);
+  }, [panelRef, scrollPosition]);
 
   const groups = useMemo(() => {
     const map = new Map<string, typeof HELP_KEYBINDINGS>();
@@ -49,33 +40,13 @@ export const HelpModal: React.FC<HelpModalProps> = ({
     return [...map.entries()];
   }, []);
 
-  // Keep Tab/Shift+Tab inside the dialog while it is open.
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab' || !panelRef.current) return;
-    const focusables = Array.from(
-      panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    );
-    if (focusables.length === 0) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    const active = document.activeElement;
-    const atPanel = active === panelRef.current;
-    if (e.shiftKey && (atPanel || active === first)) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && (atPanel || active === last)) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-
   return createPortal(
     <div
       className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      onKeyDown={handleKeyDown}
+      onKeyDown={containOverlayTab}
     >
       <div
         ref={panelRef}
@@ -176,8 +147,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                 aria-label="Select narrative effects intensity level"
               >
                 <option value="full">Full (All glitches and effects)</option>
-                <option value="reduced">Reduced (Minimal glitches)</option>
-                <option value="minimal">Minimal (Clean UI, thoughts only)</option>
+                <option value="reduced">Reduced (No background scan or automatic glitches)</option>
+                <option value="minimal">Minimal (Static text and UI)</option>
               </select>
               <p className="text-xs text-zinc-400">
                 Controls intensity of narrative UI effects like screen glitches and corruption

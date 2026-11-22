@@ -86,23 +86,9 @@ export const handleFuzzyModeKeyDown = (
 
   // Escape
   if (e.key === 'Escape') {
+    e.preventDefault();
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
-    return;
-  }
-
-  // Typing
-  if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-    const newVal = (gameState.inputBuffer || '') + e.key;
-    dispatch({ type: 'SET_INPUT_BUFFER', buffer: newVal });
-    dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
-    return;
-  }
-
-  if (e.key === 'Backspace') {
-    const newVal = (gameState.inputBuffer || '').slice(0, -1);
-    dispatch({ type: 'SET_INPUT_BUFFER', buffer: newVal });
-    dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
     return;
   }
 };

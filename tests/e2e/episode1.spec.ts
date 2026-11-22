@@ -73,22 +73,9 @@ test.describe('Episode 1: AWAKENING', () => {
       await gotoCommand(page, 'g');
       await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_top');
 
-      // Navigate up until we reach root '/'
-      // Use native keyboard events for robustness
-      await page
-        .locator('[data-testid^="file-"]')
-        .first()
-        .click({ timeout: 1000 })
-        .catch(() => page.click('body'));
-      await page.waitForTimeout(200);
-
-      // Robustly navigate to root
-      let attempts = 0;
-      while ((await getCurrentPath(page)) !== '/' && attempts < 10) {
-        await page.keyboard.press('h');
-        await page.waitForTimeout(250);
-        attempts++;
-      }
+      await pressKey(page, 'h'); // ~/datastore → ~
+      await pressKey(page, 'h'); // ~ → /home
+      await pressKey(page, 'h'); // /home → /
 
       await expectCurrentDir(page, '/', true); // Root is displayed as '/'
 

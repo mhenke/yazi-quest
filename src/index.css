@@ -63,6 +63,26 @@
   }
 }
 
+/* Keep all UI states, including urgency cues, visible without movement. */
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-reduce-motion] .scanline,
+html[data-narrative-effects='reduced'] .scanline {
+  animation: none;
+  display: none;
+}
+
+html[data-reduce-motion] :is(.glitch-text, .glitch-text-2, .glitch-text-3, .glitch-thought)::before,
+html[data-reduce-motion] :is(.glitch-text, .glitch-text-2, .glitch-text-3, .glitch-thought)::after {
+  display: none;
+}
+
 /* Ghost Message (AI-7733 consciousness) */
 .ghost-message {
   text-shadow: 0 0 3px rgba(34, 211, 238, 0.3);

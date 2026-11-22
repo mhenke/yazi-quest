@@ -330,7 +330,7 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Delete without clearing filter first (Escape would clear selections)
       await pressKey(page, 'Shift+D'); // Permanent delete
-      const modal = page.locator('[role="alertdialog"]').first();
+      const modal = page.locator('[aria-labelledby="confirmation-modal-title"]');
       await expect(modal).toBeVisible({ timeout: 1000 });
       await pressKey(page, 'y'); // Confirm
       await expect(modal).not.toBeVisible({ timeout: 2000 });
@@ -353,7 +353,7 @@ test.describe('Episode 3: MASTERY', () => {
       await clearFilter(page);
 
       await pressKey(page, 'Shift+D'); // Permanent delete
-      const modal = page.locator('[role="alertdialog"]').first();
+      const modal = page.locator('[aria-labelledby="confirmation-modal-title"]');
       await expect(modal).toBeVisible({ timeout: 1000 });
       await pressKey(page, 'y'); // Confirm
       await expect(modal).not.toBeVisible({ timeout: 2000 });

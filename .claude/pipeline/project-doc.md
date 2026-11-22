@@ -1,7 +1,7 @@
 # Project Documentation
 
-> Generated: 2026-11-22T21:03:00Z | Mode: DELTA
-> Source baseline: `6db44a2`
+> Generated: 2026-11-22T21:39:10Z | Mode: DELTA
+> Source baseline: `70a4928` plus working-tree documentation
 
 ## Tech Stack
 
@@ -103,7 +103,8 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 - Authentication/authorization: no application login/session backend. Protected files and threat rules are simulated gameplay policies, not real host filesystem permissions.
 - Error handling: fallible filesystem operations return the `Result<T, FsError>` union from `src/types.ts`; handlers check the result before updating state. `ErrorBoundary` catches render failures and offers reload; `reportError` writes to the console. No remote telemetry implementation was found.
 - Validation: zoxide storage shape validation, filesystem protection checks, operation-specific guards, and regex handling in view/input paths. These checks are not a general schema-validation framework.
-- Accessibility: keyboard input, some ARIA roles/labels, decorative-layer hiding, and narrative-effect controls exist. Focus management and dialog semantics are inconsistent; this scan is not a WCAG audit.
+- Accessibility: Help has a labelled modal, keyboard scrolling, and verified focus containment/restoration. Other overlays, inputs, and motion settings have gaps documented in [the desktop accessibility audit](../../docs/accessibility-audit.md). Neither this scan nor the audit establishes WCAG conformance.
+- Keyboard-first scope: gameplay and game controls must work without a pointer. The [Yazi keyboard research](../../docs/yazi-keyboard-research.md) separates authentic `Tab` inspection from browser focus navigation and records a proposed focus boundary; runtime routing is unchanged.
 - Settings: sound and narrative-effect settings are in-memory. The main glitch wrapper distinguishes `minimal` from other values; do not assume the displayed `reduced` option means every effect has a separate reduced implementation.
 - Security: Vite substitutes configured Gemini environment values into client code. Such values are public if used in the bundle; environment files do not provide a secret backend. No Gemini API call was found in scanned source.
 
@@ -122,9 +123,9 @@ External resources include the Tailwind CDN, an external favicon/background imag
 - Areas without dedicated colocated unit tests in the inventory: `gameReducer`, keyboard mode handlers, input arbitration, timer integration, and storage validation. Some are exercised through E2E; this is not a claim of zero executed coverage.
 - E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, and selection/Escape behavior.
 - E2E helpers use URL debug parameters, clear localStorage for isolated level starts, and centralize keyboard sequences. Tests use root-relative URLs; the Playwright server explicitly overrides Vite's base to `/`.
-- Integrated verification: **137 unit tests across 14 files and 101 E2E tests passed** under Vitest 4.1.12. Lint, type-check, and the Vite 7.3.7 production build passed. After the final metadata/footer CSS adjustments, type-check and build passed again; the scoped Impeccable type detector returned no findings.
-- The Episode II boot regression failed before the callback/timer fix and passed afterward. Actual browser verification confirmed direct Episode II entry dismisses boot and accepts keyboard navigation.
-- Rendered checks covered 1440×900, 1024×768, and 720×450 viewports. At 720px, the task counter remained fully visible without horizontal overflow. This is narrow-window/zoom-equivalent layout evidence, not an actual browser-zoom, mobile, screen-reader, or full WCAG test.
+- Integrated verification: **132 unit tests across 14 files and 101 Chromium E2E tests passed**. Lint, type-check, and the Vite 7.3.7 production build also passed. E2E ran on an isolated dev server with `--reporter=list`.
+- The opening displays **FACILITY DATE: MAY 31, 2015**. Browser checks verified Help's eight command groups, focus containment and restoration, and layout at 1440×900, 1024×768, and 720×450. E2E tests cover opening/BIOS behavior and real `j`/`k` Help scrolling.
+- The accessibility audit also used a 320 CSS px reflow check and emulated reduced-motion preferences. No actual browser-zoom or assistive-technology session was performed.
 
 ## Entry Points
 
@@ -140,18 +141,20 @@ External resources include the Tailwind CDN, an external favicon/background imag
 
 ## Changed Files
 
-Delta discovery used `git diff HEAD~1 --name-only`, supplemented by recent test cleanups and story present alignment:
+Latest delta (`git diff HEAD~1 --name-only` plus research-related working-tree files): `.husky/pre-push` delegates to `npm run prepush` without repeating the reporter flag; `.claude/pipeline/project-doc.md`, `PRODUCT.md`, `docs/accessibility-audit.md`, and `docs/yazi-keyboard-research.md` document the keyboard-first scope and open accessibility work. Five paths accounted for. Prior integrated changes retained below:
 
 - **Commitlint integration:** Installed `@commitlint/cli` and `@commitlint/config-conventional` (v21.2.4) in `devDependencies`, added `commitlint` npm script, configured `commitlint.config.cjs` with `body-max-line-length: [0]`, and activated git hook validation.
 - **Intro & boot deduplication:** Extracted shared typing animation and CRT rendering into `src/components/narrative/useTypewriter.ts`, `useSkipIntro.ts`, `Scanlines.tsx`, and `SkipIntroButton.tsx` (with unit tests in `useTypewriter.test.ts` and `useSkipIntro.test.ts`), eliminating clone group `dup:6f93754e` across `BiosBoot.tsx` and `EpisodeIntro.tsx`.
 - **Clipboard paste deduplication:** Unified destination collision detection, honeypot safety, and cut node cleanup in `src/hooks/keyboard/handleClipboard.ts`, eliminating clone groups `dup:70715035` and `dup:682b7a72`.
 - **E2E test helpers pruned:** Cleaned 12 unreferenced helper exports in `tests/e2e/utils.ts` and scoped `dismissViolation` internally, dropping Knip's unused export count to 0.
 - **Narrative timeline alignment ("Story present: 2015"):** Aligned boot sequence date (`FACILITY DATE: MAY 31, 2015`), `BASE_TIME`, simulated filesystem timestamps, and historical email records in `docs/emails_from_athorne/` (renamed 6 files to `2013-*`), `src/components/BiosBoot.tsx`, `src/components/FileSystemItem.tsx`, `src/constants/filesystem/initial.ts`, `src/constants/filesystem/scenarios.ts`, `src/constants/narrative.ts`, `tests/e2e/episode1.spec.ts`, and `tests/e2e/intro-pathway.spec.ts`.
+- **Help and typography:** `src/components/HelpModal.tsx`, `src/constants/keybindings.ts`, and `tests/e2e/dialogs.spec.ts` group the command reference and cover keyboard focus/scrolling. `index.html`, `src/glitch.css`, `src/index.css`, and `DESIGN.md` align the interface on system monospace.
+- **Dependency maintenance:** `package.json`, `package-lock.json`, and `pnpm-lock.yaml` record reviewed pins and patched versions. Pre-push smoke tests use the noninteractive `list` reporter.
 - **Domain model & instructions:** Documented canonical `Story present` in `GLOSSARY.md` and `PRODUCT.md`; added `Codebase exploration` instructions to `AGENTS.md` guiding agents to query `graphify-out/` before search.
-- **Verification:** 101/101 Playwright E2E tests passed; 137/137 unit tests passed across 14 test suites; Knip reports 0 unused exports, files, or unlisted dependencies.
+- **Graphify:** The local AST graph was refreshed to 638 nodes and 1,776 edges across 45 communities. A query resolves `HelpModal` and `useTypewriter`; this is not a semantic documentation index.
 
-No framework/dependency installation, runtime module pattern, or auth/session architecture changed.
+No framework, application-layer, or auth/session change in the latest delta. `AGENTS.md` was left unchanged by this scan.
 
 ## Last Scanned
 
-2026-11-22T21:18:00Z
+2026-11-22T21:39:10Z

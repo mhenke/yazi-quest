@@ -18,6 +18,7 @@ import { BASE_TIME } from '../constants/timings';
 
 interface FileSystemItemProps {
   item: FileNode;
+  optionId?: string;
   isActive: boolean;
   isCursor: boolean;
   isMarked: boolean;
@@ -125,6 +126,7 @@ const getListItemRowClasses = (
 
 const FileSystemItem: React.FC<FileSystemItemProps> = ({
   item,
+  optionId,
   isActive,
   isCursor,
   isMarked,
@@ -148,7 +150,9 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   return (
     <React.Fragment>
       <div
-        role="listitem"
+        id={optionId}
+        role={isParent ? 'listitem' : 'option'}
+        aria-selected={isParent ? undefined : isMarked}
         data-testid={`file-${item.name}`}
         aria-current={isCursor ? 'location' : undefined}
         aria-label={`${item.name}, ${item.type}`}
@@ -206,6 +210,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
 export const MemoizedFileSystemItem = memo(FileSystemItem, (prev, next) => {
   return (
     prev.item === next.item &&
+    prev.optionId === next.optionId &&
     prev.isActive === next.isActive &&
     prev.isCursor === next.isCursor &&
     prev.isMarked === next.isMarked &&

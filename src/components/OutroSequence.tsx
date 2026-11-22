@@ -13,9 +13,10 @@ import { useGlobalInput } from '../GlobalInputContext';
 
 interface OutroSequenceProps {
   onRestartCycle?: () => void;
+  reduceMotion?: boolean;
 }
 
-export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) => {
+export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, reduceMotion }) => {
   // Part navigation (like EpisodeIntro but across multiple parts)
   const [partIndex, setPartIndex] = useState(0);
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -68,6 +69,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
   // Typewriter effect for current section
   useEffect(() => {
     if (showTeaser) return;
+    if (reduceMotion) {
+      setDisplayedText(currentText);
+      setShowContinue(true);
+      isAnimatingRef.current = false;
+      return;
+    }
 
     setDisplayedText('');
     setShowContinue(false);
@@ -94,7 +101,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
         clearTimeout(typewriterRef.current);
       }
     };
-  }, [partIndex, sectionIndex, currentText, showTeaser]);
+  }, [partIndex, sectionIndex, currentText, showTeaser, reduceMotion]);
 
   // Skip animation or advance to next section/part
   const handleAdvance = useCallback(() => {
@@ -132,7 +139,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
     }
   }, [showTeaser, currentText, sectionIndex, sections.length, partIndex, isComplete]);
 
-  // Keyboard handler for Enter/Space to advance
+  // Enter skips typing; Shift+Enter advances.
   useGlobalInput(
     (e) => {
       if (e.key === 'Enter') {
@@ -164,9 +171,13 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
   useEffect(() => {
     if (showTeaser && videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {
-        /* ignore video play failures in UX */
-      });
+      if (reduceMotion) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(() => {
+          /* ignore video play failures in UX */
+        });
+      }
       // start teaser music
       try {
         playTeaserMusic(true);
@@ -189,7 +200,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
         /* ignore */
       }
     };
-  }, [showTeaser]);
+  }, [showTeaser, reduceMotion]);
 
   const renderHighlighted = (text: string) => {
     // Only match the specific AI identifiers we use
@@ -222,6 +233,11 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
 
   // Delay rendering of the teaser overlay content slightly to avoid a flash
   useEffect(() => {
+    if (reduceMotion) {
+      setShowOverlay(showTeaser);
+      return;
+    }
+
     if (showTeaser) {
       // hide overlay immediately, then show after short delay when video has begun fading in
       setShowOverlay(false);
@@ -241,7 +257,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
         overlayTimer.current = null;
       }
     };
-  }, [showTeaser]);
+  }, [showTeaser, reduceMotion]);
 
   // Pillar I: Automatic restart timer removed to prevent unintentional triggers while user is away
   // We will now use a manual button instead
@@ -267,7 +283,9 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
           }}
           className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
         >
-          <span>{showTeaser ? 'Replay Teaser' : 'Skip Outro'}</span>
+          <span>
+            {showTeaser ? (reduceMotion ? 'Play Teaser' : 'Replay Teaser') : 'Skip Outro'}
+          </span>
           <ArrowRight size={14} />
         </button>
       </div>

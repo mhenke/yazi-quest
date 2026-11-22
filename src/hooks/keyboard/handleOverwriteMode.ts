@@ -3,11 +3,11 @@ import { deleteNode, resolveAndCreatePath } from '../../utils/fsHelpers';
 import { Action } from '../gameReducer';
 
 export const handleOverwriteConfirmKeyDown = (
-  e: KeyboardEvent,
+  key: string,
   dispatch: React.Dispatch<Action>,
   gameState: GameState
 ) => {
-  if (e.key === 'y' || e.key === 'Enter') {
+  if (key === 'y') {
     if (!gameState.pendingOverwriteNode) {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
@@ -69,7 +69,7 @@ export const handleOverwriteConfirmKeyDown = (
     dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
     dispatch({ type: 'SET_OVERWRITE_PENDING', node: null });
     dispatch({ type: 'SET_NOTIFICATION', message: 'Overwritten successfully.' });
-  } else if (e.key === 'n' || e.key === 'Escape') {
+  } else if (key === 'n' || key === 'Escape') {
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_OVERWRITE_PENDING', node: null });
   }

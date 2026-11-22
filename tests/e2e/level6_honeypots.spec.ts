@@ -110,6 +110,12 @@ test.describe('Level 6 Honeypot Verification', () => {
 
     // Attempt to delete it
     await pressKey(page, 'd');
+    const cancel = page.getByRole('button', { name: 'Cancel deletion' });
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(cancel).not.toBeVisible();
+    await expect(fileLocator).toHaveAttribute('aria-current', 'location');
+    await pressKey(page, 'd');
 
     // Confirm deletion with 'y' as per the game's confirmation pattern
     await pressKey(page, 'y');

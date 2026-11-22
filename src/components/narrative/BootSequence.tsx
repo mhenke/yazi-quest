@@ -4,6 +4,7 @@ import { getBootSequenceForEpisode, type BootSequence } from '../../constants/bo
 interface BootSequenceProps {
   episode: number;
   onComplete?: () => void;
+  reduceMotion?: boolean;
 }
 
 /**
@@ -13,12 +14,17 @@ interface BootSequenceProps {
  * the component remounts on episode change, preventing state leakage:
  * <BootSequence key={episode} episode={episode} onComplete={...} />
  */
-export function BootSequence({ episode, onComplete }: BootSequenceProps) {
+export function BootSequence({ episode, onComplete, reduceMotion }: BootSequenceProps) {
   const [sequence] = useState(() => getBootSequenceForEpisode(episode));
   const [visibleLines, setVisibleLines] = useState<string[]>([]);
   const completeBoot = useEffectEvent(() => onComplete?.());
 
   useEffect(() => {
+    if (reduceMotion) {
+      const timer = setTimeout(() => completeBoot(), sequence.duration + 1000);
+      return () => clearTimeout(timer);
+    }
+
     const lineDuration = sequence.duration / sequence.lines.length;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
@@ -40,12 +46,12 @@ export function BootSequence({ episode, onComplete }: BootSequenceProps) {
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
     };
-  }, [sequence, episode]);
+  }, [sequence, episode, reduceMotion]);
 
   return (
     <div className="boot-sequence fixed inset-0 bg-black text-green-500 font-mono p-8 z-50">
       <div className="max-w-2xl">
-        {visibleLines.map((line, index) => (
+        {(reduceMotion ? sequence.lines : visibleLines).map((line, index) => (
           <div key={index} className="mb-2 animate-fadeIn">
             {line}
           </div>

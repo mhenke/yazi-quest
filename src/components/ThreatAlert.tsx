@@ -17,11 +17,11 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
 
   return (
     <div
-      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] animate-in zoom-in-95 fade-in duration-300"
+      className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4 z-[200] animate-in zoom-in-95 fade-in duration-300"
       role="alert"
       data-testid="threat-alert"
     >
-      <div className="bg-orange-950/95 border-2 border-orange-500 shadow-2xl shadow-orange-500/20 px-8 py-6 rounded-xl backdrop-blur-md min-w-[360px] max-w-md flex flex-col items-center text-center">
+      <div className="bg-orange-950/95 border-2 border-orange-500 shadow-2xl shadow-orange-500/20 px-4 sm:px-8 py-4 sm:py-6 rounded-xl backdrop-blur-md max-h-[calc(100dvh-2rem)] overflow-y-auto flex flex-col items-center text-center break-words">
         <div className="bg-orange-500 rounded-full p-3 mb-4 animate-pulse shadow-lg shadow-orange-500/50">
           <AlertTriangle size={32} className="text-black" />
         </div>
@@ -35,7 +35,9 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
         </div>
 
         <div className="w-full border-t border-orange-800/50 pt-4 mb-2">
-          <p className="text-white text-md font-mono font-medium leading-relaxed">{message}</p>
+          <p className="text-white text-sm sm:text-base font-mono font-medium leading-relaxed">
+            {message}
+          </p>
         </div>
 
         {author && (

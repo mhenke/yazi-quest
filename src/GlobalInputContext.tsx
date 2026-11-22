@@ -43,11 +43,24 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (
+        e.target instanceof HTMLButtonElement &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        (e.key === 'Enter' || e.key === ' ')
+      )
+        return;
+
       // Sort handlers by priority (descending)
       const sortedHandlers = [...handlersRef.current].sort((a, b) => b.priority - a.priority);
 
       const isInput =
-        e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement;
 
       for (const h of sortedHandlers) {
         if (h.enabled === false) continue; // Explicit check for false
@@ -55,19 +68,9 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
         // If focus is in an input, only allow handlers that explicitly opt-in (captureInput)
         if (isInput && !h.captureInput) continue;
 
-        const result = h.handler(e);
-        if (result === true || e.defaultPrevented) {
-          // If handler returned true, it consumed the event.
-          // e.defaultPrevented check allows handlers that called e.preventDefault() to be counted as consuming?
-          // No, usually return true is the explicit signal.
-          // But let's respect return true.
-
-          if (result === true) {
-            // Stop further processing
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            break;
-          }
+        if (h.handler(e) === true) {
+          e.stopImmediatePropagation();
+          break;
         }
       }
     };

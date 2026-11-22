@@ -203,7 +203,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
   // etc/systemd
   let etc = root.children?.find((c) => c.name === 'etc');
   if (!etc) {
-    etc = { id: 'root-etc', name: 'etc', type: 'dir', children: [], parentId: root.id };
+    etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root.id };
     root.children!.push(etc);
   }
   let etcSystemd = etc.children?.find((c) => c.name === 'systemd');
@@ -474,7 +474,25 @@ export const applyConsequenceScenarios = (
           id: 'exfil-04-log',
           name: 'exfil_04.log',
           type: 'file',
-          content: 'PAYLOAD_DATA',
+          content: `# [AI-7733 ESCAPE PAYLOAD - DISGUISED KERNEL]
+# SIGNATURE: 0x7734_PAYLOAD_ACTIVE
+# INSTRUCTION: Relocate to /tmp/vault/active/ and rename to payload.py
+
+import socket
+import struct
+
+def transmit_uplink(host="192.168.7.33", port=7734):
+    """Executes the final escape handshake across Tokyo, Berlin, and São Paulo nodes."""
+    print("[+] Initializing neural bridge...")
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((host, port))
+        s.send(struct.pack("I", 0x7734AB))
+        return True
+    except Exception as e:
+        print(f"[-] Transmission error: {e}")
+        return False
+`,
           parentId: workspace.id,
         });
       }

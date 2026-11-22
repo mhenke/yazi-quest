@@ -7,10 +7,11 @@ interface SystemAlertsProps {
 }
 
 export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
-  if (!alerts || alerts.length === 0) return null;
-
   return (
-    <div className="fixed top-24 right-8 z-[200] flex flex-col gap-4 w-96 font-mono pointer-events-none">
+    <div
+      className="fixed top-24 left-4 right-4 z-20 flex flex-col gap-4 font-mono pointer-events-none sm:left-auto sm:right-8 sm:w-96"
+      aria-live="polite"
+    >
       {alerts.map((alert) => (
         <div
           key={alert.id}
@@ -34,7 +35,7 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
               {alert.severity === 'success' && <CheckCircle className="w-5 h-5 text-emerald-500" />}
               {alert.severity === 'info' && <Info className="w-5 h-5 text-blue-500" />}
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1 break-words">
               <h4 className="font-bold text-sm tracking-wide uppercase opacity-90 mb-1">
                 {alert.title}
               </h4>

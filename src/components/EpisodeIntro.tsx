@@ -9,9 +9,14 @@ import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narra
 interface EpisodeIntroProps {
   episode: Episode;
   onComplete: (options?: { isSkip?: boolean }) => void;
+  reduceMotion?: boolean;
 }
 
-export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete }) => {
+export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
+  episode,
+  onComplete,
+  reduceMotion,
+}) => {
   const ep = episode || ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as Episode);
   const [sectionIndex, setSectionIndex] = useState(0);
 
@@ -47,6 +52,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   } = useTypewriter(fullText, {
     speed: 15,
     key: sectionIndex,
+    immediate: reduceMotion,
   });
 
   const showContinue = sectionIndex >= sections.length || isTextComplete;
@@ -189,7 +195,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       if (style) {
         const { className, glitch } = style;
         // If glitch is requested, use the glitch class + data-text
-        if (glitch) {
+        if (glitch && !reduceMotion) {
           parts.push(
             <span
               key={`${offset}-${match}`}
@@ -221,10 +227,11 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
   };
 
   useEffect(() => {
+    if (reduceMotion) return;
     // Apply dynamic glitch to any .glitch-text-2 nodes after render/typing
     const els = Array.from(document.querySelectorAll('.glitch-text-2')) as HTMLElement[];
     els.forEach((el) => applyDynamicGlitch(el));
-  }, [currentText]);
+  }, [currentText, reduceMotion]);
 
   return (
     <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
@@ -282,7 +289,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         <div className="pt-4 flex justify-between items-center transition-opacity duration-300 opacity-100">
           {/* Left instruction for non-final sections (always visible) */}
           {sectionIndex < sections.length - 1 && (
-            <div className="text-zinc-600 text-sm flex items-center gap-2">
+            <div className="text-zinc-300 text-sm flex items-center gap-2">
               <ChevronRight size={16} className="animate-pulse" />
               <span>Press Shift+Enter to continue</span>
             </div>
@@ -310,7 +317,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
       </div>
 
       {/* Background visual noise */}
-      <Scanlines />
+      {!reduceMotion && <Scanlines />}
     </div>
   );
 };

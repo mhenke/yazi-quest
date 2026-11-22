@@ -5,6 +5,7 @@ export interface UseTypewriterOptions {
   speed?: number;
   key?: unknown;
   onComplete?: () => void;
+  immediate?: boolean;
 }
 
 export interface UseTypewriterResult {
@@ -33,12 +34,18 @@ export function useTypewriter(
   const speed = options?.speed ?? (isLines ? 100 : 15);
   const key = options?.key;
   const onComplete = options?.onComplete;
+  const immediate = options?.immediate ?? false;
 
   const [displayedText, setDisplayedText] = useState('');
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
+    if (immediate) {
+      onComplete?.();
+      return;
+    }
+
     let cancelled = false;
     setIsComplete(false);
 
@@ -98,7 +105,7 @@ export function useTypewriter(
         clearInterval(interval);
       };
     }
-  }, [content, isLines, speed, key, onComplete]);
+  }, [content, isLines, speed, key, onComplete, immediate]);
 
   const skip = useCallback(() => {
     if (isLines) {
@@ -110,13 +117,16 @@ export function useTypewriter(
     onComplete?.();
   }, [content, isLines, onComplete]);
 
+  const text = immediate && !isLines ? content : displayedText;
+  const lines = immediate && isLines ? content : displayedLines;
+  const complete = immediate || isComplete;
   return {
-    displayedText,
-    text: displayedText,
-    displayedLines,
-    lines: displayedLines,
-    isComplete,
-    showContinue: isComplete,
+    displayedText: text,
+    text,
+    displayedLines: lines,
+    lines,
+    isComplete: complete,
+    showContinue: complete,
     skip,
     setDisplayedText,
     setDisplayedLines,

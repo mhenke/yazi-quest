@@ -1,4 +1,12 @@
-import React, { useEffect, useCallback, useRef, useMemo, useReducer, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 import { LEVELS } from './constants/levels';
 import {
   INITIAL_FS,
@@ -14,7 +22,6 @@ import {
   getParentNode,
   getNodeById,
   cloneFS,
-  getAllDirectoriesWithPaths,
   resolvePath,
   resolveAndCreatePath,
 } from './utils/fsHelpers';
@@ -43,6 +50,7 @@ import { SortWarningModal } from './components/SortWarningModal';
 import { FilterWarningModal } from './components/FilterWarningModal';
 import { SearchWarningModal } from './components/SearchWarningModal';
 import { InfoPanel } from './components/InfoPanel';
+import { containOverlayTab, useOverlayFocus } from './components/useOverlayFocus';
 import { GCommandDialog } from './components/GCommandDialog';
 import { DiegeticPrompt } from './components/ui/DiegeticPrompt';
 import { GlitchOverlay } from './components/ui/GlitchOverlay';
@@ -56,6 +64,7 @@ import { reportError } from './utils/error';
 import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { useGameTimer } from './hooks/useGameTimer';
+import { useReduceMotion } from './hooks/useReduceMotion';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
 import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
@@ -337,10 +346,29 @@ function createInitialState(): GameState {
 
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, createInitialState);
+  const reduceMotion = useReduceMotion(gameState.settings.narrativeEffects);
+  const filePaneRef = useRef<HTMLDivElement>(null);
+  const searchPanelRef = useOverlayFocus(gameState.mode === 'search', 'input');
+  const canFocusFilePane =
+    gameState.mode === 'normal' &&
+    !gameState.isBooting &&
+    !gameState.showEpisodeIntro &&
+    !gameState.isGameOver &&
+    !gameState.showHelp &&
+    !gameState.showHint &&
+    !gameState.showMap &&
+    !gameState.showInfoPanel;
+  useLayoutEffect(() => {
+    if (canFocusFilePane && document.activeElement === document.body) {
+      filePaneRef.current?.focus({ preventScroll: true });
+    }
+  }, [canFocusFilePane]);
 
   // Boot sequence state for episode transitions
   const [showBoot, setShowBoot] = useState(false);
-  const [currentEpisode, setCurrentEpisode] = useState(1);
+  const [currentEpisode, setCurrentEpisode] = useState(() =>
+    gameState.showEpisodeIntro ? 1 : Math.ceil((gameState.levelIndex + 1) / 5)
+  );
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   const handleSkip = useCallback(() => {
@@ -1033,72 +1061,27 @@ export default function App() {
     }
   }, [gameState, dispatch, showNotification]);
 
-  const handleFuzzySelect = useCallback(
-    (path: string, isZoxide: boolean, pathIds?: string[]) => {
-      if (isZoxide) {
-        const currentLevel = LEVELS[gameState.levelIndex];
-        const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel);
-        const match = dirs.find((d) => resolvePath(gameState.fs, d.path) === path);
-        if (match) {
-          dispatch({ type: 'NAVIGATE', path: match.path });
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'INCREMENT_STAT', stat: 'fuzzyJumps' });
-        }
-      } else {
-        if (pathIds) {
-          const parentPath = pathIds.slice(0, -1);
-          const fileId = pathIds[pathIds.length - 1];
-
-          // Find the index of the file in the parent directory
-          // Find the index of the file in the parent directory, respecting current sort
-          const parentNode = getNodeByPath(gameState.fs, parentPath);
-          let cursorIndex = 0;
-          if (parentNode?.children) {
-            const sortedNodes = sortNodes(
-              parentNode.children,
-              gameState.sortBy,
-              gameState.sortDirection
-            );
-            cursorIndex = sortedNodes.findIndex((n) => n.id === fileId);
-            if (cursorIndex === -1) cursorIndex = 0;
-          }
-
-          dispatch({ type: 'NAVIGATE', path: parentPath, cursorIndex });
-          // No SET_SELECTION
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'INCREMENT_STAT', stat: 'fzfFinds' });
-        }
+  const setUtilityPanel = useCallback((panel: 'help' | 'hint' | 'map', visible: boolean) => {
+    if (visible) {
+      for (const other of ['help', 'hint', 'map', 'info'] as const) {
+        if (other !== panel)
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: other, visible: false });
       }
-    },
-    [gameState.fs, gameState.levelIndex, gameState.sortBy, gameState.sortDirection, dispatch]
-  );
+    }
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: panel, visible });
+  }, []);
 
   // Global Key Down Handler (Refactored to useGlobalInput)
 
   // 1. System Keys (Priority 2000)
   useGlobalInput(
     (e) => {
-      // Check input modes - allow inputs to handle their own keys
-      if (
-        ['filter', 'input-file', 'rename'].includes(gameState.mode) &&
-        e.target instanceof HTMLInputElement
-      ) {
-        return;
-      }
+      if (e.target instanceof HTMLInputElement) return;
 
       // Meta commands
       if ((e.key === '?' || (e.code === 'Slash' && e.shiftKey)) && e.altKey) {
         e.preventDefault();
-        dispatch({
-          type: 'SET_MODAL_VISIBILITY',
-          modal: 'help',
-          visible: !gameState.showHelp,
-        });
-        // Ensure others are closed
-        if (!gameState.showHelp) {
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false });
-        }
+        setUtilityPanel('help', !gameState.showHelp);
         return true;
       }
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
@@ -1107,21 +1090,14 @@ export default function App() {
           const nextStage = (gameState.hintStage + 1) % 3;
           dispatch({ type: 'SET_HINT_STAGE', stage: nextStage });
         } else {
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: true });
+          setUtilityPanel('hint', true);
           dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
-          // Close others
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false });
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false });
         }
         return true;
       }
       if ((e.key.toLowerCase() === 'm' || e.code === 'KeyM') && e.altKey && !e.shiftKey) {
         e.preventDefault();
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: !gameState.showMap });
-        if (!gameState.showMap) {
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false });
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
-        }
+        setUtilityPanel('map', !gameState.showMap);
         return true;
       }
     },
@@ -1130,7 +1106,7 @@ export default function App() {
       gameState.showHint,
       gameState.showMap,
       gameState.hintStage,
-      gameState.mode,
+      setUtilityPanel,
     ],
     { priority: 2000, captureInput: true }
   );
@@ -1151,13 +1127,19 @@ export default function App() {
   // 3. Modals (Help, Map, Hint, InfoPanel) (Priority 1000 - Higher than Warnings)
   useGlobalInput(
     (e) => {
+      if (
+        e.target instanceof HTMLSelectElement &&
+        e.key !== 'Escape' &&
+        !(e.shiftKey && e.key === 'Enter')
+      )
+        return true;
       handleHelpModeKeyDown(e, gameState, () =>
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
       );
       return true;
     },
     [gameState.showHelp, gameState, handleHelpModeKeyDown],
-    { priority: 1000, enabled: gameState.showHelp }
+    { priority: 1000, enabled: gameState.showHelp, captureInput: true }
   );
 
   useGlobalInput(
@@ -1216,7 +1198,10 @@ export default function App() {
 
   useGlobalInput(
     (e) => {
-      if (e.key === 'Escape' || e.key === 'Tab') {
+      if (
+        e.key === 'Escape' ||
+        (e.key === 'Tab' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey)
+      ) {
         e.preventDefault();
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'info', visible: false });
       }
@@ -1258,6 +1243,12 @@ export default function App() {
     gameState.searchQuery,
     dispatch,
   ]);
+
+  const dismissWarning = useCallback((modal: 'filterWarning' | 'searchWarning' | 'sortWarning') => {
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal, visible: false });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+  }, []);
 
   // Hidden Warning
   useGlobalInput(
@@ -1304,14 +1295,12 @@ export default function App() {
         return true;
       }
       if (e.key === 'Escape') {
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false });
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+        dismissWarning('filterWarning');
         return true;
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
+    [gameState, currentLevel, handleAutoFixBaseline, dismissWarning],
     { priority: 800, enabled: gameState.showFilterWarning }
   );
 
@@ -1332,20 +1321,24 @@ export default function App() {
         return true;
       }
       if (e.key === 'Escape') {
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: false });
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+        dismissWarning('searchWarning');
         return true;
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
+    [gameState, currentLevel, handleAutoFixBaseline, dismissWarning],
     { priority: 800, enabled: gameState.showSearchWarning }
   );
 
   // Sort Warning
   useGlobalInput(
     (e) => {
+      if (e.key === 'Tab') return true;
+      if (e.key === 'Escape') {
+        dismissWarning('sortWarning');
+        return true;
+      }
+
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
@@ -1377,15 +1370,9 @@ export default function App() {
         dispatch({ type: 'SET_MODE', mode: 'normal' });
         return true;
       }
-      if (e.key === 'Escape') {
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-        return true;
-      }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete, handleSortModeKeyDown],
+    [gameState, currentLevel, handleAutoFixBaseline, handleSortModeKeyDown, dismissWarning],
     { priority: 800, enabled: gameState.showSortWarning }
   );
 
@@ -1437,6 +1424,28 @@ export default function App() {
 
       // Block game loop in input modes (though they are ignored by default if focus is in input)
       if (['filter', 'input-file', 'rename'].includes(gameState.mode)) return;
+      if (gameState.mode === 'search') return;
+      if (
+        (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') &&
+        !(e.target instanceof HTMLInputElement) &&
+        e.key !== 'Escape'
+      )
+        return;
+
+      if (
+        e.key === 'Tab' &&
+        (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || gameState.mode !== 'normal')
+      )
+        return;
+      const commandPending = gameState.mode === 'sort' || gameState.mode === 'g-command';
+      if (
+        (gameState.mode === 'normal' || commandPending) &&
+        !filePaneRef.current?.contains(e.target as Node) &&
+        e.target !== document.body &&
+        e.target !== document.documentElement &&
+        !(commandPending && e.key === 'Escape')
+      )
+        return;
 
       // Completion Lockdown Logic
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
@@ -1502,13 +1511,6 @@ export default function App() {
         case 'confirm-delete':
           handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, gameState);
           break;
-        case 'search':
-          if (e.key === 'Enter') {
-            handleSearchConfirm();
-          } else if (e.key === 'Escape') {
-            dispatch({ type: 'SET_MODE', mode: 'normal' });
-          }
-          break;
         case 'zoxide-jump':
         case 'fzf-current':
           handleFuzzyModeKeyDown(e, gameState, dispatch);
@@ -1517,7 +1519,7 @@ export default function App() {
           handleGCommandKeyDown(e, gameState, currentLevel);
           break;
         case 'overwrite-confirm':
-          handleOverwriteConfirmKeyDown(e, gameState);
+          handleOverwriteConfirmKeyDown(e.key, gameState);
           break;
       }
     },
@@ -1528,43 +1530,50 @@ export default function App() {
       handleNormalModeKeyDown,
       handleSortModeKeyDown,
       handleConfirmDeleteModeKeyDown,
-      handleFuzzyModeKeyDown,
       handleOverwriteConfirmKeyDown,
       handleGCommandKeyDown,
       advanceLevel,
       visibleItems,
       currentItem,
       parent,
-      handleSearchConfirm,
       dispatch,
       checkAllTasksComplete,
     ],
-    { priority: 0 }
+    { priority: 0, captureInput: true }
   );
 
   if (gameState.isBooting) {
-    return <BiosBoot onComplete={handleBootComplete} cycleCount={gameState.cycleCount || 1} />;
+    return (
+      <BiosBoot
+        onComplete={handleBootComplete}
+        cycleCount={gameState.cycleCount || 1}
+        reduceMotion={reduceMotion}
+      />
+    );
   }
 
   if (isLastLevel) {
-    return <OutroSequence onRestartCycle={handleRestartCycle} />;
+    return <OutroSequence onRestartCycle={handleRestartCycle} reduceMotion={reduceMotion} />;
   }
 
   return (
     <GlitchOverlay
       threatLevel={gameState.threatLevel}
       consciousnessLevel={consciousnessLevel}
-      enabled={gameState.settings.narrativeEffects !== 'minimal'}
+      enabled={!reduceMotion && gameState.settings.narrativeEffects === 'full'}
     >
       <div
         className={`flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative ${
-          gameState.mode === 'auto-fix' ? 'animate-glitch' : ''
+          gameState.mode === 'auto-fix' && !reduceMotion ? 'animate-glitch' : ''
         }`}
-        style={gameState.mode === 'auto-fix' ? { filter: 'url(#codrops-glitch)' } : {}}
+        style={
+          gameState.mode === 'auto-fix' && !reduceMotion ? { filter: 'url(#codrops-glitch)' } : {}
+        }
       >
-        <CodropsGlitchSVG />
+        {!reduceMotion && <CodropsGlitchSVG />}
         {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
           <EpisodeIntro
+            reduceMotion={reduceMotion}
             episode={(() => {
               const baseEpisode = EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!;
               // E C H O   C Y C L E   L O G I C
@@ -1581,6 +1590,7 @@ export default function App() {
           <BootSequence
             key={currentEpisode}
             episode={currentEpisode}
+            reduceMotion={reduceMotion}
             onComplete={() => setShowBoot(false)}
           />
         )}
@@ -1675,30 +1685,27 @@ export default function App() {
         {gameState.showSortWarning && (
           <SortWarningModal
             allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false })
-            }
+            onDismiss={() => dismissWarning('sortWarning')}
           />
         )}
         {gameState.showFilterWarning && (
           <FilterWarningModal
             allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false })
-            }
+            onDismiss={() => dismissWarning('filterWarning')}
           />
         )}
         {gameState.showSearchWarning && (
           <SearchWarningModal
             allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: false })
-            }
+            onDismiss={() => dismissWarning('searchWarning')}
           />
         )}
 
         {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
-          <OverwriteModal fileName={gameState.pendingOverwriteNode.name} />
+          <OverwriteModal
+            fileName={gameState.pendingOverwriteNode.name}
+            onDecision={(key) => handleOverwriteConfirmKeyDown(key, gameState)}
+          />
         )}
 
         {/* Render ThreatAlert AFTER other modals so it appears on top */}
@@ -1713,38 +1720,23 @@ export default function App() {
         {/* Render System Alerts (Top Right) */}
         <SystemAlerts alerts={gameState.alerts} />
 
-        <div className="flex flex-col flex-1 h-full min-w-0">
+        <div
+          className="flex flex-col flex-1 h-full min-w-0"
+          inert={gameState.showEpisodeIntro || gameState.isGameOver}
+        >
           {!gameState.showEpisodeIntro && (
             <LevelProgress
               levels={LEVELS}
               currentLevelIndex={gameState.levelIndex}
               notification={null}
               thought={gameState.thought}
-              onToggleHint={() =>
-                dispatch({
-                  type: 'SET_MODAL_VISIBILITY',
-                  modal: 'hint',
-                  visible: !gameState.showHint,
-                })
-              }
-              onToggleHelp={() =>
-                dispatch({
-                  type: 'SET_MODAL_VISIBILITY',
-                  modal: 'help',
-                  visible: !gameState.showHelp,
-                })
-              }
+              onToggleHint={() => setUtilityPanel('hint', !gameState.showHint)}
+              onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
               isOpen={gameState.showMap}
               onClose={() =>
                 dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
               }
-              onToggleMap={() =>
-                dispatch({
-                  type: 'SET_MODAL_VISIBILITY',
-                  modal: 'map',
-                  visible: !gameState.showMap,
-                })
-              }
+              onToggleMap={() => setUtilityPanel('map', !gameState.showMap)}
               onJumpToLevel={(idx) => {
                 const lvl = LEVELS[idx];
                 let fs = cloneFS(INITIAL_FS);
@@ -1785,10 +1777,26 @@ export default function App() {
           <div className="flex flex-1 min-h-0 relative">
             {/* Search Input - centered overlay popup matching Yazi style */}
             {gameState.mode === 'search' && (
-              <div className="absolute inset-0 z-30 flex items-start justify-center pt-4 pointer-events-none">
-                <div className="pointer-events-auto bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 min-w-[400px] backdrop-blur-sm">
-                  <div className="text-zinc-400 text-sm font-mono mb-2">Search via fd:</div>
+              <div
+                className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
+                onKeyDown={containOverlayTab}
+              >
+                <div
+                  ref={searchPanelRef}
+                  role="dialog"
+                  aria-labelledby="fd-search-label"
+                  tabIndex={-1}
+                  className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
+                >
+                  <label
+                    id="fd-search-label"
+                    htmlFor="fd-search"
+                    className="block text-zinc-400 text-sm font-mono mb-2"
+                  >
+                    Search via fd:
+                  </label>
                   <input
+                    id="fd-search"
                     type="text"
                     value={gameState.inputBuffer}
                     onChange={(e) => {
@@ -1796,7 +1804,9 @@ export default function App() {
                       dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
                     }}
                     onKeyDown={(e) => {
+                      if (e.nativeEvent.isComposing) return;
                       if (e.key === 'Enter') {
+                        e.preventDefault();
                         handleSearchConfirm();
                         e.stopPropagation();
                       } else if (e.key === 'Escape') {
@@ -1805,8 +1815,6 @@ export default function App() {
                       }
                     }}
                     className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
-                    autoFocus
-                    onBlur={(e) => e.target.focus()}
                     data-testid="search-input"
                   />
                 </div>
@@ -1831,9 +1839,9 @@ export default function App() {
               className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/50"
             />
 
-            <div className="flex-1 flex flex-col relative min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 sm:relative">
               <FileSystemPane
-                key={`fs-pane-main-${gameState.currentPath.join('/')}`}
+                focusRef={filePaneRef}
                 items={visibleItems}
                 isActive={
                   !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
@@ -1847,7 +1855,7 @@ export default function App() {
               />
 
               {gameState.mode === 'sort' && (
-                <div className="absolute bottom-6 right-0 m-2 z-20 bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm min-w-[300px] animate-in slide-in-from-bottom-2 duration-150">
+                <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-in slide-in-from-bottom-2 duration-150 sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
                     <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                       Sort Options
@@ -1966,11 +1974,7 @@ export default function App() {
               )}
 
               {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-                <FuzzyFinder
-                  gameState={gameState}
-                  onSelect={handleFuzzySelect}
-                  onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                />
+                <FuzzyFinder gameState={gameState} dispatch={dispatch} />
               )}
             </div>
 
