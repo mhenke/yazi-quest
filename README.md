@@ -40,7 +40,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 
 ## 🚀 Play Online
 
-https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
+[Play Yazi Quest](https://mhenke.github.io/yazi-quest/)
 
 ## Run Locally
 
@@ -57,6 +57,12 @@ https://ai.studio/apps/drive/1ceZ1bv8DUISsPb5Ysa83PHU8qdxov1U8
 3.  **Optional - Set up Gemini API:**
     Create `.env.local` and add: `GEMINI_API_KEY=YOUR_API_KEY`  
     (App includes fallbacks when key is not provided)
+
+## Deployment
+
+Pushes to `main` deploy the production build to GitHub Pages via
+`.github/workflows/deploy.yml`. The site is served under `/yazi-quest/`.
+The E2E server overrides the base to `/` for the existing root-relative test URLs.
 
 ## 📖 Documentation
 

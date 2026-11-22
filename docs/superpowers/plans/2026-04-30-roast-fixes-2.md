@@ -1,5 +1,10 @@
 # Roast Fixes Round 2 Implementation Plan
 
+**Status: Closed — 2026-11-22.** Shipping takes priority over this cleanup backlog.
+Unchecked steps below are archived, not pending work or claims of completion.
+The remaining input-handler/context extraction is cancelled; no refactor is required
+for the GitHub Pages release. Reopen only for a concrete player-facing defect.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove debug logging from production, fix three type safety issues, encapsulate a window global into a module-level flag, and extract 12 inline keyboard handler registrations from App.tsx via a React context.

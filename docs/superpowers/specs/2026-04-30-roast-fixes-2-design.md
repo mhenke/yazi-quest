@@ -1,5 +1,9 @@
 # Design: Roast Fixes Round 2
 
+**Status: Closed — 2026-11-22.** Archived in favor of shipping the playable
+[GitHub Pages release](https://mhenke.github.io/yazi-quest/). Unimplemented cleanup,
+including the input-handler/context extraction, is cancelled rather than completed.
+
 ## Context
 
 Second pass at repo issues flagged in a code review. Round 1 eliminated dead files, type lies, and the telemetry no-op. Round 2 targets: debug logging in production, an empty useEffect skeleton, `any` types in dynamicGlitch, a window global flag used as cross-component state, and 14 inline keyboard handler registrations keeping App.tsx at 2,065 lines.
