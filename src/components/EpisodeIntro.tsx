@@ -238,20 +238,23 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div
-          className={`border-b-2 border-dashed ${ep.color ? ep.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 mb-8 duration-1000`}
+          className={`shrink-0 flex flex-wrap items-start gap-x-4 gap-y-3 border-b-2 border-dashed ${ep.color ? ep.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 duration-1000`}
         >
-          <div className="flex items-center gap-3 mb-2">
-            <Terminal size={32} className={ep.color} />
-            <h1
-              className={`text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
-              data-text={episode.title}
-            >
-              {episode.title}
-            </h1>
+          <div className="flex-1 basis-full sm:basis-auto min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <Terminal size={32} className={`hidden sm:block ${ep.color}`} />
+              <h1
+                className={`text-xl sm:text-4xl font-bold tracking-tighter ${episode.color} uppercase glitch-text`}
+                data-text={episode.title}
+              >
+                {episode.title}
+              </h1>
+            </div>
+            <p className="text-zinc-500 text-sm sm:text-xl tracking-[0.2em] font-bold uppercase">
+              {'//'} {ep.subtitle}
+            </p>
           </div>
-          <p className="text-zinc-500 text-xl tracking-[0.2em] font-bold uppercase">
-            {'//'} {ep.subtitle}
-          </p>
+          <SkipIntroButton className="shrink-0" />
         </div>
 
         {/* Content - Current Section */}
@@ -270,7 +273,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
         </div>
 
         {/* Progress Indicator */}
-        <div className="flex items-center gap-2 text-zinc-600 text-sm">
+        <div className="shrink-0 flex items-center gap-2 text-zinc-600 text-sm">
           {sections.map((_, idx) => (
             <div
               key={idx}
@@ -286,7 +289,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="pt-4 flex justify-between items-center transition-opacity duration-300 opacity-100">
+        <div className="shrink-0 flex justify-between items-center transition-opacity duration-300 opacity-100">
           {/* Left instruction for non-final sections (always visible) */}
           {sectionIndex < sections.length - 1 && (
             <div className="text-zinc-300 text-sm flex items-center gap-2">
@@ -311,9 +314,6 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
             </button>
           )}
         </div>
-
-        {/* Skip Intro Button */}
-        <SkipIntroButton />
       </div>
 
       {/* Background visual noise */}
