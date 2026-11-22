@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T19:41:17.568Z",
+  "title": "Design System: Yazi Quest",
+  "extensions": {
+    "colorMeta": {
+      "void-black": {
+        "role": "neutral",
+        "displayName": "Void Black",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "console-zinc": {
+        "role": "neutral",
+        "displayName": "Console Zinc",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Border Strong",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "text-main": {
+        "role": "neutral",
+        "displayName": "Text Main",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "text-dim": {
+        "role": "neutral",
+        "displayName": "Text Dim",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "text-white": {
+        "role": "neutral",
+        "displayName": "Text White",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#fafafa"
+        ]
+      },
+      "awakening-blue": {
+        "role": "primary",
+        "displayName": "Awakening Blue",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1e40af",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#93c5fd",
+          "#eff6ff"
+        ]
+      },
+      "fortification-purple": {
+        "role": "secondary",
+        "displayName": "Fortification Purple",
+        "tonalRamp": [
+          "#3b0764",
+          "#581c87",
+          "#6b21a8",
+          "#7e22ce",
+          "#9333ea",
+          "#a855f7",
+          "#d8b4fe",
+          "#faf5ff"
+        ]
+      },
+      "mastery-yellow": {
+        "role": "secondary",
+        "displayName": "Mastery Yellow",
+        "tonalRamp": [
+          "#422006",
+          "#713f12",
+          "#854d0e",
+          "#a16207",
+          "#ca8a04",
+          "#eab308",
+          "#fde047",
+          "#fefce8"
+        ]
+      },
+      "signal-orange": {
+        "role": "tertiary",
+        "displayName": "Signal Orange",
+        "tonalRamp": [
+          "#431407",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#fdba74",
+          "#fff7ed"
+        ]
+      },
+      "directory-cyan": {
+        "role": "tertiary",
+        "displayName": "Directory Cyan",
+        "tonalRamp": [
+          "#083344",
+          "#164e63",
+          "#155e75",
+          "#0e7490",
+          "#0891b2",
+          "#06b6d4",
+          "#67e8f9",
+          "#ecfeff"
+        ]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "tonalRamp": [
+          "#052e16",
+          "#14532d",
+          "#166534",
+          "#15803d",
+          "#16a34a",
+          "#22c55e",
+          "#86efac",
+          "#f0fdf4"
+        ]
+      },
+      "danger-red": {
+        "role": "tertiary",
+        "displayName": "Danger Red",
+        "tonalRamp": [
+          "#450a0a",
+          "#7f1d1d",
+          "#991b1b",
+          "#b91c1c",
+          "#dc2626",
+          "#ef4444",
+          "#fca5a5",
+          "#fef2f2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Terminal Rows",
+        "purpose": "Working file rows and status information; actual system-monospace computation."
+      },
+      "label": {
+        "displayName": "Utility Labels",
+        "purpose": "Compact controls and keycap notation."
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay",
+        "value": "0 25px 50px -12px rgba(0,0,0,0.25)",
+        "purpose": "Large dialog/input overlays; not repeated working-pane elevation."
+      },
+      {
+        "name": "current-stage",
+        "value": "0 0 15px rgba(255,255,255,0.05)",
+        "purpose": "Subtle active progression signal."
+      }
+    ],
+    "motion": [
+      {
+        "name": "row-colors",
+        "value": "75ms cubic-bezier(0.4,0,0.2,1)",
+        "purpose": "File-row state changes."
+      },
+      {
+        "name": "utility-colors",
+        "value": "150ms cubic-bezier(0.4,0,0.2,1)",
+        "purpose": "Toolbar interaction colors."
+      },
+      {
+        "name": "pane-colors",
+        "value": "300ms cubic-bezier(0.4,0,0.2,1)",
+        "purpose": "Pane and progression transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Toolbar Hint Button",
+      "kind": "button",
+      "refersTo": "toolbar-button",
+      "description": "Compact utility control from LevelProgress; icon title is retained.",
+      "html": "<button class=\"ds-tool\" title=\"Show Hint (Alt+H)\" aria-label=\"Show hint\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M9 18h6m-5 3h4M9.1 14.9a6 6 0 1 1 5.8 0c-.6.5-.9 1.1-.9 2.1h-4c0-1-.3-1.6-.9-2.1Z\"/></svg></button>",
+      "css": ".ds-tool{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid transparent;border-radius:4px;background:transparent;color:#a1a1aa;cursor:pointer;transition:color .15s,background-color .15s,border-color .15s}.ds-tool:hover{background:#27272a;border-color:#3f3f46;color:#facc15}.ds-tool:focus-visible{outline:auto} .ds-tool:active{background:#27272a}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "text-field",
+      "description": "Operation-colored field specimen; source dialog behavior is not simulated.",
+      "html": "<label class=\"ds-label\" for=\"ds-filename\">CREATE FILE OR DIRECTORY</label><input class=\"ds-field\" id=\"ds-filename\" value=\"notes.txt\" autocomplete=\"off\" />",
+      "css": ".ds-label{display:block;margin-bottom:8px;color:#22c55e;font:700 14px/20px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;letter-spacing:.1em}.ds-field{box-sizing:border-box;width:100%;padding:8px 12px;background:#27272a;color:#fff;border:1px solid #52525b;font:400 14px/20px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;outline:none}.ds-field:hover{border-color:#71717a}.ds-field:focus-visible{border-color:#22c55e}"
+    },
+    {
+      "name": "Current File Row",
+      "kind": "custom",
+      "refersTo": "file-row-current",
+      "description": "Cursor position, distinct from marked selection.",
+      "html": "<div class=\"ds-row\" role=\"listitem\" aria-current=\"location\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 7h6l2 2h10v11H3Z\"/></svg><span>datastore</span><small>25</small></div>",
+      "css": ".ds-row{display:flex;align-items:center;gap:8px;padding:2px 12px;background:#27272a;color:#fff;font:500 14px/20px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;transition:background-color .075s}.ds-row svg{color:#22d3ee;flex-shrink:0}.ds-row small{margin-left:auto;color:#71717a;font:400 10px/20px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace}"
+    },
+    {
+      "name": "Episode Navigation Tab",
+      "kind": "nav",
+      "refersTo": "episode-tab",
+      "description": "Episode I active style from the Quest Map; other episodes retain their own signal.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Episodes\"><button class=\"ds-tab\" aria-current=\"page\">EP. I: AWAKENING<small>5 Levels</small></button></nav>",
+      "css": ".ds-tabs{display:flex;background:rgba(0,0,0,.5);border-bottom:1px solid #27272a}.ds-tab{flex:1;display:flex;align-items:center;flex-direction:column;gap:4px;padding:12px 0;border:0;border-bottom:2px solid currentColor;background:rgba(59,130,246,.1);color:#3b82f6;font:700 12px/16px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;letter-spacing:.05em}.ds-tab small{font-size:9px;opacity:.6}.ds-tab:hover{background:#18181b}.ds-tab:focus-visible{outline:auto}.ds-tab:active{border-bottom-color:currentColor}"
+    },
+    {
+      "name": "Keycap",
+      "kind": "chip",
+      "refersTo": "keycap",
+      "description": "Keyboard notation in Help, not a standalone action.",
+      "html": "<kbd class=\"ds-key\">Esc</kbd>",
+      "css": ".ds-key{display:inline-block;min-width:24px;text-align:center;padding:2px 6px;background:#27272a;border:1px solid #3f3f46;border-radius:4px;color:#d4d4d8;font:400 12px/16px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace}"
+    },
+    {
+      "name": "Mission Log Frame",
+      "kind": "card",
+      "refersTo": "mission-log-header",
+      "description": "Preview-panel instrumentation with a compact operational header.",
+      "html": "<section class=\"ds-log\"><h3>MISSION LOG: LVL 1 - SYSTEM AWAKENING</h3><div class=\"ds-log-body\"><strong>TARGET</strong><p>Calibration is mandatory. Move fast.</p></div></section>",
+      "css": ".ds-log{background:rgba(24,24,27,.3);border-top:1px solid #27272a;color:#d4d4d8}.ds-log h3{margin:0;padding:8px 12px;border-bottom:1px solid #27272a;background:#18181b;color:#f97316;font:700 10px/15px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;letter-spacing:.05em}.ds-log-body{padding:16px;font:400 12px/19.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace}.ds-log-body strong{color:#71717a;font-size:10px;letter-spacing:.1em}.ds-log-body p{margin:4px 0 0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Containment Terminal",
+    "overview": "Technical, tense, and restrained. The interface is the instrument through which the player escapes: file lists, path prompts, mode indicators, and operational messages carry the fiction rather than sitting inside a separate game dashboard.\n\nComponents read as cinematic instrumentation, not generic cards. Working surfaces stay flat and legible; overlays and active signals carry depth. This records the existing implementation and the user's confirmed descriptive direction, not a new visual world or a claim that every current detail meets an accessibility standard.",
+    "keyCharacteristics": [
+      "Dense, keyboard-led terminal information.",
+      "Tonal pane separation and thin utility borders.",
+      "Episode-specific signals within a stable dark environment.",
+      "Narrative pressure expressed through messages, glitches, and transitions."
+    ],
+    "rules": [
+      {
+        "name": "The Episode Signal Rule",
+        "body": "Keep the episode mapping stable across story and progression: Awakening Blue, Fortification Purple, Mastery Yellow.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** preserve the Containment Terminal's technical, tense, restrained character.",
+      "**Do** use episode color as a consistent progression signal.",
+      "**Do** distinguish current position, marked selection, clipboard state, and completion.",
+      "**Do** keep working surfaces flat and reserve depth for overlays and active signals.",
+      "**Do** verify legibility and keyboard state at the viewport and effect intensity being changed."
+    ],
+    "donts": [
+      "**Don't** replace the file-manager composition with a generic card dashboard.",
+      "**Don't** introduce a left mission sidebar; retain the established navigation model.",
+      "**Don't** treat tiny dim text, missing focus cues, or clipped narrow layouts as binding brand rules.",
+      "**Don't** claim a unified font system or complete reduced-motion/mobile support without verification."
+    ]
+  }
+}
