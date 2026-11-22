@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 
 import { Episode } from '../types';
@@ -19,6 +19,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
 }) => {
   const ep = episode || ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as Episode);
   const [sectionIndex, setSectionIndex] = useState(0);
+  const logRef = useRef<HTMLDivElement>(null);
 
   // Split lore into sections (separated by empty strings) - useMemo to avoid recalculation
   const sections = useMemo(() => {
@@ -94,6 +95,15 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   );
 
   useSkipIntro(onComplete);
+
+  // The page cannot scroll (body is overflow:hidden), so the log owns the scroll.
+  useEffect(() => {
+    logRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: 0 });
+  }, [sectionIndex]);
 
   // Determine styling based on content
   // Use orange for metadata lines (explicit prefixes), green for terminal output,
@@ -234,8 +244,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   }, [currentText, reduceMotion]);
 
   return (
-    <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center justify-center p-8 font-mono select-none">
-      <div className="w-full max-w-3xl space-y-8">
+    <div className="absolute inset-0 z-[80] bg-black flex flex-col items-center overflow-y-auto p-4 sm:p-8 font-mono select-none">
+      <div className="my-auto w-full max-w-3xl max-h-full flex flex-col gap-4 sm:gap-6">
         {/* Header */}
         <div
           className={`shrink-0 flex flex-wrap items-start gap-x-4 gap-y-3 border-b-2 border-dashed ${ep.color ? ep.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 duration-1000`}
@@ -258,7 +268,14 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
         </div>
 
         {/* Content - Current Section */}
-        <div className="min-h-[320px] space-y-3">
+        <div
+          ref={logRef}
+          role="region"
+          aria-label="Episode log"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be focusable to scroll by keyboard
+          tabIndex={0}
+          className="min-h-24 overflow-y-auto space-y-3 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400"
+        >
           {currentText.split('\n').map((line, idx, arr) => (
             <p
               key={idx}

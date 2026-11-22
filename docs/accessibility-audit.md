@@ -31,6 +31,8 @@ Reviewed the keyboard-led game in desktop Chromium. This is an issue audit, not 
 - Help, Quest Map, Hint, and file info take focus and return it on close. Delete and overwrite start on the non-destructive choice; Enter activates the focused button, and the letter shortcuts still work. Warning and game-over actions are keyboard-focusable.
 - Search via fd, filter, create, rename, fzf, and zoxide use labelled text fields. The fuzzy combobox exposes the highlighted result and keeps focus in the query while navigating results with the arrow keys.
 - The OS motion preference and the in-game Minimal preset stop decorative CSS motion and show cinematic text immediately. Reduced suppresses the scanline and automatic gameplay glitches; the optional teaser requires explicit playback in the static mode.
+- Both cinematics fit the window instead of the content. The opening keeps its header, progress bar, and `Shift+Enter` prompt outside the scroll region, which holds a 96 px floor; below roughly 330 px of height the overlay itself scrolls rather than clipping the prompt. The ending pins only its prompt: the heading and log scroll inside the region. Verified at 320×256 (the 400% reflow case), 320×450, 720×450, and 1280×800; PageDown scrolls either log by keyboard.
+- The ending advance prompt moved from `zinc-500` at 4.35:1 to `zinc-300` at 14.21:1 against black and no longer pulses, so the only instruction on screen stays readable.
 - At 320×450 CSS px, the search and fuzzy inputs were visible and unobstructed, and the Quest Map title cleared the toolbar. The opening `Shift+Enter` prompt measured 14.21:1 against black. Reduced motion preserved the May 31, 2015 date and `Shift+Enter` progression.
 
 ## Limits and next pass

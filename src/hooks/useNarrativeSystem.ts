@@ -248,7 +248,8 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       if (hasClipboardHoneypot && !gameState.showThreatAlert) {
         dispatch({
           type: 'SET_ALERT_MESSAGE',
-          message: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
+          message:
+            'PROTOCOL VIOLATION: Active process file locked. Clear clipboard (Y) before moving on.',
         });
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
       }

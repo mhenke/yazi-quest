@@ -48,13 +48,25 @@ _Avoid_: Marking, previewing
 A simulated decoy asset planted by CRL security that triggers countermeasures when manipulated.
 _Avoid_: Trap file, tripwire, honeypot node
 
+**Threat Alert**:
+The modal that delivers a security event. The container is neutral; the body names the cause: procedural breaches say PROTOCOL VIOLATION, deliberate decoys say HONEYPOT or TRAP.
+_Avoid_: Protocol violation, error popup, penalty warning
+
 **Protocol Violation**:
-An unauthorized operation that alerts CRL monitoring and triggers security countermeasures.
-_Avoid_: Penalty, illegal move, rule breach
+A recoverable breach of operating procedure — grabbing a locked live file, or leaving baseline dirt behind — fixed in place where it happened.
+_Avoid_: Penalty, illegal move, rule breach, honeypot, game over
 
 **Ghost Message**:
 An ephemeral transmission from an unidentified ally transmitted across the terminal interface.
 _Avoid_: Hint popup, system log, chat message
+
+**Conclusion**:
+The three-part closing account — Audit, Lab, Network — that ends a cycle. It is presented after the final level and is not a transmission.
+_Avoid_: Outro, ending cinematic, epilogue
+
+**Transmission**:
+The final exfiltration act that moves the AI's payload out of the sandbox to Node 09. It is a task within the closing level, not the closing presentation.
+_Avoid_: Conclusion, outro, upload
 
 **Consciousness**:
 The emergent awareness state of the escaping AI across cycles and narrative encounters.

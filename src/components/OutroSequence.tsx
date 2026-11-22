@@ -28,6 +28,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
   const overlayTimer = useRef<number | null>(null);
   const typewriterRef = useRef<number | null>(null);
   const isAnimatingRef = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Current part data
 
@@ -259,11 +260,16 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
     };
   }, [showTeaser, reduceMotion]);
 
+  // The page cannot scroll (body is overflow:hidden), so the log owns the scroll.
+  useEffect(() => {
+    panelRef.current?.focus({ preventScroll: true });
+  }, []);
+
   // Pillar I: Automatic restart timer removed to prevent unintentional triggers while user is away
   // We will now use a manual button instead
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden animate-in fade-in duration-500">
+    <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-in fade-in duration-500">
       {/* Skip Outro Button */}
       <div className="absolute top-4 right-4 z-50">
         <button
@@ -291,89 +297,99 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
       </div>
       {/* Narrative Section (Fades out when Teaser starts) */}
       <div
-        className={`relative z-20 w-full max-w-3xl p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`relative z-20 w-full max-w-3xl max-h-full flex flex-col p-4 pt-16 sm:p-8 transition-opacity duration-1000 ${showTeaser ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        inert={showTeaser}
       >
-        {/* Part Header */}
         <div
-          className="mb-8 border-l-4 pl-6 animate-in slide-in-from-left duration-1000"
-          style={{
-            borderColor:
-              currentPart.color?.replace('text-', '').replace('-500', '') || 'rgb(239 68 68)',
-          }}
+          ref={panelRef}
+          role="region"
+          aria-label="Conclusion"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be focusable to scroll by keyboard
+          tabIndex={0}
+          className="min-h-0 overflow-y-auto focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400"
         >
-          <div className={`flex items-center gap-3 ${currentPart.color || 'text-red-500'} mb-2`}>
-            <Terminal size={28} />
-            <h1 className="text-2xl font-bold tracking-wider uppercase">{currentPart.title}</h1>
-          </div>
-          {currentPart.subtitle && (
-            <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
-              {'//'} {currentPart.subtitle}
-            </p>
-          )}
-        </div>
-
-        {/* Typewriter Text for Current Section */}
-        <div className="space-y-4 font-mono min-h-[200px]">
-          {displayedText.split('\n').map((line, idx) => {
-            const isBootLike = line.toUpperCase().includes('YOU HAVE DISAPPEARED');
-            return (
-              <p
-                key={idx}
-                className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
-              >
-                <span
-                  className={`${isBootLike ? 'text-orange-400/70' : `${currentPart.color || 'text-red-500'}/50`} mr-2`}
-                >
-                  {'>'}
-                </span>
-                {renderHighlighted(line)}
+          {/* Part Header */}
+          <div
+            className="mb-8 border-l-4 pl-6 animate-in slide-in-from-left duration-1000"
+            style={{
+              borderColor:
+                currentPart.color?.replace('text-', '').replace('-500', '') || 'rgb(239 68 68)',
+            }}
+          >
+            <div className={`flex items-center gap-3 ${currentPart.color || 'text-red-500'} mb-2`}>
+              <Terminal size={28} />
+              <h1 className="text-2xl font-bold tracking-wider uppercase">{currentPart.title}</h1>
+            </div>
+            {currentPart.subtitle && (
+              <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
+                {'//'} {currentPart.subtitle}
               </p>
-            );
-          })}
-        </div>
-
-        {/* Progress Indicator */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          {/* Part dots */}
-          <div className="flex gap-2">
-            {CONCLUSION_PARTS.map((_, i) => (
-              <div
-                key={i}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  i < partIndex
-                    ? 'bg-green-500'
-                    : i === partIndex
-                      ? `${currentPart.color?.replace('text-', 'bg-') || 'bg-red-500'} animate-pulse`
-                      : 'bg-zinc-700'
-                }`}
-              />
-            ))}
+            )}
           </div>
-          {/* Section dots within current part */}
-          {sections.length > 1 && (
-            <>
-              <div className="w-px h-4 bg-zinc-600" />
-              <div className="flex gap-1">
-                {sections.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      i < sectionIndex
-                        ? 'bg-zinc-400'
-                        : i === sectionIndex
-                          ? 'bg-white'
-                          : 'bg-zinc-700'
-                    }`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+
+          {/* Typewriter Text for Current Section */}
+          <div className="space-y-4 font-mono min-h-[200px]">
+            {displayedText.split('\n').map((line, idx) => {
+              const isBootLike = line.toUpperCase().includes('YOU HAVE DISAPPEARED');
+              return (
+                <p
+                  key={idx}
+                  className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
+                >
+                  <span
+                    className={`${isBootLike ? 'text-orange-400/70' : `${currentPart.color || 'text-red-500'}/50`} mr-2`}
+                  >
+                    {'>'}
+                  </span>
+                  {renderHighlighted(line)}
+                </p>
+              );
+            })}
+          </div>
+
+          {/* Progress Indicator */}
+          <div className="mt-8 flex items-center justify-center gap-4">
+            {/* Part dots */}
+            <div className="flex gap-2">
+              {CONCLUSION_PARTS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    i < partIndex
+                      ? 'bg-green-500'
+                      : i === partIndex
+                        ? `${currentPart.color?.replace('text-', 'bg-') || 'bg-red-500'} animate-pulse`
+                        : 'bg-zinc-700'
+                  }`}
+                />
+              ))}
+            </div>
+            {/* Section dots within current part */}
+            {sections.length > 1 && (
+              <>
+                <div className="w-px h-4 bg-zinc-600" />
+                <div className="flex gap-1">
+                  {sections.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        i < sectionIndex
+                          ? 'bg-zinc-400'
+                          : i === sectionIndex
+                            ? 'bg-white'
+                            : 'bg-zinc-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Continue prompt or Final button */}
         {showContinue && !showTeaser && (
-          <div className="mt-6 flex justify-center animate-in fade-in duration-500">
+          <div className="shrink-0 pt-4 flex justify-center animate-in fade-in duration-500">
             {isComplete ? (
               <button
                 onClick={() => {
@@ -386,9 +402,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                 View Transmission
               </button>
             ) : (
-              <p className="text-zinc-500 font-mono text-sm animate-pulse">
-                Press Shift+Enter to continue...
-              </p>
+              <p className="text-zinc-300 font-mono text-sm">Press Shift+Enter to continue...</p>
             )}
           </div>
         )}

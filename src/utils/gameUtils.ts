@@ -183,7 +183,8 @@ export const checkGrabbingHoneypot = (
       return {
         triggered: true,
         severity: 'modal',
-        message: 'PROTOCOL VIOLATION: Active process file locked. You cannot move system locks.',
+        message:
+          'PROTOCOL VIOLATION: Active process file locked. Clear clipboard (Y) before moving on.',
       };
     }
   }
