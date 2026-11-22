@@ -124,13 +124,21 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.getByTestId('hint-modal')).toBeVisible();
   });
 
-  test('should open Help modal by clicking the help button', async ({ page }) => {
-    // Initially, Help modal should not be visible
-    await expect(page.locator('[data-testid="help-modal"]')).not.toBeVisible();
+  test('Help keeps keyboard focus inside and returns it to the opener', async ({ page }) => {
+    const opener = page.getByTestId('help-button');
+    await opener.click();
 
-    // Click the help button in the status bar
-    await page.getByTestId('help-button').click();
-    await expect(page.getByTestId('help-modal')).toBeVisible();
+    const dialog = page.getByRole('dialog', { name: /help/i });
+    await expect(dialog).toBeVisible();
+
+    for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab']) {
+      await page.keyboard.press(key);
+      await expect(dialog.locator(':focus')).toBeVisible();
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(opener).toBeFocused();
   });
 
   test('should open Quest Map modal by clicking the map button', async ({ page }) => {
@@ -147,35 +155,18 @@ test.describe('Dialogs Functionality', () => {
   });
 
   test('should support navigation in Help modal with j/k keys', async ({ page }) => {
-    // Press Alt+? to open Help modal
+    await page.setViewportSize({ width: 1024, height: 600 });
     await pressKey(page, 'Alt+?');
-    await expect(page.getByTestId('help-modal')).toBeVisible();
+    const dialog = page.getByTestId('help-modal');
+    await expect(dialog).toBeVisible();
+    const scrollTop = () => dialog.evaluate((panel) => panel.scrollTop);
+    const start = await scrollTop();
 
-    // Get initial scroll position
-    const initialScrollTop = await page
-      .getByTestId('help-modal')
-      .evaluate((node) => node.scrollTop || 0);
+    await page.keyboard.press('j');
+    await expect.poll(scrollTop).toBeGreaterThan(start);
 
-    // Press 'j' to scroll down
-    await pressKey(page, 'j');
-
-    // Check that scroll position has changed
-    const afterJScrollTop = await page
-      .getByTestId('help-modal')
-      .evaluate((node) => node.scrollTop || 0);
-    expect(afterJScrollTop).toBeGreaterThanOrEqual(initialScrollTop);
-
-    // Press 'k' to scroll up
-    await pressKey(page, 'k');
-
-    // Check that scroll position has changed back
-    const afterKScrollTop = await page
-      .getByTestId('help-modal')
-      .evaluate((node) => node.scrollTop || 0);
-    expect(afterKScrollTop).toBeLessThanOrEqual(afterJScrollTop);
-
-    // Close the modal
-    await pressKey(page, 'Escape');
+    await page.keyboard.press('k');
+    await expect.poll(scrollTop).toBe(start);
   });
 
   test('should support navigation in Quest Map modal with h/l and j/k keys', async ({ page }) => {

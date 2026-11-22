@@ -14,6 +14,7 @@ import {
   PackageOpen,
 } from 'lucide-react';
 import { FileNode, Linemode } from '../types';
+import { BASE_TIME } from '../constants/timings';
 
 interface FileSystemItemProps {
   item: FileNode;
@@ -82,8 +83,8 @@ const getFakeDate = (node: FileNode) => {
     hash = (hash << 5) - hash + node.id.charCodeAt(i);
     hash |= 0;
   }
-  // Use a fixed base time (Jan 1, 2024) instead of Date.now() for stability
-  const baseTime = 17040675000;
+  // Keep undated files on the same historical clock as the rest of the simulation.
+  const baseTime = BASE_TIME;
   const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
   const date = new Date(baseTime - offset);
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;

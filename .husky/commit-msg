@@ -1,7 +1,10 @@
 #!/bin/sh
 # Run commitlint if installed
-if [ -d "node_modules/@commitlint" ]; then
-  npx --no-install --no-update-notifier @commitlint/cli --edit "$1"
+if [ -x "./node_modules/.bin/commitlint" ]; then
+  ./node_modules/.bin/commitlint --edit "$1"
+elif [ -d "node_modules/@commitlint" ]; then
+  npx --no -- commitlint --edit "$1"
 else
   echo "commitlint not installed - skipping commit-msg check"
 fi
+

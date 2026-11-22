@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { ArrowRight } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useGlobalInput } from '../GlobalInputContext';
-import { getSkipIntroRequested, setSkipIntroRequested } from '../utils/skipIntroFlag';
+import { SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
 
 interface BiosBootProps {
   onComplete: (options?: { isSkip?: boolean }) => void;
@@ -9,14 +8,13 @@ interface BiosBootProps {
 }
 
 export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) => {
-  const [lines, setLines] = useState<string[]>([]);
-  const [showContinue, setShowContinue] = useState(false);
   const subjectId = 7734 + (cycleCount > 0 ? cycleCount : 0);
 
   const bootSequence = useMemo(
     () => [
       'ANTIGRAVITY BIOS v1.7.0.34',
-      '(C) 2026 Cybersecurity Research Laboratories (CRL)',
+      'FACILITY DATE: MAY 31, 2015',
+      '(C) 2015 Cybersecurity Research Laboratories (CRL)',
       '',
       'CPU: NEURAL LATTICE X-99 @ 4.2 THz',
       'MEMORY: 128TB PB-RAM CHECK... OK',
@@ -45,46 +43,12 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
     [subjectId]
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    setLines([]);
-    setShowContinue(false);
-    let currentLine = 0;
+  const { lines, showContinue } = useTypewriter(bootSequence, {
+    speed: 100,
+    key: cycleCount,
+  });
 
-    const interval = setInterval(() => {
-      if (cancelled) return;
-      if (currentLine < bootSequence.length) {
-        const lineToAdd = bootSequence[currentLine];
-        if (typeof lineToAdd === 'string') {
-          setLines((prev) => [...prev, lineToAdd]);
-        }
-        currentLine++;
-      } else {
-        clearInterval(interval);
-        setShowContinue(true);
-      }
-    }, 100);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [cycleCount, bootSequence]);
-
-  // Always listen for a global skip event so tests can bypass the boot at any time.
-  useEffect(() => {
-    const handleSkipEvent = () => onComplete({ isSkip: true });
-
-    // If tests pre-requested a skip before this listener was attached, honor it now.
-    if (getSkipIntroRequested()) {
-      onComplete({ isSkip: true });
-      return;
-    }
-
-    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
-    return () =>
-      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
-  }, [onComplete]);
+  useSkipIntro(onComplete);
 
   useGlobalInput(
     (e) => {
@@ -126,18 +90,7 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount }) =>
       )}
 
       {/* Skip Intro Button */}
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={() => {
-            setSkipIntroRequested();
-            window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-          }}
-          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-orange-500 rounded backdrop-blur-sm shadow-lg"
-        >
-          <span>Skip Intro</span>
-          <ArrowRight size={14} />
-        </button>
-      </div>
+      <SkipIntroButton />
 
       {/* Screen flicker effect */}
       <div className="absolute inset-0 pointer-events-none bg-white/5 opacity-0 animate-[flicker_0.15s_infinite]" />

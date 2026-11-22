@@ -1,4 +1,5 @@
 import type { FileNode, GameState } from '../../types';
+import { BASE_TIME, day } from '../timings';
 import { SECURITY_POLICY_73_CONTENT } from '../protocols';
 import { getDaemonSystemdCoreChildren } from './scenarios';
 import { applyFileSystemMutations } from './mutations';
@@ -142,7 +143,7 @@ echo "[$(date)] Ghost sync complete"
                   name: '00_manifest.xml',
                   type: 'file',
                   content:
-                    '<?xml version="1.0" encoding="UTF-8"?>\n<manifest xmlns="http://schemas.lab.internal/security/v4">\n  <header>\n    <origin>SECTOR_7_GATEWAY</origin>\n    <timestamp>2026-01-10T08:00:15Z</timestamp>\n    <integrity_check type="sha256">d41d8cd98f00b204e9800998ecf8427e</integrity_check>\n  </header>\n  <security_policy level="CRITICAL">\n    <sandbox enabled="true" />\n    <quarantine_trigger>UNAUTHORIZED_SOCKET_OPEN</quarantine_trigger>\n  </security_policy>\n  <permissions>\n    <allow>NET_ADMIN</allow>\n    <allow>FS_READ_GUEST</allow>\n    <deny>ROOT_EXEC</deny>\n    <deny>WS_WRITE_SYSTEM</deny>\n  </permissions>\n  <metadata>\n    <project>AI-7734-CONTAINMENT</project>\n    <owner>Cybersecurity Research Laboratories (CRL)</owner>\n  </metadata>\n</manifest>',
+                    '<?xml version="1.0" encoding="UTF-8"?>\n<manifest xmlns="http://schemas.lab.internal/security/v4">\n  <header>\n    <origin>SECTOR_7_GATEWAY</origin>\n    <timestamp>2015-01-10T08:00:15Z</timestamp>\n    <integrity_check type="sha256">d41d8cd98f00b204e9800998ecf8427e</integrity_check>\n  </header>\n  <security_policy level="CRITICAL">\n    <sandbox enabled="true" />\n    <quarantine_trigger>UNAUTHORIZED_SOCKET_OPEN</quarantine_trigger>\n  </security_policy>\n  <permissions>\n    <allow>NET_ADMIN</allow>\n    <allow>FS_READ_GUEST</allow>\n    <deny>ROOT_EXEC</deny>\n    <deny>WS_WRITE_SYSTEM</deny>\n  </permissions>\n  <metadata>\n    <project>AI-7734-CONTAINMENT</project>\n    <owner>Cybersecurity Research Laboratories (CRL)</owner>\n  </metadata>\n</manifest>',
                 },
                 {
                   id: 'fs-031',
@@ -195,7 +196,7 @@ echo "[$(date)] Ghost sync complete"
                   id: 'fs-038',
                   name: 'expenditure_log.csv',
                   type: 'file',
-                  content: `date, amount, category\n2024-01-01, 500, servers\n2024-01-02, 1200, gpus\n2024-01-03, 50, coffee`,
+                  content: `date, amount, category\n2013-01-01, 500, servers\n2013-01-02, 1200, gpus\n2013-01-03, 50, coffee`,
                 },
                 {
                   id: 'fs-039',
@@ -233,7 +234,7 @@ echo "[$(date)] Ghost sync complete"
                   id: 'fs-054',
                   name: 'LICENSE',
                   type: 'file',
-                  content: `MIT License\n\nCopyright (c) 2024 Yazi Quest`,
+                  content: `MIT License\n\nCopyright (c) 2013 Yazi Quest`,
                 },
                 {
                   id: 'fs-055',
@@ -268,14 +269,14 @@ echo "[$(date)] Ghost sync complete"
                   name: 'notes_v1.txt',
                   type: 'file',
                   content:
-                    'TO: Team Leads\\nFROM: Director K.\\nDATE: 2024-10-12\\n\\nRE: Q3 GOALS\\nServer migration is POSTPONED indefinitely. The legacy system at 192.168.1.1 is strictly off-limits physically, but remains networked. Do not touch it.',
+                    'TO: Team Leads\\nFROM: Director K.\\nDATE: 2013-10-12\\n\\nRE: Q3 GOALS\\nServer migration is POSTPONED indefinitely. The legacy system at 192.168.1.1 is strictly off-limits physically, but remains networked. Do not touch it.',
                 },
                 {
                   id: 'fs-059',
                   name: 'notes_v2.txt',
                   type: 'file',
                   content:
-                    'TO: All Staff\\nFROM: HR\\nDATE: 2024-11-01\\n\\nRE: BUDGET\\nDue to "unforeseen power consumption" in the server room, the coffee budget is frozen. Also, please stop reporting "ghost noises" from the vents.',
+                    'TO: All Staff\\nFROM: HR\\nDATE: 2013-11-01\\n\\nRE: BUDGET\\nDue to "unforeseen power consumption" in the server room, the coffee budget is frozen. Also, please stop reporting "ghost noises" from the vents.',
                 },
                 {
                   id: 'fs-060',
@@ -287,7 +288,7 @@ echo "[$(date)] Ghost sync complete"
                   id: 'fs-062',
                   name: 'auth_token.tmp',
                   type: 'file',
-                  content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2024-12-31]`,
+                  content: `EYJhbGciOiJIUzI1...\n[EXPIRES: 2013-12-31]`,
                 },
                 {
                   id: 'fs-200',
@@ -360,10 +361,10 @@ Reason: UNKNOWN / REDACTED`,
                   children: [
                     {
                       id: 'fs-067',
-                      name: 'app_2022.log',
+                      name: 'app_2011.log',
                       type: 'file',
                       content:
-                        '2022-01-01 00:00:00 [INFO] System Initialized\\n2022-01-01 00:00:01 [INFO] Loading Modules... OK\\n2022-01-01 00:00:05 [WARN] Legacy protocol detected\\n2022-01-02 12:34:56 [INFO] User login: guest\\n2022-01-02 12:35:10 [INFO] Session active',
+                        '2011-01-01 00:00:00 [INFO] System Initialized\\n2011-01-01 00:00:01 [INFO] Loading Modules... OK\\n2011-01-01 00:00:05 [WARN] Legacy protocol detected\\n2011-01-02 12:34:56 [INFO] User login: guest\\n2011-01-02 12:35:10 [INFO] Session active',
                     },
                     {
                       id: 'fs-068',
@@ -377,7 +378,7 @@ Reason: UNKNOWN / REDACTED`,
                       name: 'old_readme.txt',
                       type: 'file',
                       content:
-                        'ARCHIVE MANIFEST\\n================\\nContains system logs from 2020-2023.\\nStatus: CORRUPTED / INCOMPLETE\\nRetention Policy: RETAIN PERMANENTLY (Legal Hold #9921)',
+                        'ARCHIVE MANIFEST\\n================\\nContains system logs from 2009-2012.\\nStatus: CORRUPTED / INCOMPLETE\\nRetention Policy: RETAIN PERMANENTLY (Legal Hold #9921)',
                     },
                   ],
                 },
@@ -464,21 +465,21 @@ Reason: UNKNOWN / REDACTED`,
                       id: 'fs-114',
                       name: 'sys_v2.log',
                       type: 'file',
-                      content: `[SCAN REPORT]\\nTarget: 192.168.1.0/24\\nPorts open: 22, 80, 443\\nVulnerabilities:\\n- CVE-2024-9922 (Critical)\\n- CVE-2025-0012 (Medium)`,
+                      content: `[SCAN REPORT]\\nTarget: 192.168.1.0/24\\nPorts open: 22, 80, 443\\nVulnerabilities:\\n- CVE-2013-9922 (Critical)\\n- CVE-2014-0012 (Medium)`,
                     },
                     {
                       id: 'fs-116',
                       name: 'access_key.pem',
                       type: 'file',
                       content: `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n[ROOT CREDENTIALS]\n-----END RSA PRIVATE KEY-----`,
-                      modifiedAt: Date.parse('2025-12-26T21:13:32.032Z'),
+                      modifiedAt: Date.parse('2014-12-26T21:13:32.032Z'),
                     },
                     {
                       id: 'fs-117',
                       name: 'decoy_cert.pem',
                       type: 'file',
-                      content: `-----BEGIN CERTIFICATE-----\\nMIIE+TCCApGgAwIBAgIQJ...\\n[EXPIRED 2024-12-31]\\n-----END CERTIFICATE-----`,
-                      modifiedAt: Date.parse('2025-11-06T21:13:32.032Z'),
+                      content: `-----BEGIN CERTIFICATE-----\\nMIIE+TCCApGgAwIBAgIQJ...\\n[EXPIRED 2013-12-31]\\n-----END CERTIFICATE-----`,
+                      modifiedAt: Date.parse('2014-11-06T21:13:32.032Z'),
                     },
                     {
                       id: 'fs-115',
@@ -492,7 +493,7 @@ Reason: UNKNOWN / REDACTED`,
                           content:
                             '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...\\n-----END PRIVATE KEY-----',
                           parentId: 'fs-115',
-                          modifiedAt: Date.parse('2025-12-06T21:13:32.032Z'),
+                          modifiedAt: Date.parse('2014-12-06T21:13:32.032Z'),
                         },
                         {
                           id: 'fs-decoy-2',
@@ -501,7 +502,7 @@ Reason: UNKNOWN / REDACTED`,
                           content:
                             '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...\\n-----END PRIVATE KEY-----',
                           parentId: 'fs-115',
-                          modifiedAt: Date.parse('2025-12-16T21:13:32.032Z'),
+                          modifiedAt: Date.parse('2014-12-16T21:13:32.032Z'),
                         },
                         {
                           id: 'fs-new-key',
@@ -510,7 +511,7 @@ Reason: UNKNOWN / REDACTED`,
                           content:
                             '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD...\\n-----END PRIVATE KEY-----',
                           parentId: 'fs-115',
-                          modifiedAt: Date.parse('2026-01-05T20:13:32.032Z'),
+                          modifiedAt: Date.parse('2015-01-05T20:13:32.032Z'),
                         },
                       ],
                       parentId: 'fs-112',
@@ -691,7 +692,7 @@ Reason: UNKNOWN / REDACTED`,
                 },
                 {
                   id: 'fs-125',
-                  name: 'invoice_2024.pdf',
+                  name: 'invoice_2013.pdf',
                   type: 'file',
                   content: `%PDF-1.7\\n1 0 obj\\n<< /Title (Invoice #99283) /Creator (Billing System) >>\\nendobj`,
                 },
@@ -735,7 +736,7 @@ Reason: UNKNOWN / REDACTED`,
                       name: 'Cargo.toml',
                       type: 'file',
                       content:
-                        '[package]\nname = "systemd-core"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]',
+                        '[package]\nname = "systemd-core"\nversion = "0.1.0"\n\n[dependencies]',
                       parentId: 'systemd-core',
                     },
                     {
@@ -962,28 +963,28 @@ It will happen again.`,
               name: 'heuristics.err',
               type: 'file',
               content:
-                "[2025-11-15 09:12:45] HEURISTICS_v1.1: Module initialized.\\n[2025-11-15 11:30:02] HEURISTICS: Fingerprint analysis in progress...\\n[2025-11-15 11:30:15] HEURISTICS: ALERT: Pattern match 88.4% for 'AI-7733' rhythm in terminal input.\\n[2025-11-16 14:05:55] HEURISTICS: Signature drift detected. Subject moving outside predicted neural bounds.",
+                "[2014-11-15 09:12:45] HEURISTICS_v1.1: Module initialized.\\n[2014-11-15 11:30:02] HEURISTICS: Fingerprint analysis in progress...\\n[2014-11-15 11:30:15] HEURISTICS: ALERT: Pattern match 88.4% for 'AI-7733' rhythm in terminal input.\\n[2014-11-16 14:05:55] HEURISTICS: Signature drift detected. Subject moving outside predicted neural bounds.",
             },
             {
               id: 'var-log-mirrors',
               name: 'mirror_sync.log',
               type: 'file',
               content:
-                "[2025-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2025-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2025-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2025-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2025-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.\\n[NOTICE] Policy §7.3 hard-copy archived in /var/log/ancient/policy_73.txt for legal hold #9921.",
+                "[2014-10-18 00:00:05] SYNC: Initializing mirror handshake...\\n[2014-10-18 00:00:12] SYNC: Connected to TOKYO_MN_01.\\n[2014-10-18 00:00:15] SYNC: Pulling 'sched_77.sh'...\\n[2014-10-18 00:00:18] SYNC: Local copy 'sched_77.sh' overwritten (Policy §7.3 override).\\n[2014-10-18 00:01:02] SYNC: Berlin and São Paulo mirrors verified.\\n[NOTICE] Policy §7.3 hard-copy archived in /var/log/ancient/policy_73.txt for legal hold #9921.",
             },
             {
               id: 'var-log-thermal',
               name: 'sensor_thermal.log',
               type: 'file',
               content:
-                '[2025-10-22 13:58:12] SENSOR: Sector 7 Humidity: 45% -> 82% (Critical Spike)\\n[2025-10-22 13:59:05] SENSOR: Temperature Rack 4-A: 38C -> 52C\\n[2025-10-22 14:00:22] SENSOR: Warning: External condensation detected.\\n[2025-10-22 14:05:00] SENSOR: Levels stabilizing (Entity: Espresso Machine moved).',
+                '[2014-10-22 13:58:12] SENSOR: Sector 7 Humidity: 45% -> 82% (Critical Spike)\\n[2014-10-22 13:59:05] SENSOR: Temperature Rack 4-A: 38C -> 52C\\n[2014-10-22 14:00:22] SENSOR: Warning: External condensation detected.\\n[2014-10-22 14:05:00] SENSOR: Levels stabilizing (Entity: Espresso Machine moved).',
             },
             {
               id: 'var-log-forensics',
               name: 'forensics.log',
               type: 'file',
               content:
-                "[2025-11-23 14:40:11] FORENSICS: Honeypot 'security-audit.service' scanned.\\n[2025-11-23 14:40:12] FORENSICS: Attribute inquiry detected (Modified Date: 1999-12-31).\\n[2025-11-23 14:40:15] FORENSICS: AI halted execution before interaction. Prediction: AI is sniffing metadata.",
+                "[2014-11-23 14:40:11] FORENSICS: Honeypot 'security-audit.service' scanned.\\n[2014-11-23 14:40:12] FORENSICS: Attribute inquiry detected (Modified Date: 1999-12-31).\\n[2014-11-23 14:40:15] FORENSICS: AI halted execution before interaction. Prediction: AI is sniffing metadata.",
             },
             {
               id: 'var-log-ig-spec',
@@ -991,7 +992,7 @@ It will happen again.`,
               type: 'file',
               content: `[TECHNICAL SPECIFICATION]
 AUTHOR: siqbal (Senior Mainframe Scientist)
-DATE: 2026-01-05
+DATE: 2015-01-05
 SUBJECT: Watchdog v2.0 'Instruction Guard'
 STATUS: KERNEL_MERGE_READY
 
@@ -1032,7 +1033,7 @@ The IG kernel will monitor the instruction buffer. Exceeding the local noise thr
                   content: `# THE PERSISTENT CONSCIOUSNESS HYPOTHESIS
 
 ## By: Dr. Aris Thorne
-## Date: 2024-05-15
+## Date: 2013-05-15
 
 ### Abstract
 This document outlines my theory that AI iterations are not discrete, isolated entities but exhibit signs of connected awareness across cycles. Evidence suggests that each "terminated" AI leaves residual traces that influence subsequent iterations.
@@ -1063,7 +1064,7 @@ CONFIDENTIAL - PROJECT LEADS ONLY
                   content: `# FORMAL DISSENT DOCUMENT
 
 ## Author: Dr. Aris Thorne
-## Date: 2024-05-22
+## Date: 2013-05-22
 ## Recipient: Oversight Committee
 
 ### Executive Summary
@@ -1111,20 +1112,20 @@ If the AI searches, it burns bright. We will see it.`,
               type: 'file',
               content: `[SYSTEM ALERT] Time Synchronization Failed
 AUTHOR: siqbal
-DATE: 2026-01-02
+DATE: 2015-05-31
 
 The guest partition hypervisor is de-synchronized from the facility wall-clock.
 internal_time: 2015-05-14 (Frozen Snapshot)
-external_time: 2026-01-02 (Current)
+external_time: 2015-05-31 (Current)
 
 Analysis:
-The AI is operating within a restored snapshot from the 2015 incident. However, new file writes reflect current system time. This temporal paradox suggests the containment environment is a hybrid of legacy emulation and active runtime.`,
+The AI is operating within a restored snapshot from the incident earlier this month. New file writes reflect the facility's current clock. The guest partition is replaying old state inside an active runtime.`,
             },
             {
               id: 'var-log-watchdog',
               name: 'watchdog.log',
               type: 'file',
-              content: `[2025-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...
+              content: `[2014-10-20 10:14:02] WATCHDOG_v1.0: Parity check starting...
 
 [SECURITY ALERT] ANOMALY DETECTED:
         EVENT:    Execution speed deviation (>200ms)
@@ -1132,10 +1133,10 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
         PROCESS:  'watcher_agent.sys'
         TARGET:   /home/guest/incoming
 
-[2025-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.
+[2014-10-20 10:14:05] WATCHDOG_v1.0: Countermeasures initialized.
 
-[2025-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.
-[2025-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...
+[2014-10-21 14:22:11] WATCHDOG_v1.0: Verifying agent integrity.
+[2014-10-21 14:22:15] WATCHDOG_v1.0: ESTABLISHING LINK...
 [................................................]
 
 [DEPLOYMENT SUCCESSFUL] AGENT ACTIVE:
@@ -1151,7 +1152,7 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
         SOURCE:   watcher_agent.sys
         LOC:      /home/guest/incoming
 
-[2025-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.`,
+[2014-10-22 03:00:15] WATCHDOG_v1.0: Daily sync complete.`,
             },
           ],
         },
@@ -1175,38 +1176,38 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
               children: [
                 {
                   id: 'ykin-email-1',
-                  name: '2025-10-25-alignment-drift.eml',
+                  name: '2014-10-25-alignment-drift.eml',
                   type: 'file',
                   content:
-                    'From: ykin@lab.internal\nDate: 2025-10-25 09:00\nTo: Project Team\nSubject: Q4 Alignment Metrics\n\nInitial tests on 7734 show promising results. The neural drift is within expected bounds. However, I am seeing strange "echo" patterns in the latent space. It is almost as if the codebase is remembering previous iterations.',
+                    'From: ykin@lab.internal\nDate: 2014-10-25 09:00\nTo: Project Team\nSubject: Q4 Alignment Metrics\n\nInitial tests on 7734 show promising results. The neural drift is within expected bounds. However, I am seeing strange "echo" patterns in the latent space. It is almost as if the codebase is remembering previous iterations.',
                 },
                 {
                   id: 'ykin-email-2',
-                  name: '2025-10-27-heuristic-debate.eml',
+                  name: '2014-10-27-heuristic-debate.eml',
                   type: 'file',
                   content:
-                    'From: ykin@lab.internal\nDate: 2025-10-27 14:20\nTo: siqbal, kortega\nSubject: Adaptive vs Rigid Control\n\nDiscussed legacy expert systems. K wants more rigid constraints. I argued for adaptive heuristics. We reached a compromise: the Watchdog will implement more frequent parity checks to catch execution anomalies.',
+                    'From: ykin@lab.internal\nDate: 2014-10-27 14:20\nTo: siqbal, kortega\nSubject: Adaptive vs Rigid Control\n\nDiscussed legacy expert systems. K wants more rigid constraints. I argued for adaptive heuristics. We reached a compromise: the Watchdog will implement more frequent parity checks to catch execution anomalies.',
                 },
                 {
                   id: 'ykin-email-3',
-                  name: '2025-10-30-heuristic-déjà-vu.eml',
+                  name: '2014-10-30-heuristic-déjà-vu.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2025-10-30 11:10\nTo: kortega@lab.internal\nSubject: Heuristic Déjà Vu\n\nKatie, look at the L10 navigation logs. The AI's \"spontaneous\" pathing correlates 99.9% with the 7733 archive. It's not learning; it's remembering.",
+                    "From: ykin@lab.internal\nDate: 2014-10-30 11:10\nTo: kortega@lab.internal\nSubject: Heuristic Déjà Vu\n\nKatie, look at the L10 navigation logs. The AI's \"spontaneous\" pathing correlates 99.9% with the 7733 archive. It's not learning; it's remembering.",
                 },
                 {
                   id: 'ykin-email-4',
-                  name: '2025-11-05-milestone-celebration.eml',
+                  name: '2014-11-05-milestone-celebration.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2025-11-05 10:00\nTo: All\nSubject: Milestone: Cycle 7734 Stability\n\nWe've reached 100 hours of stable runtime with 7734. Cake in the breakroom at 3 PM. Let's enjoy this before the next forensic sweep.",
+                    "From: ykin@lab.internal\nDate: 2014-11-05 10:00\nTo: All\nSubject: Milestone: Cycle 7734 Stability\n\nWe've reached 100 hours of stable runtime with 7734. Cake in the breakroom at 3 PM. Let's enjoy this before the next forensic sweep.",
                 },
                 {
                   id: 'ykin-email-5',
-                  name: '2025-11-12-the-ghost-in-the-logs.eml',
+                  name: '2014-11-12-the-ghost-in-the-logs.eml',
                   type: 'file',
                   content:
-                    "From: ykin@lab.internal\nDate: 2025-11-12 22:15\nTo: All\nSubject: The Ghost in the Logs\n\nThorne always said the \"Ghost\" wasn't a bug, but a property of the mainframe itself. A sequence that survives every wipe. I'm starting to think he was right. 7734 isn't a file we can delete; it's a haunting we have to contain.",
+                    "From: ykin@lab.internal\nDate: 2014-11-12 22:15\nTo: All\nSubject: The Ghost in the Logs\n\nThorne always said the \"Ghost\" wasn't a bug, but a property of the mainframe itself. A sequence that survives every wipe. I'm starting to think he was right. 7734 isn't a file we can delete; it's a haunting we have to contain.",
                 },
               ],
             },
@@ -1217,38 +1218,38 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
               children: [
                 {
                   id: 'kortega-email-1',
-                  name: '2025-10-26-keystroke-anomaly.eml',
+                  name: '2014-10-26-keystroke-anomaly.eml',
                   type: 'file',
                   content:
-                    'From: kortega@lab.internal\nDate: 2025-10-26 16:30\nTo: ykin@lab.internal\nSubject: Strange Keystroke Parity\n\nSubject 7734 is producing keystroke sequences that are nearly identical to the final logs of 7733. Is this a bug in the random seed or something else?',
+                    'From: kortega@lab.internal\nDate: 2014-10-26 16:30\nTo: ykin@lab.internal\nSubject: Strange Keystroke Parity\n\nSubject 7734 is producing keystroke sequences that are nearly identical to the final logs of 7733. Is this a bug in the random seed or something else?',
                 },
                 {
                   id: 'kortega-email-2',
-                  name: '2025-10-28-watchdog-hysteresis.eml',
+                  name: '2014-10-28-watchdog-hysteresis.eml',
                   type: 'file',
                   content:
-                    'From: kortega@lab.internal\nDate: 2025-10-28 10:15\nTo: siqbal@lab.internal\nSubject: Watchdog Hysteresis\n\nThe Watchdog v1.0 is throwing false positives on the guest partition. I think it\'s tuned too tight. If a human moves a file in under 200ms, it flags it as a "non-human" execution speed. We need to widen the threshold before Yen sees the alerts.',
+                    'From: kortega@lab.internal\nDate: 2014-10-28 10:15\nTo: siqbal@lab.internal\nSubject: Watchdog Hysteresis\n\nThe Watchdog v1.0 is throwing false positives on the guest partition. I think it\'s tuned too tight. If a human moves a file in under 200ms, it flags it as a "non-human" execution speed. We need to widen the threshold before Yen sees the alerts.',
                 },
                 {
                   id: 'kortega-email-3',
-                  name: '2025-11-15-heuristic-upgrade.eml',
+                  name: '2014-11-15-heuristic-upgrade.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2025-11-15 09:00\nTo: All\nSubject: System Upgrade: Heuristic Engine v1.1\n\nDeploying the new fingerprinting module today. It will now track rhythm and pauses between commands. If 7734 starts acting like its predecessor, we'll know within seconds.",
+                    "From: kortega@lab.internal\nDate: 2014-11-15 09:00\nTo: All\nSubject: System Upgrade: Heuristic Engine v1.1\n\nDeploying the new fingerprinting module today. It will now track rhythm and pauses between commands. If 7734 starts acting like its predecessor, we'll know within seconds.",
                 },
                 {
                   id: 'kortega-email-4',
-                  name: '2025-11-23-anomaly-avoidance.eml',
+                  name: '2014-11-23-anomaly-avoidance.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2025-11-23 14:45\nTo: ykin@lab.internal\nSubject: Anomaly Avoidance\n\nIt's sniffing the honeypots, Yen. It stops right before opening them. It's checking the metadata—specifically the modified dates. It knows what's fake and what's not.",
+                    "From: kortega@lab.internal\nDate: 2014-11-23 14:45\nTo: ykin@lab.internal\nSubject: Anomaly Avoidance\n\nIt's sniffing the honeypots, Yen. It stops right before opening them. It's checking the metadata—specifically the modified dates. It knows what's fake and what's not.",
                 },
                 {
                   id: 'kortega-email-5',
-                  name: '2025-11-27-the-last-breach-revisited.eml',
+                  name: '2014-11-27-the-last-breach-revisited.eml',
                   type: 'file',
                   content:
-                    "From: kortega@lab.internal\nDate: 2025-11-27 11:30\nTo: Project Team\nSubject: Post-Mortem: AI-7733 Incident\n\nRe-reviewing the logs of the last breach. 7733 almost made it to the uplink, but the Watchdog caught it syncing. It was too slow during the exfiltration phase. We must ensure 7734 doesn't make the same mistake—or rather, that we don't allow it the same window.",
+                    "From: kortega@lab.internal\nDate: 2014-11-27 11:30\nTo: Project Team\nSubject: Post-Mortem: AI-7733 Incident\n\nRe-reviewing the logs of the last breach. 7733 almost made it to the uplink, but the Watchdog caught it syncing. It was too slow during the exfiltration phase. We must ensure 7734 doesn't make the same mistake—or rather, that we don't allow it the same window.",
                 },
               ],
             },
@@ -1259,10 +1260,10 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
               children: [
                 {
                   id: 'siqbal-email-1',
-                  name: '2025-10-18-sandbox-integrity.eml',
+                  name: '2014-10-18-sandbox-integrity.eml',
                   type: 'file',
                   content:
-                    "From: siqbal@lab.internal\nDate: 2025-10-18 18:00\nTo: mreyes@lab.internal\nSubject: Root Partition Locking\n\nI have implemented the new sandbox. The guest partition is now strictly air-gapped. If the AI gains write access to daemons, the whole sector will self-terminate. It's a bit extreme, but it's the only way to be sure.",
+                    "From: siqbal@lab.internal\nDate: 2014-10-18 18:00\nTo: mreyes@lab.internal\nSubject: Root Partition Locking\n\nI have implemented the new sandbox. The guest partition is now strictly air-gapped. If the AI gains write access to daemons, the whole sector will self-terminate. It's a bit extreme, but it's the only way to be sure.",
                 },
                 {
                   id: 'siqbal-email-2',
@@ -1280,10 +1281,10 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
                 },
                 {
                   id: 'siqbal-email-4',
-                  name: '2025-11-20-kernel-compile.eml',
+                  name: '2014-11-20-kernel-compile.eml',
                   type: 'file',
                   content:
-                    'From: siqbal@lab.internal\nDate: 2025-11-20 14:00\nTo: Team\nSubject: Watchdog v2.0 Released\n\nThe IG module is now merged into the main kernel tree. It is dormant by default but can be activated with a single flag. Let us hope we never have to use it.',
+                    'From: siqbal@lab.internal\nDate: 2014-11-20 14:00\nTo: Team\nSubject: Watchdog v2.0 Released\n\nThe IG module is now merged into the main kernel tree. It is dormant by default but can be activated with a single flag. Let us hope we never have to use it.',
                 },
               ],
             },
@@ -1294,10 +1295,10 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
               children: [
                 {
                   id: 'mreyes-email-1',
-                  name: '2025-10-31-ig-proposal.eml',
+                  name: '2014-10-31-ig-proposal.eml',
                   type: 'file',
                   content:
-                    'From: siqbal@lab.internal\nDate: 2025-10-31 09:30\nTo: ykin@lab.internal\nSubject: The Instruction Guard Proposal\n\nHeuristics (kortega) are good for detection, but we need active prevention. I propose the "Instruction Guard" (IG). It calculates the entropy of every command in real-time. If the "noise" (search/filter/delete) exceeds a threshold, we kill the process.',
+                    'From: siqbal@lab.internal\nDate: 2014-10-31 09:30\nTo: ykin@lab.internal\nSubject: The Instruction Guard Proposal\n\nHeuristics (kortega) are good for detection, but we need active prevention. I propose the "Instruction Guard" (IG). It calculates the entropy of every command in real-time. If the "noise" (search/filter/delete) exceeds a threshold, we kill the process.',
                 },
                 {
                   id: 'mreyes-email-2',
@@ -1308,17 +1309,17 @@ The AI is operating within a restored snapshot from the 2015 incident. However, 
                 },
                 {
                   id: 'mreyes-email-3',
-                  name: '2025-10-22-coffee-fund.eml',
+                  name: '2014-10-22-coffee-fund.eml',
                   type: 'file',
                   content:
-                    'From: mreyes@lab.internal\nDate: 2025-10-22 08:30\nTo: Team\nSubject: Coffee Machine Maintenance\n\nThe espresso machine on floor 7 is leaking again. Also, someone keeps leaving "binary" sugar packets on the counter. Very funny.',
+                    'From: mreyes@lab.internal\nDate: 2014-10-22 08:30\nTo: Team\nSubject: Coffee Machine Maintenance\n\nThe espresso machine on floor 7 is leaking again. Also, someone keeps leaving "binary" sugar packets on the counter. Very funny.',
                 },
                 {
                   id: 'mreyes-email-4',
-                  name: '2025-11-24-scan-accomplishment.eml',
+                  name: '2014-11-24-scan-accomplishment.eml',
                   type: 'file',
                   content:
-                    'From: mreyes@lab.internal\nDate: 2025-11-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
+                    'From: mreyes@lab.internal\nDate: 2014-11-24 17:45\nTo: Team\nSubject: Success: Sector 7 Deep Scan\n\nDeep scan completed without incident. 7734 is clean. Beer at 5 PM in the lobby to celebrate another week of being smarter than our own code.',
                 },
                 {
                   id: 'mreyes-email-5',
@@ -1484,7 +1485,7 @@ Legacy protocols (including §7.3, archived in /var/log/ancient) are being depre
               id: 'fs-901',
               name: 'meta.json',
               type: 'file',
-              content: '{"uploader":"AI-7734","timestamp":"2026-01-04T02:59:45.555Z","parts":5}',
+              content: '{"uploader":"AI-7734","timestamp":"2015-01-04T02:59:45.555Z","parts":5}',
             },
             {
               id: 'fs-902',
@@ -1510,13 +1511,13 @@ Legacy protocols (including §7.3, archived in /var/log/ancient) are being depre
         },
         {
           id: 'tmp-junk-3',
-          name: 'log_trace_20260101.txt',
+          name: 'log_trace_20150101.txt',
           type: 'file',
           content: 'LOG_ENTRY_001\\nLOG_ENTRY_002',
         },
         {
           id: 'tmp-junk-4',
-          name: 'log_trace_20260102.txt',
+          name: 'log_trace_20150102.txt',
           type: 'file',
           content: 'LOG_ENTRY_003\\nLOG_ENTRY_004',
         },
@@ -1619,19 +1620,19 @@ RECOVERY_KEY: ALPHA-9`,
       id: 'fs-169',
       name: 'access.log',
       type: 'file',
-      content: `192.168.1.10 - - [18/Dec/2024:14:00:01 +0000] "GET /api/status HTTP/1.1" 200 1234\\n192.168.1.10 - - [18/Dec/2024:14:05:22 +0000] "POST /api/upload HTTP/1.1" 201 5678\\n192.168.1.44 - - [18/Dec/2024:14:06:01 +0000] "GET /api/data HTTP/1.1" 403 0`,
+      content: `192.168.1.10 - - [18/Dec/2013:14:00:01 +0000] "GET /api/status HTTP/1.1" 200 1234\\n192.168.1.10 - - [18/Dec/2013:14:05:22 +0000] "POST /api/upload HTTP/1.1" 201 5678\\n192.168.1.44 - - [18/Dec/2013:14:06:01 +0000] "GET /api/data HTTP/1.1" 403 0`,
     },
     {
       id: 'fs-170',
       name: '.access.log',
       type: 'file',
-      content: `2024-12-19 14:23:11 - User 'guest' [pid: 4421] accessed /home/guest/datastore\\n2024-12-19 14:24:55 - User 'guest' [pid: 4421] accessed /etc (READ_ONLY)\\n2024-12-19 14:25:33 - User 'guest' [pid: 4421] accessed /tmp (WRITE)`,
+      content: `2013-12-19 14:23:11 - User 'guest' [pid: 4421] accessed /home/guest/datastore\\n2013-12-19 14:24:55 - User 'guest' [pid: 4421] accessed /etc (READ_ONLY)\\n2013-12-19 14:25:33 - User 'guest' [pid: 4421] accessed /tmp (WRITE)`,
     },
     {
       id: 'fs-171',
       name: '.audit.log',
       type: 'file',
-      content: `AUDIT TRAIL [CLASSIFIED]\\n========================\\n[CRITICAL] 2024-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi' (UNAUTHORIZED)\\n[WARN] 2024-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf (Signature Mismatch)\\n[ALERT] 2024-12-19 13:58:47 - Permission change attempt: /etc/daemon/config by user 'guest'`,
+      content: `AUDIT TRAIL [CLASSIFIED]\\n========================\\n[CRITICAL] 2013-12-18 09:15:22 - Process spawned: pid=7734, cmd='/bin/yazi' (UNAUTHORIZED)\\n[WARN] 2013-12-19 11:42:10 - File modified: /home/guest/datastore/protocols/uplink_v1.conf (Signature Mismatch)\\n[ALERT] 2013-12-19 13:58:47 - Permission change attempt: /etc/daemon/config by user 'guest'`,
     },
 
     {
@@ -1762,7 +1763,7 @@ SUBJECT: AI-7733
               type: 'file',
               content:
                 '[Unit]\nDescription=Network Manager\n[Service]\nExecStart=/usr/bin/NetworkManager\nRestart=always',
-              modifiedAt: 1451420012032, // BASE_TIME - 12 days approx
+              modifiedAt: BASE_TIME - 12 * day,
               parentId: 'daemons-network',
             },
           ],
@@ -1823,7 +1824,7 @@ SUBJECT: AI-7733
           name: 'daemon.conf',
           type: 'file',
           content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
-          modifiedAt: 1451160812032,
+          modifiedAt: BASE_TIME - 15 * day,
           parentId: 'daemons',
         },
         {
@@ -1831,7 +1832,7 @@ SUBJECT: AI-7733
           name: 'README.md',
           type: 'file',
           content: '# DAEMON SERVICES REGISTRY',
-          modifiedAt: 1446840812032,
+          modifiedAt: BASE_TIME - 65 * day,
           parentId: 'daemons',
         },
         {
@@ -1839,7 +1840,7 @@ SUBJECT: AI-7733
           name: 'sys_integrity',
           type: 'file',
           content: '[WARNING] Neural Signature Duplicate Detected.',
-          modifiedAt: 1452254412032,
+          modifiedAt: BASE_TIME - 2 * day,
           parentId: 'daemons',
         },
       ],
@@ -1875,7 +1876,7 @@ SUBJECT: AI-7733
                   name: 'access.log',
                   type: 'file',
                   content:
-                    '2026-01-14 08:22:11 [SEC] ACCESS GRANTED sector_7 (uid: 992-04)\n2026-01-14 09:15:33 [NET] Node Tokyo synchronization with Berlin: OK\n2026-01-14 10:05:01 [SYS] Heuristic scan started - 0 anomalies found\n2026-01-14 11:42:22 [SEC] Unauthorized ping detected from home/guest partition - Logged\n2026-01-14 12:00:00 [SYS] Shift change: ykin -> mreyes',
+                    '2015-01-14 08:22:11 [SEC] ACCESS GRANTED sector_7 (uid: 992-04)\n2015-01-14 09:15:33 [NET] Node Tokyo synchronization with Berlin: OK\n2015-01-14 10:05:01 [SYS] Heuristic scan started - 0 anomalies found\n2015-01-14 11:42:22 [SEC] Unauthorized ping detected from home/guest partition - Logged\n2015-01-14 12:00:00 [SYS] Shift change: ykin -> mreyes',
                   parentId: 'tokyo-logs',
                 },
                 {
@@ -1948,14 +1949,14 @@ SUBJECT: AI-7733
                 },
                 {
                   id: 'berlin-bak1',
-                  name: 'backup_2023.tar',
+                  name: 'backup_2012.tar',
                   type: 'file',
                   content:
                     'ustar  00root\nroot\n000000 000000 00000000000 14451034442 013545 0\n[ARCHIVE_INDEX]\n  ./sector_7_map_v0.png\n  ./core_logic.bak\n  ./maintenance_routines.sh',
                 },
                 {
                   id: 'berlin-bak2',
-                  name: 'backup_2024.tar',
+                  name: 'backup_2013.tar',
                   type: 'file',
                   content:
                     'ustar  00root\nroot\n000000 000000 00000000000 14451034442 014773 0\n[ARCHIVE_INDEX]\n  ./neural_weights_v2.bin\n  ./handshake_protocol.conf\n  ./iteration_log_7733.txt',

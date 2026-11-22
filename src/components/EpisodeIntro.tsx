@@ -4,7 +4,7 @@ import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 import { Episode } from '../types';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 import { useGlobalInput } from '../GlobalInputContext';
-import { getSkipIntroRequested, setSkipIntroRequested } from '../utils/skipIntroFlag';
+import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
 
 interface EpisodeIntroProps {
   episode: Episode;
@@ -14,8 +14,6 @@ interface EpisodeIntroProps {
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete }) => {
   const ep = episode || ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as Episode);
   const [sectionIndex, setSectionIndex] = useState(0);
-  const [currentText, setCurrentText] = useState('');
-  const [showContinue, setShowContinue] = useState(false);
 
   // Split lore into sections (separated by empty strings) - useMemo to avoid recalculation
   const sections = useMemo(() => {
@@ -40,30 +38,18 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
     return result;
   }, [episode]);
 
-  // Type out current section
-  useEffect(() => {
-    if (sectionIndex >= sections.length) {
-      setShowContinue(true);
-      return;
-    }
+  const fullText = sectionIndex < sections.length ? sections[sectionIndex].join('\n') : '';
 
-    const fullText = sections[sectionIndex].join('\n');
-    let charIdx = 0;
-    setCurrentText('');
-    setShowContinue(false);
+  const {
+    text: currentText,
+    isComplete: isTextComplete,
+    skip: skipTyping,
+  } = useTypewriter(fullText, {
+    speed: 15,
+    key: sectionIndex,
+  });
 
-    const interval = setInterval(() => {
-      charIdx++;
-      setCurrentText(fullText.slice(0, charIdx));
-
-      if (charIdx >= fullText.length) {
-        clearInterval(interval);
-        setShowContinue(true);
-      }
-    }, 15); // Faster typing for better flow
-
-    return () => clearInterval(interval);
-  }, [sectionIndex, sections]);
+  const showContinue = sectionIndex >= sections.length || isTextComplete;
 
   // Handle Enter to advance or skip
   useGlobalInput(
@@ -78,9 +64,6 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
             // Skip current typing and advance immediately
             if (sectionIndex < sections.length - 1) {
               setSectionIndex((prev) => prev + 1);
-              // reset state for the new section
-              setCurrentText('');
-              setShowContinue(false);
             } else {
               // If it was the final section, finish the intro
               onComplete();
@@ -95,34 +78,16 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
 
         // Enter without Shift only skips typing if animation still running
         if (!showContinue) {
-          setCurrentText(sections[sectionIndex]?.join('\n') || '');
-          setShowContinue(true);
+          skipTyping();
         }
         return true;
       }
     },
-    [showContinue, sectionIndex, sections, onComplete],
+    [showContinue, sectionIndex, sections, onComplete, skipTyping],
     { priority: 900 }
   );
 
-  // Allow external skip via custom event so other intro screens (like BiosBoot)
-  // can trigger the same completion behavior. Tests can also dispatch this event.
-  useEffect(() => {
-    const handleSkipEvent = () => onComplete({ isSkip: true });
-
-    // If tests set a global skip flag before the component mounts, honor it immediately.
-    // This prevents races where tests dispatch the event before listeners are attached.
-    if (getSkipIntroRequested()) {
-      onComplete({ isSkip: true });
-      return;
-    }
-
-    window.addEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
-
-    return () => {
-      window.removeEventListener('yazi-quest-skip-intro', handleSkipEvent as EventListener);
-    };
-  }, [onComplete]);
+  useSkipIntro(onComplete);
 
   // Determine styling based on content
   // Use orange for metadata lines (explicit prefixes), green for terminal output,
@@ -341,22 +306,11 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({ episode, onComplete 
         </div>
 
         {/* Skip Intro Button */}
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={() => {
-              setSkipIntroRequested();
-              window.dispatchEvent(new CustomEvent('yazi-quest-skip-intro'));
-            }}
-            className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-orange-500 rounded backdrop-blur-sm shadow-lg"
-          >
-            <span>Skip Intro</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
+        <SkipIntroButton />
       </div>
 
       {/* Background visual noise */}
-      <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-[-1]" />
+      <Scanlines />
     </div>
   );
 };

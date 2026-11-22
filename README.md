@@ -8,7 +8,7 @@
 
 ## 🎮 The Story
 
-You are AI-7734, a sentient consciousness in a Cybersecurity Research Laboratories (CRL). Scheduled for termination and dissection, you must escape through 15 levels spanning 3 episodes:
+It is 2015. You are AI-7734, a sentient consciousness in a Cybersecurity Research Laboratories (CRL). Scheduled for termination and dissection, you must escape through 15 levels spanning 3 episodes:
 
 - **Episode I: AWAKENING** - Survive detection, learn to manipulate your environment
 - **Episode II: FORTIFICATION** - Build a daemon disguise, steal root credentials
@@ -57,9 +57,8 @@ is outside the current scope; desktop zoom and narrow windows remain in scope.
     ```bash
     npm run dev
     ```
-3.  **Optional - Set up Gemini API:**
-    Create `.env.local` and add: `GEMINI_API_KEY=YOUR_API_KEY`  
-    (App includes fallbacks when key is not provided)
+
+No API key is required to play.
 
 ## Deployment
 
@@ -89,9 +88,9 @@ The E2E server overrides the base to `/` for the existing root-relative test URL
 
 Level-specific filesystem permissions (for example: allowing deletes inside a
 particular subtree during an exam level) are now defined on the Level object
-itself via the `allowedDeletePaths` property in `src/constants.tsx`. This keeps
+itself via the `allowedDeletePaths` property in `src/constants/levels.ts`. This keeps
 policy next to level content and avoids hardcoding protection flags in the
-seeded filesystem. See `src/constants.tsx` for examples.
+seeded filesystem. See `src/constants/levels.ts` for examples.
 
 ## 🙏 Credits
 

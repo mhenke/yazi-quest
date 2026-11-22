@@ -35,13 +35,6 @@ async function repeatKey(page: Page, key: string, count: number): Promise<void> 
 }
 
 /**
- * Navigates left in the file list by pressing 'h' a specified number of times.
- */
-export async function navigateLeft(page: Page, count: number): Promise<void> {
-  await repeatKey(page, 'h', count);
-}
-
-/**
  * Navigates right in the file list by pressing 'l' a specified number of times.
  */
 export async function navigateRight(page: Page, count: number): Promise<void> {
@@ -70,13 +63,6 @@ export async function goParent(page: Page): Promise<void> {
 }
 
 /**
- * Navigates up parent directories multiple times.
- */
-export async function goParentCount(page: Page, count: number): Promise<void> {
-  await repeatKey(page, 'h', count);
-}
-
-/**
  * Enters a directory by its name using filtering for robustness.
  */
 export async function enterDirectory(page: Page, name: string): Promise<void> {
@@ -102,7 +88,7 @@ export async function clearFilter(page: Page): Promise<void> {
  * Dismisses a protocol violation modal if it exists.
  * Uses Escape to close without triggering auto-fix.
  */
-export async function dismissViolation(page: Page): Promise<void> {
+async function dismissViolation(page: Page): Promise<void> {
   try {
     const modal = page.locator('div:has-text("Protocol Violation")').first();
     if (await modal.isVisible({ timeout: 500 })) {
@@ -321,20 +307,6 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
 }
 
 /**
- * Starts a level and progresses through intro with early Shift+Enter.
- */
-export async function startLevelWithEarlyIntroSkip(page: Page, level: number): Promise<void> {
-  await startLevel(page, level, { intro: true });
-}
-
-/**
- * Starts a level and lets intro complete naturally.
- */
-export async function startLevelWithFullIntro(page: Page, level: number): Promise<void> {
-  await startLevel(page, level, { intro: true });
-}
-
-/**
  * Asserts that the level starts with 0 completed tasks.
  */
 export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
@@ -425,38 +397,6 @@ export async function expectTerminalThought(page: Page, text: string | RegExp): 
 }
 
 /**
- * Gets the list of items visible in the file list.
- */
-export async function getVisibleItemsCount(page: Page): Promise<number> {
-  return await page.locator('[data-testid^="file-"]').count();
-}
-
-/**
- * Navigation to parent (alias for goParent)
- */
-export async function goUp(page: Page): Promise<void> {
-  await pressKey(page, 'h');
-}
-
-/**
- * Handles the multi-section intro sequence by pressing Shift+Enter until the intro is complete.
- */
-export async function completeIntro(page: Page): Promise<void> {
-  const introContainer = page.locator('.absolute.inset-0.bg-black');
-  await expect(introContainer).toBeVisible({ timeout: 500 });
-
-  for (let i = 0; i < 5; i++) {
-    if (!(await introContainer.isVisible({ timeout: 500 }))) {
-      break;
-    }
-    await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(500);
-  }
-
-  await expect(introContainer).not.toBeVisible({ timeout: 1000 });
-}
-
-/**
  * Dismisses a game alert if it is currently visible.
  */
 export async function dismissAlertIfPresent(
@@ -502,61 +442,11 @@ export async function expectCurrentDir(
 }
 
 /**
- * Get the task counter text (e.g., "1 / 5").
- */
-export async function getTaskCount(page: Page): Promise<string> {
-  const counter = page.getByTestId('task-counter');
-  return (await counter.textContent()) || '';
-}
-
-/**
- * Checks if a task objective is visually marked as complete (dimmed).
- */
-export async function isTaskCompleted(page: Page, taskIndex: number): Promise<boolean> {
-  const objectives = page.locator('h3:has-text("Objectives") + div > div');
-  const task = objectives.nth(taskIndex);
-  return await task.evaluate((el) => el.classList.contains('opacity-50'));
-}
-
-/**
- * Get the file name at the current cursor position.
- */
-export async function getSelectedFileName(page: Page): Promise<string | null> {
-  const selected = page
-    .locator('[data-testid^="file-"]')
-    .filter({ has: page.locator('[aria-current="location"]') });
-  if (await selected.isVisible()) {
-    const testid = await selected.getAttribute('data-testid');
-    return testid?.replace('file-', '') || null;
-  }
-  return null;
-}
-
-/**
  * Check if hidden files are currently being shown in the file pane.
  */
 export async function areHiddenFilesVisible(page: Page): Promise<boolean> {
   const hiddenIndicator = page.getByText('HIDDEN: ON');
   return await hiddenIndicator.isVisible();
-}
-
-/**
- * Get the clipboard status (e.g., "COPY: 1" or "MOVE: 2").
- */
-export async function getClipboardStatus(page: Page): Promise<string | null> {
-  const status = page.locator('[data-testid="status-clipboard"]');
-  if (await status.isVisible()) {
-    return status.textContent();
-  }
-  return null;
-}
-
-/**
- * Check if the file info panel is visible (toggled by Tab).
- */
-export async function isInfoPanelVisible(page: Page): Promise<boolean> {
-  const panel = page.locator('text=FILE INFORMATION');
-  return await panel.isVisible();
 }
 
 /**

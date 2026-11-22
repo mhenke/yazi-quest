@@ -12,6 +12,8 @@ The filesystem and security threats are simulated; there is no application backe
 
 - **Architecture or dependency work:** read `.claude/pipeline/project-doc.md` for the
   scanned module map, versions, persistence boundaries, and known verification limits.
+- **Codebase exploration:** when `graphify-out/graph.json` exists, run `graphify query "<question>"`
+  before grep or file search. Run `graphify update .` after modifying code.
 - **Domain terminology:** read `GLOSSARY.md` before naming episodes, levels, tasks, or cycles.
 - **Level, narrative, or layout changes:** read the Narrative Design, Task Description
   Style Guide, Episode Color Scheme, and UI Layout Guidelines sections in

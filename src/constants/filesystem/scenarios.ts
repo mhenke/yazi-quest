@@ -70,8 +70,7 @@ const getWorkspaceSystemdCoreChildren = (
     id: id('ws-cargo-toml'),
     name: 'Cargo.toml',
     type: 'file',
-    content:
-      '[package]\nname = "systemd-core"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]',
+    content: '[package]\nname = "systemd-core"\nversion = "0.1.0"\n\n[dependencies]',
     parentId,
   },
   {
@@ -376,7 +375,7 @@ export const applyConsequenceScenarios = (
           name: 'alert_traffic.log',
           type: 'file',
           content:
-            '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2026-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s',
+            '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2015-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s',
           parentId: workspace.id,
           modifiedAt: BASE_TIME + 2 * day,
         });

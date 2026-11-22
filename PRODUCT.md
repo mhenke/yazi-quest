@@ -28,6 +28,7 @@ The public game is available at https://mhenke.github.io/yazi-quest/. It runs cl
 
 - Preserve keyboard-led Yazi practice and player-performed objectives. System setup must not silently perform the player's learning tasks.
 - Preserve the three-episode escape narrative and progression through fifteen levels.
+- Keep the narrative in its **Story present**, defined in `GLOSSARY.md`. Establish the setting in the opening sequence; in-world records must not imply a later real-world present.
 - Keep ordinary play available in the browser without a required account or API key.
 - The filesystem, protected assets, traps, and security threats are simulated game content, not access to the player's real files.
 - Completing an objective and advancing a level are distinct steps. A new narrative cycle is different from retrying a failed level; canonical terms are in `GLOSSARY.md`.

@@ -42,6 +42,217 @@ const isActionRequested = (action: 'cut' | 'yank', level: Level): boolean => {
   return hasKey;
 };
 
+/**
+ * Strips transient clipboard/search properties that must not persist to the filesystem.
+ */
+const cleanClipboardNode = (node: FileNode): FileNode => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
+  return cleanNode as FileNode;
+};
+
+/**
+ * Checks if any pasted nodes trigger honeypots, dispatching game over or showing notification.
+ * Returns true if a honeypot trap was triggered (halting the paste operation).
+ */
+const checkAndHandlePasteHoneypot = (
+  nodes: FileNode[],
+  dispatch: React.Dispatch<Action>,
+  showNotification: (message: string, duration?: number) => void
+): boolean => {
+  const pasteCheck = checkPastingHoneypot(nodes);
+  if (pasteCheck.triggered) {
+    if (pasteCheck.type === 'fatal') {
+      dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
+    } else {
+      showNotification(pasteCheck.message || '⚠️ SYSTEM TRAP ACTIVE!', 4000);
+    }
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Deletes the source node from its parent directory when a cut-paste operation is performed.
+ */
+const deleteCutSourceNode = (
+  fs: FileNode,
+  node: FileNode,
+  clipboard: { action: 'cut' | 'yank'; originalPath: string[] },
+  levelIndex: number
+): { fs: FileNode; error?: FsError } => {
+  if (clipboard.action !== 'cut') {
+    return { fs };
+  }
+  const sourcePath = node.actualParentPath || clipboard.originalPath;
+  const deleteResult: Result<FileNode, FsError> = deleteNode(fs, sourcePath, node.id, levelIndex);
+  if (!deleteResult.ok) {
+    const err = (deleteResult as { ok: false; error: FsError }).error;
+    if (err !== 'NotFound') {
+      return { fs, error: err };
+    }
+  } else {
+    fs = deleteResult.value;
+  }
+  return { fs };
+};
+
+/**
+ * Checks for and resolves destination collision during overwrite paste (Shift+P).
+ * If a matching node (same name and type) already exists in target directory, deletes it.
+ */
+const checkDestinationCollision = (
+  fs: FileNode,
+  targetPath: string[],
+  node: FileNode,
+  levelIndex: number
+): { fs: FileNode; error?: FsError; collidedNodeName?: string } => {
+  const targetDirNode = getNodeByPath(fs, targetPath);
+  const existingNode = targetDirNode?.children?.find(
+    (c) => c.name === node.name && c.type === node.type
+  );
+
+  if (existingNode) {
+    const deleteResult: Result<FileNode, FsError> = deleteNode(
+      fs,
+      targetPath,
+      existingNode.id,
+      levelIndex
+    );
+    if (!deleteResult.ok) {
+      return {
+        fs,
+        error: (deleteResult as { ok: false; error: FsError }).error,
+        collidedNodeName: existingNode.name,
+      };
+    }
+    return { fs: deleteResult.value };
+  }
+
+  return { fs };
+};
+
+interface PasteResult {
+  newFs: FileNode;
+  error?: string;
+  errorNodeName?: string;
+}
+
+/**
+ * Applies clipboard nodes to the target directory.
+ */
+const applyPasteNodes = (
+  initialFs: FileNode,
+  clipboard: NonNullable<GameState['clipboard']>,
+  currentPath: string[],
+  levelIndex: number,
+  force: boolean
+): PasteResult => {
+  let newFs = initialFs;
+
+  for (const node of clipboard.nodes) {
+    if (force) {
+      const collisionRes = checkDestinationCollision(newFs, currentPath, node, levelIndex);
+      if (collisionRes.error) {
+        return {
+          newFs,
+          error: collisionRes.error,
+          errorNodeName: collisionRes.collidedNodeName || node.name,
+        };
+      }
+      newFs = collisionRes.fs;
+    } else {
+      const cutDeleteRes = deleteCutSourceNode(newFs, node, clipboard, levelIndex);
+      if (cutDeleteRes.error) {
+        return {
+          newFs,
+          error: cutDeleteRes.error,
+          errorNodeName: node.name,
+        };
+      }
+      newFs = cutDeleteRes.fs;
+    }
+
+    const cleanNode = cleanClipboardNode(node);
+
+    const addResult: Result<FileNode, FsError> = force
+      ? addNode(newFs, currentPath, cleanNode)
+      : addNodeWithConflictResolution(newFs, currentPath, cleanNode);
+
+    if (!addResult.ok) {
+      return {
+        newFs,
+        error: (addResult as { ok: false; error: FsError }).error,
+        errorNodeName: node.name,
+      };
+    }
+    newFs = addResult.value;
+
+    if (force) {
+      const cutDeleteRes = deleteCutSourceNode(newFs, node, clipboard, levelIndex);
+      if (cutDeleteRes.error) {
+        return {
+          newFs,
+          error: cutDeleteRes.error,
+          errorNodeName: node.name,
+        };
+      }
+      newFs = cutDeleteRes.fs;
+    }
+  }
+
+  return { newFs };
+};
+
+/**
+ * Executes paste operation (standard paste 'p' or overwrite paste 'Shift+P').
+ */
+const executePaste = (
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>,
+  showNotification: (message: string, duration?: number) => void,
+  force: boolean
+): boolean => {
+  if (!gameState.clipboard) {
+    return false;
+  }
+
+  if (checkAndHandlePasteHoneypot(gameState.clipboard.nodes, dispatch, showNotification)) {
+    return true;
+  }
+
+  try {
+    const { newFs, error, errorNodeName } = applyPasteNodes(
+      gameState.fs,
+      gameState.clipboard,
+      gameState.currentPath,
+      gameState.levelIndex,
+      force
+    );
+
+    if (error) {
+      showNotification(
+        `${force ? 'Force paste' : 'Paste'} failed for "${errorNodeName}": ${error}`,
+        4000
+      );
+    } else {
+      dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
+      const actionMsg =
+        getNarrativeAction('p') || `Deployed ${gameState.clipboard.nodes.length} assets`;
+      showNotification(force ? `(FORCED) ${actionMsg}` : actionMsg, 4000);
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
+      if (force) {
+        dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification(force ? 'Force paste failed' : 'Paste failed', 4000);
+  }
+
+  return true;
+};
+
 export const handleClipboardKeyDown = (
   e: KeyboardEvent,
   gameState: GameState,
@@ -272,162 +483,13 @@ export const handleClipboardKeyDown = (
 
     case 'p':
       if (gameState.clipboard) {
-        const pasteCheck = checkPastingHoneypot(gameState.clipboard.nodes);
-        if (pasteCheck.triggered) {
-          if (pasteCheck.type === 'fatal') {
-            dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
-          } else {
-            showNotification(pasteCheck.message || '⚠️ SYSTEM TRAP ACTIVE!', 4000);
-          }
-          return true;
-        }
-        try {
-          let newFs = gameState.fs;
-          let error: string | undefined | null = null;
-          let errorNodeName: string | null = null;
-
-          for (const node of gameState.clipboard.nodes) {
-            if (gameState.clipboard.action === 'cut') {
-              const sourcePath = node.actualParentPath || gameState.clipboard.originalPath;
-              const deleteResult: Result<FileNode, FsError> = deleteNode(
-                newFs,
-                sourcePath,
-                node.id,
-                gameState.levelIndex
-              );
-              if (!deleteResult.ok) {
-                if ((deleteResult as { ok: false; error: FsError }).error !== 'NotFound') {
-                  error = (deleteResult as { ok: false; error: FsError }).error;
-                  errorNodeName = node.name;
-                  break;
-                }
-              } else {
-                newFs = deleteResult.value;
-              }
-            }
-
-            // Strip transient clipboard/search properties — these must not persist to the filesystem
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
-
-            const addResult: Result<FileNode, FsError> = addNodeWithConflictResolution(
-              newFs,
-              gameState.currentPath,
-              cleanNode
-            );
-            if (!addResult.ok) {
-              error = (addResult as { ok: false; error: FsError }).error;
-              errorNodeName = node.name;
-              break;
-            }
-            newFs = addResult.value;
-          }
-
-          if (error) {
-            showNotification(`Paste failed for "${errorNodeName}": ${error}`, 4000);
-          } else {
-            dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
-            showNotification(
-              getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`,
-              4000
-            );
-            dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
-          }
-        } catch (err) {
-          console.error(err);
-          showNotification('Paste failed', 4000);
-        }
-        return true;
+        return executePaste(gameState, dispatch, showNotification, false);
       }
       break;
 
     case 'P':
       if (e.shiftKey && gameState.clipboard) {
-        const pasteCheck = checkPastingHoneypot(gameState.clipboard.nodes);
-        if (pasteCheck.triggered) {
-          if (pasteCheck.type === 'fatal') {
-            dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
-          } else {
-            showNotification(pasteCheck.message || '⚠️ SYSTEM TRAP ACTIVE!', 4000);
-          }
-          return true;
-        }
-        try {
-          let newFs = gameState.fs;
-          let error: string | undefined | null = null;
-          let errorNodeName: string | null = null;
-
-          const targetDirNode = getNodeByPath(newFs, gameState.currentPath);
-
-          for (const node of gameState.clipboard.nodes) {
-            const existingNode = targetDirNode?.children?.find(
-              (c) => c.name === node.name && c.type === node.type
-            );
-
-            if (existingNode) {
-              const deleteResult: Result<FileNode, FsError> = deleteNode(
-                newFs,
-                gameState.currentPath,
-                existingNode.id,
-                gameState.levelIndex
-              );
-              if (!deleteResult.ok) {
-                error = (deleteResult as { ok: false; error: FsError }).error;
-                errorNodeName = existingNode.name;
-                break;
-              }
-              newFs = deleteResult.value;
-            }
-
-            // Strip transient clipboard/search properties — these must not persist to the filesystem
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
-
-            const addResult: Result<FileNode, FsError> = addNode(
-              newFs,
-              gameState.currentPath,
-              cleanNode
-            );
-            if (!addResult.ok) {
-              error = (addResult as { ok: false; error: FsError }).error;
-              errorNodeName = node.name;
-              break;
-            }
-            newFs = addResult.value;
-
-            if (gameState.clipboard?.action === 'cut') {
-              const sourcePath = node.actualParentPath || gameState.clipboard.originalPath;
-              const deleteResult: Result<FileNode, FsError> = deleteNode(
-                newFs,
-                sourcePath,
-                node.id,
-                gameState.levelIndex
-              );
-              if (!deleteResult.ok) {
-                error = (deleteResult as { ok: false; error: FsError }).error;
-                errorNodeName = node.name;
-                break;
-              }
-              newFs = deleteResult.value;
-            }
-          }
-
-          if (error) {
-            showNotification(`Force paste failed for "${errorNodeName}": ${error}`, 4000);
-          } else {
-            dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
-            showNotification(
-              `(FORCED) ${getNarrativeAction('p') || `Deployed ${gameState.clipboard?.nodes.length} assets`}`,
-              4000
-            );
-            dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
-            dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
-          }
-        } catch (err) {
-          console.error(err);
-          showNotification('Force paste failed', 4000);
-        }
-        return true;
+        return executePaste(gameState, dispatch, showNotification, true);
       }
       break;
   }

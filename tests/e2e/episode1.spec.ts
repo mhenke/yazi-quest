@@ -118,13 +118,13 @@ test.describe('Episode 1: AWAKENING', () => {
         await gotoCommand(page, 'm'); // Use gm to go to mail
         await enterDirectory(page, 'kortega'); // Navigate to Katie Ortega's mailbox
 
-        // Navigate to the specific email file (2025-11-15-heuristic-upgrade.eml)
+        // Navigate to the specific email file (2014-11-15-heuristic-upgrade.eml)
         // The files in kortega are sorted alphabetically:
-        // 1. 2025-10-26-keystroke-anomaly.eml
-        // 2. 2025-10-28-watchdog-hysteresis.eml
-        // 3. 2025-11-15-heuristic-upgrade.eml  <- We need to be on this one
-        // 4. 2025-11-23-anomaly-avoidance.eml
-        // 5. 2025-11-27-the-last-breach-revisited.eml
+        // 1. 2014-10-26-keystroke-anomaly.eml
+        // 2. 2014-10-28-watchdog-hysteresis.eml
+        // 3. 2014-11-15-heuristic-upgrade.eml  <- We need to be on this one
+        // 4. 2014-11-23-anomaly-avoidance.eml
+        // 5. 2014-11-27-the-last-breach-revisited.eml
         await navigateDown(page, 2); // Move to the 3rd file (index 2)
         await pressKey(page, 'Tab'); // View specific email
         await assertTask(page, '2/5', testInfo.outputDir, 'explore_mail');

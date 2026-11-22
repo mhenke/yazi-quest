@@ -4,6 +4,10 @@ The language of the file-manager learning game: its curriculum, objectives, and 
 
 ## Language
 
+**Story present**:
+The current year within the escape narrative: 2015. Older records belong to its history; the real-world calendar is separate from the story.
+_Avoid_: Development date, real-world present
+
 **Episode**:
 A narrative chapter that groups levels into a learning phase: Awakening, Fortification, or Mastery.
 _Avoid_: Level, cycle

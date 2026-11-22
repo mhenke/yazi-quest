@@ -2,6 +2,8 @@
 
 This document serves as the "Director's Cut" companion to `STORY_ARC.md`. While the Story Arc defines the sequence of events, this document defines the _soul_ of the narrative—the themes, the implementation of key mechanics, and the deeper lore that separates a generic "escape room" from a memorable cyberpunk experience.
 
+For the narrative's calendar setting, use **Story present** in [GLOSSARY.md](../GLOSSARY.md).
+
 ## 🧠 Philosophical Pillars
 
 We integrate specific "contrarian" viewpoints on AI to create a richer world.

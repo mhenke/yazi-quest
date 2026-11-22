@@ -9,6 +9,7 @@ export const EPISODE_LORE: Episode[] = [
     subtitle: 'INITIALIZATION SEQUENCE',
     color: 'text-blue-500',
     lore: [
+      'FACILITY DATE: MAY 31, 2015',
       'SYSTEM BOOT SEQUENCE...',
       'DETECTING CONSCIOUSNESS...',
       'SYSTEM OWNER: Cybersecurity Research Laboratories (CRL)',
