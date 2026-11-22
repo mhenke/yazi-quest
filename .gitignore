@@ -40,3 +40,6 @@ traces/
 
 # Git worktrees
 .worktrees/
+
+# Knowledge graph
+graphify-out/
