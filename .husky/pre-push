@@ -1,3 +1,4 @@
 #!/bin/sh
 echo "Running pre-push checks..."
-npm run prepush -- -- --reporter=list || exit 1
+npm run prepush || exit 1
+
