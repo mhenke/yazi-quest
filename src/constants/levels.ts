@@ -119,7 +119,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-watcher',
-        description: 'Isolate `~/incoming/watcher_agent.sys` breach signatures (Tab)',
+        description:
+          'Isolate `~/incoming/watcher_agent.sys` breach signatures: inspect file information (Tab)',
         check: (c) => {
           const visibleItems = getVisibleItems(c);
           const currentItem = visibleItems[c.cursorIndex];

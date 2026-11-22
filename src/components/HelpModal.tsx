@@ -127,14 +127,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                 <option value="reduced">Reduced (Minimal glitches)</option>
                 <option value="minimal">Minimal (Clean UI, thoughts only)</option>
               </select>
-              <p className="text-xs text-zinc-600">
+              <p className="text-xs text-zinc-400">
                 Controls intensity of narrative UI effects like screen glitches and corruption
               </p>
             </div>
           </div>
         )}
 
-        <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-600 font-mono">
+        <div className="mt-8 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-400 font-mono">
           Query command reference (?) • Press Shift+Enter or Escape to close
         </div>
       </div>

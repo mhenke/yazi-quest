@@ -35,7 +35,6 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 3+: Move sector_map.png from ~/incoming to ~/media
   // Level 3+: Move sector_map.png from ~/incoming to ~/media (Player does this in Level 3)
   if (levelId > 3) {
     const incoming = getNodeById(newFs, 'incoming');
@@ -58,11 +57,6 @@ export const applyFileSystemMutations = (
       }
     }
   }
-
-  // Level 4+: Create protocols/ dir in datastore
-
-  // Level 4+: Create protocols/ dir in datastore
-  // (Logic moved to INITIAL_FS)
 
   // Level 4+: Create protocols/ dir in datastore (Player does this in Level 4)
   if (levelId > 4) {

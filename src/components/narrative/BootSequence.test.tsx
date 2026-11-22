@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { BootSequence } from './BootSequence';
 import '@testing-library/jest-dom';
 
@@ -6,6 +7,33 @@ import '@testing-library/jest-dom';
 vi.useRealTimers();
 
 describe('BootSequence', () => {
+  it('completes on schedule with the latest callback while the parent rerenders', () => {
+    vi.useFakeTimers();
+
+    function BootHost({ message }: { message: string }) {
+      const [completion, setCompletion] = useState('');
+      return completion ? (
+        <div>{completion}</div>
+      ) : (
+        <BootSequence episode={2} onComplete={() => setCompletion(message)} />
+      );
+    }
+
+    const { rerender, unmount } = render(<BootHost message="Initial completion" />);
+    try {
+      for (let second = 0; second < 3; second++) {
+        act(() => vi.advanceTimersByTime(1000));
+        rerender(<BootHost message="Workspace ready" />);
+      }
+      act(() => vi.advanceTimersByTime(1000));
+
+      expect(screen.getByText('Workspace ready')).toBeInTheDocument();
+    } finally {
+      unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it('should show clean boot for Episode I', async () => {
     render(<BootSequence episode={1} />);
 

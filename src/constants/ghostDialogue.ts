@@ -10,7 +10,7 @@ export interface GhostDialogue {
   minCycle?: number;
 }
 
-export const ghostDialogue: GhostDialogue[] = [
+const ghostDialogue: GhostDialogue[] = [
   {
     id: 'ghost-honeypot-warning',
     text: "Don't. The trap has my scent on it.",

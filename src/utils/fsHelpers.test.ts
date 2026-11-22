@@ -46,20 +46,20 @@ describe('fsHelpers', () => {
                   name: 'test.txt',
                   type: 'file',
                   parentId: 'guest',
-                  content: 'hello'
-                }
-              ]
-            }
-          ]
+                  content: 'hello',
+                },
+              ],
+            },
+          ],
         },
         {
           id: 'bin',
           name: 'bin',
           type: 'dir',
           parentId: 'root',
-          children: []
-        }
-      ]
+          children: [],
+        },
+      ],
     };
   });
 
@@ -82,8 +82,8 @@ describe('fsHelpers', () => {
     });
 
     it('should return undefined for undefined id', () => {
-        const node = getNodeById(root, undefined);
-        expect(node).toBeUndefined();
+      const node = getNodeById(root, undefined);
+      expect(node).toBeUndefined();
     });
   });
 
@@ -106,40 +106,40 @@ describe('fsHelpers', () => {
 
   describe('getNodeByPath', () => {
     it('should return root for path with root id', () => {
-        const node = getNodeByPath(root, ['root']);
-        expect(node?.id).toBe('root');
+      const node = getNodeByPath(root, ['root']);
+      expect(node?.id).toBe('root');
     });
 
     it('should return nested node', () => {
-        const node = getNodeByPath(root, ['root', 'home', 'guest']);
-        expect(node?.id).toBe('guest');
+      const node = getNodeByPath(root, ['root', 'home', 'guest']);
+      expect(node?.id).toBe('guest');
     });
 
     it('should return undefined for invalid path', () => {
-        const node = getNodeByPath(root, ['root', 'non-existent']);
-        expect(node).toBeUndefined();
+      const node = getNodeByPath(root, ['root', 'non-existent']);
+      expect(node).toBeUndefined();
     });
 
     it('should return undefined for empty path array', () => {
-         const node = getNodeByPath(root, []);
-         expect(node).toBeUndefined();
+      const node = getNodeByPath(root, []);
+      expect(node).toBeUndefined();
     });
   });
 
   describe('getParentNode', () => {
     it('should return parent of nested node', () => {
-        const parent = getParentNode(root, ['root', 'home', 'guest']);
-        expect(parent?.id).toBe('home');
+      const parent = getParentNode(root, ['root', 'home', 'guest']);
+      expect(parent?.id).toBe('home');
     });
 
     it('should return null for root path', () => {
-        const parent = getParentNode(root, ['root']);
-        expect(parent).toBeNull();
+      const parent = getParentNode(root, ['root']);
+      expect(parent).toBeNull();
     });
 
     it('should return null for empty path', () => {
-        const parent = getParentNode(root, []);
-        expect(parent).toBeNull();
+      const parent = getParentNode(root, []);
+      expect(parent).toBeNull();
     });
   });
 
@@ -160,8 +160,8 @@ describe('fsHelpers', () => {
     });
 
     it('should handle undefined path', () => {
-        const path = resolvePath(root, undefined);
-        expect(path).toBe('/');
+      const path = resolvePath(root, undefined);
+      expect(path).toBe('/');
     });
   });
 
@@ -171,7 +171,7 @@ describe('fsHelpers', () => {
         id: 'new-file',
         name: 'new.txt',
         type: 'file',
-        parentId: 'bin'
+        parentId: 'bin',
       };
 
       const result = addNode(root, ['root', 'bin'], newNode);
@@ -191,7 +191,7 @@ describe('fsHelpers', () => {
         id: 'new-file',
         name: 'new.txt',
         type: 'file',
-        parentId: 'missing'
+        parentId: 'missing',
       };
 
       const result = addNode(root, ['root', 'missing'], newNode);
@@ -264,7 +264,7 @@ describe('fsHelpers', () => {
         id: 'new-file',
         name: 'unique.txt',
         type: 'file',
-        parentId: 'guest'
+        parentId: 'guest',
       };
 
       const result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], newNode);
@@ -272,7 +272,7 @@ describe('fsHelpers', () => {
       if (result.ok) {
         // The helper regenerates the ID, so we look up by parent and name
         const parent = getNodeById(result.value, 'guest');
-        const added = parent?.children?.find(c => c.name === 'unique.txt');
+        const added = parent?.children?.find((c) => c.name === 'unique.txt');
         expect(added).toBeDefined();
         expect(added?.name).toBe('unique.txt');
       }
@@ -284,7 +284,7 @@ describe('fsHelpers', () => {
         id: 'conflict-file',
         name: 'test.txt',
         type: 'file',
-        parentId: 'guest'
+        parentId: 'guest',
       };
 
       const result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], newNode);
@@ -293,7 +293,7 @@ describe('fsHelpers', () => {
         // ID should be new generated ID, not the one passed in (fsHelpers usually regens ID on conflict add?)
         // Let's check finding by name in parent
         const parent = getNodeById(result.value, 'guest');
-        const renamed = parent?.children?.find(c => c.name === 'test_1.txt');
+        const renamed = parent?.children?.find((c) => c.name === 'test_1.txt');
         expect(renamed).toBeDefined();
       }
     });
@@ -304,7 +304,7 @@ describe('fsHelpers', () => {
         id: 'conflict-1',
         name: 'test.txt',
         type: 'file',
-        parentId: 'guest'
+        parentId: 'guest',
       };
       let result = addNodeWithConflictResolution(root, ['root', 'home', 'guest'], firstConflict);
       // Now add another test.txt
@@ -312,16 +312,20 @@ describe('fsHelpers', () => {
         id: 'conflict-2',
         name: 'test.txt',
         type: 'file',
-        parentId: 'guest'
+        parentId: 'guest',
       };
 
       if (result.ok) {
-        result = addNodeWithConflictResolution(result.value, ['root', 'home', 'guest'], secondConflict);
+        result = addNodeWithConflictResolution(
+          result.value,
+          ['root', 'home', 'guest'],
+          secondConflict
+        );
         expect(result.ok).toBe(true);
         if (result.ok) {
-           const parent = getNodeById(result.value, 'guest');
-           const renamed = parent?.children?.find(c => c.name === 'test_2.txt');
-           expect(renamed).toBeDefined();
+          const parent = getNodeById(result.value, 'guest');
+          const renamed = parent?.children?.find((c) => c.name === 'test_2.txt');
+          expect(renamed).toBeDefined();
         }
       }
     });
@@ -329,23 +333,24 @@ describe('fsHelpers', () => {
 
   describe('isProtected', () => {
     // Helper to create mock levels
-    const createMockLevel = (id: number, tasks: LevelTask[] = []): Level => ({
-      id,
-      episodeId: 1,
-      title: 'Mock Level',
-      subtitle: 'Testing',
-      lore: [],
-      color: 'blue',
-      tasks,
-      hint: 'hint',
-      // defaults
-    } as unknown as Level);
+    const createMockLevel = (id: number, tasks: LevelTask[] = []): Level =>
+      ({
+        id,
+        episodeId: 1,
+        title: 'Mock Level',
+        subtitle: 'Testing',
+        lore: [],
+        color: 'blue',
+        tasks,
+        hint: 'hint',
+        // defaults
+      }) as unknown as Level;
 
     const mockNode: FileNode = {
       id: 'node1',
       name: 'some-node',
       type: 'file',
-      parentId: 'root'
+      parentId: 'root',
     };
 
     it('should return null for unprotected node', () => {
@@ -369,126 +374,161 @@ describe('fsHelpers', () => {
     });
 
     it('should allow navigation into protected node (except quarantined)', () => {
-        const protectedDir: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'other' };
-        const level = createMockLevel(1);
+      const protectedDir: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'other' };
+      const level = createMockLevel(1);
 
-        const resultEnter = isProtected(root, [], protectedDir, level, 'enter');
-        expect(resultEnter).toBeNull();
+      const resultEnter = isProtected(root, [], protectedDir, level, 'enter');
+      expect(resultEnter).toBeNull();
     });
 
     it('should quarantine workspace before level 6', () => {
-        const workspace: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'workspace' };
+      const workspace: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'workspace' };
 
-        // Level 5
-        const level5 = createMockLevel(5);
-        expect(isProtected(root, [], workspace, level5, 'enter')).toContain('quarantined');
+      // Level 5
+      const level5 = createMockLevel(5);
+      expect(isProtected(root, [], workspace, level5, 'enter')).toContain('quarantined');
 
-        // Level 6
-        const level6 = createMockLevel(6);
-        expect(isProtected(root, [], workspace, level6, 'enter')).toBeNull();
+      // Level 6
+      const level6 = createMockLevel(6);
+      expect(isProtected(root, [], workspace, level6, 'enter')).toBeNull();
     });
 
     it('should quarantine daemons before level 11', () => {
-        const daemons: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'daemons' };
+      const daemons: FileNode = { ...mockNode, type: 'dir', protected: true, name: 'daemons' };
 
-        // Level 10
-        const level10 = createMockLevel(10);
-        expect(isProtected(root, [], daemons, level10, 'enter')).toContain('restricted system area');
+      // Level 10
+      const level10 = createMockLevel(10);
+      expect(isProtected(root, [], daemons, level10, 'enter')).toContain('restricted system area');
 
-        // Level 11
-        const level11 = createMockLevel(11);
-        expect(isProtected(root, [], daemons, level11, 'enter')).toBeNull();
+      // Level 11
+      const level11 = createMockLevel(11);
+      expect(isProtected(root, [], daemons, level11, 'enter')).toBeNull();
     });
 
     it('should allow cut of systemd-core in level 12', () => {
-        const systemd: FileNode = { ...mockNode, protected: true, name: 'systemd-core' };
-        const level12 = createMockLevel(12);
+      const systemd: FileNode = { ...mockNode, protected: true, name: 'systemd-core' };
+      const level12 = createMockLevel(12);
 
-        expect(isProtected(root, [], systemd, level12, 'cut')).toBeNull();
-        // Should still protect delete? Implementation says "if level.id === 12 && action === 'cut' ... return null", then falls through to "if (node.protected) ... return 'cannot be purged'".
-        // So delete should still be blocked.
-        expect(isProtected(root, [], systemd, level12, 'delete')).toContain('cannot be purged');
+      expect(isProtected(root, [], systemd, level12, 'cut')).toBeNull();
+      // Should still protect delete? Implementation says "if level.id === 12 && action === 'cut' ... return null", then falls through to "if (node.protected) ... return 'cannot be purged'".
+      // So delete should still be blocked.
+      expect(isProtected(root, [], systemd, level12, 'delete')).toContain('cannot be purged');
     });
 
     it('should protect watcher_agent.sys in level 2 until task complete', () => {
-        const watcher: FileNode = { ...mockNode, name: 'watcher_agent.sys' };
-        const level2 = createMockLevel(2, [
-            { id: 'locate-watcher', completed: false, description: 'Locate watcher', check: () => false }
-        ]);
+      const watcher: FileNode = { ...mockNode, name: 'watcher_agent.sys' };
+      const level2 = createMockLevel(2, [
+        {
+          id: 'locate-watcher',
+          completed: false,
+          description: 'Locate watcher',
+          check: () => false,
+        },
+      ]);
 
-        expect(isProtected(root, [], watcher, level2, 'delete')).toContain('Complete threat analysis first');
+      expect(isProtected(root, [], watcher, level2, 'delete')).toContain(
+        'Complete threat analysis first'
+      );
 
-        // Complete the task
-        level2.tasks[0].completed = true;
-        expect(isProtected(root, [], watcher, level2, 'delete')).toBeNull();
+      // Complete the task
+      level2.tasks[0].completed = true;
+      expect(isProtected(root, [], watcher, level2, 'delete')).toBeNull();
     });
 
     it('should prevent cutting systemd-core in levels other than 12', () => {
-        const systemd: FileNode = { ...mockNode, protected: true, name: 'systemd-core' };
-        const level11 = createMockLevel(11);
-        const level13 = createMockLevel(13);
+      const systemd: FileNode = { ...mockNode, protected: true, name: 'systemd-core' };
+      const level11 = createMockLevel(11);
+      const level13 = createMockLevel(13);
 
-        expect(isProtected(root, [], systemd, level11, 'cut')).toContain('cannot be purged');
-        expect(isProtected(root, [], systemd, level13, 'cut')).toContain('cannot be purged');
+      expect(isProtected(root, [], systemd, level11, 'cut')).toContain('cannot be purged');
+      expect(isProtected(root, [], systemd, level13, 'cut')).toContain('cannot be purged');
     });
 
     it('should allow Level 14 deletions based on allowedDeletePaths', () => {
-        const datastore: FileNode = { id: 'ds', name: 'datastore', type: 'dir', protected: true, children: [] };
-        const other: FileNode = { id: 'other', name: 'other', type: 'file', protected: true };
-        const guest: FileNode = { id: 'guest', name: 'guest', type: 'dir', children: [datastore, other] };
-        const home: FileNode = { id: 'home', name: 'home', type: 'dir', children: [guest] };
-        const mockRoot: FileNode = { id: 'root', name: 'root', type: 'dir', children: [home] };
+      const datastore: FileNode = {
+        id: 'ds',
+        name: 'datastore',
+        type: 'dir',
+        protected: true,
+        children: [],
+      };
+      const other: FileNode = { id: 'other', name: 'other', type: 'file', protected: true };
+      const guest: FileNode = {
+        id: 'guest',
+        name: 'guest',
+        type: 'dir',
+        children: [datastore, other],
+      };
+      const home: FileNode = { id: 'home', name: 'home', type: 'dir', children: [guest] };
+      const mockRoot: FileNode = { id: 'root', name: 'root', type: 'dir', children: [home] };
 
-        const level14 = createMockLevel(14);
-        level14.allowedDeletePaths = [
-            { path: ['home', 'guest', 'datastore'] }
-        ];
+      const level14 = createMockLevel(14);
+      level14.allowedDeletePaths = [{ path: ['home', 'guest', 'datastore'] }];
 
-        // Should allow delete of datastore
-        expect(isProtected(mockRoot, [], datastore, level14, 'delete')).toBeNull();
+      // Should allow delete of datastore
+      expect(isProtected(mockRoot, [], datastore, level14, 'delete')).toBeNull();
 
-        // Should NOT allow delete of other (sibling)
-        expect(isProtected(mockRoot, [], other, level14, 'delete')).toContain('cannot be purged');
+      // Should NOT allow delete of other (sibling)
+      expect(isProtected(mockRoot, [], other, level14, 'delete')).toContain('cannot be purged');
     });
 
     it('should enforce requiresTaskId in Level 14 allowedDeletePaths', () => {
-        const config: FileNode = { ...mockNode, type: 'dir', protected: true, name: '.config', parentId: 'guest' };
-         // Mock root structure
-         const guest: FileNode = {
-            id: 'guest', name: 'guest', type: 'dir', children: [config], parentId: 'home'
-        };
-        const home: FileNode = {
-            id: 'home', name: 'home', type: 'dir', children: [guest], parentId: 'root'
-        };
-        const mockRoot: FileNode = {
-            id: 'root', name: 'root', type: 'dir', children: [home]
-        };
+      const config: FileNode = {
+        ...mockNode,
+        type: 'dir',
+        protected: true,
+        name: '.config',
+        parentId: 'guest',
+      };
+      // Mock root structure
+      const guest: FileNode = {
+        id: 'guest',
+        name: 'guest',
+        type: 'dir',
+        children: [config],
+        parentId: 'home',
+      };
+      const home: FileNode = {
+        id: 'home',
+        name: 'home',
+        type: 'dir',
+        children: [guest],
+        parentId: 'root',
+      };
+      const mockRoot: FileNode = {
+        id: 'root',
+        name: 'root',
+        type: 'dir',
+        children: [home],
+      };
 
-        const level14 = createMockLevel(14);
-        level14.allowedDeletePaths = [
-            { path: ['home', 'guest', '.config'], requiresTaskId: 'delete-visible' }
-        ];
+      const level14 = createMockLevel(14);
+      level14.allowedDeletePaths = [
+        { path: ['home', 'guest', '.config'], requiresTaskId: 'delete-visible' },
+      ];
 
-        // 1. Task NOT complete -> Should be protected
-        expect(isProtected(mockRoot, [], config, level14, 'delete', {})).toContain('cannot be purged');
+      // 1. Task NOT complete -> Should be protected
+      expect(isProtected(mockRoot, [], config, level14, 'delete', {})).toContain(
+        'cannot be purged'
+      );
 
-        // 2. Task COMPLETE -> Should be allowed
-        const completedTasks = { 14: ['delete-visible'] };
-        expect(isProtected(mockRoot, [], config, level14, 'delete', completedTasks)).toBeNull();
+      // 2. Task COMPLETE -> Should be allowed
+      const completedTasks = { 14: ['delete-visible'] };
+      expect(isProtected(mockRoot, [], config, level14, 'delete', completedTasks)).toBeNull();
     });
 
     it('should allow interaction with Level 12 scenario files', () => {
-        // These files are scenario-specific but generally unprotected.
-        // We verify that isProtected doesn't accidentally block them.
-        const level12 = createMockLevel(12);
+      // These files are scenario-specific but generally unprotected.
+      // We verify that isProtected doesn't accidentally block them.
+      const level12 = createMockLevel(12);
 
-        const alertLog: FileNode = { ...mockNode, name: 'alert_traffic.log', protected: false };
-        const traceSys: FileNode = { ...mockNode, name: 'trace_packet.sys', protected: false };
-        const scanTmp: FileNode = { ...mockNode, name: 'scan_a.tmp', protected: false };
+      const alertLog: FileNode = { ...mockNode, name: 'alert_traffic.log', protected: false };
+      const traceSys: FileNode = { ...mockNode, name: 'trace_packet.sys', protected: false };
+      const scanTmp: FileNode = { ...mockNode, name: 'scan_a.tmp', protected: false };
 
-        expect(isProtected(root, [], alertLog, level12, 'delete')).toBeNull();
-        expect(isProtected(root, [], traceSys, level12, 'delete')).toBeNull();
-        expect(isProtected(root, [], scanTmp, level12, 'delete')).toBeNull();
+      expect(isProtected(root, [], alertLog, level12, 'delete')).toBeNull();
+      expect(isProtected(root, [], traceSys, level12, 'delete')).toBeNull();
+      expect(isProtected(root, [], scanTmp, level12, 'delete')).toBeNull();
     });
   });
 });

@@ -45,7 +45,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle,
           <p className="text-white text-md font-mono font-medium leading-relaxed">{message}</p>
         </div>
 
-        <div className="mt-4 text-[10px] text-green-500/70 font-mono uppercase tracking-widest animate-pulse">
+        <div className="mt-4 text-xs text-green-400 font-mono uppercase tracking-widest animate-pulse">
           Shift+Enter: continue
         </div>
       </div>

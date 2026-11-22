@@ -3,33 +3,6 @@ import { GameState, FileNode } from '../types';
 import { getNodeByPath } from './fsHelpers';
 import { sortNodes } from './sortHelpers';
 
-// Shared helper for creating safe regex from user input
-export const getSafeFilterRegex = (filter: string): RegExp | null => {
-  if (!filter) return null;
-
-  // Check if filter contains regex special characters
-  const hasRegexChars = /[.*+?^${}()|[\]\\]/.test(filter);
-
-  if (hasRegexChars) {
-    // Allow alphanumeric, parentheses, pipe, dots, dollar signs, backslashes for escaping, and hyphens (for ranges)
-    const isSafeRegex = /^[\w().|$^[\]*+?{}\\\ \-]+$/i.test(filter);
-
-    if (isSafeRegex) {
-      // Smart-case: if filter contains any uppercase, make it case-sensitive
-      const isCaseSensitive = /[A-Z]/.test(filter);
-      const flags = isCaseSensitive ? '' : 'i';
-
-      try {
-        // eslint-disable-next-line security/detect-non-literal-regexp
-        return new RegExp(filter, flags);
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-};
-
 // Helper to create a regex from the filter string, handling smart-case.
 // Returns null if the filter is an invalid regex.
 // Note: This strictly follows Yazi/fd behavior where input is raw regex (. = wildcard).
@@ -98,22 +71,6 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
   return sortNodes(items, state.sortBy, state.sortDirection);
 };
 
-export const activeFilterMatches = (
-  state: GameState,
-  predicate: (n: FileNode) => boolean
-): boolean => {
-  const currentDir = getNodeByPath(state.fs, state.currentPath);
-  if (!currentDir || !currentDir.children) return false;
-
-  const filter = state.filters[currentDir.id] || '';
-  if (!filter) return false;
-
-  const visible = getVisibleItems(state);
-  if (visible.length === 0) return false;
-
-  return visible.every(predicate);
-};
-
 /**
  * Recursively search for files matching a query string.
  * Searches all files in the given directory and its subdirectories.
@@ -161,11 +118,7 @@ export const getRecursiveSearchResults = (
       if (!showHidden && item.node.name.startsWith('.')) {
         return false;
       }
-      const matched = regex.test(item.displayPath);
-      if (item.node.name.endsWith('.log')) {
-        // console.log('LOG MATCH CHECK:', { path: item.displayPath, matched });
-      }
-      return matched;
+      return regex.test(item.displayPath);
     })
     .map((item) => ({
       ...item.node,

@@ -43,16 +43,12 @@ export const handleGCommandKeyDown = (
       return;
     }
     e.preventDefault();
-    try {
-      const items = getVisibleItems(gameState) || [];
-      const last = Math.max(0, items.length - 1);
-      dispatch({ type: 'SET_CURSOR', index: last });
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
-      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
-    } catch {
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-    }
+    const items = getVisibleItems(gameState) || [];
+    const last = Math.max(0, items.length - 1);
+    dispatch({ type: 'SET_CURSOR', index: last });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
+    dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
     return;
   }
 

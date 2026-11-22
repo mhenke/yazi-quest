@@ -44,7 +44,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
           </div>
         )}
 
-        <div className="mt-4 text-[10px] text-orange-500/70 font-mono uppercase tracking-widest">
+        <div className="mt-4 text-xs text-orange-400 font-mono uppercase tracking-widest">
           Press Shift+Enter to dismiss
         </div>
       </div>

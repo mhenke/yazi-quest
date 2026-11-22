@@ -119,30 +119,30 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
           <div className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
             <div className="flex items-center gap-3 mb-1">
               <div
-                className={`text-[11px] font-bold tracking-widest ${isDir ? 'text-green-400' : isArchive ? 'text-yellow-400' : 'text-cyan-400'}`}
+                className={`text-xs font-bold tracking-widest ${isDir ? 'text-green-400' : isArchive ? 'text-yellow-400' : 'text-cyan-400'}`}
               >
                 {isDir ? 'Folder' : isArchive ? 'Archive' : 'File'}
               </div>
               <div className="text-sm font-bold text-white">{file.name}</div>
             </div>
-            <div className="text-xs text-zinc-500 font-mono mb-3">
+            <div className="text-xs text-zinc-300 font-mono mb-3">
               <span className="text-zinc-400">{isDir ? 'Items:' : 'Size:'}</span> {size}
             </div>
 
-            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">
+            <h3 className="text-xs uppercase font-bold text-green-500 mb-2 tracking-widest">
               Base
             </h3>
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Created:</span>
+                <span className="text-zinc-400">Created:</span>
                 <span className="text-zinc-300">{created}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Modified:</span>
+                <span className="text-zinc-400">Modified:</span>
                 <span className="text-zinc-300">{modified}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Mimetype:</span>
+                <span className="text-zinc-400">Mimetype:</span>
                 <span className="text-zinc-300">{mimetype}</span>
               </div>
             </div>
@@ -150,24 +150,24 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
 
           {/* Plugins Section */}
           <div className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
-            <h3 className="text-[10px] uppercase font-bold text-green-500 mb-2 tracking-widest">
+            <h3 className="text-xs uppercase font-bold text-green-500 mb-2 tracking-widest">
               Plugins
             </h3>
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Spotter:</span>
+                <span className="text-zinc-400">Spotter:</span>
                 <span className="text-zinc-300">{spotterLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Previewer:</span>
+                <span className="text-zinc-400">Previewer:</span>
                 <span className="text-zinc-300">{previewerLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Fetchers:</span>
+                <span className="text-zinc-400">Fetchers:</span>
                 <span className="text-zinc-300">{fetchersLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Preloaders:</span>
+                <span className="text-zinc-400">Preloaders:</span>
                 <span className="text-zinc-300">-</span>
               </div>
             </div>
@@ -176,7 +176,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose: _onClose })
 
         {/* Footer */}
         <div className="px-4 py-2 bg-zinc-950 border-t border-zinc-800 text-center">
-          <p className="text-[10px] text-zinc-600 font-mono">Press Tab or Esc to close</p>
+          <p className="text-xs text-zinc-400 font-mono">Press Tab or Esc to close</p>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useEffectEvent, useState } from 'react';
 import { getBootSequenceForEpisode, type BootSequence } from '../../constants/bootSequences';
 
 interface BootSequenceProps {
@@ -16,6 +16,7 @@ interface BootSequenceProps {
 export function BootSequence({ episode, onComplete }: BootSequenceProps) {
   const [sequence] = useState(() => getBootSequenceForEpisode(episode));
   const [visibleLines, setVisibleLines] = useState<string[]>([]);
+  const completeBoot = useEffectEvent(() => onComplete?.());
 
   useEffect(() => {
     const lineDuration = sequence.duration / sequence.lines.length;
@@ -31,7 +32,7 @@ export function BootSequence({ episode, onComplete }: BootSequenceProps) {
 
     // Schedule completion
     const completionTimer = setTimeout(() => {
-      onComplete?.();
+      completeBoot();
     }, sequence.duration + 1000);
     timers.push(completionTimer);
 
@@ -39,7 +40,7 @@ export function BootSequence({ episode, onComplete }: BootSequenceProps) {
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
     };
-  }, [sequence, onComplete, episode]);
+  }, [sequence, episode]);
 
   return (
     <div className="boot-sequence fixed inset-0 bg-black text-green-500 font-mono p-8 z-50">

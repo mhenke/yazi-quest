@@ -42,23 +42,23 @@ export const getActionIntensity = (key: string, ctrlKey: boolean): number => {
 };
 
 // Helper to check for active filter in the current directory
-export const hasFilterViolation = (gameState: GameState): boolean => {
+const hasFilterViolation = (gameState: GameState): boolean => {
   const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
   return !!(currentDirNode && gameState.filters[currentDirNode.id]);
 };
 
 // Helper to check for active search results
-export const hasSearchViolation = (gameState: GameState): boolean => {
+const hasSearchViolation = (gameState: GameState): boolean => {
   return !!(gameState.searchQuery && gameState.searchResults.length > 0);
 };
 
 // Helper to check for custom sort
-export const hasSortViolation = (gameState: GameState): boolean => {
+const hasSortViolation = (gameState: GameState): boolean => {
   return gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc';
 };
 
 // Helper to check for hidden files visible
-export const hasHiddenViolation = (gameState: GameState): boolean => {
+const hasHiddenViolation = (gameState: GameState): boolean => {
   return gameState.showHidden;
 };
 

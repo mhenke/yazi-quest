@@ -7,7 +7,7 @@ import { FileNode, SortBy, SortDirection } from '../types';
 export function sortNodes(
   nodes: FileNode[],
   sortBy: SortBy,
-  sortDirection: SortDirection,
+  sortDirection: SortDirection
 ): FileNode[] {
   const sorted = [...nodes];
 

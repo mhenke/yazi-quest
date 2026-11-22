@@ -102,17 +102,6 @@ export function findNodeByName(
   return undefined;
 }
 
-export function getAllDirectories(root: FileNode): FileNode[] {
-  const result: FileNode[] = [];
-  const stack: FileNode[] = [root];
-  while (stack.length) {
-    const n = stack.pop()!;
-    if (n.type === 'dir' || n.type === 'archive') result.push(n);
-    if (n.children) stack.push(...n.children);
-  }
-  return result;
-}
-
 export function getAllDirectoriesWithPaths(
   root: FileNode,
   level?: Level
@@ -241,24 +230,6 @@ export function addNode(
   }
 }
 
-export function renameNode(
-  root: FileNode,
-  parentPath: string[] | undefined,
-  nodeId: string,
-  newName: string,
-  _levelIndex?: number
-): Result<FileNode, FsError> {
-  try {
-    const newRoot = cloneFS(root);
-    const node = getNodeById(newRoot, nodeId);
-    if (!node) return { ok: false, error: 'NotFound' };
-    node.name = newName;
-    return { ok: true, value: newRoot };
-  } catch {
-    return { ok: false, error: 'NotFound' };
-  }
-}
-
 // Simple createPath used by UI - attempts to create a file/dir name at the current path
 export function createPath(
   root: FileNode,
@@ -302,23 +273,6 @@ export function createPath(
   if (node.type === 'dir') node.children = [];
   parent.children.push(node);
   return { fs: newRoot, error: null, collision: false, collisionNode: null, newNodeId: newId };
-}
-
-export function createHoneypot(
-  parentId: string,
-  name: string,
-  content: string = '# HONEYPOT - DO NOT TOUCH',
-  extraProps: Partial<FileNode> = {}
-): FileNode {
-  return {
-    id: id('honeypot-'),
-    name,
-    type: 'file',
-    content,
-    parentId,
-    isHoneypot: true,
-    ...extraProps,
-  };
 }
 
 export function resolveAndCreatePath(
@@ -585,4 +539,3 @@ export function isProtected(
 
   return null;
 }
-export default {};

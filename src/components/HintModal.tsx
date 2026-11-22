@@ -55,7 +55,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
           <h2 className="text-sm font-bold tracking-wider uppercase">{stageLabel}</h2>
         </div>
         {stage < 2 && (
-          <div className="text-[9px] text-yellow-600 font-mono uppercase tracking-wider animate-pulse">
+          <div className="text-xs text-yellow-500 font-mono uppercase tracking-wider animate-pulse">
             Press Alt+H for more detail
           </div>
         )}
@@ -63,7 +63,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose: _onC
 
       <p className="text-zinc-300 text-xs leading-relaxed font-mono">{displayText}</p>
 
-      <div className="text-center text-[10px] text-zinc-600 font-mono mt-1">
+      <div className="text-center text-xs text-zinc-400 font-mono mt-1">
         Press Shift+Enter or Escape to close
       </div>
     </div>,

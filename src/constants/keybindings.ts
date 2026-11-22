@@ -195,17 +195,6 @@ export const KEYBINDINGS = [
   },
 ];
 
-export const META_KEYBINDINGS = [
-  { keys: ['Alt+M'], description: 'Quest Map', narrativeDescription: 'Access Neural Map' },
-  { keys: ['Alt+H'], description: 'Show Hint', narrativeDescription: 'Query Oracle' },
-  { keys: ['Alt+?'], description: 'Show Help', narrativeDescription: 'Access Codex' },
-  {
-    keys: ['Alt+Shift+M'],
-    description: 'Toggle Sound',
-    narrativeDescription: 'Toggle Audio Subroutines',
-  },
-];
-
 // Simple keybindings for the HelpModal display (no narrativeDescription arrays)
 export const HELP_KEYBINDINGS = [
   { keys: ['j', '↓'], description: 'Move Down', narrativeDescription: 'Navigation' },

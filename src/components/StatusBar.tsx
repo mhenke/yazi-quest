@@ -14,7 +14,7 @@ interface StatusBarProps {
   currentItem: FileNode | null;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({
+const StatusBar: React.FC<StatusBarProps> = ({
   state,
   level,
   allTasksComplete,
@@ -23,10 +23,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   // Mode configuration
   const MODE_STYLES: Record<string, { bg: string; text: string }> = {
-    normal: { bg: 'bg-blue-600', text: 'NOR' },
-    input: { bg: 'bg-green-600', text: 'INS' },
-    filter: { bg: 'bg-purple-600', text: 'FLT' },
-    visual: { bg: 'bg-orange-600', text: 'VIS' },
+    // -500 backgrounds: black chip text clears 4.5:1 (blue-600 was ~4.1:1);
+    // blue-500 #3b82f6 is the Awakening token in DESIGN.md
+    normal: { bg: 'bg-blue-500', text: 'NOR' },
+    input: { bg: 'bg-green-500', text: 'INS' },
+    filter: { bg: 'bg-purple-500', text: 'FLT' },
+    visual: { bg: 'bg-orange-500', text: 'VIS' },
   };
 
   // Determine active mode key
@@ -129,11 +131,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         {/* Quest Info with Task Progress */}
         <span
-          className={`text-zinc-500 hidden sm:flex items-center gap-2 whitespace-nowrap ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
+          className={`text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
         >
           <span className="font-bold text-zinc-400">L{level.id}</span>
           <span className="text-zinc-600">|</span>
-          <span>{level.title}</span>
+          <span className="hidden xl:inline">{level.title}</span>
           <span className="text-zinc-600">•</span>
           <span
             data-testid="task-counter"
@@ -184,7 +186,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               <div className="flex items-center gap-3 px-4 bg-yellow-900 border-l border-yellow-700 animate-pulse h-full">
                 <ShieldAlert size={16} className="text-yellow-400" />
                 <div className="flex flex-col justify-center">
-                  <span className="text-[10px] text-yellow-500 uppercase tracking-tighter leading-none mb-1">
+                  <span className="text-xs text-yellow-500 uppercase tracking-tighter leading-none mb-1">
                     PROTOCOL VIOLATION DETECTED
                   </span>
                   <span className="text-xs font-bold text-white font-mono tracking-wide leading-none">
@@ -268,7 +270,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             >
               {icon}
               <div className="flex flex-col justify-center h-full">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter">
+                <span className="text-xs text-zinc-400 uppercase tracking-tighter leading-none mb-0.5">
                   {label}
                 </span>
                 <span
@@ -295,7 +297,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
           >
             <span className="hidden sm:inline">NEXT</span>
-            <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+            <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
               SHIFT <ArrowRight size={8} /> ENTER
             </span>
           </button>
@@ -306,26 +308,26 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
         {/* Hidden Files Indicator */}
         <span
-          className={`font-mono text-[10px] uppercase hidden sm:inline mr-2 ${state.showHidden ? 'text-yellow-400 font-bold' : 'text-zinc-600'}`}
+          className={`font-mono text-xs uppercase hidden sm:inline mr-2 ${state.showHidden ? 'text-yellow-400 font-bold' : 'text-zinc-400'}`}
         >
           {state.showHidden ? 'HIDDEN: ON' : 'HIDDEN: OFF'}
         </span>
 
         {/* Sort Indicator - Only show if custom */}
         {isCustomSort && (
-          <span className="font-mono text-[10px] uppercase hidden sm:inline mr-1 text-orange-400 font-bold">
+          <span className="font-mono text-xs uppercase hidden sm:inline mr-1 text-orange-400 font-bold">
             {getSortLabel(state.sortBy, state.sortDirection)}
           </span>
         )}
 
         {/* Linemode Indicator - NEW */}
         {state.linemode !== 'none' && (
-          <span className="font-mono text-[10px] uppercase text-blue-400 hidden sm:inline mr-1">
+          <span className="font-mono text-xs uppercase text-blue-400 hidden sm:inline mr-1">
             {state.linemode}
           </span>
         )}
 
-        <span className="text-zinc-500 font-mono hidden md:inline">{perms}</span>
+        <span className="text-zinc-400 font-mono hidden md:inline">{perms}</span>
 
         <div className="flex items-center rounded overflow-hidden text-sm font-bold font-mono h-8">
           {/* Position Indicator (Top/Bot/%) */}
@@ -334,7 +336,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </div>
 
           {/* Count Indicator */}
-          <div className="bg-blue-600 text-black px-3 flex items-center justify-center min-w-[64px]">
+          <div className="bg-blue-500 text-black px-3 flex items-center justify-center min-w-[64px]">
             {current}/{total}
           </div>
         </div>

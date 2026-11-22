@@ -1,7 +1,5 @@
 import type { Action } from './hooks/gameReducer';
 
-export type NodeType = 'file' | 'dir' | 'archive';
-
 export interface FileNode {
   id: string;
   name: string;
@@ -20,10 +18,6 @@ export interface FileNode {
   display?: string;
   displayPath?: string; // Full relative path for search results display
   actualParentPath?: string[]; // Original parent path for clipboard operations from search
-}
-
-export interface FileSystemState {
-  root: FileNode;
 }
 
 export interface LevelTask {

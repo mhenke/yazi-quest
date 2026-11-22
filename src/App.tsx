@@ -24,7 +24,6 @@ import { getVisibleItems, getRecursiveSearchResults, getFilterRegex } from './ut
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { CodropsGlitchSVG } from './components/CodropsGlitchSVG';
 import { checkAllTasksComplete } from './utils/gameUtils';
-// eslint-disable-next-line import/no-named-as-default
 import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
@@ -897,11 +896,7 @@ export default function App() {
       // This replaces the onEnter hook functionality
       fs = ensurePrerequisiteState(fs, nextLevel.id, gameState);
     } catch (err) {
-      try {
-        reportError(err, { phase: 'ensurePrerequisiteState', level: nextLevel?.id });
-      } catch {
-        console.error('ensurePrerequisiteState failed', err);
-      }
+      reportError(err, { phase: 'ensurePrerequisiteState', level: nextLevel?.id });
       onEnterError = err as Error;
     }
 
@@ -1232,6 +1227,38 @@ export default function App() {
   );
 
   // 4. Warning Modals (Priority 600)
+  const handleAutoFixBaseline = useCallback(() => {
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: 'PROTOCOL BASELINE RESTORED',
+      duration: 3000,
+    });
+    dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
+
+    if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
+    if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
+      dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
+    }
+    const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+    if (currentDir && gameState.filters[currentDir.id]) {
+      dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
+    }
+    if (gameState.searchQuery) {
+      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+    }
+
+    setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
+  }, [
+    gameState.showHidden,
+    gameState.sortBy,
+    gameState.sortDirection,
+    gameState.fs,
+    gameState.currentPath,
+    gameState.filters,
+    gameState.searchQuery,
+    dispatch,
+  ]);
+
   // Hidden Warning
   useGlobalInput(
     (e) => {
@@ -1244,28 +1271,7 @@ export default function App() {
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
 
         if (tasksComplete) {
-          // Trigger the explicit auto-fix sequence
-          dispatch({
-            type: 'SET_NOTIFICATION',
-            message: 'PROTOCOL BASELINE RESTORED',
-            duration: 3000,
-          });
-          dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
-
-          // Clear ALL violations
-          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-          if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-            dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-          }
-          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          if (currentDir && gameState.filters[currentDir.id]) {
-            dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
-          }
-          if (gameState.searchQuery) {
-            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-          }
-
-          setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
+          handleAutoFixBaseline();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1277,7 +1283,7 @@ export default function App() {
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete],
+    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
     { priority: 800, enabled: gameState.showHiddenWarning }
   );
 
@@ -1290,26 +1296,7 @@ export default function App() {
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false });
 
         if (tasksComplete) {
-          dispatch({
-            type: 'SET_NOTIFICATION',
-            message: 'PROTOCOL BASELINE RESTORED',
-            duration: 3000,
-          });
-          dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
-
-          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-          if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-            dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-          }
-          const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-          if (currentDirNode && gameState.filters[currentDirNode.id]) {
-            dispatch({ type: 'CLEAR_FILTER', dirId: currentDirNode.id });
-          }
-          if (gameState.searchQuery) {
-            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-          }
-
-          setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
+          handleAutoFixBaseline();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1324,7 +1311,7 @@ export default function App() {
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete],
+    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
     { priority: 800, enabled: gameState.showFilterWarning }
   );
 
@@ -1337,26 +1324,7 @@ export default function App() {
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: false });
 
         if (tasksComplete) {
-          dispatch({
-            type: 'SET_NOTIFICATION',
-            message: 'PROTOCOL BASELINE RESTORED',
-            duration: 3000,
-          });
-          dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
-
-          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-          if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-            dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-          }
-          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          if (currentDir && gameState.filters[currentDir.id]) {
-            dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
-          }
-          if (gameState.searchQuery) {
-            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-          }
-
-          setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
+          handleAutoFixBaseline();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1371,7 +1339,7 @@ export default function App() {
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete],
+    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
     { priority: 800, enabled: gameState.showSearchWarning }
   );
 
@@ -1384,26 +1352,7 @@ export default function App() {
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
 
         if (tasksComplete) {
-          dispatch({
-            type: 'SET_NOTIFICATION',
-            message: 'PROTOCOL BASELINE RESTORED',
-            duration: 3000,
-          });
-          dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
-
-          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-          if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-            dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-          }
-          const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-          if (currentDir && gameState.filters[currentDir.id]) {
-            dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
-          }
-          if (gameState.searchQuery) {
-            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-          }
-
-          setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
+          handleAutoFixBaseline();
         } else {
           dispatch({ type: 'SET_MODE', mode: 'normal' });
           dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1562,7 +1511,7 @@ export default function App() {
           break;
         case 'zoxide-jump':
         case 'fzf-current':
-          handleFuzzyModeKeyDown(e as unknown as KeyboardEvent, gameState, dispatch);
+          handleFuzzyModeKeyDown(e, gameState, dispatch);
           break;
         case 'g-command':
           handleGCommandKeyDown(e, gameState, currentLevel);
@@ -1704,14 +1653,11 @@ export default function App() {
         )}
 
         {gameState.showSuccessToast && (
-          <>
-            {/* <CelebrationConfetti /> */}
-            <SuccessToast
-              message={currentLevel.successMessage || 'Sector Cleared'}
-              levelTitle={currentLevel.title}
-              onDismiss={advanceLevel}
-            />
-          </>
+          <SuccessToast
+            message={currentLevel.successMessage || 'Sector Cleared'}
+            levelTitle={currentLevel.title}
+            onDismiss={advanceLevel}
+          />
         )}
 
         {gameState.showHiddenWarning && (

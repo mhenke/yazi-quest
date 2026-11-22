@@ -14,7 +14,7 @@ import { LEVELS } from '../constants/levels';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 
-export type ModalId =
+type ModalId =
   | 'help'
   | 'hint'
   | 'map'
@@ -154,6 +154,141 @@ export type Action =
   | { type: 'SHOW_TOAST'; message: string; duration?: number }
   | { type: 'HIDE_TOAST' }
   | { type: 'ADVANCE_TO_OUTRO' };
+
+const MODAL_TO_STATE_KEY: Record<ModalId, keyof GameState> = {
+  help: 'showHelp',
+  hint: 'showHint',
+  map: 'showMap',
+  info: 'showInfoPanel',
+  threat: 'showThreatAlert',
+  success: 'showSuccessToast',
+  hiddenWarning: 'showHiddenWarning',
+  sortWarning: 'showSortWarning',
+  filterWarning: 'showFilterWarning',
+  searchWarning: 'showSearchWarning',
+};
+
+const ACTION_TO_STATE_KEY: Record<string, keyof GameState> = {
+  G: 'usedG',
+  GI: 'usedGI',
+  GC: 'usedGC',
+  GR: 'usedGR',
+  GH: 'usedGH',
+  CtrlA: 'usedCtrlA',
+  CtrlR: 'usedCtrlR',
+  GG: 'usedGG',
+  Down: 'usedDown',
+  Up: 'usedUp',
+  PreviewDown: 'usedPreviewDown',
+  PreviewUp: 'usedPreviewUp',
+  P: 'usedP',
+  ShiftP: 'usedShiftP',
+  X: 'usedX',
+  D: 'usedD',
+  TrashDelete: 'usedTrashDelete',
+  HistoryBack: 'usedHistoryBack',
+  HistoryForward: 'usedHistoryForward',
+  SortM: 'usedSortM',
+  Y: 'usedY',
+  Search: 'usedSearch',
+  SearchCleared: 'usedSearchCleared',
+  Filter: 'usedFilter',
+};
+
+function handleTick(state: GameState, action: Extract<Action, { type: 'TICK' }>): GameState {
+  if (state.isGameOver || state.showEpisodeIntro) return state;
+
+  // --- 1. Timer Logic ---
+  let nextState = { ...state };
+  const completedIds = state.completedTaskIds[action.currentLevelId] || [];
+  const isComplete = action.tasks.every((t) => completedIds.includes(t.id));
+
+  if (!(isComplete && !state.showHidden)) {
+    if (state.timeLeft !== null) {
+      if (state.timeLeft <= 0) {
+        // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
+        if (action.currentLevelId === 15) {
+          const nextPhase = (state.gauntletPhase || 0) + 1;
+          const isFinished = nextPhase >= 8;
+
+          if (isFinished) {
+            const score = state.gauntletScore || 0;
+            if (score < 6) {
+              return {
+                ...state,
+                isGameOver: true,
+                gameOverReason: 'time',
+                notification: { message: `MASTERY FAILED: Score ${score}/8.` },
+              };
+            }
+            nextState = {
+              ...nextState,
+              completedTaskIds: {
+                ...state.completedTaskIds,
+                [15]: action.tasks.map((t) => t.id),
+              },
+              notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
+            };
+          } else {
+            nextState = {
+              ...nextState,
+              gauntletPhase: nextPhase,
+              timeLeft: 20,
+              notification: { message: `PHASE FAILED! Next Phase...` },
+            };
+          }
+        } else {
+          return {
+            ...state,
+            isGameOver: true,
+            gameOverReason: 'time',
+            notification: null,
+          };
+        }
+      } else {
+        nextState = { ...nextState, timeLeft: state.timeLeft - 1 };
+      }
+    }
+  }
+
+  // --- 2. Threat Monitor Logic ---
+  let newThreat = nextState.threatLevel;
+  let newStatus = nextState.threatStatus;
+
+  // Base decay (threat slowly drops if not aggravated)
+  if (newThreat > 0) newThreat -= 0.1;
+
+  // Episode I: Time Pressure (Detection Risk)
+  if (action.episodeId === 1 && nextState.timeLeft !== null && action.timeLimit) {
+    const timeRatio = 1 - nextState.timeLeft / action.timeLimit;
+    const targetThreat = timeRatio * 100;
+    if (newThreat < targetThreat) newThreat = targetThreat;
+  }
+  // Episode II: Resource Usage (Keystroke Exhaustion)
+  else if (action.episodeId === 2 && action.maxKeystrokes) {
+    const keyRatio = nextState.keystrokes / action.maxKeystrokes;
+    const targetThreat = keyRatio * 100;
+    if (newThreat < targetThreat) newThreat = targetThreat;
+  }
+  // Episode III: Active Countermeasures
+  else if (action.episodeId === 3) {
+    newThreat += 0.2; // Passive rise
+    if (nextState.level11Flags?.triggeredHoneypot) {
+      if (newThreat < 90) newThreat = 90;
+    }
+  }
+
+  // Clamp & Status
+  if (newThreat < 0) newThreat = 0;
+  if (newThreat > 100) newThreat = 100;
+
+  if (newThreat < 20) newStatus = 'CALM';
+  else if (newThreat < 50) newStatus = 'ANALYZING';
+  else if (newThreat < 80) newStatus = 'TRACING';
+  else newStatus = 'BREACH';
+
+  return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
+}
 
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -555,100 +690,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'SET_INPUT_BUFFER':
       return { ...state, inputBuffer: action.buffer };
 
-    case 'TICK': {
-      if (state.isGameOver || state.showEpisodeIntro) return state;
-
-      // --- 1. Timer Logic ---
-      let nextState = { ...state };
-      const completedIds = state.completedTaskIds[action.currentLevelId] || [];
-      const isComplete = action.tasks.every((t) => completedIds.includes(t.id));
-
-      if (!(isComplete && !state.showHidden)) {
-        if (state.timeLeft !== null) {
-          if (state.timeLeft <= 0) {
-            // Level 15 Exception: Time-out advances phase (Failure) instead of Game Over
-            if (action.currentLevelId === 15) {
-              const nextPhase = (state.gauntletPhase || 0) + 1;
-              const isFinished = nextPhase >= 8;
-
-              if (isFinished) {
-                const score = state.gauntletScore || 0;
-                if (score < 6) {
-                  return {
-                    ...state,
-                    isGameOver: true,
-                    gameOverReason: 'time',
-                    notification: { message: `MASTERY FAILED: Score ${score}/8.` },
-                  };
-                }
-                nextState = {
-                  ...nextState,
-                  completedTaskIds: {
-                    ...state.completedTaskIds,
-                    [15]: action.tasks.map((t) => t.id),
-                  },
-                  notification: { message: `GAUNTLET SURVIVED: Score ${score}/8` },
-                };
-              } else {
-                nextState = {
-                  ...nextState,
-                  gauntletPhase: nextPhase,
-                  timeLeft: 20,
-                  notification: { message: `PHASE FAILED! Next Phase...` },
-                };
-              }
-            } else {
-              return {
-                ...state,
-                isGameOver: true,
-                gameOverReason: 'time',
-                notification: null,
-              };
-            }
-          } else {
-            nextState = { ...nextState, timeLeft: state.timeLeft - 1 };
-          }
-        }
-      }
-
-      // --- 2. Threat Monitor Logic ---
-      let newThreat = nextState.threatLevel;
-      let newStatus = nextState.threatStatus;
-
-      // Base decay (threat slowly drops if not aggravated)
-      if (newThreat > 0) newThreat -= 0.1;
-
-      // Episode I: Time Pressure (Detection Risk)
-      if (action.episodeId === 1 && nextState.timeLeft !== null && action.timeLimit) {
-        const timeRatio = 1 - nextState.timeLeft / action.timeLimit;
-        const targetThreat = timeRatio * 100;
-        if (newThreat < targetThreat) newThreat = targetThreat;
-      }
-      // Episode II: Resource Usage (Keystroke Exhaustion)
-      else if (action.episodeId === 2 && action.maxKeystrokes) {
-        const keyRatio = nextState.keystrokes / action.maxKeystrokes;
-        const targetThreat = keyRatio * 100;
-        if (newThreat < targetThreat) newThreat = targetThreat;
-      }
-      // Episode III: Active Countermeasures
-      else if (action.episodeId === 3) {
-        newThreat += 0.2; // Passive rise
-        if (nextState.level11Flags?.triggeredHoneypot) {
-          if (newThreat < 90) newThreat = 90;
-        }
-      }
-
-      // Clamp & Status
-      if (newThreat < 0) newThreat = 0;
-      if (newThreat > 100) newThreat = 100;
-
-      if (newThreat < 20) newStatus = 'CALM';
-      else if (newThreat < 50) newStatus = 'ANALYZING';
-      else if (newThreat < 80) newStatus = 'TRACING';
-      else newStatus = 'BREACH';
-
-      return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
-    }
+    case 'TICK':
+      return handleTick(state, action);
 
     case 'COMPLETE_TASK': {
       const { levelId, taskIds } = action;
@@ -664,110 +707,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case 'SET_MODAL_VISIBILITY': {
-      const { modal, visible } = action;
-      switch (modal) {
-        case 'help':
-          return { ...state, showHelp: visible };
-        case 'hint':
-          return { ...state, showHint: visible };
-        case 'map':
-          return { ...state, showMap: visible };
-        case 'info':
-          return { ...state, showInfoPanel: visible };
-        case 'threat':
-          return { ...state, showThreatAlert: visible };
-        case 'success':
-          return { ...state, showSuccessToast: visible };
-        case 'hiddenWarning':
-          return { ...state, showHiddenWarning: visible };
-        case 'sortWarning':
-          return { ...state, showSortWarning: visible };
-        case 'filterWarning':
-          return { ...state, showFilterWarning: visible };
-        case 'searchWarning':
-          return { ...state, showSearchWarning: visible };
-        default:
-          return state;
-      }
+      const key = MODAL_TO_STATE_KEY[action.modal];
+      return key ? { ...state, [key]: action.visible } : state;
     }
 
     case 'MARK_ACTION_USED': {
-      const updates: Partial<GameState> = {};
-      switch (action.actionId) {
-        case 'G':
-          updates.usedG = true;
-          break;
-        case 'GI':
-          updates.usedGI = true;
-          break;
-        case 'GC':
-          updates.usedGC = true;
-          break;
-        case 'GR':
-          updates.usedGR = true;
-          break;
-        case 'GH':
-          updates.usedGH = true;
-          break;
-        case 'CtrlA':
-          updates.usedCtrlA = true;
-          break;
-        case 'CtrlR':
-          updates.usedCtrlR = true;
-          break;
-        case 'GG':
-          updates.usedGG = true;
-          break;
-        case 'Down':
-          updates.usedDown = true;
-          break;
-        case 'Up':
-          updates.usedUp = true;
-          break;
-        case 'PreviewDown':
-          updates.usedPreviewDown = true;
-          break;
-        case 'PreviewUp':
-          updates.usedPreviewUp = true;
-          break;
-        case 'P':
-          updates.usedP = true;
-          break;
-        case 'ShiftP':
-          updates.usedShiftP = true;
-          break;
-        case 'X':
-          updates.usedX = true;
-          break;
-        case 'D':
-          updates.usedD = true;
-          break;
-        case 'TrashDelete':
-          updates.usedTrashDelete = true;
-          break;
-        case 'HistoryBack':
-          updates.usedHistoryBack = true;
-          break;
-        case 'HistoryForward':
-          updates.usedHistoryForward = true;
-          break;
-        case 'SortM':
-          updates.usedSortM = true;
-          break;
-        case 'Y':
-          updates.usedY = true;
-          break;
-        case 'Search':
-          updates.usedSearch = true;
-          break;
-        case 'SearchCleared':
-          updates.usedSearchCleared = true;
-          break;
-        case 'Filter':
-          updates.usedFilter = true;
-          break;
-      }
-      return { ...state, ...updates };
+      const key = ACTION_TO_STATE_KEY[action.actionId];
+      return key ? { ...state, [key]: true } : state;
     }
 
     case 'SET_PREVIEW_SCROLL':

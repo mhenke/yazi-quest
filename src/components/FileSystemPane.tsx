@@ -13,7 +13,7 @@ interface FileSystemPaneProps {
   className?: string;
 }
 
-export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
+const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   items,
   isActive,
   cursorIndex = -1,
@@ -60,7 +60,7 @@ export const FileSystemPane: React.FC<FileSystemPaneProps> = ({
       >
         {items.length === 0 && (
           <div
-            className="absolute top-10 w-full text-center text-zinc-600 font-mono text-sm select-none"
+            className="absolute top-10 w-full text-center text-zinc-400 font-mono text-sm select-none"
             role="status"
           >
             No items

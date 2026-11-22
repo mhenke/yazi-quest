@@ -46,8 +46,6 @@ export const GlobalInputProvider: React.FC<{ children: ReactNode }> = ({ childre
       // Sort handlers by priority (descending)
       const sortedHandlers = [...handlersRef.current].sort((a, b) => b.priority - a.priority);
 
-      // console.log(`[GlobalInput] Key: ${e.key}, Handlers: ${sortedHandlers.length}`);
-
       const isInput =
         e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
 

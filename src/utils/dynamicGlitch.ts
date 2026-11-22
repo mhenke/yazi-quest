@@ -45,11 +45,3 @@ export function applyDynamicGlitch(el: GlitchElement) {
 
   el.__dynamicGlitchApplied = true;
 }
-
-export const triggerScreenShake = (element: HTMLElement) => {
-  if (!element) return;
-  // Reset animation
-  element.style.animation = 'none';
-  void element.offsetWidth; // trigger reflow
-  element.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both';
-};

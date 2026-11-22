@@ -108,7 +108,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           <div className="flex flex-col justify-center h-full">
             <div className="flex items-center gap-2 mb-1">
               <span
-                className={`text-[10px] uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx]?.color}`}
+                className={`text-xs uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx]?.color}`}
               >
                 {episodes[currentEpisodeIdx]?.shortTitle}
               </span>
@@ -136,10 +136,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                     {/* Stage Node */}
                     <div
                       className={`
-                                flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-[9px] font-mono transition-all duration-300
-                                ${isCompleted ? 'bg-zinc-900/50 border-zinc-800 text-zinc-500' : ''}
+                                flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-xs font-mono transition-all duration-300
+                                ${isCompleted ? 'bg-zinc-900/50 border-zinc-800 text-zinc-400' : ''}
                                 ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].color} shadow-[0_0_15px_rgba(255,255,255,0.05)] scale-105 z-10` : ''}
-                                ${isLocked ? 'bg-transparent border-transparent text-zinc-700' : ''}
+                                ${isLocked ? 'bg-transparent border-transparent text-zinc-500' : ''}
                             `}
                     >
                       <div className="flex items-center justify-center">
@@ -199,11 +199,11 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               return (
                 <div
                   key={ep.id}
-                  className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-700 ${isComplete ? `text-${baseColor}-400 scale-110` : 'text-zinc-600'}`}
+                  className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-700 ${isComplete ? `text-${baseColor}-400 scale-110` : 'text-zinc-400'}`}
                   style={isComplete ? { filter: `drop-shadow(0 0 8px ${shadowColor})` } : {}}
                 >
                   <Icon size={14} fill={isComplete ? 'currentColor' : 'none'} />
-                  <span className="text-[8px] uppercase font-bold tracking-wider hidden xl:inline-block leading-none mt-0.5">
+                  <span className="text-xs uppercase font-bold tracking-wider hidden xl:inline-block leading-none mt-0.5">
                     {ep.name}
                   </span>
                 </div>
@@ -254,7 +254,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                       Quest Map
                     </h2>
                   </div>
-                  <div className="text-xs text-zinc-600 font-mono">
+                  <div className="text-xs text-zinc-400 font-mono">
                     h/l: episodes • j/k: missions • Enter: jump • Shift+Enter or Escape: close
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         `}
                   >
                     <span>{ep.shortTitle}</span>
-                    <span className="text-[9px] opacity-60">{ep.levels.length} Levels</span>
+                    <span className="text-xs">{ep.levels.length} Levels</span>
                   </button>
                 ))}
               </div>
@@ -331,7 +331,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                             {level.title}
                           </h3>
                           {level.coreSkill && (
-                            <p className="text-xs text-zinc-600 font-mono mt-0.5">
+                            <p className="text-xs text-zinc-400 font-mono mt-0.5">
                               {level.coreSkill}
                             </p>
                           )}
@@ -341,7 +341,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         {status === 'active' && (
                           <div className="flex items-center gap-1 text-xs text-orange-400 font-mono">
                             <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                            <span className="text-[10px] uppercase tracking-wider">Active</span>
+                            <span className="text-xs uppercase tracking-wider">Active</span>
                           </div>
                         )}
                         {status === 'completed' && (

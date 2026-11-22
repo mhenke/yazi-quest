@@ -29,7 +29,6 @@ test.describe('Persistence & State Survival', () => {
     await expect(page.locator('.breadcrumb')).toHaveText('/', { timeout: 10000 });
 
     // Navigate into 'var' to add to zoxide
-    // Safer:
     await gotoCommand(page, 't'); // Jump to tmp (guaranteed to exist and be tracked)
     await expectCurrentDir(page, 'tmp');
 

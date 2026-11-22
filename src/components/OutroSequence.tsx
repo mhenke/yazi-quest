@@ -428,12 +428,10 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
                     >
                       <Icon size={24} className={colorClass} />
                     </div>
-                    <span
-                      className={`text-[10px] font-mono uppercase tracking-widest ${colorClass}`}
-                    >
+                    <span className={`text-xs font-mono uppercase tracking-widest ${colorClass}`}>
                       {ep.name}
                     </span>
-                    <span className="text-[8px] text-zinc-500 uppercase">System Installed</span>
+                    <span className="text-xs text-zinc-400 uppercase">System Installed</span>
                   </div>
                 );
               })}
@@ -458,7 +456,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
               <div className="animate-scroll-y flex flex-col gap-8 py-4">
                 {CREDITS_DATA.map((credit, i) => (
                   <div key={i} className="flex flex-col gap-1 items-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">
+                    <span className="text-xs text-zinc-400 font-mono tracking-widest uppercase">
                       {credit.role}
                     </span>
                     <span className="text-lg text-white font-bold tracking-tight">
@@ -488,7 +486,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle }) 
                   />
                 </div>
               </button>
-              <p className="mt-4 text-[10px] text-zinc-500 font-mono uppercase tracking-widest animate-pulse">
+              <p className="mt-4 text-xs text-zinc-400 font-mono uppercase tracking-widest animate-pulse">
                 Establishing consciousness bridge...
               </p>
             </div>

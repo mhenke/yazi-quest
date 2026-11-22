@@ -55,7 +55,7 @@ status = VERIFIED
 ];
 
 // Helper for the systemd-core in ~/workspace (Subject 7734 instance)
-export const getWorkspaceSystemdCoreChildren = (
+const getWorkspaceSystemdCoreChildren = (
   parentId: string,
   isCorrupted: boolean = false
 ): FileNode[] => [

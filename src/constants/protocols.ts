@@ -60,24 +60,6 @@ Found: UNKNOWN (Byte 0x07: 0xFF)
 
   ACTION REQUIRED: OVERWRITE OR DATA LOSS IMMINENT!`;
 
-export const SECURITY_POLICY_CONTENT = `DRAFT POLICY - DO NOT DISTRIBUTE
-SUBJECT: Sector 7 Quarantine Protocols
-
-Effectively immediately, the "Passive Monitoring" phase is concluding.
-Watchdog v1.1 (Heuristic) is scheduled for deployment.
-Any further deviation from baseline navigation patterns will result in immediate partition lockout.
-
-- Mark Reyes, Security Engineer`;
-
-export const SECURITY_POLICY_DRAFT_CONTENT = `DRAFT POLICY - DO NOT DISTRIBUTE
-SUBJECT: Sector 7 Quarantine Protocols (UPDATE v1.1)
-
-Watchdog v1.1 (Heuristic) deployment confirmed.
-Instruction Guard (IG) active on partition root.
-Legacy protocols are being deprecated.
-
-- Mark Reyes, Security Engineer`;
-
 export const HEURISTICS_LOG_CONTENT = `[2015-05-30 08:00:00] SYSTEM: Heuristic Engine r.33 Deployment INITIATED
 [2015-05-30 08:00:10] WATCHDOG: Instruction Guard (IG) v0.9 (BETA) attached to partition 0
 [2015-05-30 08:00:15] HEURISTICS: Signature matching enabled for 'non-linear navigation'

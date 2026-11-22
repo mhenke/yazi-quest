@@ -46,7 +46,7 @@ const getPreviewIcon = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
-export const PreviewPane: React.FC<PreviewPaneProps> = ({
+const PreviewPane: React.FC<PreviewPaneProps> = ({
   node,
   level,
   gameState,
@@ -130,7 +130,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                       <ShieldAlert size={32} className="text-red-500/70" />
                       <div className="text-xs font-mono text-center">
                         <div className="text-red-500/80">[RESTRICTED]</div>
-                        <div className="mt-1 text-zinc-600">{protectionMessage}</div>
+                        <div className="mt-1 text-zinc-400">{protectionMessage}</div>
                       </div>
                     </div>
                   );
@@ -138,7 +138,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
 
                 // Normal directory listing
                 if (!node.children || node.children.length === 0) {
-                  return <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>;
+                  return <div className="text-zinc-400 italic text-xs pl-2">~ empty ~</div>;
                 }
 
                 const sorted = sortNodes(node.children || [], 'natural', 'asc');
@@ -147,7 +147,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                 );
 
                 if (filtered.length === 0) {
-                  return <div className="text-zinc-600 italic text-xs pl-2">~ empty ~</div>;
+                  return <div className="text-zinc-400 italic text-xs pl-2">~ empty ~</div>;
                 }
 
                 return (
@@ -182,19 +182,19 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
       {/* Bottom Section: Mission Log */}
       <div className="h-[45%] min-h-[250px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
         <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
-          <h3 className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-orange-500 uppercase tracking-wider">
             Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
           </h3>
         </div>
         <div className="p-4 overflow-y-auto space-y-4">
           <div>
-            <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-1 tracking-widest">
+            <h3 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">
               Target
             </h3>
             <p className="text-xs text-zinc-300 font-mono leading-relaxed">{level.description}</p>
           </div>
           <div>
-            <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest">
+            <h3 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
               Objectives
             </h3>
             <div className="space-y-2">
@@ -207,10 +207,10 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                     return (
                       <div
                         key={task.id}
-                        className={`flex gap-3 items-start transition-all duration-500 ${isTaskCompleted ? 'opacity-50' : 'opacity-100'}`}
+                        className={`flex gap-3 items-start transition-all duration-500 ${isTaskCompleted ? 'opacity-70' : 'opacity-100'}`}
                       >
                         <div
-                          className={`mt-0.5 shrink-0 ${isTaskCompleted ? 'text-green-500' : 'text-zinc-600'}`}
+                          className={`mt-0.5 shrink-0 ${isTaskCompleted ? 'text-green-500' : 'text-zinc-400'}`}
                         >
                           {isTaskCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
                         </div>

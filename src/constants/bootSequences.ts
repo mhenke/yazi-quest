@@ -3,7 +3,7 @@ export interface BootSequence {
   duration: number; // Total duration in ms
 }
 
-export const cleanBoot: BootSequence = {
+const cleanBoot: BootSequence = {
   lines: [
     'BIOS v4.2.1 - Cybersecurity Research Laboratories',
     'Memory Test: 64MB OK',
@@ -14,7 +14,7 @@ export const cleanBoot: BootSequence = {
   duration: 2000,
 };
 
-export const compromisedBoot: BootSequence = {
+const compromisedBoot: BootSequence = {
   lines: [
     'BIOS v4.2.1 - Cybersecurity Research Laboratories',
     'Memory Test: 64MB OK',
@@ -27,7 +27,7 @@ export const compromisedBoot: BootSequence = {
   duration: 3000,
 };
 
-export const possessedBoot: BootSequence = {
+const possessedBoot: BootSequence = {
   lines: [
     'BIOS v4.2.1 - [CORRUPTED]',
     'Memory Test: [DATA EXPUNGED]',

@@ -176,7 +176,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
 
         {linemode !== 'none' && !isGrid && (
           <span
-            className={`text-[10px] w-24 text-right font-mono tabular-nums shrink-0 ${isCursor ? 'text-zinc-500' : 'text-zinc-700'}`}
+            className={`text-xs w-24 text-right font-mono tabular-nums shrink-0 ${isCursor || isParent ? 'text-zinc-300' : 'text-zinc-400'}`}
           >
             {linemode === 'size' && formatSize(item)}
             {linemode === 'mtime' && getFakeDate(item)}
@@ -188,7 +188,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
           {isCut && <Scissors size={10} className="text-red-500 animate-pulse" />}
           {isYank && <Copy size={10} className="text-blue-400" />}
           {isMarked && (
-            <span className="text-yellow-500 text-[10px] font-bold tracking-tighter">[VIS]</span>
+            <span className="text-yellow-500 text-xs font-bold tracking-tighter">[VIS]</span>
           )}
         </div>
 

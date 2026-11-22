@@ -13,11 +13,11 @@ export function GhostMessage({ text, signature, onClose }: GhostMessageProps) {
       data-testid="ghost-message"
     >
       <p className="text-cyan-400 italic font-mono text-sm">&quot;{text}&quot;</p>
-      <p className="text-cyan-600 text-xs mt-2 text-right">{signature}</p>
+      <p className="text-cyan-500 text-xs mt-2 text-right">{signature}</p>
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-cyan-700 hover:text-cyan-500"
+          className="absolute top-2 right-2 text-cyan-400 hover:text-cyan-200"
         >
           ×
         </button>

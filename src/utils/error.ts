@@ -11,16 +11,3 @@ export const reportError = (err: unknown, context?: Record<string, unknown>) => 
     console.error('REPORT_ERROR_FAILED', e);
   }
 };
-
-export const safeExec = async <T>(
-  fn: () => Promise<T> | T,
-  context?: Record<string, unknown>,
-): Promise<{ ok: true; result: T } | { ok: false; error: unknown }> => {
-  try {
-    const result = await fn();
-    return { ok: true, result };
-  } catch (err) {
-    reportError(err, context);
-    return { ok: false, error: err };
-  }
-};

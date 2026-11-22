@@ -106,15 +106,11 @@ export const handleNavigationKeyDown = (
         return true;
       }
       e.preventDefault();
-      try {
-        const items = getVisibleItems(gameState) || [];
-        const last = Math.max(0, items.length - 1);
-        dispatch({ type: 'SET_CURSOR', index: last });
-        dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
-        dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
-      } catch {
-        // ignore
-      }
+      const items = getVisibleItems(gameState) || [];
+      const last = Math.max(0, items.length - 1);
+      dispatch({ type: 'SET_CURSOR', index: last });
+      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
       return true;
     }
 

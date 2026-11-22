@@ -25,7 +25,9 @@ test.describe('Game Mechanics & Failures', () => {
       await startLevel(page, 2);
     });
 
-    test('Shell Collapse: Deleting critical system directory triggers Game Over', async ({ page }) => {
+    test('Shell Collapse: Deleting critical system directory triggers Game Over', async ({
+      page,
+    }) => {
       // Navigate to Root
       await gotoCommand(page, 'r');
       await expectCurrentDir(page, '/');

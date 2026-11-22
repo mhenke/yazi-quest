@@ -304,12 +304,7 @@ export async function startLevel(
   await page.waitForLoadState('networkidle');
   await page.waitForLoadState('domcontentloaded');
 
-  // Since `intro=false` is now the sole mechanism, we just need to wait for the game to be ready.
-  // The most reliable way is to wait for the status bar, which signals the main UI is rendered.
   await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 1000 });
-
-  // Assert level started incomplete - this is now redundant if we wait for the status bar,
-  // but we keep it as a sanity check.
   await assertLevelStartedIncomplete(page);
 }
 

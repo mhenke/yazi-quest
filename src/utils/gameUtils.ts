@@ -1,5 +1,4 @@
 import { GameState, Level, FileNode } from '../types';
-import { KEYBINDINGS } from '../constants/keybindings';
 import { getVisibleItems } from './viewHelpers';
 import { isProtected } from './fsHelpers';
 
@@ -11,20 +10,6 @@ export const getRandomElement = <T>(arr: T[]): T => {
     throw new Error('Cannot get random element from empty array');
   }
   return arr[Math.floor(Math.random() * arr.length)];
-};
-
-/**
- * Finds the narrative description for a given key.
- */
-export const getNarrativeAction = (key: string): string | null => {
-  const binding = KEYBINDINGS.find((b) => b.keys.includes(key));
-  if (binding && binding.narrativeDescription) {
-    if (Array.isArray(binding.narrativeDescription)) {
-      return getRandomElement(binding.narrativeDescription);
-    }
-    return binding.narrativeDescription as string;
-  }
-  return null;
 };
 
 // Define the pattern used in level 9 to identify keeper files
