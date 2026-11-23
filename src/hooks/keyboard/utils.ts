@@ -47,9 +47,9 @@ const hasFilterViolation = (gameState: GameState): boolean => {
   return !!(currentDirNode && gameState.filters[currentDirNode.id]);
 };
 
-// Helper to check for active search results
-const hasSearchViolation = (gameState: GameState): boolean => {
-  return !!(gameState.searchQuery && gameState.searchResults.length > 0);
+// An empty result list is still an active Search.
+export const hasSearchViolation = (gameState: GameState): boolean => {
+  return gameState.searchQuery !== null;
 };
 
 // Helper to check for custom sort
@@ -64,7 +64,7 @@ const hasHiddenViolation = (gameState: GameState): boolean => {
 
 /**
  * True when the view is not the baseline CRL requires (hidden files shown, custom
- * sort, an active filter, or live search results). Mirrors the checks above so the
+ * sort, an active filter, or an active Search). Mirrors the checks above so the
  * auto-fix path and the navigation guard can never disagree about what a violation is.
  */
 export const hasBaselineViolation = (gameState: GameState): boolean =>

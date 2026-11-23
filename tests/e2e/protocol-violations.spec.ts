@@ -199,4 +199,60 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
     await page.waitForTimeout(DEFAULT_DELAY);
     await expect(page.getByTestId('status-bar')).toContainText('L7');
   });
+
+  test('Search baseline: an empty result list still blocks navigation', async ({ page }) => {
+    await search(page, 'no-such-file-7734');
+    const pane = page.getByRole('listbox', { name: 'File Browser', exact: true });
+    await expect(pane.getByRole('option')).toHaveCount(0);
+    await page.keyboard.press('j');
+    await expect(page.getByRole('alertdialog')).toContainText('Active search session detected.');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    await expect(pane.getByRole('option').first()).toBeVisible();
+  });
+
+  for (const { query, recovery } of [
+    { query: 'uplink', recovery: 'Escape' },
+    { query: 'no-such-file-7734', recovery: 'Shift+Enter' },
+  ]) {
+    test(`Search baseline: completion waits for ${recovery} after ${query}`, async ({ page }) => {
+      await startLevel(page, 6, {
+        intro: false,
+        extraParams: {
+          tasks: 'batch-descend,recursive-search,select-all-search,deploy-to-vault',
+        },
+      });
+      await gotoCommand(page, 'c');
+      await enterDirectory(page, 'vault');
+      await expect(page.getByTestId('task-counter')).toHaveText('Tasks: 4/5');
+      await search(page, query);
+      await expect(page.getByTestId('search-input')).not.toBeVisible();
+      if (query === 'uplink') {
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId('file-uplink_v1.conf')
+        ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole('listbox', { name: 'File Browser', exact: true }).getByRole('option')
+        ).toHaveCount(0);
+      }
+
+      await addItem(page, 'training_data/');
+      await expect(page.getByTestId('task-counter')).toHaveText('Tasks: 5/5');
+      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+      await expect(page.getByRole('alertdialog')).toContainText('Active search session detected.');
+
+      await page.keyboard.press(recovery);
+      await expect(page.getByRole('alertdialog')).not.toBeVisible();
+      await expect(page.getByTestId('status-bar').getByText('L6', { exact: true })).toBeVisible();
+      await expect(
+        page.getByTestId('filesystem-pane-active').getByTestId('file-training_data')
+      ).toBeVisible();
+      await expect(page.getByTestId('mission-complete')).toContainText('BATCH OPERATIONS');
+
+      await page.keyboard.press('Shift+Enter');
+      await expect(page.getByTestId('status-bar').getByText('L7', { exact: true })).toBeVisible();
+      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+    });
+  }
 });

@@ -64,7 +64,11 @@ import { useReduceMotion } from './hooks/useReduceMotion';
 import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
 import { RequirementNotice } from './components/RequirementNotice';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
-import { getActionIntensity, hasBaselineViolation } from './hooks/keyboard/utils';
+import {
+  getActionIntensity,
+  hasBaselineViolation,
+  hasSearchViolation,
+} from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
 import { createInitialState } from './hooks/initialState';
@@ -507,6 +511,15 @@ export default function App() {
         dispatch({ type: 'SET_MODE', mode: 'normal' });
       }
 
+      if (hasSearchViolation(gameState)) {
+        warningActive = true;
+        if (!gameState.showSearchWarning) {
+          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: true });
+        }
+      } else if (gameState.showSearchWarning) {
+        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: false });
+      }
+
       // 4. Success Modal State
       if (warningActive) {
         if (gameState.showSuccessToast) {
@@ -593,6 +606,8 @@ export default function App() {
     gameState.showSuccessToast,
     gameState.showHiddenWarning,
     gameState.showSortWarning,
+    gameState.showSearchWarning,
+    gameState.searchQuery,
     gameState.filters,
     gameState.fs,
     gameState.currentPath,
@@ -633,7 +648,7 @@ export default function App() {
     const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
     const isFilterClear = !currentDirNode || !gameState.filters[currentDirNode.id];
 
-    // Priority: Hidden > Sort > Filter
+    // Priority: Hidden > Sort > Filter > Search
     if (gameState.showHidden) {
       dispatch({
         type: 'SET_MODAL_VISIBILITY',
@@ -648,6 +663,10 @@ export default function App() {
       return;
     } else if (!isFilterClear) {
       dispatch({ type: 'SET_MODE', mode: 'filter-warning' });
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
+      return;
+    } else if (hasSearchViolation(gameState)) {
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: true });
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'success', visible: false });
       return;
     }
@@ -986,23 +1005,21 @@ export default function App() {
     if (currentDir && gameState.filters[currentDir.id]) {
       dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
     }
-    if (gameState.searchQuery) {
+    if (hasSearchViolation(gameState)) {
       dispatch({ type: 'SET_SEARCH', query: null, results: [] });
     }
 
     setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
-  }, [
-    gameState.showHidden,
-    gameState.sortBy,
-    gameState.sortDirection,
-    gameState.fs,
-    gameState.currentPath,
-    gameState.filters,
-    gameState.searchQuery,
-    dispatch,
-  ]);
+  }, [gameState, dispatch]);
 
   const dismissWarning = useCallback((modal: 'filterWarning' | 'searchWarning' | 'sortWarning') => {
+    if (modal === 'searchWarning') {
+      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+      dispatch({ type: 'SET_CURSOR', index: 0 });
+      dispatch({ type: 'SET_SELECTION', ids: [] });
+      dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
+      dispatch({ type: 'MARK_ACTION_USED', actionId: 'SearchCleared' });
+    }
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal, visible: false });
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
@@ -1073,8 +1090,7 @@ export default function App() {
         if (tasksComplete) {
           handleAutoFixBaseline();
         } else {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+          dismissWarning('searchWarning');
         }
         return true;
       }
@@ -1152,7 +1168,7 @@ export default function App() {
           if (currentDir && gameState.filters[currentDir.id]) {
             dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
           }
-          if (gameState.searchQuery) {
+          if (hasSearchViolation(gameState)) {
             dispatch({ type: 'SET_SEARCH', query: null, results: [] });
           }
 

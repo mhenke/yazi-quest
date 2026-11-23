@@ -13,7 +13,12 @@ import { describe, expect, it } from 'vitest';
 import type { FileNode, GameState, SortBy, SortDirection } from '../types';
 import { gameReducer, type Action } from './gameReducer';
 import { createInitialState } from './initialState';
-import { getAllDirectoriesWithPaths, getNodeById, getNodeByPath } from '../utils/fsHelpers';
+import {
+  deleteNode,
+  getAllDirectoriesWithPaths,
+  getNodeById,
+  getNodeByPath,
+} from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 
 const stepArb = record({
@@ -168,5 +173,74 @@ describe('property: reducer keeps list and navigation state coherent', () => {
       }),
       { numRuns: 100 }
     );
+  });
+
+  it('clamps the cursor when DELETE_NODES shrinks the visible list', () => {
+    const initial = createInitialState();
+    const visible = getVisibleItems(initial);
+    expect(visible.length).toBeGreaterThan(0);
+
+    assert(
+      property(
+        integer({ min: 0, max: visible.length - 1 }),
+        integer({ min: 0, max: visible.length - 1 }),
+        (cursorIndex, targetIndex) => {
+          const cursorState =
+            initial.cursorIndex === cursorIndex
+              ? initial
+              : gameReducer(initial, { type: 'SET_CURSOR', index: cursorIndex });
+
+          const deleted = deleteNode(initial.fs, initial.currentPath, visible[targetIndex].id);
+          expect(deleted.ok).toBe(true);
+          if (!deleted.ok) return;
+
+          const next = gameReducer(cursorState, { type: 'DELETE_NODES', newFs: deleted.value });
+          const remaining = getVisibleItems(next);
+
+          expect(next.cursorIndex).toBeGreaterThanOrEqual(0);
+          expect(next.cursorIndex).toBeLessThanOrEqual(Math.max(0, remaining.length - 1));
+
+          const cursorId = visible[cursorIndex].id;
+          const expectedId =
+            visible[targetIndex].id === cursorId
+              ? (visible[cursorIndex + 1]?.id ?? visible[cursorIndex - 1]?.id)
+              : cursorId;
+          if (remaining.length > 0) {
+            expect(remaining[next.cursorIndex]?.id).toBe(expectedId);
+          }
+        }
+      ),
+      { numRuns: 200 }
+    );
+  });
+
+  it('keeps the same node when earlier items go, else moves to the next survivor', () => {
+    const initial = createInitialState();
+    const visible = getVisibleItems(initial);
+    expect(visible.length).toBeGreaterThanOrEqual(4);
+
+    const deleteVisible = (state: GameState, nodes: FileNode[]): GameState => {
+      let fs = state.fs;
+      for (const node of nodes) {
+        const result = deleteNode(fs, state.currentPath, node.id);
+        expect(result.ok).toBe(true);
+        if (result.ok) fs = result.value;
+      }
+      return gameReducer(state, { type: 'DELETE_NODES', newFs: fs });
+    };
+
+    const atThird = gameReducer(initial, { type: 'SET_CURSOR', index: 2 });
+
+    const earlierGone = deleteVisible(atThird, [visible[0], visible[1]]);
+    expect(getVisibleItems(earlierGone)[earlierGone.cursorIndex].id).toBe(visible[2].id);
+
+    const cursorAndEarlierGone = deleteVisible(atThird, [visible[0], visible[2]]);
+    expect(getVisibleItems(cursorAndEarlierGone)[cursorAndEarlierGone.cursorIndex].id).toBe(
+      visible[3].id
+    );
+
+    const allGone = deleteVisible(atThird, visible);
+    expect(getVisibleItems(allGone)).toEqual([]);
+    expect(allGone.cursorIndex).toBe(0);
   });
 });

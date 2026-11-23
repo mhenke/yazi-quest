@@ -317,6 +317,38 @@ function handleTick(state: GameState, action: Extract<Action, { type: 'TICK' }>)
   return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
 }
 
+function resolveCursorAfterDelete(
+  before: FileNode[],
+  after: FileNode[],
+  cursorIndex: number
+): number {
+  const cursorId = before[cursorIndex]?.id;
+  const sameNode = cursorId ? after.findIndex((item) => item.id === cursorId) : -1;
+  if (sameNode !== -1) return sameNode;
+
+  for (let i = cursorIndex + 1; i < before.length; i++) {
+    const nextIndex = after.findIndex((item) => item.id === before[i].id);
+    if (nextIndex !== -1) return nextIndex;
+  }
+  return Math.max(0, after.length - 1);
+}
+
+function applyDeleteResult(state: GameState, newFs: FileNode): GameState {
+  const before = getVisibleItems(state);
+  const nextState: GameState = {
+    ...state,
+    fs: newFs,
+    selectedIds: [],
+    pendingDeleteIds: [],
+    mode: 'normal',
+  };
+  const after = getVisibleItems(nextState);
+  return {
+    ...nextState,
+    cursorIndex: resolveCursorAfterDelete(before, after, state.cursorIndex),
+  };
+}
+
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'SHOW_TOAST':
@@ -678,13 +710,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'DELETE_NODES':
-      return {
-        ...state,
-        fs: action.newFs,
-        selectedIds: [],
-        pendingDeleteIds: [],
-        mode: 'normal',
-      };
+      return applyDeleteResult(state, action.newFs);
 
     case 'ADD_NODE':
       return {

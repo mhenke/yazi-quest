@@ -1,5 +1,5 @@
 import { GameState, FileNode, Level } from '../../types';
-import { getNarrativeAction, checkProtocolViolations } from './utils';
+import { getNarrativeAction, checkProtocolViolations, hasSearchViolation } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { isProtected, getNodeByPath } from '../../utils/fsHelpers';
 import { Action } from '../gameReducer';
@@ -125,7 +125,7 @@ export const handleSystemParamsKeyDown = (
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
       dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
 
-      if (gameState.searchQuery) {
+      if (hasSearchViolation(gameState)) {
         showNotification(getNarrativeAction('Escape') || 'Search cleared', 4000);
         dispatch({ type: 'SET_SEARCH', query: null, results: [] });
         dispatch({ type: 'SET_CURSOR', index: 0 });

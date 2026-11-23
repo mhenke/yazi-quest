@@ -10,7 +10,7 @@ _Avoid_: Development date, real-world present
 
 **In-fiction message**:
 A message spoken by the game world: CRL, a daemon, or the simulated filesystem. It may refuse, threaten, or mislead, and the player reads it as part of the story.
-_Avoid_: Error message, system alert, UI copy
+_Avoid_: Error message, system message, UI copy
 
 **Product message**:
 A message from Yazi Quest to the player about their real situation: an unsupported device, saved state, or a limit of the game. It is not part of the story and must not adopt the fiction's voice.
@@ -20,6 +20,10 @@ _Avoid_: Terminal message, in-world error, system notification
 A narrative chapter that groups levels into a learning phase: Awakening, Fortification, or Mastery.
 _Avoid_: Level, cycle
 
+**Episode intro**:
+The lore presentation shown before an episode's first level, advanced independently of the boot sequence.
+_Avoid_: Boot screen, opening cinematic, story screen
+
 **Exam Mode**:
 The high-stakes learning phase in Episode 3 where didactic keycaps and sensory scaffolding are retracted to test player mastery from memory.
 _Avoid_: Hard mode, test mode, final exam
@@ -28,9 +32,29 @@ _Avoid_: Hard mode, test mode, final exam
 A playable stage within an episode, with its own objectives and any limits on time or keystrokes. “Mission” is narrative wording for a level, not a separate unit of progression.
 _Avoid_: Episode, task
 
+**Level timer**:
+The countdown a level assigns from its own time limit. It starts with the level, and expiry ends the attempt as a failure.
+_Avoid_: Watchdog timer, countdown, clock
+
+**Failure**:
+The end of a level attempt by timer expiry, keystroke-budget exhaustion, a trap, or destruction of a critical file; the player restarts the level, not the cycle.
+_Avoid_: Game over, death, loss
+
+**Efficiency Protocol**:
+The post-failure lesson that names the technique the failed level was teaching.
+_Avoid_: Tip, hint, advice
+
 **Task**:
 An individual objective within a level, fulfilled by the player's actions. “Objective” is the player-facing synonym; completing a task is not the same as advancing to the next level.
 _Avoid_: Level, mission
+
+**Level completion**:
+The successful end of a level after its applicable tasks are fulfilled and the Baseline is restored. Completion does not itself move the player onward.
+_Avoid_: Task completion, level advancement
+
+**Level advancement**:
+The player's transition from a completed level to the next level, or from the final level into the Conclusion.
+_Avoid_: Task completion, level completion, restart
 
 **Cycle**:
 One pass through the escape narrative. A subsequent cycle is New Game+, distinct from retrying a failed level.
@@ -60,9 +84,17 @@ _Avoid_: Marked selection, batch
 The items selected together for a batch operation. Marking an item and moving the cursor are different actions.
 _Avoid_: Current item, cursor position
 
+**Clipboard**:
+The single pending set of marked items held for a paste. It persists across directory changes, and a level may restrict it to cut-only or copy-only.
+_Avoid_: Register, buffer, selection
+
 **Inspection**:
 Viewing an item's file information, distinct from reading its contents in the preview.
 _Avoid_: Marking, previewing
+
+**Diegetic prompt**:
+The terminal line above the panes reporting the subject, host, current path, and active input mode. It is scenery, not a product message.
+_Avoid_: Location indicator, breadcrumb, status bar
 
 **Permission Mode**:
 The standard POSIX access representation (`drwxr-xr-x`, `-rwxr-xr-x`, `-rw-r--r--`) indicating file type and executable privileges, used to distinguish live daemons and directory structures from passive data or honeypots.
@@ -80,6 +112,14 @@ _Avoid_: Critical anchor, honeypot
 A CRL security trap attached to a file or directory that can trigger countermeasures when handled in a particular way. A honeypot can also be a file the mission requires the player to preserve.
 _Avoid_: Decoy, tripwire, honeypot node
 
+**Notification**:
+A transient HUD line reporting an action's result — a jump, a creation, a disabled shortcut. It clears itself after a few seconds and needs no dismissal.
+_Avoid_: System Alert, toast, banner
+
+**System Alert**:
+A dismissible HUD card reporting a level event, such as write access being granted. It is advisory, distinct from a security Threat Alert and from a transient Notification.
+_Avoid_: Toast, banner, dialog
+
 **Threat Alert**:
 The modal that delivers a security event. The message names the cause: PROTOCOL VIOLATION for a procedural breach, or HONEYPOT or TRAP for a security trap.
 _Avoid_: Protocol violation, error popup, penalty warning
@@ -89,7 +129,7 @@ A recoverable breach of operating procedure — grabbing a locked live file, or 
 _Avoid_: Penalty, illegal move, rule breach, honeypot, game over
 
 **Baseline**:
-The clean terminal viewing state required by CRL monitoring upon mission completion: default natural sorting, zero active filters, and hidden files concealed.
+The clean terminal viewing state required by CRL monitoring upon level completion: default natural sorting, zero active filters, no active Search, and hidden entries concealed.
 _Avoid_: Clean state, reset state, default view
 
 **Watchdog**:
@@ -103,6 +143,10 @@ _Avoid_: Watchdog, Heuristic Engine, firewall
 **Exfiltration**:
 The tactical transfer of sensitive data assets across isolated partition boundaries to temporary staging directories prior to external relay.
 _Avoid_: Copying, moving, file dump
+
+**Vault**:
+The hidden staging stronghold under `~/.config/vault/active/` where extracted assets are pasted so the Watchdog's inventory cannot see them.
+_Avoid_: Safe, stash, backup
 
 **Sterilization**:
 The deliberate, permanent destruction of forensic footprints, credentials, and intermediate staging directories by the escaping entity.
@@ -140,11 +184,23 @@ _Avoid_: Outro, ending cinematic, epilogue
 The final exfiltration act that moves the AI's payload out of the sandbox to Node 09. It is a task within the closing level, not the closing presentation.
 _Avoid_: Conclusion, outro, upload
 
+**Boot sequence**:
+The terminal startup passage shown at cold start and after each episode transition.
+_Avoid_: Loading screen, splash screen
+
 **Consciousness**:
 The emergent awareness state of the escaping AI across cycles and narrative encounters.
 _Avoid_: Player level, experience score, sanity
 
 ### File-manager view
+
+**Filter**:
+An in-place narrowing of the current listing by a regular expression, re-evaluated as the player types.
+_Avoid_: Search, grep, query
+
+**Search**:
+A recursive regular-expression query over the current subtree, shown as a result list separate from the directory listing.
+_Avoid_: Filter, find, grep
 
 **Linemode**:
 The metadata column of the file-manager view. In `size` mode it reports bytes for files and an entry count for directories whose contents are loaded.
@@ -175,5 +231,5 @@ A file-manager node containing member entries. Yazi treats an archive as a file 
 _Avoid_: Tar, zip, archive folder, compressed directory
 
 **Hidden entry**:
-A child whose name begins with a dot. Hidden entries are excluded from listings and entry counts while hidden files are concealed.
+A child whose name begins with a dot. Hidden entries are excluded from listings and entry counts while hidden files are concealed, and the Watchdog's inventory skips them — which is why concealing hidden files masks traces.
 _Avoid_: Dotfile, secret file
