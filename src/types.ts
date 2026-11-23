@@ -236,11 +236,8 @@ export interface GameState {
   usedSearchCleared?: boolean; // Tracks if player cleared a search
   usedFilter?: boolean; // Tracks if player used 'f' for filter mode
 
-  // Ghost dialogue system (AI-7733 consciousness)
-
   // Consciousness meter (AI-7734 emergence tracking)
   consciousnessLevel: number; // 0-100 hidden stat
-  consciousnessTriggers: Record<string, boolean>; // Track triggered consciousness milestones
 
   // Lifted UI State (Centralized Input)
   helpScrollPosition?: number; // Scroll offset for HelpModal

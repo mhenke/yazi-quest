@@ -299,7 +299,8 @@ function createInitialState(): GameState {
     isGameOver: false,
     gameOverReason: undefined,
     stats: { fuzzyJumps: 0, fzfFinds: 0, filterUsage: 0, renames: 0, archivesEntered: 0 },
-    settings: { soundEnabled: true },
+    settings: { soundEnabled: true, narrativeEffects: 'full' },
+    consciousnessLevel: 0,
     fuzzySelectedIndex: 0,
     usedG: false,
     usedGI: false,
@@ -344,7 +345,7 @@ function createInitialState(): GameState {
     alertMessage: '',
     showSuccessToast: false,
     isBooting: false,
-  } as GameState;
+  };
 }
 
 export default function App() {

@@ -331,7 +331,6 @@ describe('gameUtils', () => {
         isBooting: false,
         alerts: [],
         consciousnessLevel: 0,
-        consciousnessTriggers: {},
       };
 
       const level: Level = {
@@ -427,7 +426,6 @@ describe('gameUtils', () => {
         isBooting: false,
         alerts: [],
         consciousnessLevel: 0,
-        consciousnessTriggers: {},
       };
 
       const level: Level = {
@@ -523,7 +521,6 @@ describe('gameUtils', () => {
         isBooting: false,
         alerts: [],
         consciousnessLevel: 0,
-        consciousnessTriggers: {},
       };
 
       const level: Level = {
