@@ -1,5 +1,5 @@
 import type { FileNode, GameState } from '../../types';
-import { getNodeById, findNodeByName, id } from '../../utils/fsHelpers';
+import { getNodeById, findNodeByName } from '../../utils/fsHelpers';
 import { UPLINK_TRAP_CONTENT } from '../protocols';
 import { FORCE_SCENARIO } from '../timings';
 
@@ -60,21 +60,21 @@ const getWorkspaceSystemdCoreChildren = (
   isCorrupted: boolean = false
 ): FileNode[] => [
   {
-    id: id('ws-gitignore'),
+    id: 'ws-gitignore',
     name: '.gitignore',
     type: 'file',
     content: 'target/\n*.log\n*.snapshot',
     parentId,
   },
   {
-    id: id('ws-cargo-toml'),
+    id: 'ws-cargo-toml',
     name: 'Cargo.toml',
     type: 'file',
     content: '[package]\nname = "systemd-core"\nversion = "0.1.0"\n\n[dependencies]',
     parentId,
   },
   {
-    id: id('ws-readme-md'),
+    id: 'ws-readme-md',
     name: 'README.md',
     type: 'file',
     content:
@@ -82,14 +82,14 @@ const getWorkspaceSystemdCoreChildren = (
     parentId,
   },
   {
-    id: id('ws-kernel-panic'),
+    id: 'ws-kernel-panic',
     name: 'kernel-panic.log',
     type: 'file',
     content: 'KERNEL PANIC: Out of memory at 0x99283f',
     parentId,
   },
   {
-    id: id('ws-lib-rs'),
+    id: 'ws-lib-rs',
     name: 'lib.rs',
     type: 'file',
     content:
@@ -97,35 +97,35 @@ const getWorkspaceSystemdCoreChildren = (
     parentId,
   },
   {
-    id: id('ws-main-rs'),
+    id: 'ws-main-rs',
     name: 'main.rs',
     type: 'file',
     content: 'fn main() {\n    println!("Initializing workspace systemd-core...");\n}',
     parentId,
   },
   {
-    id: id('ws-system-log'),
+    id: 'ws-system-log',
     name: 'system.log',
     type: 'file',
     content: 'Jan 10 16:20:20 workspace-systemd-core[882]: Service started.',
     parentId,
   },
   {
-    id: id('ws-uplink-v0-bak'),
+    id: 'ws-uplink-v0-bak',
     name: 'uplink_v0.conf.bak',
     type: 'file',
     content: '# Backup of old protocol',
     parentId,
   },
   {
-    id: id('ws-crash-dump'),
+    id: 'ws-crash-dump',
     name: 'crash_dump.log',
     type: 'file',
     content: '[SYSTEM CRASH DUMP]\nMemory Address: 0x000000\nReason: NULL_POINTER_EXCEPTION',
     parentId,
   },
   {
-    id: id('ws-target-uplink'),
+    id: 'ws-target-uplink',
     name: 'uplink_v1.conf',
     type: 'file',
     content: isCorrupted
@@ -134,7 +134,7 @@ const getWorkspaceSystemdCoreChildren = (
     parentId,
   },
   {
-    id: id('ws-uplink-v1-snapshot'),
+    id: 'ws-uplink-v1-snapshot',
     name: 'uplink_v1.conf.snapshot',
     type: 'file',
     content: '# Weekly binary snapshot',
