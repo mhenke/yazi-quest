@@ -2,13 +2,22 @@ import {
   assert,
   property,
   array,
+  boolean,
+  integer,
   record,
   constantFrom,
   stringMatching,
   type Arbitrary,
 } from 'fast-check';
 import { describe, it, expect } from 'vitest';
-import { addNode, deleteNode } from './fsHelpers';
+import {
+  addNode,
+  deleteNode,
+  findPathById,
+  getRecursiveContent,
+  getNodeByPath,
+  resolvePath,
+} from './fsHelpers';
 import { sortNodes } from './sortHelpers';
 import { FileNode } from '../types';
 
@@ -144,6 +153,155 @@ describe('property: sortNodes ordering invariants', () => {
         const desc = sortNodes(nodes, 'alphabetical', 'desc').map((n) => n.name);
         expect(desc).toEqual([...asc].reverse());
       }),
+      { numRuns: 100 }
+    );
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Path algebra + recursive listing (fsHelpers)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Trees come from a seeded PRNG (mulberry32) so the counterexample fast-check
+ * prints rebuilds the exact shape: 0-3 subdirectories and 0-4 files per
+ * directory, some entries dot-prefixed, and roughly a third of the directories
+ * replaced by an archive that does carry children - the shape the "archives
+ * are opaque" rule needs. Names are unique, which makes resolvePath injective
+ * and therefore checkable against the ground truth recorded at build time.
+ */
+const prng = (seed: number): (() => number) => {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+type Entry = { node: FileNode; path: string[]; namePath: string[] };
+type Forest = { root: FileNode; entries: Entry[] };
+
+const arbForest: Arbitrary<Forest> = integer({ min: 1, max: 2 ** 31 - 1 }).map((seed) => {
+  const rand = prng(seed);
+  const int = (n: number) => Math.floor(rand() * n);
+  const entries: Entry[] = [];
+  let next = 0;
+  const make = (
+    type: FileNode['type'],
+    parentPath: string[],
+    parentNamePath: string[],
+    depth: number
+  ): FileNode => {
+    const base = `fnd${next}`;
+    const node: FileNode = { id: `n${next++}`, name: rand() < 0.3 ? `.${base}` : base, type };
+    const path = [...parentPath, node.id];
+    const namePath = [...parentNamePath, node.name];
+    entries.push({ node, path, namePath });
+    if (type !== 'file' && depth < 4) {
+      const children: FileNode[] = [];
+      for (let i = int(4); i > 0; i--) {
+        children.push(make(rand() < 0.33 ? 'archive' : 'dir', path, namePath, depth + 1));
+      }
+      for (let i = int(5); i > 0; i--) children.push(make('file', path, namePath, depth + 1));
+      node.children = children;
+    }
+    return node;
+  };
+  return { root: make('dir', [], [], 0), entries };
+});
+
+/** `/name/...` for a descendant, `/` for the root, from build-time names. */
+const expectedDisplay = (namePath: string[]): string =>
+  namePath.length <= 1 ? '/' : `/${namePath.slice(1).join('/')}`;
+
+/**
+ * Ground truth for getRecursiveContent: every node below the start whose own
+ * name is visible and whose intermediate ancestors are neither hidden nor an
+ * archive. The start itself is never filtered - opening an archive lists its
+ * contents, which is exactly what entering a level's directory does.
+ */
+const expectedRecursive = (forest: Forest, startPath: string[], showHidden: boolean): string[] => {
+  const byId = new Map(forest.entries.map((e) => [e.node.id, e]));
+  return forest.entries
+    .filter(({ node, path }) => {
+      // strict descendant of the start node
+      if (path.length <= startPath.length) return false;
+      if (!startPath.every((id, i) => path[i] === id)) return false;
+      if (!showHidden && node.name.startsWith('.')) return false;
+      return path.slice(startPath.length, -1).every((id) => {
+        const anc = byId.get(id)!;
+        if (anc.node.type === 'archive') return false;
+        return showHidden || !anc.node.name.startsWith('.');
+      });
+    })
+    .map((e) => e.node.id)
+    .sort();
+};
+
+describe('property: path algebra is self-consistent', () => {
+  it('every node has a path that round-trips through getNodeByPath', () => {
+    assert(
+      property(arbForest, (forest) => {
+        const { root, entries } = forest;
+        expect(new Set(entries.map((e) => e.node.id)).size).toBe(entries.length);
+        for (const { node, path, namePath } of entries) {
+          const found = findPathById(root, node.id);
+          expect(found).toEqual(path);
+          expect(getNodeByPath(root, found)).toBe(node);
+          expect(resolvePath(root, found)).toBe(expectedDisplay(namePath));
+        }
+      }),
+      { numRuns: 200 }
+    );
+  });
+
+  it('getNodeByPath returns undefined for ids outside the tree', () => {
+    assert(
+      property(arbForest, stringMatching(/^zz[0-9]{1,4}$/), (forest, absent) => {
+        expect(findPathById(forest.root, absent)).toBeUndefined();
+        expect(getNodeByPath(forest.root, [forest.root.id, absent])).toBeUndefined();
+      }),
+      { numRuns: 100 }
+    );
+  });
+});
+
+describe('property: getRecursiveContent lists and labels correctly', () => {
+  it('labels each item with its resolved path and last id, and never leaks archive children', () => {
+    assert(
+      property(
+        arbForest,
+        array(integer({ min: 0, max: 1_000_000 }), { minLength: 1, maxLength: 5 }),
+        boolean(),
+        (forest, picks, showHidden) => {
+          const containers = forest.entries.filter((e) => e.node.type !== 'file');
+          const starts = picks.map((p) => containers[p % containers.length]);
+          starts.unshift(forest.entries[0]);
+          const byId = new Map(forest.entries.map((e) => [e.node.id, e]));
+          for (const start of starts) {
+            const items = getRecursiveContent(forest.root, start.path, undefined, showHidden);
+
+            expect(items.map((i) => i.id).sort()).toEqual(
+              expectedRecursive(forest, start.path, showHidden)
+            );
+            for (const item of items) {
+              expect(item.path!.at(-1)).toBe(item.id);
+              expect(item.display).toBe(resolvePath(forest.root, item.path));
+              expect(item.display).toBe(expectedDisplay(byId.get(item.id)!.namePath));
+              expect(getNodeByPath(forest.root, item.path)).toBe(byId.get(item.id)!.node);
+            }
+
+            // Archives stay opaque: nothing below a returned archive is listed.
+            for (const archive of items.filter((i) => i.type === 'archive')) {
+              const prefix = `${archive.path!.join('/')}/`;
+              expect(items.some((other) => other.path!.join('/').startsWith(prefix))).toBe(false);
+            }
+          }
+        }
+      ),
       { numRuns: 100 }
     );
   });

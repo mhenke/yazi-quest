@@ -294,6 +294,58 @@ describe('fsHelpers', () => {
         }
       }
     });
+
+    it('treats a same-name sibling of another type as a conflict', () => {
+      const path = ['root', 'home', 'guest'];
+      const withDir = addNodeWithConflictResolution(root, path, {
+        id: 'shared-dir',
+        name: 'shared',
+        type: 'dir',
+        parentId: 'guest',
+        children: [],
+      });
+      expect(withDir.ok).toBe(true);
+      if (!withDir.ok) return;
+
+      const withFile = addNodeWithConflictResolution(withDir.value, path, {
+        id: 'shared-file',
+        name: 'shared',
+        type: 'file',
+        parentId: 'guest',
+      });
+      expect(withFile.ok).toBe(true);
+      if (!withFile.ok) return;
+
+      const names = getNodeById(withFile.value, 'guest')?.children?.map((c) => c.name) ?? [];
+      expect(names).toContain('shared');
+      expect(names).toContain('shared_1');
+      expect(new Set(names).size).toBe(names.length);
+    });
+
+    it('keeps a leading-dot name hidden when suffixing a conflict', () => {
+      const path = ['root', 'home', 'guest'];
+      const first = addNodeWithConflictResolution(root, path, {
+        id: 'dot-env-1',
+        name: '.env',
+        type: 'file',
+        parentId: 'guest',
+      });
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+
+      const second = addNodeWithConflictResolution(first.value, path, {
+        id: 'dot-env-2',
+        name: '.env',
+        type: 'file',
+        parentId: 'guest',
+      });
+      expect(second.ok).toBe(true);
+      if (!second.ok) return;
+
+      const names = getNodeById(second.value, 'guest')?.children?.map((c) => c.name) ?? [];
+      expect(names).toContain('.env_1');
+      expect(names).not.toContain('_1.env');
+    });
   });
 
   describe('isProtected', () => {
@@ -533,6 +585,14 @@ describe('fsHelpers', () => {
       expect(res.error).toBeNull();
       expect(res.targetNode?.name).toBe('new.sh');
       expect(getNodeByPath(res.fs, ['root', 'bin'])?.type).toBe('dir');
+    });
+
+    it('rejects paths that name no entry', () => {
+      for (const input of ['/', '~/']) {
+        const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], input);
+        expect(res.error).toBe('Invalid path');
+        expect(res.targetNode).toBeUndefined();
+      }
     });
   });
 });
