@@ -21,7 +21,9 @@ export function isValidZoxideData(data: unknown): data is Record<string, ZoxideE
     }
 
     const entry = value as Record<string, unknown>;
-    if (typeof entry.count !== 'number' || typeof entry.lastAccess !== 'number') {
+    // Number.isFinite also rejects non-numbers; guards NaN/Infinity, which
+    // typeof 'number' would let through this trust-boundary validator.
+    if (!Number.isFinite(entry.count) || !Number.isFinite(entry.lastAccess)) {
       return false;
     }
 

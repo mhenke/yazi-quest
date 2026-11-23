@@ -1,6 +1,6 @@
 import { GameState, FileNode } from '../types';
 
-import { getNodeByPath } from './fsHelpers';
+import { getNodeByPath, isVisibleEntry } from './fsHelpers';
 import { sortNodes } from './sortHelpers';
 
 // Helper to create a regex from the filter string, handling smart-case.
@@ -11,7 +11,7 @@ export const getFilterRegex = (input: string): RegExp | null => {
 
   // Smart-case: if filter contains any uppercase, make it case-sensitive.
   // We do NOT treat escapes as case-sensitive triggers, because the user might just be escaping a dot.
-  const isCaseSensitive = /[A-Z]/.test(input);
+  const isCaseSensitive = /[A-Z]/.test(input.replace(/\\./g, ''));
   const flags = isCaseSensitive ? '' : 'i';
 
   try {
@@ -40,6 +40,16 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
     // If a search is active, return the sorted search results
     // We must apply sorting here to match what the user sees in the UI
     let items = [...state.searchResults];
+
+    if (!state.showHidden) {
+      // Results are a snapshot from when the search ran; hidden may have changed since.
+      items = items.filter((item) => {
+        const displayPath = (item as FileNode & { displayPath?: string }).displayPath;
+        return displayPath
+          ? !displayPath.split('/').some((part) => part.startsWith('.'))
+          : !item.name.startsWith('.');
+      });
+    }
 
     // Apply active filter if present (allows filtering within search results);
     // no currentDir means no filtering of search results.
@@ -72,21 +82,19 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
 const getAllFiles = (
   node: FileNode,
   pathPrefix: string,
-  idPath: string[]
+  idPath: string[],
+  showHidden: boolean
 ): { node: FileNode; displayPath: string; path: string[] }[] => {
   let files: { node: FileNode; displayPath: string; path: string[] }[] = [];
 
-  if (node.children) {
-    for (const child of node.children) {
-      const newDisplayPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
-      const newIdPath = [...idPath, child.id];
-      files.push({ node: child, displayPath: newDisplayPath, path: newIdPath });
+  for (const child of (node.children ?? []).filter((c) => isVisibleEntry(c, showHidden))) {
+    const newDisplayPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+    const newIdPath = [...idPath, child.id];
+    files.push({ node: child, displayPath: newDisplayPath, path: newIdPath });
 
-      if (child.children) {
-        // FIX: Do not recurse into archives. They are opaque to search.
-        if (child.type === 'archive') continue;
-        files = files.concat(getAllFiles(child, newDisplayPath, newIdPath));
-      }
+    // Archives are opaque to search: list them, never descend.
+    if (child.children && child.type !== 'archive') {
+      files = files.concat(getAllFiles(child, newDisplayPath, newIdPath, showHidden));
     }
   }
   return files;
@@ -104,15 +112,10 @@ export const getRecursiveSearchResults = (
   const startNode = getNodeByPath(rootNode, startPath);
   if (!startNode) return [];
 
-  const allDescendants = getAllFiles(startNode, '', startPath);
+  const allDescendants = getAllFiles(startNode, '', startPath, showHidden);
 
   const results = allDescendants
-    .filter((item) => {
-      if (!showHidden && item.node.name.startsWith('.')) {
-        return false;
-      }
-      return regex.test(item.displayPath);
-    })
+    .filter((item) => regex.test(item.displayPath))
     .map((item) => ({
       ...item.node,
       displayPath: item.displayPath,

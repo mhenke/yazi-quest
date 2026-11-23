@@ -35,9 +35,12 @@ export function getBaseFuzzyCandidates(gameState: GameState): FuzzyCandidate[] {
       });
   }
 
-  const items = getRecursiveContent(gameState.fs, gameState.currentPath, currentLevel).filter(
-    (c) => c.type === 'file' || c.type === 'archive'
-  );
+  const items = getRecursiveContent(
+    gameState.fs,
+    gameState.currentPath,
+    currentLevel,
+    gameState.showHidden
+  ).filter((c) => c.type === 'file' || c.type === 'archive');
 
   return items.map((c) => {
     const display = (c as { display?: string; path?: string[] }).display;

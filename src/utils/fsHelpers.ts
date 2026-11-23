@@ -9,6 +9,11 @@ export function cloneFS(fs: FileNode): FileNode {
   return JSON.parse(JSON.stringify(fs));
 }
 
+/** Hidden entries are pruned with their whole subtree when hidden files are off. */
+export function isVisibleEntry(node: FileNode, showHidden: boolean): boolean {
+  return showHidden || !node.name.startsWith('.');
+}
+
 export function getNodeById(root: FileNode, id: string | undefined): FileNode | undefined {
   if (!id) return undefined;
   if (root.id === id) return root;
@@ -154,16 +159,19 @@ export function resolvePath(root: FileNode, path: string[] | undefined): string 
 export function getRecursiveContent(
   root: FileNode,
   path: string[] | undefined,
-  level?: Level
+  level?: Level,
+  showHidden = true
 ): FileNode[] {
   const startNode = getNodeByPath(root, path) || root;
   const startPath = path && path.length ? [...path] : [root.id];
   const out: FileNode[] = [];
   // Stack items keep track of node and its id-path from root for display/path compatibility
-  const stack: { node: FileNode; pathIds: string[] }[] = (startNode.children || []).map((c) => ({
-    node: c,
-    pathIds: [...startPath, c.id],
-  }));
+  const stack: { node: FileNode; pathIds: string[] }[] = (startNode.children || [])
+    .filter((c) => isVisibleEntry(c, showHidden))
+    .map((c) => ({
+      node: c,
+      pathIds: [...startPath, c.id],
+    }));
   while (stack.length) {
     const { node: n, pathIds } = stack.pop()!;
 
@@ -180,11 +188,9 @@ export function getRecursiveContent(
       continue;
     }
 
-    if (n.children) {
-      // FIX: Do not recurse into archives. They are opaque to search/fzf.
-      if (n.type === 'archive') continue;
-
-      for (const c of n.children) {
+    if (n.children && n.type !== 'archive') {
+      // Archives are opaque to search/fzf.
+      for (const c of n.children.filter((child) => isVisibleEntry(child, showHidden))) {
         stack.push({ node: c, pathIds: [...pathIds, c.id] });
       }
     }
@@ -230,6 +236,36 @@ export function addNode(
   }
 }
 
+function parseCreatePath(
+  root: FileNode,
+  currentPath: string[],
+  inputPath: string
+): { parentPath: string[]; segments: string[]; error?: string } {
+  let parentPath: string[];
+  let segments: string[];
+
+  if (inputPath.startsWith('~/')) {
+    // Correctly resolve "~/" to /home/guest
+    // We expect the standard "root -> home -> guest" structure
+    if (!getNodeByPath(root, ['root', 'home', 'guest'])) {
+      return { parentPath: [], segments: [], error: 'Home directory (~/) not found' };
+    }
+    parentPath = ['root', 'home', 'guest'];
+    segments = inputPath.substring(2).split('/').filter(Boolean);
+  } else if (inputPath.startsWith('/')) {
+    parentPath = ['root'];
+    segments = inputPath.substring(1).split('/').filter(Boolean);
+  } else {
+    parentPath = [...currentPath];
+    segments = inputPath.split('/').filter(Boolean);
+  }
+
+  if (segments.length === 0) {
+    return { parentPath, segments, error: 'Invalid path' };
+  }
+  return { parentPath, segments };
+}
+
 export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],
@@ -241,26 +277,13 @@ export function resolveAndCreatePath(
   collision?: boolean;
   collisionNode?: FileNode | null;
 } {
-  let newRoot = cloneFS(root);
-  let effectiveParentPath: string[] = [];
-  let pathSegmentsToCreate: string[] = [];
-
-  if (inputPath.startsWith('~/')) {
-    // Correctly resolve "~/" to /home/guest
-    // We expect the standard "root -> home -> guest" structure
-    const guestNode = getNodeByPath(newRoot, ['root', 'home', 'guest']);
-    if (!guestNode) {
-      return { fs: newRoot, error: 'Home directory (~/) not found', targetNode: undefined };
-    }
-    effectiveParentPath = ['root', 'home', 'guest'];
-    pathSegmentsToCreate = inputPath.substring(2).split('/').filter(Boolean);
-  } else if (inputPath.startsWith('/')) {
-    effectiveParentPath = ['root'];
-    pathSegmentsToCreate = inputPath.substring(1).split('/').filter(Boolean);
-  } else {
-    effectiveParentPath = [...currentPath];
-    pathSegmentsToCreate = inputPath.split('/').filter(Boolean);
+  const newRoot = cloneFS(root);
+  const parsed = parseCreatePath(newRoot, currentPath, inputPath);
+  if (parsed.error) {
+    return { fs: newRoot, error: parsed.error, targetNode: undefined };
   }
+  const effectiveParentPath = parsed.parentPath;
+  const pathSegmentsToCreate = parsed.segments;
 
   const initialNode = getNodeByPath(newRoot, effectiveParentPath);
   if (!initialNode) {
@@ -364,17 +387,18 @@ export function addNodeWithConflictResolution(
 
   let newName = node.name;
   let counter = 0;
-  let exists = parent.children.find((c) => c.name === newName && c.type === node.type);
+  let exists = parent.children.find((c) => c.name === newName);
 
   while (exists) {
     counter++;
-    const parts = node.name.split('.');
-    if (parts.length > 1 && node.type === 'file') {
-      newName = `${parts.slice(0, -1).join('.')}_${counter}.${parts[parts.length - 1]}`;
+    const dot = node.name.lastIndexOf('.');
+    // A leading dot is part of the name (`.env`), not an extension.
+    if (dot > 0 && node.type === 'file') {
+      newName = `${node.name.slice(0, dot)}_${counter}${node.name.slice(dot)}`;
     } else {
       newName = `${node.name}_${counter}`;
     }
-    exists = parent.children.find((c) => c.name === newName && c.type === node.type);
+    exists = parent.children.find((c) => c.name === newName);
   }
 
   const newNode: FileNode = { ...node, name: newName, id: id() };
