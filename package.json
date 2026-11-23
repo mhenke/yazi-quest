@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test --grep \"@smoke\"",
-    "prepush": "npm run lint && npm run type-check && npm run build && npm run test:smoke -- --reporter=list"
+    "prepush": "npm run lint && npm run type-check && npm run build && npm run test:smoke -- --reporter=list && npm run audit:changed",
+    "audit:changed": "fallow audit --base origin/main --format json --quiet && knip --no-progress"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -54,9 +55,12 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-security": "3.0.1",
+    "fallow": "^3.46.0",
+    "fast-check": "^4.11.0",
     "globals": "^17.0.0",
     "husky": "9.1.7",
     "jsdom": "^27.4.0",
+    "knip": "^6.48.0",
     "lint-staged": "16.2.7",
     "prettier": "3.7.4",
     "typescript": "5.9.3",
