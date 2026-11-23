@@ -13,6 +13,7 @@ import { INITIAL_FS } from '../constants/filesystem';
 import { LEVELS } from '../constants/levels';
 import { cloneFS } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
+import { getLevelStartPath } from '../utils/gameUtils';
 
 type ModalId =
   | 'help'
@@ -765,7 +766,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'COMPLETE_INTRO': {
       const isSkip = action.isSkip ?? false;
       const currentLevel = LEVELS[state.levelIndex];
-      const initialPath = currentLevel?.initialPath || ['root', 'home', 'guest'];
+      const initialPath = getLevelStartPath(state.fs, currentLevel);
 
       const newCompletedTaskIds = { ...state.completedTaskIds };
       if (currentLevel) {

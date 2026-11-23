@@ -104,7 +104,9 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
                   <div
                     className={`text-xs font-mono leading-snug mission-prose ${isTaskCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
                   >
-                    {task.description}
+                    {typeof task.description === 'function'
+                      ? task.description(gameState, level)
+                      : task.description}
                   </div>
                 </div>
               );

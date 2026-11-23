@@ -23,7 +23,7 @@ export interface FileNode {
 
 export interface LevelTask {
   id: string;
-  description: string;
+  description: string | ((gameState: GameState, level: Level) => string);
   check: (gameState: GameState, level: Level) => boolean | undefined;
   completed: boolean;
   hidden?: (gameState: GameState, level: Level) => boolean | undefined; // Hide task until condition met
@@ -35,7 +35,7 @@ export interface Level {
   title: string;
   description?: string;
   tasks: LevelTask[];
-  initialPath?: string[] | null; // Path of IDs (null = stay in current)
+  initialPath?: string[] | null; // Directory names from root, resolved to node IDs on entry.
   hint: string;
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)

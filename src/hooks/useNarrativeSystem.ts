@@ -199,6 +199,10 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
         triggerThought('Deeper into the shadow. They cannot track me in the static.');
       }
 
+      if (currentLevel.id === 7 && newTasks.includes('stage-token')) {
+        triggerThought("It's a trap. I remember the shape of this code.");
+      }
+
       // --- Level Completion Thought Triggers ---
       // Check if all tasks are now complete for this level
       const allTasksComplete = currentLevel.tasks.every(

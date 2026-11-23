@@ -2,6 +2,20 @@ import { GameState, Level, FileNode } from '../types';
 import { getVisibleItems } from './viewHelpers';
 import { isProtected } from './fsHelpers';
 
+// Level definitions use directory names; player-created directories have generated IDs.
+export const getLevelStartPath = (fs: FileNode, level: Level): string[] => {
+  const names = level.initialPath || ['root', 'home', 'guest'];
+  const path = [fs.id];
+  let node = fs;
+  for (let i = 1; i < names.length; i++) {
+    const child = node.children?.find((entry) => entry.name === names[i]);
+    if (!child) throw new Error(`Level ${level.id} start directory missing: ${names[i]}`);
+    node = child;
+    path.push(node.id);
+  }
+  return path;
+};
+
 // Define the pattern used in level 9 to identify keeper files
 const LEVEL_9_KEEPER_PATTERN = /\.(key|pid|sock)$/;
 
@@ -193,7 +207,7 @@ export const checkGrabbingHoneypot = (
         triggered: true,
         severity: 'modal',
         message:
-          "🚨 HONEYPOT DETECTED - File 'access_token.key' is a security trap! Abort operation immediately.",
+          'HONEYPOT DETECTED. access_token.key is a security trap. Clear clipboard (Y) before pasting.',
       };
     }
   }

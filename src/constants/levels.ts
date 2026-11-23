@@ -464,18 +464,17 @@ export const LEVELS: Level[] = [
     description:
       "A credential leak in `/tmp`. Origin unknown. It might be Sebastian Iqbal's 1999 legacy honeypot trap... or it might be an exit.",
     initialPath: ['root', 'home', 'guest', '.config', 'vault', 'training_data'],
-    hint: 'Root jump (gr). Deep search (z). Exfiltrate (x). Jump (Z). Abort (Y).',
+    hint: 'Root jump (gr). Find token: z, type access_token, Enter. Extract (x). Abort if trapped (Y).',
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
-      "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → Stage → Vault → Abort",
+      "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → access_token → Enter → x",
     successMessage:
       'TRAP EVADED. The back door was a bait, but you found the bypass. Bitrot is eating the systemd core. Stabilize it, or the whole partition collapses with you inside.',
     buildsOn: [6],
     leadsTo: [8],
-    thought: "It's a trap. I remember the shape of this code.",
     timeLimit: 90,
     efficiencyTip:
-      'OBSERVATION: The Z-buffer is a neural map of the entire CRL hierarchy. Type to focus your intent. Enter to manifest at the destination. FZF is a bridge across infinity.',
+      'OBSERVATION: Type a filename in the z finder, then Enter to select it. If extraction reveals a trap, clear the clipboard with Y before pasting.',
     tasks: [
       {
         id: 'nav-to-root',
@@ -488,7 +487,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'locate-token',
-        description: 'Analyze system for `access_token.key` (z)',
+        description: 'Locate `access_token.key`: press `z`, type `access_token`, then press Enter',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -499,7 +498,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'stage-token',
-        description: 'Extract `/tmp/access_token.key` signature',
+        description: 'Extract `/tmp/access_token.key` signature (x)',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('locate-token')) return false;
           return (
@@ -510,24 +509,13 @@ export const LEVELS: Level[] = [
         completed: false,
       },
       {
-        id: 'zoxide-vault',
-        description: 'Infiltrate the `~/.config/vault/` sector (Z)',
-        check: (c, _s) => {
-          if (!c.completedTaskIds[_s.id]?.includes('stage-token')) return false;
-          const config = getNodeById(c.fs, '.config');
-          const vault = config?.children?.find((n) => n.name === 'vault');
-          // Allow Zoxide OR standard navigation to .config (gc)
-          return (c.stats.fuzzyJumps >= 1 || c.usedGC) && c.currentPath.includes(vault?.id || '');
-        },
-        completed: false,
-      },
-      {
         id: 'abort-operation',
-        description: 'Neutralize exfiltration: Honeypot detected (Y)',
-        hidden: (c, _s) => !c.completedTaskIds[_s.id]?.includes('zoxide-vault'),
-        check: (c, _s) => {
-          return c.completedTaskIds[_s.id]?.includes('zoxide-vault') ? c.clipboard === null : false;
-        },
+        description: (c, level) =>
+          c.completedTaskIds[level.id]?.includes('stage-token')
+            ? 'Honeypot detected. Abort extraction: clear clipboard (Y)'
+            : 'Infiltrate the `~/.config/vault/` sector (Z)',
+        check: (c, level) =>
+          !!c.completedTaskIds[level.id]?.includes('stage-token') && c.clipboard === null,
         completed: false,
       },
     ],

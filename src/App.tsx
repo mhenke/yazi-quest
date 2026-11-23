@@ -26,7 +26,7 @@ import { dirsToLoad } from './utils/folderCache';
 import { getVisibleItems, getRecursiveSearchResults, getFilterRegex } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { CodropsGlitchSVG } from './components/CodropsGlitchSVG';
-import { checkAllTasksComplete } from './utils/gameUtils';
+import { checkAllTasksComplete, getLevelStartPath } from './utils/gameUtils';
 import StatusBar from './components/StatusBar';
 import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
@@ -694,7 +694,7 @@ export default function App() {
     }
 
     const now = Date.now();
-    const targetPath = nextLevel.initialPath || gameState.currentPath;
+    const targetPath = getLevelStartPath(fs, nextLevel);
     const pathStr = resolvePath(fs, targetPath);
 
     let newZoxideData = { ...gameState.zoxideData };
@@ -949,7 +949,7 @@ export default function App() {
             type: 'SET_LEVEL',
             index: globalIdx,
             fs,
-            path: lvl.initialPath || ['root', 'home', 'guest'],
+            path: getLevelStartPath(fs, lvl),
             showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
             notification: null, // No specific notification on jump
             zoxideData: gameState.zoxideData,
@@ -1515,7 +1515,7 @@ export default function App() {
                     type: 'SET_LEVEL',
                     index: idx,
                     fs,
-                    path: lvl.initialPath || ['root', 'home', 'guest'],
+                    path: getLevelStartPath(fs, lvl),
                     showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
                     notification: null, // No specific notification on jump
                     zoxideData: gameState.zoxideData,

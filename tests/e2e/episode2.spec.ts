@@ -116,33 +116,26 @@ test.describe('Episode 2: FORTIFICATION', () => {
       await expect(selectedFile).toContainText('access_token.key');
     });
 
+    await expect(
+      page.getByRole('region', { name: 'Mission log' }).getByText(/vault.*\(Z\)/)
+    ).toBeVisible();
+
     await test.step('Task 3: Cut & Handle Honeypot', async () => {
       await pressKey(page, 'x'); // cut the file
 
-      // New behavior: Honeypot alert triggers immediately on cut
-      // We must dismiss it to continue navigation
+      // Extraction reveals the trap and replaces the delivery objective immediately.
       await dismissAlertIfPresent(page);
-
-      // Verify Task 3 completion (Stage Token)
       await assertTask(page, '3/4', testInfo.outputDir, 'stage_token');
-    });
-
-    // Task 4: Jump to vault using `gc` and `l` (User Expert Steps)
-    await test.step('Task 4: Jump to Vault & Fall into Trap', async () => {
-      await gotoCommand(page, 'c');
-      // We assume 'vault' is selected or we need to select it.
-      await pressKey(page, 'l');
-
-      // Task 4 complete -> hidden Task 5 appears, so count becomes 4/5
+      const missionLog = page.getByRole('region', { name: 'Mission log' });
+      await expect(missionLog.getByText(/clipboard \(Y\)/)).toBeVisible();
+      await expect(missionLog.getByText(/vault.*\(Z\)/)).not.toBeVisible();
       await expectTerminalThought(page, "It's a trap. I remember the shape of this code.");
-      await assertTask(page, '4/5', testInfo.outputDir, 'jump_to_vault_and_reveal_trap');
     });
 
-    await test.step('Task 5: Abort Operation', async () => {
-      await dismissAlertIfPresent(page); // Dismiss alert
-      await page.keyboard.press('Shift+Y'); // Abort operation (Y)
-
-      await assertTask(page, '5/5', testInfo.outputDir, 'abort_operation');
+    await test.step('Task 4: Abort Operation Without Visiting Vault', async () => {
+      await page.keyboard.press('Shift+Y');
+      await expectCurrentDir(page, '/tmp', true);
+      await assertTask(page, '4/4', testInfo.outputDir, 'abort_operation');
 
       await confirmMission(page, 'QUANTUM BYPASS');
     });
@@ -369,6 +362,20 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
       // Verify that the mission complete dialog is no longer visible
       await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+
+      // The destination must resolve player-created IDs, not just show the next title.
+      await expectCurrentDir(page, '~/.config/vault/training_data', true);
+      for (const name of ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log']) {
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId(`file-${name}`)
+        ).toBeVisible();
+      }
+      await gotoCommand(page, 'r');
+      await findFZF(page, 'access_token');
+      await expectCurrentDir(page, '/tmp', true);
+      await expect(
+        page.getByTestId('filesystem-pane-active').getByTestId('file-access_token.key')
+      ).toBeVisible();
     });
   });
 });

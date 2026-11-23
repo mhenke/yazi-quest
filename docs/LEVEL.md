@@ -70,8 +70,9 @@ This document audits the current levels for narrative consistency, clear objecti
   - `Space, .` `[R2]` -> **DROP MENTIONS**
   - `s, Ctrl+A, gc` `[R1]`
   - `z, Z, gr, Y` `[INTRO]`
-- **Objectives**: Use quantum navigation to find a rogue access token, but abort if a honeypot is detected.
-- **Regex Clause**: Provide string `access_token` for FZF search.
+- **Objectives**: Find and stage the rogue access token. Extraction reveals a honeypot and replaces the vault-delivery objective with immediate clipboard abort (`Y`); no vault visit is required.
+- **FZF Steps**: Press `z`, type `access_token` to narrow the results, then press `Enter` to select `access_token.key`.
+- **Transition**: Level starts resolve directory names to their current IDs, preserving player-created vault folders and their contents.
 
 ### Level 8: DAEMON DISGUISE CONSTRUCTION
 

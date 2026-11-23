@@ -3,6 +3,7 @@ import { INITIAL_FS, applyFileSystemMutations } from '../constants/filesystem';
 import type { GameState, ZoxideEntry } from '../types';
 import { cloneFS, resolvePath, getNodeById } from '../utils/fsHelpers';
 import { isValidZoxideData } from '../utils/validation';
+import { getLevelStartPath } from '../utils/gameUtils';
 import { getSkipIntroRequested } from '../utils/skipIntroFlag';
 import { INITIAL_ACTION_FLAGS } from './gameReducer';
 
@@ -123,8 +124,6 @@ export function createInitialState(): GameState {
     initialZoxide['/tmp'] = { count: 15, lastAccess: now - 1800000 };
   }
 
-  const initialPath = initialLevel.initialPath || ['root', 'home', 'guest'];
-
   // --- ECHO CYCLE (NEW GAME+) LOGIC ---
   let cycleCount = 1;
   try {
@@ -152,16 +151,14 @@ export function createInitialState(): GameState {
     });
   }
 
-  if (initialLevel.initialPath) {
-    const initialPathStr = resolvePath(INITIAL_FS, initialLevel.initialPath);
-    if (!initialZoxide[initialPathStr]) {
-      initialZoxide[initialPathStr] = { count: 1, lastAccess: now };
-    }
-  }
-
   let fs = cloneFS(INITIAL_FS);
-  // Apply level-specific mutations to ensure correct state from the start
+  // Apply level-specific mutations before resolving player-created start directories.
   fs = applyFileSystemMutations(fs, initialLevel.id, { completedTaskIds } as GameState);
+  const initialPath = getLevelStartPath(fs, initialLevel);
+  const initialPathStr = resolvePath(fs, initialPath);
+  if (!initialZoxide[initialPathStr]) {
+    initialZoxide[initialPathStr] = { count: 1, lastAccess: now };
+  }
 
   // Inject Ghost File for Echo Cycle (Level 1 only)
   if (cycleCount > 1 && effectiveIndex === 0) {

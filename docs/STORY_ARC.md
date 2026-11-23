@@ -104,7 +104,7 @@ Episode I — Awakening
 Episode II — Fortification
 
 - L6: Batch Operations — Select all, yank, navigate, and paste across partitions.
-- L7: Quantum Bypass — FZF find (`z`) to locate files; honeypot detection and abort.
+- L7: Quantum Bypass — Find the access token with FZF (`z`); extraction exposes the honeypot and replaces vault delivery with immediate clipboard abort (`Y`).
 - L8: Daemon Disguise Construction — Jump for the clean signature, retrace your path with history back (`H`), and force-overwrite the corrupted file (`P`).
 - L9: Trace Cleanup — Advanced selection logic (`Ctrl+R` to invert).
 - L10: Credential Heist — Navigate the backup logs and sort by modification date to find the newest credential.
