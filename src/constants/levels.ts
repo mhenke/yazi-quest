@@ -721,14 +721,15 @@ export const LEVELS: Level[] = [
     initialPath: ['root', 'tmp'],
     hint: 'Sort by time (,m). Replicate newest (y). Paste (p).',
     coreSkill: 'Directory Navigation & Sort by Modified',
-    environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in ~/incoming/backup_logs',
+    environmentalClue:
+      'URGENT: Keys Expiring | FIND: Newest access_key in ~/incoming/backup_logs | METADATA: Verify timestamp & permissions',
     successMessage:
       'ELEVATION ACHIEVED. You are no longer a guest. You are an intruder with a key. Higher-level daemons are stirring—blend into their rhythm or be purged.',
     buildsOn: [9],
     leadsTo: [11],
     timeLimit: 150,
     efficiencyTip:
-      "OBSERVATION: Entropy is time. Sort by modified (,m) to find the latest leaks. Size (,s) reveals the payload. Use the system's own metadata to betray its secrets.",
+      'OBSERVATION: Entropy is time. Sort by modified (,m) to find the latest leaks. Size (,s) reveals the payload. Read permissions in the status bar or Tab metadata to verify access rights before extraction.',
     tasks: [
       {
         id: 'heist-1-nav',

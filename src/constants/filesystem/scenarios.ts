@@ -179,8 +179,12 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
     workspace.children.push(systemdCore);
   }
 
-  // Always re-populate to ensure current state (e.g., corruption) is applied
-  systemdCore.children = getWorkspaceSystemdCoreChildren(systemdCore.id, isCorrupted);
+  // Re-seed to apply current state (e.g., corruption), but keep player-added
+  // children (installed .service files, credentials/) that seeded content doesn't own.
+  const seeded = getWorkspaceSystemdCoreChildren(systemdCore.id, isCorrupted);
+  const seededNames = new Set(seeded.map((c) => c.name));
+  const preserved = (systemdCore.children ?? []).filter((c) => !seededNames.has(c.name));
+  systemdCore.children = [...seeded, ...preserved];
   return newFs;
 };
 

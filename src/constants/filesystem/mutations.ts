@@ -478,30 +478,6 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 13+: Remove access_token.key, move systemd-core to /daemons
-  if (levelId >= 13) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp?.children) {
-      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
-    }
-    const rootNode = getNodeById(newFs, 'root');
-    const daemons = rootNode?.children?.find((c) => c.name === 'daemons');
-    const guestWorkspace = getNodeById(newFs, 'workspace');
-    if (daemons && guestWorkspace) {
-      const systemdCore = guestWorkspace.children?.find((c) => c.name === 'systemd-core');
-      if (systemdCore) {
-        guestWorkspace.children = guestWorkspace.children!.filter((c) => c.name !== 'systemd-core');
-        if (!daemons.children?.some((c) => c.name === 'systemd-core')) {
-          const clonedCore = JSON.parse(JSON.stringify(systemdCore));
-          clonedCore.id = 'daemons-systemd-core';
-          clonedCore.parentId = daemons.id;
-          if (!daemons.children) daemons.children = [];
-          daemons.children.push(clonedCore);
-        }
-      }
-    }
-  }
-
   // Level 14+: central_relay setup
   if (levelId >= 14) {
     const workspace = getNodeById(newFs, 'workspace');
