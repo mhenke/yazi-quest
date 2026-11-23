@@ -185,6 +185,8 @@ export const INITIAL_ACTION_FLAGS = {
   usedTrashDelete: false,
   usedHistoryBack: false,
   usedHistoryForward: false,
+  lastHistoryBackPath: null,
+  lastHistoryBackClipboardIds: null,
   usedSortM: false,
   usedY: false,
   usedSearch: false,
@@ -366,6 +368,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
         cursorIndex: 0,
         usedPreviewDown: false,
         usedPreviewUp: false,
+        lastHistoryBackPath: prevPath,
+        lastHistoryBackClipboardIds: state.clipboard
+          ? state.clipboard.nodes.map((node) => node.id)
+          : null,
       };
     }
 

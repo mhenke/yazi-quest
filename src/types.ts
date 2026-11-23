@@ -214,6 +214,10 @@ export interface GameState {
   usedTrashDelete?: boolean; // Tracks if player used 'd' for trash delete
   usedHistoryBack?: boolean;
   usedHistoryForward?: boolean;
+  // Most recent H: where it landed and which clipboard nodes it was carrying.
+  // Lets a level tell a real history-backed return from a stray H press.
+  lastHistoryBackPath?: string[] | null;
+  lastHistoryBackClipboardIds?: string[] | null;
   usedSortM?: boolean; // Tracks if player used ',m' (sort by modified)
   usedY?: boolean; // Tracks if player used 'y' (yank)
   // If true, the next keypress while in normal mode should be handled by the sort dialog handler.

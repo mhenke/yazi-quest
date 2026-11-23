@@ -540,7 +540,7 @@ export const LEVELS: Level[] = [
     description:
       'Bitrot is consuming the tables. Stabilize the core. Overwrite the corrupted segment.',
     initialPath: ['root', 'home', 'guest', '.config', 'vault'],
-    hint: 'Inspect `systemd-core`. Replicate signature from `vault/active`. Force overwrite (Shift+P).',
+    hint: 'Inspect `systemd-core`. Jump to `vault/active` (Z) and replicate the clean signature (y). Press H until you are back; force overwrite (Shift+P).',
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
       'CRITICAL: Watchdog Instability Detected | HEURISTIC LOCK: uplink_v1.conf | OVERWRITE REQUIRED (Shift+P)',
@@ -613,7 +613,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-patch',
-        description: 'Extract clean signature from `~/.config/vault/active/` (y)',
+        description: 'Jump to `~/.config/vault/active` (Z) and replicate the clean signature (y)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           // Check if we have the clean file in clipboard
@@ -625,7 +625,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-patch',
-        description: 'Return to `~/workspace/systemd-core` (H) and overwrite `uplink_v1.conf` (P)',
+        description:
+          'Press history back (H) until you are back in `~/workspace/systemd-core`, then force overwrite `uplink_v1.conf` (P)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -633,12 +634,25 @@ export const LEVELS: Level[] = [
             ? findNodeByName(workspace, 'systemd-core', 'dir')
             : undefined;
           const uplinkFile = systemdCore?.children?.find((n) => n.name === 'uplink_v1.conf');
+          const cleanClipboardNode = c.clipboard?.nodes.find(
+            (n) => n.name === 'uplink_v1.conf' && !n.content?.includes('CORRUPT')
+          );
+          // A stray H anywhere does not count: the most recent H must have landed
+          // in this directory while carrying the clean signature.
+          const returnedViaHistory =
+            !!c.lastHistoryBackPath &&
+            c.lastHistoryBackPath.length === c.currentPath.length &&
+            c.lastHistoryBackPath.every((id, index) => id === c.currentPath[index]) &&
+            !!cleanClipboardNode &&
+            c.lastHistoryBackClipboardIds?.includes(cleanClipboardNode.id) === true;
 
           return (
+            !!systemdCore &&
+            c.currentPath.includes(systemdCore.id) &&
             !!uplinkFile &&
             !uplinkFile.content?.includes('CORRUPT') &&
             c.usedShiftP === true &&
-            c.usedHistoryBack === true
+            returnedViaHistory
           );
         },
         completed: false,

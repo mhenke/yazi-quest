@@ -79,7 +79,7 @@ This document audits the current levels for narrative consistency, clear objecti
   - `s, Ctrl+A, gc` `[R2]` -> **DROP MENTIONS**
   - `z, Z, gr, Y` `[R1]`
   - `H, P` `[INTRO]`
-- **Objectives**: Return to the previous directory and overwrite the corrupted config with the clean signature.
+- **Objectives**: Jump to the clean signature in `~/.config/vault/active`, then retrace your path with history back (`H`) and force-overwrite the corrupted config (`P`).
 - **Regex Clause**: Provide string `uplink` for filtering.
 
 ### Level 9: TRACE CLEANUP

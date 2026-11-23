@@ -103,3 +103,33 @@ describe('gameReducer action flag sanitization', () => {
     expect(next.usedPreviewUp).toBe(true);
   });
 });
+
+describe('gameReducer NAVIGATE_BACK', () => {
+  const clipboard = {
+    nodes: [{ id: 'clean-node', name: 'uplink_v1.conf', type: 'file' as const, content: 'CLEAN' }],
+    action: 'yank' as const,
+    originalPath: ['root', 'home', 'guest', '.config', 'vault', 'active'],
+  };
+
+  const state = {
+    currentPath: ['root', 'home', 'guest'],
+    history: [['root'], ['root', 'home']],
+    future: [],
+    clipboard,
+    cursorIndex: 2,
+    usedPreviewDown: true,
+    usedPreviewUp: true,
+  } as unknown as GameState;
+
+  it('records where H landed and the clipboard it carried', () => {
+    const next = gameReducer(state, { type: 'NAVIGATE_BACK' });
+    expect(next.currentPath).toEqual(['root', 'home']);
+    expect(next.lastHistoryBackPath).toEqual(['root', 'home']);
+    expect(next.lastHistoryBackClipboardIds).toEqual(['clean-node']);
+  });
+
+  it('records no clipboard ids when the clipboard is empty', () => {
+    const next = gameReducer({ ...state, clipboard: null }, { type: 'NAVIGATE_BACK' });
+    expect(next.lastHistoryBackClipboardIds).toBeNull();
+  });
+});
