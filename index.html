@@ -255,6 +255,80 @@
       .animate-urgent-pulse {
         animation: urgent-pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
+
+      /* Touch gate: the game is keyboard-only, so touch devices get this notice instead. */
+      .touch-gate {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        overflow-y: auto;
+        background: #09090b;
+        color: #a1a1aa;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+          monospace;
+      }
+      .touch-gate__panel {
+        max-width: 32rem;
+        margin: auto;
+        padding: 2rem 1.5rem;
+      }
+      @media (min-width: 640px) {
+        .touch-gate__panel {
+          padding: 2.5rem;
+          border: 1px solid #27272a;
+        }
+      }
+      .touch-gate__eyebrow {
+        margin: 0 0 0.75rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: #f97316;
+      }
+      .touch-gate__title {
+        margin: 0 0 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px dashed #3f3f46;
+        font-size: 1.375rem;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #fafafa;
+      }
+      .touch-gate__body {
+        margin: 0 0 0.875rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+      }
+      .touch-gate code {
+        padding: 0 0.25rem;
+        border: 1px solid #3f3f46;
+        color: #d4d4d8;
+      }
+      .touch-gate__hint {
+        margin: 1.5rem 0 0;
+        padding-top: 1rem;
+        border-top: 1px dashed #3f3f46;
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: #71717a;
+      }
+      @media (hover: none) and (pointer: coarse) {
+        #root,
+        .scanline {
+          display: none;
+        }
+        .touch-gate {
+          /* flex + margin:auto on the panel centres when there is room and
+             still scrolls from the top when the panel is taller than the viewport */
+          display: flex;
+        }
+      }
     </style>
     <script type="importmap">
       {
@@ -286,6 +360,22 @@
   </head>
   <body>
     <div class="scanline"></div>
+    <div class="touch-gate" role="region" aria-label="Desktop required">
+      <div class="touch-gate__panel">
+        <p class="touch-gate__eyebrow">Terminal access denied</p>
+        <h1 class="touch-gate__title">This terminal needs a keyboard</h1>
+        <p class="touch-gate__body">
+          Yazi Quest is a keyboard-driven simulation. Every mission is solved with keys like
+          <code>j</code>, <code>k</code>, <code>Space</code>, <code>gc</code> — there are no touch
+          controls to fall back on.
+        </p>
+        <p class="touch-gate__body">
+          Open this page on a desktop or laptop and it will boot normally. A narrow window is fine;
+          a physical keyboard is the requirement.
+        </p>
+        <p class="touch-gate__hint">Awaiting keyboard-capable session</p>
+      </div>
+    </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script type="module" src="src/index.tsx"></script>
