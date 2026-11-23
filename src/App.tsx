@@ -69,7 +69,7 @@ import { useReduceMotion } from './hooks/useReduceMotion';
 import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
 import { RequirementNotice } from './components/RequirementNotice';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
-import { getActionIntensity } from './hooks/keyboard/utils';
+import { getActionIntensity, hasBaselineViolation } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
 import {
@@ -1388,12 +1388,7 @@ export default function App() {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey && tasksComplete) {
         const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-        const hasViolation =
-          gameState.showHidden ||
-          gameState.sortBy !== 'natural' ||
-          gameState.sortDirection !== 'asc' ||
-          !!(currentDir && gameState.filters[currentDir.id]) ||
-          !!(gameState.searchQuery && gameState.searchResults.length > 0);
+        const hasViolation = hasBaselineViolation(gameState);
 
         if (hasViolation) {
           e.preventDefault();
@@ -1457,13 +1452,7 @@ export default function App() {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (tasksComplete && gameState.showSuccessToast) {
         // Only block if there are NO violations that need auto-fixing
-        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-        const hasViolation =
-          gameState.showHidden ||
-          gameState.sortBy !== 'natural' ||
-          gameState.sortDirection !== 'asc' ||
-          !!(currentDir && gameState.filters[currentDir.id]) ||
-          !!(gameState.searchQuery && gameState.searchResults.length > 0);
+        const hasViolation = hasBaselineViolation(gameState);
 
         if (!hasViolation) {
           // SuccessToast handles Shift+Enter with priority 700.

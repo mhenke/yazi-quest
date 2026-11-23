@@ -63,6 +63,17 @@ const hasHiddenViolation = (gameState: GameState): boolean => {
 };
 
 /**
+ * True when the view is not the baseline CRL requires (hidden files shown, custom
+ * sort, an active filter, or live search results). Mirrors the checks above so the
+ * auto-fix path and the navigation guard can never disagree about what a violation is.
+ */
+export const hasBaselineViolation = (gameState: GameState): boolean =>
+  hasHiddenViolation(gameState) ||
+  hasSortViolation(gameState) ||
+  hasFilterViolation(gameState) ||
+  hasSearchViolation(gameState);
+
+/**
  * Unified protocol violation check for navigation.
  * Order of priority: Filter > Search > Sort > Hidden
  *
