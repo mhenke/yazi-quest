@@ -44,6 +44,23 @@ const checkAndHandlePasteHoneypot = (
 };
 
 /**
+ * Rejects pastes that would put a node inside its own subtree, then runs trap checks.
+ */
+const rejectInvalidPaste = (
+  clipboard: NonNullable<GameState['clipboard']>,
+  currentPath: string[],
+  dispatch: React.Dispatch<Action>,
+  showNotification: (message: string, duration?: number) => void
+): boolean => {
+  const pastedAncestor = clipboard.nodes.find((node) => currentPath.includes(node.id));
+  if (pastedAncestor) {
+    showNotification(`Cannot paste ${pastedAncestor.name} into its own subtree`, 4000);
+    return true;
+  }
+  return checkAndHandlePasteHoneypot(clipboard.nodes, dispatch, showNotification);
+};
+
+/**
  * Deletes the source node from its parent directory when a cut-paste operation is performed.
  */
 const deleteCutSourceNode = (
@@ -188,7 +205,7 @@ const executePaste = (
     return false;
   }
 
-  if (checkAndHandlePasteHoneypot(gameState.clipboard.nodes, dispatch, showNotification)) {
+  if (rejectInvalidPaste(gameState.clipboard, gameState.currentPath, dispatch, showNotification)) {
     return true;
   }
 
