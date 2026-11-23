@@ -361,9 +361,9 @@ function applyPasteResult(state: GameState, action: Extract<Action, { type: 'PAS
     fs: action.newFs,
     clipboard: action.action === 'cut' ? null : state.clipboard,
   };
-  // A cut paste deletes the source node and re-adds it under a fresh id, so
-  // any selection that still points at the old id no longer resolves; prune
-  // it the same way DELETE_NODES sanitizes selections.
+  // A cut paste re-adds descendants under fresh ids, so a selection that
+  // still points at an old id no longer resolves; prune it the same way
+  // DELETE_NODES sanitizes selections.
   if (action.action === 'cut') {
     next = { ...next, selectedIds: next.selectedIds.filter((sid) => getNodeById(next.fs, sid)) };
   }
