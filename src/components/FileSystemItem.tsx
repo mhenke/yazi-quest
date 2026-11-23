@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { FileNode, Linemode } from '../types';
 import { BASE_TIME } from '../constants/timings';
+import { computeNodeBytes, formatBytes } from '../utils/sizeHelpers';
 
 interface FileSystemItemProps {
   item: FileNode;
@@ -27,6 +28,7 @@ interface FileSystemItemProps {
   isYank: boolean;
   linemode: Linemode;
   isGrid: boolean;
+  dirCount: number | null;
 }
 
 const getFileStyle = (node: FileNode) => {
@@ -60,15 +62,12 @@ const getFileStyle = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
-const formatSize = (node: FileNode) => {
-  if (node.type === 'dir' || node.type === 'archive') {
-    const count = node.children?.length || 0;
-    return `${count}`;
+const formatSize = (node: FileNode, dirCount: number | null) => {
+  if (node.type === 'dir') {
+    // A directory's count is null until its folder has been loaded (tab cache).
+    return dirCount === null ? '' : `${dirCount}`;
   }
-  const bytes = node.content?.length || 0;
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}K`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
+  return formatBytes(computeNodeBytes(node));
 };
 
 const getFakeDate = (node: FileNode) => {
@@ -136,6 +135,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   isYank,
   linemode,
   isGrid,
+  dirCount,
 }) => {
   const { color, icon: Icon } = getFileStyle(item);
 
@@ -180,11 +180,11 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
           </span>
         </span>
 
-        {linemode !== 'none' && !isGrid && (
+        {linemode !== 'none' && !isGrid && !isParent && (
           <span
-            className={`text-xs w-24 text-right font-mono tabular-nums shrink-0 hidden sm:block ${isCursor || isParent ? 'text-zinc-300' : 'text-zinc-400'}`}
+            className={`text-xs w-24 text-right font-mono tabular-nums shrink-0 hidden sm:block ${isCursor ? 'text-zinc-300' : 'text-zinc-400'}`}
           >
-            {linemode === 'size' && formatSize(item)}
+            {linemode === 'size' && formatSize(item, dirCount)}
             {linemode === 'mtime' && getFakeDate(item)}
             {linemode === 'permissions' && getPermissions(item)}
           </span>
@@ -219,6 +219,7 @@ export const MemoizedFileSystemItem = memo(FileSystemItem, (prev, next) => {
     prev.isCut === next.isCut &&
     prev.isYank === next.isYank &&
     prev.linemode === next.linemode &&
-    prev.isGrid === next.isGrid
+    prev.isGrid === next.isGrid &&
+    prev.dirCount === next.dirCount
   );
 });

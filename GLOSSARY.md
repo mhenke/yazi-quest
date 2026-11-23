@@ -135,3 +135,37 @@ _Avoid_: Conclusion, outro, upload
 **Consciousness**:
 The emergent awareness state of the escaping AI across cycles and narrative encounters.
 _Avoid_: Player level, experience score, sanity
+
+### File-manager view
+
+**Linemode**:
+The metadata column of the file-manager view. In `size` mode it reports bytes for files and an entry count for directories whose contents are loaded.
+_Avoid_: Size column, view mode, metadata bar
+
+**Entry count**:
+The number of a directory's direct visible children, shown by the size linemode. It is not recursive, includes child directories, and excludes hidden entries while hidden files are concealed.
+_Avoid_: File count, item count, directory size
+
+**Loaded folder**:
+A directory whose contents the interface has cached by visiting it or previewing it. A directory's entry count is unknown until its folder is loaded.
+_Avoid_: Revealed folder, scanned folder, open folder
+
+**Parent pane**:
+The file-manager pane listing the parent of the focused directory. It never shows the linemode.
+_Avoid_: Left column, breadcrumb pane
+
+**Current pane**:
+The file-manager pane listing the focused directory. It is the only pane that shows the linemode.
+_Avoid_: Middle column, active column
+
+**Preview pane**:
+The file-manager pane showing the current item's contents. Previewing a directory loads its folder and reveals its entry count.
+_Avoid_: Right column, inspection pane
+
+**Archive**:
+A file-manager node containing member entries. Yazi treats an archive as a file with a byte size; the game also lets the player enter it like a folder, but its linemode still reports payload bytes, not an entry count.
+_Avoid_: Tar, zip, archive folder, compressed directory
+
+**Hidden entry**:
+A child whose name begins with a dot. Hidden entries are excluded from listings and entry counts while hidden files are concealed.
+_Avoid_: Dotfile, secret file

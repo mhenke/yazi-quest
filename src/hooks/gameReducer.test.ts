@@ -57,6 +57,7 @@ describe('gameReducer action flag sanitization', () => {
     fs: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
     levelStartFS: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
     levelStartPath: ['root', 'home', 'guest'],
+    loadedDirIds: ['dir-a'],
   } as unknown as GameState;
 
   it('resets all action tracking flags on RESTART_CYCLE to prevent cross-cycle leakage', () => {
@@ -66,6 +67,7 @@ describe('gameReducer action flag sanitization', () => {
     expect(next.usedPreviewUp).toBe(false);
     expect(next.usedDown).toBe(false);
     expect(next.usedUp).toBe(false);
+    expect(next.loadedDirIds).toEqual([]);
   });
 
   it('resets all action tracking flags on RESET_LEVEL', () => {
@@ -75,6 +77,7 @@ describe('gameReducer action flag sanitization', () => {
     expect(next.usedPreviewUp).toBe(false);
     expect(next.usedDown).toBe(false);
     expect(next.usedUp).toBe(false);
+    expect(next.loadedDirIds).toEqual([]);
   });
 
   it('resets preview scroll flags when cursor index changes (scoping preview to active file)', () => {
@@ -101,6 +104,20 @@ describe('gameReducer action flag sanitization', () => {
     expect(next.cursorIndex).toBe(1);
     expect(next.usedPreviewDown).toBe(true);
     expect(next.usedPreviewUp).toBe(true);
+  });
+});
+
+describe('gameReducer LOAD_DIRS', () => {
+  const state = { loadedDirIds: [] } as unknown as GameState;
+
+  it('adds new ids and ignores ones already loaded', () => {
+    const first = gameReducer(state, { type: 'LOAD_DIRS', ids: ['a', 'b'] });
+    expect(first.loadedDirIds).toEqual(['a', 'b']);
+
+    const next = gameReducer(first, { type: 'LOAD_DIRS', ids: ['b', 'c'] });
+    expect(next.loadedDirIds).toEqual(['a', 'b', 'c']);
+
+    expect(gameReducer(next, { type: 'LOAD_DIRS', ids: ['a'] })).toBe(next);
   });
 });
 

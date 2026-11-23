@@ -1,5 +1,7 @@
-import React, { useEffect, useId, useRef, memo, useMemo } from 'react';
+import React, { useId, useRef, memo, useMemo } from 'react';
 import { FileNode, ClipboardItem, Linemode } from '../types';
+import { countVisibleChildren } from '../utils/sizeHelpers';
+import { useScrollToCursor } from '../hooks/useScrollToCursor';
 import { MemoizedFileSystemItem } from './FileSystemItem';
 
 interface FileSystemPaneProps {
@@ -10,9 +12,30 @@ interface FileSystemPaneProps {
   selectedIds: string[];
   clipboard: ClipboardItem | null;
   linemode: Linemode;
+  showHidden: boolean;
+  loadedDirIds: string[];
   className?: string;
   focusRef?: React.RefObject<HTMLDivElement | null>;
 }
+
+const paneLayout = (isParent: boolean, className?: string) => {
+  const isGrid = !!className?.includes('grid');
+  const width = isParent ? 'w-1/3' : 'flex-1';
+  const background = isParent ? 'bg-zinc-950/50 text-zinc-400' : 'bg-zinc-900/80 text-zinc-300';
+  const finalClass = isGrid ? (className ?? '') : `${width} ${background} ${className ?? ''}`;
+
+  return { isGrid, finalClass };
+};
+
+const resolveDirCount = (
+  item: FileNode,
+  isParent: boolean,
+  loadedIds: readonly string[],
+  showHidden: boolean
+): number | null => {
+  if (isParent || item.type !== 'dir' || !loadedIds.includes(item.id)) return null;
+  return countVisibleChildren(item, showHidden);
+};
 
 const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   items,
@@ -22,28 +45,17 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   selectedIds = [],
   clipboard,
   linemode,
+  showHidden,
+  loadedDirIds,
   className,
   focusRef,
 }) => {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const listRef = focusRef ?? fallbackRef;
   const listId = useId();
+  useScrollToCursor(listRef, cursorIndex, items);
 
-  useEffect(() => {
-    if (listRef.current && cursorIndex >= 0) {
-      const children = listRef.current.children;
-      if (children[cursorIndex]) {
-        children[cursorIndex].scrollIntoView({ block: 'nearest' });
-      }
-    }
-  }, [cursorIndex, items, listRef]);
-
-  const defaultWidth = isParent ? 'w-1/3' : 'flex-1';
-  const bgColors = isParent ? 'bg-zinc-950/50 text-zinc-400' : 'bg-zinc-900/80 text-zinc-300';
-
-  // Use className directly if it contains grid layout classes, otherwise append default bg/width
-  const isGrid = !!className?.includes('grid');
-  const finalClass = isGrid ? className : `${defaultWidth} ${bgColors} ${className || ''}`;
+  const { isGrid, finalClass } = paneLayout(isParent, className);
 
   const clipboardSet = useMemo(() => new Set(clipboard?.nodes?.map((n) => n.id)), [clipboard]);
   const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -75,6 +87,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
           const inClipboard = clipboardSet.has(item.id);
           const isCut = !!(inClipboard && clipboard?.action === 'cut');
           const isYank = !!(inClipboard && clipboard?.action === 'yank');
+          const dirCount = resolveDirCount(item, isParent, loadedDirIds, showHidden);
 
           return (
             <MemoizedFileSystemItem
@@ -89,6 +102,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
               isYank={isYank}
               linemode={linemode}
               isGrid={isGrid}
+              dirCount={dirCount}
             />
           );
         })}

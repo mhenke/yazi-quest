@@ -158,6 +158,7 @@ export interface GameState {
   zoxideData: Record<string, ZoxideEntry>; // Frecency tracking: pathString -> {count, lastAccess}
   history: string[][]; // Stack of visited paths (Array of string arrays)
   future: string[][]; // Stack of paths for forward navigation (L)
+  loadedDirIds: string[]; // Tab folder cache: current dir plus any hover-previewed dir; Yazi counts only loaded folders
   previewScroll: number; // Scroll offset index for preview pane
   levelIndex: number;
   fs: FileNode; // The entire file tree

@@ -33,6 +33,7 @@ export type Action =
   | { type: 'NAVIGATE_FORWARD' }
   | { type: 'SET_CURSOR'; index: number }
   | { type: 'MOVE_CURSOR'; delta: number; itemCount: number }
+  | { type: 'LOAD_DIRS'; ids: string[] }
   | { type: 'TOGGLE_HIDDEN' }
   | { type: 'TOGGLE_INFO_PANEL' }
   | {
@@ -410,6 +411,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
+    case 'LOAD_DIRS': {
+      const nextIds = action.ids.filter((id) => !state.loadedDirIds.includes(id));
+      if (nextIds.length === 0) return state;
+      return { ...state, loadedDirIds: [...state.loadedDirIds, ...nextIds] };
+    }
+
     case 'TOGGLE_HIDDEN': {
       // Maintain cursor position on same file if possible
       const visibleItemsBefore = getVisibleItems(state);
@@ -496,6 +503,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         cursorIndex: 0,
         history: [],
         future: [],
+        loadedDirIds: [],
         clipboard: null,
         selectedIds: [],
         alerts: [],
@@ -536,6 +544,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         levelIndex: 0,
         fs: cloneFS(INITIAL_FS),
         currentPath: ['root', 'home', 'guest'],
+        loadedDirIds: [],
         isGameOver: false,
         alerts: [],
         completedTaskIds: {},
@@ -567,6 +576,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         fs: state.levelStartFS,
         currentPath: state.levelStartPath,
         cursorIndex: 0,
+        loadedDirIds: [],
         mode: 'normal',
         clipboard: null,
         selectedIds: [],

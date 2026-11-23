@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FileNode } from '../types';
+import { computeNodeBytes, formatBytes } from '../utils/sizeHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface InfoPanelProps {
@@ -11,22 +12,6 @@ interface InfoPanelProps {
 export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   const panelRef = useOverlayFocus(Boolean(file));
   if (!file) return null;
-
-  const computeBytes = (node: FileNode): number => {
-    if (node.type === 'dir' || node.type === 'archive') {
-      const children = node.children || [];
-      return children.reduce((sum, c) => sum + computeBytes(c), 0);
-    }
-    return node.content ? node.content.length : 0;
-  };
-
-  const formatSize = (node: FileNode): string => {
-    const bytes = computeBytes(node);
-    if (bytes === 0) return '0B';
-    if (bytes < 1024) return `${bytes}B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}K`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
-  };
 
   const getMimetype = (node: FileNode): string => {
     if (node.type === 'dir') return 'inode/directory';
@@ -58,7 +43,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
     return mimeMap[ext || ''] || 'application/octet-stream';
   };
 
-  const size = formatSize(file);
+  const size = formatBytes(computeNodeBytes(file));
   const mimetype = getMimetype(file);
   const isDir = file.type === 'dir';
   const isArchive = file.type === 'archive';

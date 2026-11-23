@@ -27,6 +27,7 @@ import {
   resolveAndCreatePath,
 } from './utils/fsHelpers';
 import { sortNodes } from './utils/sortHelpers';
+import { dirsToLoad } from './utils/folderCache';
 import { isValidZoxideData } from './utils/validation';
 import { getVisibleItems, getRecursiveSearchResults, getFilterRegex } from './utils/viewHelpers';
 import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
@@ -270,6 +271,7 @@ function createInitialState(): GameState {
     linemode: 'size',
     history: [],
     future: [],
+    loadedDirIds: [],
     alerts: [],
     previewScroll: 0,
     zoxideData: initialZoxide,
@@ -521,6 +523,15 @@ export default function App() {
     () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
     [gameState.fs, gameState.currentPath]
   );
+
+  // Mirror Yazi's tab folder cache: the current directory is loaded, and the
+  // preview loads the hovered directory. Counts are read only from that cache.
+  useEffect(() => {
+    dispatch({
+      type: 'LOAD_DIRS',
+      ids: dirsToLoad(gameState.fs, gameState.currentPath, currentItem),
+    });
+  }, [gameState.fs, gameState.currentPath, currentItem, dispatch]);
 
   // Helper to show notification with auto-clear
   const showNotification = useCallback(
@@ -1835,6 +1846,8 @@ export default function App() {
                 selectedIds={[]}
                 clipboard={null}
                 linemode={gameState.linemode}
+                showHidden={gameState.showHidden}
+                loadedDirIds={gameState.loadedDirIds}
                 // ADR-0001: the parent pane is one of the three panes, so it shows
                 // wherever the file-manager view itself is shown. Same fact as the
                 // floor gate above; derived from it rather than a separate breakpoint.
@@ -1853,6 +1866,8 @@ export default function App() {
                   selectedIds={gameState.selectedIds}
                   clipboard={gameState.clipboard}
                   linemode={gameState.linemode}
+                  showHidden={gameState.showHidden}
+                  loadedDirIds={gameState.loadedDirIds}
                   className="flex-1"
                 />
 
