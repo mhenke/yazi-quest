@@ -18,8 +18,8 @@ test('toolbar focus exits gameplay without changing the current file', async ({ 
   await expect(current).toContainText('incoming');
 });
 
-test('narrow desktop search and filter keep focus and return it on Escape', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 450 });
+test('search and filter keep focus and return it on Escape', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 700 });
   await page.goto('/?lvl=6&intro=false');
   const pane = page.getByRole('listbox', { name: 'File Browser' });
   await expect(pane).toBeFocused();
@@ -39,19 +39,31 @@ test('narrow desktop search and filter keep focus and return it on Escape', asyn
   }
 });
 
-test('file names stay readable when the pane is narrow', async ({ page }) => {
+test('window below the floor shows the width notice, not the file manager', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 450 });
   await page.goto('/?lvl=6&intro=false');
-  await expect(page.getByRole('listbox', { name: 'File Browser' })).toBeFocused();
 
-  // The size column's fixed width used to collapse the name span to zero at this width.
+  // ADR-0001: below 1024 CSS px the three-pane file manager is refused, not degraded.
+  const notice = page.getByRole('region', { name: 'Window too narrow' });
+  await expect(notice).toBeVisible();
+  await expect(notice.getByRole('heading', { name: /1024 px/i })).toBeVisible();
+  await expect(page.getByRole('listbox', { name: 'File Browser' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Keyboard required' })).toHaveCount(0);
+});
+
+test('file names keep their width at the floor with three columns', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 700 });
+  await page.goto('/?lvl=6&intro=false');
+  const pane = page.getByRole('listbox', { name: 'File Browser' });
+  await expect(pane).toBeFocused();
+
   const nameWidths = await page
     .getByRole('option')
     .evaluateAll((rows) =>
       rows.map((row) => row.querySelector('span.truncate')?.getBoundingClientRect().width ?? 0)
     );
   expect(nameWidths.length).toBeGreaterThan(0);
-  for (const width of nameWidths) expect(width).toBeGreaterThanOrEqual(40);
+  for (const width of nameWidths) expect(width).toBeGreaterThanOrEqual(150);
 });
 
 test('fuzzy find exposes the typed query and active file before selection', async ({ page }) => {

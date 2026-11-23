@@ -65,6 +65,8 @@ import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { useGameTimer } from './hooks/useGameTimer';
 import { useReduceMotion } from './hooks/useReduceMotion';
+import { useAtFloor } from './hooks/useViewportFloor';
+import { WidthNotice } from './components/WidthNotice';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
 import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
@@ -347,6 +349,7 @@ function createInitialState(): GameState {
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, createInitialState);
   const reduceMotion = useReduceMotion(gameState.settings.narrativeEffects);
+  const atFloor = useAtFloor();
   const filePaneRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useOverlayFocus(gameState.mode === 'search', 'input');
   const canFocusFilePane =
@@ -1720,283 +1723,287 @@ export default function App() {
         {/* Render System Alerts (Top Right) */}
         <SystemAlerts alerts={gameState.alerts} />
 
-        <div
-          className="flex flex-col flex-1 h-full min-w-0"
-          inert={gameState.showEpisodeIntro || gameState.isGameOver}
-        >
-          {!gameState.showEpisodeIntro && (
-            <LevelProgress
-              levels={LEVELS}
-              currentLevelIndex={gameState.levelIndex}
-              notification={null}
-              thought={gameState.thought}
-              onToggleHint={() => setUtilityPanel('hint', !gameState.showHint)}
-              onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
-              isOpen={gameState.showMap}
-              onClose={() =>
-                dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
-              }
-              onToggleMap={() => setUtilityPanel('map', !gameState.showMap)}
-              onJumpToLevel={(idx) => {
-                const lvl = LEVELS[idx];
-                let fs = cloneFS(INITIAL_FS);
-                fs = ensurePrerequisiteState(fs, lvl.id, gameState);
-                dispatch({
-                  type: 'SET_LEVEL',
-                  index: idx,
-                  fs,
-                  path: lvl.initialPath || ['root', 'home', 'guest'],
-                  showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
-                  notification: null, // No specific notification on jump
-                  timeLeft: lvl.timeLimit || null,
-                  zoxideData: gameState.zoxideData,
-                });
-              }}
-              activeTab={gameState.questMapTab}
-              selectedMissionIdx={gameState.questMapMissionIdx}
-            />
-          )}
-
-          {!gameState.showEpisodeIntro && (
-            <DiegeticPrompt
-              threatLevel={gameState.threatLevel}
-              mode={gameState.mode}
-              currentPath={gameState.currentPath}
-              fs={gameState.fs}
-              filterQuery={gameState.inputBuffer}
-              confirmedFilter={(() => {
-                const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                return dir ? gameState.filters[dir.id] : undefined;
-              })()}
-              searchQuery={gameState.searchQuery}
-              searchResults={gameState.searchResults}
-              cycleCount={gameState.cycleCount}
-            />
-          )}
-
-          <div className="flex flex-1 min-h-0 relative">
-            {/* Search Input - centered overlay popup matching Yazi style */}
-            {gameState.mode === 'search' && (
-              <div
-                className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
-                onKeyDown={containOverlayTab}
-              >
-                <div
-                  ref={searchPanelRef}
-                  role="dialog"
-                  aria-labelledby="fd-search-label"
-                  tabIndex={-1}
-                  className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
-                >
-                  <label
-                    id="fd-search-label"
-                    htmlFor="fd-search"
-                    className="block text-zinc-400 text-sm font-mono mb-2"
-                  >
-                    Search via fd:
-                  </label>
-                  <input
-                    id="fd-search"
-                    type="text"
-                    value={gameState.inputBuffer}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.nativeEvent.isComposing) return;
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSearchConfirm();
-                        e.stopPropagation();
-                      } else if (e.key === 'Escape') {
-                        dispatch({ type: 'SET_MODE', mode: 'normal' });
-                        e.stopPropagation();
-                      }
-                    }}
-                    className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
-                    data-testid="search-input"
-                  />
-                </div>
-              </div>
+        {atFloor ? (
+          <div
+            className="flex flex-col flex-1 h-full min-w-0"
+            inert={gameState.showEpisodeIntro || gameState.isGameOver}
+          >
+            {!gameState.showEpisodeIntro && (
+              <LevelProgress
+                levels={LEVELS}
+                currentLevelIndex={gameState.levelIndex}
+                notification={null}
+                thought={gameState.thought}
+                onToggleHint={() => setUtilityPanel('hint', !gameState.showHint)}
+                onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
+                isOpen={gameState.showMap}
+                onClose={() =>
+                  dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
+                }
+                onToggleMap={() => setUtilityPanel('map', !gameState.showMap)}
+                onJumpToLevel={(idx) => {
+                  const lvl = LEVELS[idx];
+                  let fs = cloneFS(INITIAL_FS);
+                  fs = ensurePrerequisiteState(fs, lvl.id, gameState);
+                  dispatch({
+                    type: 'SET_LEVEL',
+                    index: idx,
+                    fs,
+                    path: lvl.initialPath || ['root', 'home', 'guest'],
+                    showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
+                    notification: null, // No specific notification on jump
+                    timeLeft: lvl.timeLimit || null,
+                    zoxideData: gameState.zoxideData,
+                  });
+                }}
+                activeTab={gameState.questMapTab}
+                selectedMissionIdx={gameState.questMapMissionIdx}
+              />
             )}
 
-            <FileSystemPane
-              items={(() => {
-                const parent = getParentNode(gameState.fs, gameState.currentPath);
-                let items =
-                  parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
-                if (!gameState.showHidden) {
-                  items = items.filter((c) => !c.name.startsWith('.'));
-                }
-                return items;
-              })()}
-              isActive={false}
-              isParent={true}
-              selectedIds={[]}
-              clipboard={null}
-              linemode={gameState.linemode}
-              className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/50"
-            />
-
-            <div className="flex-1 flex flex-col min-w-0 sm:relative">
-              <FileSystemPane
-                focusRef={filePaneRef}
-                items={visibleItems}
-                isActive={
-                  !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
-                }
-                cursorIndex={gameState.cursorIndex}
-                isParent={false}
-                selectedIds={gameState.selectedIds}
-                clipboard={gameState.clipboard}
-                linemode={gameState.linemode}
-                className="flex-1"
+            {!gameState.showEpisodeIntro && (
+              <DiegeticPrompt
+                threatLevel={gameState.threatLevel}
+                mode={gameState.mode}
+                currentPath={gameState.currentPath}
+                fs={gameState.fs}
+                filterQuery={gameState.inputBuffer}
+                confirmedFilter={(() => {
+                  const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                  return dir ? gameState.filters[dir.id] : undefined;
+                })()}
+                searchQuery={gameState.searchQuery}
+                searchResults={gameState.searchResults}
+                cycleCount={gameState.cycleCount}
               />
+            )}
 
-              {gameState.mode === 'sort' && (
-                <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-in slide-in-from-bottom-2 duration-150 sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
-                  <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                      Sort Options
-                    </span>
-                    <span className="text-xs font-mono text-zinc-600">Which-Key</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">n</span>{' '}
-                      <span className="text-zinc-400">Natural</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">N</span>{' '}
-                      <span className="text-zinc-400">Natural (rev)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">a</span>{' '}
-                      <span className="text-zinc-400">A-Z</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">A</span>{' '}
-                      <span className="text-zinc-400">Z-A</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">m</span>{' '}
-                      <span className="text-zinc-400">Modified (new)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">M</span>{' '}
-                      <span className="text-zinc-400">Modified (old)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">s</span>{' '}
-                      <span className="text-zinc-400">Size (large)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">S</span>{' '}
-                      <span className="text-zinc-400">Size (small)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">e</span>{' '}
-                      <span className="text-zinc-400">Extension</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">E</span>{' '}
-                      <span className="text-zinc-400">Extension (rev)</span>
-                    </div>
-                    <div className="col-span-2 border-t border-zinc-800 my-1"></div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">l</span>{' '}
-                      <span className="text-zinc-400">Cycle Linemode</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-orange-500 font-bold">-</span>{' '}
-                      <span className="text-zinc-400">Clear Linemode</span>
-                    </div>
+            <div className="flex flex-1 min-h-0 relative">
+              {/* Search Input - centered overlay popup matching Yazi style */}
+              {gameState.mode === 'search' && (
+                <div
+                  className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
+                  onKeyDown={containOverlayTab}
+                >
+                  <div
+                    ref={searchPanelRef}
+                    role="dialog"
+                    aria-labelledby="fd-search-label"
+                    tabIndex={-1}
+                    className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
+                  >
+                    <label
+                      id="fd-search-label"
+                      htmlFor="fd-search"
+                      className="block text-zinc-400 text-sm font-mono mb-2"
+                    >
+                      Search via fd:
+                    </label>
+                    <input
+                      id="fd-search"
+                      type="text"
+                      value={gameState.inputBuffer}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.nativeEvent.isComposing) return;
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearchConfirm();
+                          e.stopPropagation();
+                        } else if (e.key === 'Escape') {
+                          dispatch({ type: 'SET_MODE', mode: 'normal' });
+                          e.stopPropagation();
+                        }
+                      }}
+                      className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
+                      data-testid="search-input"
+                    />
                   </div>
                 </div>
               )}
 
-              {gameState.mode === 'g-command' && (
-                <GCommandDialog onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })} />
-              )}
+              <FileSystemPane
+                items={(() => {
+                  const parent = getParentNode(gameState.fs, gameState.currentPath);
+                  let items =
+                    parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+                  if (!gameState.showHidden) {
+                    items = items.filter((c) => !c.name.startsWith('.'));
+                  }
+                  return items;
+                })()}
+                isActive={false}
+                isParent={true}
+                selectedIds={[]}
+                clipboard={null}
+                linemode={gameState.linemode}
+                className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/50"
+              />
 
-              {gameState.mode === 'input-file' && (
-                <InputModal
-                  label="Create"
-                  value={gameState.inputBuffer}
-                  onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                  onConfirm={handleInputConfirm}
-                  onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                  borderColorClass="border-green-500"
-                  testid="create-input"
+              <div className="flex-1 flex flex-col min-w-0 sm:relative">
+                <FileSystemPane
+                  focusRef={filePaneRef}
+                  items={visibleItems}
+                  isActive={
+                    !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
+                  }
+                  cursorIndex={gameState.cursorIndex}
+                  isParent={false}
+                  selectedIds={gameState.selectedIds}
+                  clipboard={gameState.clipboard}
+                  linemode={gameState.linemode}
+                  className="flex-1"
                 />
-              )}
 
-              {gameState.mode === 'filter' && (
-                <InputModal
-                  label="Filter"
-                  value={gameState.inputBuffer}
-                  onChange={(val) => {
-                    const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                    if (dir) {
-                      dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
-                    }
-                    // Also update inputBuffer so the input field shows the typed text
-                    dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                  }}
-                  onConfirm={() => {
-                    dispatch({ type: 'SET_MODE', mode: 'normal' });
-                    dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                  }}
-                  onCancel={() => {
-                    const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                    if (dir) {
-                      dispatch({ type: 'CLEAR_FILTER', dirId: dir.id });
-                    }
-                    dispatch({ type: 'SET_MODE', mode: 'normal' });
-                    dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                  }}
-                  borderColorClass="border-orange-500"
-                  testid="filter-input"
-                />
-              )}
+                {gameState.mode === 'sort' && (
+                  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-in slide-in-from-bottom-2 duration-150 sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
+                    <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
+                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                        Sort Options
+                      </span>
+                      <span className="text-xs font-mono text-zinc-600">Which-Key</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">n</span>{' '}
+                        <span className="text-zinc-400">Natural</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">N</span>{' '}
+                        <span className="text-zinc-400">Natural (rev)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">a</span>{' '}
+                        <span className="text-zinc-400">A-Z</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">A</span>{' '}
+                        <span className="text-zinc-400">Z-A</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">m</span>{' '}
+                        <span className="text-zinc-400">Modified (new)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">M</span>{' '}
+                        <span className="text-zinc-400">Modified (old)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">s</span>{' '}
+                        <span className="text-zinc-400">Size (large)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">S</span>{' '}
+                        <span className="text-zinc-400">Size (small)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">e</span>{' '}
+                        <span className="text-zinc-400">Extension</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">E</span>{' '}
+                        <span className="text-zinc-400">Extension (rev)</span>
+                      </div>
+                      <div className="col-span-2 border-t border-zinc-800 my-1"></div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">l</span>{' '}
+                        <span className="text-zinc-400">Cycle Linemode</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-orange-500 font-bold">-</span>{' '}
+                        <span className="text-zinc-400">Clear Linemode</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {gameState.mode === 'rename' && (
-                <InputModal
-                  label="Rename"
-                  value={gameState.inputBuffer}
-                  onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                  onConfirm={handleRenameConfirm}
-                  onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                  borderColorClass="border-cyan-500" // or green/cyan mix
-                  testid="rename-input"
-                />
-              )}
+                {gameState.mode === 'g-command' && (
+                  <GCommandDialog onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })} />
+                )}
 
-              {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-                <FuzzyFinder gameState={gameState} dispatch={dispatch} />
-              )}
+                {gameState.mode === 'input-file' && (
+                  <InputModal
+                    label="Create"
+                    value={gameState.inputBuffer}
+                    onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                    onConfirm={handleInputConfirm}
+                    onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                    borderColorClass="border-green-500"
+                    testid="create-input"
+                  />
+                )}
+
+                {gameState.mode === 'filter' && (
+                  <InputModal
+                    label="Filter"
+                    value={gameState.inputBuffer}
+                    onChange={(val) => {
+                      const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                      if (dir) {
+                        dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
+                      }
+                      // Also update inputBuffer so the input field shows the typed text
+                      dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                    }}
+                    onConfirm={() => {
+                      dispatch({ type: 'SET_MODE', mode: 'normal' });
+                      dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                    }}
+                    onCancel={() => {
+                      const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                      if (dir) {
+                        dispatch({ type: 'CLEAR_FILTER', dirId: dir.id });
+                      }
+                      dispatch({ type: 'SET_MODE', mode: 'normal' });
+                      dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                    }}
+                    borderColorClass="border-orange-500"
+                    testid="filter-input"
+                  />
+                )}
+
+                {gameState.mode === 'rename' && (
+                  <InputModal
+                    label="Rename"
+                    value={gameState.inputBuffer}
+                    onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                    onConfirm={handleRenameConfirm}
+                    onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                    borderColorClass="border-cyan-500" // or green/cyan mix
+                    testid="rename-input"
+                  />
+                )}
+
+                {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+                  <FuzzyFinder gameState={gameState} dispatch={dispatch} />
+                )}
+              </div>
+
+              <PreviewPane
+                node={currentItem}
+                level={currentLevel}
+                gameState={gameState}
+                previewScroll={gameState.previewScroll}
+                dispatch={dispatch}
+              />
             </div>
 
-            <PreviewPane
-              node={currentItem}
-              level={currentLevel}
-              gameState={gameState}
-              previewScroll={gameState.previewScroll}
-              dispatch={dispatch}
-            />
+            {!gameState.showEpisodeIntro && (
+              <StatusBar
+                state={gameState}
+                level={currentLevel}
+                allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
+                onNextLevel={advanceLevel}
+                currentItem={currentItem}
+              />
+            )}
           </div>
-
-          {!gameState.showEpisodeIntro && (
-            <StatusBar
-              state={gameState}
-              level={currentLevel}
-              allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
-              onNextLevel={advanceLevel}
-              currentItem={currentItem}
-            />
-          )}
-        </div>
+        ) : (
+          <WidthNotice />
+        )}
       </div>
     </GlitchOverlay>
   );

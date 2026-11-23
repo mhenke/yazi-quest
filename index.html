@@ -329,6 +329,18 @@
           display: flex;
         }
       }
+      /* The React width notice replaces this markup when only the width fails,
+         so the static gate must not stack on top of it on desktop. */
+      @media (min-width: 1024px), (hover: hover) and (pointer: fine) {
+        .touch-gate {
+          display: none;
+        }
+        /* Same panel geometry as the static gate; shown by React when only the
+           width fails. A desktop window gets the width message, not the keyboard one. */
+        .width-gate {
+          display: flex;
+        }
+      }
     </style>
     <script type="importmap">
       {
