@@ -190,11 +190,11 @@ as such.
 - Size column yielding below `sm` (640 px): shipped, in `FileSystemItem.tsx`. It only
   matters in the two-column mode this ADR retires; at 1024 px and above the size column
   is shown and names still measure 185 px.
-- Width floor: **not yet implemented.** The file-manager view is to be gated at
-  `min-width: 1024px`, with a product notice below it. Five E2E tests currently assert
-  behavior at 320 px — two of them gameplay (`keyboard-accessibility.spec.ts:22,43`),
-  one the outro (`:130`), two cinematic — and all five need to move above the floor
-  or be re-scoped to the zoomed-cinematic case.
+- Width floor: shipped. `useViewportFloor` gates the file-manager view at
+  `min-width: 1024px` inside `App.tsx`, below the cinematic branches, with
+  `WidthNotice` shown below it. Four E2E tests cover the split: two gameplay tests
+  moved to 1024 px, one asserts the notice replaces the game at 320 px, and the
+  cinematic tests stay at 320 px per Decision 4.
 - `PRODUCT.md` previously stated that narrow windows remain in scope; this ADR
   supersedes that line.
 
