@@ -45,9 +45,6 @@ export type Action =
   | { type: 'CLEAR_NOTIFICATION' }
   | { type: 'SET_THOUGHT'; payload: { text: string; author?: string } }
   | { type: 'CLEAR_THOUGHT' }
-  | { type: 'MARK_THOUGHT_TRIGGERED'; payload: string }
-  | { type: 'SET_GHOST_MESSAGE'; payload: { text: string; signature: string } }
-  | { type: 'MARK_GHOST_DIALOGUE_TRIGGERED'; payload: string }
   | { type: 'UPDATE_CONSCIOUSNESS'; payload: number }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> }
   | { type: 'SET_CLIPBOARD'; nodes: FileNode[]; action: 'yank' | 'cut'; originalPath: string[] }
@@ -404,27 +401,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'CLEAR_THOUGHT':
       return { ...state, thought: null };
 
-    case 'MARK_THOUGHT_TRIGGERED': {
-      return {
-        ...state,
-        triggeredThoughts: [...state.triggeredThoughts, action.payload],
-        lastThoughtId: action.payload,
-      };
-    }
-
-    case 'SET_GHOST_MESSAGE':
-      return {
-        ...state,
-        thought: { text: action.payload.text, author: `AI-7733 ${action.payload.signature}` },
-      };
-
-    case 'MARK_GHOST_DIALOGUE_TRIGGERED': {
-      return {
-        ...state,
-        ghostDialogueTriggered: [...state.ghostDialogueTriggered, action.payload],
-      };
-    }
-
     case 'UPDATE_CONSCIOUSNESS': {
       return {
         ...state,
@@ -524,8 +500,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         usedSearch: false,
         usedFilter: false,
         // Reset terminal thoughts tracking
-        triggeredThoughts: [],
-        lastThoughtId: null,
       };
 
     case 'RESTART_CYCLE':
@@ -540,8 +514,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
-        triggeredThoughts: [],
-        lastThoughtId: null,
       };
 
     case 'INCREMENT_KEYSTROKES':
@@ -847,6 +819,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'ADD_ALERT':
+      // Alerts are keyed by id and an effect can dispatch before state commits
+      // (StrictMode double-invoke), so uniqueness is enforced here rather than at
+      // each call site reading a possibly-stale alerts array.
+      if (state.alerts.some((a) => a.id === action.payload.id)) return state;
       return {
         ...state,
         alerts: [...state.alerts, action.payload],

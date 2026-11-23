@@ -25,8 +25,6 @@ interface UseConsciousnessProps {
  * Updates on level completion and significant game state changes
  */
 export function useConsciousness({ gameState, dispatch }: UseConsciousnessProps) {
-  const ghostCount = (gameState.ghostDialogueTriggered ?? []).length;
-
   /**
    * Update consciousness metrics
    * Called on level completion or significant state changes
@@ -40,7 +38,6 @@ export function useConsciousness({ gameState, dispatch }: UseConsciousnessProps)
         ),
         discoveryRate: 0.5, // Base rate - would need file tracking for precise calculation
         threatManagement: calculateThreatManagementScore(gameState.threatLevel),
-        ghostInteractions: ghostCount,
         ...overrides,
       };
 
@@ -60,7 +57,6 @@ export function useConsciousness({ gameState, dispatch }: UseConsciousnessProps)
       gameState.weightedKeystrokes,
       gameState.keystrokes,
       gameState.threatLevel,
-      ghostCount,
       gameState.consciousnessLevel,
       dispatch,
     ]
@@ -72,15 +68,6 @@ export function useConsciousness({ gameState, dispatch }: UseConsciousnessProps)
   useEffect(() => {
     updateMetrics({});
   }, [gameState.levelIndex, updateMetrics]);
-
-  /**
-   * Update consciousness when ghost dialogues are triggered
-   */
-  useEffect(() => {
-    if (ghostCount > 0) {
-      updateMetrics({});
-    }
-  }, [ghostCount, updateMetrics]);
 
   return {
     consciousnessLevel: gameState.consciousnessLevel || 0,

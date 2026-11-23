@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getRandomElement,
   checkCriticalFileDeletion,
   validateDeletions,
   checkGrabbingHoneypot,
@@ -10,26 +9,6 @@ import {
 import { GameState, Level, FileNode } from '../types';
 
 describe('gameUtils', () => {
-  describe('getRandomElement', () => {
-    it('should return a random element from an array', () => {
-      const arr = ['a', 'b', 'c'];
-      const result = getRandomElement(arr);
-      expect(arr).toContain(result);
-    });
-
-    it('should return undefined for empty array', () => {
-      const arr: string[] = [];
-      // Note: The function as written would cause an error for empty array
-      expect(() => getRandomElement(arr)).toThrow();
-    });
-
-    it('should return the only element for single-element array', () => {
-      const arr = ['only'];
-      const result = getRandomElement(arr);
-      expect(result).toBe('only');
-    });
-  });
-
   describe('checkCriticalFileDeletion', () => {
     it('should return false for non-critical file deletion', () => {
       const gameState: GameState = {
@@ -351,9 +330,6 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
-        triggeredThoughts: [],
-        lastThoughtId: null,
-        ghostDialogueTriggered: [],
         consciousnessLevel: 0,
         consciousnessTriggers: {},
       };
@@ -450,9 +426,6 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
-        triggeredThoughts: [],
-        lastThoughtId: null,
-        ghostDialogueTriggered: [],
         consciousnessLevel: 0,
         consciousnessTriggers: {},
       };
@@ -549,9 +522,6 @@ describe('gameUtils', () => {
         previewScroll: 0,
         isBooting: false,
         alerts: [],
-        triggeredThoughts: [],
-        lastThoughtId: null,
-        ghostDialogueTriggered: [],
         consciousnessLevel: 0,
         consciousnessTriggers: {},
       };

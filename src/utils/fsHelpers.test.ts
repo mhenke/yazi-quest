@@ -4,12 +4,12 @@ import {
   resolvePath,
   addNode,
   deleteNode,
-  createPath,
   addNodeWithConflictResolution,
   findPathById,
   getNodeByPath,
   getParentNode,
   isProtected,
+  resolveAndCreatePath,
 } from './fsHelpers';
 import { FileNode, Level, LevelTask } from '../types';
 
@@ -220,41 +220,6 @@ describe('fsHelpers', () => {
     it('should return error if node not found in parent', () => {
       const result = deleteNode(root, ['root', 'home'], 'missing-child');
       expect(result.ok).toBe(false);
-    });
-  });
-
-  describe('createPath', () => {
-    it('should create a new file', () => {
-      const result = createPath(root, ['root', 'home'], 'notes.txt');
-      expect(result.error).toBeNull();
-      expect(result.collision).toBe(false);
-
-      const created = getNodeById(result.fs, result.newNodeId);
-      expect(created).toBeDefined();
-      expect(created?.name).toBe('notes.txt');
-      expect(created?.type).toBe('file');
-    });
-
-    it('should create a new directory when name ends with /', () => {
-      const result = createPath(root, ['root', 'home'], 'projects/');
-      expect(result.error).toBeNull();
-      expect(result.collision).toBe(false);
-
-      const created = getNodeById(result.fs, result.newNodeId);
-      expect(created).toBeDefined();
-      expect(created?.name).toBe('projects');
-      expect(created?.type).toBe('dir');
-    });
-
-    it('should detect collision with existing file', () => {
-      // First create a file
-      const setup = createPath(root, ['root', 'home'], 'notes.txt');
-      const fsWithFile = setup.fs;
-
-      // Try to create it again
-      const result = createPath(fsWithFile, ['root', 'home'], 'notes.txt');
-      expect(result.collision).toBe(true);
-      expect(result.collisionNode?.name).toBe('notes.txt');
     });
   });
 
@@ -529,6 +494,45 @@ describe('fsHelpers', () => {
       expect(isProtected(root, [], alertLog, level12, 'delete')).toBeNull();
       expect(isProtected(root, [], traceSys, level12, 'delete')).toBeNull();
       expect(isProtected(root, [], scanTmp, level12, 'delete')).toBeNull();
+    });
+  });
+
+  describe('resolveAndCreatePath', () => {
+    it('creates a file at the current path', () => {
+      const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], 'notes.txt');
+      expect(res.error).toBeNull();
+      expect(res.collision).toBe(false);
+      expect(res.targetNode?.name).toBe('notes.txt');
+      expect(res.targetNode?.type).toBe('file');
+    });
+
+    it('creates an intermediate directory for a nested path', () => {
+      const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], 'a/b.txt');
+      expect(res.error).toBeNull();
+      expect(res.targetNode?.name).toBe('b.txt');
+      const guest = getNodeByPath(res.fs, ['root', 'home', 'guest']);
+      const dirA = guest?.children?.find((c) => c.name === 'a');
+      expect(dirA?.type).toBe('dir');
+    });
+
+    it('creates a directory when the input ends with a slash', () => {
+      const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], 'projects/');
+      expect(res.error).toBeNull();
+      expect(res.targetNode?.name).toBe('projects');
+      expect(res.targetNode?.type).toBe('dir');
+    });
+
+    it('reports a collision instead of overwriting an existing name', () => {
+      const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], 'test.txt');
+      expect(res.collision).toBe(true);
+      expect(res.collisionNode?.name).toBe('test.txt');
+    });
+
+    it('resolves a leading slash against root', () => {
+      const res = resolveAndCreatePath(root, ['root', 'home', 'guest'], '/bin/new.sh');
+      expect(res.error).toBeNull();
+      expect(res.targetNode?.name).toBe('new.sh');
+      expect(getNodeByPath(res.fs, ['root', 'bin'])?.type).toBe('dir');
     });
   });
 });

@@ -2,16 +2,6 @@ import { GameState, Level, FileNode } from '../types';
 import { getVisibleItems } from './viewHelpers';
 import { isProtected } from './fsHelpers';
 
-/**
- * Returns a random element from an array.
- */
-export const getRandomElement = <T>(arr: T[]): T => {
-  if (arr.length === 0) {
-    throw new Error('Cannot get random element from empty array');
-  }
-  return arr[Math.floor(Math.random() * arr.length)];
-};
-
 // Define the pattern used in level 9 to identify keeper files
 const LEVEL_9_KEEPER_PATTERN = /\.(key|pid|sock)$/;
 

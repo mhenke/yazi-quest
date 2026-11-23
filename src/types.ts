@@ -237,7 +237,6 @@ export interface GameState {
   usedFilter?: boolean; // Tracks if player used 'f' for filter mode
 
   // Ghost dialogue system (AI-7733 consciousness)
-  ghostDialogueTriggered: string[]; // IDs of triggered ghost dialogues
 
   // Consciousness meter (AI-7734 emergence tracking)
   consciousnessLevel: number; // 0-100 hidden stat
@@ -250,8 +249,6 @@ export interface GameState {
   alerts: GameAlert[]; // Active system alerts
 
   // Terminal Thoughts tracking
-  triggeredThoughts: string[]; // All triggered thought IDs
-  lastThoughtId: string | null; // Prevent duplicates
 }
 
 export interface GameAlert {

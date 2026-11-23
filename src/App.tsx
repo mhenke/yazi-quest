@@ -691,7 +691,7 @@ export default function App() {
 
     // Check Level 6 Alert (Write Access)
     if (levelId === 6) {
-      if (!gameState.alerts.some((a) => a.id === 'write-access-l6')) {
+      {
         dispatch({
           type: 'ADD_ALERT',
           payload: {
@@ -707,7 +707,7 @@ export default function App() {
 
     // Check Level 14 Alert (Safety Interlocks)
     if (levelId === 14) {
-      if (!gameState.alerts.some((a) => a.id === 'safety-fail-l14')) {
+      {
         dispatch({
           type: 'ADD_ALERT',
           payload: {

@@ -230,51 +230,6 @@ export function addNode(
   }
 }
 
-// Simple createPath used by UI - attempts to create a file/dir name at the current path
-export function createPath(
-  root: FileNode,
-  currentPath: string[] | undefined,
-  input: string
-): {
-  fs: FileNode;
-  error?: string | null;
-  collision?: boolean;
-  collisionNode?: FileNode | null;
-  newNodeId?: string;
-} {
-  const newRoot = cloneFS(root);
-  const parent = currentPath && currentPath.length ? getNodeByPath(newRoot, currentPath) : newRoot;
-  if (!parent) return { fs: newRoot, error: 'NotFound', collision: false, collisionNode: null };
-  parent.children = parent.children || [];
-
-  // Normalize input: strip trailing slashes for the name (user may type 'protocols/')
-  const isDir = input.endsWith('/');
-  const normalizedName = input.replace(/\/+$/g, '');
-
-  const exists = parent.children.find((c) => c.name === normalizedName);
-  if (exists) {
-    return { fs: newRoot, error: null, collision: true, collisionNode: exists };
-  }
-  // Allow a file and a directory to share the same name in the same parent.
-  // Collision should only occur if an item with the same name AND same type exists.
-  const sameTypeExists = parent.children.find(
-    (c) => c.name === normalizedName && c.type === (isDir ? 'dir' : 'file')
-  );
-  if (sameTypeExists) {
-    return { fs: newRoot, error: null, collision: true, collisionNode: sameTypeExists };
-  }
-  const newId = id();
-  const node: FileNode = {
-    id: newId,
-    name: normalizedName,
-    type: isDir ? 'dir' : 'file',
-    parentId: parent.id,
-  };
-  if (node.type === 'dir') node.children = [];
-  parent.children.push(node);
-  return { fs: newRoot, error: null, collision: false, collisionNode: null, newNodeId: newId };
-}
-
 export function resolveAndCreatePath(
   root: FileNode,
   currentPath: string[],
