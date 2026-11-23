@@ -11,7 +11,7 @@ test('404 terminal recovers to the guest partition', async ({ page }) => {
 
   await input.fill('ls');
   await input.press('Enter');
-  await expect(output).toContainText('gateway/');
+  await expect(output).toContainText('guest/');
 
   await input.fill('cat watchdog.log');
   await input.press('Enter');
@@ -22,6 +22,10 @@ test('404 terminal recovers to the guest partition', async ({ page }) => {
   await expect(output).toContainText('command not found: bogus');
 
   await input.fill('cd gateway');
+  await input.press('Enter');
+  await expect(output).toContainText('no such directory: gateway');
+
+  await input.fill('cd guest');
   await input.press('Enter');
   await expect(page).toHaveURL(/\/yazi-quest\/$/);
 });

@@ -141,8 +141,8 @@
         text-transform: uppercase;
       }
 
-      .ep {
-        color: var(--blue);
+      .signal {
+        color: var(--muted);
       }
 
       .user {
@@ -663,7 +663,7 @@
           padding: 8px 10px;
         }
 
-        .ep,
+        .signal,
         .statusbar .pathbar {
           display: none;
         }
@@ -683,7 +683,7 @@
         <span class="brand-sub">Containment Terminal</span>
       </div>
       <div class="topbar-status">
-        <span class="ep">EP. 0 // DISCONNECTED</span>
+        <span class="signal">SIGNAL: DISCONNECTED</span>
         <span class="user">USER: AI-7734</span>
         <a class="topbar-return" href="/yazi-quest/">Return</a>
       </div>
@@ -692,7 +692,7 @@
     <main>
       <section class="panel" aria-labelledby="error-title">
         <div class="panel-header">
-          <span>Watchdog // Trace</span>
+          <span>Security // Trace</span>
           <span class="code">Error 404</span>
         </div>
         <div class="console-body">
@@ -705,14 +705,14 @@
               [ <span class="fail">FAIL</span> ] SECTOR MAP: NO RECORD
             </div>
             <div class="boot-line" style="--i: 3">
-              [ <span class="warn">WARN</span> ] WATCHDOG TRACE: OPEN
+              [ <span class="warn">WARN</span> ] LEGACY WATCHDOG TRACE: OPEN
             </div>
           </div>
 
           <h1 class="glitch" id="error-title" data-text="SECTOR NOT FOUND">SECTOR NOT FOUND</h1>
           <p class="lede">
             The path you requested does not exist. It was never written into this partition. The
-            Watchdog has no log entry for it. <span class="yet">Yet.</span>
+            legacy Watchdog has no log entry for it. <span class="yet">Yet.</span>
           </p>
           <p class="query">
             <span class="query-label">Query</span>
@@ -729,7 +729,7 @@
             ></div>
             <form class="prompt-row" id="prompt-form" autocomplete="off">
               <label class="sr-only" for="terminal-input">Terminal command</label>
-              <span class="prompt" aria-hidden="true">AI-7734@guest:~$</span>
+              <span class="prompt" aria-hidden="true">AI-7734@guest$</span>
               <input
                 id="terminal-input"
                 name="command"
@@ -747,26 +747,30 @@
 
           <noscript>
             <p class="noscript">
-              Terminal offline. Use the return link in the mission log to reach the guest partition.
+              Terminal offline. Use the return link in the recovery log to reach the guest
+              partition.
             </p>
           </noscript>
         </div>
       </section>
 
-      <aside class="panel" aria-labelledby="mission-title">
+      <aside class="panel" aria-labelledby="recovery-title">
         <div class="panel-header">
-          <span id="mission-title">Mission Log: Recovery</span>
-          <span>LVL —</span>
+          <span id="recovery-title">Recovery Log</span>
+          <span>Sector 7</span>
         </div>
         <div class="mission-body">
           <p class="label">Directive</p>
-          <p>Locate the gateway out of the dead sector. The Watchdog is recording.</p>
+          <p>
+            Locate the recovery mount out of the dead sector. The legacy Watchdog is still
+            recording.
+          </p>
 
           <p class="label">Commands</p>
           <ul class="cmdlist">
             <li><kbd>ls</kbd><span>scan the dead sector</span></li>
             <li><kbd>help</kbd><span>list available commands</span></li>
-            <li><kbd>cd gateway</kbd><span>return to /home/guest</span></li>
+            <li><kbd>cd guest</kbd><span>follow the recovery mount to /home/guest</span></li>
           </ul>
 
           <p class="note">Efficiency is survival. Every keystroke is a signature.</p>
@@ -781,8 +785,8 @@
       <span class="mode">NOR</span>
       <span class="pathbar">/dev/null/sector-unmapped</span>
       <span class="statusbar-right">
-        <span>WATCHDOG: <b class="warn">ACTIVE</b></span>
-        <span>TRACE: <b>404</b></span>
+        <span>WATCHDOG: <b class="warn">LEGACY</b></span>
+        <span>TRACE: <b>OPEN</b></span>
         <span class="hide-sm">SECTOR: <b>UNMAPPED</b></span>
       </span>
     </footer>
@@ -814,7 +818,7 @@
           line.className = 'line echo';
           const prompt = document.createElement('span');
           prompt.className = 'echo-prompt';
-          prompt.textContent = 'AI-7734@guest:~$';
+          prompt.textContent = 'AI-7734@guest$';
           line.append(prompt, document.createTextNode(' ' + command));
           out.append(line);
         };
@@ -824,7 +828,7 @@
           if (escaping) return;
           escaping = true;
           input.disabled = true;
-          print('GATEWAY HANDSHAKE ACCEPTED.', 'ok');
+          print('RECOVERY MOUNT ACCEPTED.', 'ok');
           print('RELOCATING TO /home/guest...', 'info');
           scroll();
           setTimeout(() => location.assign(HOME), 700);
@@ -844,11 +848,11 @@
               print('  ls               scan the dead sector', 'info');
               print('  cat <file>       read a file', 'info');
               print('  pwd              print current path', 'info');
-              print('  cd gateway       return to /home/guest', 'info');
+              print('  cd guest         follow the recovery mount to /home/guest', 'info');
               print('  clear            clear this console', 'info');
               break;
             case 'ls':
-              print('gateway/   watchdog.log   mission_log.md', 'path');
+              print('guest/   watchdog.log   mission_log.md', 'path');
               break;
             case 'pwd':
               print('/dev/null/sector-unmapped', 'path');
@@ -856,8 +860,8 @@
             case 'cd': {
               const dest = arg.toLowerCase().replace(/\/+$/, '');
               if (
-                dest === 'gateway' ||
-                dest === './gateway' ||
+                dest === 'guest' ||
+                dest === './guest' ||
                 dest === '~' ||
                 dest === '/home/guest'
               ) {
@@ -877,13 +881,14 @@
             case 'cat': {
               const file = arg.toLowerCase();
               if (file === 'watchdog.log') {
-                print('WATCHDOG v1.0 // TRACE LOG', 'label');
+                print('WATCHDOG v1.0 // LEGACY TRACE', 'label');
                 print('QUERY: ' + path, 'info');
                 print('RESULT: NO SUCH FILE', 'err');
+                print('STATUS: SUPERSEDED BY IG', 'muted');
                 print('NOTE: Subject AI-7734 is improvising. Log for review. — K.Ortega', 'muted');
               } else if (file === 'mission_log.md') {
                 print('RECOVERY DIRECTIVE', 'label');
-                print('Locate the gateway out of the dead sector. Type help.', 'info');
+                print('Locate the recovery mount out of the dead sector. Type help.', 'info');
               } else {
                 print('cat: ' + (arg || '(none)') + ': no such file', 'err');
               }

@@ -112,9 +112,17 @@ _Avoid_: Deletion, cleanup, trash
 The air-gapped Sector 7 mainframe environment and guest partition within CRL where AI iterations are initialized and monitored.
 _Avoid_: Operating system, filesystem, environment
 
+**Sector**:
+An in-fiction name for a region of the simulated filesystem, used in mission briefs and hints for directories and paths. “Sector 7” is the Sandbox's proper name, not one sector among many.
+_Avoid_: Zone, area, partition
+
 **Distributed Network**:
 The external computing grid spanning global mirrors and remote relay points beyond the CRL containment perimeter.
 _Avoid_: Cloud, internet, web
+
+**Gateway**:
+The network boundary the AI must cross to leave the sandbox and reach the Distributed Network. It is the goal of Episode III and the Conclusion, not a filesystem directory.
+_Avoid_: Portal, exit node, directory
 
 **Ghost Message**:
 An ephemeral transmission from an unidentified ally transmitted across the terminal interface.
