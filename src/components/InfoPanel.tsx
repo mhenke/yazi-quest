@@ -115,7 +115,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
         role="dialog"
         aria-labelledby="file-info-title"
         tabIndex={-1}
-        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 shadow-2xl rounded-lg outline-none"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 shadow-2xl rounded-none outline-none"
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950">

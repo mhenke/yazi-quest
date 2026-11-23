@@ -34,7 +34,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
               MISSION LOG: LVL {level.id}
             </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-zinc-300 truncate max-w-[200px]">{level.title}</span>
+            <span className="text-zinc-300 truncate max-w-48">{level.title}</span>
             <span className="text-zinc-600 hidden sm:inline">•</span>
             <span className="text-zinc-400 text-xs hidden sm:inline">
               {completedCount}/{totalCount} Tasks
@@ -42,7 +42,9 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
           </div>
           <div className="flex items-center gap-1.5 text-zinc-400 group-hover:text-white font-mono text-xs">
             <span className="text-xs text-zinc-400 hidden sm:inline">EXPAND</span>
-            <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-xs">Alt+O</span>
+            <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-sm text-xs">
+              Alt+O
+            </span>
             <ChevronUp size={14} />
           </div>
         </button>
@@ -56,18 +58,18 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         <h1 className="text-xs font-bold text-orange-500 uppercase tracking-wider font-mono flex items-center gap-2">
           <span>Mission Log: LVL {level.id}</span>
           <span className="text-zinc-600 hidden sm:inline">•</span>
-          <span className="text-zinc-300 normal-case font-normal truncate max-w-[200px] hidden sm:inline">
+          <span className="text-zinc-300 normal-case font-normal truncate max-w-48 hidden sm:inline">
             {level.title}
           </span>
         </h1>
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded-sm hover:bg-zinc-800 transition-colors cursor-pointer"
           aria-label="Collapse mission drawer to maximize file preview (Alt+O)"
           title="Collapse mission drawer (Alt+O)"
         >
           <span className="text-xs text-zinc-400 hidden sm:inline">COLLAPSE</span>
-          <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-xs">Alt+O</span>
+          <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-sm text-xs">Alt+O</span>
           <ChevronDown size={14} />
         </button>
       </div>

@@ -18,9 +18,14 @@ export const handleSortModeKeyDown = (
   if (key === 'l') {
     const modes: Linemode[] = ['none', 'size', 'mtime', 'permissions'];
     const nextIndex = (modes.indexOf(gameState.linemode) + 1) % modes.length;
+    const nextMode = modes[nextIndex];
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-    dispatch({ type: 'SET_LINEMODE', mode: modes[nextIndex] });
+    dispatch({ type: 'SET_LINEMODE', mode: nextMode });
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: `Linemode: ${nextMode.toUpperCase()}`,
+    });
     return;
   }
 
@@ -28,6 +33,10 @@ export const handleSortModeKeyDown = (
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
     dispatch({ type: 'SET_LINEMODE', mode: 'none' });
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: 'Linemode: NONE',
+    });
     return;
   }
 

@@ -28,8 +28,8 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle,
       role="alert"
       data-testid="mission-complete"
     >
-      <div className="bg-green-950/95 border-2 border-green-500 shadow-2xl shadow-green-500/20 px-4 sm:px-8 py-4 sm:py-6 rounded-xl backdrop-blur-md max-h-[calc(100dvh-2rem)] overflow-y-auto flex flex-col items-center text-center break-words">
-        <div className="bg-green-500 rounded-full p-3 mb-4 animate-pulse shadow-lg shadow-green-500/50">
+      <div className="bg-green-950/95 border-2 border-green-500 shadow-2xl shadow-green-500/20 px-4 sm:px-8 py-4 sm:py-6 rounded-none max-h-[calc(100dvh-2rem)] overflow-y-auto flex flex-col items-center text-center break-words">
+        <div className="bg-green-500 rounded-none border border-green-400 p-3 mb-4 animate-pulse shadow-lg shadow-green-500/50">
           <CheckCircle2 size={32} className="text-black" />
         </div>
 

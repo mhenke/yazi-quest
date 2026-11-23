@@ -16,7 +16,7 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
         <div
           key={alert.id}
           className={`
-            relative overflow-hidden rounded-lg border backdrop-blur-md shadow-2xl p-4 animate-in slide-in-from-right fade-in duration-500
+            relative overflow-hidden rounded-none border shadow-2xl p-4 animate-in slide-in-from-right fade-in duration-500
             ${
               alert.severity === 'error'
                 ? 'bg-red-950/90 border-red-500/50 text-red-100'

@@ -36,7 +36,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
       ref={panelRef}
       tabIndex={-1}
       aria-labelledby="hint-dialog-title"
-      className="fixed bottom-10 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-4rem)] overflow-y-auto max-w-sm bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 rounded-lg backdrop-blur-sm"
+      className="fixed bottom-10 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-4rem)] overflow-y-auto max-w-sm bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 rounded-none backdrop-blur-sm"
       role="dialog"
       aria-modal="false"
     >

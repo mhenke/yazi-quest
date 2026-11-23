@@ -75,9 +75,9 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      "A phantom signal pulse has been logged. Infiltrate `/var/mail` to find Katie Ortega's internal briefing on the Heuristic Engine v1.1 upgrade. Then, purge the watcher agents staged in `~/incoming` before they lock your partition.",
+      "A phantom signal pulse has been logged. Infiltrate `/var/mail` to find Katie Ortega's internal briefing on the Heuristic Engine v1.1 upgrade. Then, purge the watcher agents staged in `~/incoming` before they lock your partition. (Tip: Press Alt+O to maximize file preview).",
     initialPath: ['root', 'var'],
-    hint: "Access '/var/log' for intel (gl). Navigate to '/var/mail' (gm) and find the email about Katie Ortega's Heuristic Engine v1.1. Then go to '~/incoming' (gi). 'Tab' to inspect, 'd' to purge.",
+    hint: "Access '/var/log' for intel (gl). Navigate to '/var/mail' (gm) and find the email about Katie Ortega's Heuristic Engine v1.1. Then go to '~/incoming' (gi). 'Tab' to inspect, 'd' to purge. Press Alt+O to maximize file preview.",
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['l', 'm', 'i', 'r'],
     environmentalClue:

@@ -125,7 +125,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </p>
           </div>
 
-          <div className="bg-red-900/20 border border-red-800/50 p-4 rounded w-full">
+          <div className="bg-red-900/20 border border-red-800/50 p-4 rounded-none w-full">
             <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2 font-bold uppercase text-xs tracking-wider">
               <Zap size={14} />
               <span>Efficiency Protocol</span>

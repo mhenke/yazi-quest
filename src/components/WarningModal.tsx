@@ -34,7 +34,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
         aria-labelledby={`${id}-title`}
         aria-describedby={`${id}-description`}
         tabIndex={-1}
-        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-4 sm:p-8 text-center relative rounded-lg"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-4 sm:p-8 text-center relative rounded-none"
       >
         <div className="absolute inset-0 bg-yellow-900/10 pointer-events-none" />
 
@@ -54,14 +54,14 @@ export const WarningModal: React.FC<WarningModalProps> = ({
               {detectedText}
             </p>
             {note && (
-              <div className="w-full bg-yellow-950/20 border border-yellow-600/40 p-3 rounded">
+              <div className="w-full bg-yellow-950/20 border border-yellow-600/40 p-3 rounded-none">
                 <p className="text-yellow-300 font-mono text-sm font-semibold">{note}</p>
               </div>
             )}
           </div>
 
-          <div className="bg-black/40 border border-zinc-700 p-4 rounded w-full flex items-center gap-4">
-            <div className="bg-zinc-800 p-2 rounded-full">{icon}</div>
+          <div className="bg-black/40 border border-zinc-700 p-4 rounded-none w-full flex items-center gap-4">
+            <div className="bg-zinc-800 p-2 rounded-none border border-zinc-700">{icon}</div>
             <div className="text-left">
               <p className="text-yellow-500 font-bold text-xs uppercase tracking-wider mb-1">
                 Corrective Action
@@ -74,7 +74,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
             {allowAutoFix ? (
               <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
                 Press{' '}
-                <span className="bg-yellow-500 text-black px-3 py-1 rounded font-extrabold mx-2 text-sm">
+                <span className="bg-yellow-500 text-black px-3 py-1 rounded-sm font-extrabold mx-2 text-sm">
                   Shift+Enter
                 </span>{' '}
                 {autoFixText}
