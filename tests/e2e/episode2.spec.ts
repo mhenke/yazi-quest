@@ -35,6 +35,7 @@ test.describe('Episode 2: FORTIFICATION', () => {
     // 2) gi (g then i), then l (enter batch_logs)
     await test.step('Navigate to batch_logs', async () => {
       await gotoCommand(page, 'i');
+      await assertTask(page, '0/5', testInfo.outputDir, 'arrived_in_incoming');
       await enterDirectory(page, 'batch_logs');
       await assertTask(page, '1/5', testInfo.outputDir, 'task1');
     });

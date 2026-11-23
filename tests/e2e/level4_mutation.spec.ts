@@ -20,6 +20,7 @@ test.describe('Level 4 Mutation Check', () => {
     // Task 3: Duplicate file (y, p) and rename to uplink_v2.conf (r)
     await pressKey(page, 'y');
     await pressKey(page, 'p');
+    await gotoCommand(page, 'g'); // The conflict-renamed copy sorts first.
     await renameItem(page, 'uplink_v2.conf');
 
     // 3. Verify Mission Complete Banner appears
@@ -42,9 +43,12 @@ test.describe('Level 4 Mutation Check', () => {
     // 6. Verify we're in protocols directory by checking we can see the uplink files
     // The status bar shows the current file name when a file is selected
     await expect(page.getByTestId('status-bar')).toContainText('uplink_v1.conf', { timeout: 3000 });
+    const preview = page.getByRole('region', { name: 'File preview' });
+    await expect(preview).toContainText('Uplink Protocol v1');
 
     // 7. Navigate down to uplink_v2.conf to verify both files exist
     await pressKey(page, 'j');
     await expect(page.getByTestId('status-bar')).toContainText('uplink_v2.conf', { timeout: 3000 });
+    await expect(preview).toContainText('Uplink Protocol v2');
   });
 });

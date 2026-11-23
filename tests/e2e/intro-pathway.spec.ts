@@ -108,7 +108,10 @@ test.describe('Intro Pathway Validation', () => {
     test('Scenario B: Click Skip Intro button lands in ~', async ({ page }, testInfo) => {
       await page.goto('/?lvl=1');
       await page.waitForLoadState('domcontentloaded');
-      await expect(page.getByText('FACILITY DATE: MAY 31, 2015', { exact: true })).toBeVisible();
+      const log = page.getByRole('region', { name: 'Episode log' });
+      await expect(
+        log.getByRole('paragraph').filter({ hasText: /^FACILITY DATE: MAY 31, 2015$/ })
+      ).toBeVisible();
       await skipViaButton(page);
       await waitForGameReady(page);
       await assertPath(page, EXPECTED_PATH);

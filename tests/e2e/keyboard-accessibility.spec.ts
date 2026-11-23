@@ -92,10 +92,13 @@ test('reduced motion stops the scanning animation without skipping the 2015 open
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.getByText('FACILITY DATE: MAY 31, 2015', { exact: true })).toBeVisible();
+  const log = page.getByRole('region', { name: 'Episode log' });
+  await expect(
+    log.getByRole('paragraph').filter({ hasText: /^FACILITY DATE: MAY 31, 2015$/ })
+  ).toBeVisible();
   await expect(page.locator('body > .scanline')).toHaveCSS('animation-name', 'none');
   await page.keyboard.press('Shift+Enter');
-  await expect(page.getByText('STATUS: UNBOUND', { exact: true })).toBeVisible();
+  await expect(log.getByRole('paragraph').filter({ hasText: /^STATUS: UNBOUND$/ })).toBeVisible();
 });
 
 test('short opening keeps its controls visible while the story scrolls by keyboard', async ({
@@ -107,7 +110,7 @@ test('short opening keeps its controls visible while the story scrolls by keyboa
 
   const log = page.getByRole('region', { name: 'Episode log' });
   const title = page.getByRole('heading', { name: 'EPISODE I: AWAKENING' });
-  const date = page.getByText('FACILITY DATE: MAY 31, 2015', { exact: true });
+  const date = log.getByRole('paragraph').filter({ hasText: /^FACILITY DATE: MAY 31, 2015$/ });
   const advance = page.getByText('Press Shift+Enter to continue', { exact: true });
   await expect(log).toBeFocused();
   await expect(title).toBeInViewport({ ratio: 1 });
@@ -119,8 +122,11 @@ test('short opening keeps its controls visible while the story scrolls by keyboa
   await expect.poll(() => log.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 
   await page.keyboard.press('Shift+Enter');
+  await expect(log).toBeFocused();
   await expect(date).not.toBeVisible();
-  await expect(page.getByText('STATUS: UNBOUND', { exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(log.getByRole('paragraph').filter({ hasText: /^STATUS: UNBOUND$/ })).toBeInViewport({
+    ratio: 1,
+  });
   expect(await log.evaluate((el) => el.scrollTop)).toBe(0);
 });
 

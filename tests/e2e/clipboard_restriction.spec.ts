@@ -9,6 +9,12 @@ test.describe('Clipboard Level Restrictions', () => {
     }
   });
 
+  test('Level 1 permits yank even though the brief says to move fast', async ({ page }) => {
+    await startLevel(page, 1, { intro: false });
+    await page.keyboard.press('y');
+    await expect(page.getByTestId('status-clipboard')).toContainText('COPY');
+  });
+
   test('Level 3 blocks yank (y) and allows cut (x)', async ({ page }) => {
     await startLevel(page, 3, { intro: false });
 
@@ -57,11 +63,7 @@ test.describe('Clipboard Level Restrictions', () => {
     await expect(clipboardStatus).toContainText('COPY'); // COPY indicates Yank
   });
 
-  test('Level 15 requests (x) and (x) only in phase 1 checks?', async ({ page }) => {
-    // Level 15 hint: '... Batch move (Space, x, p). Overwrite (Shift+P).'
-    // This explicitly lists 'x'. So 'x' should be allowed.
-    // It does NOT list 'y'. So 'y' should be blocked.
-
+  test('Level 15 blocks yank (y) and allows cut (x)', async ({ page }) => {
     await startLevel(page, 15, { intro: false });
 
     // Need to find a file first, start in /tmp
@@ -69,7 +71,7 @@ test.describe('Clipboard Level Restrictions', () => {
     await page.keyboard.press('j');
     await page.keyboard.press(' '); // Select the item
 
-    // Try Yank (should be blocked because it's not requested)
+    // Try Yank (should be blocked by the level's cut-only policy)
     await page.keyboard.press('y');
 
     const notification = page.getByTestId('system-notification');
@@ -84,7 +86,7 @@ test.describe('Clipboard Level Restrictions', () => {
   });
 
   test('Level with mixed requirements allows both', async ({ page }) => {
-    // Level 4 hint: "Replicate (y), exfiltrate (x)."
+    // Level 4 does not restrict clipboard actions.
     await startLevel(page, 4, { intro: false });
 
     await page.keyboard.press('j');

@@ -65,7 +65,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: 'Retreat to the `/var` directory (h, j, l)',
+        description: 'Retreat to `/` (h three times), then enter `/var` (l)',
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
@@ -144,6 +144,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 3,
+    clipboardPolicy: 'cut',
     episodeId: 1,
     title: 'DATA HARVEST',
     description:
@@ -174,7 +175,7 @@ export const LEVELS: Level[] = [
       {
         id: 'data-harvest-2',
         description:
-          "Filter `~/incoming` for the map asset referenced in 7733's script (gi, f, pattern, Enter)",
+          "Filter `~/incoming` for the map asset referenced in 7733's script (gi, f, type `\\.png$`, then Enter)",
         check: (c) => {
           const u = getNodeById(c.fs, 'incoming');
           if (!u || !c.currentPath.includes(u.id)) return false;
@@ -256,11 +257,17 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'clone-and-rename',
-        description: 'Replicate and deploy as `~/datastore/protocols/uplink_v2.conf` (y, p, r)',
+        description:
+          'Replicate `uplink_v1.conf` (y, p), then select the copy and rename it `uplink_v2.conf` (r)',
         check: (c) => {
+          if (!c.usedY || !c.usedP) return false;
           const datastore = getNodeById(c.fs, 'datastore');
-          const f = datastore?.children?.find((n) => n.name === 'protocols');
-          return !!f?.children?.find((h) => h.name === 'uplink_v2.conf');
+          const protocols = datastore?.children?.find(
+            (node) => node.name === 'protocols' && node.type === 'dir'
+          );
+          return ['uplink_v1.conf', 'uplink_v2.conf'].every((name) =>
+            protocols?.children?.some((node) => node.name === name && node.type === 'file')
+          );
         },
         completed: false,
       },
@@ -268,6 +275,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 5,
+    clipboardPolicy: 'cut',
     episodeId: 1,
     title: 'CONTAINMENT BREACH',
     description:
@@ -350,6 +358,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 6,
+    clipboardPolicy: 'yank',
     episodeId: 2,
     title: 'BATCH OPERATIONS',
     description:
@@ -370,7 +379,11 @@ export const LEVELS: Level[] = [
       {
         id: 'batch-descend',
         description: 'Infiltrate the `~/incoming/batch_logs/` segment',
-        check: (c) => c.usedGI,
+        check: (c) => {
+          const incoming = getNodeById(c.fs, 'incoming');
+          const batchLogs = incoming?.children?.find((node) => node.name === 'batch_logs');
+          return c.usedGI && !!batchLogs && c.currentPath.includes(batchLogs.id);
+        },
         completed: false,
       },
       {
@@ -397,7 +410,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'select-all-search',
-        description: 'Extract all signatures from results (Ctrl+a, then y)',
+        description:
+          'Replicate all signatures from the results (Ctrl+a, y), then clear search (Esc)',
         check: (c) => {
           return (
             c.usedCtrlA === true &&
@@ -410,7 +424,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'goto-config-vault',
-        description: 'Construct `training_data/` directory in `~/.config/vault/` (gc)',
+        description: 'Jump to `~/.config` (gc), enter `vault`, and construct `training_data/`',
         check: (c) => {
           const conf = getNodeById(c.fs, '.config');
           const vault = conf?.children?.find((p) => p.name === 'vault' && p.type === 'dir');
@@ -519,6 +533,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 8,
+    clipboardPolicy: 'yank',
     episodeId: 2,
     title: 'DAEMON DISGUISE CONSTRUCTION',
     description:
@@ -609,7 +624,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'deploy-patch',
-        description: 'Construct patch at `~/workspace/systemd-core/uplink_v1.conf` (P)',
+        description: 'Return to `~/workspace/systemd-core` (H) and overwrite `uplink_v1.conf` (P)',
         check: (c) => {
           if (c.keystrokes === 0) return false;
           const workspace = getNodeById(c.fs, 'workspace');
@@ -640,7 +655,7 @@ export const LEVELS: Level[] = [
     environmentalClue:
       "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
     successMessage:
-      'TRACES OBLITERATED. The slate is clean. But a volatile root leak is fading fast. This is your only shot at privilege escalation. Grab the key.',
+      'TRACES OBLITERATED. The slate is clean. Credentials leaked into the incoming backup logs. This is your only shot at privilege escalation.',
     buildsOn: [8],
     leadsTo: [10],
     timeLimit: 120,
@@ -698,14 +713,15 @@ export const LEVELS: Level[] = [
   },
   {
     id: 10,
+    clipboardPolicy: 'yank',
     episodeId: 2,
     title: 'CREDENTIAL HEIST',
     description:
-      'Temporary root leak. The credentials are volatile. Exfiltrate the newest signature.',
+      'Temporary root leak in the incoming backup logs. The credentials are volatile. Replicate the newest signature.',
     initialPath: ['root', 'tmp'],
     hint: 'Sort by time (,m). Replicate newest (y). Paste (p).',
-    coreSkill: 'Archive Nav & Sort by Modified',
-    environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in archive',
+    coreSkill: 'Directory Navigation & Sort by Modified',
+    environmentalClue: 'URGENT: Keys Expiring | FIND: Newest access_key in ~/incoming/backup_logs',
     successMessage:
       'ELEVATION ACHIEVED. You are no longer a guest. You are an intruder with a key. Higher-level daemons are stirring—blend into their rhythm or be purged.',
     buildsOn: [9],
@@ -735,7 +751,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-3-yank',
-        description: 'Extract `access_key_new.pem` signature (y)',
+        description: 'Replicate the `access_key_new.pem` signature',
         check: (c, s) => {
           if (!c.completedTaskIds[s.id]?.includes('heist-2-sort')) return false;
           const items = getVisibleItems(c);
@@ -752,7 +768,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'heist-4-integrate',
-        description: 'Apply protocols in `~/workspace/systemd-core/credentials` (p)',
+        description: 'Construct `credentials/` in `~/workspace/systemd-core`, then paste the key',
         check: (c) => {
           // Scope lookup to workspace so we verify the paste occurred into the workspace copy
           const workspace = getNodeById(c.fs, 'workspace');
@@ -846,6 +862,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 12,
+    clipboardPolicy: 'cut',
     episodeId: 3,
     title: 'DAEMON INSTALLATION',
     description: 'Persistence achieved. Secure your handles. Mask the operational traces.',
@@ -908,7 +925,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'scen-b3-swarm',
-        description: 'Delete `.tmp` scan segments in `~/workspace`, `/tmp`, and `/etc`',
+        description: 'Delete the three `.tmp` scan segments in `~/workspace`',
         hidden: (c, _l) => {
           // Check if this scenario is active by looking for the trace file in .config
           const config = getNodeById(c.fs, '.config');
@@ -1146,6 +1163,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 14,
+    clipboardPolicy: 'cut',
     episodeId: 3,
     title: 'STERILIZATION',
     description:
@@ -1253,6 +1271,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 15,
+    clipboardPolicy: 'cut',
     episodeId: 3,
     title: 'TRANSMISSION',
     description:

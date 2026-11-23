@@ -54,6 +54,7 @@ export interface Level {
   // this level. Each entry may optionally require a task id to be
   // completed (requiresTaskId) before the rule applies.
   allowedDeletePaths?: { path: string[]; requiresTaskId?: string }[];
+  clipboardPolicy?: 'cut' | 'yank'; // Restrict copying or moving for a level; omitted allows both.
   postTasks?: { triggerTaskId: string; action: (gameState: GameState, level: Level) => Action }[];
 }
 

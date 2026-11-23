@@ -200,9 +200,14 @@ test.describe('Episode 1: AWAKENING', () => {
       await addItem(page, 'uplink_v1.conf');
       await assertTask(page, '2/3', testInfo.outputDir, 'create_uplink_conf');
 
-      // Task 3: Duplicate file (y, p) and rename to uplink_v2.conf (r)
+      await renameItem(page, 'uplink_v2.conf');
+      await assertTask(page, '2/3', testInfo.outputDir, 'rename_without_copy');
+      await renameItem(page, 'uplink_v1.conf');
+
+      // Duplicate the original, then select the pasted copy for renaming.
       await pressKey(page, 'y');
       await pressKey(page, 'p');
+      await gotoCommand(page, 'g'); // The conflict-renamed copy sorts first.
       await renameItem(page, 'uplink_v2.conf');
       await assertTask(page, '3/3', testInfo.outputDir, 'duplicate_and_rename');
 
@@ -272,12 +277,10 @@ test.describe('Episode 1: AWAKENING', () => {
       await navigateRight(page, 1); // Enter datastore
       await assertTask(page, '2/5', 'temp', 'enter_datastore');
 
-      await filterByText(page, 'personnel_list.txt');
-      await pressKey(page, 'Escape');
-      await pressKey(page, 'Shift+J');
-      await pressKey(page, 'Shift+K');
       await pressKey(page, 'Shift+G');
       await pressKey(page, 'k');
+      await pressKey(page, 'Shift+J');
+      await pressKey(page, 'Shift+K');
       await assertTask(page, '3/5', 'temp', 'preview_personnel_list');
 
       await gotoCommand(page, 'g');

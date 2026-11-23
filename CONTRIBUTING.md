@@ -146,4 +146,4 @@ Run Playwright E2E tests with a non-interactive reporter:
 npm run test:e2e -- --reporter=list
 ```
 
-CI and the pre-push hook start a fresh dev server on port 3100. To reuse your local dev server on port 3000, run `env -u CI npm run test:e2e -- --reporter=list`.
+CI and the pre-push hook start a fresh dev server on the next free port from 3100. To reuse your local dev server on port 3000, run `env -u CI npm run test:e2e -- --reporter=list`.

@@ -42,7 +42,7 @@ This document audits the current levels for narrative consistency, clear objecti
 ### Level 4: UPLINK ESTABLISHMENT
 
 - **Keybindings**: `a, y, r, p` `[INTRO]`
-- **Objectives**: Construct relay signatures. Redundant uplink configs.
+- **Objectives**: Construct the first uplink signature, duplicate it, and rename the copy while preserving the original.
 
 ### Level 5: CONTAINMENT BREACH
 
@@ -62,8 +62,7 @@ This document audits the current levels for narrative consistency, clear objecti
   - `Space, .` `[R1]`
   - `s, Ctrl+A, gc` `[INTRO]`
 - **Objectives**: Infiltration phase. Logs are scattered across subdirectories. Aggregate your training data in the secure vault.
-- **Regex Clause**: Provide the pattern `.log` for recursive search.
-- **Task Refinement**: "Logs are scattered. Use recursive search (s) and type the pattern `.log` to find all training files."
+- **Regex Clause**: Search for `\.log$` in `~/incoming/batch_logs/`, yank the results, then press `Esc` to clear the search.
 
 ### Level 7: QUANTUM BYPASS
 
@@ -79,15 +78,15 @@ This document audits the current levels for narrative consistency, clear objecti
 - **Keybindings**:
   - `s, Ctrl+A, gc` `[R2]` -> **DROP MENTIONS**
   - `z, Z, gr, Y` `[R1]`
-  - `Shift+P` `[INTRO]`
-- **Objectives**: Stabilize core config by forcing an overwrite with a verified clean signature.
+  - `H, P` `[INTRO]`
+- **Objectives**: Return to the previous directory and overwrite the corrupted config with the clean signature.
 - **Regex Clause**: Provide string `uplink` for filtering.
 
 ### Level 9: TRACE CLEANUP
 
 - **Keybindings**:
   - `z, Z, gr, Y` `[R2]` -> **DROP MENTIONS**
-  - `Shift+P` `[R1]`
+  - `P` `[R1]`
   - `Ctrl+R, D, gt` `[INTRO]`
 - **Objectives**: Purge the junk in /tmp while preserving critical process artifacts using anchored filters and selection inversion.
 - **Regex Clause**: **CRITICAL.** Provide the anchored pattern `\.(key|pid|sock)$` to prevent accidental deletion of decoy files. Explain that the `$` ensures we only match the extension.
@@ -95,10 +94,10 @@ This document audits the current levels for narrative consistency, clear objecti
 ### Level 10: CREDENTIAL HEIST
 
 - **Keybindings**:
-  - `Shift+P` `[R2]` -> **DROP MENTIONS**
+  - `P` `[R2]` -> **DROP MENTIONS**
   - `Ctrl+R, D, gt` `[R1]`
   - `,m` `[INTRO]` (Sort)
-- **Objectives**: Identify and extract the most recently modified access key from a volatile archive.
+- **Objectives**: Replicate the most recently modified key from the incoming backup logs, create `credentials/` in the workspace daemon, and paste the key there.
 
 ---
 

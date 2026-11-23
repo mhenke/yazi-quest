@@ -43,6 +43,8 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
   mode handlers. Preserve priority, event consumption, and input-focus behavior.
 - Level definitions and task checks live in `src/constants/levels.ts`; filesystem
   seeds, prerequisites, and consequences live in `src/constants/filesystem/`.
+- Set clipboard restrictions in `Level.clipboardPolicy`; keep mission copy independent
+  of which commands the game allows.
 - Player actions must satisfy objectives. Do not pre-solve them with level-specific
   filesystem injections.
 - Preserve Yazi's three-pane layout: parent, current directory, preview. Keep mission
@@ -79,8 +81,8 @@ under `src/constants/` and UI under `src/components/`.
 
 - Run `npm run type-check` after code changes and the narrow check covering the behavior.
 - Run Playwright with `--reporter=list`; use existing fixtures and keyboard helpers.
-  The pre-push hook and CI start their own Vite on port 3100. To reuse the local
-  dev server on port 3000, run Playwright with `env -u CI`.
+  The pre-push hook and CI start their own Vite on the next free port from 3100.
+  To reuse the local dev server on port 3000, run Playwright with `env -u CI`.
 - Preserve literal user-reported key sequences. Replicate the reported workflow before
   substituting another command sequence; capture a screenshot immediately after a UI failure.
 - Verify relevant level/episode states using URL debug parameters from `src/App.tsx`.

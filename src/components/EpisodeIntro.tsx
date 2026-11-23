@@ -97,13 +97,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
 
   useSkipIntro(onComplete);
 
-  // The page cannot scroll (body is overflow:hidden), so the log owns the scroll.
+  // Each section replaces the scroller so an in-flight PageDown cannot carry into it.
   useEffect(() => {
     logRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: 0 });
   }, [sectionIndex]);
 
   // Determine styling based on content
@@ -270,6 +266,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
 
         {/* Content - Current Section */}
         <div
+          key={sectionIndex}
           ref={logRef}
           role="region"
           aria-label="Episode log"
