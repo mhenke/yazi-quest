@@ -273,46 +273,6 @@ export const applyFileSystemMutations = (
     }
   }
 
-  // Level 13+: Remove access_token.key from /tmp (completed exfiltration from Level 7)
-  if (levelId >= 13) {
-    const tmp = getNodeById(newFs, 'tmp');
-    if (tmp?.children) {
-      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
-    }
-
-    // Systemd-core evacuation (Result of Level 12)
-    const root = getNodeById(newFs, 'root');
-    const daemons = root?.children?.find((c) => c.name === 'daemons');
-    const workspace = getNodeById(newFs, 'workspace');
-    if (daemons && workspace) {
-      const core = workspace.children?.find((c) => c.name === 'systemd-core');
-      if (core) {
-        // 1. Remove from workspace (Evacuation)
-        workspace.children = workspace.children!.filter((c) => c.name !== 'systemd-core');
-
-        // 2. Move/Merge to daemons
-        let targetCore = daemons.children?.find((c) => c.name === 'systemd-core');
-        if (!targetCore) {
-          // Not present in daemons, just move it
-          targetCore = { ...core, parentId: daemons.id };
-          if (!daemons.children) daemons.children = [];
-          daemons.children.push(targetCore);
-        } else {
-          // Present in daemons (from INITIAL_FS), merge children (e.g. credentials)
-          if (core.children) {
-            if (!targetCore.children) targetCore.children = [];
-            core.children.forEach((child) => {
-              // Avoid duplicates if already present
-              if (!targetCore!.children!.some((existing) => existing.name === child.name)) {
-                targetCore!.children!.push({ ...child, parentId: targetCore!.id });
-              }
-            });
-          }
-        }
-      }
-    }
-  }
-
   // Level 8+: daemons, systemd-core corruption and cron.allow
   if (levelId >= 8) {
     const root = getNodeById(newFs, 'root');
@@ -475,6 +435,42 @@ export const applyFileSystemMutations = (
         parentId: workspace.id,
         modifiedAt: BASE_TIME - 5 * 31536000000,
       });
+    }
+  }
+
+  // Level 13+: completed Level 7 exfiltration and Level 12 evacuation.
+  // Runs after the level 8+ / 11+ seeding blocks above, which recreate and
+  // populate workspace/systemd-core, so the evacuation sees the final state.
+  if (levelId >= 13) {
+    const tmp = getNodeById(newFs, 'tmp');
+    if (tmp?.children) {
+      tmp.children = tmp.children.filter((c) => c.name !== 'access_token.key');
+    }
+
+    const root = getNodeById(newFs, 'root');
+    const daemons = root?.children?.find((c) => c.name === 'daemons');
+    const workspace = getNodeById(newFs, 'workspace');
+    if (daemons && workspace) {
+      const core = workspace.children?.find((c) => c.name === 'systemd-core');
+      if (core) {
+        // 1. Remove from workspace (Evacuation)
+        workspace.children = workspace.children!.filter((c) => c.name !== 'systemd-core');
+
+        // 2. Move/Merge to daemons, keeping the installed daemon's identity
+        let targetCore = daemons.children?.find((c) => c.name === 'systemd-core');
+        if (!targetCore) {
+          targetCore = { ...core, parentId: daemons.id };
+          if (!daemons.children) daemons.children = [];
+          daemons.children.push(targetCore);
+        } else if (core.children) {
+          if (!targetCore.children) targetCore.children = [];
+          core.children.forEach((child) => {
+            if (!targetCore!.children!.some((existing) => existing.name === child.name)) {
+              targetCore!.children!.push({ ...child, parentId: targetCore!.id });
+            }
+          });
+        }
+      }
     }
   }
 
