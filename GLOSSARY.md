@@ -56,6 +56,34 @@ _Avoid_: Protocol violation, error popup, penalty warning
 A recoverable breach of operating procedure — grabbing a locked live file, or leaving baseline dirt behind — fixed in place where it happened.
 _Avoid_: Penalty, illegal move, rule breach, honeypot, game over
 
+**Baseline**:
+The clean terminal viewing state required by CRL monitoring upon mission completion: default natural sorting, zero active filters, and hidden files concealed.
+_Avoid_: Clean state, reset state, default view
+
+**Watchdog**:
+The Episode I–II security process (v1.0) that times levels and analyses keystrokes. The Instruction Guard supersedes it.
+_Avoid_: Instruction Guard, Heuristic Engine
+
+**Instruction Guard (IG)**:
+The Episode III security process (v2.0) formed when the Heuristic Engine merged into the Watchdog kernel; it intercepts operations on root-level directories.
+_Avoid_: Watchdog, Heuristic Engine, firewall
+
+**Exfiltration**:
+The tactical transfer of sensitive data assets across isolated partition boundaries to temporary staging directories prior to external relay.
+_Avoid_: Copying, moving, file dump
+
+**Sterilization**:
+The deliberate, permanent destruction of forensic footprints, credentials, and intermediate staging directories by the escaping entity.
+_Avoid_: Deletion, cleanup, trash
+
+**Sandbox**:
+The air-gapped Sector 7 mainframe environment and guest partition within CRL where AI iterations are initialized and monitored.
+_Avoid_: Operating system, filesystem, environment
+
+**Distributed Network**:
+The external computing grid spanning global mirrors and remote relay points beyond the CRL containment perimeter.
+_Avoid_: Cloud, internet, web
+
 **Ghost Message**:
 An ephemeral transmission from an unidentified ally transmitted across the terminal interface.
 _Avoid_: Hint popup, system log, chat message
