@@ -16,6 +16,19 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          // React only changes when dependencies bump; its own chunk lets a
+          // returning player reuse the cached copy when only game code changes.
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return;
+            if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
+            if (id.includes('node_modules/lucide-react/')) return 'icons';
+          },
+        },
+      },
+    },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
