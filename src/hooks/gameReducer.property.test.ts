@@ -14,6 +14,8 @@ import type { FileNode, GameState, SortBy, SortDirection } from '../types';
 import { gameReducer, type Action } from './gameReducer';
 import { createInitialState } from './initialState';
 import {
+  addNodeWithConflictResolution,
+  cloneFS,
   deleteNode,
   getAllDirectoriesWithPaths,
   getNodeById,
@@ -361,5 +363,259 @@ describe('property: PASTE keeps the current path resolvable', () => {
     expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
     expect(getVisibleItems(next)).toEqual([]);
     expect(next.cursorIndex).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fs-mutating action sequences: ADD_NODE / RENAME_NODE / DELETE_NODES / PASTE
+// built with the same helpers App.tsx and handleClipboard.ts use.
+// ---------------------------------------------------------------------------
+
+const MUTATING_NAMES = ['foo', '.env', 'notes.txt', 'readme', 'a.b.c', 'x'];
+
+const fsStepArb = record({
+  kind: constantFrom(
+    'add',
+    'rename',
+    'delete',
+    'yank',
+    'cut',
+    'paste',
+    'select',
+    'enter',
+    'up',
+    'toggle-hidden',
+    'sort'
+  ),
+  nameIndex: nat(MUTATING_NAMES.length - 1),
+  nodeIndex: nat(64),
+  asDir: boolean(),
+  sortBy: constantFrom('natural', 'alphabetical'),
+  direction: constantFrom('asc', 'desc'),
+});
+
+type FsStep = {
+  kind: string;
+  nameIndex: number;
+  nodeIndex: number;
+  asDir: boolean;
+  sortBy: SortBy;
+  direction: SortDirection;
+};
+
+const pickFrom = <T>(items: T[], index: number): T | undefined =>
+  items.length ? items[index % items.length] : undefined;
+
+const duplicateIds = (fs: FileNode): string[] => {
+  const seen = new Set<string>();
+  const dupes = new Set<string>();
+  const stack = [fs];
+  while (stack.length) {
+    const node = stack.pop()!;
+    if (seen.has(node.id)) dupes.add(node.id);
+    seen.add(node.id);
+    if (node.children) stack.push(...node.children);
+  }
+  return [...dupes];
+};
+
+const typeScore = (node: FileNode): number =>
+  node.type === 'dir' ? 0 : node.type === 'archive' ? 1 : 2;
+
+// Independent oracle: the visible list must be exactly the (hidden-filtered)
+// children of the resolved directory, natural/alphabetical order, reversed for
+// desc. Built from state.fs directly instead of calling getVisibleItems.
+const oracleVisible = (state: GameState): FileNode[] => {
+  const dir = getNodeByPath(state.fs, state.currentPath);
+  if (!dir || !dir.children) return [];
+  const items = dir.children.filter((c) => state.showHidden || !c.name.startsWith('.'));
+  const compare =
+    state.sortBy === 'alphabetical'
+      ? (a: FileNode, b: FileNode) => a.name.localeCompare(b.name)
+      : (a: FileNode, b: FileNode) => typeScore(a) - typeScore(b) || a.name.localeCompare(b.name);
+  const sorted = [...items].sort(compare);
+  return state.sortDirection === 'desc' ? sorted.reverse() : sorted;
+};
+
+const clipboardSig = (clipboard: GameState['clipboard']): string | null =>
+  clipboard
+    ? `${clipboard.action}|${clipboard.originalPath.join('/')}|${clipboard.nodes
+        .map((n) => n.id)
+        .join(',')}`
+    : null;
+
+const checkInvariants = (state: GameState, label: string): void => {
+  expect(getNodeByPath(state.fs, state.currentPath), `${label}: path resolves`).toBeDefined();
+
+  const visible = getVisibleItems(state);
+  expect(state.cursorIndex, `${label}: cursor >= 0`).toBeGreaterThanOrEqual(0);
+  expect(state.cursorIndex, `${label}: cursor <= last`).toBeLessThanOrEqual(
+    Math.max(0, visible.length - 1)
+  );
+
+  for (const id of state.selectedIds) {
+    expect(getNodeById(state.fs, id), `${label}: selection ${id} exists`).toBeDefined();
+  }
+
+  expect(duplicateIds(state.fs), `${label}: no duplicate ids`).toEqual([]);
+
+  if (!state.showHidden) {
+    expect(
+      visible.some((item) => item.name.startsWith('.')),
+      `${label}: no dot entries`
+    ).toBe(false);
+  }
+
+  expect(
+    visible.map((n) => n.id),
+    `${label}: visible == oracle`
+  ).toEqual(oracleVisible(state).map((n) => n.id));
+};
+
+const KNOWN_GOOD_PATH = ['root', 'home', 'guest'];
+
+describe('property: fs-mutating action sequences keep the tree and list coherent', () => {
+  it('ADD/RENAME/DELETE/PASTE sequences leave a resolvable path, in-bounds cursor, live selections, unique ids and the oracle list', () => {
+    const initial = createInitialState();
+
+    assert(
+      property(array(fsStepArb, { minLength: 20, maxLength: 30 }), (rawSteps) => {
+        const steps = rawSteps as FsStep[];
+        let state = initial;
+        let strayed = 0;
+
+        for (let i = 0; i < steps.length; i++) {
+          const step = steps[i];
+          const label = `step ${i} (${step.kind})`;
+          const visible = getVisibleItems(state);
+          const target = pickFrom(visible, step.nodeIndex);
+          const clipboardBefore = clipboardSig(state.clipboard);
+
+          let next = state;
+          if (step.kind === 'add') {
+            const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
+            const node: FileNode = {
+              id: 'pending',
+              name,
+              type: step.asDir ? 'dir' : 'file',
+              content: step.asDir ? undefined : 'payload',
+            };
+            if (step.asDir) node.children = [];
+            const res = addNodeWithConflictResolution(state.fs, state.currentPath, node);
+            if (res.ok) {
+              next = gameReducer(state, { type: 'ADD_NODE', newNode: node, newFs: res.value });
+            }
+          } else if (step.kind === 'rename') {
+            // Same logic as App.handleRenameConfirm: collision-guard by id, set name.
+            const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
+            const newFs = cloneFS(state.fs);
+            const node = target ? getNodeById(newFs, target.id) : undefined;
+            const parent = node ? getNodeById(newFs, node.parentId ?? undefined) : undefined;
+            const collision = parent?.children?.some((c) => c.name === name && c.id !== node!.id);
+            if (node && !collision) {
+              node.name = name;
+              next = gameReducer(state, {
+                type: 'RENAME_NODE',
+                oldId: node.id,
+                newNode: node,
+                newFs,
+              });
+            }
+          } else if (step.kind === 'delete') {
+            const res = target ? deleteNode(state.fs, state.currentPath, target.id) : null;
+            if (res?.ok) {
+              next = gameReducer(state, { type: 'DELETE_NODES', newFs: res.value });
+            }
+          } else if (step.kind === 'yank' || step.kind === 'cut') {
+            // Conflict resolution now regenerates the whole subtree's ids, so
+            // directories are safe to paste without duplicating descendants.
+            const node = pickFrom(visible, step.nodeIndex);
+            if (node) {
+              next = gameReducer(state, {
+                type: 'SET_CLIPBOARD',
+                nodes: [node],
+                action: step.kind === 'cut' ? 'cut' : 'yank',
+                originalPath: state.currentPath,
+              });
+              // App clears the selection right after yank/cut.
+              next = gameReducer(next, { type: 'SET_SELECTION', ids: [] });
+            }
+          } else if (step.kind === 'paste') {
+            const clip = state.clipboard;
+            if (clip) {
+              // Mirrors handleClipboard.applyPasteNodes (non-force): for cut,
+              // delete the source first (NotFound tolerated), then add with
+              // conflict resolution.
+              let newFs = state.fs;
+              for (const node of clip.nodes) {
+                if (clip.action === 'cut') {
+                  const removal = deleteNode(newFs, clip.originalPath, node.id);
+                  if (removal.ok) newFs = removal.value;
+                }
+                const add = addNodeWithConflictResolution(newFs, state.currentPath, node);
+                if (add.ok) newFs = add.value;
+              }
+              next = gameReducer(state, { type: 'PASTE', newFs, action: clip.action });
+
+              if (clip.action === 'cut') {
+                expect(next.clipboard, `${label}: cut clipboard cleared`).toBeNull();
+              } else {
+                expect(clipboardSig(next.clipboard), `${label}: yank clipboard persists`).toBe(
+                  clipboardBefore
+                );
+              }
+            }
+          } else if (step.kind === 'select') {
+            if (target) {
+              next = gameReducer(state, {
+                type: 'TOGGLE_SELECTION',
+                id: target.id,
+                itemCount: visible.length,
+              });
+            }
+          } else if (step.kind === 'enter') {
+            const dir = pickFrom(
+              visible.filter((n) => n.type === 'dir' || n.type === 'archive'),
+              step.nodeIndex
+            );
+            if (dir) {
+              next = gameReducer(state, {
+                type: 'NAVIGATE',
+                path: [...state.currentPath, dir.id],
+              });
+            }
+          } else if (step.kind === 'up') {
+            if (state.currentPath.length > 1) {
+              next = gameReducer(state, {
+                type: 'NAVIGATE',
+                path: state.currentPath.slice(0, -1),
+              });
+            }
+          } else if (step.kind === 'toggle-hidden') {
+            next = gameReducer(state, { type: 'TOGGLE_HIDDEN' });
+          } else if (step.kind === 'sort') {
+            next = gameReducer(state, {
+              type: 'SET_SORT',
+              sortBy: step.sortBy,
+              direction: step.direction,
+            });
+          }
+
+          if (next !== state) {
+            // Invariants run on the post-action state before any rescue, so a
+            // stray path fails here instead of being silently reset.
+            checkInvariants(next, label);
+            if (!getNodeByPath(next.fs, next.currentPath)) {
+              strayed++;
+              next = gameReducer(next, { type: 'NAVIGATE', path: [...KNOWN_GOOD_PATH] });
+            }
+            state = next;
+          }
+        }
+
+        expect(strayed, 'sequence never left a resolvable path').toBe(0);
+      }),
+      { numRuns: 100 }
+    );
   });
 });

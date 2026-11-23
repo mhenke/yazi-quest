@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { INITIAL_FS } from '../constants/filesystem';
 import { LEVELS } from '../constants/levels';
-import { cloneFS, getNodeByPath } from '../utils/fsHelpers';
+import { cloneFS, getNodeById, getNodeByPath } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { getLevelStartPath } from '../utils/gameUtils';
 
@@ -361,6 +361,12 @@ function applyPasteResult(state: GameState, action: Extract<Action, { type: 'PAS
     fs: action.newFs,
     clipboard: action.action === 'cut' ? null : state.clipboard,
   };
+  // A cut paste deletes the source node and re-adds it under a fresh id, so
+  // any selection that still points at the old id no longer resolves; prune
+  // it the same way DELETE_NODES sanitizes selections.
+  if (action.action === 'cut') {
+    next = { ...next, selectedIds: next.selectedIds.filter((sid) => getNodeById(next.fs, sid)) };
+  }
   // Defense-in-depth: if the pasted tree lost the current directory, fall
   // back to its deepest surviving ancestor (root at worst) before clamping.
   if (!getNodeByPath(next.fs, next.currentPath)) {
@@ -723,13 +729,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return newState;
     }
 
-    case 'RENAME_NODE':
-      return {
-        ...state,
-        fs: action.newFs,
-        mode: 'normal',
-        inputBuffer: '',
-      };
+    case 'RENAME_NODE': {
+      // Renaming to a dot-name can hide the node (showHidden=false), shrinking
+      // the visible list; keep the cursor in bounds like DELETE_NODES does.
+      const next = { ...state, fs: action.newFs, mode: 'normal' as const, inputBuffer: '' };
+      return { ...next, cursorIndex: clampCursorIndex(next, state.cursorIndex) };
+    }
 
     case 'DELETE_NODES':
       return applyDeleteResult(state, action.newFs);
