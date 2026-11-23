@@ -146,4 +146,4 @@ Run Playwright E2E tests with a non-interactive reporter:
 npm run test:e2e -- --reporter=list
 ```
 
-Because `CI=true` may be exported in the environment, prefix Playwright commands with `env -u CI` (e.g., `env -u CI npm run test:e2e -- --reporter=list`) to prevent Playwright from starting a second dev server and colliding on port 3000. Any test run without `--reporter=list` is considered invalid.
+CI and the pre-push hook start a fresh dev server on port 3100. To reuse your local dev server on port 3000, run `env -u CI npm run test:e2e -- --reporter=list`.

@@ -1,4 +1,4 @@
 #!/bin/sh
 echo "Running pre-push checks..."
-npm run prepush || exit 1
+PLAYWRIGHT_ISOLATE_SERVER=1 npm run prepush || exit 1
 

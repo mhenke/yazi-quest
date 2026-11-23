@@ -79,8 +79,8 @@ under `src/constants/` and UI under `src/components/`.
 
 - Run `npm run type-check` after code changes and the narrow check covering the behavior.
 - Run Playwright with `--reporter=list`; use existing fixtures and keyboard helpers.
-  Because `CI=true` is exported here, prefix E2E with `env -u CI` or Playwright starts a
-  second dev server and collides on port 3000.
+  The pre-push hook and CI start their own Vite on port 3100. To reuse the local
+  dev server on port 3000, run Playwright with `env -u CI`.
 - Preserve literal user-reported key sequences. Replicate the reported workflow before
   substituting another command sequence; capture a screenshot immediately after a UI failure.
 - Verify relevant level/episode states using URL debug parameters from `src/App.tsx`.

@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isolatedServer = !!process.env.CI || process.env.PLAYWRIGHT_ISOLATE_SERVER === '1';
+const port = isolatedServer ? 3100 : 3000;
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 15000,
@@ -13,7 +17,7 @@ export default defineConfig({
   reporter: 'html',
   use: {
     actionTimeout: 5000,
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
     video: 'off',
     screenshot: 'only-on-failure',
@@ -25,8 +29,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev -- --base /',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev -- --base / --port ${port} --strictPort`,
+    url: baseURL,
+    reuseExistingServer: !isolatedServer,
   },
 });
