@@ -36,6 +36,10 @@ _Avoid_: Level restart, episode
 The player's overview of episodes, levels, objectives, and learning dependencies.
 _Avoid_: Filesystem map, directory tree
 
+**Viewport floor**:
+The minimum window width at which the game is playable: 1024 CSS pixels. Below it the player sees an unsupported-window notice instead of the file manager. It is a product requirement, not a responsive breakpoint, and it does not restrict the cinematics.
+_Avoid_: Min width, mobile layout, breakpoint
+
 **Mission brief**:
 The narrative explanation of a level's situation, stakes, and purpose. The interface currently labels this text “Target”; it is distinct from the task objectives.
 _Avoid_: Objective, task, file target

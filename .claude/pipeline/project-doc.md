@@ -1,7 +1,7 @@
 # Project Documentation
 
-> Generated: 2026-11-22T21:39:10Z | Mode: DELTA
-> Source baseline: `70a4928` plus working-tree documentation
+> Generated: 2026-11-23T12:20:00Z | Mode: DELTA
+> Source baseline: `70a4928`..`99935c4` (18 commits) plus working-tree documentation
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@
 - Language: TypeScript / TSX, ES modules, ES2022 target. TypeScript strict mode, implicit-any checking, and strict-null checking are disabled in `tsconfig.json`.
 - Framework: React 19.2.3, bundled by Vite 7.3.7 with the React plugin.
 - Database: none. The game operates on an in-memory simulated filesystem.
-- Styling: Tailwind through its browser CDN, inline styles in `index.html`, and local CSS for narrative/glitch effects. The interface uses the existing system-monospace stack without a webfont download.
+- Styling: Tailwind CSS 3.4.19 compiled at build time through PostCSS (`tailwind.config.js` scans `index.html` and `src/**/*.{ts,tsx}`; `postcss.config.js` runs Tailwind and Autoprefixer). Episode colours live in `src/constants/palette.ts` as literal utility strings so the scanner sees every class. Inline styles in `index.html` and local CSS cover narrative/glitch effects and the platform gates. The interface uses the system-monospace stack without a webfont download. Tailwind is pinned to v3 deliberately: v4 renames `outline-none`, rescales `rounded-sm`, and changes the default border colour, all of which would shift the existing visual design.
 - State management: `useReducer(gameReducer)` in `src/App.tsx`; `GlobalInputProvider` arbitrates keyboard input. Some UI/narrative behavior uses local hook state.
 - Hosting: static GitHub Pages site at <https://mhenke.github.io/yazi-quest/>.
 
@@ -20,9 +20,12 @@ Versions below are resolved from `package-lock.json`, not claims about the newes
 | Group        | Libraries and resolved versions                                                                                                                                                           |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Core         | `react` 19.2.3, `react-dom` 19.2.3, `lucide-react` 0.556.0                                                                                                                                |
-| Development  | `vite` 7.3.7, `@vitejs/plugin-react` 5.1.2, `typescript` 5.9.3                                                                                                                            |
+| Build        | `vite` 7.3.7, `@vitejs/plugin-react` 5.1.2, `typescript` 5.9.3, `tailwindcss` 3.4.19, `postcss` 8.5.33, `autoprefixer` 10.7.0                                                             |
 | Code quality | `eslint` 9.39.2, `@typescript-eslint/parser` and plugin 8.73.0, `prettier` 3.7.4, `husky` 9.1.7, `lint-staged` 16.2.7, `@commitlint/cli` 21.2.4, `@commitlint/config-conventional` 21.2.4 |
-| Testing      | `vitest` 4.1.12, `jsdom` 27.4.0, `@testing-library/react` 16.3.1, `@testing-library/jest-dom` 6.9.1, `@playwright/test` 1.57.0                                                            |
+| Gate tooling | `fallow` 3.46.0 (dead code, complexity, duplication), `knip` 6.48.0 (unused exports and dependencies)                                                                                     |
+| Testing      | `vitest` 4.1.12, `jsdom` 27.4.0, `@testing-library/react` 16.3.1, `@testing-library/jest-dom` 6.9.1, `@playwright/test` 1.57.0, `fast-check` 4.11.0                                       |
+
+`npm run prepush` chains lint, type-check, build, the `@smoke` E2E subset, and `audit:changed`, which runs `fallow audit --base origin/main` (new-only attribution) followed by `knip`. The gate fails a commit only on newly introduced findings; inherited complexity, duplication, and the one inherited unused dev-dependency surface as warnings.
 
 Reproducible deployment uses `npm ci` and `package-lock.json`. The secondary `pnpm-lock.yaml` was regenerated with `pnpm import`; the Pages workflow does not consume it. Fourteen `*` constraints were replaced with exact versions. The offline dependency doctor reported zero manifest findings; it does not resolve dependencies or check vulnerabilities.
 
@@ -38,6 +41,8 @@ A client-only React application organized by technical concern, with declarative
 
 The runtime tree is `StrictMode` → `ErrorBoundary` → `GlobalInputProvider` → `App`. Keyboard behavior is split into mode-specific handlers. Narrative hooks observe game state and feed notifications, dialogue, effects, and timers back into the UI.
 
+**Platform gating** (ADR-0001) is a first-class layer, not styling. Two independent requirements gate the game: primary input, proxied as `(hover: none) and (pointer: coarse)`, and a 1024 CSS px viewport floor. The input half is enforced in three places that must stay in sync — the CSS gate in `index.html`, the mount guard in `src/index.tsx`, and `src/hooks/useViewportFloor.ts`; the mount guard skips mounting entirely on touch-only devices so no timers, typewriter, or Web Audio starts behind the notice. The width half is a React-level gate in `App` using `useViewportFloor`, deliberately not CSS, so cinematics stay reachable below the floor. Both render `src/components/RequirementNotice.tsx`; the static `.touch-gate` markup in `index.html` is the no-JS special case of that component.
+
 The root `index.tsx` is a separate legacy entry file. The actual HTML module entry is `src/index.tsx`, which includes the required input provider.
 
 ## Folder Structure
@@ -45,17 +50,18 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 | Location                                       | Purpose                                                                                  |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `src/components/`                              | Filesystem panes, preview, HUD, dialogs, intros, outro, and alerts                       |
-| `src/components/narrative/`                    | Boot-sequence and ghost-message presentation                                             |
+| `src/components/narrative/`                    | Boot-sequence and cinematic presentation (typing, skip, scanlines)                       |
 | `src/components/ui/`                           | Diegetic prompt and glitch-overlay components                                            |
-| `src/hooks/`                                   | Game reducer, keyboard coordination, timers, and narrative hooks                         |
+| `src/hooks/`                                   | Game reducer, keyboard coordination, timers, narrative hooks, and platform gates         |
 | `src/hooks/keyboard/`                          | Navigation, clipboard, deletion, fuzzy modes, sorting, and modal handlers                |
-| `src/constants/`                               | Levels, keybindings, episode/narrative content, timings, and filesystem setup            |
+| `src/constants/`                               | Levels, keybindings, episode/narrative content, timings, and the episode colour palette  |
 | `src/constants/filesystem/`                    | Initial tree, level mutations, prerequisites, and consequence scenarios                  |
 | `src/utils/`                                   | Filesystem operations, visible-item derivation, sorting, validation, sound, and effects  |
 | `src/types.ts`                                 | Shared filesystem, level, clipboard, settings, and game-state contracts                  |
 | `tests/e2e/`                                   | Playwright specs, fixtures, and keyboard/game helpers                                    |
 | `public/images/`                               | Static simulation/narrative images                                                       |
-| `docs/`                                        | Narrative/curriculum reference and historical plans; plans may be closed or stale        |
+| `docs/`                                        | Narrative/curriculum reference, accessibility audit, keyboard research, and ADRs         |
+| `docs/adr/`                                    | Accepted architecture decisions; ADR-0001 fixes the input and viewport floor             |
 | `.github/workflows/`                           | Production build and Pages deployment                                                    |
 | `.husky/`                                      | Commit and push hooks                                                                    |
 | `.claude/pipeline/`                            | This scan snapshot and scan checkpoint                                                   |
@@ -103,7 +109,7 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 - Authentication/authorization: no application login/session backend. Protected files and threat rules are simulated gameplay policies, not real host filesystem permissions.
 - Error handling: fallible filesystem operations return the `Result<T, FsError>` union from `src/types.ts`; handlers check the result before updating state. `ErrorBoundary` catches render failures and offers reload; `reportError` writes to the console. No remote telemetry implementation was found.
 - Validation: zoxide storage shape validation, filesystem protection checks, operation-specific guards, and regex handling in view/input paths. These checks are not a general schema-validation framework.
-- Accessibility: Help has a labelled modal, keyboard scrolling, and verified focus containment/restoration. Other overlays, inputs, and motion settings have gaps documented in [the desktop accessibility audit](../../docs/accessibility-audit.md). Neither this scan nor the audit establishes WCAG conformance.
+- Accessibility: Help has a labelled modal, keyboard scrolling, and verified focus containment/restoration. Overlay focus is centralized in `src/components/useOverlayFocus.ts` (capture, restore, and Tab containment) and used by every overlay that owns keyboard input, including Help, Map, Hint, Info, Fuzzy Finder, and the confirmation and warning modals. Reduced motion is honoured through `src/hooks/useReduceMotion.ts`, which combines `prefers-reduced-motion` with the in-game `narrativeEffects: 'minimal'` setting and stamps `data-narrative-effects` on the root for CSS. Automated axe scans now report zero violations on the gameplay shell (levels 1, 6, 12, and episode 2), the Quest Map, Help, Hint, and the outro. Landmarks are `<header>`, `<main>`, and `<footer>` with the mission title as the page `h1`; both scroll regions and the level strip are focusable with a visible ring. This is automated coverage only — no assistive-technology or real-browser-zoom session was performed, so it does not establish WCAG conformance. [The desktop accessibility audit](../../docs/accessibility-audit.md) records the method and measurements.
 - Keyboard-first scope: gameplay and game controls must work without a pointer. The [Yazi keyboard research](../../docs/yazi-keyboard-research.md) separates authentic `Tab` inspection from browser focus navigation and records a proposed focus boundary; runtime routing is unchanged.
 - Settings: sound and narrative-effect settings are in-memory. The main glitch wrapper distinguishes `minimal` from other values; do not assume the displayed `reduced` option means every effect has a separate reduced implementation.
 - Security: Vite substitutes configured Gemini environment values into client code. Such values are public if used in the bundle; environment files do not provide a secret backend. No Gemini API call was found in scanned source.
@@ -112,26 +118,28 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 
 No REST, GraphQL, WebSocket, or application event-bus service boundary was found in scanned source. Reducer dispatch and the keyboard registry coordinate the local application; a browser skip-intro event supports intro transitions.
 
-External resources include the Tailwind CDN, an external favicon/background image, and a configured S3 conclusion-video URL. Their presence does not verify their availability. `index.html` also retains an AI Studio-era import map; the production app is built by Vite.
+External resources are limited to an external favicon/background image and a configured S3 conclusion-video URL; their presence does not verify their availability. Tailwind is no longer fetched from a CDN — it is compiled into `dist/assets/*.css` at build time, so the page has no third-party styling dependency at runtime. `index.html` also retains an AI Studio-era import map; the production app is built by Vite.
 
 ## Test Coverage
 
 - Overall coverage: **unmeasured**. No coverage summary, LCOV report, configured coverage provider, or installed Vitest coverage provider was found. A percentage cannot be inferred from passing tests.
 - Frameworks: Vitest with jsdom; Testing Library for component/hooks tests; Playwright for Chromium E2E scenarios.
-- Inventory: **14 unit-test files**, **16 E2E spec files**, and shared E2E fixtures/helpers.
-- Unit-test areas: filesystem/game helpers, skip-intro flag, consciousness/glitch helpers, terminal thoughts and ghost dialogue, boot/ghost UI, typewriter/intro hooks, diegetic prompt, and glitch overlay.
-- Areas without dedicated colocated unit tests in the inventory: `gameReducer`, keyboard mode handlers, input arbitration, timer integration, and storage validation. Some are exercised through E2E; this is not a claim of zero executed coverage.
-- E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, and selection/Escape behavior.
+- Inventory: **12 unit-test files**, **17 E2E spec files** (110 Chromium tests), and shared E2E fixtures/helpers.
+- Unit-test areas: filesystem helpers (including a `fast-check` property suite), game reducer state invariants, skip-intro flag, consciousness/glitch helpers, boot/typewriter/skip hooks, diegetic prompt, and glitch overlay.
+- Areas without dedicated colocated unit tests in the inventory: keyboard mode handlers, input arbitration, timer integration, and storage validation. Some are exercised through E2E; this is not a claim of zero executed coverage.
+- E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, selection/Escape behavior, and (in `keyboard-accessibility.spec.ts`) focus order and keyboard reachability.
 - E2E helpers use URL debug parameters, clear localStorage for isolated level starts, and centralize keyboard sequences. Tests use root-relative URLs; the Playwright server explicitly overrides Vite's base to `/`.
-- Integrated verification: **132 unit tests across 14 files and 101 Chromium E2E tests passed**. Lint, type-check, and the Vite 7.3.7 production build also passed. E2E ran on an isolated dev server with `--reporter=list`.
-- The opening displays **FACILITY DATE: MAY 31, 2015**. Browser checks verified Help's eight command groups, focus containment and restoration, and layout at 1440×900, 1024×768, and 720×450. E2E tests cover opening/BIOS behavior and real `j`/`k` Help scrolling.
+- Integrated verification: **122 unit tests across 12 files passed**; the `@smoke` E2E subset (5 tests) passed against the dev server, and 110 Chromium tests exist in total. Lint, type-check, Prettier, and the production build also passed. E2E must run with `--reporter=list`. Because `CI=true` is exported in this environment, Playwright's `reuseExistingServer: !CI` starts a second server and collides on port 3000 — run E2E with `env -u CI`.
+- The opening displays **FACILITY DATE: MAY 31, 2015**. Browser checks verified Help's eight command groups, focus containment and restoration, and the game layout at 1440×900 and 1024×768 — the floor itself. 720×450 no longer renders the file manager; it renders the width half of `RequirementNotice`. E2E tests cover opening/BIOS behavior and real `j`/`k` Help scrolling.
+- Cinematics are exempt from the viewport floor: intro, outro, and the boot sequence are reachable at 320 CSS px and reflow there. That exemption is the reason the width gate lives in React rather than CSS.
 - The accessibility audit also used a 320 CSS px reflow check and emulated reduced-motion preferences. No actual browser-zoom or assistive-technology session was performed.
 
 ## Entry Points
 
 - `index.html` loads `src/index.tsx`; `src/App.tsx` owns game initialization and orchestration.
 - `src/hooks/gameReducer.ts`, `src/GlobalInputContext.tsx`, `src/hooks/useKeyboardHandlers.ts`, and `src/constants/levels.ts` are central behavior entry points.
-- `vite.config.ts` configures the production `/yazi-quest/` base, port 3000, React, environment substitution, aliases, and Vitest discovery.
+- `vite.config.ts` configures the production `/yazi-quest/` base, port 3000, React, environment substitution, aliases, Vitest discovery, and a `manualChunks` split that isolates React (192 kB) and lucide (10 kB) from game code (302 kB) so returning players reuse the cached vendor chunks. The split matches on module id; the object form silently matches nothing for `react-dom`.
+- `tailwind.config.js` and `postcss.config.js` compile the stylesheet; there is no runtime Tailwind.
 - `playwright.config.ts` configures Chromium, the local dev server, timeouts, retries, and artifacts. Run with `--reporter=list` as required by project instructions.
 - `.github/workflows/deploy.yml` uses Node 24, `npm ci --ignore-scripts`, type-check, build, and Pages artifact/deploy actions on pushes to `main` or manual dispatch.
 - Normal `npm install` triggers `npx playwright install --with-deps`; this machine's attempt failed at password-protected sudo. Installation with `--ignore-scripts` and a separate Chromium download succeeded. Static deployment intentionally skips browser/OS installation and Git hooks.
@@ -141,20 +149,19 @@ External resources include the Tailwind CDN, an external favicon/background imag
 
 ## Changed Files
 
-Latest delta (`git diff HEAD~1 --name-only` plus research-related working-tree files): `.husky/pre-push` delegates to `npm run prepush` without repeating the reporter flag; `.claude/pipeline/project-doc.md`, `PRODUCT.md`, `docs/accessibility-audit.md`, and `docs/yazi-keyboard-research.md` document the keyboard-first scope and open accessibility work. Five paths accounted for. Prior integrated changes retained below:
+Latest delta `70a4928..99935c4` (18 commits, 85 paths: 14 added, 9 deleted, 62 modified). The headline changes are the platform-scope gate, the build-time Tailwind migration, the accessibility remediation, and the dead-narrative removal.
 
-- **Commitlint integration:** Installed `@commitlint/cli` and `@commitlint/config-conventional` (v21.2.4) in `devDependencies`, added `commitlint` npm script, configured `commitlint.config.cjs` with `body-max-line-length: [0]`, and activated git hook validation.
-- **Intro & boot deduplication:** Extracted shared typing animation and CRT rendering into `src/components/narrative/useTypewriter.ts`, `useSkipIntro.ts`, `Scanlines.tsx`, and `SkipIntroButton.tsx` (with unit tests in `useTypewriter.test.ts` and `useSkipIntro.test.ts`), eliminating clone group `dup:6f93754e` across `BiosBoot.tsx` and `EpisodeIntro.tsx`.
-- **Clipboard paste deduplication:** Unified destination collision detection, honeypot safety, and cut node cleanup in `src/hooks/keyboard/handleClipboard.ts`, eliminating clone groups `dup:70715035` and `dup:682b7a72`.
-- **E2E test helpers pruned:** Cleaned 12 unreferenced helper exports in `tests/e2e/utils.ts` and scoped `dismissViolation` internally, dropping Knip's unused export count to 0.
-- **Narrative timeline alignment ("Story present: 2015"):** Aligned boot sequence date (`FACILITY DATE: MAY 31, 2015`), `BASE_TIME`, simulated filesystem timestamps, and historical email records in `docs/emails_from_athorne/` (renamed 6 files to `2013-*`), `src/components/BiosBoot.tsx`, `src/components/FileSystemItem.tsx`, `src/constants/filesystem/initial.ts`, `src/constants/filesystem/scenarios.ts`, `src/constants/narrative.ts`, `tests/e2e/episode1.spec.ts`, and `tests/e2e/intro-pathway.spec.ts`.
-- **Help and typography:** `src/components/HelpModal.tsx`, `src/constants/keybindings.ts`, and `tests/e2e/dialogs.spec.ts` group the command reference and cover keyboard focus/scrolling. `index.html`, `src/glitch.css`, `src/index.css`, and `DESIGN.md` align the interface on system monospace.
-- **Dependency maintenance:** `package.json`, `package-lock.json`, and `pnpm-lock.yaml` record reviewed pins and patched versions. Pre-push smoke tests use the noninteractive `list` reporter.
-- **Domain model & instructions:** Documented canonical `Story present` in `GLOSSARY.md` and `PRODUCT.md`; added `Codebase exploration` instructions to `AGENTS.md` guiding agents to query `graphify-out/` before search.
-- **Graphify:** The local AST graph was refreshed to 638 nodes and 1,776 edges across 45 communities. A query resolves `HelpModal` and `useTypewriter`; this is not a semantic documentation index.
+- **Platform scope (ADR-0001):** `docs/adr/0001-keyboard-and-viewport-floor.md` and `docs/adr/README.md` record the decision to require hardware modifiers and a 1024 px viewport. `src/hooks/useViewportFloor.ts`, `src/components/RequirementNotice.tsx`, `src/hooks/useReduceMotion.ts`, `src/index.tsx`, `index.html`, `src/App.tsx`, and `src/index.css` implement and style the gates. `tests/e2e/keyboard-accessibility.spec.ts` covers focus order and reachability.
+- **Build-time Tailwind:** `tailwind.config.js`, `postcss.config.js`, and `src/constants/palette.ts` added; `index.html` dropped the Play CDN; `src/index.css` gained the directives. Palette tokens replaced string-surgery derivation in `App.tsx`, `LevelProgress.tsx`, `EpisodeIntro.tsx`, and `OutroSequence.tsx`. This fixed a latent fault: qualitatively derived classes (`border-*-500/30`, `bg-*-500/10`, `ring-*-500`, `text-*-500/50`) existed in no source file and were generated only by the runtime CDN, so a build-time scanner would have dropped them silently.
+- **Accessibility remediation:** `FileSystemItem.tsx`, `PreviewPane.tsx`, `LevelProgress.tsx`, `StatusBar.tsx`, `HintModal.tsx`, and `index.html` were changed to replace opacity-based dimming with explicit colour tokens, fix landmark/heading structure, and make scroll regions focusable. `src/components/useOverlayFocus.ts` centralizes overlay focus capture, restore, and Tab containment for all ten overlays that own keyboard input.
+- **Dead narrative removed:** Deleted `GhostMessage.tsx`/`.test.tsx`, `ghostDialogue.ts`, `terminalThoughts.ts`/`.test.ts`, `useGhostDialogue.ts`/`.test.ts`, and `useTerminalThoughts.ts`/`.test.ts`, plus their reducer state and actions in `src/hooks/gameReducer.ts`. `src/hooks/useNarrativeSystem.ts` and `src/constants/narrative.ts` were trimmed accordingly; `gameReducer.test.ts` was added for the surviving state invariants.
+- **Gate tooling:** `fallow` and `knip` added with `audit:changed`, wired into `.husky/pre-push` and `.husky/pre-commit`. `fast-check` added for `src/utils/fsHelpers.property.test.ts`.
+- **Bundle split:** `vite.config.ts` now isolates React and lucide into separate chunks.
+- **Original requirements:** `docs/accessibility-audit.md` and `docs/yazi-keyboard-research.md` added; `docs/yazi-mobile-research.md`, `PRODUCT.md`, `DESIGN.md`, and `GLOSSARY.md` updated.
+- **Prior deltas** (commitlint, intro/boot dedup, clipboard dedup, E2E helper pruning, narrative timeline alignment, monospace typography, dependency maintenance, Graphify) are unchanged from the previous scan and remain accurate.
 
-No framework, application-layer, or auth/session change in the latest delta. `AGENTS.md` was left unchanged by this scan.
+Architectural change detected: build-time CSS compilation, a platform-gating layer, and a mandated viewport floor. `AGENTS.md` was patched with human confirmation to record platform scope, the three-way gate sync, literal palette tokens, the `audit:changed` gate, and the `env -u CI` requirement for E2E here.
 
 ## Last Scanned
 
-2026-11-22T21:39:10Z
+2026-11-23T12:20:00Z
