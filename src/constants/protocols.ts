@@ -1,3 +1,5 @@
+export const NODE_KEY_NAMES = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'] as const;
+
 export const UPLINK_V1_CONTENT = `# Uplink Protocol v1 - Legacy Network Bridge
 # Auto-populated by Ghost Protocol (/etc/sched_77.sh)
 # DO NOT MODIFY - Managed by AI-7734 automation

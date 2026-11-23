@@ -25,6 +25,9 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
 - **Level, narrative, or layout changes:** read the Narrative Design, Task Description
   Style Guide, Episode Color Scheme, and UI Layout Guidelines sections in
   `.github/copilot-instructions.md`.
+- **File-manager controls or instructions:** verify keybindings and their behavior against
+  [Yazi's Quick Start](https://yazi-rs.github.io/docs/quick-start/#keybindings) before changing
+  handlers, objectives, hints, or walkthroughs.
 - **E2E changes or debugging:** read that file's Anti-Failure Protocols and Development
   Environment sections. Its old `src/constants.tsx` references mean the current
   `src/constants/` modules.
@@ -42,7 +45,8 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
   seeds, prerequisites, and consequences live in `src/constants/filesystem/`.
 - Player actions must satisfy objectives. Do not pre-solve them with level-specific
   filesystem injections.
-- Mission navigation belongs in the Quest Map, not a new left sidebar.
+- Preserve Yazi's three-pane layout: parent, current directory, preview. Keep mission
+  navigation in the Quest Map; do not add a mission sidebar.
 - Platform gating is one requirement with two halves. Primary input is proxied by
   `(hover: none) and (pointer: coarse)` and enforced in three places that must move
   together: the CSS gate in `index.html`, the mount guard in `src/index.tsx`, and

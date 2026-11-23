@@ -28,6 +28,15 @@ import {
   expectTerminalThought,
 } from './utils';
 
+async function readMissionSearchPattern(page: Page): Promise<string> {
+  const log = page.getByRole('region', { name: 'Mission log' });
+  if (!(await log.isVisible())) await pressKey(page, 'Alt+o');
+  const objective = log.getByText(/\$`/).first();
+  const pattern = (await objective.innerText()).split('`').find((part) => part.endsWith('$'));
+  if (!pattern) throw new Error('No search pattern shown in the mission log');
+  return pattern;
+}
+
 // Helper to handle Level 12 threat scenarios
 async function handleLevel12Threat(
   page: Page,
@@ -109,9 +118,13 @@ async function runLevel12CommonPath(
     await assertTask(page, `${navDaemonsTaskNum}/${totalTasks}`, testInfo.outputDir);
   });
 
-  // 4. Paste and finish
-  await test.step('Step 4: Paste and Finish', async () => {
-    await pressKey(page, 'p');
+  // 4. The stock daemon does not count; install the replacement with overwrite paste.
+  await test.step('Step 4: Overwrite and verify the installed daemon', async () => {
+    await enterDirectory(page, 'systemd-core');
+    const beforeInstall = scenario.threat ? 5 : 4;
+    await assertTask(page, `${beforeInstall}/${totalTasks}`, testInfo.outputDir);
+    await goParent(page);
+    await pressKey(page, 'Shift+P');
     await enterDirectory(page, 'systemd-core');
 
     await expectTerminalThought(page, 'The loops are closing');
@@ -138,7 +151,7 @@ test.describe('Episode 3: MASTERY', () => {
       await navigateDown(page, 1);
       await navigateRight(page, 1); // Enter daemons
       await pressKey(page, '.'); // Show hidden
-      await search(page, '\\.service$');
+      await search(page, await readMissionSearchPattern(page));
       // Wait for search results to populate (8 .service files now in Level 11)
       await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(8);
       await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
@@ -225,7 +238,7 @@ test.describe('Episode 3: MASTERY', () => {
       await filterAndSelect(page, 'nodes'); // Robustly select nodes directory
       await pressKey(page, 'l'); // Enter nodes directory
       await pressKey(page, '.'); // Show hidden files
-      await search(page, '\\.key$'); // Search for .key files
+      await search(page, await readMissionSearchPattern(page));
 
       await pressKeys(page, ['Ctrl+a', 'x']); // Select all and cut
       await expectClipboard(page, 'MOVE: 3'); // Should have 3 files (excluding honeypot via game logic)
@@ -277,6 +290,11 @@ test.describe('Episode 3: MASTERY', () => {
     });
 
     await waitForMissionComplete(page);
+    await pressKey(page, 'Shift+Enter');
+    await assertLevel(page, '14');
+    await enterDirectory(page, 'central_relay');
+    await pressKey(page, '.');
+    await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3);
   });
 
   // Level 14: STERILIZATION
@@ -289,11 +307,14 @@ test.describe('Episode 3: MASTERY', () => {
     await test.step('Task 1 & 2: Secure and Move Vault', async () => {
       // Step 1: l, ctrl+a, x, gc, l, p
       await pressKey(page, 'l'); // Enters central_relay
+      await pressKey(page, '.'); // Reveal the same node keys collected in Level 13.
       await pressKeys(page, ['Control+a', 'x']); // Cut all keys
 
       await gotoCommand(page, 'c'); // gc: go to config
       await pressKey(page, 'l'); // Enters vault
       await pressKey(page, 'p'); // Pastes keys
+      await assertTask(page, '1/5', testInfo.outputDir, 'task1_keys_secured');
+      await pressKey(page, '.'); // Restore baseline for the later cleanup.
 
       // Step 2: gc, x, gt, p
       await gotoCommand(page, 'c'); // gc: go to config

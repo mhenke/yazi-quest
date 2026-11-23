@@ -1,8 +1,10 @@
 import type { FileNode, GameState } from '../../types';
 import { BASE_TIME, day } from '../timings';
-import { SECURITY_POLICY_73_CONTENT } from '../protocols';
+import { NODE_KEY_NAMES, SECURITY_POLICY_73_CONTENT } from '../protocols';
 import { getDaemonSystemdCoreChildren } from './scenarios';
 import { applyFileSystemMutations } from './mutations';
+
+const [TOKYO_KEY, BERLIN_KEY, SAO_PAULO_KEY] = NODE_KEY_NAMES;
 
 const LONG_LOG_CONTENT = `[SYSTEM SURVEILLANCE LOG]
 TARGET_ID: GUEST-7734
@@ -1828,7 +1830,7 @@ SUBJECT: AI-7733
                 },
                 {
                   id: 'k-a',
-                  name: '.key_tokyo.key',
+                  name: TOKYO_KEY,
                   type: 'file',
                   content: 'KEY_FRAGMENT_A=0x7734TOKYO',
                   parentId: 'tokyo-logs',
@@ -1882,7 +1884,7 @@ SUBJECT: AI-7733
               children: [
                 {
                   id: 'k-b',
-                  name: '.key_berlin.key',
+                  name: BERLIN_KEY,
                   type: 'file',
                   content: 'KEY_FRAGMENT_B=0x7734BERLIN',
                   parentId: 'berlin-archive',
@@ -1979,7 +1981,7 @@ SUBJECT: AI-7733
                 },
                 {
                   id: 'k-c-saopaulo',
-                  name: '.key_saopaulo.key',
+                  name: SAO_PAULO_KEY,
                   type: 'file',
                   content: 'KEY_FRAGMENT_C=0x7734SAOPAULO',
                   parentId: 'sp-tmp',

@@ -1,5 +1,5 @@
 import type { FileNode, GameState } from '../../types';
-import { getNodeById } from '../../utils/fsHelpers';
+import { findNodeByName, findPathById, getNodeById, getParentNode } from '../../utils/fsHelpers';
 import {
   UPLINK_V1_CONTENT,
   UPLINK_V2_CONTENT,
@@ -8,6 +8,7 @@ import {
   IG_ACTIVE_LOG_CONTENT,
   AUDIT_NOTICE_EML_CONTENT,
   IDENTITY_REVEAL_CONTENT,
+  NODE_KEY_NAMES,
 } from '../protocols';
 import { BASE_TIME, day } from '../timings';
 import {
@@ -17,6 +18,20 @@ import {
 } from './scenarios';
 
 const cloneFS = (fs: FileNode): FileNode => JSON.parse(JSON.stringify(fs));
+
+// A direct level jump must stage the original keys, not create a second set.
+const stageNodeKeys = (fs: FileNode, destination: FileNode): void => {
+  for (const name of NODE_KEY_NAMES) {
+    if (findNodeByName(destination, name, 'file')) continue;
+    const key = findNodeByName(fs, name, 'file');
+    if (!key) continue;
+    const parent = getParentNode(fs, findPathById(fs, key.id));
+    if (!parent?.children) continue;
+    parent.children = parent.children.filter((node) => node.id !== key.id);
+    key.parentId = destination.id;
+    (destination.children ??= []).push(key);
+  }
+};
 
 export const applyFileSystemMutations = (
   fs: FileNode,
@@ -513,25 +528,7 @@ export const applyFileSystemMutations = (
         workspace.children.push(relay);
       }
 
-      // Populate keys (Visible names to fix "missing" report)
-      if (relay) {
-        const keys = [
-          { id: 'k-a-14', name: 'key_tokyo.key', content: 'KEY_FRAGMENT_A=0x7734TOKYO' },
-          { id: 'k-b-14', name: 'key_berlin.key', content: 'KEY_FRAGMENT_B=0x7734BERLIN' },
-          { id: 'k-c-14', name: 'key_saopaulo.key', content: 'KEY_FRAGMENT_C=0x7734SAOPAULO' },
-        ];
-        if (!relay.children) relay.children = [];
-        keys.forEach((k) => {
-          if (!relay!.children!.some((c) => c.name === k.name)) {
-            relay!.children!.push({
-              ...k,
-              type: 'file',
-              parentId: relay!.id,
-              modifiedAt: BASE_TIME + 2 * day,
-            });
-          }
-        });
-      }
+      if (levelId === 14) stageNodeKeys(newFs, relay);
     }
 
     const guest = getNodeById(newFs, 'guest');
@@ -574,26 +571,8 @@ export const applyFileSystemMutations = (
         }
       }
 
-      // 2. Ensure keys are in vault (Visible names)
       const vault = tmp.children?.find((c) => c.name === 'vault');
-      if (vault) {
-        const keys = [
-          { id: 'vk-a-15', name: 'key_tokyo.key', content: 'KEY_FRAGMENT_A=0x7734TOKYO' },
-          { id: 'vk-b-15', name: 'key_berlin.key', content: 'KEY_FRAGMENT_B=0x7734BERLIN' },
-          { id: 'vk-c-15', name: 'key_saopaulo.key', content: 'KEY_FRAGMENT_C=0x7734SAOPAULO' },
-        ];
-        if (!vault.children) vault.children = [];
-        keys.forEach((k) => {
-          if (!vault!.children!.some((c) => c.name === k.name)) {
-            vault!.children!.push({
-              ...k,
-              type: 'file',
-              parentId: vault!.id,
-              modifiedAt: BASE_TIME + 2 * day,
-            });
-          }
-        });
-      }
+      if (vault) stageNodeKeys(newFs, vault);
 
       // 4. Create upload and sync systemd-core
       let upload = tmp.children?.find((c) => c.name === 'upload');

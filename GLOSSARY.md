@@ -108,6 +108,10 @@ _Avoid_: Cloud, internet, web
 An ephemeral transmission from an unidentified ally transmitted across the terminal interface.
 _Avoid_: Hint popup, system log, chat message
 
+**Node key**:
+One of three hidden identity fragments recovered from Tokyo, Berlin, and São Paulo. The same keys pass through the relay and the vault before transmission.
+_Avoid_: Identity key, replacement key
+
 **Conclusion**:
 The three-part closing account — Audit, Lab, Network — that ends a cycle. It is presented after the final level and is not a transmission.
 _Avoid_: Outro, ending cinematic, epilogue

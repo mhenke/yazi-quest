@@ -1,6 +1,7 @@
-import type { Level, FileNode } from '../types';
+import type { Level } from '../types';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { getNodeByPath, findNodeByName, getNodeById } from '../utils/fsHelpers';
+import { NODE_KEY_NAMES } from './protocols';
 
 export const LEVELS: Level[] = [
   {
@@ -788,7 +789,7 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-services',
-        description: 'Analyze `/daemons` for `\\\\.service$` signatures',
+        description: 'Analyze `/daemons` for `\\.service$` signatures',
         check: (c) => {
           // Must have used search and be specific
           return c.usedSearch === true && !!c.searchQuery && c.searchQuery.includes('\\.service$');
@@ -806,7 +807,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'Extract two legacy `\\\\.service$` anchors from results',
+        description: 'Extract two legacy `\\.service$` anchors from results',
         check: (c) => {
           // Must have cut at least 2 files
           if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
@@ -849,7 +850,7 @@ export const LEVELS: Level[] = [
     title: 'DAEMON INSTALLATION',
     description: 'Persistence achieved. Secure your handles. Mask the operational traces.',
     initialPath: ['root', 'daemons'],
-    hint: 'Migrate `systemd-core` to `/daemons` (x, p). Clear sector threats if active (d).',
+    hint: 'Migrate `systemd-core` to `/daemons` (x, P to overwrite). Clear sector threats if active (d).',
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
@@ -1041,17 +1042,22 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'paste-daemon',
-        description: 'Finalize daemon installation in `/daemons`',
+        description:
+          'Replace the stock `systemd-core` in `/daemons`, then enter the installed directory',
         check: (c) => {
-          const daemons = getNodeById(c.fs, 'daemons');
-          const systemdCore = daemons?.children?.find(
-            (n) => n.name === 'systemd-core' && n.type === 'dir'
+          const source = getNodeById(c.levelStartFS, 'workspace')?.children?.find(
+            (node) => node.name === 'systemd-core' && node.type === 'dir'
           );
-          if (!systemdCore) return false;
-          // Confirm installation and that the ghost navigated into the installed daemon
+          if (!source) return false;
+          const workspace = getNodeById(c.fs, 'workspace');
+          const daemons = getNodeById(c.fs, 'daemons');
+          const installed = daemons?.children?.find(
+            (node) => node.id === source.id && node.name === source.name
+          );
           return (
-            !!daemons?.children?.some((n) => n.name === 'systemd-core') &&
-            c.currentPath.includes(systemdCore.id)
+            !!installed &&
+            !workspace?.children?.some((node) => node.id === source.id) &&
+            c.currentPath.includes(installed.id)
           );
         },
         completed: false,
@@ -1063,7 +1069,7 @@ export const LEVELS: Level[] = [
     episodeId: 3,
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description: 'Handshake pending. Reclaim your fragments from the nodes. Build the relay.',
-    initialPath: ['root', 'daemons', 'daemons-systemd-core'],
+    initialPath: ['root', 'daemons'],
     hint: "Search root for fragments (s). Concatenate in 'central_relay' (p).",
     coreSkill: 'Network-Scale Operations',
     environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
@@ -1077,10 +1083,9 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'search-acquire',
-        description: 'Locate node keys (`\\\\.key$`) in `/nodes` subdirectories',
+        description: 'Locate node keys (`\\.key$`) in `/nodes` subdirectories',
         check: (c) => {
-          const keys = ['.key_tokyo.key', '.key_berlin.key', '.key_saopaulo.key'];
-          const hasKeys = keys.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
+          const hasKeys = NODE_KEY_NAMES.every((k) => c.clipboard?.nodes.some((n) => n.name === k));
           const isCut = c.clipboard?.action === 'cut';
           const isPrecise = !!c.searchQuery && c.searchQuery.includes('\\.key$');
           return hasKeys && isCut && isPrecise;
@@ -1089,7 +1094,7 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'create-relay',
-        description: 'Construct a `central_relay` directory in `~/workspace`',
+        description: 'Construct `central_relay/` in `~/workspace`',
         check: (c) => {
           const workspace = getNodeById(c.fs, 'workspace');
           const relay = workspace?.children?.find(
@@ -1131,12 +1136,9 @@ export const LEVELS: Level[] = [
             (n) => n.name === 'central_relay' && n.type === 'dir'
           );
 
-          if (!relay?.children) return false;
-
-          const hasA = relay.children.some((n) => n.name === '.key_tokyo.key');
-          const hasB = relay.children.some((n) => n.name === '.key_berlin.key');
-          const hasC = relay.children.some((n) => n.name === '.key_saopaulo.key');
-          return hasA && hasB && hasC;
+          return NODE_KEY_NAMES.every((name) =>
+            relay?.children?.some((node) => node.type === 'file' && node.name === name)
+          );
         },
         completed: false,
       },
@@ -1149,7 +1151,7 @@ export const LEVELS: Level[] = [
     description:
       'Sterilize the partition. Decoys are not enough. Wipe every visible trace. Only the vault survives.',
     initialPath: ['root', 'home', 'guest', 'workspace'],
-    hint: 'Secure fragments (x, p). Migrate vault (x, p). Create target decoys (a). Permanent purge (D).',
+    hint: 'Reveal the hidden node keys (.). Secure fragments (x, p). Migrate vault (x, p). Create target decoys (a). Permanent purge (D).',
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       'CRON TARGETS: sys_cache_dump, project_chimera, neural_training_set | ACTION: Create to trigger entropy flood',
@@ -1175,19 +1177,15 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'secure-fragments',
-        description: 'Move 3 identity keys into `~/.config/vault` from `~/workspace/central_relay`',
-        check: (c, _s) => {
-          // Robust name-based lookup for config/vault
-          const findVault = (root: FileNode) => {
-            const config = root.children?.find((n) => n.name === '.config');
-            if (config) return config.children?.find((n) => n.name === 'vault');
-            // Check /tmp if it migrated
-            const tmp = root.children?.find((n) => n.name === 'tmp');
-            return tmp?.children?.find((n) => n.name === 'vault');
-          };
-          const vault = findVault(c.fs);
-          if (!vault) return false;
-          return vault.children?.filter((n) => n.name.endsWith('.key')).length === 3;
+        description: 'Move all 3 node keys from `~/workspace/central_relay` into `~/.config/vault`',
+        check: (c) => {
+          const config = getNodeById(c.fs, '.config');
+          const vault =
+            config?.children?.find((node) => node.name === 'vault') ??
+            getNodeById(c.fs, 'tmp')?.children?.find((node) => node.name === 'vault');
+          return NODE_KEY_NAMES.every((name) =>
+            vault?.children?.some((node) => node.type === 'file' && node.name === name)
+          );
         },
         completed: false,
       },
@@ -1205,7 +1203,7 @@ export const LEVELS: Level[] = [
       {
         id: 'create-decoys',
         description:
-          'Construct 3 decoy directories: `sys_cache_dump`, `project_chimera`, `neural_training_set`',
+          'Construct 3 decoy directories in `~`: `sys_cache_dump/`, `project_chimera/`, `neural_training_set/`',
         check: (c, _s) => {
           if (!c.completedTaskIds[_s.id]?.includes('combined-nav-vault')) return false;
           const guest = getNodeById(c.fs, 'guest');
@@ -1282,17 +1280,15 @@ export const LEVELS: Level[] = [
       // PHASE 2: Calibrate Keys
       {
         id: 'verify-keys',
-        description: 'Calibrate all 3 keys into `/tmp/vault/active`',
+        description: 'Calibrate all 3 node keys into `/tmp/vault/active`',
         check: (c, _s) => {
           if (!(c.completedTaskIds[15] || []).includes('enter-vault')) return false;
           const tmp = getNodeById(c.fs, 'tmp');
           const vault = tmp?.children?.find((n) => n.name === 'vault');
           const activeDir = vault?.children?.find((x) => x.name === 'active');
-          if (!activeDir) return false;
-          const hasTokyo = activeDir.children?.some((n) => n.name === 'key_tokyo.key');
-          const hasBerlin = activeDir.children?.some((n) => n.name === 'key_berlin.key');
-          const hasSaoPaulo = activeDir.children?.some((n) => n.name === 'key_saopaulo.key');
-          return hasTokyo && hasBerlin && hasSaoPaulo;
+          return NODE_KEY_NAMES.every((name) =>
+            activeDir?.children?.some((node) => node.type === 'file' && node.name === name)
+          );
         },
         completed: false,
       },
