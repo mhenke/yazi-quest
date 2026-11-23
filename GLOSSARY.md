@@ -8,6 +8,14 @@ The language of the file-manager learning game: its curriculum, objectives, and 
 The current year within the escape narrative: 2015. Older records belong to its history; the real-world calendar is separate from the story.
 _Avoid_: Development date, real-world present
 
+**In-fiction message**:
+A message spoken by the game world: CRL, a daemon, or the simulated filesystem. It may refuse, threaten, or mislead, and the player reads it as part of the story.
+_Avoid_: Error message, system alert, UI copy
+
+**Product message**:
+A message from Yazi Quest to the player about their real situation: an unsupported device, saved state, or a limit of the game. It is not part of the story and must not adopt the fiction's voice.
+_Avoid_: Terminal message, in-world error, system notification
+
 **Episode**:
 A narrative chapter that groups levels into a learning phase: Awakening, Fortification, or Mastery.
 _Avoid_: Level, cycle
