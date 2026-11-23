@@ -26,6 +26,8 @@ The public game is available at https://mhenke.github.io/yazi-quest/. It runs cl
 
 ## Capabilities and Constraints
 
+Platform scope is recorded in `docs/adr/0001-keyboard-and-viewport-floor.md`.
+
 - Preserve keyboard-led Yazi practice and player-performed objectives. System setup must not silently perform the player's learning tasks.
 - Preserve the three-episode escape narrative and progression through fifteen levels.
 - Keep the narrative in its **Story present**, defined in `GLOSSARY.md`. Establish the setting in the opening sequence; in-world records must not imply a later real-world present.

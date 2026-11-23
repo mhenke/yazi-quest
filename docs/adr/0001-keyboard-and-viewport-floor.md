@@ -19,23 +19,34 @@ constrains the input device and the layout:
   fix hides the size column below `sm` so filenames keep their width. The remaining
   question was whether a two-column mode should be the product, not whether it renders.
 
-Measured, with three columns forced on at each width (viewport 900 px tall, Level 6):
+Measured at Level 6, viewport height fixed at 900 px, with **three columns forced on**
+at each width — note the game does not render three columns below 1024 px today, it
+plays two, so these rows describe a layout the ADR chooses to require rather than one
+a player has seen:
 
-| Viewport | Parent | Current | Preview | Mission brief            |
-| -------- | ------ | ------- | ------- | ------------------------ |
-| 722      | 256    | 232     | 233     | filename span 34 px      |
-| 768      | 256    | 255     | 257     | 18.8 chars/line, 5 lines |
-| 900      | 256    | 321     | 323     | 31.3 chars/line, 3 lines |
-| 1024     | 256    | 383     | 385     | 31.3 chars/line, 3 lines |
-| 1280     | 256    | 511     | 513     | 47 chars/line, 2 lines   |
+| Viewport width | Parent | Current | Preview | Mission brief            |
+| -------------- | ------ | ------- | ------- | ------------------------ |
+| 722            | 256    | 232     | 233     | filename span 34 px      |
+| 768            | 256    | 255     | 257     | 18.8 chars/line, 5 lines |
+| 900            | 256    | 321     | 323     | 31.3 chars/line, 3 lines |
+| 1024           | 256    | 383     | 385     | 31.3 chars/line, 3 lines |
+| 1280           | 256    | 511     | 513     | 47 chars/line, 2 lines   |
 
-The brief is word soup below ~900 px: at 768 the 257 px preview column wraps
-"mandatory. Move fast." across three lines. Filenames collapse to 34 px at 722.
+Read from the table: at 768 px the 257 px preview column wraps "mandatory. Move fast."
+across three lines, and filenames collapse to 34 px at 722 px. These widths are the
+_project owner's_ reported band ("400 px and 430 px unplayable; 800 px plays"); the
+table shows the forced layout is not worth restoring there.
 
 The parent pane is the fixed cost. It is 256 px at every width, so three columns give
 the preview `(W − 256) / 2` while the two-column mode this ADR replaces gives it
 `W / 2`: three columns always cost the brief 128 px, and the gap only closes above
 ~1150 px.
+
+The project owner measured 800 px as the smallest width that plays comfortably — in
+the two-column mode. That reading is not contradicted here and does not set the floor:
+the floor exists because the composition at 800 px is not Yazi's, not because the
+rendering is unusable. Option 2 covers the difference; the floor picks where
+three columns begin.
 
 Reported by the project owner from real use: 400 px and 430 px are unplayable,
 800 px is the smallest width that plays comfortably, and tablets in landscape are
@@ -61,11 +72,13 @@ would play, but no tested browser reports `pointer: fine` on one.
 
 Rely on the on-screen keyboard so phones and tablets can play.
 
-Rejected on input capability. Letters and `Shift+Enter` work, but the clipboard and
-fuzzy-find actions bind `Ctrl` chords, and the utility panels bind `Alt` chords, which
-iPadOS cannot send and Android only sends through non-standard two-key sequences.
-Key repeat — used to move continuously with a held key — is also absent on iOS.
-Support would require inventing an input scheme, not Yazi.
+Rejected on input capability. Letters, `Shift+Enter`, and the core cut/yank/paste keys
+(`x`/`y`/`p`) work on a soft keyboard. But select-all and invert-selection bind
+`Ctrl+A` and `Ctrl+R`, fuzzy-find navigation binds `Ctrl+N`/`J` and `Ctrl+P`/`K`, the
+utility panels bind `Alt+M`/`Alt+H`/`Alt+?`, and key repeat — used to move continuously
+with a held key — is absent on iOS. iPadOS cannot send `Ctrl` or `Alt` at all, and
+Android only sends them through non-standard two-key sequences. Support would
+require inventing an input scheme, not Yazi.
 
 ### Option 2: Two columns below the floor
 
@@ -99,11 +112,14 @@ as such.
 ## Decision
 
 1. **Hardware modifiers are required.** The game binds actions to `Ctrl` and `Alt`
-   chords that a soft keyboard cannot send: `Ctrl+A`/`x`/`v` for clipboard operations
-   (`handleClipboard.ts:276,293`), `Ctrl+n`/`j` and `Ctrl+p`/`k` in fuzzy-find
-   (`handleFuzzyMode.ts:58,67`), and `Alt+M`/`Alt+H`/`Alt+?` for utility panels
-   (`App.tsx:1082-1471`). iPadOS has no Ctrl or Alt on its soft keyboard, and Android's
-   are non-standard, so a soft keyboard can move and act but cannot reach these.
+   chords that a soft keyboard cannot send: `Ctrl+A` for select-all and `Ctrl+R` for
+   invert-selection (`handleClipboard.ts:276,293`), `Ctrl+N`/`J` and `Ctrl+P`/`K` for
+   fuzzy-find navigation (`handleFuzzyMode.ts:58,67`), and `Alt+M`/`Alt+H`/`Alt+?` for
+   the Quest Map, hints, and help (`App.tsx:1082-1471`). Cut, yank, and paste are plain
+   letters (`x`, `y`, `p`, `handleClipboard.ts:338,339,484`) and a soft keyboard sends
+   them, so a soft keyboard can move and act through part of the clipboard loop — but
+   it cannot reach select-all, invert, fuzzy keyboard-navigation, or the utility
+   panels, and the curriculum requires those.
    Because no media feature reports whether a hardware keyboard is attached, the game
    probes `(hover: none) and (pointer: coarse)` as a best-effort proxy and shows a
    product notice when it matches. The proxy is also imperfect: iPadOS Safari reports
@@ -113,11 +129,17 @@ as such.
    input that satisfies both, and that is what the requirement names.
 2. **The file-manager view requires 1024 CSS px** (`lg`, matching the existing
    breakpoint that already reveals the parent pane). Below it, a product notice
-   explains the width requirement. This is the only exclusion that is both precise and
-   detectable: an iPad Pro in landscape is 1366 CSS px and would pass, while a narrow
-   desktop window does not.
+   explains the width requirement. Unlike the modifier requirement, width is measured
+   exactly: an iPad Pro in landscape is 1366 CSS px and passes, a narrow desktop window
+   does not.
 3. **Both notices are product messages**, per `GLOSSARY.md`: they speak for Yazi Quest
    about the player's real device, and must not adopt the containment terminal's voice.
+4. **The cinematic surfaces are exempt from the floor.** The Episode intro and the
+   Conclusion are single-column narrative; measured, they still render and advance at
+   320×200 CSS px. A player zoomed to 400% on a 1280 px desktop therefore gets the
+   story, then the notice, rather than being locked out entirely — this preserves the
+   existing reflow work rather than discarding it, and it is the surface a screen-reader
+   or low-vision player reaches first.
 
 ## Consequences
 
@@ -150,21 +172,29 @@ as such.
 - The keyboard probe is a proxy, and it is wrong in both directions: it over-blocks
   iPadOS with peripherals and under-blocks a Windows touch monitor without a keyboard.
   Treat it as a guardrail against the worst case (a phone), not a precise capability test.
+  **Revisit this ADR if** [WebKit 209292](https://bugs.webkit.org/show_bug.cgi?id=209292)
+  or [Chromium 1028118](https://bugs.chromium.org/p/chromium/issues/detail?id=1028118)
+  is fixed and `any-pointer` begins to report attached trackpads — a keyboarded tablet
+  would then correctly be admitted, and the "every iPad is refused" consequence lapses.
 - Players on 1366×768 laptops at 125–150% OS scaling land near or below the floor
   and will see the notice. The notice must therefore state the requirement in CSS
   pixels, not in vague "larger screen" terms.
-- The 320 px cinematic and reflow tests describe a path most players no longer reach.
-  They remain valid as regression coverage for zoomed users; they are not evidence
-  that narrow gameplay works.
+- The five 320 px tests in `keyboard-accessibility.spec.ts` describe a path most
+  players no longer reach. They remain valid as regression coverage for zoomed users;
+  they are not evidence that narrow gameplay works.
 
 ## Implementation Notes
 
 - Touch gate: shipped. `index.html` styles plus the mount guard in `src/index.tsx`
   (`(hover: none) and (pointer: coarse)`).
-- Size column yielding below `sm`: shipped, in `FileSystemItem.tsx`.
+- Size column yielding below `sm` (640 px): shipped, in `FileSystemItem.tsx`. It only
+  matters in the two-column mode this ADR retires; at 1024 px and above the size column
+  is shown and names still measure 185 px.
 - Width floor: **not yet implemented.** The file-manager view is to be gated at
-  `min-width: 1024px`, with a product notice below it; two E2E tests that assert
-  gameplay at 320 px are to move above the floor.
+  `min-width: 1024px`, with a product notice below it. Five E2E tests currently assert
+  behavior at 320 px — two of them gameplay (`keyboard-accessibility.spec.ts:22,43`),
+  one the outro (`:130`), two cinematic — and all five need to move above the floor
+  or be re-scoped to the zoomed-cinematic case.
 - `PRODUCT.md` previously stated that narrow windows remain in scope; this ADR
   supersedes that line.
 
