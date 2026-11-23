@@ -1412,6 +1412,7 @@ echo "[$(date)] Ghost sync complete"
           id: 'tmp-honeypot-1',
           name: 'system_monitor.pid',
           type: 'file',
+          isHoneypot: true,
           content: 'PID: 1 (SYSTEM CRITICAL)', // Looks important
           parentId: 'tmp',
         },
