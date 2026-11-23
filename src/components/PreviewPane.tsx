@@ -189,7 +189,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
       {/* Bottom Section: Mission Log */}
       <div className="h-[45%] min-h-[250px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
         <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
-          <h1 className="text-xs font-bold text-orange-500 uppercase tracking-wider">
+          <h1 className="text-sm font-bold text-orange-500 uppercase tracking-wider">
             Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
           </h1>
         </div>
@@ -204,7 +204,9 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
             <h2 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">
               Target
             </h2>
-            <p className="text-xs text-zinc-300 font-mono leading-relaxed">{level.description}</p>
+            <p className="text-xs text-zinc-300 font-mono leading-relaxed mission-prose">
+              {level.description}
+            </p>
           </div>
           <div>
             <h2 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
@@ -228,7 +230,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                           {isTaskCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
                         </div>
                         <div
-                          className={`text-xs font-mono leading-tight ${isTaskCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
+                          className={`text-xs font-mono leading-snug mission-prose ${isTaskCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
                         >
                           {task.description}
                         </div>

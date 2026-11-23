@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Objective and brief copy wraps mid-phrase at narrow widths; `pretty` pulls the
+   orphan word down. Progressive: browsers without it keep the default wrap. */
+.mission-prose {
+  text-wrap: pretty;
+}
+
 /* Glitch Overlay Effects */
 .glitch-container {
   position: relative;
