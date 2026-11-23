@@ -9,7 +9,7 @@ interface SystemAlertsProps {
 export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
   return (
     <div
-      className="fixed top-24 left-4 right-4 z-20 flex flex-col gap-4 font-mono pointer-events-none sm:left-auto sm:right-8 sm:w-96"
+      className="fixed top-24 left-4 right-4 z-20 flex flex-col gap-4 font-mono pointer-events-none max-h-[calc(100dvh-8rem)] overflow-y-auto sm:left-auto sm:right-8 sm:w-96"
       aria-live="polite"
     >
       {alerts.map((alert) => (

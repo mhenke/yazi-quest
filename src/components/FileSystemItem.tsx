@@ -181,7 +181,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
 
         {linemode !== 'none' && !isGrid && (
           <span
-            className={`text-xs w-24 text-right font-mono tabular-nums shrink-0 ${isCursor || isParent ? 'text-zinc-300' : 'text-zinc-400'}`}
+            className={`text-xs w-24 text-right font-mono tabular-nums shrink-0 hidden sm:block ${isCursor || isParent ? 'text-zinc-300' : 'text-zinc-400'}`}
           >
             {linemode === 'size' && formatSize(item)}
             {linemode === 'mtime' && getFakeDate(item)}

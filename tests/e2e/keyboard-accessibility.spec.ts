@@ -39,6 +39,21 @@ test('narrow desktop search and filter keep focus and return it on Escape', asyn
   }
 });
 
+test('file names stay readable when the pane is narrow', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 450 });
+  await page.goto('/?lvl=6&intro=false');
+  await expect(page.getByRole('listbox', { name: 'File Browser' })).toBeFocused();
+
+  // The size column's fixed width used to collapse the name span to zero at this width.
+  const nameWidths = await page
+    .getByRole('option')
+    .evaluateAll((rows) =>
+      rows.map((row) => row.querySelector('span.truncate')?.getBoundingClientRect().width ?? 0)
+    );
+  expect(nameWidths.length).toBeGreaterThan(0);
+  for (const width of nameWidths) expect(width).toBeGreaterThanOrEqual(40);
+});
+
 test('fuzzy find exposes the typed query and active file before selection', async ({ page }) => {
   await startLevel(page, 7, { intro: false });
   await gotoCommand(page, 'r');
