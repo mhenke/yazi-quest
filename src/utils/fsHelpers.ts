@@ -262,11 +262,12 @@ export function resolveAndCreatePath(
     pathSegmentsToCreate = inputPath.split('/').filter(Boolean);
   }
 
-  let currentWorkingNode: FileNode | undefined = getNodeByPath(newRoot, effectiveParentPath);
-  if (!currentWorkingNode) {
+  const initialNode = getNodeByPath(newRoot, effectiveParentPath);
+  if (!initialNode) {
     return { fs: newRoot, error: 'Starting path not found or invalid', targetNode: undefined };
   }
 
+  let currentWorkingNode: FileNode = initialNode;
   let finalTargetNode: FileNode | undefined = undefined;
 
   for (let i = 0; i < pathSegmentsToCreate.length; i++) {
@@ -278,7 +279,9 @@ export function resolveAndCreatePath(
     // The last segment is a directory ONLY if the input path ended with '/'.
     const needDir = !isLastSegment || inputPath.endsWith('/');
 
-    const existingNode = currentWorkingNode.children?.find((c) => c.name === segment);
+    const existingNode: FileNode | undefined = currentWorkingNode.children?.find(
+      (c) => c.name === segment
+    );
 
     if (existingNode) {
       // COLLISION CHECK

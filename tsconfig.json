@@ -18,8 +18,8 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true
   }
 }

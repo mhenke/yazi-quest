@@ -165,6 +165,33 @@ const MODAL_TO_STATE_KEY: Record<ModalId, keyof GameState> = {
   searchWarning: 'showSearchWarning',
 };
 
+export const INITIAL_ACTION_FLAGS = {
+  usedG: false,
+  usedGI: false,
+  usedGC: false,
+  usedGR: false,
+  usedGH: false,
+  usedCtrlA: false,
+  usedCtrlR: false,
+  usedGG: false,
+  usedDown: false,
+  usedUp: false,
+  usedPreviewDown: false,
+  usedPreviewUp: false,
+  usedP: false,
+  usedShiftP: false,
+  usedX: false,
+  usedD: false,
+  usedTrashDelete: false,
+  usedHistoryBack: false,
+  usedHistoryForward: false,
+  usedSortM: false,
+  usedY: false,
+  usedSearch: false,
+  usedSearchCleared: false,
+  usedFilter: false,
+} as const;
+
 const ACTION_TO_STATE_KEY: Record<string, keyof GameState> = {
   G: 'usedG',
   GI: 'usedGI',
@@ -323,6 +350,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         cursorIndex: cursorIndex ?? 0,
         searchResults: [],
         searchQuery: null,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
       };
     }
 
@@ -335,6 +364,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         history: state.history.slice(0, -1),
         future: [state.currentPath, ...state.future],
         cursorIndex: 0,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
       };
     }
 
@@ -347,18 +378,30 @@ export function gameReducer(state: GameState, action: Action): GameState {
         history: [...state.history, state.currentPath],
         future: state.future.slice(1),
         cursorIndex: 0,
+        usedPreviewDown: false,
+        usedPreviewUp: false,
       };
     }
 
     case 'SET_CURSOR':
-      return { ...state, cursorIndex: action.index };
+      return {
+        ...state,
+        cursorIndex: action.index,
+        ...(action.index !== state.cursorIndex
+          ? { usedPreviewDown: false, usedPreviewUp: false }
+          : {}),
+      };
 
     case 'MOVE_CURSOR': {
       const newIndex = Math.max(
         0,
         Math.min(action.itemCount - 1, state.cursorIndex + action.delta)
       );
-      return { ...state, cursorIndex: newIndex };
+      return {
+        ...state,
+        cursorIndex: newIndex,
+        ...(newIndex !== state.cursorIndex ? { usedPreviewDown: false, usedPreviewUp: false } : {}),
+      };
     }
 
     case 'TOGGLE_HIDDEN': {
@@ -474,31 +517,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
         zoxideData: action.zoxideData || state.zoxideData,
         // Reset game over state when restarting/setting level
         isGameOver: false,
-        gameOverReason: null,
+        gameOverReason: undefined,
         // Reset all tracking flags to prevent state leakage between levels
-        usedG: false,
-        usedGI: false,
-        usedGC: false,
-        usedGR: false,
-        usedGH: false,
-        usedCtrlA: false,
-        usedCtrlR: false,
-        usedGG: false,
-        usedDown: false,
-        usedUp: false,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-        usedP: false,
-        usedShiftP: false,
-        usedX: false,
-        usedD: false,
-        usedTrashDelete: false,
-        usedHistoryBack: false,
-        usedHistoryForward: false,
-        usedSortM: false,
-        usedY: false,
-        usedSearch: false,
-        usedFilter: false,
+        ...INITIAL_ACTION_FLAGS,
         // Reset terminal thoughts tracking
       };
 
@@ -514,6 +535,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
+        ...INITIAL_ACTION_FLAGS,
       };
 
     case 'INCREMENT_KEYSTROKES':
@@ -542,6 +564,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         mode: 'normal',
         clipboard: null,
         selectedIds: [],
+        ...INITIAL_ACTION_FLAGS,
       };
 
     case 'SET_SORT':
@@ -711,35 +734,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
         currentPath: [...initialPath],
         cursorIndex: 0,
         // Reset all action flags to prevent leakage from mashing during intro
-        usedG: false,
-        usedGI: false,
-        usedGC: false,
-        usedGR: false,
-        usedGH: false,
-        usedCtrlA: false,
-        usedCtrlR: false,
-        usedGG: false,
-        usedDown: false,
-        usedUp: false,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-        usedP: false,
-        usedShiftP: false,
-        usedX: false,
-        usedD: false,
-        usedTrashDelete: false,
-        usedHistoryBack: false,
-        usedHistoryForward: false,
-        usedSortM: false,
-        usedY: false,
-        usedSearch: false,
-        usedFilter: false,
+        ...INITIAL_ACTION_FLAGS,
         keystrokes: 0,
         weightedKeystrokes: 0,
-        searchQuery: null,
-        searchResults: [],
+        searchQuery: null as string | null,
+        searchResults: [] as FileNode[],
         filters: {},
-        selectedIds: [],
+        selectedIds: [] as string[],
         completedTaskIds: newCompletedTaskIds,
         mode: 'normal' as const,
       };

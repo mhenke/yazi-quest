@@ -43,3 +43,63 @@ describe('gameReducer ADD_ALERT', () => {
     expect(next.alerts.map((a) => a.id)).toEqual(['write-access-l6', 'safety-fail-l14']);
   });
 });
+
+describe('gameReducer action flag sanitization', () => {
+  const dirtyState = {
+    usedG: true,
+    usedPreviewDown: true,
+    usedPreviewUp: true,
+    usedDown: true,
+    usedUp: true,
+    cursorIndex: 0,
+    currentPath: ['root', 'home', 'guest'],
+    levelIndex: 0,
+    fs: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
+    levelStartFS: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
+    levelStartPath: ['root', 'home', 'guest'],
+  } as unknown as GameState;
+
+  it('resets all action tracking flags on RESTART_CYCLE to prevent cross-cycle leakage', () => {
+    const next = gameReducer(dirtyState, { type: 'RESTART_CYCLE' });
+    expect(next.usedG).toBe(false);
+    expect(next.usedPreviewDown).toBe(false);
+    expect(next.usedPreviewUp).toBe(false);
+    expect(next.usedDown).toBe(false);
+    expect(next.usedUp).toBe(false);
+  });
+
+  it('resets all action tracking flags on RESET_LEVEL', () => {
+    const next = gameReducer(dirtyState, { type: 'RESET_LEVEL' });
+    expect(next.usedG).toBe(false);
+    expect(next.usedPreviewDown).toBe(false);
+    expect(next.usedPreviewUp).toBe(false);
+    expect(next.usedDown).toBe(false);
+    expect(next.usedUp).toBe(false);
+  });
+
+  it('resets preview scroll flags when cursor index changes (scoping preview to active file)', () => {
+    const stateWithPreview = {
+      ...dirtyState,
+      cursorIndex: 1,
+      usedPreviewDown: true,
+      usedPreviewUp: true,
+    };
+    const next = gameReducer(stateWithPreview, { type: 'SET_CURSOR', index: 2 });
+    expect(next.cursorIndex).toBe(2);
+    expect(next.usedPreviewDown).toBe(false);
+    expect(next.usedPreviewUp).toBe(false);
+  });
+
+  it('retains preview scroll flags when cursor index does not change', () => {
+    const stateWithPreview = {
+      ...dirtyState,
+      cursorIndex: 1,
+      usedPreviewDown: true,
+      usedPreviewUp: true,
+    };
+    const next = gameReducer(stateWithPreview, { type: 'SET_CURSOR', index: 1 });
+    expect(next.cursorIndex).toBe(1);
+    expect(next.usedPreviewDown).toBe(true);
+    expect(next.usedPreviewUp).toBe(true);
+  });
+});

@@ -1,12 +1,12 @@
 # Project Documentation
 
-> Generated: 2026-11-23T12:20:00Z | Mode: DELTA
-> Source baseline: `70a4928`..`99935c4` (18 commits) plus working-tree documentation
+> Generated: 2026-11-23T15:35:46Z | Mode: DELTA
+> Source baseline: `99935c4`..`3f7a851` (8 commits)
 
 ## Tech Stack
 
 - Runtime: browser application; Node.js 24 in the deployment workflow. Local scan environment: Node.js 24.22.2 / npm 11.19.1. No Node engine constraint is declared.
-- Language: TypeScript / TSX, ES modules, ES2022 target. TypeScript strict mode, implicit-any checking, and strict-null checking are disabled in `tsconfig.json`.
+- Language: TypeScript / TSX, ES modules, ES2022 target. Progress toward full type safety has enabled both `noImplicitAny` and `strictNullChecks` in `tsconfig.json`, with full `strict` mode remaining disabled.
 - Framework: React 19.2.3, bundled by Vite 7.3.7 with the React plugin.
 - Database: none. The game operates on an in-memory simulated filesystem.
 - Styling: Tailwind CSS 3.4.19 compiled at build time through PostCSS (`tailwind.config.js` scans `index.html` and `src/**/*.{ts,tsx}`; `postcss.config.js` runs Tailwind and Autoprefixer). Episode colours live in `src/constants/palette.ts` as literal utility strings so the scanner sees every class. Inline styles in `index.html` and local CSS cover narrative/glitch effects and the platform gates. The interface uses the system-monospace stack without a webfont download. Tailwind is pinned to v3 deliberately: v4 renames `outline-none`, rescales `rounded-sm`, and changes the default border colour, all of which would shift the existing visual design.
@@ -49,7 +49,7 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 
 | Location                                       | Purpose                                                                                  |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `src/components/`                              | Filesystem panes, preview, HUD, dialogs, intros, outro, and alerts                       |
+| `src/components/`                              | Filesystem panes, preview, mission drawer, HUD, dialogs, intros, outro, and alerts       |
 | `src/components/narrative/`                    | Boot-sequence and cinematic presentation (typing, skip, scanlines)                       |
 | `src/components/ui/`                           | Diegetic prompt and glitch-overlay components                                            |
 | `src/hooks/`                                   | Game reducer, keyboard coordination, timers, narrative hooks, and platform gates         |
@@ -87,10 +87,15 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 - Level task checks are content-driven. Filesystem prerequisites and consequences belong with filesystem setup, not in presentation components.
 - Narrative content and narrative hooks are separated, but some game-specific narrative coordination remains in `App`.
 - Reusable modal presentation is centralized: warning modals (`FilterWarningModal`, `SearchWarningModal`, `SortWarningModal`, `HiddenFilesWarningModal`) delegate shared layout, title, message, and action button structure to `WarningModal.tsx`.
+- Modal geometry harmonization: Peripheral dialogs, warning shells, and alerts (`GameOverModal.tsx`, `HintModal.tsx`, `InfoPanel.tsx`, `WarningModal.tsx`, `SuccessToast.tsx`, `SystemAlerts.tsx`, `ThreatAlert.tsx`) have been standardized to rectangular terminal geometry (`rounded-none`, `border-zinc-700` or corresponding status border tokens) consistent with the terminal aesthetic.
+- Mission drawer (`src/components/MissionDrawer.tsx`): Extracted from `PreviewPane.tsx` to encapsulate mission title, progress, description, and task checklist. Supports collapsible drawer behavior toggled via `Alt+O` (registered in `src/App.tsx` via `useGlobalInput`) or by clicking the drawer header, allowing players to collapse the mission log to maximize the file preview area.
+- Status bar modularity (`src/components/StatusBar.tsx`): Restructured into three functional clusters: left mode and command indicators, center-left file info/context and technical feedback notifications, and right progress and stats block (task counter, linemode, permissions, position indicators). The default `HIDDEN: OFF` indicator is silenced when inactive to reduce visual noise on the terminal. Linemode cycling (`handleSortMode.ts`) dispatches transient notifications to the status bar.
+- Scanline overlay consolidation: CRT scanline gradients previously duplicated inline across `GameOverModal.tsx` and `OutroSequence.tsx` are consolidated to route through the shared `Scanlines` component (`src/components/narrative/Scanlines.tsx`).
 - Fuzzy search candidate matching, scoring, and derivation logic is centralized in `src/utils/fuzzyHelpers.ts`, decoupling `handleFuzzyMode.ts` and `FuzzyFinder.tsx`.
 - Reducer action-to-state mappings leverage dictionary lookup tables (`ACTION_TO_STATE_KEY`, `MODAL_TO_STATE_KEY`) to minimize repetitive action branch duplication.
 - Intro and boot presentations (`BiosBoot.tsx`, `EpisodeIntro.tsx`) share presentation hooks (`useTypewriter`, `useSkipIntro`) and visual components (`Scanlines`, `SkipIntroButton`) under `src/components/narrative/`.
 - Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`.
+- Filesystem trap integrity: Restored the dropped `isHoneypot: true` flag on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, ensuring Level 9 trap detection logic triggers when critical PID keepers are removed.
 - Codebase knowledge graph is generated via Graphify (`graphify-out/graph.json`) in offline AST mode, with project hooks in `.claude/` enabling graph traversal before search.
 - The previously proposed input-handler/context extraction is cancelled in the closed roast-fixes round 2 documents; it is not the current architecture.
 
@@ -111,7 +116,7 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 - Validation: zoxide storage shape validation, filesystem protection checks, operation-specific guards, and regex handling in view/input paths. These checks are not a general schema-validation framework.
 - Accessibility: Help has a labelled modal, keyboard scrolling, and verified focus containment/restoration. Overlay focus is centralized in `src/components/useOverlayFocus.ts` (capture, restore, and Tab containment) and used by every overlay that owns keyboard input, including Help, Map, Hint, Info, Fuzzy Finder, and the confirmation and warning modals. Reduced motion is honoured through `src/hooks/useReduceMotion.ts`, which combines `prefers-reduced-motion` with the in-game `narrativeEffects: 'minimal'` setting and stamps `data-narrative-effects` on the root for CSS. Automated axe scans now report zero violations on the gameplay shell (levels 1, 6, 12, and episode 2), the Quest Map, Help, Hint, and the outro. Landmarks are `<header>`, `<main>`, and `<footer>` with the mission title as the page `h1`; both scroll regions and the level strip are focusable with a visible ring. This is automated coverage only — no assistive-technology or real-browser-zoom session was performed, so it does not establish WCAG conformance. [The desktop accessibility audit](../../docs/accessibility-audit.md) records the method and measurements.
 - Keyboard-first scope: gameplay and game controls must work without a pointer. The [Yazi keyboard research](../../docs/yazi-keyboard-research.md) separates authentic `Tab` inspection from browser focus navigation and records a proposed focus boundary; runtime routing is unchanged.
-- Settings: sound and narrative-effect settings are in-memory. The main glitch wrapper distinguishes `minimal` from other values; do not assume the displayed `reduced` option means every effect has a separate reduced implementation.
+- Settings: sound and narrative-effect settings are in-memory. The initial `GameState` contract strictly enforces `narrativeEffects: 'full'` (setting `data-narrative-effects` on root for CSS targeting) and `consciousnessLevel: 0` without unsafe type casts (`as GameState` was removed in `src/App.tsx`). The main glitch wrapper distinguishes `minimal` from other values; do not assume the displayed `reduced` option means every effect has a separate reduced implementation.
 - Security: Vite substitutes configured Gemini environment values into client code. Such values are public if used in the bundle; environment files do not provide a secret backend. No Gemini API call was found in scanned source.
 
 ## Service Communication
@@ -149,19 +154,20 @@ External resources are limited to an external favicon/background image and a con
 
 ## Changed Files
 
-Latest delta `70a4928..99935c4` (18 commits, 85 paths: 14 added, 9 deleted, 62 modified). The headline changes are the platform-scope gate, the build-time Tailwind migration, the accessibility remediation, and the dead-narrative removal.
+Latest delta `99935c4..3f7a851` (8 commits, 37 paths: 1 added, 2 renamed, 34 modified). Headline changes include the extraction of the collapsible Mission Drawer, StatusBar clustering and noise reduction, modal geometry harmonization, scanline overlay consolidation, Level 9 honeypot restoration, and documentation alignment.
 
-- **Platform scope (ADR-0001):** `docs/adr/0001-keyboard-and-viewport-floor.md` and `docs/adr/README.md` record the decision to require hardware modifiers and a 1024 px viewport. `src/hooks/useViewportFloor.ts`, `src/components/RequirementNotice.tsx`, `src/hooks/useReduceMotion.ts`, `src/index.tsx`, `index.html`, `src/App.tsx`, and `src/index.css` implement and style the gates. `tests/e2e/keyboard-accessibility.spec.ts` covers focus order and reachability.
-- **Build-time Tailwind:** `tailwind.config.js`, `postcss.config.js`, and `src/constants/palette.ts` added; `index.html` dropped the Play CDN; `src/index.css` gained the directives. Palette tokens replaced string-surgery derivation in `App.tsx`, `LevelProgress.tsx`, `EpisodeIntro.tsx`, and `OutroSequence.tsx`. This fixed a latent fault: qualitatively derived classes (`border-*-500/30`, `bg-*-500/10`, `ring-*-500`, `text-*-500/50`) existed in no source file and were generated only by the runtime CDN, so a build-time scanner would have dropped them silently.
-- **Accessibility remediation:** `FileSystemItem.tsx`, `PreviewPane.tsx`, `LevelProgress.tsx`, `StatusBar.tsx`, `HintModal.tsx`, and `index.html` were changed to replace opacity-based dimming with explicit colour tokens, fix landmark/heading structure, and make scroll regions focusable. `src/components/useOverlayFocus.ts` centralizes overlay focus capture, restore, and Tab containment for all ten overlays that own keyboard input.
-- **Dead narrative removed:** Deleted `GhostMessage.tsx`/`.test.tsx`, `ghostDialogue.ts`, `terminalThoughts.ts`/`.test.ts`, `useGhostDialogue.ts`/`.test.ts`, and `useTerminalThoughts.ts`/`.test.ts`, plus their reducer state and actions in `src/hooks/gameReducer.ts`. `src/hooks/useNarrativeSystem.ts` and `src/constants/narrative.ts` were trimmed accordingly; `gameReducer.test.ts` was added for the surviving state invariants.
-- **Gate tooling:** `fallow` and `knip` added with `audit:changed`, wired into `.husky/pre-push` and `.husky/pre-commit`. `fast-check` added for `src/utils/fsHelpers.property.test.ts`.
-- **Bundle split:** `vite.config.ts` now isolates React and lucide into separate chunks.
-- **Original requirements:** `docs/accessibility-audit.md` and `docs/yazi-keyboard-research.md` added; `docs/yazi-mobile-research.md`, `PRODUCT.md`, `DESIGN.md`, and `GLOSSARY.md` updated.
-- **Prior deltas** (commitlint, intro/boot dedup, clipboard dedup, E2E helper pruning, narrative timeline alignment, monospace typography, dependency maintenance, Graphify) are unchanged from the previous scan and remain accurate.
+- **Mission Drawer & Layout:** `src/components/MissionDrawer.tsx` extracted from `src/components/PreviewPane.tsx` to render mission titles, descriptions, and task checklists; supports collapsible drawer toggle with `Alt+O` in `src/App.tsx`. Discoverability tips added to Level 2 in `src/constants/levels.ts`.
+- **Status Bar Refactor:** `src/components/StatusBar.tsx` restructured into three functional clusters (mode/state, file context/technical notifications, progress/stats). Silenced default `HIDDEN: OFF` flag to reduce terminal visual noise. Added ephemeral notifications to `src/hooks/keyboard/handleSortMode.ts` when cycling linemodes.
+- **Modal Geometry Harmonization:** Standardized peripheral modals and alert shells to rectangular terminal geometry (`rounded-none`, `border-zinc-700`): `src/components/GameOverModal.tsx`, `src/components/HintModal.tsx`, `src/components/InfoPanel.tsx`, `src/components/WarningModal.tsx`, `src/components/SuccessToast.tsx`, `src/components/SystemAlerts.tsx`, `src/components/ThreatAlert.tsx`.
+- **Scanline Overlay Consolidation:** Routed inline CRT scanline overlays in `src/components/GameOverModal.tsx` and `src/components/OutroSequence.tsx` through shared `src/components/narrative/Scanlines.tsx`.
+- **Filesystem Trap Fix:** Restored `isHoneypot: true` on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, fixing the Level 9 trap where deleting critical keepers must trigger failure.
+- **Type Safety & Settings Contract:** Removed unsafe `as GameState` cast in `src/App.tsx`, restoring compiler verification for `narrativeEffects` and `consciousnessLevel`. Progress in `tsconfig.json` enabled `noImplicitAny: true` and `strictNullChecks: true`. Pruned unused `consciousnessTriggers` in `src/types.ts` and `src/utils/gameUtils.test.ts`.
+- **Typography & Responsive Formatting:** Added `.mission-prose` (`text-wrap: pretty`) in `src/index.css` and applied it to mission briefs and task descriptions. Balanced requirement notice typography (`text-wrap: balance`) and removed eyebrow kickers in `index.html` and `src/components/RequirementNotice.tsx`.
+- **Documentation & Walkthrough Realignment:** Aligned documentation, walkthroughs, and roadmaps with codebase changes across `CLAUDE.md`, `CONTRIBUTING.md`, `GEMINI.md`, `GLOSSARY.md`, `QUESTIONS.md`, `README.md`, `ROADMAP.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `docs/EPISODE_3_SOLUTIONS.md`, `docs/HAUNTED_MACHINE_SUMMARY.md`, `docs/LEARNING_DESIGN.md`, `docs/PROTOCOL_VIOLATIONS.md`, and `docs/STORY_ARC.md`. Archived unmerged proposals to `docs/archive/HUD_LAYOUT_ANALYSIS.md` and `docs/archive/LEVEL_AUDIT.md`.
+- **Prior deltas:** Architectural baseline features (ADR-0001 platform gating, build-time Tailwind 3.4.19, accessibility focus containment, dead-narrative pruning, `fallow`/`knip` gates, and chunk isolation) are retained from previous scans.
 
-Architectural change detected: build-time CSS compilation, a platform-gating layer, and a mandated viewport floor. `AGENTS.md` was patched with human confirmation to record platform scope, the three-way gate sync, literal palette tokens, the `audit:changed` gate, and the `env -u CI` requirement for E2E here.
+No architectural changes detected in this delta: changes represent modular UI extractions, geometry harmonization, bug fixes, and documentation synchronization.
 
 ## Last Scanned
 
-2026-11-23T12:20:00Z
+2026-11-23T15:35:46Z

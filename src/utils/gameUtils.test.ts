@@ -7,6 +7,8 @@ import {
   checkAllTasksComplete,
 } from './gameUtils';
 import { GameState, Level, FileNode } from '../types';
+import { LEVELS } from '../constants/levels';
+import { INITIAL_FS } from '../constants/filesystem/initial';
 
 describe('gameUtils', () => {
   describe('checkCriticalFileDeletion', () => {
@@ -15,7 +17,7 @@ describe('gameUtils', () => {
         currentPath: ['root', 'home', 'guest'],
         alerts: [],
         // Add other required properties as needed
-      } as GameState;
+      } as unknown as GameState;
       const pendingDeleteIds = ['some-file-id'];
 
       const result = checkCriticalFileDeletion(gameState, pendingDeleteIds);
@@ -27,7 +29,7 @@ describe('gameUtils', () => {
         currentPath: ['root'], // At root level
         alerts: [],
         // Add other required properties as needed
-      } as GameState;
+      } as unknown as GameState;
       const pendingDeleteIds = ['bin-item']; // Would need to mock the items to have a 'bin' folder
 
       // This test would need proper mocking of the file system and items
@@ -42,12 +44,12 @@ describe('gameUtils', () => {
       const gameState: GameState = {
         alerts: [],
         // Mock game state
-      } as GameState;
+      } as unknown as GameState;
       const pendingDeleteIds: string[] = [];
       const currentLevel: Level = {
         id: 1,
         // Mock level
-      } as Level;
+      } as unknown as Level;
 
       const result = validateDeletions(gameState, pendingDeleteIds, currentLevel);
       expect(result).toEqual({ ok: true });
@@ -345,7 +347,7 @@ describe('gameUtils', () => {
         initialPath: [],
         hint: 'Test hint',
         coreSkill: 'Test skill',
-        timeLimit: null,
+        timeLimit: undefined,
         maxKeystrokes: undefined,
         efficiencyTip: undefined,
         thought: undefined,
@@ -440,7 +442,7 @@ describe('gameUtils', () => {
         initialPath: [],
         hint: 'Test hint',
         coreSkill: 'Test skill',
-        timeLimit: null,
+        timeLimit: undefined,
         maxKeystrokes: undefined,
         efficiencyTip: undefined,
         thought: undefined,
@@ -541,7 +543,7 @@ describe('gameUtils', () => {
         initialPath: [],
         hint: 'Test hint',
         coreSkill: 'Test skill',
-        timeLimit: null,
+        timeLimit: undefined,
         maxKeystrokes: undefined,
         efficiencyTip: undefined,
         thought: undefined,
@@ -550,6 +552,53 @@ describe('gameUtils', () => {
 
       const result = checkAllTasksComplete(gameState, level);
       expect(result).toBe(true);
+    });
+  });
+
+  describe('Level 1 Task 3 (view-personnel) check predicate', () => {
+    const task = LEVELS[0].tasks.find((t) => t.id === 'view-personnel')!;
+
+    const baseState: GameState = {
+      fs: INITIAL_FS,
+      currentPath: ['root', 'home', 'guest', 'datastore'],
+      cursorIndex: 16, // personnel_list.txt
+      usedG: true,
+      previewScroll: 0,
+      usedPreviewDown: false,
+      usedPreviewUp: false,
+      filters: {},
+      sortBy: 'natural',
+      sortDirection: 'asc',
+      showHidden: false,
+    } as unknown as GameState;
+
+    it('returns false when cursor is on personnel_list.txt after G but preview was not scrolled', () => {
+      expect(task.check(baseState, LEVELS[0])).toBe(false);
+    });
+
+    it('returns true when usedPreviewDown and usedPreviewUp are true on personnel_list.txt after G', () => {
+      const scrolledState = { ...baseState, usedPreviewDown: true, usedPreviewUp: true };
+      expect(task.check(scrolledState, LEVELS[0])).toBe(true);
+    });
+
+    it('returns false if only usedPreviewDown is true', () => {
+      const scrolledState = { ...baseState, usedPreviewDown: true, usedPreviewUp: false };
+      expect(task.check(scrolledState, LEVELS[0])).toBe(false);
+    });
+
+    it('returns false if preview was scrolled on a different file', () => {
+      const wrongFileState = {
+        ...baseState,
+        cursorIndex: 17,
+        previewScroll: 5,
+        usedPreviewDown: true,
+      };
+      expect(task.check(wrongFileState, LEVELS[0])).toBe(false);
+    });
+
+    it('returns false if usedG is false even if preview is scrolled', () => {
+      const noGState = { ...baseState, usedG: false, previewScroll: 5 };
+      expect(task.check(noGState, LEVELS[0])).toBe(false);
     });
   });
 });

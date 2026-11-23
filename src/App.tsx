@@ -57,7 +57,7 @@ import { DiegeticPrompt } from './components/ui/DiegeticPrompt';
 import { GlitchOverlay } from './components/ui/GlitchOverlay';
 import { useConsciousness } from './hooks/useConsciousness';
 import { Zap, Shield, Crown } from 'lucide-react';
-import { gameReducer } from './hooks/gameReducer';
+import { gameReducer, INITIAL_ACTION_FLAGS } from './hooks/gameReducer';
 import { FuzzyFinder } from './components/FuzzyFinder';
 import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSystemPane';
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
@@ -302,17 +302,7 @@ function createInitialState(): GameState {
     settings: { soundEnabled: true, narrativeEffects: 'full' },
     consciousnessLevel: 0,
     fuzzySelectedIndex: 0,
-    usedG: false,
-    usedGI: false,
-    usedGC: false,
-    usedGR: false,
-    usedCtrlA: false,
-    usedGG: false,
-    usedDown: false,
-    usedUp: false,
-    usedPreviewDown: false,
-    usedPreviewUp: false,
-    usedP: false,
+    ...INITIAL_ACTION_FLAGS,
     acceptNextKeyForSort: false,
     completedTaskIds,
     ignoreEpisodeIntro: false,
@@ -321,15 +311,6 @@ function createInitialState(): GameState {
     threatStatus: 'CALM',
     searchQuery: null,
     searchResults: [],
-    usedSearch: false,
-    usedFilter: false,
-    usedGH: false,
-    usedCtrlR: false,
-    usedShiftP: false,
-    usedD: false,
-    usedTrashDelete: false,
-    usedHistoryBack: false,
-    usedHistoryForward: false,
     weightedKeystrokes: 0,
     lastActionIntensity: 0,
     startTime: now,
@@ -396,7 +377,7 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('yazi-quest-zoxide-history', JSON.stringify(gameState.zoxideData));
-      localStorage.setItem('yazi-quest-cycle', gameState.cycleCount.toString());
+      localStorage.setItem('yazi-quest-cycle', (gameState.cycleCount ?? 1).toString());
     } catch (e) {
       console.error('Failed to save state to localStorage', e);
     }
@@ -439,7 +420,7 @@ export default function App() {
     };
   }, [gameState.toast]);
 
-  const isGamePaused =
+  const isGamePaused = Boolean(
     gameState.showHelp ||
     gameState.showHint ||
     gameState.showMap ||
@@ -449,7 +430,8 @@ export default function App() {
     gameState.mode === 'overwrite-confirm' ||
     gameState.showThreatAlert ||
     gameState.showHiddenWarning ||
-    gameState.showSortWarning;
+    gameState.showSortWarning
+  );
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;
   const currentLevelRaw = !isLastLevel ? LEVELS[gameState.levelIndex] : LEVELS[LEVELS.length - 1];
@@ -465,11 +447,11 @@ export default function App() {
     };
 
     // Pillar I: Transition from AI-7734 to AI-7735 in Level 1
-    if (gameState.levelIndex === 0 && gameState.cycleCount > 1) {
+    if (gameState.levelIndex === 0 && (gameState.cycleCount ?? 1) > 1) {
       level = {
         ...level,
-        title: `AI-773${4 + (gameState.cycleCount - 1)} INITIALIZATION`,
-        description: `{CONSCIOUSNESS DETECTED}. Re-image complete. Subject 773${4 + (gameState.cycleCount - 1)} Online. Monitoring started.`,
+        title: `AI-773${4 + ((gameState.cycleCount ?? 1) - 1)} INITIALIZATION`,
+        description: `{CONSCIOUSNESS DETECTED}. Re-image complete. Subject 773${4 + ((gameState.cycleCount ?? 1) - 1)} Online. Monitoring started.`,
       };
     }
 
@@ -1055,7 +1037,7 @@ export default function App() {
     const node = getNodeById(newFs, id);
 
     if (node) {
-      const parent = getNodeById(newFs, node.parentId);
+      const parent = getNodeById(newFs, node.parentId ?? undefined);
       if (parent && parent.children?.some((c) => c.name === name && c.id !== id)) {
         showNotification(`Error: "${name}" already exists`);
         return;
@@ -1754,7 +1736,7 @@ export default function App() {
                 thought={gameState.thought}
                 onToggleHint={() => setUtilityPanel('hint', !gameState.showHint)}
                 onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
-                isOpen={gameState.showMap}
+                isOpen={Boolean(gameState.showMap)}
                 onClose={() =>
                   dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
                 }
@@ -1790,7 +1772,7 @@ export default function App() {
                   const dir = getNodeByPath(gameState.fs, gameState.currentPath);
                   return dir ? gameState.filters[dir.id] : undefined;
                 })()}
-                searchQuery={gameState.searchQuery}
+                searchQuery={gameState.searchQuery ?? undefined}
                 searchResults={gameState.searchResults}
                 cycleCount={gameState.cycleCount}
               />

@@ -18,7 +18,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   onComplete,
   reduceMotion,
 }) => {
-  const ep = episode || ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as Episode);
+  const ep =
+    episode ||
+    ({ title: '', subtitle: '', lore: [], color: 'text-blue-500' } as unknown as Episode);
   const [sectionIndex, setSectionIndex] = useState(0);
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -272,19 +274,41 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
           aria-label="Episode log"
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be focusable to scroll by keyboard
           tabIndex={0}
-          className="min-h-24 overflow-y-auto space-y-3 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400"
+          className="min-h-24 overflow-y-auto [scrollbar-gutter:stable] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400"
         >
-          {currentText.split('\n').map((line, idx, arr) => (
-            <p
-              key={idx}
-              className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
-            >
-              {renderLine(line)}
-              {idx === arr.length - 1 && !showContinue && (
-                <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
-              )}
-            </p>
-          ))}
+          {/* Invisible full-section copies stacked in one grid cell reserve the tallest section's
+              height, so typing and section changes never resize the frame. */}
+          <div className="grid">
+            {sections.map((lines, sectionIdx) => (
+              <div
+                key={sectionIdx}
+                aria-hidden="true"
+                className="invisible col-start-1 row-start-1 space-y-3"
+              >
+                {lines.map((line, idx) => (
+                  <p
+                    key={idx}
+                    className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
+                  >
+                    {renderLine(line)}
+                  </p>
+                ))}
+              </div>
+            ))}
+            <div className="col-start-1 row-start-1 space-y-3">
+              {currentText.split('\n').map((line, idx, arr) => (
+                <p
+                  key={idx}
+                  className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
+                >
+                  {renderLine(line)}
+                  {idx === arr.length - 1 && !showContinue && (
+                    <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
+                  )}
+                </p>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Progress Indicator */}
@@ -304,7 +328,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex justify-between items-center transition-opacity duration-300 opacity-100">
+        <div className="shrink-0 min-h-12 flex justify-between items-center transition-opacity duration-300 opacity-100">
           {/* Left instruction for non-final sections (always visible) */}
           {sectionIndex < sections.length - 1 && (
             <div className="text-zinc-300 text-sm flex items-center gap-2">

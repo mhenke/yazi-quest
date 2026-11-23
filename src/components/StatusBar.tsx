@@ -191,7 +191,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           let statusColor = 'text-blue-400';
 
           // ... rest of existing logic ...
-          let icon = null;
+          let icon: React.ReactNode = null;
           let urgentClass = '';
 
           if (level.id < 5) {
