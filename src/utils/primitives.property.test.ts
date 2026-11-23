@@ -19,8 +19,7 @@ import { getFilterRegex } from './viewHelpers';
 const NUM_RUNS = 150;
 const HOUR = 60 * 60 * 1000;
 
-// Fixed clock so tier math is deterministic and lastAccess is never the
-// falsy-0 quirk value (`entry.lastAccess || now` inside calculateFrecency).
+// Fixed clock so tier math is deterministic.
 const NOW = 1_700_000_000_000;
 
 const arbFiniteNumber = float({ noNaN: true, noDefaultInfinity: true });
@@ -72,10 +71,17 @@ describe('isValidZoxideData', () => {
 
 describe('calculateFrecency', () => {
   const arbCount = integer({ min: 0, max: 500_000 });
-  const arbLastAccess = integer({ min: NOW - 30 * 24 * HOUR, max: NOW });
+  // Domain starts at epoch 0: `lastAccess ?? now` must treat it as a real
+  // timestamp (×0.25 tier), not as "missing" (which would give ×4).
+  const arbLastAccess = integer({ min: 0, max: NOW });
 
   it('returns 0 for an undefined entry', () => {
     expect(calculateFrecency(undefined, NOW)).toBe(0);
+  });
+
+  // Regression: `entry.lastAccess || now` scored epoch-0 as "just accessed".
+  it('scores an epoch-0 lastAccess in the oldest tier, not as "now"', () => {
+    expect(calculateFrecency({ count: 10, lastAccess: 0 }, NOW)).toBe(2.5);
   });
 
   it('is always non-negative for count >= 0 and lastAccess <= now', () => {

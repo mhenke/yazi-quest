@@ -80,6 +80,17 @@ import {
 import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
+import type { FileNode } from './types';
+
+const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): FileNode[] => {
+  if (showHidden) return results;
+  return results.filter((item) => {
+    const path = item.displayPath ?? item.display;
+    return path
+      ? !path.split('/').some((part) => part.startsWith('.'))
+      : !item.name.startsWith('.');
+  });
+};
 
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, createInitialState);
@@ -219,6 +230,9 @@ export default function App() {
         if (gameState.searchQuery) {
           // Apply sorting to search results
           let results = gameState.searchResults;
+
+          // Results are a snapshot from when the search ran; hidden may have changed since.
+          results = hideHiddenSearchResults(results, gameState.showHidden);
 
           // Apply filter on search results if active (search -> filter chaining)
           const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);

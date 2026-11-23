@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { INITIAL_FS } from '../constants/filesystem';
 import { LEVELS } from '../constants/levels';
-import { cloneFS } from '../utils/fsHelpers';
+import { cloneFS, getNodeByPath } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { getLevelStartPath } from '../utils/gameUtils';
 
@@ -318,6 +318,11 @@ function handleTick(state: GameState, action: Extract<Action, { type: 'TICK' }>)
   return { ...nextState, threatLevel: newThreat, threatStatus: newStatus };
 }
 
+function clampCursorIndex(state: GameState, index: number): number {
+  const lastIndex = Math.max(0, getVisibleItems(state).length - 1);
+  return Math.min(Math.max(index, 0), lastIndex);
+}
+
 function resolveCursorAfterDelete(
   before: FileNode[],
   after: FileNode[],
@@ -348,6 +353,22 @@ function applyDeleteResult(state: GameState, newFs: FileNode): GameState {
     ...nextState,
     cursorIndex: resolveCursorAfterDelete(before, after, state.cursorIndex),
   };
+}
+
+function applyPasteResult(state: GameState, action: Extract<Action, { type: 'PASTE' }>): GameState {
+  let next: GameState = {
+    ...state,
+    fs: action.newFs,
+    clipboard: action.action === 'cut' ? null : state.clipboard,
+  };
+  // Defense-in-depth: if the pasted tree lost the current directory, fall
+  // back to its deepest surviving ancestor (root at worst) before clamping.
+  if (!getNodeByPath(next.fs, next.currentPath)) {
+    const path = [...next.currentPath];
+    while (path.length > 1 && !getNodeByPath(next.fs, path)) path.pop();
+    next = { ...next, currentPath: path, cursorIndex: 0 };
+  }
+  return { ...next, cursorIndex: clampCursorIndex(next, next.cursorIndex) };
 }
 
 export function gameReducer(state: GameState, action: Action): GameState {
@@ -423,14 +444,14 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
-    case 'SET_CURSOR':
+    case 'SET_CURSOR': {
+      const index = clampCursorIndex(state, action.index);
       return {
         ...state,
-        cursorIndex: action.index,
-        ...(action.index !== state.cursorIndex
-          ? { usedPreviewDown: false, usedPreviewUp: false }
-          : {}),
+        cursorIndex: index,
+        ...(index !== state.cursorIndex ? { usedPreviewDown: false, usedPreviewUp: false } : {}),
       };
+    }
 
     case 'MOVE_CURSOR': {
       const newIndex = Math.max(
@@ -722,11 +743,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'PASTE':
-      return {
-        ...state,
-        fs: action.newFs,
-        clipboard: action.action === 'cut' ? null : state.clipboard,
-      };
+      return applyPasteResult(state, action);
 
     case 'SET_INPUT_BUFFER':
       return { ...state, inputBuffer: action.buffer };

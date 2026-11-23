@@ -101,7 +101,8 @@ export function calculateFrecency(
   const dayMs = 24 * hourMs;
   const weekMs = 7 * dayMs;
 
-  const elapsed = now - (entry.lastAccess || now);
+  // `??` not `||`: lastAccess = 0 is a real epoch timestamp, not "missing"
+  const elapsed = now - (entry.lastAccess ?? now);
 
   let multiplier: number;
   if (elapsed < hourMs) {

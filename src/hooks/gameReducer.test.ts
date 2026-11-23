@@ -108,6 +108,32 @@ describe('gameReducer SET_LEVEL timer', () => {
 });
 
 describe('gameReducer action flag sanitization', () => {
+  // Realistic fixture: currentPath resolves and the guest dir shows 3 items,
+  // so SET_CURSOR stays meaningful under the reducer's clamp.
+  const guestTree = {
+    id: 'root',
+    name: 'root',
+    type: 'dir' as const,
+    children: [
+      {
+        id: 'home',
+        name: 'home',
+        type: 'dir' as const,
+        children: [
+          {
+            id: 'guest',
+            name: 'guest',
+            type: 'dir' as const,
+            children: [
+              { id: 'ga', name: 'alpha.txt', type: 'file' as const },
+              { id: 'gb', name: 'beta.txt', type: 'file' as const },
+              { id: 'gc', name: 'gamma.txt', type: 'file' as const },
+            ],
+          },
+        ],
+      },
+    ],
+  };
   const dirtyState = {
     usedG: true,
     usedPreviewDown: true,
@@ -117,10 +143,16 @@ describe('gameReducer action flag sanitization', () => {
     cursorIndex: 0,
     currentPath: ['root', 'home', 'guest'],
     levelIndex: 0,
-    fs: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
-    levelStartFS: { id: 'root', name: 'root', type: 'dir' as const, children: [] },
+    fs: guestTree,
+    levelStartFS: guestTree,
     levelStartPath: ['root', 'home', 'guest'],
     loadedDirIds: ['dir-a'],
+    searchQuery: null,
+    searchResults: [],
+    showHidden: false,
+    filters: {},
+    sortBy: 'natural' as const,
+    sortDirection: 'asc' as const,
   } as unknown as GameState;
 
   it('resets all action tracking flags on RESTART_CYCLE to prevent cross-cycle leakage', () => {

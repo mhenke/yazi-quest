@@ -27,6 +27,7 @@ const stepArb = record({
     'navigate',
     'back',
     'forward',
+    'set-cursor',
     'toggle-hidden',
     'set-filter',
     'clear-filter',
@@ -42,6 +43,7 @@ const stepArb = record({
     'keystrokes'
   ),
   delta: integer({ min: -20, max: 20 }),
+  index: integer({ min: -100000, max: 100000 }),
   pathIndex: nat(1000),
   filter: stringMatching(/^[a-z.]{0,5}$/),
   sortBy: constantFrom('natural', 'alphabetical', 'modified', 'size', 'extension'),
@@ -53,6 +55,7 @@ const stepArb = record({
 type Step = {
   kind: string;
   delta: number;
+  index: number;
   pathIndex: number;
   filter: string;
   sortBy: SortBy;
@@ -65,6 +68,8 @@ const navigationAction = (step: Step, paths: string[][], visible: FileNode[]): A
   switch (step.kind) {
     case 'move':
       return { type: 'MOVE_CURSOR', delta: step.delta, itemCount: visible.length };
+    case 'set-cursor':
+      return { type: 'SET_CURSOR', index: step.index };
     case 'navigate':
       return { type: 'NAVIGATE', path: paths[step.pathIndex % paths.length] };
     case 'back':
@@ -242,5 +247,119 @@ describe('property: reducer keeps list and navigation state coherent', () => {
     const allGone = deleteVisible(atThird, visible);
     expect(getVisibleItems(allGone)).toEqual([]);
     expect(allGone.cursorIndex).toBe(0);
+  });
+});
+
+describe('property: SET_CURSOR clamps arbitrary indices into the visible list', () => {
+  it('any index, negative or huge, leaves the cursor in bounds', () => {
+    const initial = createInitialState();
+    const dirs = getAllDirectoriesWithPaths(initial.fs);
+    const paths = dirs.map((d) => d.path);
+
+    assert(
+      property(
+        array(stepArb, { maxLength: 10 }),
+        integer({ min: -1_000_000, max: 1_000_000 }),
+        (steps, index) => {
+          let state = initial;
+          for (const step of steps as Step[]) {
+            state = gameReducer(state, actionFor(step, state, paths, nodeIds(initial.fs)));
+          }
+          const next = gameReducer(state, { type: 'SET_CURSOR', index });
+          const visible = getVisibleItems(next);
+          expect(next.cursorIndex).toBeGreaterThanOrEqual(0);
+          expect(next.cursorIndex).toBeLessThanOrEqual(Math.max(0, visible.length - 1));
+
+          // In-place preview reset: jumping to a different row clears the flags,
+          // staying put keeps them.
+          const moved = next.cursorIndex !== state.cursorIndex;
+          expect(next.usedPreviewDown).toBe(moved ? false : state.usedPreviewDown);
+          expect(next.usedPreviewUp).toBe(moved ? false : state.usedPreviewUp);
+
+          // An in-bounds request must be honoured exactly.
+          const lastIndex = Math.max(0, getVisibleItems(state).length - 1);
+          if (index >= 0 && index <= lastIndex) expect(next.cursorIndex).toBe(index);
+        }
+      ),
+      { numRuns: 150 }
+    );
+  });
+});
+
+describe('property: PASTE keeps the current path resolvable', () => {
+  it('re-anchors to the deepest surviving ancestor when newFs lost the directory', () => {
+    const initial = createInitialState();
+    const dirs = getAllDirectoriesWithPaths(initial.fs);
+    const paths = dirs.map((d) => d.path);
+
+    assert(
+      property(
+        nat(paths.length - 1),
+        integer({ min: -1000, max: 1000 }),
+        boolean(),
+        (pathPick, cursorIndex, cut) => {
+          const currentPath = paths[pathPick];
+          // newFs: the directory at currentPath removed from its parent, so the
+          // tree no longer resolves the cwd the PASTE lands in.
+          const removal = deleteNode(
+            initial.fs,
+            currentPath.slice(0, -1),
+            currentPath[currentPath.length - 1]
+          );
+          if (!removal.ok) return; // root itself cannot be removed from its parent
+
+          const state: GameState = { ...initial, currentPath, cursorIndex };
+          const next = gameReducer(state, {
+            type: 'PASTE',
+            newFs: removal.value,
+            action: cut ? 'cut' : 'yank',
+          });
+
+          expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
+          expect(next.currentPath.length).toBeLessThan(currentPath.length);
+
+          const visible = getVisibleItems(next);
+          expect(next.cursorIndex).toBeGreaterThanOrEqual(0);
+          expect(next.cursorIndex).toBeLessThanOrEqual(Math.max(0, visible.length - 1));
+          // Clipboard behavior unchanged: cut clears, yank keeps.
+          expect(next.clipboard).toBe(cut ? null : initial.clipboard);
+        }
+      ),
+      { numRuns: 150 }
+    );
+  });
+
+  it('leaves an intact current directory untouched when pasting', () => {
+    const initial = createInitialState();
+    const dirs = getAllDirectoriesWithPaths(initial.fs);
+    const paths = dirs.map((d) => d.path);
+
+    assert(
+      property(nat(paths.length - 1), nat(50), (pathPick, cursorIndex) => {
+        const currentPath = paths[pathPick];
+        const next = gameReducer(
+          { ...initial, currentPath, cursorIndex },
+          { type: 'PASTE', newFs: initial.fs, action: 'yank' }
+        );
+
+        expect(next.currentPath).toEqual(currentPath);
+        expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
+
+        const lastIndex = Math.max(0, getVisibleItems(next).length - 1);
+        expect(next.cursorIndex).toBe(Math.min(cursorIndex, lastIndex));
+      }),
+      { numRuns: 150 }
+    );
+  });
+
+  it('root is the worst-case fallback when the whole tree under it is gone', () => {
+    const initial = createInitialState();
+    const emptied = { ...initial.fs, children: [] } as FileNode;
+    const next = gameReducer(initial, { type: 'PASTE', newFs: emptied, action: 'yank' });
+
+    expect(next.currentPath).toEqual([next.fs.id]);
+    expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
+    expect(getVisibleItems(next)).toEqual([]);
+    expect(next.cursorIndex).toBe(0);
   });
 });

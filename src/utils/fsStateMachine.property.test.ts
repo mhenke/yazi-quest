@@ -309,7 +309,6 @@ const conflictAddArb = tuple(nameArb, typeArb).map(
 );
 
 const NUM_RUNS = 100;
-const SEED = 20261123;
 
 describe('property: fs mutation algebra is model-consistent', () => {
   it('add / delete / conflict-add keep the real tree in lockstep with the model', () => {
@@ -319,7 +318,7 @@ describe('property: fs mutation algebra is model-consistent', () => {
       property(arb, (cmds) => {
         modelRun(() => ({ model: initialModel(), real: { fs: fixedTree() } }), cmds);
       }),
-      { numRuns: NUM_RUNS, seed: SEED }
+      { numRuns: NUM_RUNS }
     );
   });
 
@@ -385,7 +384,7 @@ describe('property: resolveAndCreatePath', () => {
         expect(findPathById(res.fs, res.targetNode!.id)).toEqual(path);
         expect(getNodeByPath(res.fs, path)?.id).toBe(res.targetNode!.id);
       }),
-      { numRuns: NUM_RUNS, seed: SEED }
+      { numRuns: NUM_RUNS }
     );
   });
 
@@ -402,7 +401,7 @@ describe('property: resolveAndCreatePath', () => {
         expect(JSON.stringify(root)).toBe(snapshot);
         expect(JSON.stringify(res.fs)).toBe(snapshot); // clone carries no change
       }),
-      { numRuns: NUM_RUNS, seed: SEED }
+      { numRuns: NUM_RUNS }
     );
   });
 });
