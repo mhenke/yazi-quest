@@ -469,7 +469,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
 
             <div className="pt-8 md:pt-12">
               <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
-                <UploadCloud size={16} className="animate-bounce" />
+                <UploadCloud size={16} className="animate-pulse" />
                 <a
                   href="https://github.com/mhenke/yazi-quest"
                   target="_blank"

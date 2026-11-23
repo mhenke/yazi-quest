@@ -31,8 +31,9 @@ export const RequirementNotice: React.FC<{ reason: RequirementReason }> = ({ rea
       aria-label={copy.ariaLabel}
     >
       <div className="touch-gate__panel">
-        <p className="touch-gate__eyebrow">{copy.label}</p>
-        <h1 className="touch-gate__title">{copy.title}</h1>
+        <h1 className="touch-gate__title" style={{ textWrap: 'balance' }}>
+          {copy.title}
+        </h1>
         {reason === 'keyboard' ? (
           <>
             <p className="touch-gate__body">
@@ -44,7 +45,9 @@ export const RequirementNotice: React.FC<{ reason: RequirementReason }> = ({ rea
               Open this page on a desktop or laptop with a hardware keyboard and it will start
               normally.
             </p>
-            <p className="touch-gate__hint">A window at least 1024 px wide is required</p>
+            <p className="touch-gate__hint text-zinc-400" style={{ textWrap: 'pretty' }}>
+              A window at least 1024 px wide is required
+            </p>
           </>
         ) : (
           <>
@@ -57,7 +60,9 @@ export const RequirementNotice: React.FC<{ reason: RequirementReason }> = ({ rea
               Widen the window, or reduce browser zoom to 100% or lower, and the mission will start
               normally.
             </p>
-            <p className="touch-gate__hint">A keyboard with Ctrl and Alt is also required</p>
+            <p className="touch-gate__hint text-zinc-400" style={{ textWrap: 'pretty' }}>
+              A keyboard with Ctrl and Alt is also required
+            </p>
           </>
         )}
       </div>

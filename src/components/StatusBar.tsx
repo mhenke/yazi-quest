@@ -110,11 +110,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
         </div>
       </div>
 
-      {/* 3. File Info / Name */}
+      {/* 2. File Info / Context (Left Cluster) */}
       <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
-        <span className="truncate mr-4 font-bold text-white max-w-[150px]">{itemName}</span>
+        <span className="truncate mr-3 font-bold text-white max-w-48 sm:max-w-72">{itemName}</span>
+        <span className="text-zinc-400 font-mono text-xs hidden lg:inline mr-2">{perms}</span>
 
-        {/* Notification Area for Technical Feedback - Moved to left of task count */}
+        {/* Notification Area for Technical Feedback */}
         {state.notification && (
           <div
             className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full max-w-[55%] ${
@@ -128,22 +129,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
             <span className="truncate">{state.notification.message}</span>
           </div>
         )}
-
-        {/* Quest Info with Task Progress */}
-        <span
-          className={`text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap ${!state.notification ? 'ml-auto' : 'ml-0 border-l border-zinc-700 px-3 h-full'}`}
-        >
-          <span className="font-bold text-zinc-400">L{level.id}</span>
-          <span className="text-zinc-600">|</span>
-          <span className="hidden xl:inline">{level.title}</span>
-          <span className="text-zinc-600">•</span>
-          <span
-            data-testid="task-counter"
-            className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
-          >
-            Tasks: {completedTasks}/{totalTasks}
-          </span>
-        </span>
       </div>
 
       {/* 3.2 Filter Active Indicator */}
@@ -304,30 +289,42 @@ const StatusBar: React.FC<StatusBarProps> = ({
         )}
       </div>
 
-      {/* 5. Stats Block (Yazi Style) */}
+      {/* 5. Progress & Stats Block (Right Cluster) */}
       <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
-        {/* Hidden Files Indicator */}
-        <span
-          className={`font-mono text-xs uppercase hidden sm:inline mr-2 ${state.showHidden ? 'text-yellow-400 font-bold' : 'text-zinc-400'}`}
-        >
-          {state.showHidden ? 'HIDDEN: ON' : 'HIDDEN: OFF'}
+        {/* Quest Info with Task Progress */}
+        <span className="text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap text-xs">
+          <span className="font-bold text-zinc-300">L{level.id}</span>
+          <span className="text-zinc-600 hidden xl:inline">•</span>
+          <span className="hidden xl:inline text-zinc-400 truncate max-w-32">{level.title}</span>
+          <span className="text-zinc-600">•</span>
+          <span
+            data-testid="task-counter"
+            className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
+          >
+            Tasks: {completedTasks}/{totalTasks}
+          </span>
         </span>
+
+        {/* Hidden Files Indicator - Only when active */}
+        {state.showHidden && (
+          <span className="font-mono text-xs uppercase hidden sm:inline text-yellow-400 font-bold">
+            HIDDEN: ON
+          </span>
+        )}
 
         {/* Sort Indicator - Only show if custom */}
         {isCustomSort && (
-          <span className="font-mono text-xs uppercase hidden sm:inline mr-1 text-orange-400 font-bold">
+          <span className="font-mono text-xs uppercase hidden sm:inline text-orange-400 font-bold">
             {getSortLabel(state.sortBy, state.sortDirection)}
           </span>
         )}
 
-        {/* Linemode Indicator - NEW */}
+        {/* Linemode Indicator */}
         {state.linemode !== 'none' && (
-          <span className="font-mono text-xs uppercase text-blue-400 hidden sm:inline mr-1">
+          <span className="font-mono text-xs uppercase text-blue-400 hidden sm:inline">
             {state.linemode}
           </span>
         )}
-
-        <span className="text-zinc-400 font-mono hidden md:inline">{perms}</span>
 
         <div className="flex items-center rounded overflow-hidden text-sm font-bold font-mono h-8">
           {/* Position Indicator (Top/Bot/%) */}

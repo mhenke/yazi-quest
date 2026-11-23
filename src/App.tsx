@@ -372,6 +372,7 @@ export default function App() {
 
   // Boot sequence state for episode transitions
   const [showBoot, setShowBoot] = useState(false);
+  const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(true);
   const [currentEpisode, setCurrentEpisode] = useState(() =>
     gameState.showEpisodeIntro ? 1 : Math.ceil((gameState.levelIndex + 1) / 5)
   );
@@ -1114,6 +1115,19 @@ export default function App() {
       gameState.hintStage,
       setUtilityPanel,
     ],
+    { priority: 2000, captureInput: true }
+  );
+
+  useGlobalInput(
+    // fallow-ignore-next-line complexity
+    (e) => {
+      if ((e.key.toLowerCase() === 'o' || e.code === 'KeyO') && e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        setIsMissionDrawerOpen((prev) => !prev);
+        return true;
+      }
+    },
+    [setIsMissionDrawerOpen],
     { priority: 2000, captureInput: true }
   );
 
@@ -1995,6 +2009,8 @@ export default function App() {
                 gameState={gameState}
                 previewScroll={gameState.previewScroll}
                 dispatch={dispatch}
+                isMissionDrawerOpen={isMissionDrawerOpen}
+                onToggleMissionDrawer={() => setIsMissionDrawerOpen((prev) => !prev)}
               />
             </div>
 

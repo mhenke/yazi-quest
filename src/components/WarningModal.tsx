@@ -54,7 +54,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
               {detectedText}
             </p>
             {note && (
-              <div className="w-full bg-yellow-900/10 border-l-4 border-yellow-600 p-3 rounded">
+              <div className="w-full bg-yellow-950/20 border border-yellow-600/40 p-3 rounded">
                 <p className="text-yellow-300 font-mono text-sm font-semibold">{note}</p>
               </div>
             )}

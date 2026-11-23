@@ -3,8 +3,6 @@ import {
   FileText,
   FileArchive,
   PackageOpen,
-  CheckSquare,
-  Square,
   Folder,
   FileCode,
   FileImage,
@@ -18,6 +16,7 @@ import { sortNodes } from '../utils/sortHelpers';
 import { isProtected } from '../utils/fsHelpers';
 import { FileNode, Level, GameState } from '../types';
 import { Action } from '../hooks/gameReducer';
+import { MissionDrawer } from './MissionDrawer';
 
 interface PreviewPaneProps {
   node: FileNode | null;
@@ -25,6 +24,8 @@ interface PreviewPaneProps {
   gameState: GameState;
   previewScroll?: number;
   dispatch?: React.Dispatch<Action>;
+  isMissionDrawerOpen?: boolean;
+  onToggleMissionDrawer?: () => void;
 }
 
 // Helper for preview icons (simplified version of FileSystemPane style)
@@ -46,12 +47,15 @@ const getPreviewIcon = (node: FileNode) => {
   return { color: 'text-zinc-400', icon: FileText };
 };
 
+// fallow-ignore-next-line complexity
 const PreviewPane: React.FC<PreviewPaneProps> = ({
   node,
   level,
   gameState,
   previewScroll = 0,
   dispatch,
+  isMissionDrawerOpen = true,
+  onToggleMissionDrawer,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isArchiveFile = node?.type === 'file' && /\.(zip|tar|gz|7z|rar)$/i.test(node.name);
@@ -186,62 +190,13 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
         )}
       </div>
 
-      {/* Bottom Section: Mission Log */}
-      <div className="h-[45%] min-h-[250px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
-        <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
-          <h1 className="text-sm font-bold text-orange-500 uppercase tracking-wider">
-            Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
-          </h1>
-        </div>
-        <div
-          className="p-4 overflow-y-auto space-y-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be reachable for keyboard scrolling
-          tabIndex={0}
-          role="region"
-          aria-label="Mission log"
-        >
-          <div>
-            <h2 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">
-              Target
-            </h2>
-            <p className="text-xs text-zinc-300 font-mono leading-relaxed mission-prose">
-              {level.description}
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
-              Objectives
-            </h2>
-            <div className="space-y-2">
-              {(() => {
-                const completedTaskIds = gameState.completedTaskIds[level.id] || [];
-                return level.tasks
-                  .filter((task) => !task.hidden || !task.hidden(gameState, level))
-                  .map((task) => {
-                    const isTaskCompleted = completedTaskIds.includes(task.id);
-                    return (
-                      <div
-                        key={task.id}
-                        className={`flex gap-3 items-start transition-all duration-500 ${isTaskCompleted ? 'text-zinc-400' : 'text-zinc-300'}`}
-                      >
-                        <div
-                          className={`mt-0.5 shrink-0 ${isTaskCompleted ? 'text-green-500' : 'text-zinc-400'}`}
-                        >
-                          {isTaskCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
-                        </div>
-                        <div
-                          className={`text-xs font-mono leading-snug mission-prose ${isTaskCompleted ? 'line-through text-zinc-500 decoration-zinc-600' : 'text-zinc-300'}`}
-                        >
-                          {task.description}
-                        </div>
-                      </div>
-                    );
-                  });
-              })()}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Bottom Section: Mission Log Drawer */}
+      <MissionDrawer
+        level={level}
+        gameState={gameState}
+        isExpanded={isMissionDrawerOpen}
+        onToggle={onToggleMissionDrawer || (() => {})}
+      />
     </div>
   );
 };
