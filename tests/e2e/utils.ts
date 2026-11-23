@@ -289,7 +289,8 @@ export async function startLevel(
   await page.waitForLoadState('domcontentloaded');
 
   await expect(page.locator('[data-testid="status-bar"]')).toBeVisible({ timeout: 3000 });
-  await assertLevelStartedIncomplete(page);
+  await assertLevel(page, level.toString());
+  if (!options.extraParams?.tasks) await assertLevelStartedIncomplete(page);
 }
 
 /**
@@ -302,6 +303,7 @@ export async function goToLevel(page: Page, level: number): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => !!document.querySelector('[data-testid="status-bar"]'));
   await page.waitForTimeout(DEFAULT_DELAY);
+  await assertLevel(page, level.toString());
 }
 
 /**
@@ -311,25 +313,16 @@ export async function assertLevelStartedIncomplete(page: Page): Promise<void> {
   await expect(page.locator('[data-testid="status-bar"]')).toBeVisible();
   const taskCounter = page.getByTestId('task-counter');
   await expect(taskCounter).toBeVisible();
-  await expect(taskCounter).toContainText(/Tasks:/);
+  await expect(taskCounter).toHaveText(/^Tasks:\s*0\/[1-9]\d*$/);
 }
 
 /**
  * Asserts the current level ID.
  */
 export async function assertLevel(page: Page, levelId: string): Promise<void> {
-  await expect(page.getByTestId('status-bar')).toContainText(`L${levelId}`);
-}
-
-/**
- * Get the current directory path shown in the UI.
- */
-export async function getCurrentPath(page: Page): Promise<string> {
-  const breadcrumb = page.locator('.breadcrumb').first();
-  // Wait a bit longer for the breadcrumb to become available in slower CI/dev
-  await expect(breadcrumb).toBeVisible({ timeout: 10000 });
-  await page.waitForTimeout(100);
-  return (await breadcrumb.textContent()) || '';
+  await expect(
+    page.getByTestId('status-bar').getByText(`L${levelId}`, { exact: true })
+  ).toBeVisible();
 }
 
 /**
@@ -341,48 +334,24 @@ export async function assertTask(
   _outputDir?: string,
   _screenshotName?: string
 ): Promise<void> {
-  const expectedCompleted = taskCount.split('/')[0];
-  const escapedExpected = expectedCompleted.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const tasksRegex = new RegExp('Tasks:\\s*' + escapedExpected + '/\\d+', ''); // eslint-disable-line security/detect-non-literal-regexp
-  await expect(page.getByTestId('task-counter')).toHaveText(tasksRegex, { timeout: 2000 });
+  await expect(page.getByTestId('task-counter')).toHaveText(`Tasks: ${taskCount}`);
 }
 
 /**
  * Standardizes mission completion verification.
  */
-export async function confirmMission(page: Page, _title: string | RegExp): Promise<void> {
+export async function confirmMission(page: Page, title: string | RegExp): Promise<void> {
   await waitForMissionComplete(page);
-  // Optional verification of title if possible
+  await expect(
+    page.getByTestId('mission-complete').getByText(title, { exact: true })
+  ).toBeVisible();
 }
 
 /**
  * Waits for mission complete state.
  */
 export async function waitForMissionComplete(page: Page): Promise<void> {
-  // Check for Protocol Violation and dismiss
-  try {
-    const violation = page.getByText('Protocol Violation');
-    if (await violation.isVisible({ timeout: 500 })) {
-      await page.keyboard.press('Shift+Enter');
-    }
-  } catch {}
-
-  const currentUrl = new URL(page.url());
-  const currentLvl = currentUrl.searchParams.get('lvl');
-
-  await Promise.race([
-    expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 30000 }),
-    expect(page.getByText('CONCLUSION I: AUDIT')).toBeVisible({ timeout: 30000 }), // Outro detection
-    page.waitForURL(
-      (url) => {
-        const newLvl = url.searchParams.get('lvl');
-        return newLvl !== currentLvl;
-      },
-      { timeout: 30000 }
-    ),
-  ]).catch((e) => {
-    throw new Error(`Timeout waiting for mission complete or advancement. ${e}`);
-  });
+  await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 5000 });
 }
 
 /**

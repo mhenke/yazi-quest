@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test --grep \"@smoke\"",
+    "test:production": "npm run build && playwright test --config=playwright.production.config.ts",
     "prepush": "npm run lint && npm run type-check && npm run build && npm run test:smoke -- --reporter=list && npm run audit:changed",
     "audit:changed": "fallow audit --base origin/main --format json --quiet && knip --no-progress"
   },

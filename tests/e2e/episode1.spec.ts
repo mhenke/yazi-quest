@@ -12,6 +12,8 @@
 import { test, expect } from '@playwright/test';
 import {
   startLevel,
+  assertLevel,
+  assertLevelStartedIncomplete,
   pressKey,
   gotoCommand,
   assertTask,
@@ -26,18 +28,21 @@ import {
   navigateRight,
   enterDirectory,
   expectCurrentDir,
-  getCurrentPath,
-  waitForMissionComplete,
 } from './utils';
 
 test.describe('Episode 1: AWAKENING', () => {
   test.setTimeout(60000);
 
   test.describe('Level 1: SYSTEM AWAKENING', { tag: '@smoke' }, () => {
-    test(`Level 1: SYSTEM AWAKENING - completes all navigation tasks`, async ({
-      page,
-    }, testInfo) => {
-      await startLevel(page, 1, { intro: false });
+    test('Level 1: intro, navigation, and advancement to Level 2', async ({ page }, testInfo) => {
+      await page.goto('/');
+      await expect(page.getByRole('heading', { name: 'EPISODE I: AWAKENING' })).toBeVisible();
+      await expect(page.getByTestId('status-bar')).not.toBeVisible();
+      await page.getByRole('button', { name: 'Skip Intro', exact: true }).click();
+      await assertLevelStartedIncomplete(page);
+      await assertLevel(page, '1');
+      await assertTask(page, '0/5');
+      await expectCurrentDir(page, '~', true);
 
       // Task 1: Calibrate sensors - Move Down (j) and Up (k)
       await navigateDown(page, 1);
@@ -85,6 +90,12 @@ test.describe('Episode 1: AWAKENING', () => {
 
       // Verify mission complete
       await confirmMission(page, /SYSTEM AWAKENING/i);
+
+      await page.keyboard.press('Shift+Enter');
+      await assertLevel(page, '2');
+      await assertTask(page, '0/5');
+      await expectCurrentDir(page, '/var', true);
+      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
     });
   });
 
@@ -252,6 +263,21 @@ test.describe('Episode 1: AWAKENING', () => {
         await navigateRight(page, 2);
         await pressKey(page, 'p');
         await assertTask(page, '4/5');
+        await expectCurrentDir(page, '~/.config/vault/active', true);
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId('file-uplink_v1.conf')
+        ).toBeVisible();
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId('file-uplink_v2.conf')
+        ).toBeVisible();
+        await gotoCommand(page, 'd');
+        await enterDirectory(page, 'protocols');
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId('file-uplink_v1.conf')
+        ).toHaveCount(0);
+        await expect(
+          page.getByTestId('filesystem-pane-active').getByTestId('file-uplink_v2.conf')
+        ).toHaveCount(0);
       });
 
       // 5) gh, then .
@@ -260,55 +286,8 @@ test.describe('Episode 1: AWAKENING', () => {
         await pressKey(page, '.');
       });
 
-      await waitForMissionComplete(page);
-    });
-  });
-
-  test.describe('Level Advancement with Shift+Enter', () => {
-    test('verifies Shift+Enter properly advances from Level 1 to Level 2', async ({ page }) => {
-      // Start at Level 1 and complete it
-      await startLevel(page, 1, { intro: false });
-
-      // Complete all tasks for Level 1
-      await navigateDown(page, 1);
-      await navigateUp(page, 1);
-      await assertTask(page, '1/5', 'temp', 'calibrate_sensors');
-
-      await navigateRight(page, 1); // Enter datastore
-      await assertTask(page, '2/5', 'temp', 'enter_datastore');
-
-      await pressKey(page, 'Shift+G');
-      await pressKey(page, 'k');
-      await pressKey(page, 'Shift+J');
-      await pressKey(page, 'Shift+K');
-      await assertTask(page, '3/5', 'temp', 'preview_personnel_list');
-
-      await gotoCommand(page, 'g');
-      await assertTask(page, '4/5', 'temp', 'jump_to_top');
-
-      let attempts = 0;
-      while ((await getCurrentPath(page)) !== '/' && attempts < 10) {
-        await page.keyboard.press('h');
-        await page.waitForTimeout(250);
-        attempts++;
-      }
-      await expectCurrentDir(page, '/', true);
-      await enterDirectory(page, 'var');
-      await assertTask(page, '5/5', 'temp', 'navigate_to_var');
-
-      // Wait for the mission complete dialog to appear
-      await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 1000 });
-
-      // Use Shift+Enter to advance to the next level
-      await page.keyboard.press('Shift+Enter');
-
-      // Verify we've moved to Level 2 by checking for Level 2's initial conditions
-      await expect(page.getByText('RECONNAISSANCE & EXTRACTION').first()).toBeVisible({
-        timeout: 1000,
-      });
-
-      // Verify that the mission complete dialog is no longer visible
-      await expect(page.getByTestId('mission-complete')).not.toBeVisible();
+      await assertTask(page, '5/5');
+      await confirmMission(page, 'CONTAINMENT BREACH');
     });
   });
 });

@@ -60,11 +60,32 @@ is outside the current scope; desktop zoom and narrow windows remain in scope.
 
 No API key is required to play.
 
+## Smoke tests
+
+`npm run test:smoke -- --reporter=list` runs four fixed Chromium hotspots:
+
+- L1: real intro → Skip Intro → navigation tasks → Shift+Enter into L2.
+- L5: batch cut, vault creation, move verification at source and destination, and hidden-file cleanup.
+- L6: recursive search, select-all/yank, and verification of all four pasted logs.
+- L11: search, modified-time sort, legacy-daemon extraction, and destination verification.
+
+Selection is deterministic, not random. Destination checks verify filenames rather
+than trusting task counters. Startup-only checks and assertion-helper regressions
+remain in `npm run test:e2e`, outside smoke.
+
+`npm run test:production -- --reporter=list` builds the site and runs one Chromium
+boot/input check against Vite preview under `/yazi-quest/`, including asset-load
+and uncaught browser-error checks. It is separate from the four gameplay hotspots.
+
 ## Deployment
 
-Pushes to `main` deploy the production build to GitHub Pages via
-`.github/workflows/deploy.yml`. The site is served under `/yazi-quest/`.
-The E2E server overrides the base to `/` for the existing root-relative test URLs.
+Pushes to `main` deploy to GitHub Pages via `.github/workflows/deploy.yml` only
+after the reusable CI workflow passes lint, type-checking, unit tests, audits,
+gameplay smoke, and the production boot check. Deployment consumes the exact
+`dist` artifact verified by that check; it does not rebuild.
+
+The site is served under `/yazi-quest/`. Gameplay E2E tests use a development
+server with the base overridden to `/`; the production check keeps the Pages base.
 
 ## 📖 Documentation
 

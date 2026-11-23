@@ -524,7 +524,7 @@ def scan(path):
                       protected: true,
                       children: [
                         {
-                          id: 'fs-121',
+                          id: 'fs-bl-exfil-01',
                           name: 'exfil_01.log',
                           type: 'file',
                           protected: true,
@@ -547,7 +547,7 @@ def scan(path):
                       protected: true,
                       children: [
                         {
-                          id: 'fs-122',
+                          id: 'fs-bl-exfil-02',
                           name: 'exfil_02.log',
                           type: 'file',
                           protected: true,

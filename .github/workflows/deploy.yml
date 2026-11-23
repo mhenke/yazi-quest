@@ -13,18 +13,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
         with:
-          node-version: 24
-          cache: npm
-      # Static builds do not need the postinstall browser/OS dependencies or Git hooks.
-      - run: npm ci --ignore-scripts
-      - run: npm run type-check
-      - run: npm run build
+          name: production-site
+          path: dist
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -27,61 +27,72 @@ test.describe('Episode 2: FORTIFICATION', () => {
   test.setTimeout(60000);
 
   // Level 6: BATCH OPERATIONS - Batch Select (Ctrl+A) and Recursive Search (s)
-  test('Level 6: BATCH OPERATIONS - completes recursive search and batch operations', async ({
-    page,
-  }, testInfo) => {
-    await startLevel(page, 6, { intro: false });
+  test(
+    'Level 6: BATCH OPERATIONS - completes recursive search and batch operations',
+    {
+      tag: '@smoke',
+    },
+    async ({ page }, testInfo) => {
+      await startLevel(page, 6, { intro: false });
 
-    // 2) gi (g then i), then l (enter batch_logs)
-    await test.step('Navigate to batch_logs', async () => {
-      await gotoCommand(page, 'i');
-      await assertTask(page, '0/5', testInfo.outputDir, 'arrived_in_incoming');
-      await enterDirectory(page, 'batch_logs');
-      await assertTask(page, '1/5', testInfo.outputDir, 'task1');
-    });
+      // 2) gi (g then i), then l (enter batch_logs)
+      await test.step('Navigate to batch_logs', async () => {
+        await gotoCommand(page, 'i');
+        await assertTask(page, '0/5', testInfo.outputDir, 'arrived_in_incoming');
+        await enterDirectory(page, 'batch_logs');
+        await assertTask(page, '1/5', testInfo.outputDir, 'task1');
+      });
 
-    // 3) Use robust search helper
-    await test.step('Recursive Search', async () => {
-      await search(page, '\\.log$');
+      // 3) Use robust search helper
+      await test.step('Recursive Search', async () => {
+        await search(page, '\\.log$');
 
-      // Wait for search results to populate (at least 4 logs expected)
-      await page.waitForFunction(
-        () => document.querySelectorAll('[data-testid^="file-"]').length >= 4
-      );
+        for (const name of ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log']) {
+          await expect(
+            page.getByTestId('filesystem-pane-active').getByTestId(`file-${name}`)
+          ).toBeVisible();
+        }
 
-      await assertTask(page, '2/5', testInfo.outputDir, 'task2');
-    });
+        await assertTask(page, '2/5', testInfo.outputDir, 'task2');
+      });
 
-    // 4) ctrl+a, then y
-    await test.step('Batch Select & Yank', async () => {
-      await pressKey(page, 'Ctrl+a');
-      await pressKey(page, 'y');
-      // Task 3 requires clearing the search (Escape) to be marked complete
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(DEFAULT_DELAY); // Allow state to update
-      await assertTask(page, '3/5', testInfo.outputDir, 'task3');
-    });
+      // 4) ctrl+a, then y
+      await test.step('Batch Select & Yank', async () => {
+        await pressKey(page, 'Ctrl+a');
+        await pressKey(page, 'y');
+        // Task 3 requires clearing the search (Escape) to be marked complete
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(DEFAULT_DELAY); // Allow state to update
+        await assertTask(page, '3/5', testInfo.outputDir, 'task3');
+      });
 
-    // 5) gc (g then c) -- Escape is already pressed
-    await test.step('Navigate to Vault & Add Training Data', async () => {
-      await gotoCommand(page, 'c');
-      await filterAndSelect(page, 'vault');
-      await navigateRight(page, 1);
-      await clearFilter(page);
-      await addItem(page, 'training_data/');
-      await assertTask(page, '4/5', testInfo.outputDir, 'task4');
-    });
+      // 5) gc (g then c) -- Escape is already pressed
+      await test.step('Navigate to Vault & Add Training Data', async () => {
+        await gotoCommand(page, 'c');
+        await filterAndSelect(page, 'vault');
+        await navigateRight(page, 1);
+        await clearFilter(page);
+        await addItem(page, 'training_data/');
+        await assertTask(page, '4/5', testInfo.outputDir, 'task4');
+      });
 
-    // 7) l (enter training_data) then p
-    await test.step('Paste Data', async () => {
-      await enterDirectory(page, 'training_data');
-      await pressKey(page, 'p');
-      await assertTask(page, '5/5', testInfo.outputDir, 'task5');
+      // 7) l (enter training_data) then p
+      await test.step('Paste Data', async () => {
+        await enterDirectory(page, 'training_data');
+        await pressKey(page, 'p');
+        await assertTask(page, '5/5', testInfo.outputDir, 'task5');
+        await expectCurrentDir(page, '~/.config/vault/training_data', true);
+        for (const name of ['exfil_01.log', 'exfil_02.log', 'exfil_03.log', 'exfil_04.log']) {
+          await expect(
+            page.getByTestId('filesystem-pane-active').getByTestId(`file-${name}`)
+          ).toBeVisible();
+        }
 
-      // Wait for mission complete dialog to appear
-      await confirmMission(page, 'BATCH OPERATIONS');
-    });
-  });
+        // Wait for mission complete dialog to appear
+        await confirmMission(page, 'BATCH OPERATIONS');
+      });
+    }
+  );
 
   // Level 7: QUANTUM BYPASS - FZF (z) and Abort (Y)
   test('Level 7: QUANTUM BYPASS - completes FZF find and clipboard abort', async ({
@@ -256,6 +267,8 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await deleteItem(page, { permanent: true, confirm: true });
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
+    await pressKey(page, 'Shift+Enter'); // Explicitly restore the baseline before confirming.
+    await expect(page.getByTestId('status-bar')).not.toContainText('FILTER:');
 
     await confirmMission(page, 'TRACE CLEANUP');
   });

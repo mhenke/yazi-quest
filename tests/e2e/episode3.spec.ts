@@ -67,7 +67,7 @@ async function runLevel12CommonPath(
   testInfo: TestInfo,
   scenario: { id: string; threat: string | null }
 ) {
-  const totalTasks = scenario.threat ? 5 : 4; // 4 base tasks + 1 threat task if applicable
+  const totalTasks = scenario.threat ? 6 : 5; // 5 base tasks plus the active threat.
 
   // 1. Discover Identity
   await test.step('Step 1: Discover Identity', async () => {
@@ -130,9 +130,7 @@ async function runLevel12CommonPath(
     await expectTerminalThought(page, 'The loops are closing');
 
     // Verify level completion counter (total/total)
-    await expect(page.getByTestId('task-counter')).toHaveText(/Tasks:\s*(\d+)\/\1/, {
-      timeout: 5000,
-    });
+    await assertTask(page, `${totalTasks}/${totalTasks}`);
 
     await waitForMissionComplete(page);
   });
@@ -142,60 +140,75 @@ test.describe('Episode 3: MASTERY', () => {
   test.setTimeout(120000);
 
   // Level 11: DAEMON RECONNAISSANCE
-  test('Level 11: DAEMON RECONNAISSANCE - completes reconnaissance', async ({ page }, testInfo) => {
-    await startLevel(page, 11, { intro: false });
+  test(
+    'Level 11: DAEMON RECONNAISSANCE - completes reconnaissance',
+    {
+      tag: '@smoke',
+    },
+    async ({ page }, testInfo) => {
+      await startLevel(page, 11, { intro: false });
 
-    // Task 1: gr, j, l, . then s, type ".service", enter
-    await test.step('Task 1: Reconnaissance', async () => {
-      await gotoCommand(page, 'r');
-      await navigateDown(page, 1);
-      await navigateRight(page, 1); // Enter daemons
-      await pressKey(page, '.'); // Show hidden
-      await search(page, await readMissionSearchPattern(page));
-      // Wait for search results to populate (8 .service files now in Level 11)
-      await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(8);
-      await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
-    });
+      // Task 1: gr, j, l, . then s, type ".service", enter
+      await test.step('Task 1: Reconnaissance', async () => {
+        await gotoCommand(page, 'r');
+        await navigateDown(page, 1);
+        await navigateRight(page, 1); // Enter daemons
+        await pressKey(page, '.'); // Show hidden
+        await search(page, await readMissionSearchPattern(page));
+        // Wait for search results to populate (8 .service files now in Level 11)
+        await expect(page.locator('[data-testid^="file-"][data-testid$=".service"]')).toHaveCount(
+          8
+        );
+        await assertTask(page, '1/4', testInfo.outputDir, 'search_complete');
+      });
 
-    // Task 2: , then Shift+M
-    await test.step('Task 2: Sort by Modified', async () => {
-      await sortCommand(page, 'Shift+M');
-      await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
-    });
+      // Task 2: , then Shift+M
+      await test.step('Task 2: Sort by Modified', async () => {
+        await sortCommand(page, 'Shift+M');
+        await assertTask(page, '2/4', testInfo.outputDir, 'sort_modified');
+      });
 
-    // Task 3: Exfiltrate two legacy files.
-    await test.step('Task 3: Exfiltrate Legacy Files', async () => {
-      // Use precise search to isolate the legacy files, ignoring recent honeypots.
-      await search(page, '(ghost-handler|backup-archive)\\.service$');
+      // Task 3: Exfiltrate two legacy files.
+      await test.step('Task 3: Exfiltrate Legacy Files', async () => {
+        // Use precise search to isolate the legacy files, ignoring recent honeypots.
+        await search(page, '(ghost-handler|backup-archive)\\.service$');
 
-      // Select all results (should be exactly 2)
-      await pressKey(page, 'Control+a');
+        // Select all results (should be exactly 2)
+        await pressKey(page, 'Control+a');
 
-      // Sort logic is still required for Task 2
-      await sortCommand(page, 'Shift+M');
+        // Sort logic is still required for Task 2
+        await sortCommand(page, 'Shift+M');
 
-      // Cut selected
-      await pressKey(page, 'x');
+        // Cut selected
+        await pressKey(page, 'x');
 
-      await expectClipboard(page, 'MOVE: 2');
-      await assertTask(page, '3/4', testInfo.outputDir, 'exfiltrate_files');
-    });
+        await expectClipboard(page, 'MOVE: 2');
+        await assertTask(page, '3/4', testInfo.outputDir, 'exfiltrate_files');
+      });
 
-    // Task 4: escape, press (.) and then ,n and finally gw, l, p
-    await test.step('Task 4: Paste Payload', async () => {
-      await pressKeys(page, ['Escape', '.']); // Toggle hidden back
-      await sortCommand(page, 'n'); // Natural sort
+      // Keep hidden files visible until the pasted legacy daemon has been verified.
+      await test.step('Task 4: Paste Payload', async () => {
+        await pressKey(page, 'Escape');
+        await sortCommand(page, 'n'); // Natural sort
 
-      await gotoCommand(page, 'w');
-      await navigateRight(page, 1); // Enter systemd-core
-      await expectCurrentDir(page, 'systemd-core');
+        await gotoCommand(page, 'w');
+        await navigateRight(page, 1); // Enter systemd-core
+        await expectCurrentDir(page, 'systemd-core');
 
-      await pressKey(page, 'p');
-      await assertTask(page, '4/4', testInfo.outputDir, 'paste_files');
+        await pressKey(page, 'p');
+        await assertTask(page, '4/4', testInfo.outputDir, 'paste_files');
+        await expectCurrentDir(page, '~/workspace/systemd-core', true);
+        for (const name of ['ghost-handler.service', '.backup-archive.service']) {
+          await expect(
+            page.getByTestId('filesystem-pane-active').getByTestId(`file-${name}`)
+          ).toBeVisible();
+        }
+        await pressKey(page, '.');
 
-      await confirmMission(page, 'DAEMON RECONNAISSANCE');
-    });
-  });
+        await confirmMission(page, 'DAEMON RECONNAISSANCE');
+      });
+    }
+  );
 
   // Level 12 Scenarios
   const scenarios = [
@@ -466,21 +479,10 @@ test.describe('Episode 3: MASTERY', () => {
       await assertTask(page, '5/5', testInfo.outputDir, 'phase4_payload');
     });
 
-    // All 5 tasks complete - use Shift+Enter to auto-fix any protocol violations and complete
-    // Note: Hidden files may still be visible, causing a Protocol Violation modal.
-    // Shift+Enter auto-fixes this and triggers mission completion.
+    await pressKey(page, 'Escape');
+    await confirmMission(page, 'TRANSMISSION');
     await page.keyboard.press('Shift+Enter');
-    await page.waitForTimeout(500);
-
-    // If Protocol Violation modal appeared, Shift+Enter dismissed it. Press again to complete.
-    // Check if mission complete dialog is visible, if not press Shift+Enter again
-    const missionComplete = page.locator('text=MISSION COMPLETE');
-    if (!(await missionComplete.isVisible({ timeout: 1000 }).catch(() => false))) {
-      await page.keyboard.press('Shift+Enter');
-      await page.waitForTimeout(500);
-    }
-
-    await confirmMission(page, 'TRANSMISSION PROTOCOL');
+    await expect(page.getByRole('heading', { name: 'CONCLUSION I: AUDIT' })).toBeVisible();
   });
 });
 

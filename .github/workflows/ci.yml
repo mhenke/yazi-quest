@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # fallow audit diffs against origin/main, so the base ref must exist.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      # Matches deploy: unit tests use jsdom and need no browser postinstall.
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run type-check
+      - run: npm test
+      - run: npm run audit:changed
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:smoke -- --reporter=list
+      - run: npm run test:production -- --reporter=list
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-site
+          path: dist
+          if-no-files-found: error
