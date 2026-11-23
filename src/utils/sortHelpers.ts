@@ -1,5 +1,20 @@
 import { FileNode, SortBy, SortDirection } from '../types';
 
+// Type priority score for natural sorting
+const typeScore = (type: string) => {
+  if (type === 'dir') return 0;
+  if (type === 'archive') return 1;
+  return 2; // file
+};
+
+// Natural: dirs -> archives -> files, alphabetical within each type
+const naturalCompare = (a: FileNode, b: FileNode) => {
+  const scoreA = typeScore(a.type);
+  const scoreB = typeScore(b.type);
+  if (scoreA !== scoreB) return scoreA - scoreB;
+  return a.name.localeCompare(b.name);
+};
+
 /**
  * Sort files according to Yazi's sorting methods
  * Real Yazi: ,m (modified), ,a (alphabetical), ,s (size), ,e (extension), ,n (natural)
@@ -11,22 +26,9 @@ export function sortNodes(
 ): FileNode[] {
   const sorted = [...nodes];
 
-  // Type priority score for natural sorting
-  const typeScore = (type: string) => {
-    if (type === 'dir') return 0;
-    if (type === 'archive') return 1;
-    return 2; // file
-  };
-
   switch (sortBy) {
     case 'natural':
-      // Natural: dirs -> archives -> files, alphabetical within each type
-      sorted.sort((a, b) => {
-        const scoreA = typeScore(a.type);
-        const scoreB = typeScore(b.type);
-        if (scoreA !== scoreB) return scoreA - scoreB;
-        return a.name.localeCompare(b.name);
-      });
+      sorted.sort(naturalCompare);
       break;
 
     case 'alphabetical':
@@ -72,12 +74,7 @@ export function sortNodes(
 
     default:
       // Fallback to natural
-      sorted.sort((a, b) => {
-        const scoreA = typeScore(a.type);
-        const scoreB = typeScore(b.type);
-        if (scoreA !== scoreB) return scoreA - scoreB;
-        return a.name.localeCompare(b.name);
-      });
+      sorted.sort(naturalCompare);
   }
 
   // Apply direction

@@ -76,7 +76,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
 
   // Permissions logic
   const isDir = currentItem?.type === 'dir' || currentItem?.type === 'archive';
-  const perms = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
+  const perms = currentItem?.permissions || (isDir ? 'drwxr-xr-x' : '-rw-r--r--');
 
   // Position logic (Top/Bot/%)
   let percentStr = 'Top';

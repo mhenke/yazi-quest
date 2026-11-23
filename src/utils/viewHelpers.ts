@@ -24,25 +24,28 @@ export const getFilterRegex = (input: string): RegExp | null => {
   }
 };
 
+// Apply the active filter to a list of nodes.
+// An empty filter is a no-op; an invalid regex matches nothing (Yazi/fd behavior).
+const applyActiveFilter = (items: FileNode[], filter: string): FileNode[] => {
+  if (!filter) return items;
+
+  const regex = getFilterRegex(filter);
+  if (!regex) return [];
+
+  return items.filter((c) => regex.test(c.name));
+};
+
 export const getVisibleItems = (state: GameState): FileNode[] => {
   if (state.searchQuery) {
     // If a search is active, return the sorted search results
     // We must apply sorting here to match what the user sees in the UI
     let items = [...state.searchResults];
 
-    // Apply active filter if present (allows filtering within search results)
+    // Apply active filter if present (allows filtering within search results);
+    // no currentDir means no filtering of search results.
     const currentDir = getNodeByPath(state.fs, state.currentPath);
-    if (currentDir) {
-      const filter = state.filters[currentDir.id] || '';
-      if (filter) {
-        const regex = getFilterRegex(filter);
-        if (regex) {
-          items = items.filter((c) => regex.test(c.name));
-        } else {
-          items = [];
-        }
-      }
-    }
+    const filter = currentDir ? state.filters[currentDir.id] || '' : '';
+    items = applyActiveFilter(items, filter);
 
     return sortNodes(items, state.sortBy, state.sortDirection);
   }
@@ -56,17 +59,7 @@ export const getVisibleItems = (state: GameState): FileNode[] => {
     items = items.filter((c) => !c.name.startsWith('.'));
   }
 
-  const filter = state.filters[currentDir.id] || '';
-  if (filter) {
-    const regex = getFilterRegex(filter);
-
-    if (regex) {
-      items = items.filter((c) => regex.test(c.name));
-    } else {
-      // If regex is invalid, show no items (Yazi/fd behavior)
-      items = [];
-    }
-  }
+  items = applyActiveFilter(items, state.filters[currentDir.id] || '');
 
   return sortNodes(items, state.sortBy, state.sortDirection);
 };

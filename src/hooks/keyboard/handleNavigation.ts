@@ -6,6 +6,18 @@ import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { Action } from '../gameReducer';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
 
+// Shift+G: jump the cursor to the last visible item.
+export const jumpToLastVisibleItem = (
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>
+): void => {
+  const items = getVisibleItems(gameState) || [];
+  const last = Math.max(0, items.length - 1);
+  dispatch({ type: 'SET_CURSOR', index: last });
+  dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+  dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
+};
+
 export const handleNavigationKeyDown = (
   e: KeyboardEvent,
   gameState: GameState,
@@ -106,11 +118,7 @@ export const handleNavigationKeyDown = (
         return true;
       }
       e.preventDefault();
-      const items = getVisibleItems(gameState) || [];
-      const last = Math.max(0, items.length - 1);
-      dispatch({ type: 'SET_CURSOR', index: last });
-      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
-      dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
+      jumpToLastVisibleItem(gameState, dispatch);
       return true;
     }
 

@@ -166,6 +166,12 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
                 <span className="text-zinc-400">Mimetype:</span>
                 <span className="text-zinc-300">{mimetype}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Permissions:</span>
+                <span className="text-zinc-300">
+                  {file.permissions || (isDir ? 'drwxr-xr-x' : '-rw-r--r--')}
+                </span>
+              </div>
             </div>
           </div>
 

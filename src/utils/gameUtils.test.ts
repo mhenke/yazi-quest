@@ -601,4 +601,65 @@ describe('gameUtils', () => {
       expect(task.check(noGState, LEVELS[0])).toBe(false);
     });
   });
+
+  describe('Level 11 Task 3 (acquire-legacy) check predicate', () => {
+    const level11 = LEVELS[10];
+    const acquireTask = level11.tasks.find((t) => t.id === 'acquire-legacy')!;
+
+    it('returns true when cut legacy files have executable permissions', () => {
+      const state = {
+        clipboard: {
+          action: 'cut' as const,
+          nodes: [
+            {
+              id: 'leg-1',
+              name: 'daemon1.service',
+              type: 'file' as const,
+              modifiedAt: 921456000000,
+              permissions: '-rwxr-xr-x',
+              isHoneypot: false,
+            },
+            {
+              id: 'leg-2',
+              name: 'daemon2.service',
+              type: 'file' as const,
+              modifiedAt: 1401580800000,
+              permissions: '-rwxr-xr-x',
+              isHoneypot: false,
+            },
+          ],
+        },
+      } as unknown as GameState;
+
+      expect(acquireTask.check(state, level11)).toBe(true);
+    });
+
+    it('returns false when cut legacy files lack execute permissions', () => {
+      const state = {
+        clipboard: {
+          action: 'cut' as const,
+          nodes: [
+            {
+              id: 'leg-1',
+              name: 'config.service',
+              type: 'file' as const,
+              modifiedAt: 921456000000,
+              permissions: '-rw-r--r--',
+              isHoneypot: false,
+            },
+            {
+              id: 'leg-2',
+              name: 'daemon2.service',
+              type: 'file' as const,
+              modifiedAt: 1401580800000,
+              permissions: '-rwxr-xr-x',
+              isHoneypot: false,
+            },
+          ],
+        },
+      } as unknown as GameState;
+
+      expect(acquireTask.check(state, level11)).toBe(false);
+    });
+  });
 });

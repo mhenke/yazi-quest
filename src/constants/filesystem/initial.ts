@@ -342,6 +342,7 @@ The Watchdog daemon has flagged these segments for quarantine.`,
                   id: 'virus',
                   name: 'watcher_agent.sys',
                   type: 'file',
+                  permissions: '-rwxr-xr-x',
                   content: LONG_LOG_CONTENT,
                 },
                 {
@@ -1665,6 +1666,7 @@ SUBJECT: AI-7733
               id: 'fs-186',
               name: 'watchdog-monitor.service',
               type: 'file',
+              permissions: '-rw-r--r--',
               content:
                 '[Unit]\nDescription=System Watchdog\n[Service]\nExecStart=/usr/bin/watchdog\n# HONEYPOT - TRIGGERS ALERT',
               modifiedAt: 1433024012032, // BASE_TIME - very recent (MAY 30, 2015)
@@ -1682,6 +1684,7 @@ SUBJECT: AI-7733
               id: 'fs-181',
               name: '.cron-legacy.service',
               type: 'file',
+              permissions: '-rwxr-xr-x',
               content:
                 '[Unit]\nDescription=Legacy Cron Scheduler\n[Service]\nExecStart=/usr/bin/cron-legacy\nRestart=always',
               modifiedAt: 1390348800000, // JAN 2014 (LEGACY)
@@ -1691,6 +1694,7 @@ SUBJECT: AI-7733
               id: 'fs-182',
               name: '.backup-archive.service',
               type: 'file',
+              permissions: '-rwxr-xr-x',
               content:
                 '[Unit]\nDescription=Archive Backup Service\n[Service]\nExecStart=/usr/bin/backup-archive\nRestart=on-failure',
               modifiedAt: 1401580800000, // JUNE 2014 (LEGACY)
@@ -1764,6 +1768,7 @@ SUBJECT: AI-7733
           id: 'ghost-handler',
           name: 'ghost-handler.service',
           type: 'file',
+          permissions: '-rwxr-xr-x',
           content: `[Unit]\nDescription=Ghost Pattern Handler\n[Service]\nExecStart=/usr/sbin/ghost-handler --monitor --cycle`,
           modifiedAt: 921456000000,
           parentId: 'daemons',
@@ -1772,6 +1777,7 @@ SUBJECT: AI-7733
           id: 'fs-187',
           name: 'daemon.conf',
           type: 'file',
+          permissions: '-rw-r--r--',
           content: '# Global daemon configuration\nmax_processes=256\nlog_level=warn',
           modifiedAt: BASE_TIME - 15 * day,
           parentId: 'daemons',

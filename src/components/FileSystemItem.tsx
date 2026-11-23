@@ -92,6 +92,7 @@ const getFakeDate = (node: FileNode) => {
 };
 
 const getPermissions = (node: FileNode) => {
+  if (node.permissions) return node.permissions;
   return node.type === 'dir' || node.type === 'archive' ? 'drwxr-xr-x' : '-rw-r--r--';
 };
 

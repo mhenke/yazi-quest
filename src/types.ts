@@ -10,6 +10,7 @@ export interface FileNode {
   size?: number; // File size in bytes (simulated)
   modifiedAt?: number; // Unix timestamp
   createdAt?: number; // Unix timestamp
+  permissions?: string; // POSIX permissions e.g. "-rwxr-xr-x", "-rw-r--r--", "drwxr-xr-x"
   protected?: boolean;
   isHoneypot?: boolean;
   isDecoy?: boolean; // If true, this honeypot is safe to delete/move (won't trigger game over)

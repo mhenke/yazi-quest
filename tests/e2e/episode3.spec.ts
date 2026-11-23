@@ -292,6 +292,7 @@ test.describe('Episode 3: MASTERY', () => {
     await waitForMissionComplete(page);
     await pressKey(page, 'Shift+Enter');
     await assertLevel(page, '14');
+    await expectCurrentDir(page, '~/workspace');
     await enterDirectory(page, 'central_relay');
     await pressKey(page, '.');
     await expect(page.locator('[data-testid^="file-"][data-testid$=".key"]')).toHaveCount(3);

@@ -5,6 +5,14 @@ import { isProtected } from './fsHelpers';
 // Define the pattern used in level 9 to identify keeper files
 const LEVEL_9_KEEPER_PATTERN = /\.(key|pid|sock)$/;
 
+// Live (non-decoy) honeypot: flagged in metadata or marked in its content.
+const isLiveHoneypot = (node: FileNode): boolean =>
+  (node.isHoneypot && !node.isDecoy) || !!node.content?.includes('HONEYPOT');
+
+// Fallback/paste check: the sticky access_token.key trap counts as a honeypot too.
+const isLiveHoneypotOrToken = (node: FileNode): boolean =>
+  isLiveHoneypot(node) || node.name === 'access_token.key';
+
 /**
  * Checks if a honeypot has been triggered.
  */
@@ -166,9 +174,7 @@ export const checkGrabbingHoneypot = (
 
   // Level 6: Clipboard Honeypot (active_log_sync.lock)
   if (levelId === 6) {
-    const hasHoneypot = nodes.some(
-      (n) => (n.isHoneypot && !n.isDecoy) || n.content?.includes('HONEYPOT')
-    );
+    const hasHoneypot = nodes.some(isLiveHoneypot);
     if (hasHoneypot) {
       return {
         triggered: true,
@@ -194,9 +200,7 @@ export const checkGrabbingHoneypot = (
 
   // Level 11 & 12: Honeypots
   if (levelId === 11 || levelId === 12) {
-    const hasHoneypot = nodes.some(
-      (n) => (n.isHoneypot && !n.isDecoy) || n.content?.includes('HONEYPOT')
-    );
+    const hasHoneypot = nodes.some(isLiveHoneypot);
     if (hasHoneypot) {
       return {
         triggered: true,
@@ -207,12 +211,7 @@ export const checkGrabbingHoneypot = (
   }
 
   // General Honeypot
-  const hasHoneypot = nodes.some(
-    (n) =>
-      (n.isHoneypot && !n.isDecoy) ||
-      n.content?.includes('HONEYPOT') ||
-      n.name === 'access_token.key'
-  );
+  const hasHoneypot = nodes.some(isLiveHoneypotOrToken);
 
   if (hasHoneypot) {
     return {
@@ -244,12 +243,7 @@ export const checkPastingHoneypot = (
   }
 
   // Standard honeypots
-  const hasHoneypot = nodes.some(
-    (n) =>
-      (n.isHoneypot && !n.isDecoy) ||
-      n.content?.includes('HONEYPOT') ||
-      n.name === 'access_token.key'
-  );
+  const hasHoneypot = nodes.some(isLiveHoneypotOrToken);
 
   if (hasHoneypot) {
     return {

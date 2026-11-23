@@ -793,7 +793,9 @@ export const LEVELS: Level[] = [
     hint: 'Search root for `.service` (s). Audit time (,m).',
     coreSkill: 'Skill Synthesis (Recursive Search + Forensic Metadata + Clipboard)',
     environmentalClue:
-      'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy (> 30d) | CONSOLIDATE: ~/workspace/systemd-core',
+      'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy Executable (> 30d, -rwxr-xr-x) | CONSOLIDATE: ~/workspace/systemd-core',
+    thought:
+      'EXAM MODE ENGAGED. Sensory scaffolding retracted. Mission drawer collapsed for full preview (Alt+O to expand).',
     successMessage:
       "PROTOCOLS HIJACKED. You are blending into the system background noise. Sebastian Iqbal's Instruction Guard v2.0 is blind to your movements... for now. Establish your stronghold.",
     buildsOn: [3, 5, 7, 9, 10],
@@ -823,17 +825,21 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'acquire-legacy',
-        description: 'Extract two legacy `\\.service$` anchors from results',
+        description:
+          'Extract two legacy executable `\\.service$` anchors from results (-rwxr-xr-x)',
         check: (c) => {
           // Must have cut at least 2 files
           if (!c.clipboard || c.clipboard.action !== 'cut' || c.clipboard.nodes.length < 2)
             return false;
 
-          // All exfiltrated must be legacy (> 30 days) and not honeypots
+          // All exfiltrated must be legacy (> 30 days), executable (-rwxr-xr-x), and not honeypots
           const BASE_TIME = 1433059200000;
           const thirtyDaysAgo = BASE_TIME - 30 * 86400000;
           const allLegacy = c.clipboard.nodes.every(
-            (n) => (n.modifiedAt || 0) < thirtyDaysAgo && !n.isHoneypot
+            (n) =>
+              (n.modifiedAt || 0) < thirtyDaysAgo &&
+              !n.isHoneypot &&
+              (n.permissions || '-rwxr-xr-x').includes('x')
           );
 
           return allLegacy;
