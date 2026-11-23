@@ -65,7 +65,8 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'retreat-var',
-        description: 'Retreat to `/` (h three times), then enter `/var` (l)',
+        description:
+          'Retreat to the root directory `/` (h three times), move down to `var` (j), then enter it (l)',
         check: (c) => getNodeByPath(c.fs, c.currentPath)?.name === 'var',
         completed: false,
       },
