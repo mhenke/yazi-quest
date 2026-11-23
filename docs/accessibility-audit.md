@@ -1,6 +1,6 @@
 # Desktop accessibility and focus audit
 
-Reviewed the keyboard-led game in desktop Chromium. This is an issue audit, not a WCAG 2.2 conformance assessment. Touch-only gameplay is outside product scope; narrow desktop and browser zoom are not. Findings below describe the pre-fix build.
+Reviewed the keyboard-led game in desktop Chromium. This is an issue audit, not a WCAG 2.2 conformance assessment. Touch-only gameplay is outside product scope, and so is the file-manager view below 1024 CSS px (`docs/adr/0001-keyboard-and-viewport-floor.md`); the cinematic surfaces remain reflow-safe and in scope for browser zoom. Findings below describe the pre-fix build.
 
 ## Highest priority
 

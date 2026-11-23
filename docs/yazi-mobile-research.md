@@ -13,6 +13,6 @@ Researched 2026-11-22 from primary sources. No mobile installation or device tes
 
 Yazi's Android availability does not establish a requirement for touch-only browser gameplay in Yazi Quest. A phone running Termux and a browser learning game have different input and layout constraints.
 
-Confirmed product scope: desktop browsers with a physical keyboard are the target experience; touch-only mobile gameplay is outside the current scope. Narrow desktop windows and browser zoom remain in scope. See `PRODUCT.md`.
+Confirmed product scope: desktop browsers with a hardware keyboard are the target experience; touch-primary gameplay is outside the current scope, and the file-manager view requires 1024 CSS px. See `PRODUCT.md` and `docs/adr/0001-keyboard-and-viewport-floor.md`.
 
-The user confirmed this product requirement after the research. No architecture decision record was needed.
+The user confirmed this product requirement after the research; ADR-0001 records it.

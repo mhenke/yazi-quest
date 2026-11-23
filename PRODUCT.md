@@ -33,7 +33,7 @@ The public game is available at https://mhenke.github.io/yazi-quest/. It runs cl
 - The filesystem, protected assets, traps, and security threats are simulated game content, not access to the player's real files.
 - Completing an objective and advancing a level are distinct steps. A new narrative cycle is different from retrying a failed level; canonical terms are in `GLOSSARY.md`.
 - Only zoxide-style directory history and the narrative cycle count currently survive a reload. Full level progress and settings are not saved.
-- Target desktop browsers with a physical keyboard. Players must be able to play and use game controls without a pointer. Touch-only gameplay is outside scope; desktop zoom and narrow windows remain in scope.
+- Target desktop browsers with a hardware keyboard. The game binds actions to `Ctrl` and `Alt` chords that soft keyboards cannot send, so a hardware keyboard is required; players must also be able to play and use game controls without a pointer. Touch-primary gameplay is outside scope, and the gate reads primary input: `(hover: none) and (pointer: coarse)`. Every tested tablet in landscape — iPadOS Safari with a Magic Keyboard, Android Chrome and Firefox with a mouse, Surface tablet mode — still reports touch as primary, so tablets are refused. The file-manager view also requires 1024 CSS px; below that, and when primary input is touch, a product notice states the requirement. See `docs/adr/0001-keyboard-and-viewport-floor.md`.
 - Specific accessibility conformance targets remain unconfirmed. Do not claim conformance without verifying it.
 
 ## Brand Commitments
