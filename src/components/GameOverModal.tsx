@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, Zap } from 'lucide-react';
 import { useGlobalInput } from '../GlobalInputContext';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
+import { Scanlines } from './narrative/Scanlines';
 
 interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
@@ -103,7 +104,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-4 sm:p-8 text-center relative"
       >
         {/* Scanline bg */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20" />
+        <Scanlines className="opacity-20" />
 
         <div className="relative z-10 flex flex-col items-center gap-6">
           <div className="text-red-500 animate-pulse">
