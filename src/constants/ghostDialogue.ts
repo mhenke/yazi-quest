@@ -1,4 +1,4 @@
-export interface GhostDialogue {
+interface GhostDialogue {
   id: string;
   text: string;
   signature: string;

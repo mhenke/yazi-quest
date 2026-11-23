@@ -329,15 +329,17 @@
           display: flex;
         }
       }
-      /* The React width notice replaces this markup when only the width fails,
-         so the static gate must not stack on top of it on desktop. */
-      @media (min-width: 1024px), (hover: hover) and (pointer: fine) {
+      /* React-rendered product notices (RequirementNotice) take over on devices
+         that are not touch-only. The static gate shows on touch-primary devices at
+         any width: a wide touch tablet is still refused (ADR-0001), and #root stays
+         hidden there so the React layer never mounts. */
+      @media not all and ((hover: none) and (pointer: coarse)) {
         .touch-gate {
           display: none;
         }
-        /* Same panel geometry as the static gate; shown by React when only the
-           width fails. A desktop window gets the width message, not the keyboard one. */
         .width-gate {
+          /* flex + margin:auto on the panel centres when there is room and
+             still scrolls from the top when the panel is taller than the viewport */
           display: flex;
         }
       }
@@ -384,7 +386,7 @@
         <p class="touch-gate__body">
           Open this page on a desktop or laptop with a hardware keyboard and it will start normally.
         </p>
-        <p class="touch-gate__hint">A narrow desktop window is fine</p>
+        <p class="touch-gate__hint">A window at least 1024 px wide is required</p>
       </div>
     </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>

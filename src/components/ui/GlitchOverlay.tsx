@@ -6,7 +6,7 @@ import {
   getRandomGlitchChar,
 } from '../../utils/glitchEffects';
 
-export interface GlitchOverlayProps {
+interface GlitchOverlayProps {
   threatLevel: number;
   consciousnessLevel?: number;
   enabled?: boolean;

@@ -1,4 +1,4 @@
-export interface TerminalThought {
+interface TerminalThought {
   id: string;
   text: string;
   phase: 1 | 2 | 3;

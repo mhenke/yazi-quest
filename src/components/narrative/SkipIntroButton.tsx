@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { setSkipIntroRequested } from '../../utils/skipIntroFlag';
 
-export interface SkipIntroButtonProps {
+interface SkipIntroButtonProps {
   className?: string;
 }
 

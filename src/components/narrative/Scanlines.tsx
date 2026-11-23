@@ -1,6 +1,6 @@
 import React from 'react';
 
-export interface ScanlinesProps {
+interface ScanlinesProps {
   className?: string;
 }
 

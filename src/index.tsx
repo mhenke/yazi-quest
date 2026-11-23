@@ -6,7 +6,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { GlobalInputProvider } from './GlobalInputContext';
 
 // The CSS touch gate hides #root on touch devices; skip mounting so boot timers,
-// typewriter, and Web Audio never start behind it. Mirrors the stylesheet's media query.
+// typewriter, and Web Audio never start behind it. Mirrors the stylesheet's media
+// query in index.html. Platform scope is ADR-0001; the 1024px floor is a separate,
+// React-level gate inside App so cinematics stay reachable below it.
 const touchOnly = window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false;
 
 if (touchOnly) {

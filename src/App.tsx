@@ -65,8 +65,8 @@ import { measure } from './utils/perf';
 import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { useGameTimer } from './hooks/useGameTimer';
 import { useReduceMotion } from './hooks/useReduceMotion';
-import { useAtFloor } from './hooks/useViewportFloor';
-import { WidthNotice } from './components/WidthNotice';
+import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
+import { RequirementNotice } from './components/RequirementNotice';
 import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
 import { getActionIntensity } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
@@ -349,7 +349,8 @@ function createInitialState(): GameState {
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, createInitialState);
   const reduceMotion = useReduceMotion(gameState.settings.narrativeEffects);
-  const atFloor = useAtFloor();
+  const atFloor = useFileManagerView();
+  const touchOnly = useTouchOnly();
   const filePaneRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useOverlayFocus(gameState.mode === 'search', 'input');
   const canFocusFilePane =
@@ -1840,7 +1841,10 @@ export default function App() {
                 selectedIds={[]}
                 clipboard={null}
                 linemode={gameState.linemode}
-                className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/50"
+                // ADR-0001: the parent pane is one of the three panes, so it shows
+                // wherever the file-manager view itself is shown. Same fact as the
+                // floor gate above; derived from it rather than a separate breakpoint.
+                className={`${atFloor ? 'flex' : 'hidden'} w-64 border-r border-zinc-800 bg-zinc-950/50`}
               />
 
               <div className="flex-1 flex flex-col min-w-0 sm:relative">
@@ -2002,7 +2006,7 @@ export default function App() {
             )}
           </div>
         ) : (
-          <WidthNotice />
+          <RequirementNotice reason={touchOnly ? 'keyboard' : 'width'} />
         )}
       </div>
     </GlitchOverlay>
