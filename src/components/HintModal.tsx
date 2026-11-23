@@ -41,14 +41,14 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
       aria-modal="false"
     >
       <div className="flex items-center justify-between flex-wrap gap-2 border-b border-zinc-800 pb-2">
-        <div className="flex items-center gap-2 text-yellow-500">
+        <div className="flex items-center gap-2 text-yellow-400">
           <Lightbulb size={18} />
           <h2 id="hint-dialog-title" className="text-sm font-bold tracking-wider uppercase">
             {stageLabel}
           </h2>
         </div>
         {stage < 2 && (
-          <div className="text-xs text-yellow-500 font-mono uppercase tracking-wider animate-pulse">
+          <div className="text-xs text-yellow-400 font-mono uppercase tracking-wider">
             Press Alt+H for more detail
           </div>
         )}

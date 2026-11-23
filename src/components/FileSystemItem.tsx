@@ -119,7 +119,7 @@ const getListItemRowClasses = (
     ${baseClasses}
     ${rowBg}
     ${isMarked ? 'text-yellow-400' : rowText}
-    ${isParent && !isCursor ? 'opacity-70' : ''}
+    ${isParent && !isCursor ? 'text-zinc-400' : ''}
     ${isCut ? 'opacity-50' : ''}
   `;
 };

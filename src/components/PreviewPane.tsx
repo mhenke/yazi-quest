@@ -92,7 +92,14 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
       {/* Content Display Section (No Header) */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {node ? (
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-4 custom-scrollbar focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be reachable for keyboard scrolling
+            tabIndex={0}
+            role="region"
+            aria-label="File preview"
+          >
             {/* CASE 1: Image */}
             {isImage && (
               <div className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-zinc-800 rounded bg-zinc-900/30 p-4">
@@ -182,21 +189,27 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
       {/* Bottom Section: Mission Log */}
       <div className="h-[45%] min-h-[250px] border-t border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
         <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800">
-          <h3 className="text-xs font-bold text-orange-500 uppercase tracking-wider">
+          <h1 className="text-xs font-bold text-orange-500 uppercase tracking-wider">
             Mission Log: LVL {level.id} - <span className="normal-case">{level.title}</span>
-          </h3>
+          </h1>
         </div>
-        <div className="p-4 overflow-y-auto space-y-4">
+        <div
+          className="p-4 overflow-y-auto space-y-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be reachable for keyboard scrolling
+          tabIndex={0}
+          role="region"
+          aria-label="Mission log"
+        >
           <div>
-            <h3 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">
+            <h2 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">
               Target
-            </h3>
+            </h2>
             <p className="text-xs text-zinc-300 font-mono leading-relaxed">{level.description}</p>
           </div>
           <div>
-            <h3 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
+            <h2 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
               Objectives
-            </h3>
+            </h2>
             <div className="space-y-2">
               {(() => {
                 const completedTaskIds = gameState.completedTaskIds[level.id] || [];
@@ -207,7 +220,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                     return (
                       <div
                         key={task.id}
-                        className={`flex gap-3 items-start transition-all duration-500 ${isTaskCompleted ? 'opacity-70' : 'opacity-100'}`}
+                        className={`flex gap-3 items-start transition-all duration-500 ${isTaskCompleted ? 'text-zinc-400' : 'text-zinc-300'}`}
                       >
                         <div
                           className={`mt-0.5 shrink-0 ${isTaskCompleted ? 'text-green-500' : 'text-zinc-400'}`}

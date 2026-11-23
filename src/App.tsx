@@ -1727,7 +1727,7 @@ export default function App() {
         <SystemAlerts alerts={gameState.alerts} />
 
         {atFloor ? (
-          <div
+          <main
             className="flex flex-col flex-1 h-full min-w-0"
             inert={gameState.showEpisodeIntro || gameState.isGameOver}
           >
@@ -2006,7 +2006,7 @@ export default function App() {
                 currentItem={currentItem}
               />
             )}
-          </div>
+          </main>
         ) : (
           <RequirementNotice reason={touchOnly ? 'keyboard' : 'width'} />
         )}

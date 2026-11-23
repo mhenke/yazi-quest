@@ -240,6 +240,9 @@
           display: none;
         }
       }
+      /* Opacity must stay high: it multiplies the label's contrast against the
+         tinted background. 0.7 dropped WATCHDOG v1.1 to 2.6:1; 0.9 keeps the
+         pulse visible while the label (text-zinc-200) stays above 4.5:1. */
       @keyframes urgent-pulse {
         0%,
         100% {
@@ -247,7 +250,7 @@
           transform: scale(1);
         }
         50% {
-          opacity: 0.7;
+          opacity: 0.9;
           transform: scale(0.98);
         }
       }

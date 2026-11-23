@@ -7,6 +7,34 @@ import { EPISODE_LORE } from '../constants/narrative';
 import { paletteFor } from '../constants/palette';
 import { useOverlayFocus } from './useOverlayFocus';
 
+// One token per status; a ternary chain here costs a complexity point per branch.
+const TITLE_COLOR: Record<string, string> = {
+  active: 'text-white',
+  completed: 'text-zinc-400',
+  locked: 'text-zinc-600',
+};
+
+type MissionStatus = 'active' | 'completed' | 'locked';
+
+const missionStatus = (globalIdx: number, currentLevelIndex: number): MissionStatus =>
+  globalIdx < currentLevelIndex
+    ? 'completed'
+    : globalIdx === currentLevelIndex
+      ? 'active'
+      : 'locked';
+
+const MISSION_ROW: Record<MissionStatus, string> = {
+  active: 'text-white',
+  completed: 'text-zinc-500 hover:text-zinc-300',
+  locked: 'opacity-30',
+};
+
+const MISSION_ICON: Record<MissionStatus, string> = {
+  active: 'bg-zinc-800',
+  completed: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  locked: 'bg-zinc-900 text-zinc-700 border border-zinc-800',
+};
+
 interface LevelProgressProps {
   levels: Level[];
   currentLevelIndex: number;
@@ -72,7 +100,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   return (
     <>
-      <div
+      <header
         data-testid="level-progress-bar"
         className="w-full bg-black/50 border-b border-zinc-800 py-3 px-4 sm:px-6 flex items-center justify-between backdrop-blur-sm z-[300] relative"
       >
@@ -103,13 +131,19 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
           <div className="flex flex-col justify-center h-full">
             <div className="flex items-center gap-2 mb-1">
               <span
-                className={`text-xs uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx]?.color}`}
+                className={`text-xs uppercase font-bold tracking-widest leading-none ${episodes[currentEpisodeIdx]?.palette.textStrong}`}
               >
                 {episodes[currentEpisodeIdx]?.shortTitle}
               </span>
             </div>
 
-            <div className="flex items-center h-4 max-w-[200px] sm:max-w-none overflow-x-auto scrollbar-hide">
+            <div
+              className="flex items-center h-4 max-w-[200px] sm:max-w-none overflow-x-auto scrollbar-hide focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              role="group"
+              aria-label="Levels in this episode"
+              // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- horizontally scrollable strip must be reachable by keyboard
+              tabIndex={0}
+            >
               {episodes[currentEpisodeIdx]?.levels.map((level, idx) => {
                 const globalIdx = levels.indexOf(level);
                 const isCompleted = globalIdx < currentLevelIndex;
@@ -130,7 +164,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                       className={`
                                 flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-xs font-mono transition-all duration-300
                                 ${isCompleted ? 'bg-zinc-900/50 border-zinc-800 text-zinc-400' : ''}
-                                ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].color} shadow-[0_0_15px_rgba(255,255,255,0.05)] scale-105 z-10` : ''}
+                                ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].palette.textStrong} shadow-[0_0_15px_rgba(255,255,255,0.05)] scale-105 z-10` : ''}
                                 ${isLocked ? 'bg-transparent border-transparent text-zinc-500' : ''}
                             `}
                     >
@@ -223,7 +257,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Legend Modal */}
       {isOpen &&
@@ -275,7 +309,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                     data-testid="episode-tab"
                     aria-current={activeTab === idx ? 'true' : undefined}
                     className={`flex-1 min-w-0 px-1 py-3 break-words text-center text-[11px] sm:text-xs font-bold uppercase sm:tracking-wider border-b-2
-                            ${activeTab === idx ? `${ep.color} ${ep.bg} border-current` : 'text-zinc-400 border-transparent'}
+                            ${activeTab === idx ? `${ep.palette.textStrong} ${ep.bg} border-current` : 'text-zinc-400 border-transparent'}
                         `}
                   >
                     <span className="block">{ep.shortTitle}</span>
@@ -293,13 +327,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                   {activeEpisode.levels.map((level, missionIdx) => {
                     // Calculate global index to check status against currentLevelIndex
                     const globalIdx = levels.findIndex((l) => l.id === level.id);
-
-                    const status =
-                      globalIdx < currentLevelIndex
-                        ? 'completed'
-                        : globalIdx === currentLevelIndex
-                          ? 'active'
-                          : 'locked';
+                    const status = missionStatus(globalIdx, currentLevelIndex);
                     const isKeyboardSelected = missionIdx === selectedMissionIdx;
 
                     return (
@@ -314,8 +342,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         className={`
                             w-full text-left px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white
                             ${status === 'active' ? `bg-zinc-900/50 border-l-4 ${activeEpisode.border}` : ''}
-                            ${status === 'completed' ? 'opacity-50 hover:opacity-100' : ''}
-                            ${status === 'locked' ? 'opacity-30' : ''}
+                            ${MISSION_ROW[status]}
                             ${isKeyboardSelected ? 'bg-zinc-800/50 ring-2 ring-inset ring-white/20' : 'hover:bg-zinc-900/30'}
                             `}
                         onClick={() => {
@@ -329,9 +356,8 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         <span
                           className={`
                                 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0
-                                ${status === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : ''}
-                                ${status === 'active' ? `bg-zinc-800 ${activeEpisode.color} border ${activeEpisode.border}` : ''}
-                                ${status === 'locked' ? 'bg-zinc-900 text-zinc-700 border border-zinc-800' : ''}
+                                ${MISSION_ICON[status]}
+                                ${status === 'active' ? `${activeEpisode.color} ${activeEpisode.border}` : ''}
                             `}
                         >
                           {status === 'completed' ? <Check size={14} strokeWidth={3} /> : level.id}
@@ -340,12 +366,14 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                         {/* Level Title */}
                         <span className="flex-1 min-w-0">
                           <span
-                            className={`block break-words font-bold text-sm tracking-wide ${status === 'active' ? 'text-white' : status === 'completed' ? 'text-zinc-400' : 'text-zinc-600'}`}
+                            className={`block break-words font-bold text-sm tracking-wide ${TITLE_COLOR[status]}`}
                           >
                             {level.title}
                           </span>
                           {level.coreSkill && (
-                            <span className="block text-xs text-zinc-400 font-mono mt-0.5">
+                            <span
+                              className={`block text-xs font-mono mt-0.5 ${status === 'locked' ? 'text-zinc-600' : 'text-zinc-400'}`}
+                            >
                               {level.coreSkill}
                             </span>
                           )}

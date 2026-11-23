@@ -97,7 +97,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   const isCustomSort = state.sortBy !== 'natural';
 
   return (
-    <div
+    <footer
       data-testid="status-bar"
       className="h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
     >
@@ -255,7 +255,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : urgentClass;
 
           // Timer logic with pulsing
-          let timerClass = 'text-zinc-400 font-mono text-sm';
+          let timerClass = 'text-zinc-200 font-mono text-sm';
           if (state.timeLeft !== null) {
             if (state.timeLeft < 10) {
               timerClass = 'text-red-500 font-mono text-sm animate-urgent-pulse font-bold';
@@ -270,7 +270,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
             >
               {icon}
               <div className="flex flex-col justify-center h-full">
-                <span className="text-xs text-zinc-400 uppercase tracking-tighter leading-none mb-0.5">
+                <span className="text-xs text-zinc-200 uppercase tracking-tighter leading-none mb-0.5">
                   {label}
                 </span>
                 <span
@@ -341,7 +341,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 
