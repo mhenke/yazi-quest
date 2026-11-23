@@ -1,12 +1,29 @@
 import { FileNode, Result, FsError, Level } from '../types';
 
-// Simple id generator used across the constants for seeding
-export function id(prefix = ''): string {
+// Simple id generator used by the mutation helpers below
+function id(prefix = ''): string {
   return prefix + Math.random().toString(36).slice(2, 9);
 }
 
 export function cloneFS(fs: FileNode): FileNode {
   return JSON.parse(JSON.stringify(fs));
+}
+
+/** Deep-copies a node, giving every node in the subtree a fresh id. */
+export function cloneSubtreeWithFreshIds(
+  node: FileNode,
+  parentId?: string,
+  preserveRootId = false
+): FileNode {
+  const copy: FileNode = {
+    ...node,
+    id: preserveRootId ? node.id : id(),
+    parentId: parentId ?? node.parentId,
+  };
+  if (node.children) {
+    copy.children = node.children.map((child) => cloneSubtreeWithFreshIds(child, copy.id));
+  }
+  return copy;
 }
 
 /** Hidden entries are pruned with their whole subtree when hidden files are off. */
@@ -378,7 +395,8 @@ export function resolveAndCreatePath(
 export function addNodeWithConflictResolution(
   root: FileNode,
   parentPath: string[] | undefined,
-  node: FileNode
+  node: FileNode,
+  preserveId = false
 ): Result<FileNode, FsError> {
   let newRoot = cloneFS(root);
   const parent = parentPath && parentPath.length ? getNodeByPath(newRoot, parentPath) : newRoot;
@@ -401,7 +419,11 @@ export function addNodeWithConflictResolution(
     exists = parent.children.find((c) => c.name === newName);
   }
 
-  const newNode: FileNode = { ...node, name: newName, id: id() };
+  const newNode: FileNode = cloneSubtreeWithFreshIds(
+    { ...node, name: newName },
+    parent.id,
+    preserveId
+  );
 
   return addNode(newRoot, parentPath, newNode);
 }

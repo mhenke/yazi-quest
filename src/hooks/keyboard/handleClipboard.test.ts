@@ -25,6 +25,17 @@ const stateWith = (
   levelIndex: 0,
 });
 
+const allIds = (fs: FileNode): string[] => {
+  const ids: string[] = [];
+  const stack = [fs];
+  while (stack.length) {
+    const node = stack.pop()!;
+    ids.push(node.id);
+    if (node.children) stack.push(...node.children);
+  }
+  return ids;
+};
+
 describe('paste into the pasted node subtree', () => {
   it('refuses a force-cut directory pasted into its own subtree', () => {
     const nested = dir('D', 'D', [file('f', 'f.txt')]);
@@ -108,5 +119,158 @@ describe('paste into the pasted node subtree', () => {
         'a.txt'
       );
     }
+  });
+
+  it('regenerates ids for a pasted directory subtree', () => {
+    const source = dir('src', 'src', [file('a', 'a.txt'), dir('sub', 'sub', [file('b', 'b.txt')])]);
+    const fs = dir('root', 'root', [source, dir('target', 'target')]);
+    const state = stateWith(fs, ['root', 'target'], {
+      nodes: [source],
+      action: 'yank',
+      originalPath: ['root'],
+    });
+    const dispatch = vi.fn();
+
+    handleClipboardKeyDown(
+      { key: 'p', shiftKey: false } as KeyboardEvent,
+      state,
+      dispatch,
+      [],
+      null,
+      LEVELS[0],
+      vi.fn()
+    );
+
+    const paste = dispatch.mock.calls
+      .map(([action]) => action)
+      .find((action) => action.type === 'PASTE');
+    expect(paste).toBeDefined();
+    if (paste?.type !== 'PASTE') return;
+
+    const ids: string[] = [];
+    const stack = [paste.newFs];
+    while (stack.length) {
+      const node = stack.pop()!;
+      ids.push(node.id);
+      if (node.children) stack.push(...node.children);
+    }
+    expect(new Set(ids).size).toBe(ids.length);
+
+    const copy = getNodeByPath(paste.newFs, ['root', 'target'])?.children?.find(
+      (c) => c.name === 'src'
+    );
+    expect(copy).toBeDefined();
+    expect(copy?.id).not.toBe('src');
+    expect(copy?.parentId).toBe('target');
+    const sub = copy?.children?.find((c) => c.name === 'sub');
+    expect(sub?.id).not.toBe('sub');
+    expect(sub?.parentId).toBe(copy?.id);
+    expect(sub?.children?.[0].parentId).toBe(sub?.id);
+  });
+
+  it('regenerates ids for a forced directory paste', () => {
+    const source = dir('src', 'src', [file('a', 'a.txt')]);
+    const fs = dir('root', 'root', [source, dir('target', 'target')]);
+    const state = stateWith(fs, ['root', 'target'], {
+      nodes: [source],
+      action: 'yank',
+      originalPath: ['root'],
+    });
+    const dispatch = vi.fn();
+
+    handleClipboardKeyDown(
+      { key: 'P', shiftKey: true } as KeyboardEvent,
+      state,
+      dispatch,
+      [],
+      null,
+      LEVELS[0],
+      vi.fn()
+    );
+
+    const paste = dispatch.mock.calls
+      .map(([action]) => action)
+      .find((action) => action.type === 'PASTE');
+    expect(paste).toBeDefined();
+    if (paste?.type !== 'PASTE') return;
+
+    const copy = getNodeByPath(paste.newFs, ['root', 'target'])?.children?.find(
+      (c) => c.name === 'src'
+    );
+    expect(copy?.id).not.toBe('src');
+    expect(copy?.children?.[0].id).not.toBe('a');
+    expect(copy?.children?.[0].parentId).toBe(copy?.id);
+  });
+
+  it('preserves a cut directory root id so level checks can match the source', () => {
+    const source = dir('src', 'src', [file('a', 'a.txt')]);
+    const fs = dir('root', 'root', [source, dir('target', 'target')]);
+    const state = stateWith(fs, ['root', 'target'], {
+      nodes: [source],
+      action: 'cut',
+      originalPath: ['root'],
+    });
+    const dispatch = vi.fn();
+
+    handleClipboardKeyDown(
+      { key: 'p', shiftKey: false } as KeyboardEvent,
+      state,
+      dispatch,
+      [],
+      null,
+      LEVELS[0],
+      vi.fn()
+    );
+
+    const paste = dispatch.mock.calls
+      .map(([action]) => action)
+      .find((action) => action.type === 'PASTE');
+    expect(paste).toBeDefined();
+    if (paste?.type !== 'PASTE') return;
+
+    expect(paste.newFs.children?.some((c: FileNode) => c.id === 'src')).toBe(false);
+    const copy = getNodeByPath(paste.newFs, ['root', 'target'])?.children?.find(
+      (c: FileNode) => c.name === 'src'
+    );
+    expect(copy?.id).toBe('src');
+    expect(copy?.children?.[0].id).not.toBe('a');
+    expect(copy?.children?.[0].parentId).toBe('src');
+    const ids = allIds(paste.newFs);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('preserves the cut root id on a forced overwrite paste', () => {
+    const source = dir('src', 'src', [file('a', 'a.txt')]);
+    const fs = dir('root', 'root', [source, dir('target', 'target')]);
+    const state = stateWith(fs, ['root', 'target'], {
+      nodes: [source],
+      action: 'cut',
+      originalPath: ['root'],
+    });
+    const dispatch = vi.fn();
+
+    handleClipboardKeyDown(
+      { key: 'P', shiftKey: true } as KeyboardEvent,
+      state,
+      dispatch,
+      [],
+      null,
+      LEVELS[0],
+      vi.fn()
+    );
+
+    const paste = dispatch.mock.calls
+      .map(([action]) => action)
+      .find((action) => action.type === 'PASTE');
+    expect(paste).toBeDefined();
+    if (paste?.type !== 'PASTE') return;
+
+    expect(paste.newFs.children?.some((c: FileNode) => c.id === 'src')).toBe(false);
+    const copy = getNodeByPath(paste.newFs, ['root', 'target'])?.children?.find(
+      (c: FileNode) => c.name === 'src'
+    );
+    expect(copy?.id).toBe('src');
+    const ids = allIds(paste.newFs);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

@@ -5,6 +5,7 @@ import {
   deleteNode,
   addNode,
   addNodeWithConflictResolution,
+  cloneSubtreeWithFreshIds,
   isProtected,
   findPathById,
 } from '../../utils/fsHelpers';
@@ -20,6 +21,19 @@ const cleanClipboardNode = (node: FileNode): FileNode => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { displayPath: _dp, actualParentPath: _app, path: _p, ...cleanNode } = node;
   return cleanNode as FileNode;
+};
+
+/** Fresh ids and destination parent are only required for forced adds. */
+const preparePasteNode = (
+  node: FileNode,
+  force: boolean,
+  fs: FileNode,
+  currentPath: string[],
+  preserveRootId: boolean
+): FileNode => {
+  if (!force) return cleanClipboardNode(node);
+  const destinationParentId = getNodeByPath(fs, currentPath)?.id;
+  return cloneSubtreeWithFreshIds(cleanClipboardNode(node), destinationParentId, preserveRootId);
 };
 
 /**
@@ -136,6 +150,7 @@ const applyPasteNodes = (
   levelIndex: number,
   force: boolean
 ): PasteResult => {
+  const preserveRootId = clipboard.action === 'cut';
   let newFs = initialFs;
 
   for (const node of clipboard.nodes) {
@@ -161,11 +176,11 @@ const applyPasteNodes = (
       newFs = cutDeleteRes.fs;
     }
 
-    const cleanNode = cleanClipboardNode(node);
+    const cleanNode = preparePasteNode(node, force, initialFs, currentPath, preserveRootId);
 
     const addResult: Result<FileNode, FsError> = force
       ? addNode(newFs, currentPath, cleanNode)
-      : addNodeWithConflictResolution(newFs, currentPath, cleanNode);
+      : addNodeWithConflictResolution(newFs, currentPath, cleanNode, preserveRootId);
 
     if (!addResult.ok) {
       return {
