@@ -1,12 +1,12 @@
 # Project Documentation
 
-> Generated: 2026-11-23T15:35:46Z | Mode: DELTA
-> Source baseline: `99935c4`..`3f7a851` (8 commits)
+> Generated: 2026-11-23T16:45:00Z | Mode: DELTA
+> Source baseline: `3f7a851`..`824c99d` (9 commits)
 
 ## Tech Stack
 
 - Runtime: browser application; Node.js 24 in the deployment workflow. Local scan environment: Node.js 24.22.2 / npm 11.19.1. No Node engine constraint is declared.
-- Language: TypeScript / TSX, ES modules, ES2022 target. Progress toward full type safety has enabled both `noImplicitAny` and `strictNullChecks` in `tsconfig.json`, with full `strict` mode remaining disabled.
+- Language: TypeScript / TSX, ES modules, ES2022 target. Type safety migration has enabled both `noImplicitAny: true` and `strictNullChecks: true` in `tsconfig.json`, with full `strict` mode remaining disabled.
 - Framework: React 19.2.3, bundled by Vite 7.3.7 with the React plugin.
 - Database: none. The game operates on an in-memory simulated filesystem.
 - Styling: Tailwind CSS 3.4.19 compiled at build time through PostCSS (`tailwind.config.js` scans `index.html` and `src/**/*.{ts,tsx}`; `postcss.config.js` runs Tailwind and Autoprefixer). Episode colours live in `src/constants/palette.ts` as literal utility strings so the scanner sees every class. Inline styles in `index.html` and local CSS cover narrative/glitch effects and the platform gates. The interface uses the system-monospace stack without a webfont download. Tailwind is pinned to v3 deliberately: v4 renames `outline-none`, rescales `rounded-sm`, and changes the default border colour, all of which would shift the existing visual design.
@@ -96,12 +96,16 @@ The root `index.tsx` is a separate legacy entry file. The actual HTML module ent
 - Intro and boot presentations (`BiosBoot.tsx`, `EpisodeIntro.tsx`) share presentation hooks (`useTypewriter`, `useSkipIntro`) and visual components (`Scanlines`, `SkipIntroButton`) under `src/components/narrative/`.
 - Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`.
 - Filesystem trap integrity: Restored the dropped `isHoneypot: true` flag on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, ensuring Level 9 trap detection logic triggers when critical PID keepers are removed.
+- Episode 3 Exam Mode scaffolding: On transition to Episode 3, the `MissionDrawer` initializes as collapsed by default to maximize full-height file inspection while challenging players to operate from memory, retaining `Alt+O` expansion.
+- POSIX permissions visualization: `StatusBar.tsx`, `FileSystemItem.tsx`, and `InfoPanel.tsx` consume `permissions` attributes on `FileNode` to render standard POSIX indicators (`-rwxr-xr-x`, `-rw-r--r--`, `drwxr-xr-x`) to support forensic inspection objectives.
+- Filesystem mutation preservation: `src/constants/filesystem/mutations.ts` sequences Level 13 directory evacuation after prerequisite node seeding, verified via unit test `src/utils/fsMutationPreservation.test.ts`.
+- Test server isolation: `playwright.config.ts` configures isolated webServer execution with `reuseExistingServer: !isolatedServer` and port 3100 targeting for pre-push verification.
 - Codebase knowledge graph is generated via Graphify (`graphify-out/graph.json`) in offline AST mode, with project hooks in `.claude/` enabling graph traversal before search.
 - The previously proposed input-handler/context extraction is cancelled in the closed roast-fixes round 2 documents; it is not the current architecture.
 
 ## Data Architecture
 
-- `FileNode` represents files, directories, and archives in a tree, with identity, optional parent/children, simulated contents/metadata, and protection/honeypot flags.
+- `FileNode` represents files, directories, and archives in a tree, with identity, optional parent/children, simulated contents/metadata, POSIX permission mode (`permissions?: string`), and protection/honeypot flags.
 - Navigation paths are arrays of node IDs. Display paths and zoxide history use readable path strings. `Level.allowedDeletePaths` is a distinct name-based policy, optionally gated by task completion.
 - `Level` belongs to an episode and contains tasks. Each task checks the current game state; completion and advancing to the next level are separate events. Canonical domain terms are defined in `GLOSSARY.md`.
 - Clipboard state contains nodes, a yank/cut action, and the original path. Search results can carry transient path metadata that clipboard operations strip before writing nodes into the tree.
@@ -129,12 +133,12 @@ External resources are limited to an external favicon/background image and a con
 
 - Overall coverage: **unmeasured**. No coverage summary, LCOV report, configured coverage provider, or installed Vitest coverage provider was found. A percentage cannot be inferred from passing tests.
 - Frameworks: Vitest with jsdom; Testing Library for component/hooks tests; Playwright for Chromium E2E scenarios.
-- Inventory: **12 unit-test files**, **17 E2E spec files** (110 Chromium tests), and shared E2E fixtures/helpers.
-- Unit-test areas: filesystem helpers (including a `fast-check` property suite), game reducer state invariants, skip-intro flag, consciousness/glitch helpers, boot/typewriter/skip hooks, diegetic prompt, and glitch overlay.
+- Inventory: **13 unit-test files**, **17 E2E spec files** (111 Chromium tests), and shared E2E fixtures/helpers.
+- Unit-test areas: filesystem helpers (including a `fast-check` property suite and mutation preservation suite), game reducer state invariants, skip-intro flag, consciousness/glitch helpers, boot/typewriter/skip hooks, diegetic prompt, and glitch overlay.
 - Areas without dedicated colocated unit tests in the inventory: keyboard mode handlers, input arbitration, timer integration, and storage validation. Some are exercised through E2E; this is not a claim of zero executed coverage.
 - E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, selection/Escape behavior, and (in `keyboard-accessibility.spec.ts`) focus order and keyboard reachability.
 - E2E helpers use URL debug parameters, clear localStorage for isolated level starts, and centralize keyboard sequences. Tests use root-relative URLs; the Playwright server explicitly overrides Vite's base to `/`.
-- Integrated verification: **122 unit tests across 12 files passed**; the `@smoke` E2E subset (5 tests) passed against the dev server, and 110 Chromium tests exist in total. Lint, type-check, Prettier, and the production build also passed. E2E must run with `--reporter=list`. Because `CI=true` is exported in this environment, Playwright's `reuseExistingServer: !CI` starts a second server and collides on port 3000 — run E2E with `env -u CI`.
+- Integrated verification: **134 unit tests across 13 files passed**; the `@smoke` E2E subset (5 tests) passed against the dev server, and 111 Chromium tests exist in total. Lint, type-check, Prettier, and the production build also passed. E2E must run with `--reporter=list`. Pre-push verification isolates the test server on port 3100 via `PLAYWRIGHT_ISOLATE_SERVER=1`.
 - The opening displays **FACILITY DATE: MAY 31, 2015**. Browser checks verified Help's eight command groups, focus containment and restoration, and the game layout at 1440×900 and 1024×768 — the floor itself. 720×450 no longer renders the file manager; it renders the width half of `RequirementNotice`. E2E tests cover opening/BIOS behavior and real `j`/`k` Help scrolling.
 - Cinematics are exempt from the viewport floor: intro, outro, and the boot sequence are reachable at 320 CSS px and reflow there. That exemption is the reason the width gate lives in React rather than CSS.
 - The accessibility audit also used a 320 CSS px reflow check and emulated reduced-motion preferences. No actual browser-zoom or assistive-technology session was performed.
@@ -154,20 +158,19 @@ External resources are limited to an external favicon/background image and a con
 
 ## Changed Files
 
-Latest delta `99935c4..3f7a851` (8 commits, 37 paths: 1 added, 2 renamed, 34 modified). Headline changes include the extraction of the collapsible Mission Drawer, StatusBar clustering and noise reduction, modal geometry harmonization, scanline overlay consolidation, Level 9 honeypot restoration, and documentation alignment.
+Latest delta `3f7a851..824c99d` (9 commits, 40 modified paths: 1 added, 39 modified). Headline changes include TypeScript strictness migration (`noImplicitAny`, `strictNullChecks`), POSIX permission mode indicators and curriculum inspection, Episode 3 Exam Mode scaffolding, filesystem mutation preservation, pre-push test server isolation, and domain glossary synchronization.
 
-- **Mission Drawer & Layout:** `src/components/MissionDrawer.tsx` extracted from `src/components/PreviewPane.tsx` to render mission titles, descriptions, and task checklists; supports collapsible drawer toggle with `Alt+O` in `src/App.tsx`. Discoverability tips added to Level 2 in `src/constants/levels.ts`.
-- **Status Bar Refactor:** `src/components/StatusBar.tsx` restructured into three functional clusters (mode/state, file context/technical notifications, progress/stats). Silenced default `HIDDEN: OFF` flag to reduce terminal visual noise. Added ephemeral notifications to `src/hooks/keyboard/handleSortMode.ts` when cycling linemodes.
-- **Modal Geometry Harmonization:** Standardized peripheral modals and alert shells to rectangular terminal geometry (`rounded-none`, `border-zinc-700`): `src/components/GameOverModal.tsx`, `src/components/HintModal.tsx`, `src/components/InfoPanel.tsx`, `src/components/WarningModal.tsx`, `src/components/SuccessToast.tsx`, `src/components/SystemAlerts.tsx`, `src/components/ThreatAlert.tsx`.
-- **Scanline Overlay Consolidation:** Routed inline CRT scanline overlays in `src/components/GameOverModal.tsx` and `src/components/OutroSequence.tsx` through shared `src/components/narrative/Scanlines.tsx`.
-- **Filesystem Trap Fix:** Restored `isHoneypot: true` on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, fixing the Level 9 trap where deleting critical keepers must trigger failure.
-- **Type Safety & Settings Contract:** Removed unsafe `as GameState` cast in `src/App.tsx`, restoring compiler verification for `narrativeEffects` and `consciousnessLevel`. Progress in `tsconfig.json` enabled `noImplicitAny: true` and `strictNullChecks: true`. Pruned unused `consciousnessTriggers` in `src/types.ts` and `src/utils/gameUtils.test.ts`.
-- **Typography & Responsive Formatting:** Added `.mission-prose` (`text-wrap: pretty`) in `src/index.css` and applied it to mission briefs and task descriptions. Balanced requirement notice typography (`text-wrap: balance`) and removed eyebrow kickers in `index.html` and `src/components/RequirementNotice.tsx`.
-- **Documentation & Walkthrough Realignment:** Aligned documentation, walkthroughs, and roadmaps with codebase changes across `CLAUDE.md`, `CONTRIBUTING.md`, `GEMINI.md`, `GLOSSARY.md`, `QUESTIONS.md`, `README.md`, `ROADMAP.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `docs/EPISODE_3_SOLUTIONS.md`, `docs/HAUNTED_MACHINE_SUMMARY.md`, `docs/LEARNING_DESIGN.md`, `docs/PROTOCOL_VIOLATIONS.md`, and `docs/STORY_ARC.md`. Archived unmerged proposals to `docs/archive/HUD_LAYOUT_ANALYSIS.md` and `docs/archive/LEVEL_AUDIT.md`.
+- **TypeScript Strictness Migration:** Enabled `noImplicitAny: true` and `strictNullChecks: true` in `tsconfig.json`. Added explicit typings and null-safe guards across `src/App.tsx`, `src/hooks/gameReducer.ts`, `src/hooks/keyboard/*`, `src/utils/*`, and tests.
+- **Curriculum & Permission Bit Inspection:** Added `permissions?: string` to `FileNode` in `src/types.ts`, rendered in `src/components/StatusBar.tsx`, `src/components/FileSystemItem.tsx`, and `src/components/InfoPanel.tsx`. Seeded POSIX permissions across initial daemons and configs in `src/constants/filesystem/initial.ts`. Added Level 11 Task 3 executable permission check `(n.permissions || '-rwxr-xr-x').includes('x')` and Level 10 audit guidance in `src/constants/levels.ts`.
+- **Episode 3 Exam Mode Scaffolding:** Initialized `MissionDrawer` as collapsed by default upon entering Episode 3, challenging players to operate without visible task reminders while maximizing file preview area (`Alt+O` to expand).
+- **Filesystem Mutation Preservation:** Sequenced Level 13 directory evacuation after prerequisite node seeding in `src/constants/filesystem/mutations.ts`, verified via unit test `src/utils/fsMutationPreservation.test.ts`.
+- **Playwright Test Isolation:** Updated `playwright.config.ts` to cleanly isolate pre-push test execution on port 3100 with valid `baseURL` and `webServer.url: 'http://localhost:3100'`, avoiding port 3000 local dev server collisions.
+- **Curriculum Navigation Instruction:** Clarified Level 1 Task 5 navigation instructions (`retreat-var`) in `src/constants/levels.ts`.
+- **Domain Modeling & Vocabulary:** Updated `GLOSSARY.md` with canonical, implementation-free definitions for `Exam Mode`, `Mission Drawer`, and `Permission Mode`.
 - **Prior deltas:** Architectural baseline features (ADR-0001 platform gating, build-time Tailwind 3.4.19, accessibility focus containment, dead-narrative pruning, `fallow`/`knip` gates, and chunk isolation) are retained from previous scans.
 
-No architectural changes detected in this delta: changes represent modular UI extractions, geometry harmonization, bug fixes, and documentation synchronization.
+No architectural changes detected in this delta: changes represent type safety hardening, curriculum refinements, test harness isolation, and documentation synchronization.
 
 ## Last Scanned
 
-2026-11-23T15:35:46Z
+2026-11-23T16:45:00Z

@@ -20,6 +20,10 @@ _Avoid_: Terminal message, in-world error, system notification
 A narrative chapter that groups levels into a learning phase: Awakening, Fortification, or Mastery.
 _Avoid_: Level, cycle
 
+**Exam Mode**:
+The high-stakes learning phase in Episode 3 where didactic keycaps and sensory scaffolding are retracted to test player mastery from memory.
+_Avoid_: Hard mode, test mode, final exam
+
 **Level**:
 A playable stage within an episode, with its own objectives and any limits on time or keystrokes. “Mission” is narrative wording for a level, not a separate unit of progression.
 _Avoid_: Episode, task
@@ -44,6 +48,10 @@ _Avoid_: Min width, mobile layout, breakpoint
 The narrative explanation of a level's situation, stakes, and purpose. The interface currently labels this text “Target”; it is distinct from the task objectives.
 _Avoid_: Objective, task, file target
 
+**Mission Drawer**:
+The collapsible in-game HUD container in the inspection pane presenting the active level's mission brief and task checklist.
+_Avoid_: Mission sidebar, task panel, objective tray
+
 **Current item**:
 The file or directory at the cursor position. It need not belong to the marked selection.
 _Avoid_: Marked selection, batch
@@ -55,6 +63,10 @@ _Avoid_: Current item, cursor position
 **Inspection**:
 Viewing an item's file information, distinct from reading its contents in the preview.
 _Avoid_: Marking, previewing
+
+**Permission Mode**:
+The standard POSIX access representation (`drwxr-xr-x`, `-rwxr-xr-x`, `-rw-r--r--`) indicating file type and executable privileges, used to distinguish live daemons and directory structures from passive data or honeypots.
+_Avoid_: File mode, chmod, access flags, permission bits
 
 **Critical anchor**:
 A file that TRACE CLEANUP requires the player to preserve. Being a critical anchor does not say what happens if the player tries to delete it.
