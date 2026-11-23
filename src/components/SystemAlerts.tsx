@@ -1,12 +1,13 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle, Info, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, ShieldAlert, X } from 'lucide-react';
 import { GameAlert } from '../types';
 
 interface SystemAlertsProps {
   alerts: GameAlert[];
+  onDismiss?: (id: string) => void;
 }
 
-export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
+export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts, onDismiss }) => {
   return (
     <div
       className="fixed top-24 left-4 right-4 z-20 flex flex-col gap-4 font-mono pointer-events-none max-h-[calc(100dvh-8rem)] overflow-y-auto sm:left-auto sm:right-8 sm:w-96"
@@ -16,7 +17,7 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
         <div
           key={alert.id}
           className={`
-            relative overflow-hidden rounded-none border shadow-2xl p-4 animate-in slide-in-from-right fade-in duration-500
+            pointer-events-auto relative overflow-hidden rounded-none border shadow-2xl p-4 animate-in slide-in-from-right fade-in duration-500
             ${
               alert.severity === 'error'
                 ? 'bg-red-950/90 border-red-500/50 text-red-100'
@@ -28,6 +29,14 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts }) => {
             }
           `}
         >
+          <button
+            type="button"
+            onClick={() => onDismiss?.(alert.id)}
+            aria-label={`Dismiss ${alert.title}`}
+            className="absolute right-2 top-2 z-10 p-1 opacity-60 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
           <div className="flex items-start gap-3">
             <div className="mt-1 shrink-0">
               {alert.severity === 'error' && <ShieldAlert className="w-5 h-5 text-red-500" />}

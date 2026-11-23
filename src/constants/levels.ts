@@ -165,7 +165,7 @@ export const LEVELS: Level[] = [
       {
         id: 'data-harvest-1',
         description:
-          'Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs (gd)',
+          'Investigate `~/datastore/abandoned_script.py` for exfiltration breadcrumbs (gd, then j×3)',
         check: (c) => {
           const items = getVisibleItems(c);
           const node = items[c.cursorIndex];
@@ -285,7 +285,7 @@ export const LEVELS: Level[] = [
     hint: 'Select (Space), exfiltrate (x). Reveal hidden (.), paste (p).',
     coreSkill: 'Batch Selection (Space) + Toggle Hidden (.)',
     environmentalClue:
-      'VAULT: ~ / .config | ASSETS: protocols / * | MODE: Select → Cut → Reveal → Paste',
+      'VAULT: ~ / .config | SCANNER: skips ~/.gitignore matches (.*) | MODE: Select → Cut → Reveal → Paste',
     successMessage:
       'SEGMENTS ARCHIVED. The vault is heavy with data. But a credential leak in `/tmp` has opened a temporary back door. Breach it before the honeypots snap shut.',
     efficiencyTip:
@@ -375,7 +375,7 @@ export const LEVELS: Level[] = [
     leadsTo: [7],
     timeLimit: 90,
     efficiencyTip:
-      'OBSERVATION: Synchronizing bulk data clusters is more efficient than individual packet transfers. Select all (Ctrl+a) to move like a swarm. The clipboard persists—your memory is absolute.',
+      'OBSERVATION: Batch it — Ctrl+a, copy once, paste in the vault. The clipboard survives navigation.',
     tasks: [
       {
         id: 'batch-descend',

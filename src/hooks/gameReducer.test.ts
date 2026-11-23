@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { gameReducer } from './gameReducer';
+import { LEVELS } from '../constants/levels';
 import type { GameState } from '../types';
 
 /**
- * Alerts are keyed by id. An effect can dispatch before state commits (StrictMode
- * double-invoke), so the reducer — not each call site — must keep ids unique.
+ * Alerts are keyed by id and dismissible. An effect can dispatch before state
+ * commits (StrictMode double-invoke), so the reducer — not each call site —
+ * keeps ids unique, and a dismissed id stays suppressed until the level resets.
  * Regression: Level 6 rendered two "WRITE ACCESS GRANTED" cards and React warned
  * about the duplicate `write-access-l6` key.
  */
@@ -41,6 +43,67 @@ describe('gameReducer ADD_ALERT', () => {
     });
 
     expect(next.alerts.map((a) => a.id)).toEqual(['write-access-l6', 'safety-fail-l14']);
+  });
+
+  it('removes only the dismissed id', () => {
+    const first = gameReducer(withAlerts([]), { type: 'ADD_ALERT', payload: alert });
+    const withTwo = gameReducer(first, {
+      type: 'ADD_ALERT',
+      payload: { ...alert, id: 'safety-fail-l14' },
+    });
+
+    const next = gameReducer(withTwo, { type: 'REMOVE_ALERT', id: 'write-access-l6' });
+
+    expect(next.alerts.map((a) => a.id)).toEqual(['safety-fail-l14']);
+    expect(next.dismissedAlertIds).toEqual(['write-access-l6']);
+  });
+
+  it('does not re-add a dismissed alert within the level', () => {
+    const first = gameReducer(withAlerts([]), { type: 'ADD_ALERT', payload: alert });
+    const removed = gameReducer(first, { type: 'REMOVE_ALERT', id: 'write-access-l6' });
+
+    const readded = gameReducer(removed, { type: 'ADD_ALERT', payload: alert });
+
+    expect(readded.alerts).toHaveLength(0);
+    expect(readded).toBe(removed);
+  });
+
+  it('clears dismissed ids when the level changes', () => {
+    const state = {
+      alerts: [],
+      dismissedAlertIds: ['write-access-l6'],
+      completedTaskIds: {},
+      zoxideData: {},
+    } as unknown as GameState;
+
+    const next = gameReducer(state, {
+      type: 'SET_LEVEL',
+      index: 5,
+      fs: { id: 'root', name: 'root', type: 'dir', children: [] },
+      path: ['root'],
+    });
+
+    expect(next.dismissedAlertIds).toEqual([]);
+  });
+});
+
+describe('gameReducer SET_LEVEL timer', () => {
+  it('re-arms the watchdog timer from the level definition on restart', () => {
+    const state = {
+      timeLeft: 0,
+      completedTaskIds: {},
+      zoxideData: {},
+    } as unknown as GameState;
+
+    const next = gameReducer(state, {
+      type: 'SET_LEVEL',
+      index: 5,
+      fs: { id: 'root', name: 'root', type: 'dir', children: [] },
+      path: ['root'],
+    });
+
+    expect(LEVELS[5].timeLimit).toBe(90);
+    expect(next.timeLeft).toBe(90);
   });
 });
 

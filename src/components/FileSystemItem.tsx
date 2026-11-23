@@ -113,7 +113,7 @@ const getListItemRowClasses = (
     }
   }
 
-  const baseClasses = `px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75 relative`;
+  const baseClasses = `px-3 py-0.5 flex items-center gap-2 truncate font-mono cursor-default text-sm transition-colors duration-75`;
 
   return `
     ${baseClasses}

@@ -63,7 +63,6 @@ export type Action =
       showIntro?: boolean;
       notification?: GameState['notification'];
       thought?: GameState['thought'];
-      timeLeft?: number | null;
       zoxideData?: Record<string, ZoxideEntry>;
     }
   | { type: 'RESTART_CYCLE' }
@@ -141,6 +140,7 @@ export type Action =
   | { type: 'SET_HELP_SCROLL'; scroll: number }
   | { type: 'UPDATE_QUEST_MAP'; tab?: number; missionIdx?: number }
   | { type: 'ADD_ALERT'; payload: GameAlert }
+  | { type: 'REMOVE_ALERT'; id: string }
   | { type: 'SET_ALERT_MESSAGE'; message: string }
   | {
       type: 'UPDATE_GAUNTLET';
@@ -507,11 +507,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
         clipboard: null,
         selectedIds: [],
         alerts: [],
+        dismissedAlertIds: [],
         mode: 'normal',
         showEpisodeIntro: action.showIntro ?? false,
         notification: action.notification ?? null,
         thought: action.thought ?? null,
-        timeLeft: action.timeLeft ?? null,
+        timeLeft: LEVELS[action.index].timeLimit ?? null,
         keystrokes: 0,
         weightedKeystrokes: 0,
         gauntletPhase: 0,
@@ -547,6 +548,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         loadedDirIds: [],
         isGameOver: false,
         alerts: [],
+        dismissedAlertIds: [],
+        timeLeft: LEVELS[0].timeLimit ?? null,
         completedTaskIds: {},
         showEpisodeIntro: true,
         isBooting: true,
@@ -838,11 +841,22 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'ADD_ALERT':
       // Alerts are keyed by id and an effect can dispatch before state commits
       // (StrictMode double-invoke), so uniqueness is enforced here rather than at
-      // each call site reading a possibly-stale alerts array.
+      // each call site reading a possibly-stale alerts array. A dismissed id stays
+      // suppressed until SET_LEVEL/RESTART_CYCLE clears the ledger.
+      if (state.dismissedAlertIds?.includes(action.payload.id)) return state;
       if (state.alerts.some((a) => a.id === action.payload.id)) return state;
       return {
         ...state,
         alerts: [...state.alerts, action.payload],
+      };
+
+    case 'REMOVE_ALERT':
+      return {
+        ...state,
+        alerts: state.alerts.filter((a) => a.id !== action.id),
+        dismissedAlertIds: state.dismissedAlertIds?.includes(action.id)
+          ? state.dismissedAlertIds
+          : [...(state.dismissedAlertIds ?? []), action.id],
       };
 
     case 'SET_ALERT_MESSAGE':

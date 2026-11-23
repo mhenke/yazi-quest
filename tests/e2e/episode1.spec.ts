@@ -158,9 +158,9 @@ test.describe('Episode 1: AWAKENING', () => {
       await startLevel(page, 3, { intro: false });
       await expectTerminalThought(page, 'Breadcrumbs... he was here. I am not the first.');
 
-      // Task 1: gd, then 4*j - go to datastore and navigate down 4 times
+      // Task 1: gd, then 3*j - go to datastore and navigate down to the script
       await gotoCommand(page, 'd'); // go to datastore (gd)
-      await navigateDown(page, 4); // 4*j to reach abandoned_script.py
+      await navigateDown(page, 3); // 3*j to reach abandoned_script.py
       await assertTask(page, '1/4', testInfo.outputDir, 'preview_script');
 
       // Task 2: gi, f, type 'sector_map.png' then Enter

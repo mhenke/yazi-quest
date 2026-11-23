@@ -251,6 +251,7 @@ export interface GameState {
   questMapTab?: number; // Active episode tab index (0-2)
   questMapMissionIdx?: number; // Selected mission index in current tab
   alerts: GameAlert[]; // Active system alerts
+  dismissedAlertIds: string[]; // Alert ids the player closed; suppressed until the level resets
 
   // Terminal Thoughts tracking
 }

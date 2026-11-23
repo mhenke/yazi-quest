@@ -273,6 +273,7 @@ function createInitialState(): GameState {
     future: [],
     loadedDirIds: [],
     alerts: [],
+    dismissedAlertIds: [],
     previewScroll: 0,
     zoxideData: initialZoxide,
     levelIndex: targetIndex,
@@ -685,41 +686,38 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    // Determine level ID
+    // Emit each level's alert on entry. The reducer owns dedupe and dismissal,
+    // so a dismissed alert is never re-added within the same level.
     const levelId = currentLevel.id;
 
     // Check Level 6 Alert (Write Access)
     if (levelId === 6) {
-      if (!gameState.alerts.some((a) => a.id === 'write-access-l6')) {
-        dispatch({
-          type: 'ADD_ALERT',
-          payload: {
-            id: 'write-access-l6',
-            title: 'WRITE ACCESS GRANTED',
-            message: 'Security protocols lifted for workspace. Modification enabled.',
-            severity: 'info',
-            timestamp: Date.now(),
-          },
-        });
-      }
+      dispatch({
+        type: 'ADD_ALERT',
+        payload: {
+          id: 'write-access-l6',
+          title: 'WRITE ACCESS GRANTED',
+          message: 'Security protocols lifted for workspace. Modification enabled.',
+          severity: 'info',
+          timestamp: Date.now(),
+        },
+      });
     }
 
     // Check Level 14 Alert (Safety Interlocks)
     if (levelId === 14) {
-      if (!gameState.alerts.some((a) => a.id === 'safety-fail-l14')) {
-        dispatch({
-          type: 'ADD_ALERT',
-          payload: {
-            id: 'safety-fail-l14',
-            title: 'SAFETY INTERLOCKS DISABLED',
-            message: 'CRITICAL FAILURE: User data protection offline.',
-            severity: 'error',
-            timestamp: Date.now(),
-          },
-        });
-      }
+      dispatch({
+        type: 'ADD_ALERT',
+        payload: {
+          id: 'safety-fail-l14',
+          title: 'SAFETY INTERLOCKS DISABLED',
+          message: 'CRITICAL FAILURE: User data protection offline.',
+          severity: 'error',
+          timestamp: Date.now(),
+        },
+      });
     }
-  }, [currentLevel.id, gameState.alerts, dispatch]);
+  }, [currentLevel.id, dispatch]);
 
   useEffect(() => {
     // Check if everything is complete (including just finished ones)
@@ -951,7 +949,6 @@ export default function App() {
       path: targetPath,
       showIntro: isNewEp,
       notification: onEnterError ? { message: 'Level initialization failed' } : null,
-      timeLeft: nextLevel.timeLimit || null,
       zoxideData: newZoxideData,
     });
   }, [gameState, dispatch]);
@@ -1191,7 +1188,6 @@ export default function App() {
             path: lvl.initialPath || ['root', 'home', 'guest'],
             showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
             notification: null, // No specific notification on jump
-            timeLeft: lvl.timeLimit || null,
             zoxideData: gameState.zoxideData,
           });
         }
@@ -1724,7 +1720,10 @@ export default function App() {
           />
         )}
         {/* Render System Alerts (Top Right) */}
-        <SystemAlerts alerts={gameState.alerts} />
+        <SystemAlerts
+          alerts={gameState.alerts}
+          onDismiss={(id) => dispatch({ type: 'REMOVE_ALERT', id })}
+        />
 
         {atFloor ? (
           <main
@@ -1758,7 +1757,6 @@ export default function App() {
                     path: lvl.initialPath || ['root', 'home', 'guest'],
                     showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
                     notification: null, // No specific notification on jump
-                    timeLeft: lvl.timeLimit || null,
                     zoxideData: gameState.zoxideData,
                   });
                 }}

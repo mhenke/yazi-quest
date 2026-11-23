@@ -33,14 +33,14 @@ const getFailureTitle = (reason: GameOverModalProps['reason'], levelId: number =
 const getFailureNarrative = (reason: GameOverModalProps['reason'], levelId: number = 1): string => {
   // Character-specific attribution logic (Watchdog Evolution)
   const getAttribution = () => {
-    if (levelId <= 5) return 'Ticket #9942 auto-resolved by Admin M.Reyes.';
-    if (levelId <= 10) return 'Heuristic deviation confirmed by Analyst K.Ortega.';
-    return 'IG Interception authorized by S.Iqbal (Watchdog v2.0).';
+    if (levelId <= 5) return 'Ticket #9942 closed by M.Reyes.';
+    if (levelId <= 10) return 'Deviation flagged by K.Ortega.';
+    return 'Interception authorized by S.Iqbal.';
   };
 
   switch (reason) {
     case 'time':
-      return `Watchdog Timer Expired. ${getAttribution()}`;
+      return `Timer expired. ${getAttribution()}`;
     case 'keystrokes':
       return `Instruction Analysis Complete. Pattern match confirmed. ${getAttribution()}`;
     case 'honeypot':

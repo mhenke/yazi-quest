@@ -325,6 +325,22 @@ The Watchdog daemon has flagged these segments for quarantine.`,
                   content: 'images/sector_map.png',
                 },
                 {
+                  id: 'fs-121',
+                  name: 'legacy_scan.py',
+                  type: 'file',
+                  content: `# Deprecated ingestion scanner (kept for the 2011 audit tooling)
+
+def scan(path):
+    return [name for name in path if name.endswith('.log')]`,
+                },
+                {
+                  id: 'fs-122',
+                  name: 'sector_map.png.part',
+                  type: 'file',
+                  content:
+                    'PARTIAL TRANSFER — 4096 of 1048576 bytes received.\nResume from the original source before ingest.',
+                },
+                {
                   id: 'fs-105',
                   name: 'status_report.txt',
                   type: 'file',
@@ -835,6 +851,15 @@ It will happen again.`,
               name: '.profile',
               type: 'file',
               content: `# User profile\nexport EDITOR=vim`,
+            },
+            {
+              id: 'fs-160',
+              name: '.gitignore',
+              type: 'file',
+              content: `# Containment baseline is a VCS export. The Watchdog indexer
+# only scores tracked paths; matches here never reach its inventory.
+# AI-7733: hidden partitions own this namespace.
+.*`,
             },
             {
               id: 'purge-lock-honeypot',

@@ -65,15 +65,15 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, redu
   );
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black text-zinc-400 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
+    <div className="fixed inset-0 z-[1000] bg-black text-green-500 font-mono p-12 overflow-hidden flex flex-col items-start justify-start select-none">
       <div className="w-full max-w-2xl">
         {lines.map((line, i) => (
           <div key={i} className="min-h-[1.2em]">
             {line && line.startsWith('[ OK ]') ? (
               <>
-                <span className="text-zinc-600">[</span>
-                <span className="text-green-500 font-bold"> OK </span>
-                <span className="text-zinc-600">]</span>
+                <span className="text-green-700">[</span>
+                <span className="text-green-400 font-bold"> OK </span>
+                <span className="text-green-700">]</span>
                 {line.substring(6)}
               </>
             ) : (
@@ -81,12 +81,12 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, redu
             )}
           </div>
         ))}
-        <div className="animate-pulse bg-zinc-400 w-2 h-4 inline-block ml-1 mt-1" />
+        <div className="animate-pulse bg-green-500 w-2 h-4 inline-block ml-1 mt-1" />
       </div>
 
       {showContinue && (
-        <div className="mt-8 text-zinc-300 font-mono text-sm flex items-center gap-2">
-          <span className="w-2 h-2 bg-zinc-400 animate-pulse rounded-full" />
+        <div className="mt-8 text-green-500 font-mono text-sm flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
           Press Shift+Enter to continue...
         </div>
       )}

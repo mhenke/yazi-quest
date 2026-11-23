@@ -17,6 +17,7 @@ export const handleSystemParamsKeyDown = (
     case 'f':
       if (!e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
         dispatch({ type: 'SET_MODE', mode: 'filter' });
         dispatch({ type: 'MARK_ACTION_USED', actionId: 'Filter' });
         return true;
