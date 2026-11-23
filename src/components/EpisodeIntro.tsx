@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 
 import { Episode } from '../types';
+import { paletteFor } from '../constants/palette';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 import { useGlobalInput } from '../GlobalInputContext';
 import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
@@ -248,7 +249,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
       <div className="my-auto w-full max-w-3xl max-h-full flex flex-col gap-4 sm:gap-6">
         {/* Header */}
         <div
-          className={`shrink-0 flex flex-wrap items-start gap-x-4 gap-y-3 border-b-2 border-dashed ${ep.color ? ep.color.replace('text-', 'border-') : 'border-zinc-500'} pb-4 duration-1000`}
+          className={`shrink-0 flex flex-wrap items-start gap-x-4 gap-y-3 border-b-2 border-dashed ${paletteFor(ep.color).border} pb-4 duration-1000`}
         >
           <div className="flex-1 basis-full sm:basis-auto min-w-0">
             <div className="flex items-center gap-3 mb-2">

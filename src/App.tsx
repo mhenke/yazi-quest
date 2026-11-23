@@ -14,6 +14,7 @@ import {
   applyFileSystemMutations,
 } from './constants/filesystem';
 import { EPISODE_LORE, ECHO_EPISODE_1_LORE } from './constants/narrative';
+import { paletteFor } from './constants/palette';
 import { UPLINK_V1_CONTENT, UPLINK_V2_CONTENT } from './constants/protocols';
 import type { GameState, ZoxideEntry } from './types';
 import { InputModal } from './components/InputModal';
@@ -1150,13 +1151,14 @@ export default function App() {
     (e) => {
       const episodeIcons = [Zap, Shield, Crown];
       const episodes = EPISODE_LORE.map((lore, idx) => {
-        const color = lore.color ?? 'text-blue-500';
+        const palette = paletteFor(lore.color);
         return {
           ...lore,
           levels: LEVELS.filter((l) => l.episodeId === lore.id),
-          border: color.replace('text-', 'border-') + '/30',
-          bg: color.replace('text-', 'bg-') + '/10',
-          color,
+          border: palette.border,
+          bg: palette.bg,
+          color: palette.text,
+          palette,
           icon: episodeIcons[idx] || Shield,
         };
       });

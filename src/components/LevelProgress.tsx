@@ -4,6 +4,7 @@ import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } f
 
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants/narrative';
+import { paletteFor } from '../constants/palette';
 import { useOverlayFocus } from './useOverlayFocus';
 
 interface LevelProgressProps {
@@ -40,13 +41,14 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
 
   const episodeIcons = [Zap, Shield, Crown];
   const episodes = EPISODE_LORE.map((lore, idx) => {
-    const color = lore.color ?? 'text-blue-500';
+    const palette = paletteFor(lore.color);
     return {
       ...lore,
       levels: levels.filter((l) => l.episodeId === lore.id),
-      border: color.replace('text-', 'border-') + '/30',
-      bg: color.replace('text-', 'bg-') + '/10',
-      color,
+      border: palette.border,
+      bg: palette.bg,
+      color: palette.text,
+      palette,
       icon: episodeIcons[idx] || Shield,
     };
   });
@@ -182,20 +184,15 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             {episodes.map((ep, idx) => {
               const isComplete = completionStatus[idx];
               const Icon = ep.icon;
-
-              const baseColor = ep.color.split('-')[1];
-              const shadowColor =
-                baseColor === 'blue'
-                  ? 'rgba(96,165,250,0.5)'
-                  : baseColor === 'purple'
-                    ? 'rgba(192,132,252,0.5)'
-                    : 'rgba(250,204,21,0.5)';
+              const palette = paletteFor(ep.color);
 
               return (
                 <div
                   key={ep.id}
-                  className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-700 ${isComplete ? `text-${baseColor}-400 scale-110` : 'text-zinc-400'}`}
-                  style={isComplete ? { filter: `drop-shadow(0 0 8px ${shadowColor})` } : {}}
+                  className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-700 ${isComplete ? `${palette.textStrong} scale-110` : 'text-zinc-400'}`}
+                  style={
+                    isComplete ? { filter: `drop-shadow(0 0 8px ${palette.textStrongHex}80)` } : {}
+                  }
                 >
                   <Icon size={14} fill={isComplete ? 'currentColor' : 'none'} />
                   <span className="text-xs uppercase font-bold tracking-wider hidden xl:inline-block leading-none mt-0.5">

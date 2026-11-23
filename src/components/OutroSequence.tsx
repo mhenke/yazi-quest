@@ -7,6 +7,7 @@ import {
   EPISODE_LORE,
   CREDITS_DATA,
 } from '../constants/narrative';
+import { paletteFor } from '../constants/palette';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 import { useGlobalInput } from '../GlobalInputContext';
@@ -33,6 +34,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
   // Current part data
 
   const currentPart = CONCLUSION_PARTS[partIndex] || CONCLUSION_PARTS[0];
+  const partPalette = paletteFor(currentPart?.color ?? 'text-red-500');
 
   // Split current part's lore into sections (separated by empty strings)
   const sections = useMemo(() => {
@@ -311,12 +313,9 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
           {/* Part Header */}
           <div
             className="mb-8 border-l-4 pl-6 animate-in slide-in-from-left duration-1000"
-            style={{
-              borderColor:
-                currentPart.color?.replace('text-', '').replace('-500', '') || 'rgb(239 68 68)',
-            }}
+            style={{ borderColor: partPalette.hex }}
           >
-            <div className={`flex items-center gap-3 ${currentPart.color || 'text-red-500'} mb-2`}>
+            <div className={`flex items-center gap-3 ${partPalette.text} mb-2`}>
               <Terminal size={28} />
               <h1 className="text-2xl font-bold tracking-wider uppercase">{currentPart.title}</h1>
             </div>
@@ -336,9 +335,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                   key={idx}
                   className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
                 >
-                  <span
-                    className={`${isBootLike ? 'text-orange-400/70' : `${currentPart.color || 'text-red-500'}/50`} mr-2`}
-                  >
+                  <span className={`${isBootLike ? 'text-orange-400/70' : partPalette.soft} mr-2`}>
                     {'>'}
                   </span>
                   {renderHighlighted(line)}
@@ -358,7 +355,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                     i < partIndex
                       ? 'bg-green-500'
                       : i === partIndex
-                        ? `${currentPart.color?.replace('text-', 'bg-') || 'bg-red-500'} animate-pulse`
+                        ? `${partPalette.bgSolid} animate-pulse`
                         : 'bg-zinc-700'
                   }`}
                 />
@@ -452,15 +449,15 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                 const episodeIcons = [Zap, Shield, Crown];
 
                 const Icon = episodeIcons[idx] || Shield;
-                const colorClass = ep.color.split(' ')[0]; // Extract base color class
+                const palette = paletteFor(ep.color);
                 return (
                   <div key={ep.id} className="flex flex-col items-center gap-2">
                     <div
-                      className={`p-3 rounded-full bg-zinc-900 ring-2 ring-offset-2 ring-offset-black ${colorClass.replace('text', 'ring')}`}
+                      className={`p-3 rounded-full bg-zinc-900 ring-2 ring-offset-2 ring-offset-black ${palette.ring}`}
                     >
-                      <Icon size={24} className={colorClass} />
+                      <Icon size={24} className={palette.text} />
                     </div>
-                    <span className={`text-xs font-mono uppercase tracking-widest ${colorClass}`}>
+                    <span className={`text-xs font-mono uppercase tracking-widest ${palette.text}`}>
                       {ep.name}
                     </span>
                     <span className="text-xs text-zinc-400 uppercase">System Installed</span>
