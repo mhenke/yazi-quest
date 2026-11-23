@@ -2,7 +2,7 @@
 
 ## Adding New Levels
 
-1. Add level definition to `src/constants.tsx`. Ensure all new components or utilities are placed in `src/components/` and `src/utils/` respectively.
+1. Add level definition to `src/constants/levels.ts`. Ensure all new components or utilities are placed in `src/components/` and `src/utils/` respectively.
 2. Implement check functions
 3. Test all tasks complete properly
 4. Update episode lore if needed
@@ -13,25 +13,27 @@
 - Tasks should build on previous knowledge
 - Hints should guide, not solve
 - Ensure hints reference specific keybindings
-- Verify logic with `src/levelTransitions.test.ts` to ensure consistent state across levels.
+- Verify logic with `npm test` to ensure consistent state across levels.
 
 ### Per-level filesystem policy
 
 - Level-scoped filesystem exceptions (for example: allowing deletes inside a
   specific subtree for an exam level) are authored on the Level object via
-  `allowedDeletePaths` in `src/constants.tsx`. Keep policy next to the level
+  `allowedDeletePaths` in `src/constants/levels.ts`. Keep policy next to the level
   content so authors and designers can review runtime behavior without
   searching for external policy files.
+- Filesystem mutations and pre-seeded level state are handled in
+  `src/constants/filesystem/mutations.ts` (`applyFileSystemMutations`), not via
+  an `onEnter(fs)` hook.
 
 See the documentation index for detailed rationale:
 
 - [STORY_ARC.md](./docs/STORY_ARC.md) - Narrative and level progression.
 - [LEARNING_DESIGN.md](./docs/LEARNING_DESIGN.md) - Pedagogical rationale.
-- [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) - Historical audit and refactor logs.
 
 ## Styling
 
-- Use Tailwind CSS
+- Use Tailwind CSS 3.4 (compiled at build time via PostCSS; dynamic class fragments are not supported)
 - Follow the color scheme:
   - Episode 1: Blue
   - Episode 2: Purple
@@ -47,6 +49,12 @@ See the documentation index for detailed rationale:
 - `npm run build`: Builds the application for production.
 - `npm run lint`: Lints the code using ESLint.
 - `npm run format`: Formats the code using Prettier.
+- `npm run type-check`: Runs TypeScript compiler check.
+- `npm test`: Runs unit and integration tests (Vitest).
+- `npm run test:e2e`: Runs Playwright E2E tests.
+- `npm run test:smoke`: Runs Playwright smoke tests (`@smoke`).
+- `npm run prepush`: Runs the full verification pipeline before pushing.
+- `npm run audit:changed`: Runs dependency and dead-code audits (`fallow` + `knip`).
 
 To test the game state, use URL parameters:
 
@@ -56,7 +64,7 @@ To test the game state, use URL parameters:
 - `?intro=false` - Skip intro cinematics.
 - `?debug=outro` - Jump directly to end sequence.
 
-To test specific random events in Level 12 (Daemon Installation), you can force a scenario using URL parameters or by modifying `src/constants.tsx`:
+To test specific random events in Level 12 (Daemon Installation), you can force a scenario using URL parameters or by modifying `src/constants/timings.ts`:
 
 **URL Parameter Method (Recommended):**
 
@@ -64,7 +72,7 @@ To test specific random events in Level 12 (Daemon Installation), you can force 
 
 **Code Modification Method:**
 
-1.  Locate `export const FORCE_SCENARIO: string | null = null;` near the top of the file.
+1.  Locate `export const FORCE_SCENARIO: string | null = null;` in `src/constants/timings.ts`.
 2.  Set it to one of the scenario IDs below.
 3.  Set back to `null` to restore normal behavior.
 
@@ -104,7 +112,7 @@ All interactive components must include `data-testid` attributes to support the 
 
 ### Best Practices:
 
-- **No Manual State**: If a level requires a specific state (e.g. 10 files in `/tmp`), implement it in `onEnter` rather than assuming existing state.
+- **No Manual State**: If a level requires a specific state (e.g. 10 files in `/tmp`), implement it in `src/constants/filesystem/mutations.ts` (`applyFileSystemMutations`) rather than assuming existing state (levels do not have an `onEnter(fs)` hook).
 - **Wait for Modals**: E2E tests should always wait for transitions (`Enter`, `Escape`) to resolve before checking tasks.
 
 ### Automated Testing Guidelines
@@ -129,3 +137,13 @@ await page.evaluate(() => {
 
 - **Levels 1-4**: Press `Shift+Enter` to dismiss the standard intro or use `?intro=false`.
 - **Level 5**: Has a unique "QUARANTINE ALERT". Must be dismissed with `Shift+Enter` before interactions can begin.
+
+#### 3. Playwright E2E Execution
+
+Run Playwright E2E tests with a non-interactive reporter:
+
+```bash
+npm run test:e2e -- --reporter=list
+```
+
+Because `CI=true` may be exported in the environment, prefix Playwright commands with `env -u CI` (e.g., `env -u CI npm run test:e2e -- --reporter=list`) to prevent Playwright from starting a second dev server and colliding on port 3000. Any test run without `--reporter=list` is considered invalid.

@@ -56,12 +56,20 @@ _Avoid_: Current item, cursor position
 Viewing an item's file information, distinct from reading its contents in the preview.
 _Avoid_: Marking, previewing
 
+**Critical anchor**:
+A file that TRACE CLEANUP requires the player to preserve. Being a critical anchor does not say what happens if the player tries to delete it.
+_Avoid_: Keeper, protected file, honeypot
+
+**Decoy**:
+A convincing false target. In TRACE CLEANUP, decoys resemble files worth preserving; in STERILIZATION, the player creates decoy directories to misdirect an audit.
+_Avoid_: Critical anchor, honeypot
+
 **Security Honeypot**:
-A simulated decoy asset planted by CRL security that triggers countermeasures when manipulated.
-_Avoid_: Trap file, tripwire, honeypot node
+A CRL security trap attached to a file or directory that can trigger countermeasures when handled in a particular way. A honeypot can also be a file the mission requires the player to preserve.
+_Avoid_: Decoy, tripwire, honeypot node
 
 **Threat Alert**:
-The modal that delivers a security event. The container is neutral; the body names the cause: procedural breaches say PROTOCOL VIOLATION, deliberate decoys say HONEYPOT or TRAP.
+The modal that delivers a security event. The message names the cause: PROTOCOL VIOLATION for a procedural breach, or HONEYPOT or TRAP for a security trap.
 _Avoid_: Protocol violation, error popup, penalty warning
 
 **Protocol Violation**:

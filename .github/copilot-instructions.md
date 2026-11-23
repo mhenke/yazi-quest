@@ -15,20 +15,24 @@ Adopt the role of a critical collaborator, not a supportive assistant. Deliver c
 - **Framework:** React 19
 - **Language:** TypeScript
 - **Build Tool:** Vite
-- **Styling:** Tailwind CSS (CDN)
+- **Styling:** Tailwind CSS 3.4 (compiled at build time via PostCSS; dynamic class fragments are not supported)
 - **Icons:** Lucide React
 
 ## Commands
 
 ```bash
-npm install        # Install dependencies
-npm run dev        # Start Vite dev server (hot reload)
-npm run build      # Production build
-npm run preview    # Preview production build
-npm test           # Run tests (Vitest)
-npm run lint       # Run ESLint
-npm run format     # Format code with Prettier
-npm run type-check # Run TypeScript compiler check
+npm install           # Install dependencies
+npm run dev           # Start Vite dev server (hot reload)
+npm run build         # Production build
+npm run preview       # Preview production build
+npm test              # Run tests (Vitest)
+npm run test:e2e      # Run Playwright E2E tests
+npm run test:smoke    # Run Playwright smoke tests (@smoke)
+npm run lint          # Run ESLint
+npm run format        # Format code with Prettier
+npm run type-check    # Run TypeScript compiler check
+npm run prepush       # Run complete pre-push verification pipeline
+npm run audit:changed # Run dependency and dead-code audits (fallow + knip)
 ```
 
 ## Debug Parameters
@@ -51,7 +55,7 @@ The project follows a standard React project structure where all source code is 
 - `src/App.tsx`: Main React component; orchestrates the reducer and global listeners.
 - `src/hooks/gameReducer.ts`: Central state management using the reducer pattern.
 - `src/hooks/keyboard/`: Modularized keyboard event handlers.
-- `src/constants.tsx`: Level definitions and other game constants.
+- `src/constants/`: Modular game constants (`levels.ts`, `filesystem/`, `keybindings.ts`, `narrative.ts`, `protocols.ts`, `timings.ts`).
 - `src/types.ts`: TypeScript type definitions.
 - `src/components/`: Reusable UI components.
 - `src/utils/`: Utility functions (fsHelpers.ts, gameUtils.ts, etc.).
@@ -78,9 +82,9 @@ The project follows a standard React project structure where all source code is 
 
 ## Adding Levels
 
-1. Add level definition to `LEVELS` array in `constants.tsx`
+1. Add level definition to `LEVELS` array in `src/constants/levels.ts`
 2. Implement `check()` functions for each task
-3. Optional: Add `onEnter(fs)` hook to modify filesystem at level start
+3. Filesystem mutations and pre-seeded level state are handled in `src/constants/filesystem/mutations.ts` (`applyFileSystemMutations`); levels do not implement an `onEnter(fs)` hook
 4. Pre-seed zoxide data in `App.tsx` if level requires fuzzy jump to specific paths
 
 ## Narrative Design
@@ -150,7 +154,7 @@ Key principles:
 
 6. **Literal Execution:** If a user provides specific key sequences (e.g., "press j 4 times"), EXECUTE LITERALLY. Do not substitute with "smarter" logic (e.g., filters) unless explicitly asked.
 7. **Tool Verification:** Never assume `pressKey('char')` handles modifiers. `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase. Verify low-level mechanics.
-8. **Deterministic Sandbox:** Before E2E testing, grep `src/constants.tsx` for `Math.random` or dynamic dates. Remove/mock sources of non-determinism that alter state.
+8. **Deterministic Sandbox:** Before E2E testing, grep `src/constants/` for `Math.random` or dynamic dates. Remove/mock sources of non-determinism that alter state.
 9. **Visual-First Debugging:** If a UI test fails, the IMMEDIATELY NEXT step is capturing a screenshot. Do not iterate on code without visual evidence.
 10. **Prioritize User Evidence (Anti-"Lazy Expert" Bias):** When a user claims "this works manually," the automated test MUST replicate their exact steps first. Do not optimize or "clean up" the workflow until baseline reproduction is achieved. Do not assume your preferred method is superior to the user's manual instructions.
 11. **Codebase Precedent:** Before implementing a complex interaction, grep existing tests for successful patterns. Do not reinvent methods that are already solved in the codebase.

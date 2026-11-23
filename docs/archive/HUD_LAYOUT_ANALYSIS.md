@@ -1,5 +1,8 @@
 # Design Analysis: Security Indicator Placement
 
+> [!NOTE]
+> **Design Analysis Only**: The proposal to move the Watchdog and Timer to a top-tier header (`LevelProgress.tsx`) was evaluated and rejected; Watchdog and operational indicators remain anchored in `StatusBar.tsx`. This file is preserved for historical context.
+
 Moving the security indicators (Watchdog/Heuristic Scan) to a top navigation bar introduces several architectural and UX trade-offs that require scrutiny:
 
 ## The Structural Pivot: Split-Pane Metadata

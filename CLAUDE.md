@@ -12,9 +12,13 @@ npm run dev        # Start Vite dev server (hot reload)
 npm run build      # Production build
 npm run preview    # Preview production build
 npm test           # Run tests (Vitest)
+npm run test:e2e   # Run Playwright E2E tests
+npm run test:smoke # Run Playwright smoke tests (@smoke)
 npm run lint       # Run ESLint
 npm run format     # Format code with Prettier
 npm run type-check # Run TypeScript compiler check
+npm run prepush    # Run full verification pipeline before pushing
+npm run audit:changed # Run dependency and dead-code audits (fallow + knip)
 ```
 
 ## Debug Parameters
@@ -37,10 +41,10 @@ Use URL parameters for testing:
 
 - `src/hooks/gameReducer.ts` - Central state management using the reducer pattern
 - `src/hooks/keyboard/` - Modularized keyboard event handlers
-- `src/constants.tsx` - Level definitions (`LEVELS`), initial filesystem (`INITIAL_FS`), episode lore, keybindings
+- `src/constants/` - Modular game constants (`levels.ts` for level definitions, `filesystem/` for `INITIAL_FS` and mutations, `keybindings.ts`, `narrative.ts` for episode lore, `protocols.ts`, `timings.ts`)
 - `src/types.ts` - TypeScript interfaces for `GameState`, `FileNode`, `Level`, `Episode`
 - `src/utils/fsHelpers.ts` - Immutable filesystem operations
-- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar) - Styled with Tailwind CSS (via CDN)
+- `src/components/` - UI components (FileSystemPane, PreviewPane, modals, StatusBar) - Styled with Tailwind CSS 3.4 (compiled at build time via PostCSS; dynamic class fragments are not supported)
 
 **Core Patterns:**
 
@@ -62,10 +66,10 @@ Use URL parameters for testing:
 
 ## Adding Levels
 
-1. Add level definition to `LEVELS` array in `src/constants.tsx`
+1. Add level definition to `LEVELS` array in `src/constants/levels.ts`
 2. Implement `check()` functions for each task
-3. Optional: Add `onEnter(fs)` hook to modify filesystem at level start
-4. Any necessary pre-seeded data or state modifications should be handled within the 'onEnter' hook of the level in 'src/constants.tsx'.
+3. Filesystem mutations and pre-seeded level state are handled in `src/constants/filesystem/mutations.ts` (`applyFileSystemMutations`); levels do not implement an `onEnter(fs)` hook
+4. Update episode lore or narrative in `src/constants/narrative.ts` if needed
 
 ## Narrative Design
 
@@ -125,7 +129,7 @@ Key principles:
 
 1. **Literal Execution:** If a user provides specific key sequences (e.g., "press j 4 times"), EXECUTE LITERALLY. Do not substitute with "smarter" logic like filters.
 2. **Key Input Precision:** `pressKey('G')` sends lowercase 'g'. Use `pressKey('Shift+G')` for uppercase commands. Verify inputs.
-3. **Deterministic Environment:** Check `src/constants.tsx` for `Math.random` before testing. Flakiness is often hidden randomness (e.g. `alert_traffic.log`).
+3. **Deterministic Environment:** Check `src/constants/` for `Math.random` before testing. Flakiness is often hidden randomness (e.g. `alert_traffic.log`).
 4. **Visual Evidence:** If a test fails, capture a screenshot IMMEDIATELY. Do not guess the state.
 5. **Prioritize User Evidence (Anti-"Lazy Expert" Bias):** When a user claims "this works manually," the automated test MUST replicate their exact steps first. Do not optimize or "clean up" the workflow until baseline reproduction is achieved. Do not substitute user instructions with "better" logic.
 6. **Codebase Precedent:** Check existing tests for successful patterns before inventing new interaction logic.
@@ -136,7 +140,7 @@ Key principles:
 ## Development Environment
 
 - **Development Server**: The Vite dev server runs on `http://localhost:3000`. Assume it is already running before executing tests.
-- **Testing**: When running Playwright tests, use a non-interactive reporter (e.g., `list`) to ensure the command terminates upon completion. Example: `npm run test:e2e -- --reporter=list`.
+- **Testing**: When running Playwright tests, use a non-interactive reporter (e.g., `list`) to ensure the command terminates upon completion. Example: `npm run test:e2e -- --reporter=list`. Because `CI=true` may be exported in the environment, prefix Playwright commands with `env -u CI` (e.g., `env -u CI npm run test:e2e -- --reporter=list`) or Playwright will start a second dev server and collide on port 3000.
 - **Test Validity**: Any test run without `--reporter=list` is considered invalid and should not be run in CI or for validation purposes.
 
 ## Codebase Navigation

@@ -1,5 +1,8 @@
 # Level Audit: Lore, Storytelling, and Keybindings
 
+> [!NOTE]
+> **Historical / Unmerged Proposal**: This document contains an exploratory audit and proposed curriculum shift (e.g. moving `f, x, p` into Level 2) that was NOT adopted into the game engine. For canonical level definitions and curriculum, refer to `src/constants/levels.ts` and `docs/LEVEL.md`.
+
 This document audits the current levels for narrative consistency, clear objectives (what/why), and the "Initial + 2 Reinforcements + Drop" keybinding rule.
 
 ## Legend

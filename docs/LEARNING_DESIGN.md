@@ -82,7 +82,7 @@ Key milestones (Level 15) utilize **Performance Gauntlets**.
 
 Level 15 ("Final Mastery Gauntlet") serves as the narrative climax—a "System Audit." To match this high-stakes context, the assessment strategy shifts:
 
-- **Explicit Framing**: Challenges are presented as a scored "exam" (6/8 required to pass).
+- **Explicit Framing**: Rather than a scored "exam", Level 15 is structured as a 5-task multi-phase gauntlet that unlocks the final transmission action once the 4 prerequisite tasks are completed.
 - **Time Pressure**: Strict time limits force fluency rather than just competence.
 - **Cumulative**: It tests the synthesis of all prior skills.
   _Note: The underlying mechanism remains performance-based (doing the tasks), but the stealth layer is removed to create tension._

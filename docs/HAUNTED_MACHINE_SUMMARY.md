@@ -16,7 +16,7 @@ The Haunted Machine transforms Yazi Quest's terminal into a **living, haunted na
 
 ### 1. Terminal Thoughts System ✅
 
-**Files:** `src/constants/terminalThoughts.ts`, `src/hooks/useTerminalThoughts.ts`
+**Files:** `src/hooks/useNarrativeSystem.ts`, `src/constants/narrative.ts`
 
 **What it does:** AI-7734's internal monologue evolves through three consciousness phases:
 
