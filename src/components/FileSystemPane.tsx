@@ -45,10 +45,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   const isGrid = !!className?.includes('grid');
   const finalClass = isGrid ? className : `${defaultWidth} ${bgColors} ${className || ''}`;
 
-  // Pre-compute clipboard set for O(1) lookups
   const clipboardSet = useMemo(() => new Set(clipboard?.nodes?.map((n) => n.id)), [clipboard]);
-
-  // Pre-compute selected IDs set for O(1) lookups
   const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   return (

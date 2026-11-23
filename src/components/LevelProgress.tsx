@@ -32,14 +32,12 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   onClose,
   onToggleMap,
   onJumpToLevel,
-  // Lifted Props
   activeTab = 0,
   selectedMissionIdx = 0,
 }) => {
   const missionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const mapRef = useOverlayFocus(isOpen);
 
-  // Derived Data (same as before)
   const episodeIcons = [Zap, Shield, Crown];
   const episodes = EPISODE_LORE.map((lore, idx) => {
     const color = lore.color ?? 'text-blue-500';
@@ -116,19 +114,16 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                 const isCurrent = globalIdx === currentLevelIndex;
                 const isLocked = globalIdx > currentLevelIndex;
 
-                // Local index 1-N for display
                 const displayNum = idx + 1;
 
                 return (
                   <div key={level.id} className="flex items-center group shrink-0">
-                    {/* Connector */}
                     {idx > 0 && (
                       <div
                         className={`w-3 h-[2px] mx-1 rounded-full ${isCompleted ? 'bg-zinc-600' : 'bg-zinc-800'}`}
                       />
                     )}
 
-                    {/* Stage Node */}
                     <div
                       className={`
                                 flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-xs font-mono transition-all duration-300

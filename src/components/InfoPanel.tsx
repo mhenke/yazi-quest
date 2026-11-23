@@ -12,13 +12,11 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
   const panelRef = useOverlayFocus(Boolean(file));
   if (!file) return null;
 
-  // Compute approximate byte-size for a node (files, dirs, archives)
   const computeBytes = (node: FileNode): number => {
     if (node.type === 'dir' || node.type === 'archive') {
       const children = node.children || [];
       return children.reduce((sum, c) => sum + computeBytes(c), 0);
     }
-    // files
     return node.content ? node.content.length : 0;
   };
 
@@ -30,7 +28,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
   };
 
-  // Get mimetype
   const getMimetype = (node: FileNode): string => {
     if (node.type === 'dir') return 'inode/directory';
     if (node.type === 'archive') {
@@ -38,7 +35,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
       if (node.name.endsWith('.tar.gz') || node.name.endsWith('.tgz')) return 'application/gzip';
       return 'application/x-archive';
     }
-    // Files
     const ext = node.name.split('.').pop()?.toLowerCase();
     const mimeMap: Record<string, string> = {
       txt: 'text/plain',

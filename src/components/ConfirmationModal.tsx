@@ -19,7 +19,6 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   const isPermanent = deleteType === 'permanent';
   const panelRef = useOverlayFocus(true, '[data-cancel-delete]');
 
-  // Construct the question for the border title
   const count = itemsToDelete.length;
   const action = isPermanent ? 'Delete' : 'Trash';
   const suffix = count === 1 ? 'file' : 'files';
@@ -38,7 +37,6 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         tabIndex={-1}
         className={`w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-y-auto border ${isPermanent ? 'border-red-500' : 'border-purple-400'} bg-zinc-900/95 shadow-2xl relative`}
       >
-        {/* Border Title */}
         <div
           id="confirmation-modal-title"
           className={`px-4 pt-3 text-center ${isPermanent ? 'text-red-400' : 'text-purple-400'} text-sm font-mono`}
@@ -47,7 +45,6 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         <div className="p-4 sm:p-8 flex flex-col items-center justify-center">
-          {/* File List / Paths */}
           <div
             id="confirmation-modal-files"
             className="w-full max-h-[60vh] overflow-y-auto mb-8 text-lg font-mono text-zinc-400 grid grid-cols-1 gap-y-1 justify-items-center"

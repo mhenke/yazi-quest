@@ -67,18 +67,14 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
 
   const accentTextClass = isQuantumLevel ? 'text-purple-300' : 'text-orange-300';
 
-  // 1. Get Base History/Content
   const baseItems = useMemo(() => getBaseFuzzyCandidates(gameState), [gameState]);
-
   const totalCount = baseItems.length;
 
-  // 2. Apply Filter - preserve existing sort order from baseItems
   const filteredCandidates = useMemo(
     () => filterFuzzyCandidates(baseItems, query),
     [baseItems, query]
   );
 
-  // 3. Determine Preview Items
   const selectedCandidate = filteredCandidates[selectedIndex];
   const previewPath = isZoxide ? selectedCandidate?.path : undefined;
   const previewItems = useMemo(() => {
@@ -143,7 +139,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
                 const isSelected = idx === selectedIndex;
                 return (
                   <div
-                    key={String(item.path) + idx}
+                    key={`${item.path}-${idx}`}
                     data-testid={`file-${item.path}`}
                     id={`${id}-result-${idx}`}
                     role="option"
@@ -167,7 +163,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
                     )}
 
                     <span className="truncate">
-                      {highlightMatch(String(item.path), query, accentTextClass)}
+                      {highlightMatch(item.path, query, accentTextClass)}
                     </span>
                   </div>
                 );
