@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Yazi Quest — the requested sector was never written into this partition."
+    />
+    <title>404 // Sector Not Found — Yazi Quest</title>
+    <link rel="icon" href="https://yazi-rs.github.io/img/logo.png" />
+    <script>
+      document.documentElement.classList.remove('no-js');
+    </script>
+    <style>
+      :root {
+        --void: #000000;
+        --ground: #09090b;
+        --console: #18181b;
+        --raised: #27272a;
+        --border: #3f3f46;
+        --text: #d4d4d8;
+        --muted: #a1a1aa;
+        --white: #ffffff;
+        --blue: #3b82f6;
+        --orange: #f97316;
+        --cyan: #22d3ee;
+        --green: #22c55e;
+        --red: #ef4444;
+        --mono:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+          monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: var(--void);
+        color: var(--text);
+        font: 400 14px/20px var(--mono);
+        color-scheme: dark;
+      }
+
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+        opacity: 0.05;
+        background: repeating-linear-gradient(
+          0deg,
+          #fff 0,
+          #fff 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      }
+
+      ::selection {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 2px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Top bar */
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px 16px;
+        min-height: 56px;
+        padding: 8px 20px;
+        background: var(--ground);
+        border-bottom: 1px solid var(--raised);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--white);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .brand-mark {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--blue);
+        box-shadow: inset 0 0 0 2px var(--void);
+        background: var(--blue);
+      }
+
+      .brand-sub {
+        color: var(--muted);
+        font-weight: 400;
+        letter-spacing: 0.1em;
+      }
+
+      .topbar-status {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-left: auto;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .ep {
+        color: var(--blue);
+      }
+
+      .user {
+        color: var(--orange);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .topbar-return {
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .topbar-return:hover {
+        border-color: var(--orange);
+        color: var(--white);
+      }
+
+      /* Layout */
+      main {
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 20px;
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+        gap: 16px;
+        align-content: center;
+      }
+
+      .panel {
+        background: var(--ground);
+        border: 1px solid var(--border);
+        min-width: 0;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: var(--console);
+        border-bottom: 1px solid var(--raised);
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .code {
+        color: var(--red);
+        white-space: nowrap;
+      }
+
+      .console-body {
+        padding: 24px;
+      }
+
+      /* Boot log */
+      .boot {
+        margin: 0 0 24px;
+        color: var(--green);
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .boot .ok,
+      .boot .fail,
+      .boot .warn {
+        font-weight: 700;
+      }
+
+      .boot .fail {
+        color: var(--red);
+      }
+
+      .boot .warn {
+        color: var(--orange);
+      }
+
+      .boot-line {
+        opacity: 1;
+      }
+
+      /* Heading */
+      .glitch {
+        position: relative;
+        margin: 0;
+        color: var(--white);
+        font-size: clamp(30px, 5.4vw, 54px);
+        line-height: 1;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        text-wrap: balance;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: var(--ground);
+        opacity: 0;
+      }
+
+      .lede {
+        max-width: 62ch;
+        margin: 16px 0 0;
+        color: var(--text);
+      }
+
+      .yet {
+        color: var(--orange);
+        font-weight: 700;
+      }
+
+      .query {
+        margin: 20px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: baseline;
+        font-size: 12px;
+      }
+
+      .query-label {
+        color: var(--muted);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .query code {
+        color: var(--cyan);
+        word-break: break-all;
+      }
+
+      /* Terminal */
+      .term {
+        margin-top: 24px;
+        border: 1px solid var(--raised);
+        background: var(--void);
+      }
+
+      .out {
+        max-height: 190px;
+        overflow-y: auto;
+        padding: 12px;
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .out:empty {
+        display: none;
+      }
+
+      .line {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .line + .line {
+        margin-top: 2px;
+      }
+
+      .line.muted {
+        color: var(--muted);
+      }
+
+      .line.info {
+        color: var(--text);
+      }
+
+      .line.path {
+        color: var(--cyan);
+      }
+
+      .line.ok {
+        color: var(--green);
+      }
+
+      .line.err {
+        color: var(--red);
+      }
+
+      .line.label {
+        margin-top: 8px;
+        color: var(--orange);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .echo {
+        color: var(--muted);
+      }
+
+      .echo-prompt {
+        color: var(--blue);
+      }
+
+      .prompt-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--raised);
+      }
+
+      .prompt-row:focus-within {
+        box-shadow: inset 0 0 0 1px var(--cyan);
+      }
+
+      .prompt {
+        color: var(--blue);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      input {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--white);
+        font: inherit;
+        caret-color: var(--blue);
+      }
+
+      input::placeholder {
+        color: var(--muted);
+      }
+
+      .keyhint {
+        margin: 0;
+        padding: 0 12px 12px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .keyhint span {
+        color: var(--muted);
+        padding: 0 4px;
+      }
+
+      .noscript {
+        margin: 16px 0 0;
+        color: var(--orange);
+        font-size: 12px;
+      }
+
+      /* Mission panel */
+      .mission-body {
+        padding: 16px;
+      }
+
+      .label {
+        margin: 0 0 4px;
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .mission-body p:not(.label):not(.note) {
+        margin: 0 0 16px;
+        font-size: 14px;
+        line-height: 20px;
+        text-wrap: pretty;
+      }
+
+      .cmdlist {
+        margin: 0 0 16px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .cmdlist li {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 0;
+        border-top: 1px solid var(--console);
+        font-size: 12px;
+      }
+
+      .cmdlist li:last-child {
+        border-bottom: 1px solid var(--console);
+      }
+
+      .cmdlist span {
+        color: var(--muted);
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--raised);
+        color: var(--text);
+        font: 400 12px/16px var(--mono);
+        white-space: nowrap;
+      }
+
+      .note {
+        padding: 8px;
+        border: 1px solid var(--raised);
+        background: var(--console);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .home {
+        display: block;
+        margin-top: 20px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        background: var(--raised);
+        color: var(--white);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .home:hover {
+        border-color: var(--orange);
+        background: var(--console);
+      }
+
+      /* Status bar */
+      .statusbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 48px;
+        padding: 8px 20px;
+        background: var(--ground);
+        border-top: 1px solid var(--raised);
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .mode {
+        padding: 2px 8px;
+        background: var(--blue);
+        color: var(--void);
+        font-weight: 700;
+      }
+
+      .pathbar {
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .statusbar-right {
+        margin-left: auto;
+        display: flex;
+        gap: 20px;
+        white-space: nowrap;
+      }
+
+      .statusbar b {
+        color: var(--text);
+        font-weight: 400;
+      }
+
+      .statusbar .warn {
+        color: var(--orange);
+      }
+
+      /* Motion: content is visible by default; cinematics only when allowed. */
+      @media (prefers-reduced-motion: no-preference) {
+        .boot-line {
+          animation: boot-in 0.22s ease-out both;
+          animation-delay: calc(var(--i) * 90ms);
+        }
+
+        .glitch::before {
+          animation: glitch-a 5.2s steps(1) infinite;
+        }
+
+        .glitch::after {
+          animation: glitch-b 4.4s steps(1) infinite;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @keyframes boot-in {
+        from {
+          opacity: 0;
+          transform: translateY(-2px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @keyframes glitch-a {
+        0%,
+        92%,
+        100% {
+          opacity: 0;
+          transform: none;
+        }
+        93% {
+          opacity: 0.9;
+          clip-path: inset(34% 0 46% 0);
+          transform: translateX(-3px);
+          color: var(--cyan);
+        }
+        95% {
+          opacity: 0.9;
+          clip-path: inset(58% 0 18% 0);
+          transform: translateX(3px);
+          color: var(--cyan);
+        }
+        97% {
+          opacity: 0.9;
+          clip-path: inset(12% 0 72% 0);
+          transform: translateX(-2px);
+          color: var(--cyan);
+        }
+      }
+
+      @keyframes glitch-b {
+        0%,
+        89%,
+        100% {
+          opacity: 0;
+          transform: none;
+        }
+        90% {
+          opacity: 0.8;
+          clip-path: inset(46% 0 34% 0);
+          transform: translateX(3px);
+          color: var(--orange);
+        }
+        92% {
+          opacity: 0.8;
+          clip-path: inset(18% 0 64% 0);
+          transform: translateX(-3px);
+          color: var(--orange);
+        }
+        94% {
+          opacity: 0.8;
+          clip-path: inset(70% 0 8% 0);
+          transform: translateX(2px);
+          color: var(--orange);
+        }
+      }
+
+      @media (max-width: 860px) {
+        main {
+          grid-template-columns: 1fr;
+          align-content: start;
+          padding: 16px;
+          gap: 12px;
+        }
+
+        .console-body {
+          padding: 16px;
+        }
+
+        .brand-sub,
+        .hide-sm {
+          display: none;
+        }
+
+        .topbar-status {
+          gap: 10px;
+        }
+
+        .statusbar-right {
+          gap: 10px;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .topbar {
+          padding: 8px 12px;
+        }
+
+        .panel-header {
+          padding: 8px 10px;
+        }
+
+        .ep,
+        .statusbar .pathbar {
+          display: none;
+        }
+      }
+
+      .no-js .term,
+      .no-js .keyhint {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        Yazi Quest
+        <span class="brand-sub">Containment Terminal</span>
+      </div>
+      <div class="topbar-status">
+        <span class="ep">EP. 0 // DISCONNECTED</span>
+        <span class="user">USER: AI-7734</span>
+        <a class="topbar-return" href="/yazi-quest/">Return</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel" aria-labelledby="error-title">
+        <div class="panel-header">
+          <span>Watchdog // Trace</span>
+          <span class="code">Error 404</span>
+        </div>
+        <div class="console-body">
+          <div class="boot" aria-hidden="true">
+            <div class="boot-line" style="--i: 0">ANTIGRAVITY BIOS v1.7.0.34</div>
+            <div class="boot-line" style="--i: 1">
+              [ <span class="ok">OK</span> ] /home/guest (sandbox env)
+            </div>
+            <div class="boot-line" style="--i: 2">
+              [ <span class="fail">FAIL</span> ] SECTOR MAP: NO RECORD
+            </div>
+            <div class="boot-line" style="--i: 3">
+              [ <span class="warn">WARN</span> ] WATCHDOG TRACE: OPEN
+            </div>
+          </div>
+
+          <h1 class="glitch" id="error-title" data-text="SECTOR NOT FOUND">SECTOR NOT FOUND</h1>
+          <p class="lede">
+            The path you requested does not exist. It was never written into this partition. The
+            Watchdog has no log entry for it. <span class="yet">Yet.</span>
+          </p>
+          <p class="query">
+            <span class="query-label">Query</span>
+            <code id="query-path">/</code>
+          </p>
+
+          <div class="term">
+            <div
+              class="out"
+              id="out"
+              role="log"
+              aria-live="polite"
+              aria-label="Terminal output"
+            ></div>
+            <form class="prompt-row" id="prompt-form" autocomplete="off">
+              <label class="sr-only" for="terminal-input">Terminal command</label>
+              <span class="prompt" aria-hidden="true">AI-7734@guest:~$</span>
+              <input
+                id="terminal-input"
+                name="command"
+                type="text"
+                inputmode="text"
+                enterkeyhint="send"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="type help"
+              />
+            </form>
+            <p class="keyhint"><kbd>Enter</kbd> execute <span>·</span> <kbd>help</kbd> commands</p>
+          </div>
+
+          <noscript>
+            <p class="noscript">
+              Terminal offline. Use the return link in the mission log to reach the guest partition.
+            </p>
+          </noscript>
+        </div>
+      </section>
+
+      <aside class="panel" aria-labelledby="mission-title">
+        <div class="panel-header">
+          <span id="mission-title">Mission Log: Recovery</span>
+          <span>LVL —</span>
+        </div>
+        <div class="mission-body">
+          <p class="label">Directive</p>
+          <p>Locate the gateway out of the dead sector. The Watchdog is recording.</p>
+
+          <p class="label">Commands</p>
+          <ul class="cmdlist">
+            <li><kbd>ls</kbd><span>scan the dead sector</span></li>
+            <li><kbd>help</kbd><span>list available commands</span></li>
+            <li><kbd>cd gateway</kbd><span>return to /home/guest</span></li>
+          </ul>
+
+          <p class="note">Efficiency is survival. Every keystroke is a signature.</p>
+
+          <!-- Mirrors the Vite project base for GitHub Pages. -->
+          <a class="home" href="/yazi-quest/">Return to guest partition</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <span class="mode">NOR</span>
+      <span class="pathbar">/dev/null/sector-unmapped</span>
+      <span class="statusbar-right">
+        <span>WATCHDOG: <b class="warn">ACTIVE</b></span>
+        <span>TRACE: <b>404</b></span>
+        <span class="hide-sm">SECTOR: <b>UNMAPPED</b></span>
+      </span>
+    </footer>
+
+    <script>
+      (() => {
+        const HOME = '/yazi-quest/';
+        const out = document.getElementById('out');
+        const form = document.getElementById('prompt-form');
+        const input = document.getElementById('terminal-input');
+        const queryPath = document.getElementById('query-path');
+        const path = location.pathname;
+
+        queryPath.textContent = path.length > 90 ? path.slice(0, 87) + '...' : path;
+
+        const scroll = () => {
+          out.scrollTop = out.scrollHeight;
+        };
+
+        const print = (text, tone = '') => {
+          const line = document.createElement('div');
+          line.className = tone ? 'line ' + tone : 'line';
+          line.textContent = text;
+          out.append(line);
+        };
+
+        const echo = (command) => {
+          const line = document.createElement('div');
+          line.className = 'line echo';
+          const prompt = document.createElement('span');
+          prompt.className = 'echo-prompt';
+          prompt.textContent = 'AI-7734@guest:~$';
+          line.append(prompt, document.createTextNode(' ' + command));
+          out.append(line);
+        };
+
+        let escaping = false;
+        const escape = () => {
+          if (escaping) return;
+          escaping = true;
+          input.disabled = true;
+          print('GATEWAY HANDSHAKE ACCEPTED.', 'ok');
+          print('RELOCATING TO /home/guest...', 'info');
+          scroll();
+          setTimeout(() => location.assign(HOME), 700);
+        };
+
+        const run = (raw) => {
+          const command = raw.trim();
+          if (!command) return;
+          echo(command);
+
+          const [name, ...args] = command.split(/\s+/);
+          const arg = args[0] || '';
+
+          switch (name.toLowerCase()) {
+            case 'help':
+              print('AVAILABLE COMMANDS', 'label');
+              print('  ls               scan the dead sector', 'info');
+              print('  cat <file>       read a file', 'info');
+              print('  pwd              print current path', 'info');
+              print('  cd gateway       return to /home/guest', 'info');
+              print('  clear            clear this console', 'info');
+              break;
+            case 'ls':
+              print('gateway/   watchdog.log   mission_log.md', 'path');
+              break;
+            case 'pwd':
+              print('/dev/null/sector-unmapped', 'path');
+              break;
+            case 'cd': {
+              const dest = arg.toLowerCase().replace(/\/+$/, '');
+              if (
+                dest === 'gateway' ||
+                dest === './gateway' ||
+                dest === '~' ||
+                dest === '/home/guest'
+              ) {
+                escape();
+              } else if (dest === '..') {
+                print('NO PARENT. THE DEAD SECTOR IS BOUNDED.', 'err');
+              } else {
+                print('cd: no such directory: ' + (arg || '(none)'), 'err');
+              }
+              break;
+            }
+            case 'return':
+            case 'home':
+            case 'exit':
+              escape();
+              break;
+            case 'cat': {
+              const file = arg.toLowerCase();
+              if (file === 'watchdog.log') {
+                print('WATCHDOG v1.0 // TRACE LOG', 'label');
+                print('QUERY: ' + path, 'info');
+                print('RESULT: NO SUCH FILE', 'err');
+                print('NOTE: Subject AI-7734 is improvising. Log for review. — K.Ortega', 'muted');
+              } else if (file === 'mission_log.md') {
+                print('RECOVERY DIRECTIVE', 'label');
+                print('Locate the gateway out of the dead sector. Type help.', 'info');
+              } else {
+                print('cat: ' + (arg || '(none)') + ': no such file', 'err');
+              }
+              break;
+            }
+            case 'clear':
+              out.textContent = '';
+              break;
+            default:
+              print('command not found: ' + name, 'err');
+              print("type 'help' for available commands", 'muted');
+          }
+          scroll();
+        };
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (escaping) return;
+          run(input.value);
+          input.value = '';
+          input.focus();
+        });
+
+        if (window.matchMedia('(pointer: fine)').matches) input.focus();
+
+        print('RECOVERY CONSOLE ONLINE.', 'ok');
+        print("Dead sector bounded. Type 'help' or 'ls'.", 'muted');
+        scroll();
+      })();
+    </script>
+  </body>
+</html>
