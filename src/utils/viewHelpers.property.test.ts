@@ -4,11 +4,13 @@ import {
   array,
   boolean,
   constantFrom,
+  oneof,
+  string,
   stringMatching,
   type Arbitrary,
 } from 'fast-check';
 import { describe, it, expect } from 'vitest';
-import { getRecursiveSearchResults, getVisibleItems } from './viewHelpers';
+import { getFilterRegex, getRecursiveSearchResults, getVisibleItems } from './viewHelpers';
 import { sortNodes } from './sortHelpers';
 import type { FileNode, GameState, SortBy, SortDirection } from '../types';
 
@@ -33,11 +35,50 @@ const arbSegment: Arbitrary<string> = constantFrom(
   '.deepneedle'
 );
 
+/** Mixed-case segments to exercise smart-case filter sensitivity. */
+const arbMixedSegment: Arbitrary<string> = constantFrom(
+  'needle',
+  'Needle',
+  '.needle',
+  '.Needle',
+  'readme.md',
+  'README.md',
+  'dir',
+  'Dir',
+  '.Hidden',
+  'App_1.ts'
+);
+
 /** Each array is one root-to-leaf chain; shared prefixes collapse into one node. */
 const arbChains = array(array(arbSegment, { minLength: 1, maxLength: 3 }), {
   minLength: 2,
   maxLength: 8,
 });
+
+const arbMixedChains = array(array(arbMixedSegment, { minLength: 1, maxLength: 2 }), {
+  minLength: 2,
+  maxLength: 8,
+});
+
+const arbMalformedOrAnyPattern: Arbitrary<string> = oneof(
+  string(),
+  constantFrom(
+    '',
+    '[unclosed',
+    '(abc',
+    '*bad',
+    '\\',
+    '(?invalid)',
+    'a\\',
+    '+++',
+    '...',
+    '^$',
+    '\\\\A',
+    '\\A',
+    'Needle',
+    'needle'
+  )
+);
 
 const upsertChild = (
   parent: FileNode,
@@ -185,6 +226,34 @@ describe('property: recursive search honours showHidden at every depth', () => {
       { numRuns: 200 }
     );
   });
+
+  it('never throws on arbitrary or malformed query strings and never leaks hidden files when showHidden=false', () => {
+    assert(
+      property(arbChains, arbMalformedOrAnyPattern, boolean(), (chains, query, showHidden) => {
+        const root = buildTree(chains);
+        const results = getRecursiveSearchResults(root, query, showHidden);
+        const regex = getFilterRegex(query);
+
+        if (!regex) {
+          expect(results).toEqual([]);
+          return;
+        }
+
+        for (const result of results) {
+          expect(result.path!.at(-1)).toBe(result.id);
+          expect(regex.test(result.displayPath!)).toBe(true);
+          if (!showHidden) {
+            expect(isHiddenResult(result)).toBe(false);
+          }
+        }
+        for (const archive of results.filter((r) => r.type === 'archive')) {
+          const prefix = `${archive.displayPath!}/`;
+          expect(results.some((r) => r.displayPath!.startsWith(prefix))).toBe(false);
+        }
+      }),
+      { numRuns: 200 }
+    );
+  });
 });
 
 const arbSortBy: Arbitrary<SortBy> = constantFrom(
@@ -262,29 +331,85 @@ describe('property: getVisibleItems re-filters a stale search snapshot', () => {
     );
   });
 
-  it('an active filter narrows children and never resurrects hidden entries', () => {
+  it('an active smart-case filter narrows mixed-case children and never resurrects hidden entries', () => {
+    const arbSmartFilter = oneof(
+      stringMatching(/^[a-zA-Z]{1,4}$/),
+      constantFrom(
+        'needle',
+        'Needle',
+        'NEEDLE',
+        'readme',
+        'README',
+        'dir',
+        'Dir',
+        'App_1',
+        'app_1',
+        '\\D',
+        '\\\\N'
+      )
+    );
+    assert(
+      property(arbMixedChains, arbSmartFilter, boolean(), (chains, filter, showHidden) => {
+        const root = buildTree(chains);
+        const children = root.children ?? [];
+        const isCaseSensitive = /[A-Z]/.test(filter.replace(/\\./g, ''));
+        // eslint-disable-next-line security/detect-non-literal-regexp -- oracle for smart-case getFilterRegex semantics
+        const regex = new RegExp(filter, isCaseSensitive ? '' : 'i');
+        const expected = children
+          .filter((c) => (showHidden ? true : !c.name.startsWith('.')))
+          .filter((c) => regex.test(c.name));
+
+        const items = getVisibleItems(
+          baseState(root, { showHidden, filters: { [root.id]: filter } })
+        );
+
+        expect(sorted(items.map((i) => i.id))).toEqual(sorted(expected.map((c) => c.id)));
+        if (!showHidden) {
+          for (const item of items) expect(item.name.startsWith('.')).toBe(false);
+        }
+      }),
+      { numRuns: 150 }
+    );
+  });
+
+  it('arbitrary or malformed filters never throw, fall back safely, and respect showHidden in both modes', () => {
     assert(
       property(
-        arbChains,
-        stringMatching(/^[a-z]{1,4}$/),
+        arbMixedChains,
+        arbMalformedOrAnyPattern,
         boolean(),
-        (chains, filter, showHidden) => {
+        boolean(),
+        (chains, filter, showHidden, inSearchMode) => {
           const root = buildTree(chains);
-          const children = root.children ?? [];
-          // eslint-disable-next-line security/detect-non-literal-regexp -- oracle for getFilterRegex semantics
-          const regex = new RegExp(filter, /[A-Z]/.test(filter) ? '' : 'i');
-          const expected = children
-            .filter((c) => (showHidden ? true : !c.name.startsWith('.')))
-            .filter((c) => regex.test(c.name));
+          const snapshot = inSearchMode ? getRecursiveSearchResults(root, '.', true) : [];
+          const state = baseState(root, {
+            showHidden,
+            filters: { [root.id]: filter },
+            ...(inSearchMode ? { searchQuery: '.', searchResults: snapshot } : {}),
+          });
 
-          const items = getVisibleItems(
-            baseState(root, { showHidden, filters: { [root.id]: filter } })
-          );
+          const items = getVisibleItems(state);
+          const unfiltered = getVisibleItems(baseState(root, { ...state, filters: {} }));
+          const unfilteredIds = new Set(unfiltered.map((i) => i.id));
 
-          expect(sorted(items.map((i) => i.id))).toEqual(sorted(expected.map((c) => c.id)));
+          if (filter === '') {
+            expect(items.map((i) => i.id)).toEqual(unfiltered.map((i) => i.id));
+          } else if (getFilterRegex(filter) === null) {
+            expect(items).toEqual([]);
+          } else {
+            for (const item of items) {
+              expect(unfilteredIds.has(item.id)).toBe(true);
+            }
+          }
+
+          if (!showHidden) {
+            for (const item of items) {
+              expect(inSearchMode ? isHiddenResult(item) : item.name.startsWith('.')).toBe(false);
+            }
+          }
         }
       ),
-      { numRuns: 150 }
+      { numRuns: 200 }
     );
   });
 });

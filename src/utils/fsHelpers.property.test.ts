@@ -3,172 +3,34 @@ import {
   property,
   array,
   boolean,
-  integer,
-  record,
   constantFrom,
+  integer,
+  option,
   stringMatching,
   type Arbitrary,
 } from 'fast-check';
 import { describe, it, expect } from 'vitest';
 import {
   addNode,
+  cloneSubtreeWithFreshIds,
   deleteNode,
+  findNodeByName,
   findPathById,
-  getRecursiveContent,
+  getAllDirectoriesWithPaths,
   getNodeByPath,
+  getParentNode,
+  getRecursiveContent,
   resolvePath,
 } from './fsHelpers';
-import { sortNodes } from './sortHelpers';
 import { FileNode } from '../types';
-
-/**
- * ADR-critical property (repo Critical Rule 1): immutability is non-negotiable.
- * fsHelpers helpers must return fresh state and never mutate the input tree.
- * Expressed as a property so any shape of tree is checked, not only the shapes
- * the example-based tests happened to write down.
- *
- * Helpers are path-addressed: `addNode(fs, parentPath, node)` and
- * `deleteNode(fs, parentPath, nodeId)`.
- */
-const leaf = (id: string, name: string, type: FileNode['type']): FileNode => ({ id, name, type });
-
-/** A root with one level of directories, each holding a file. */
-const arbTree: Arbitrary<FileNode> = array(stringMatching(/^[a-z0-9]{1,4}$/), {
-  minLength: 1,
-  maxLength: 4,
-}).map((names) => ({
-  id: 'root',
-  name: 'root',
-  type: 'dir' as const,
-  children: names.map((n, i) => ({
-    id: `d${i}`,
-    name: n,
-    type: 'dir' as const,
-    children: [leaf(`f${i}`, `${n}.txt`, 'file')],
-  })),
-}));
-
-const dirPaths = (fs: FileNode): string[][] => (fs.children ?? []).map((d) => [fs.id, d.id]);
-
-describe('property: fs helpers preserve immutability', () => {
-  it('addNode returns a fresh tree and never mutates the input', () => {
-    assert(
-      property(arbTree, stringMatching(/^[a-z]{1,6}$/), (fs, name) => {
-        const paths = dirPaths(fs);
-        const parentPath = paths[0];
-        const snapshot = JSON.stringify(fs);
-
-        const result = addNode(fs, parentPath, leaf(`new-${name}`, name, 'file'));
-
-        expect(JSON.stringify(fs)).toBe(snapshot);
-        expect(result.ok).toBe(true);
-        if (result.ok) expect(JSON.stringify(result.value)).not.toBe(snapshot);
-      }),
-      { numRuns: 200 }
-    );
-  });
-
-  it('deleteNode removes exactly the addressed node and never mutates the input', () => {
-    assert(
-      property(arbTree, (fs) => {
-        const parentPath = dirPaths(fs)[0];
-        const target = fs.children!.find((d) => d.id === parentPath[1])!.children![0];
-        const snapshot = JSON.stringify(fs);
-
-        const result = deleteNode(fs, parentPath, target.id);
-
-        expect(JSON.stringify(fs)).toBe(snapshot);
-        expect(result.ok).toBe(true);
-        if (result.ok) {
-          const stillThere = (result.value.children ?? [])
-            .flatMap((d) => d.children ?? [])
-            .some((c) => c.id === target.id);
-          expect(stillThere).toBe(false);
-        }
-      }),
-      { numRuns: 200 }
-    );
-  });
-
-  it('deleteNode reports NotFound rather than throwing for an absent id', () => {
-    assert(
-      property(arbTree, stringMatching(/^missing-[a-z]{3}$/), (fs, absent) => {
-        const snapshot = JSON.stringify(fs);
-        const result = deleteNode(fs, [fs.id, fs.children![0].id], absent);
-        expect(result.ok).toBe(false);
-        expect(JSON.stringify(fs)).toBe(snapshot);
-      }),
-      { numRuns: 50 }
-    );
-  });
-});
-
-describe('property: sortNodes ordering invariants', () => {
-  const arbNodes = array(
-    record({
-      id: stringMatching(/^[a-z0-9]{1,6}$/),
-      name: stringMatching(/^[a-z.]{1,8}$/),
-      type: constantFrom('file', 'dir', 'archive') as Arbitrary<FileNode['type']>,
-    }),
-    { minLength: 0, maxLength: 12 }
-  );
-
-  it('is a permutation: no node is lost or duplicated', () => {
-    assert(
-      property(
-        arbNodes,
-        constantFrom('natural', 'alphabetical', 'modified', 'size', 'extension') as Arbitrary<
-          Parameters<typeof sortNodes>[1]
-        >,
-        constantFrom('asc', 'desc') as Arbitrary<Parameters<typeof sortNodes>[2]>,
-        (nodes, sortBy, dir) => {
-          const snapshot = JSON.stringify(nodes);
-          const sorted = sortNodes(nodes, sortBy, dir);
-
-          expect(sorted.map((n) => n.id).sort()).toEqual(nodes.map((n) => n.id).sort());
-          expect(JSON.stringify(nodes)).toBe(snapshot);
-        }
-      ),
-      { numRuns: 200 }
-    );
-  });
-
-  it('natural mode groups directories ahead of non-directories on asc', () => {
-    assert(
-      property(arbNodes, (nodes) => {
-        const sorted = sortNodes(nodes, 'natural', 'asc');
-        const firstNonDir = sorted.findIndex((n) => n.type !== 'dir');
-        if (firstNonDir === -1) return;
-        expect(sorted.slice(firstNonDir).every((n) => n.type !== 'dir')).toBe(true);
-      }),
-      { numRuns: 200 }
-    );
-  });
-
-  it('descending reverses ascending for the total alphabetical order', () => {
-    assert(
-      property(array(stringMatching(/^[a-z]{1,6}$/), { minLength: 1, maxLength: 8 }), (names) => {
-        const nodes = names.map((n, i) => leaf(`n${i}`, n, 'file'));
-        const asc = sortNodes(nodes, 'alphabetical', 'asc').map((n) => n.name);
-        const desc = sortNodes(nodes, 'alphabetical', 'desc').map((n) => n.name);
-        expect(desc).toEqual([...asc].reverse());
-      }),
-      { numRuns: 100 }
-    );
-  });
-});
-
-/* ------------------------------------------------------------------ *
- * Path algebra + recursive listing (fsHelpers)
- * ------------------------------------------------------------------ */
 
 /**
  * Trees come from a seeded PRNG (mulberry32) so the counterexample fast-check
  * prints rebuilds the exact shape: 0-3 subdirectories and 0-4 files per
  * directory, some entries dot-prefixed, and roughly a third of the directories
  * replaced by an archive that does carry children - the shape the "archives
- * are opaque" rule needs. Names are unique, which makes resolvePath injective
- * and therefore checkable against the ground truth recorded at build time.
+ * are opaque" rule needs. Names are unique, which makes resolvePath and
+ * findNodeByName injective and checkable against build-time ground truth.
  */
 const prng = (seed: number): (() => number) => {
   let s = seed >>> 0;
@@ -213,6 +75,9 @@ const arbForest: Arbitrary<Forest> = integer({ min: 1, max: 2 ** 31 - 1 }).map((
   return { root: make('dir', [], [], 0), entries };
 });
 
+const arbNonEmptyForest = arbForest.filter((f) => f.entries.length > 1);
+const arbPick = integer({ min: 0, max: 1_000_000 });
+
 /** `/name/...` for a descendant, `/` for the root, from build-time names. */
 const expectedDisplay = (namePath: string[]): string =>
   namePath.length <= 1 ? '/' : `/${namePath.slice(1).join('/')}`;
@@ -241,6 +106,123 @@ const expectedRecursive = (forest: Forest, startPath: string[], showHidden: bool
     .sort();
 };
 
+const collectTreeIds = (node: FileNode): string[] => {
+  const ids = [node.id];
+  for (const child of node.children ?? []) {
+    ids.push(...collectTreeIds(child));
+  }
+  return ids;
+};
+
+const assertSameShape = (orig: FileNode, copy: FileNode): void => {
+  expect(copy.name).toBe(orig.name);
+  expect(copy.type).toBe(orig.type);
+  const origChildren = orig.children ?? [];
+  const copyChildren = copy.children ?? [];
+  expect(copyChildren.length).toBe(origChildren.length);
+  for (let i = 0; i < origChildren.length; i++) {
+    expect(copyChildren[i].parentId).toBe(copy.id);
+    assertSameShape(origChildren[i], copyChildren[i]);
+  }
+};
+
+/* ------------------------------------------------------------------ *
+ * Immutability & subtree mutations across multi-level nested trees
+ * ------------------------------------------------------------------ */
+
+describe('property: fs helpers preserve immutability', () => {
+  it('addNode adds at any nested container path and never mutates the input', () => {
+    assert(
+      property(
+        arbForest,
+        arbPick,
+        stringMatching(/^[a-z]{1,6}$/),
+        constantFrom<'file' | 'dir'>('file', 'dir'),
+        (forest, pick, name, type) => {
+          const containers = forest.entries.filter((e) => e.node.type !== 'file');
+          const target = containers[pick % containers.length];
+          const snapshot = JSON.stringify(forest.root);
+          const added: FileNode = {
+            id: `added-${name}`,
+            name,
+            type,
+            ...(type === 'dir' ? { children: [] } : {}),
+          };
+
+          const result = addNode(forest.root, target.path, added);
+
+          expect(JSON.stringify(forest.root)).toBe(snapshot);
+          expect(result.ok).toBe(true);
+          if (result.ok) {
+            expect(JSON.stringify(result.value)).not.toBe(snapshot);
+            const expectedPath = [...target.path, added.id];
+            expect(findPathById(result.value, added.id)).toEqual(expectedPath);
+            expect(getNodeByPath(result.value, expectedPath)).toEqual(added);
+          }
+        }
+      ),
+      { numRuns: 200 }
+    );
+  });
+
+  it('deleteNode removes exactly the addressed nested subtree and never mutates the input', () => {
+    assert(
+      property(arbNonEmptyForest, arbPick, (forest, pick) => {
+        const nonRoot = forest.entries.slice(1);
+        const target = nonRoot[pick % nonRoot.length];
+        const parentPath = target.path.slice(0, -1);
+        const snapshot = JSON.stringify(forest.root);
+
+        const result = deleteNode(forest.root, parentPath, target.node.id);
+
+        expect(JSON.stringify(forest.root)).toBe(snapshot);
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+          for (const entry of forest.entries) {
+            const isInDeletedSubtree =
+              entry.path.length >= target.path.length &&
+              target.path.every((id, i) => entry.path[i] === id);
+            if (isInDeletedSubtree) {
+              expect(findPathById(result.value, entry.node.id)).toBeUndefined();
+            } else {
+              expect(findPathById(result.value, entry.node.id)).toEqual(entry.path);
+            }
+          }
+        }
+      }),
+      { numRuns: 200 }
+    );
+  });
+
+  it('deleteNode and addNode report NotFound without mutating for absent targets or parent paths', () => {
+    assert(
+      property(arbForest, arbPick, stringMatching(/^missing-[a-z]{3}$/), (forest, pick, absent) => {
+        const containers = forest.entries.filter((e) => e.node.type !== 'file');
+        const parentPath = containers[pick % containers.length].path;
+        const snapshot = JSON.stringify(forest.root);
+
+        const delMissingNode = deleteNode(forest.root, parentPath, absent);
+        expect(delMissingNode).toEqual({ ok: false, error: 'NotFound' });
+        expect(JSON.stringify(forest.root)).toBe(snapshot);
+
+        const badParentPath = [forest.root.id, absent];
+        const addBadParent = addNode(forest.root, badParentPath, {
+          id: 'new-1',
+          name: 'x',
+          type: 'file',
+        });
+        expect(addBadParent).toEqual({ ok: false, error: 'NotFound' });
+        expect(JSON.stringify(forest.root)).toBe(snapshot);
+      }),
+      { numRuns: 100 }
+    );
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Path algebra, lookup, cloning, and recursive listing (fsHelpers)
+ * ------------------------------------------------------------------ */
+
 describe('property: path algebra is self-consistent', () => {
   it('every node has a path that round-trips through getNodeByPath', () => {
     assert(
@@ -267,6 +249,127 @@ describe('property: path algebra is self-consistent', () => {
       { numRuns: 100 }
     );
   });
+
+  it('getParentNode returns null at root/invalid paths and the exact parent for every descendant', () => {
+    assert(
+      property(arbForest, stringMatching(/^zz[0-9]{1,4}$/), (forest, absent) => {
+        const { root, entries } = forest;
+        expect(getParentNode(root, undefined)).toBeNull();
+        expect(getParentNode(root, [])).toBeNull();
+        expect(getParentNode(root, [root.id])).toBeNull();
+        expect(getParentNode(root, [root.id, absent, 'leaf'])).toBeNull();
+
+        for (const { node, path } of entries.slice(1)) {
+          const parent = getParentNode(root, path);
+          expect(parent).toBe(getNodeByPath(root, path.slice(0, -1)));
+          expect(parent?.children).toContain(node);
+        }
+      }),
+      { numRuns: 150 }
+    );
+  });
+
+  it('findNodeByName matches unique names and respects optional type filters (dir includes archive)', () => {
+    assert(
+      property(arbForest, stringMatching(/^missing-[a-z]{1,4}$/), (forest, absent) => {
+        const { root, entries } = forest;
+
+        for (const { node } of entries) {
+          expect(findNodeByName(root, node.name)).toBe(node);
+          expect(findNodeByName(root, node.name, node.type)).toBe(node);
+          expect(findNodeByName(root, node.name, 'file')).toBe(
+            node.type === 'file' ? node : undefined
+          );
+          expect(findNodeByName(root, node.name, 'archive')).toBe(
+            node.type === 'archive' ? node : undefined
+          );
+          expect(findNodeByName(root, node.name, 'dir')).toBe(
+            node.type === 'dir' || node.type === 'archive' ? node : undefined
+          );
+        }
+
+        expect(findNodeByName(root, absent)).toBeUndefined();
+        expect(findNodeByName(root, absent, 'file')).toBeUndefined();
+        expect(findNodeByName(root, absent, 'dir')).toBeUndefined();
+        expect(findNodeByName(root, absent, 'archive')).toBeUndefined();
+      }),
+      { numRuns: 150 }
+    );
+  });
+});
+
+describe('property: cloneSubtreeWithFreshIds', () => {
+  it('preserves structure/name/type, mints unique fresh IDs, rewires parentId, and never mutates original', () => {
+    assert(
+      property(
+        arbForest,
+        arbPick,
+        option(stringMatching(/^parent-[a-z]{1,4}$/), { nil: undefined }),
+        boolean(),
+        (forest, pick, parentId, preserveRootId) => {
+          const target = forest.entries[pick % forest.entries.length].node;
+          const snapshot = JSON.stringify(target);
+          const origIds = new Set(collectTreeIds(target));
+
+          const cloned = cloneSubtreeWithFreshIds(target, parentId, preserveRootId);
+
+          expect(JSON.stringify(target)).toBe(snapshot);
+          expect(cloned).not.toBe(target);
+          expect(cloned.parentId).toBe(parentId ?? target.parentId);
+          assertSameShape(target, cloned);
+
+          const clonedIds = collectTreeIds(cloned);
+          expect(new Set(clonedIds).size).toBe(clonedIds.length);
+
+          if (preserveRootId) {
+            expect(cloned.id).toBe(target.id);
+            for (const descendantId of clonedIds.slice(1)) {
+              expect(origIds.has(descendantId)).toBe(false);
+            }
+          } else {
+            for (const freshId of clonedIds) {
+              expect(origIds.has(freshId)).toBe(false);
+            }
+          }
+        }
+      ),
+      { numRuns: 150 }
+    );
+  });
+});
+
+describe('property: getAllDirectoriesWithPaths', () => {
+  it('returns every non-archive-nested dir and archive with its exact path and excludes files', () => {
+    assert(
+      property(arbForest, (forest) => {
+        const byId = new Map(forest.entries.map((e) => [e.node.id, e]));
+        const expectedIds = forest.entries
+          .filter(({ node, path }) => {
+            if (node.type === 'file') return false;
+            return path.slice(0, -1).every((ancId) => byId.get(ancId)!.node.type !== 'archive');
+          })
+          .map((e) => e.node.id)
+          .sort();
+
+        const dirs = getAllDirectoriesWithPaths(forest.root);
+
+        expect(dirs.map((d) => d.node.id).sort()).toEqual(expectedIds);
+        for (const { node, path } of dirs) {
+          expect(node.type).not.toBe('file');
+          expect(path.at(-1)).toBe(node.id);
+          expect(getNodeByPath(forest.root, path)).toBe(node);
+          expect(path).toEqual(byId.get(node.id)!.path);
+        }
+
+        // Archives stay opaque: no returned directory lies strictly beneath an archive.
+        for (const archive of dirs.filter((d) => d.node.type === 'archive')) {
+          const prefix = `${archive.path.join('/')}/`;
+          expect(dirs.some((other) => other.path.join('/').startsWith(prefix))).toBe(false);
+        }
+      }),
+      { numRuns: 150 }
+    );
+  });
 });
 
 describe('property: getRecursiveContent lists and labels correctly', () => {
@@ -274,7 +377,7 @@ describe('property: getRecursiveContent lists and labels correctly', () => {
     assert(
       property(
         arbForest,
-        array(integer({ min: 0, max: 1_000_000 }), { minLength: 1, maxLength: 5 }),
+        array(arbPick, { minLength: 1, maxLength: 5 }),
         boolean(),
         (forest, picks, showHidden) => {
           const containers = forest.entries.filter((e) => e.node.type !== 'file');

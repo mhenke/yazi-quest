@@ -1,6 +1,7 @@
 import {
   assert,
   array,
+  boolean,
   commands,
   constantFrom,
   modelRun,
@@ -294,7 +295,10 @@ class ConflictAddCommand {
   }
 }
 
-const dirIdArb = constantFrom(ROOT, 'home', 'guest', 'projects', 'app', CONFLICT_PARENT, WORK);
+const dirIdArb = oneof(
+  constantFrom(ROOT, 'home', 'guest', 'projects', 'app', CONFLICT_PARENT, WORK),
+  nat(15).map((n) => `node-${n}`)
+);
 const nameArb = constantFrom('foo', 'bar', '.env', 'notes.txt', 'data', 'config.json');
 const typeArb = constantFrom<'file' | 'dir'>('file', 'dir');
 const addArb = tuple(dirIdArb, nameArb, typeArb).map(
@@ -312,7 +316,7 @@ const NUM_RUNS = 100;
 
 describe('property: fs mutation algebra is model-consistent', () => {
   it('add / delete / conflict-add keep the real tree in lockstep with the model', () => {
-    const arb = commands<FsModel, Real>([addArb, deleteArb, conflictAddArb], { maxCommands: 30 });
+    const arb = commands<FsModel, Real>([addArb, deleteArb, conflictAddArb], { maxCommands: 40 });
 
     assert(
       property(arb, (cmds) => {
@@ -345,15 +349,24 @@ describe('property: fs mutation algebra is model-consistent', () => {
 
 describe('property: resolveAndCreatePath', () => {
   const segArb = stringMatching(/^[a-z]{1,4}$/);
+  /** Prefix guarantees no accidental collision with fixedTree's top-level/guest names. */
+  const freshSegArb = stringMatching(/^z[a-z]{1,3}$/);
+  const startPathArb = constantFrom<string[]>(
+    [ROOT],
+    [ROOT, WORK],
+    [ROOT, 'projects', 'app'],
+    [ROOT, CONFLICT_PARENT]
+  );
 
   it('creates 1-3 lowercase segments, returns a resolvable target, never mutates the input', () => {
     assert(
-      property(array(segArb, { minLength: 1, maxLength: 3 }), (segs) => {
+      property(array(segArb, { minLength: 1, maxLength: 3 }), boolean(), (segs, trailingSlash) => {
         const root = fixedTree();
         const snapshot = JSON.stringify(root);
         const startPath = [ROOT, WORK];
+        const input = segs.join('/') + (trailingSlash ? '/' : '');
 
-        const res = resolveAndCreatePath(root, startPath, segs.join('/'));
+        const res = resolveAndCreatePath(root, startPath, input);
 
         expect(res.error ?? null).toBeNull();
         expect(res.collision).toBe(false);
@@ -373,7 +386,10 @@ describe('property: resolveAndCreatePath', () => {
 
         expect(created.map((n) => n.name)).toEqual(segs);
         expect(created[created.length - 1]).toBe(res.targetNode);
-        expect(res.targetNode!.type).toBe('file'); // no trailing slash
+        expect(res.targetNode!.type).toBe(trailingSlash ? 'dir' : 'file');
+        if (trailingSlash) {
+          expect(res.targetNode!.children).toEqual([]);
+        }
         for (const n of created.slice(0, -1)) {
           expect(n.type).toBe('dir');
           expect(n.children).toBeDefined();
@@ -388,9 +404,114 @@ describe('property: resolveAndCreatePath', () => {
     );
   });
 
-  it("bare '/' and '~/' return an error with no target", () => {
+  it('anchors absolute (/a/b) at root and tilde (~/a/b) at /home/guest regardless of currentPath', () => {
     assert(
-      property(constantFrom('/', '~/'), (input) => {
+      property(
+        constantFrom<'/' | '~/'>('/', '~/'),
+        startPathArb,
+        array(freshSegArb, { minLength: 1, maxLength: 3 }),
+        boolean(),
+        (prefix, startPath, segs, trailingSlash) => {
+          const root = fixedTree();
+          const snapshot = JSON.stringify(root);
+          const input = `${prefix}${segs.join('/')}${trailingSlash ? '/' : ''}`;
+
+          const res = resolveAndCreatePath(root, startPath, input);
+
+          expect(res.error ?? null).toBeNull();
+          expect(res.collision).toBe(false);
+          expect(res.targetNode).toBeDefined();
+          expect(JSON.stringify(root)).toBe(snapshot);
+
+          const expectedAnchor = prefix === '/' ? [ROOT] : [ROOT, 'home', 'guest'];
+          const path = [...expectedAnchor];
+          let node = getNodeByPath(res.fs, path)!;
+          for (const seg of segs) {
+            node = (node.children ?? []).find((c) => c.name === seg)!;
+            expect(node).toBeDefined();
+            path.push(node.id);
+          }
+
+          expect(node).toBe(res.targetNode);
+          expect(res.targetNode!.type).toBe(trailingSlash ? 'dir' : 'file');
+          expect(findPathById(res.fs, res.targetNode!.id)).toEqual(path);
+        }
+      ),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('reports collision on an existing target without mutating the tree or duplicating nodes', () => {
+    assert(
+      property(
+        array(segArb, { minLength: 1, maxLength: 3 }),
+        boolean(),
+        boolean(),
+        (segs, createAsDir, retryAsDir) => {
+          const root = fixedTree();
+          const startPath = [ROOT, WORK];
+          const first = resolveAndCreatePath(
+            root,
+            startPath,
+            segs.join('/') + (createAsDir ? '/' : '')
+          );
+          expect(first.targetNode).toBeDefined();
+
+          const snapshot = JSON.stringify(first.fs);
+          const second = resolveAndCreatePath(
+            first.fs,
+            startPath,
+            segs.join('/') + (retryAsDir ? '/' : '')
+          );
+
+          expect(JSON.stringify(first.fs)).toBe(snapshot);
+          expect(JSON.stringify(second.fs)).toBe(snapshot);
+
+          if (!createAsDir && retryAsDir) {
+            // Requesting a directory where a file already exists is an error, not a soft collision.
+            expect(second.error).toBeTruthy();
+            expect(second.targetNode).toBeUndefined();
+          } else {
+            expect(second.error ?? null).toBeNull();
+            expect(second.collision).toBe(true);
+            expect(second.collisionNode?.id).toBe(first.targetNode!.id);
+            expect(second.targetNode?.id).toBe(first.targetNode!.id);
+          }
+        }
+      ),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('errors when an intermediate segment collides with an existing file', () => {
+    assert(
+      property(
+        array(segArb, { minLength: 1, maxLength: 2 }),
+        array(segArb, { minLength: 1, maxLength: 2 }),
+        boolean(),
+        (fileSegs, tailSegs, trailingSlash) => {
+          const root = fixedTree();
+          const startPath = [ROOT, WORK];
+          const first = resolveAndCreatePath(root, startPath, fileSegs.join('/'));
+          expect(first.targetNode?.type).toBe('file');
+
+          const snapshot = JSON.stringify(first.fs);
+          const nested = [...fileSegs, ...tailSegs].join('/') + (trailingSlash ? '/' : '');
+          const res = resolveAndCreatePath(first.fs, startPath, nested);
+
+          expect(res.error).toBeTruthy();
+          expect(res.targetNode).toBeUndefined();
+          expect(JSON.stringify(first.fs)).toBe(snapshot);
+          expect(JSON.stringify(res.fs)).toBe(snapshot);
+        }
+      ),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('rejects empty, slash-only, invalid-start, and missing-home paths without mutating input', () => {
+    assert(
+      property(constantFrom('', '/', '///', '~/', '~///'), (input) => {
         const root = fixedTree();
         const snapshot = JSON.stringify(root);
 
@@ -399,9 +520,47 @@ describe('property: resolveAndCreatePath', () => {
         expect(res.error).toBeTruthy();
         expect(res.targetNode).toBeUndefined();
         expect(JSON.stringify(root)).toBe(snapshot);
-        expect(JSON.stringify(res.fs)).toBe(snapshot); // clone carries no change
+        expect(JSON.stringify(res.fs)).toBe(snapshot);
       }),
       { numRuns: NUM_RUNS }
+    );
+
+    assert(
+      property(array(segArb, { minLength: 1, maxLength: 2 }), (segs) => {
+        const root = fixedTree();
+        const snapshot = JSON.stringify(root);
+
+        const badStart = resolveAndCreatePath(root, [ROOT, 'nonexistent'], segs.join('/'));
+        expect(badStart.error).toBeTruthy();
+        expect(badStart.targetNode).toBeUndefined();
+        expect(JSON.stringify(root)).toBe(snapshot);
+        expect(JSON.stringify(badStart.fs)).toBe(snapshot);
+
+        // Tree without /home/guest must reject tilde paths cleanly.
+        const noHome: FileNode = { id: ROOT, name: 'root', type: 'dir', children: [] };
+        const noHomeSnap = JSON.stringify(noHome);
+        const tildeRes = resolveAndCreatePath(noHome, [ROOT], `~/${segs.join('/')}`);
+        expect(tildeRes.error).toBeTruthy();
+        expect(tildeRes.targetNode).toBeUndefined();
+        expect(JSON.stringify(noHome)).toBe(noHomeSnap);
+        expect(JSON.stringify(tildeRes.fs)).toBe(noHomeSnap);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('never throws or mutates the input tree on whitespace-only path inputs', () => {
+    assert(
+      property(constantFrom(' ', '   ', '\t', '/   ', '~/   '), (input) => {
+        const root = fixedTree();
+        const snapshot = JSON.stringify(root);
+
+        const res = resolveAndCreatePath(root, [ROOT, WORK], input);
+
+        expect(JSON.stringify(root)).toBe(snapshot);
+        expect(res.fs).toBeDefined();
+      }),
+      { numRuns: 50 }
     );
   });
 });

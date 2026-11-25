@@ -19,8 +19,13 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
 
 - **Architecture or dependency work:** read `.claude/pipeline/project-doc.md` for the
   scanned module map, versions, persistence boundaries, and known verification limits.
-- **Codebase exploration:** when `graphify-out/graph.json` exists, run `graphify query "<question>"`
-  before grep or file search. Run `graphify update .` after modifying code.
+- **Code exploration (Graphify):** query before searching when `graphify-out/` exists. Run
+  `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"`
+  before grepping or reading files. Baseline index lives at root `graphify-out/` and is
+  symlinked into worktrees (`ln -s ../../graphify-out .worktrees/<lane-name>/graphify-out`).
+  Run `npm run graphify:update` after structural changes; avoid concurrent rebuilds across
+  worktrees. Exploration aid only (never an architectural authority or runtime dependency);
+  keep `graphify-out/` uncommitted.
 - **Domain terminology:** read `GLOSSARY.md` before naming episodes, levels, tasks, or cycles.
 - **Level, narrative, or layout changes:** read the Narrative Design, Task Description
   Style Guide, Episode Color Scheme, and UI Layout Guidelines sections in
@@ -86,7 +91,9 @@ under `src/constants/` and UI under `src/components/`.
 - Preserve literal user-reported key sequences. Replicate the reported workflow before
   substituting another command sequence; capture a screenshot immediately after a UI failure.
 - Verify relevant level/episode states using URL debug parameters from `src/App.tsx`.
-- Coverage percentage is unmeasured. Test counts and passing runs are not coverage.
+- Run `npm run test:coverage` (`@vitest/coverage-v8`, configured in `vite.config.ts`) to
+  measure Vitest unit and `fast-check` property coverage (`coverage/` is gitignored).
+  Playwright E2E runs are not instrumented; test counts and passing runs are not coverage.
 - `npm run audit:changed` (`fallow audit --base origin/main` then `knip`) gates commits.
   It fails only on _newly introduced_ findings; inherited ones are warnings.
 

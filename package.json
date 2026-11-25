@@ -15,11 +15,14 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test --grep \"@smoke\"",
     "test:production": "npm run build && playwright test --config=playwright.production.config.ts",
     "prepush": "npm run lint && npm run type-check && npm test && npm run build && npm run test:smoke -- --reporter=list && npm run audit:changed",
-    "audit:changed": "fallow audit --base origin/main --format json --quiet && knip --no-progress"
+    "audit:changed": "fallow audit --base origin/main --format json --quiet && knip --no-progress",
+    "graphify:update": "graphify update .",
+    "graphify:report": "graphify cluster-only ."
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -48,6 +51,7 @@
     "@typescript-eslint/eslint-plugin": "8.73.0",
     "@typescript-eslint/parser": "8.73.0",
     "@vitejs/plugin-react": "5.1.2",
+    "@vitest/coverage-v8": "4.1.12",
     "autoprefixer": "^10.7.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "^10.1.8",

@@ -11,7 +11,7 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: ['dist/', '.worktrees/'], // Ignore the dist directory and git worktrees
+    ignores: ['dist/', 'coverage/', '.worktrees/', 'graphify-out/'], // Ignore build, coverage, git worktrees, and graphify index
   },
   {
     files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
