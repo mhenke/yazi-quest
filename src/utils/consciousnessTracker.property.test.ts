@@ -91,9 +91,9 @@ describe('property: calculateThreatManagementScore', () => {
 });
 
 describe('property: calculateEfficiencyScore', () => {
-  it('is finite, never NaN, and bounded in [0, 1] for any finite keystrokes and non-negative optimalKeystrokes', () => {
+  it('is finite, never NaN, and bounded in [0, 1] for any finite keystrokes and optimalKeystrokes (including negative)', () => {
     assert(
-      property(arbFinite, arbNonNegFinite, (keystrokes, optimalKeystrokes) => {
+      property(arbFinite, arbFinite, (keystrokes, optimalKeystrokes) => {
         const score = calculateEfficiencyScore(keystrokes, optimalKeystrokes);
         expect(Number.isFinite(score)).toBe(true);
         expect(Number.isNaN(score)).toBe(false);
@@ -104,7 +104,7 @@ describe('property: calculateEfficiencyScore', () => {
     );
   });
 
-  it('returns 0 when keystrokes <= 0 or optimalKeystrokes === 0', () => {
+  it('returns 0 when keystrokes <= 0 or optimalKeystrokes <= 0', () => {
     assert(
       property(
         double({ min: -1e6, max: 0, noNaN: true, noDefaultInfinity: true }),
@@ -117,9 +117,13 @@ describe('property: calculateEfficiencyScore', () => {
     );
 
     assert(
-      property(arbFinite, (keystrokes) => {
-        expect(calculateEfficiencyScore(keystrokes, 0)).toBe(0);
-      }),
+      property(
+        arbFinite,
+        double({ min: -1e6, max: 0, noNaN: true, noDefaultInfinity: true }),
+        (keystrokes, nonPosOptimal) => {
+          expect(calculateEfficiencyScore(keystrokes, nonPosOptimal)).toBe(0);
+        }
+      ),
       { numRuns: NUM_RUNS }
     );
   });
@@ -179,13 +183,15 @@ describe('property: updateConsciousness', () => {
     );
   });
 
-  it('returns a finite integer and never NaN even for out-of-range finite inputs', () => {
+  it('always returns a finite integer clamped to [0, 100] even for out-of-range current and negative/huge metrics', () => {
     assert(
       property(arbFinite, arbAnyFiniteMetrics, (current, metrics) => {
         const next = updateConsciousness(current, metrics);
         expect(Number.isFinite(next)).toBe(true);
         expect(Number.isNaN(next)).toBe(false);
         expect(Number.isInteger(next)).toBe(true);
+        expect(next).toBeGreaterThanOrEqual(0);
+        expect(next).toBeLessThanOrEqual(100);
       }),
       { numRuns: NUM_RUNS }
     );

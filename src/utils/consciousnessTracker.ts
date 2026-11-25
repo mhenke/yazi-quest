@@ -25,7 +25,7 @@ function calculateConsciousness(metrics: ConsciousnessMetrics): number {
     metrics.discoveryRate * 0.3 * 100 +
     metrics.threatManagement * 0.3 * 100;
 
-  return Math.min(Math.round(score), 100);
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 /**
@@ -35,7 +35,7 @@ function calculateConsciousness(metrics: ConsciousnessMetrics): number {
 export function updateConsciousness(current: number, newMetrics: ConsciousnessMetrics): number {
   const newScore = calculateConsciousness(newMetrics);
   // Smooth transition: 70% new score, 30% previous score
-  return Math.round(current * 0.3 + newScore * 0.7);
+  return Math.max(0, Math.min(100, Math.round(current * 0.3 + newScore * 0.7)));
 }
 
 /**
@@ -48,7 +48,7 @@ export function calculateEfficiencyScore(
 ): number {
   if (keystrokes <= 0) return 0;
   // Score is 1.0 at optimal, decreases as keystrokes increase
-  return Math.min(1, optimalKeystrokes / keystrokes);
+  return Math.max(0, Math.min(1, optimalKeystrokes / keystrokes));
 }
 
 /**

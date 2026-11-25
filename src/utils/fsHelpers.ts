@@ -277,7 +277,7 @@ function parseCreatePath(
     segments = inputPath.split('/').filter(Boolean);
   }
 
-  if (segments.length === 0) {
+  if (segments.length === 0 || segments.some((s) => s.trim().length === 0)) {
     return { parentPath, segments, error: 'Invalid path' };
   }
   return { parentPath, segments };

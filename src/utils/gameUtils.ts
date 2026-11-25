@@ -44,68 +44,55 @@ export const checkHoneypotTriggered = (
     return { triggered: false };
   }
 
+  const isLevel9 = currentLevel.id === 9;
+
+  const findMatchingPendingNode = (
+    predicate: (node: FileNode) => boolean
+  ): FileNode | undefined => {
+    for (const id of pendingDeleteIds) {
+      const node = items.find((n) => n.id === id);
+      if (node && predicate(node)) return node;
+    }
+    return undefined;
+  };
+
   // 2. Persistent Honeypots (isHoneypot flag)
-  const triggeredHoneypot = pendingDeleteIds.find((id) => {
-    const node = items.find((n) => n.id === id);
-    return node?.isHoneypot && !node?.isDecoy;
-  });
+  // On Level 9, only keeper files (.key, .pid, .sock) are live traps; other flagged files are
+  // decoys and must not short-circuit the check or mask later traps in the same batch.
+  const triggeredHoneypot = findMatchingPendingNode(
+    (node) =>
+      Boolean(node.isHoneypot && !node.isDecoy) &&
+      (!isLevel9 || LEVEL_9_KEEPER_PATTERN.test(node.name))
+  );
 
   if (triggeredHoneypot) {
-    const node = items.find((n) => n.id === triggeredHoneypot);
-
-    // Level 9: Special handling for keeper vs decoy files
-    if (currentLevel.id === 9) {
-      // Keeper files in level 9 match the predefined pattern
-      // These are files ending with .key, .pid, or .sock
-      if (node?.name && LEVEL_9_KEEPER_PATTERN.test(node.name)) {
-        return {
-          triggered: true,
-          reason: 'honeypot',
-          message: `TRAP ACTIVATED: Attempting to delete critical asset '${node?.name}'. This will compromise your operation.`,
-        };
-      }
-
-      // If it's a different honeypot file in level 9, it's likely a decoy that can be deleted
-      // These are the honeypot files like 'mysockfile.txt', 'passwordkey_backup.log', etc.
-      // that contain key/pid/sock as substrings but are not actual keeper files
-      return { triggered: false };
+    if (isLevel9) {
+      return {
+        triggered: true,
+        reason: 'honeypot',
+        message: `TRAP ACTIVATED: Attempting to delete critical asset '${triggeredHoneypot.name}'. This will compromise your operation.`,
+      };
     }
 
     return {
       triggered: true,
       reason: 'honeypot',
-      message: `ANOMALY DETECTED: Deletion of ${node?.name} triggered a forensic alert.`,
+      message: `ANOMALY DETECTED: Deletion of ${triggeredHoneypot.name} triggered a forensic alert.`,
     };
   }
 
   // Fallback for content-based traps (mostly for Level 11 check logic or manual content markers)
-  const contentTrap = pendingDeleteIds.find((id) => {
-    const node = items.find((n) => n.id === id);
-    return node?.content?.includes('HONEYPOT') || node?.content?.includes('audit-trap');
-  });
+  const contentTrap = findMatchingPendingNode(
+    (node) =>
+      Boolean(node.content?.includes('HONEYPOT') || node.content?.includes('audit-trap')) &&
+      (!isLevel9 || LEVEL_9_KEEPER_PATTERN.test(node.name))
+  );
 
-  if (contentTrap && currentLevel.id !== 14) {
-    const node = items.find((n) => n.id === contentTrap);
-
-    // Level 9: Allow deletion of decoy files even if they have content traps
-    if (currentLevel.id === 9) {
-      // Keeper files in level 9 match the predefined pattern
-      // These are files ending with .key, .pid, or .sock
-      if (node?.name && LEVEL_9_KEEPER_PATTERN.test(node.name)) {
-        return {
-          triggered: true,
-          reason: 'honeypot',
-          message: `ANOMALY DETECTED: Deletion of signature-trap ${node?.name} detected.`,
-        };
-      }
-      // If it's not a keeper file, allow deletion (it's likely a decoy)
-      return { triggered: false };
-    }
-
+  if (contentTrap) {
     return {
       triggered: true,
       reason: 'honeypot',
-      message: `ANOMALY DETECTED: Deletion of signature-trap ${node?.name} detected.`,
+      message: `ANOMALY DETECTED: Deletion of signature-trap ${contentTrap.name} detected.`,
     };
   }
 

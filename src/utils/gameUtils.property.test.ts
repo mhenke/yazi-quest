@@ -444,33 +444,133 @@ describe('property: checkHoneypotTriggered', () => {
     );
   });
 
-  it('Level 9 triggers on single visible targets iff keeper-pattern (.key/.pid/.sock) matches', () => {
+  it('Level 9 matches the visible keeper oracle across arbitrary mixed batches and is order-independent', () => {
     assert(
-      property(arbFileNode('l9'), boolean(), boolean(), (node, showHidden, addUnknownIds) => {
-        const root: FileNode = { id: 'root', name: 'root', type: 'dir', children: [node] };
-        const state = makeState({ fs: root, currentPath: ['root'], showHidden });
-        const pending = addUnknownIds ? ['ghost-id', node.id, 'missing'] : [node.id];
+      property(
+        arbUniqueFileNodes(0, 8),
+        boolean(),
+        boolean(),
+        integer({ min: 0, max: 8 }),
+        (children, showHidden, useSearchMode, rawRotation) => {
+          const root: FileNode = { id: 'root', name: 'root', type: 'dir', children };
+          const state = makeState({
+            fs: root,
+            currentPath: ['root'],
+            showHidden,
+            ...(useSearchMode ? { searchQuery: '.*', searchResults: children } : {}),
+          });
 
-        const visible = getVisibleItems(state).some((n) => n.id === node.id);
-        const isFlag = Boolean(node.isHoneypot && !node.isDecoy);
-        const isContent = isContentTrapSpec(node);
-        const isKeeper = LEVEL_9_KEEPER_PATTERN.test(node.name);
-        const expectedTriggered = visible && (isFlag || isContent) && isKeeper;
+          const visible = getVisibleItems(state);
+          const visibleById = new Map(visible.map((n) => [n.id, n]));
+          const allIds = [...children.map((c) => c.id), 'nonexistent-id'];
+          const rot = allIds.length > 0 ? rawRotation % allIds.length : 0;
+          const rotatedIds = [...allIds.slice(rot), ...allIds.slice(0, rot)];
+          const reversedIds = [...allIds].reverse();
 
-        const res = checkHoneypotTriggered(state, pending, level9);
+          const stateSnap = JSON.stringify(state);
+          const first = checkHoneypotTriggered(state, allIds, level9);
+          const reversed = checkHoneypotTriggered(state, reversedIds, level9);
+          const rotated = checkHoneypotTriggered(state, rotatedIds, level9);
+          const repeat = checkHoneypotTriggered(state, allIds, level9);
 
-        expect(res.triggered).toBe(expectedTriggered);
-        if (expectedTriggered) {
-          expect(res.reason).toBe('honeypot');
-          expect(res.message).toContain(node.name);
-          if (isFlag) {
-            expect(res.message).toContain('TRAP ACTIVATED');
+          expect(first).toEqual(repeat);
+          expect(JSON.stringify(state)).toBe(stateSnap);
+
+          const visiblePending = allIds
+            .map((id) => visibleById.get(id))
+            .filter((n): n is FileNode => n !== undefined);
+          const flagKeepers = visiblePending.filter(
+            (n) => Boolean(n.isHoneypot && !n.isDecoy) && LEVEL_9_KEEPER_PATTERN.test(n.name)
+          );
+          const contentKeepers = visiblePending.filter(
+            (n) => isContentTrapSpec(n) && LEVEL_9_KEEPER_PATTERN.test(n.name)
+          );
+          const expectedTriggered = flagKeepers.length > 0 || contentKeepers.length > 0;
+
+          expect(first.triggered).toBe(expectedTriggered);
+          expect(reversed.triggered).toBe(expectedTriggered);
+          expect(rotated.triggered).toBe(expectedTriggered);
+
+          if (expectedTriggered) {
+            expect(first.reason).toBe('honeypot');
+            expect(reversed.reason).toBe('honeypot');
+            expect(rotated.reason).toBe('honeypot');
+            if (flagKeepers.length > 0) {
+              expect(first.message).toContain('TRAP ACTIVATED');
+              expect(reversed.message).toContain('TRAP ACTIVATED');
+              expect(rotated.message).toContain('TRAP ACTIVATED');
+            } else {
+              expect(first.message).toContain('signature-trap');
+              expect(reversed.message).toContain('signature-trap');
+              expect(rotated.message).toContain('signature-trap');
+            }
           } else {
-            expect(res.message).toContain('signature-trap');
+            expect(first).toEqual({ triggered: false });
+            expect(reversed).toEqual({ triggered: false });
+            expect(rotated).toEqual({ triggered: false });
           }
         }
-      }),
-      { numRuns: 200 }
+      ),
+      { numRuns: 250 }
+    );
+  });
+
+  it('Level 9 non-keeper decoys never mask keeper honeypots or block fallthrough to keeper content traps', () => {
+    const arbDecoyName = constantFrom(
+      'mysockfile.txt',
+      'passwordkey_backup.log',
+      'pid_summary.txt',
+      'normal.txt'
+    );
+    const arbKeeperName = constantFrom('access_token.key', 'ghost_process.pid', 'socket_001.sock');
+    const arbTrapContent = constantFrom(
+      '# HONEYPOT - ACTIVE SYNC LOCK',
+      'ExecStart=/usr/bin/audit-trap'
+    );
+
+    assert(
+      property(
+        arbDecoyName,
+        arbKeeperName,
+        constantFrom('flag-keeper', 'content-trap-keeper'),
+        arbTrapContent,
+        boolean(),
+        (decoyName, keeperName, keeperKind, trapContent, decoyAlsoHasTrapContent) => {
+          const decoy: FileNode = {
+            id: 'decoy-1',
+            name: decoyName,
+            type: 'file',
+            isHoneypot: true,
+            ...(decoyAlsoHasTrapContent ? { content: trapContent } : {}),
+          };
+          const keeper: FileNode =
+            keeperKind === 'flag-keeper'
+              ? { id: 'keeper-1', name: keeperName, type: 'file', isHoneypot: true }
+              : { id: 'keeper-1', name: keeperName, type: 'file', content: trapContent };
+
+          const root: FileNode = {
+            id: 'root',
+            name: 'root',
+            type: 'dir',
+            children: [decoy, keeper],
+          };
+          const state = makeState({ fs: root, currentPath: ['root'] });
+
+          const decoyFirst = checkHoneypotTriggered(state, [decoy.id, keeper.id], level9);
+          const keeperFirst = checkHoneypotTriggered(state, [keeper.id, decoy.id], level9);
+
+          expect(decoyFirst).toEqual(keeperFirst);
+          expect(decoyFirst.triggered).toBe(true);
+          expect(decoyFirst.reason).toBe('honeypot');
+          expect(decoyFirst.message).toContain(keeper.name);
+          if (keeperKind === 'flag-keeper') {
+            expect(decoyFirst.message).toContain('TRAP ACTIVATED');
+          } else {
+            expect(decoyFirst.message).toContain('signature-trap');
+          }
+        }
+      ),
+      { numRuns: 150 }
     );
   });
 
@@ -1294,24 +1394,21 @@ describe('property: keyboard/utils protocol violation checks', () => {
           expect(preventDefault).not.toHaveBeenCalled();
           expect(dispatch).not.toHaveBeenCalled();
         } else {
-          expect(preventDefault).toHaveBeenCalled();
+          expect(preventDefault).toHaveBeenCalledTimes(1);
           expect(dispatch).toHaveBeenCalledTimes(1);
           const action = dispatch.mock.calls[0][0];
           expect(action.type).toBe('SET_MODAL_VISIBILITY');
           if (action.type === 'SET_MODAL_VISIBILITY') {
             expect(action.visible).toBe(true);
-            // Verify strict priority Filter > Search > Sort > Hidden on non-vertical keys
-            // (and when sort is not active on vertical keys)
-            if (!isVertical || !sort) {
-              const expectedModal = filter
-                ? 'filterWarning'
-                : search
-                  ? 'searchWarning'
-                  : sort
-                    ? 'sortWarning'
-                    : 'hiddenWarning';
-              expect(action.modal).toBe(expectedModal);
-            }
+            const isSortBlocking = sort && !isVertical;
+            const expectedModal = filter
+              ? 'filterWarning'
+              : search
+                ? 'searchWarning'
+                : isSortBlocking
+                  ? 'sortWarning'
+                  : 'hiddenWarning';
+            expect(action.modal).toBe(expectedModal);
           }
         }
       }),
@@ -1319,7 +1416,7 @@ describe('property: keyboard/utils protocol violation checks', () => {
     );
   });
 
-  it('vertical navigation is permitted during custom sort when no filter, search, or completed-level hidden violation is active', () => {
+  it('vertical navigation during custom sort only blocks on completed-level hidden violation and dispatches hiddenWarning', () => {
     const arbVerticalKey = constantFrom('j', 'k', 'ArrowUp', 'ArrowDown', 'G', 'g');
     const arbCustomSort = tuple(arbSortBy, arbSortDirection).filter(
       ([by, dir]) => by !== 'natural' || dir !== 'asc'
@@ -1353,6 +1450,14 @@ describe('property: keyboard/utils protocol violation checks', () => {
           if (!blocked) {
             expect(preventDefault).not.toHaveBeenCalled();
             expect(dispatch).not.toHaveBeenCalled();
+          } else {
+            expect(preventDefault).toHaveBeenCalledTimes(1);
+            expect(dispatch).toHaveBeenCalledTimes(1);
+            expect(dispatch).toHaveBeenCalledWith({
+              type: 'SET_MODAL_VISIBILITY',
+              modal: 'hiddenWarning',
+              visible: true,
+            });
           }
         }
       ),

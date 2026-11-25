@@ -2,10 +2,12 @@ import {
   assert,
   array,
   boolean,
+  constant,
   constantFrom,
   double,
   integer,
   nat,
+  oneof,
   option,
   property,
   record,
@@ -473,6 +475,17 @@ const checkInvariants = (state: GameState, label: string): void => {
     expect(getNodeById(state.fs, id), `${label}: selection ${id} exists`).toBeDefined();
   }
 
+  for (const item of state.searchResults) {
+    expect(
+      getNodeById(state.fs, item.id),
+      `${label}: searchResult ${item.id} exists`
+    ).toBeDefined();
+  }
+
+  for (const item of visible) {
+    expect(getNodeById(state.fs, item.id), `${label}: visible ${item.id} exists`).toBeDefined();
+  }
+
   expect(duplicateIds(state.fs), `${label}: no duplicate ids`).toEqual([]);
 
   if (!state.showHidden) {
@@ -696,6 +709,17 @@ const checkInterleavedInvariants = (state: GameState, label: string): void => {
     expect(getNodeById(state.fs, id), `${label}: selection ${id} exists`).toBeDefined();
   }
 
+  for (const item of state.searchResults) {
+    expect(
+      getNodeById(state.fs, item.id),
+      `${label}: searchResult ${item.id} exists`
+    ).toBeDefined();
+  }
+
+  for (const item of visible) {
+    expect(getNodeById(state.fs, item.id), `${label}: visible ${item.id} exists`).toBeDefined();
+  }
+
   expect(duplicateIds(state.fs), `${label}: no duplicate ids`).toEqual([]);
 
   if (!state.showHidden) {
@@ -708,6 +732,186 @@ const checkInterleavedInvariants = (state: GameState, label: string): void => {
       }),
       `${label}: no dot entries when !showHidden`
     ).toBe(false);
+  }
+};
+
+const applyInterleavedFsStep = (
+  state: GameState,
+  step: InterleavedStep,
+  target: FileNode | undefined,
+  label: string
+): GameState | null => {
+  switch (step.kind) {
+    case 'add': {
+      const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
+      const node: FileNode = {
+        id: 'pending',
+        name,
+        type: step.asDir ? 'dir' : 'file',
+        content: step.asDir ? undefined : 'payload',
+      };
+      if (step.asDir) node.children = [];
+      const res = addNodeWithConflictResolution(state.fs, state.currentPath, node);
+      return res.ok
+        ? gameReducer(state, { type: 'ADD_NODE', newNode: node, newFs: res.value })
+        : state;
+    }
+    case 'rename': {
+      const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
+      const newFs = cloneFS(state.fs);
+      const node = target ? getNodeById(newFs, target.id) : undefined;
+      const parent = node ? getNodeById(newFs, node.parentId ?? undefined) : undefined;
+      const collision = parent?.children?.some((c) => c.name === name && c.id !== node!.id);
+      if (!node || collision) return state;
+      node.name = name;
+      return gameReducer(state, { type: 'RENAME_NODE', oldId: node.id, newNode: node, newFs });
+    }
+    case 'delete': {
+      const parentPath =
+        target?.path && target.path.length > 1 ? target.path.slice(0, -1) : state.currentPath;
+      const res = target ? deleteNode(state.fs, parentPath, target.id) : null;
+      return res?.ok ? gameReducer(state, { type: 'DELETE_NODES', newFs: res.value }) : state;
+    }
+    case 'yank':
+    case 'cut': {
+      if (!target || !getNodeById(state.fs, target.id)) return state;
+      const origPath =
+        target.path && target.path.length > 1 ? target.path.slice(0, -1) : state.currentPath;
+      const copied = gameReducer(state, {
+        type: 'SET_CLIPBOARD',
+        nodes: [target],
+        action: step.kind === 'cut' ? 'cut' : 'yank',
+        originalPath: origPath,
+      });
+      return gameReducer(copied, { type: 'SET_SELECTION', ids: [] });
+    }
+    case 'clear-clipboard': {
+      const next = gameReducer(state, { type: 'CLEAR_CLIPBOARD' });
+      expect(next.clipboard).toBeNull();
+      return next;
+    }
+    case 'paste': {
+      const clip = state.clipboard;
+      if (!clip) return state;
+      let newFs = state.fs;
+      for (const node of clip.nodes) {
+        if (clip.action === 'cut') {
+          const removal = deleteNode(newFs, clip.originalPath, node.id);
+          if (removal.ok) newFs = removal.value;
+        }
+        const add = addNodeWithConflictResolution(newFs, state.currentPath, node);
+        if (add.ok) newFs = add.value;
+      }
+      const next = gameReducer(state, { type: 'PASTE', newFs, action: clip.action });
+      if (clip.action === 'cut') {
+        expect(next.clipboard, `${label}: cut clears clipboard`).toBeNull();
+      }
+      return next;
+    }
+    default:
+      return null;
+  }
+};
+
+const applyInterleavedNavStep = (
+  state: GameState,
+  step: InterleavedStep,
+  visible: FileNode[]
+): GameState | null => {
+  switch (step.kind) {
+    case 'enter': {
+      const dirs = visible.filter(
+        (n) => (n.type === 'dir' || n.type === 'archive') && getNodeById(state.fs, n.id)
+      );
+      const dir = pickFrom(dirs, step.nodeIndex);
+      if (!dir) return state;
+      const targetPath =
+        dir.path && getNodeByPath(state.fs, dir.path) ? dir.path : [...state.currentPath, dir.id];
+      return getNodeByPath(state.fs, targetPath)
+        ? gameReducer(state, { type: 'NAVIGATE', path: targetPath })
+        : state;
+    }
+    case 'up':
+      return state.currentPath.length > 1
+        ? gameReducer(state, { type: 'NAVIGATE', path: state.currentPath.slice(0, -1) })
+        : state;
+    case 'back':
+      return gameReducer(state, { type: 'NAVIGATE_BACK' });
+    case 'forward':
+      return gameReducer(state, { type: 'NAVIGATE_FORWARD' });
+    default:
+      return null;
+  }
+};
+
+const applyInterleavedViewStep = (
+  state: GameState,
+  step: InterleavedStep,
+  visible: FileNode[],
+  target: FileNode | undefined
+): GameState => {
+  const currentDir = getNodeByPath(state.fs, state.currentPath);
+  const filterStr = INTERLEAVED_FILTERS[step.filterIndex % INTERLEAVED_FILTERS.length];
+  switch (step.kind) {
+    case 'set-filter': {
+      if (!currentDir) return state;
+      const next = gameReducer(state, {
+        type: 'SET_FILTER',
+        dirId: currentDir.id,
+        filter: filterStr,
+      });
+      expect(next.cursorIndex).toBe(0);
+      return next;
+    }
+    case 'clear-filter': {
+      if (!currentDir) return state;
+      const next = gameReducer(state, { type: 'CLEAR_FILTER', dirId: currentDir.id });
+      expect(next.filters[currentDir.id]).toBeUndefined();
+      return next;
+    }
+    case 'clear-all-filters': {
+      const next = gameReducer(state, { type: 'CLEAR_ALL_FILTERS' });
+      expect(next.filters).toEqual({});
+      return next;
+    }
+    case 'set-search': {
+      const q = filterStr || 'a';
+      const results = getRecursiveSearchResults(state.fs, q, state.showHidden, state.currentPath);
+      const next = gameReducer(state, { type: 'SET_SEARCH', query: q, results });
+      expect(next.cursorIndex).toBe(0);
+      return next;
+    }
+    case 'clear-search': {
+      const next = gameReducer(state, { type: 'SET_SEARCH', query: null, results: [] });
+      expect(next.searchQuery).toBeNull();
+      expect(next.searchResults).toEqual([]);
+      expect(next.cursorIndex).toBe(0);
+      return next;
+    }
+    case 'confirm-search': {
+      const q = filterStr || 'a';
+      const results = getRecursiveSearchResults(state.fs, q, state.showHidden, state.currentPath);
+      const next = gameReducer(state, { type: 'CONFIRM_SEARCH', query: q, results });
+      expect(next.mode).toBe('normal');
+      expect(next.usedSearch).toBe(true);
+      expect(next.inputBuffer).toBe('');
+      expect(next.cursorIndex).toBe(0);
+      return next;
+    }
+    case 'select':
+      return target
+        ? gameReducer(state, { type: 'TOGGLE_SELECTION', id: target.id, itemCount: visible.length })
+        : state;
+    case 'toggle-hidden':
+      return gameReducer(state, { type: 'TOGGLE_HIDDEN' });
+    case 'sort':
+      return gameReducer(state, {
+        type: 'SET_SORT',
+        sortBy: step.sortBy,
+        direction: step.direction,
+      });
+    default:
+      return state;
   }
 };
 
@@ -725,218 +929,10 @@ describe('property: interleaved FS mutations, history, filters, search, and clip
           const label = `step ${i} (${step.kind})`;
           const visible = getVisibleItems(state);
           const target = pickFrom(visible, step.nodeIndex);
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const filterStr = INTERLEAVED_FILTERS[step.filterIndex % INTERLEAVED_FILTERS.length];
-
-          let next = state;
-          switch (step.kind) {
-            case 'add': {
-              const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
-              const node: FileNode = {
-                id: 'pending',
-                name,
-                type: step.asDir ? 'dir' : 'file',
-                content: step.asDir ? undefined : 'payload',
-              };
-              if (step.asDir) node.children = [];
-              const res = addNodeWithConflictResolution(state.fs, state.currentPath, node);
-              if (res.ok) {
-                next = gameReducer(state, { type: 'ADD_NODE', newNode: node, newFs: res.value });
-              }
-              break;
-            }
-            case 'rename': {
-              const name = MUTATING_NAMES[step.nameIndex % MUTATING_NAMES.length];
-              const newFs = cloneFS(state.fs);
-              const node = target ? getNodeById(newFs, target.id) : undefined;
-              const parent = node ? getNodeById(newFs, node.parentId ?? undefined) : undefined;
-              const collision = parent?.children?.some((c) => c.name === name && c.id !== node!.id);
-              if (node && !collision) {
-                node.name = name;
-                next = gameReducer(state, {
-                  type: 'RENAME_NODE',
-                  oldId: node.id,
-                  newNode: node,
-                  newFs,
-                });
-              }
-              break;
-            }
-            case 'delete': {
-              const parentPath =
-                target?.path && target.path.length > 1
-                  ? target.path.slice(0, -1)
-                  : state.currentPath;
-              const res = target ? deleteNode(state.fs, parentPath, target.id) : null;
-              if (res?.ok) {
-                next = gameReducer(state, { type: 'DELETE_NODES', newFs: res.value });
-              }
-              break;
-            }
-            case 'yank':
-            case 'cut': {
-              if (target && getNodeById(state.fs, target.id)) {
-                const origPath =
-                  target.path && target.path.length > 1
-                    ? target.path.slice(0, -1)
-                    : state.currentPath;
-                next = gameReducer(state, {
-                  type: 'SET_CLIPBOARD',
-                  nodes: [target],
-                  action: step.kind === 'cut' ? 'cut' : 'yank',
-                  originalPath: origPath,
-                });
-                next = gameReducer(next, { type: 'SET_SELECTION', ids: [] });
-              }
-              break;
-            }
-            case 'clear-clipboard': {
-              next = gameReducer(state, { type: 'CLEAR_CLIPBOARD' });
-              expect(next.clipboard).toBeNull();
-              break;
-            }
-            case 'paste': {
-              const clip = state.clipboard;
-              if (clip) {
-                let newFs = state.fs;
-                for (const node of clip.nodes) {
-                  if (clip.action === 'cut') {
-                    const removal = deleteNode(newFs, clip.originalPath, node.id);
-                    if (removal.ok) newFs = removal.value;
-                  }
-                  const add = addNodeWithConflictResolution(newFs, state.currentPath, node);
-                  if (add.ok) newFs = add.value;
-                }
-                next = gameReducer(state, { type: 'PASTE', newFs, action: clip.action });
-                if (clip.action === 'cut') {
-                  expect(next.clipboard, `${label}: cut clears clipboard`).toBeNull();
-                }
-              }
-              break;
-            }
-            case 'enter': {
-              const dirs = visible.filter(
-                (n) => (n.type === 'dir' || n.type === 'archive') && getNodeById(state.fs, n.id)
-              );
-              const dir = pickFrom(dirs, step.nodeIndex);
-              if (dir) {
-                const targetPath =
-                  dir.path && getNodeByPath(state.fs, dir.path)
-                    ? dir.path
-                    : [...state.currentPath, dir.id];
-                if (getNodeByPath(state.fs, targetPath)) {
-                  next = gameReducer(state, { type: 'NAVIGATE', path: targetPath });
-                }
-              }
-              break;
-            }
-            case 'up': {
-              if (state.currentPath.length > 1) {
-                next = gameReducer(state, {
-                  type: 'NAVIGATE',
-                  path: state.currentPath.slice(0, -1),
-                });
-              }
-              break;
-            }
-            case 'back': {
-              // Exercise empty history (no-op) and live history targets; deleted
-              // history targets are tracked separately as a known reducer bug.
-              const prevPath = state.history[state.history.length - 1];
-              if (!prevPath || getNodeByPath(state.fs, prevPath)) {
-                next = gameReducer(state, { type: 'NAVIGATE_BACK' });
-              }
-              break;
-            }
-            case 'forward': {
-              const nextPath = state.future[0];
-              if (!nextPath || getNodeByPath(state.fs, nextPath)) {
-                next = gameReducer(state, { type: 'NAVIGATE_FORWARD' });
-              }
-              break;
-            }
-            case 'set-filter': {
-              if (currentDir) {
-                next = gameReducer(state, {
-                  type: 'SET_FILTER',
-                  dirId: currentDir.id,
-                  filter: filterStr,
-                });
-                expect(next.cursorIndex).toBe(0);
-              }
-              break;
-            }
-            case 'clear-filter': {
-              if (currentDir) {
-                next = gameReducer(state, { type: 'CLEAR_FILTER', dirId: currentDir.id });
-                expect(next.filters[currentDir.id]).toBeUndefined();
-              }
-              break;
-            }
-            case 'clear-all-filters': {
-              next = gameReducer(state, { type: 'CLEAR_ALL_FILTERS' });
-              expect(next.filters).toEqual({});
-              break;
-            }
-            case 'set-search': {
-              const q = filterStr || 'a';
-              const results = getRecursiveSearchResults(
-                state.fs,
-                q,
-                state.showHidden,
-                state.currentPath
-              );
-              next = gameReducer(state, { type: 'SET_SEARCH', query: q, results });
-              expect(next.cursorIndex).toBe(0);
-              break;
-            }
-            case 'clear-search': {
-              next = gameReducer(state, { type: 'SET_SEARCH', query: null, results: [] });
-              expect(next.searchQuery).toBeNull();
-              expect(next.searchResults).toEqual([]);
-              expect(next.cursorIndex).toBe(0);
-              break;
-            }
-            case 'confirm-search': {
-              const q = filterStr || 'a';
-              const results = getRecursiveSearchResults(
-                state.fs,
-                q,
-                state.showHidden,
-                state.currentPath
-              );
-              next = gameReducer(state, { type: 'CONFIRM_SEARCH', query: q, results });
-              expect(next.mode).toBe('normal');
-              expect(next.usedSearch).toBe(true);
-              expect(next.inputBuffer).toBe('');
-              expect(next.cursorIndex).toBe(0);
-              break;
-            }
-            case 'select': {
-              // Only select nodes currently present in state.fs (stale searchResults
-              // after DELETE_NODES are documented as a separate reducer bug).
-              if (target && getNodeById(state.fs, target.id)) {
-                next = gameReducer(state, {
-                  type: 'TOGGLE_SELECTION',
-                  id: target.id,
-                  itemCount: visible.length,
-                });
-              }
-              break;
-            }
-            case 'toggle-hidden': {
-              next = gameReducer(state, { type: 'TOGGLE_HIDDEN' });
-              break;
-            }
-            case 'sort': {
-              next = gameReducer(state, {
-                type: 'SET_SORT',
-                sortBy: step.sortBy,
-                direction: step.direction,
-              });
-              break;
-            }
-          }
+          const next =
+            applyInterleavedFsStep(state, step, target, label) ??
+            applyInterleavedNavStep(state, step, visible) ??
+            applyInterleavedViewStep(state, step, visible, target);
 
           if (next !== state) {
             checkInterleavedInvariants(next, label);
@@ -948,45 +944,133 @@ describe('property: interleaved FS mutations, history, filters, search, and clip
     );
   });
 
-  // BUG: NAVIGATE_BACK and NAVIGATE_FORWARD pop/shift paths from history/future
-  // without checking getNodeByPath(state.fs, targetPath), and DELETE_NODES / PASTE
-  // do not prune deleted paths from history/future. Entering a dir, going up,
-  // deleting that dir, and dispatching NAVIGATE_BACK leaves currentPath unresolvable.
-  it.skip('NAVIGATE_BACK/NAVIGATE_FORWARD should not land on a deleted directory', () => {
-    const initial = createInitialState();
-    const dir = getVisibleItems(initial).find((n) => n.type === 'dir');
-    expect(dir).toBeDefined();
-    if (!dir) return;
-
-    const entered = gameReducer(initial, {
-      type: 'NAVIGATE',
-      path: [...initial.currentPath, dir.id],
+  it('NAVIGATE_BACK and NAVIGATE_FORWARD skip deleted directories and clear exhausted stacks', () => {
+    const base = createInitialState();
+    const validPaths = getAllDirectoriesWithPaths(base.fs).map((d) => d.path);
+    const deadPaths = [
+      ['root', 'deleted-dir'],
+      ['root', 'home', 'deleted-sub'],
+      ['root', 'home', 'guest', 'gone-folder'],
+    ];
+    const entryArb = record({
+      alive: boolean(),
+      pick: nat(validPaths.length - 1),
     });
-    const backedOut = gameReducer(entered, { type: 'NAVIGATE', path: initial.currentPath });
-    const removed = deleteNode(backedOut.fs, backedOut.currentPath, dir.id);
-    expect(removed.ok).toBe(true);
-    if (!removed.ok) return;
 
-    const afterDelete = gameReducer(backedOut, { type: 'DELETE_NODES', newFs: removed.value });
-    const afterBack = gameReducer(afterDelete, { type: 'NAVIGATE_BACK' });
-    expect(getNodeByPath(afterBack.fs, afterBack.currentPath)).toBeDefined();
+    assert(
+      property(
+        array(entryArb, { minLength: 1, maxLength: 6 }),
+        array(entryArb, { minLength: 1, maxLength: 6 }),
+        boolean(),
+        (historyEntries, futureEntries, hasClipboard) => {
+          const toPath = (e: { alive: boolean; pick: number }) =>
+            e.alive ? validPaths[e.pick % validPaths.length] : deadPaths[e.pick % deadPaths.length];
+          const history = historyEntries.map(toPath);
+          const future = futureEntries.map(toPath);
+          const clipboard: GameState['clipboard'] = hasClipboard
+            ? {
+                nodes: [{ id: 'clip-1', name: 'f.txt', type: 'file', content: 'x' }],
+                action: 'yank',
+                originalPath: base.currentPath,
+              }
+            : null;
+
+          const state: GameState = { ...base, history, future, clipboard };
+
+          const back = gameReducer(state, { type: 'NAVIGATE_BACK' });
+          let expectedBackIdx = -1;
+          for (let i = history.length - 1; i >= 0; i--) {
+            if (getNodeByPath(state.fs, history[i])) {
+              expectedBackIdx = i;
+              break;
+            }
+          }
+          expect(getNodeByPath(back.fs, back.currentPath)).toBeDefined();
+          if (expectedBackIdx === -1) {
+            expect(back.currentPath).toEqual(state.currentPath);
+            expect(back.history).toEqual([]);
+          } else {
+            expect(back.currentPath).toEqual(history[expectedBackIdx]);
+            expect(back.history).toEqual(history.slice(0, expectedBackIdx));
+            expect(back.future).toEqual([state.currentPath, ...future]);
+            expect(back.lastHistoryBackPath).toEqual(history[expectedBackIdx]);
+            expect(back.lastHistoryBackClipboardIds).toEqual(hasClipboard ? ['clip-1'] : null);
+          }
+
+          const fwd = gameReducer(state, { type: 'NAVIGATE_FORWARD' });
+          const expectedFwdIdx = future.findIndex((p) => Boolean(getNodeByPath(state.fs, p)));
+          expect(getNodeByPath(fwd.fs, fwd.currentPath)).toBeDefined();
+          if (expectedFwdIdx === -1) {
+            expect(fwd.currentPath).toEqual(state.currentPath);
+            expect(fwd.future).toEqual([]);
+          } else {
+            expect(fwd.currentPath).toEqual(future[expectedFwdIdx]);
+            expect(fwd.future).toEqual(future.slice(expectedFwdIdx + 1));
+            expect(fwd.history).toEqual([...history, state.currentPath]);
+          }
+        }
+      ),
+      { numRuns: 100 }
+    );
   });
 
-  // BUG: DELETE_NODES does not prune deleted nodes from active searchResults, so
-  // getVisibleItems still yields deleted nodes while searchQuery is set.
-  it.skip('DELETE_NODES should prune deleted nodes from active searchResults', () => {
-    const initial = createInitialState();
-    const results = getRecursiveSearchResults(initial.fs, 'a', false, initial.currentPath);
+  it('DELETE_NODES and cut PASTE prune deleted nodes from searchResults and clamp cursor', () => {
+    const base = createInitialState();
+    const results = getRecursiveSearchResults(base.fs, 'a', false, base.currentPath).filter(
+      (n) => n.path && n.path.length > 1
+    );
     expect(results.length).toBeGreaterThan(0);
-    const victim = results[0];
-    const searching = gameReducer(initial, { type: 'CONFIRM_SEARCH', query: 'a', results });
-    const parentPath = victim.path ? victim.path.slice(0, -1) : initial.currentPath;
-    const removed = deleteNode(searching.fs, parentPath, victim.id);
-    expect(removed.ok).toBe(true);
-    if (!removed.ok) return;
 
-    const afterDelete = gameReducer(searching, { type: 'DELETE_NODES', newFs: removed.value });
-    expect(getVisibleItems(afterDelete).some((item) => item.id === victim.id)).toBe(false);
+    assert(
+      property(
+        nat(results.length - 1),
+        nat(results.length - 1),
+        boolean(),
+        (cursorPick, targetPick, viaCutPaste) => {
+          const searchState = gameReducer(base, {
+            type: 'CONFIRM_SEARCH',
+            query: 'a',
+            results,
+          });
+          const positioned = gameReducer(searchState, { type: 'SET_CURSOR', index: cursorPick });
+          const target = results[targetPick];
+          const parentPath = target.path!.slice(0, -1);
+          const deletion = deleteNode(positioned.fs, parentPath, target.id);
+          if (!deletion.ok) return;
+
+          let next: GameState;
+          if (viaCutPaste) {
+            const added = addNodeWithConflictResolution(
+              deletion.value,
+              positioned.currentPath,
+              target
+            );
+            const newFs = added.ok ? added.value : deletion.value;
+            const withClip = gameReducer(positioned, {
+              type: 'SET_CLIPBOARD',
+              nodes: [target],
+              action: 'cut',
+              originalPath: parentPath,
+            });
+            next = gameReducer(withClip, { type: 'PASTE', newFs, action: 'cut' });
+          } else {
+            next = gameReducer(positioned, { type: 'DELETE_NODES', newFs: deletion.value });
+          }
+
+          expect(next.searchResults.some((item) => item.id === target.id)).toBe(false);
+          for (const item of next.searchResults) {
+            expect(getNodeById(next.fs, item.id)).toBeDefined();
+          }
+          const visible = getVisibleItems(next);
+          for (const item of visible) {
+            expect(getNodeById(next.fs, item.id)).toBeDefined();
+          }
+          expect(next.cursorIndex).toBeGreaterThanOrEqual(0);
+          expect(next.cursorIndex).toBeLessThanOrEqual(Math.max(0, visible.length - 1));
+        }
+      ),
+      { numRuns: 100 }
+    );
   });
 });
 
@@ -1368,29 +1452,61 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
     );
   });
 
-  it('RESTART_CYCLE increments cycleCount, resets to level 0 with fresh INITIAL_FS and resolvable home path', () => {
+  it('RESTART_CYCLE increments cycleCount, resets dirty ephemeral state, and preserves settings/stats', () => {
     const base = createInitialState();
 
     assert(
       property(
         option(integer({ min: 1, max: 20 }), { nil: undefined }),
         integer({ min: 0, max: LEVELS.length }),
-        (cycleCount, levelIndex) => {
+        integer({ min: 1, max: 25 }),
+        (cycleCount, levelIndex, cursorIndex) => {
+          const customSettings: GameSettings = { soundEnabled: false, narrativeEffects: 'minimal' };
+          const customStats: GameStats = {
+            fuzzyJumps: 3,
+            fzfFinds: 4,
+            filterUsage: 5,
+            renames: 6,
+            archivesEntered: 7,
+          };
           const dirty: GameState = {
             ...base,
             cycleCount,
             levelIndex,
-            cursorIndex: 0,
-            selectedIds: [],
+            cursorIndex,
+            selectedIds: ['stale-selected-id'],
+            history: [['root'], ['root', 'home']],
+            future: [['root', 'tmp']],
+            clipboard: { nodes: [base.fs], action: 'cut', originalPath: ['root'] },
+            mode: 'filter',
+            inputBuffer: 'leftover-buffer',
+            filters: { guest: 'foo' },
+            searchQuery: 'stale-query',
+            searchResults: [base.fs],
+            showHidden: true,
+            sortBy: 'size',
+            sortDirection: 'desc',
+            pendingDeleteIds: ['pending-1'],
+            deleteType: 'permanent',
+            pendingOverwriteNode: { id: 'ow', name: 'ow.txt', type: 'file' },
             currentPath: ['root'],
+            levelStartPath: ['root'],
             loadedDirIds: ['root'],
             isGameOver: true,
+            gameOverReason: 'time',
+            threatLevel: 85,
+            threatStatus: 'BREACH',
+            keystrokes: 42,
+            weightedKeystrokes: 19,
             alerts: [{ id: 'a1', title: 'T', message: 'M', severity: 'error', timestamp: 1 }],
             dismissedAlertIds: ['a2'],
             completedTaskIds: { 1: ['t1'], 2: ['t2'] },
             showEpisodeIntro: false,
             isBooting: false,
+            settings: customSettings,
+            stats: customStats,
             usedG: true,
+            usedSearch: true,
           };
 
           const next = gameReducer(dirty, { type: 'RESTART_CYCLE' });
@@ -1398,34 +1514,49 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
           expect(next.cycleCount).toBe((cycleCount || 1) + 1);
           expect(next.levelIndex).toBe(0);
           expect(next.fs).not.toBe(dirty.fs);
+          expect(next.levelStartFS).not.toBe(next.fs);
+          expect(next.levelStartFS).toEqual(next.fs);
           expect(next.currentPath).toEqual(['root', 'home', 'guest']);
+          expect(next.levelStartPath).toEqual(['root', 'home', 'guest']);
           expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
+          expect(next.cursorIndex).toBe(0);
+          expect(next.selectedIds).toEqual([]);
+          expect(next.history).toEqual([]);
+          expect(next.future).toEqual([]);
           expect(next.loadedDirIds).toEqual([]);
+          expect(next.clipboard).toBeNull();
+          expect(next.mode).toBe('normal');
+          expect(next.inputBuffer).toBe('');
+          expect(next.filters).toEqual({});
+          expect(next.searchQuery).toBeNull();
+          expect(next.searchResults).toEqual([]);
+          expect(next.showHidden).toBe(false);
+          expect(next.sortBy).toBe('natural');
+          expect(next.sortDirection).toBe('asc');
+          expect(next.pendingDeleteIds).toEqual([]);
+          expect(next.deleteType).toBeNull();
+          expect(next.pendingOverwriteNode).toBeNull();
           expect(next.isGameOver).toBe(false);
+          expect(next.gameOverReason).toBeUndefined();
+          expect(next.threatLevel).toBe(0);
+          expect(next.threatStatus).toBe('CALM');
+          expect(next.keystrokes).toBe(0);
+          expect(next.weightedKeystrokes).toBe(0);
           expect(next.alerts).toEqual([]);
           expect(next.dismissedAlertIds).toEqual([]);
           expect(next.timeLeft).toBe(LEVELS[0].timeLimit ?? null);
           expect(next.completedTaskIds).toEqual({});
           expect(next.showEpisodeIntro).toBe(true);
           expect(next.isBooting).toBe(true);
-          expect(next.usedG).toBe(false);
+          expect(next.settings).toEqual(customSettings);
+          expect(next.stats).toEqual(customStats);
+          for (const [k, v] of Object.entries(INITIAL_ACTION_FLAGS)) {
+            expect(next[k as keyof typeof INITIAL_ACTION_FLAGS]).toEqual(v);
+          }
         }
       ),
       { numRuns: 50 }
     );
-  });
-
-  // BUG: RESTART_CYCLE does not reset cursorIndex, selectedIds, history, future,
-  // clipboard, mode, filters, searchQuery/searchResults, levelStartFS/levelStartPath,
-  // or gameOverReason. With cursorIndex > guest children count or custom selectedIds,
-  // post-restart state violates cursor-in-bounds and live-selection invariants.
-  it.skip('RESTART_CYCLE should reset cursorIndex and selectedIds for the fresh FS', () => {
-    const initial = createInitialState();
-    const dirty: GameState = { ...initial, cursorIndex: 99, selectedIds: ['ghost-id'] };
-    const next = gameReducer(dirty, { type: 'RESTART_CYCLE' });
-    const visible = getVisibleItems(next);
-    expect(next.cursorIndex).toBeLessThanOrEqual(Math.max(0, visible.length - 1));
-    expect(next.selectedIds).toEqual([]);
   });
 
   it('COMPLETE_INTRO resets transient state, resolves level start path, and gates boot sequence on Ep 1 natural completion', () => {
@@ -1479,14 +1610,6 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
     );
   });
 
-  // BUG: COMPLETE_INTRO calls getLevelStartPath(state.fs, currentLevel) on line 791
-  // before checking `if (currentLevel)` on line 794, throwing TypeError after ADVANCE_TO_OUTRO.
-  it.skip('COMPLETE_INTRO should not throw when levelIndex === LEVELS.length (outro)', () => {
-    const initial = createInitialState();
-    const outro = gameReducer(initial, { type: 'ADVANCE_TO_OUTRO' });
-    expect(() => gameReducer(outro, { type: 'COMPLETE_INTRO' })).not.toThrow();
-  });
-
   it('ADVANCE_TO_OUTRO always sets levelIndex to LEVELS.length', () => {
     const base = createInitialState();
 
@@ -1498,6 +1621,44 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
         expect(next.fs).toBe(state.fs);
         expect(next.currentPath).toBe(state.currentPath);
       }),
+      { numRuns: 40 }
+    );
+  });
+
+  it('COMPLETE_INTRO does not crash after ADVANCE_TO_OUTRO when levelIndex === LEVELS.length', () => {
+    const base = createInitialState();
+    const dirs = getAllDirectoriesWithPaths(base.fs).map((d) => d.path);
+
+    assert(
+      property(
+        nat(dirs.length - 1),
+        boolean(),
+        option(boolean(), { nil: undefined }),
+        (pathIdx, showEpisodeIntro, isSkip) => {
+          const outroState = gameReducer(
+            {
+              ...base,
+              currentPath: dirs[pathIdx],
+              showEpisodeIntro,
+              usedG: true,
+              cursorIndex: 3,
+              mode: 'filter',
+            },
+            { type: 'ADVANCE_TO_OUTRO' }
+          );
+          expect(outroState.levelIndex).toBe(LEVELS.length);
+
+          const next = gameReducer(outroState, { type: 'COMPLETE_INTRO', isSkip });
+          expect(next.levelIndex).toBe(LEVELS.length);
+          expect(next.currentPath).toEqual(outroState.currentPath);
+          expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
+          expect(next.showEpisodeIntro).toBe(false);
+          expect(next.isBooting).toBe(false);
+          expect(next.cursorIndex).toBe(0);
+          expect(next.mode).toBe('normal');
+          expect(next.usedG).toBe(false);
+        }
+      ),
       { numRuns: 40 }
     );
   });
@@ -1617,37 +1778,44 @@ describe('property: UPDATE_ZOXIDE frecency tracking', () => {
 // ---------------------------------------------------------------------------
 
 describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDATE_SETTINGS, TOGGLE_SOUND, UPDATE_LEVEL_11_FLAGS', () => {
-  it('UPDATE_CONSCIOUSNESS sets consciousnessLevel within [0, 100]', () => {
+  it('UPDATE_CONSCIOUSNESS clamps finite and infinite payloads to [0, 100] and ignores NaN', () => {
     const base = createInitialState();
+    const payloadArb = oneof(
+      double({ min: -1000, max: 1000, noNaN: true, noDefaultInfinity: true }),
+      constantFrom(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NaN)
+    );
 
     assert(
-      property(integer({ min: 0, max: 100 }), (level) => {
-        const next = gameReducer(base, { type: 'UPDATE_CONSCIOUSNESS', payload: level });
-        expect(next.consciousnessLevel).toBe(level);
+      property(integer({ min: 0, max: 100 }), payloadArb, (initialLevel, payload) => {
+        const seeded: GameState = { ...base, consciousnessLevel: initialLevel };
+        const next = gameReducer(seeded, { type: 'UPDATE_CONSCIOUSNESS', payload });
+
+        if (Number.isNaN(payload)) {
+          expect(next.consciousnessLevel).toBe(initialLevel);
+        } else {
+          expect(next.consciousnessLevel).toBe(Math.max(0, Math.min(100, payload)));
+        }
+        expect(next.consciousnessLevel).toBeGreaterThanOrEqual(0);
+        expect(next.consciousnessLevel).toBeLessThanOrEqual(100);
       }),
-      { numRuns: 50 }
+      { numRuns: 100 }
     );
   });
 
-  // BUG: types.ts documents `consciousnessLevel: number; // 0-100 hidden stat`,
-  // but UPDATE_CONSCIOUSNESS assigns action.payload directly without clamping to [0, 100].
-  it.skip('UPDATE_CONSCIOUSNESS should clamp out-of-range values to [0, 100]', () => {
+  it('UPDATE_GAUNTLET updates provided fields, preserves omitted ones, and clears notification on null', () => {
     const base = createInitialState();
-    const low = gameReducer(base, { type: 'UPDATE_CONSCIOUSNESS', payload: -10 });
-    const high = gameReducer(base, { type: 'UPDATE_CONSCIOUSNESS', payload: 250 });
-    expect(low.consciousnessLevel).toBeGreaterThanOrEqual(0);
-    expect(high.consciousnessLevel).toBeLessThanOrEqual(100);
-  });
-
-  it('UPDATE_GAUNTLET updates provided fields and preserves omitted ones', () => {
-    const base = createInitialState();
+    const notificationArb = oneof(
+      constant<GameState['notification'] | undefined>(undefined),
+      constant<GameState['notification'] | undefined>(null),
+      record({ message: string({ maxLength: 20 }) })
+    );
 
     assert(
       property(
         option(integer({ min: 0, max: 8 }), { nil: undefined }),
         option(integer({ min: 0, max: 8 }), { nil: undefined }),
         option(integer({ min: 0, max: 60 }), { nil: undefined }),
-        option(record({ message: string({ maxLength: 20 }) }), { nil: undefined }),
+        notificationArb,
         (phase, score, timeLeft, notification) => {
           const state: GameState = {
             ...base,
@@ -1666,10 +1834,12 @@ describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDAT
           expect(next.gauntletPhase).toBe(phase ?? state.gauntletPhase);
           expect(next.gauntletScore).toBe(score ?? state.gauntletScore);
           expect(next.timeLeft).toBe(timeLeft ?? state.timeLeft);
-          expect(next.notification).toEqual(notification ?? state.notification);
+          expect(next.notification).toEqual(
+            notification !== undefined ? notification : state.notification
+          );
         }
       ),
-      { numRuns: 80 }
+      { numRuns: 100 }
     );
   });
 
@@ -1928,17 +2098,24 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
     );
   });
 
-  it('SET_LINEMODE, SET_DELETE_PENDING, SET_OVERWRITE_PENDING, and UPDATE_FS update state cleanly', () => {
+  it('SET_LINEMODE, SET_DELETE_PENDING (including null clearing), SET_OVERWRITE_PENDING, and UPDATE_FS update state cleanly', () => {
     const base = createInitialState();
 
     assert(
       property(
         constantFrom<Linemode>('none', 'size', 'mtime', 'permissions'),
+        constantFrom<'trash' | 'permanent'>('trash', 'permanent'),
         array(stringMatching(/^[a-z0-9-]{1,6}$/), { maxLength: 5 }),
-        option(constantFrom<'trash' | 'permanent'>('trash', 'permanent'), { nil: undefined }),
+        constantFrom<'trash' | 'permanent' | null | undefined>(
+          'trash',
+          'permanent',
+          null,
+          undefined
+        ),
         boolean(),
-        (linemode, deleteIds, deleteType, hasOverwrite) => {
-          const s1 = gameReducer(base, { type: 'SET_LINEMODE', mode: linemode });
+        (linemode, initialDeleteType, deleteIds, deleteType, hasOverwrite) => {
+          const seeded: GameState = { ...base, deleteType: initialDeleteType };
+          const s1 = gameReducer(seeded, { type: 'SET_LINEMODE', mode: linemode });
           expect(s1.linemode).toBe(linemode);
 
           const s2 = gameReducer(s1, {
@@ -1947,7 +2124,7 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
             deleteType,
           });
           expect(s2.pendingDeleteIds).toEqual(deleteIds);
-          expect(s2.deleteType).toBe(deleteType ?? s1.deleteType);
+          expect(s2.deleteType).toBe(deleteType !== undefined ? deleteType : s1.deleteType);
 
           const overwriteNode: FileNode | null = hasOverwrite
             ? { id: 'ow-1', name: 'dup.txt', type: 'file', content: 'data' }
@@ -1961,25 +2138,8 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
           expect(s4.fs).not.toBe(s3.fs);
         }
       ),
-      { numRuns: 60 }
+      { numRuns: 80 }
     );
-  });
-
-  // BUG: SET_DELETE_PENDING uses `action.deleteType ?? state.deleteType`, so passing
-  // `deleteType: null` (permitted by the Action union) cannot clear deleteType back to null.
-  it.skip('SET_DELETE_PENDING with deleteType: null should clear deleteType to null', () => {
-    const base = createInitialState();
-    const armed = gameReducer(base, {
-      type: 'SET_DELETE_PENDING',
-      ids: ['n1'],
-      deleteType: 'permanent',
-    });
-    const cleared = gameReducer(armed, {
-      type: 'SET_DELETE_PENDING',
-      ids: [],
-      deleteType: null,
-    });
-    expect(cleared.deleteType).toBeNull();
   });
 
   it('ADD_ALERT / REMOVE_ALERT enforce id uniqueness and permanent dismissal, and SET_ALERT_MESSAGE sets message', () => {

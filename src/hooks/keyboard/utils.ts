@@ -105,9 +105,6 @@ export const checkProtocolViolations = (
   // Prevent default action (navigation)
   e.preventDefault();
 
-  // Prevent default action (navigation)
-  e.preventDefault();
-
   // Show the appropriate warning modal.
   // Note: During tasks, hidden files do NOT block (isBlockingViolation was false).
   // After tasks, we show the respective modal.
@@ -115,7 +112,7 @@ export const checkProtocolViolations = (
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: true });
   } else if (search) {
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'searchWarning', visible: true });
-  } else if (sort) {
+  } else if (isSortBlocking) {
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: true });
   } else if (hidden) {
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: true });

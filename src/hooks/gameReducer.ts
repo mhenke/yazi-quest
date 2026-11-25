@@ -339,11 +339,27 @@ function resolveCursorAfterDelete(
   return Math.max(0, after.length - 1);
 }
 
+function pruneSearchResults(searchResults: FileNode[], fs: FileNode): FileNode[] {
+  if (searchResults.length === 0) return searchResults;
+  return searchResults.filter((item) => getNodeById(fs, item.id) !== undefined);
+}
+
+function fallbackToSurvivingPath(fs: FileNode, currentPath: string[]): string[] {
+  if (getNodeByPath(fs, currentPath)) return currentPath;
+  const path = [...currentPath];
+  while (path.length > 1 && !getNodeByPath(fs, path)) path.pop();
+  return path;
+}
+
 function applyDeleteResult(state: GameState, newFs: FileNode): GameState {
   const before = getVisibleItems(state);
+  const survivingPath = fallbackToSurvivingPath(newFs, state.currentPath);
+  const pathChanged = survivingPath !== state.currentPath;
   const nextState: GameState = {
     ...state,
     fs: newFs,
+    currentPath: survivingPath,
+    searchResults: pruneSearchResults(state.searchResults, newFs),
     selectedIds: [],
     pendingDeleteIds: [],
     mode: 'normal',
@@ -351,7 +367,9 @@ function applyDeleteResult(state: GameState, newFs: FileNode): GameState {
   const after = getVisibleItems(nextState);
   return {
     ...nextState,
-    cursorIndex: resolveCursorAfterDelete(before, after, state.cursorIndex),
+    cursorIndex: pathChanged
+      ? clampCursorIndex(nextState, 0)
+      : resolveCursorAfterDelete(before, after, state.cursorIndex),
   };
 }
 
@@ -359,6 +377,7 @@ function applyPasteResult(state: GameState, action: Extract<Action, { type: 'PAS
   let next: GameState = {
     ...state,
     fs: action.newFs,
+    searchResults: pruneSearchResults(state.searchResults, action.newFs),
     clipboard: action.action === 'cut' ? null : state.clipboard,
   };
   // A cut paste re-adds descendants under fresh ids, so a selection that
@@ -369,12 +388,148 @@ function applyPasteResult(state: GameState, action: Extract<Action, { type: 'PAS
   }
   // Defense-in-depth: if the pasted tree lost the current directory, fall
   // back to its deepest surviving ancestor (root at worst) before clamping.
-  if (!getNodeByPath(next.fs, next.currentPath)) {
-    const path = [...next.currentPath];
-    while (path.length > 1 && !getNodeByPath(next.fs, path)) path.pop();
-    next = { ...next, currentPath: path, cursorIndex: 0 };
+  const survivingPath = fallbackToSurvivingPath(next.fs, next.currentPath);
+  if (survivingPath !== next.currentPath) {
+    next = { ...next, currentPath: survivingPath, cursorIndex: 0 };
   }
   return { ...next, cursorIndex: clampCursorIndex(next, next.cursorIndex) };
+}
+
+function applyNavigateBack(state: GameState): GameState {
+  if (state.history.length === 0) return state;
+  let targetIdx = state.history.length - 1;
+  while (targetIdx >= 0 && state.fs && !getNodeByPath(state.fs, state.history[targetIdx])) {
+    targetIdx--;
+  }
+  if (targetIdx < 0) {
+    return { ...state, history: [] };
+  }
+  const prevPath = state.history[targetIdx];
+  return {
+    ...state,
+    currentPath: prevPath,
+    history: state.history.slice(0, targetIdx),
+    future: [state.currentPath, ...state.future],
+    cursorIndex: 0,
+    usedPreviewDown: false,
+    usedPreviewUp: false,
+    lastHistoryBackPath: prevPath,
+    lastHistoryBackClipboardIds: state.clipboard
+      ? state.clipboard.nodes.map((node) => node.id)
+      : null,
+  };
+}
+
+function applyNavigateForward(state: GameState): GameState {
+  if (state.future.length === 0) return state;
+  let targetIdx = 0;
+  while (
+    targetIdx < state.future.length &&
+    state.fs &&
+    !getNodeByPath(state.fs, state.future[targetIdx])
+  ) {
+    targetIdx++;
+  }
+  if (targetIdx >= state.future.length) {
+    return { ...state, future: [] };
+  }
+  const nextPath = state.future[targetIdx];
+  return {
+    ...state,
+    currentPath: nextPath,
+    history: [...state.history, state.currentPath],
+    future: state.future.slice(targetIdx + 1),
+    cursorIndex: 0,
+    usedPreviewDown: false,
+    usedPreviewUp: false,
+  };
+}
+
+function applyUpdateConsciousness(state: GameState, payload: number): GameState {
+  if (Number.isNaN(payload)) return state;
+  return {
+    ...state,
+    consciousnessLevel: Math.max(0, Math.min(100, payload)),
+  };
+}
+
+function applyRestartCycle(state: GameState): GameState {
+  const freshFs = cloneFS(INITIAL_FS);
+  const startPath = ['root', 'home', 'guest'];
+  return {
+    ...state,
+    cycleCount: (state.cycleCount || 1) + 1,
+    levelIndex: 0,
+    fs: freshFs,
+    currentPath: startPath,
+    levelStartFS: cloneFS(freshFs),
+    levelStartPath: [...startPath],
+    cursorIndex: 0,
+    selectedIds: [],
+    history: [],
+    future: [],
+    loadedDirIds: [],
+    clipboard: null,
+    mode: 'normal',
+    inputBuffer: '',
+    filters: {},
+    searchQuery: null,
+    searchResults: [],
+    showHidden: false,
+    sortBy: 'natural',
+    sortDirection: 'asc',
+    pendingDeleteIds: [],
+    deleteType: null,
+    pendingOverwriteNode: null,
+    isGameOver: false,
+    gameOverReason: undefined,
+    threatLevel: 0,
+    threatStatus: 'CALM',
+    keystrokes: 0,
+    weightedKeystrokes: 0,
+    alerts: [],
+    dismissedAlertIds: [],
+    timeLeft: LEVELS[0].timeLimit ?? null,
+    completedTaskIds: {},
+    showEpisodeIntro: true,
+    isBooting: true,
+    ...INITIAL_ACTION_FLAGS,
+  };
+}
+
+function applyCompleteIntro(state: GameState, isSkip = false): GameState {
+  const currentLevel = LEVELS[state.levelIndex];
+  const initialPath = currentLevel ? getLevelStartPath(state.fs, currentLevel) : state.currentPath;
+
+  const newCompletedTaskIds = { ...state.completedTaskIds };
+  if (currentLevel) {
+    newCompletedTaskIds[currentLevel.id] = [];
+  }
+
+  const newState = {
+    ...state,
+    showEpisodeIntro: false,
+    isBooting: false,
+    currentPath: [...initialPath],
+    cursorIndex: 0,
+    // Reset all action flags to prevent leakage from mashing during intro
+    ...INITIAL_ACTION_FLAGS,
+    keystrokes: 0,
+    weightedKeystrokes: 0,
+    searchQuery: null as string | null,
+    searchResults: [] as FileNode[],
+    filters: {},
+    selectedIds: [] as string[],
+    completedTaskIds: newCompletedTaskIds,
+    mode: 'normal' as const,
+  };
+
+  // Conditionally trigger boot sequence only for Episode 1 natural progression
+  if (!isSkip && state.showEpisodeIntro && state.levelIndex === 0) {
+    return { ...newState, isBooting: true };
+  }
+
+  return newState;
 }
 
 export function gameReducer(state: GameState, action: Action): GameState {
@@ -418,37 +573,11 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
-    case 'NAVIGATE_BACK': {
-      if (state.history.length === 0) return state;
-      const prevPath = state.history[state.history.length - 1];
-      return {
-        ...state,
-        currentPath: prevPath,
-        history: state.history.slice(0, -1),
-        future: [state.currentPath, ...state.future],
-        cursorIndex: 0,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-        lastHistoryBackPath: prevPath,
-        lastHistoryBackClipboardIds: state.clipboard
-          ? state.clipboard.nodes.map((node) => node.id)
-          : null,
-      };
-    }
+    case 'NAVIGATE_BACK':
+      return applyNavigateBack(state);
 
-    case 'NAVIGATE_FORWARD': {
-      if (state.future.length === 0) return state;
-      const nextPath = state.future[0];
-      return {
-        ...state,
-        currentPath: nextPath,
-        history: [...state.history, state.currentPath],
-        future: state.future.slice(1),
-        cursorIndex: 0,
-        usedPreviewDown: false,
-        usedPreviewUp: false,
-      };
-    }
+    case 'NAVIGATE_FORWARD':
+      return applyNavigateForward(state);
 
     case 'SET_CURSOR': {
       const index = clampCursorIndex(state, action.index);
@@ -517,12 +646,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'CLEAR_THOUGHT':
       return { ...state, thought: null };
 
-    case 'UPDATE_CONSCIOUSNESS': {
-      return {
-        ...state,
-        consciousnessLevel: action.payload,
-      };
-    }
+    case 'UPDATE_CONSCIOUSNESS':
+      return applyUpdateConsciousness(state, action.payload);
 
     case 'SET_CLIPBOARD':
       return {
@@ -599,22 +724,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
 
     case 'RESTART_CYCLE':
-      return {
-        ...state,
-        cycleCount: (state.cycleCount || 1) + 1,
-        levelIndex: 0,
-        fs: cloneFS(INITIAL_FS),
-        currentPath: ['root', 'home', 'guest'],
-        loadedDirIds: [],
-        isGameOver: false,
-        alerts: [],
-        dismissedAlertIds: [],
-        timeLeft: LEVELS[0].timeLimit ?? null,
-        completedTaskIds: {},
-        showEpisodeIntro: true,
-        isBooting: true,
-        ...INITIAL_ACTION_FLAGS,
-      };
+      return applyRestartCycle(state);
 
     case 'INCREMENT_KEYSTROKES':
       return {
@@ -785,41 +895,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'SET_BOOT_STATUS':
       return { ...state, isBooting: action.isBooting };
 
-    case 'COMPLETE_INTRO': {
-      const isSkip = action.isSkip ?? false;
-      const currentLevel = LEVELS[state.levelIndex];
-      const initialPath = getLevelStartPath(state.fs, currentLevel);
-
-      const newCompletedTaskIds = { ...state.completedTaskIds };
-      if (currentLevel) {
-        newCompletedTaskIds[currentLevel.id] = [];
-      }
-
-      const newState = {
-        ...state,
-        showEpisodeIntro: false,
-        isBooting: false,
-        currentPath: [...initialPath],
-        cursorIndex: 0,
-        // Reset all action flags to prevent leakage from mashing during intro
-        ...INITIAL_ACTION_FLAGS,
-        keystrokes: 0,
-        weightedKeystrokes: 0,
-        searchQuery: null as string | null,
-        searchResults: [] as FileNode[],
-        filters: {},
-        selectedIds: [] as string[],
-        completedTaskIds: newCompletedTaskIds,
-        mode: 'normal' as const,
-      };
-
-      // Conditionally trigger boot sequence only for Episode 1 natural progression
-      if (!isSkip && state.showEpisodeIntro && state.levelIndex === 0) {
-        return { ...newState, isBooting: true };
-      }
-
-      return newState;
-    }
+    case 'COMPLETE_INTRO':
+      return applyCompleteIntro(state, action.isSkip);
 
     case 'UPDATE_LEVEL_11_FLAGS':
       return {
@@ -838,7 +915,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         pendingDeleteIds: action.ids,
-        deleteType: action.deleteType ?? state.deleteType,
+        deleteType: action.deleteType !== undefined ? action.deleteType : state.deleteType,
       };
 
     case 'SET_OVERWRITE_PENDING':
@@ -917,7 +994,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         gauntletPhase: action.phase ?? state.gauntletPhase,
         gauntletScore: action.score ?? state.gauntletScore,
         timeLeft: action.timeLeft ?? state.timeLeft,
-        notification: action.notification ?? state.notification,
+        notification: action.notification !== undefined ? action.notification : state.notification,
       };
 
     case 'ADVANCE_TO_OUTRO':

@@ -392,6 +392,22 @@ describe('dirsToLoad', () => {
       { numRuns: NUM_RUNS }
     );
   });
+
+  it('always returns unique IDs even when currentItem is the current directory itself', () => {
+    assert(
+      property(arbSeed, integer({ min: 0, max: 1_000_000 }), (seed, dirPick) => {
+        const root = buildSizedTree(seed);
+        const dirEntries = collectDirPaths(root, [root.id]);
+        const current = dirEntries[dirPick % dirEntries.length];
+
+        const ids = dirsToLoad(root, current.path, current.node);
+
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ids).toEqual([current.node.id]);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
 });
 
 describe('getFilterRegex', () => {

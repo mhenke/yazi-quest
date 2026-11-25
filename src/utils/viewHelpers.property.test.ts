@@ -352,12 +352,13 @@ describe('property: getVisibleItems re-filters a stale search snapshot', () => {
       property(arbMixedChains, arbSmartFilter, boolean(), (chains, filter, showHidden) => {
         const root = buildTree(chains);
         const children = root.children ?? [];
+        const regex = getFilterRegex(filter);
+        expect(regex).not.toBeNull();
         const isCaseSensitive = /[A-Z]/.test(filter.replace(/\\./g, ''));
-        // eslint-disable-next-line security/detect-non-literal-regexp -- oracle for smart-case getFilterRegex semantics
-        const regex = new RegExp(filter, isCaseSensitive ? '' : 'i');
+        expect(regex!.flags.includes('i')).toBe(!isCaseSensitive);
         const expected = children
           .filter((c) => (showHidden ? true : !c.name.startsWith('.')))
-          .filter((c) => regex.test(c.name));
+          .filter((c) => regex!.test(c.name));
 
         const items = getVisibleItems(
           baseState(root, { showHidden, filters: { [root.id]: filter } })

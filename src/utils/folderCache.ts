@@ -8,5 +8,7 @@ export const dirsToLoad = (
 ): string[] => {
   const currentDirId = getNodeByPath(fs, currentPath)?.id;
   const hoveredDirId = currentItem?.type === 'dir' ? currentItem.id : null;
-  return [currentDirId, hoveredDirId].filter((id): id is string => Boolean(id));
+  return Array.from(
+    new Set([currentDirId, hoveredDirId].filter((id): id is string => Boolean(id)))
+  );
 };

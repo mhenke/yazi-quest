@@ -30,7 +30,7 @@ export function getBaseFuzzyCandidates(gameState: GameState): FuzzyCandidate[] {
       }))
       .sort((a, b) => {
         const diff = (b.score ?? 0) - (a.score ?? 0);
-        if (Math.abs(diff) > 0.0001) return diff;
+        if (diff !== 0) return diff;
         return a.path.localeCompare(b.path);
       });
   }

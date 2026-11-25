@@ -549,16 +549,43 @@ describe('property: resolveAndCreatePath', () => {
     );
   });
 
-  it('never throws or mutates the input tree on whitespace-only path inputs', () => {
+  it('rejects whitespace-only inputs and whitespace-only segments without mutating fs, while allowing spaces inside filenames', () => {
+    const wsSegArb = stringMatching(/^[ \t]{1,4}$/);
+    const wsPathArb = oneof(
+      constantFrom(' ', '   ', '\t', '/   ', '~/   ', 'a/   /b', '   /a', 'a/   ', '/a/\t/b'),
+      wsSegArb,
+      tuple(constantFrom('', '/', '~/'), wsSegArb, boolean()).map(
+        ([prefix, ws, trailing]) => `${prefix}${ws}${trailing ? '/' : ''}`
+      ),
+      tuple(constantFrom('', '/', '~/'), segArb, wsSegArb, segArb).map(
+        ([prefix, head, ws, tail]) => `${prefix}${head}/${ws}/${tail}`
+      )
+    );
+
     assert(
-      property(constantFrom(' ', '   ', '\t', '/   ', '~/   '), (input) => {
+      property(wsPathArb, (input) => {
         const root = fixedTree();
         const snapshot = JSON.stringify(root);
 
         const res = resolveAndCreatePath(root, [ROOT, WORK], input);
 
+        expect(res.error).toBeTruthy();
+        expect(res.targetNode).toBeUndefined();
         expect(JSON.stringify(root)).toBe(snapshot);
-        expect(res.fs).toBeDefined();
+        expect(JSON.stringify(res.fs)).toBe(snapshot);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+
+    assert(
+      property(segArb, segArb, (left, right) => {
+        const root = fixedTree();
+        const spacedName = `${left} ${right}.txt`;
+        const res = resolveAndCreatePath(root, [ROOT, WORK], spacedName);
+
+        expect(res.error ?? null).toBeNull();
+        expect(res.targetNode?.name).toBe(spacedName);
+        expect(res.targetNode?.type).toBe('file');
       }),
       { numRuns: 50 }
     );

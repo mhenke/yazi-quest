@@ -455,6 +455,79 @@ describe('property: getBaseFuzzyCandidates visibility, opacity, and path resolut
       { numRuns: NUM_RUNS }
     );
   });
+
+  it('orders zoxide candidates strictly and transitively even when fractional counts differ by <= 1e-5', () => {
+    const now = Date.now();
+    const lastAccess = now - 10 * 60 * 1000;
+    const arbNearScores = array(integer({ min: 0, max: 12 }), {
+      minLength: 3,
+      maxLength: 10,
+    });
+
+    assert(
+      property(arbNearScores, integer({ min: 1, max: 100 }), (steps, baseCount) => {
+        const dirNodes: FileNode[] = steps.map((_, idx) => ({
+          id: `d${idx}`,
+          name: `dir_${String.fromCharCode(97 + idx)}`,
+          type: 'dir',
+          children: [],
+        }));
+        const zoxideEntries = dirNodes.map((node, idx): [string, ZoxideEntry] => [
+          `/${node.name}`,
+          { count: baseCount + steps[idx] * 1e-6, lastAccess },
+        ]);
+        const forwardRoot: FileNode = {
+          id: 'root',
+          name: 'root',
+          type: 'dir',
+          children: dirNodes,
+        };
+        const reversedRoot: FileNode = {
+          id: 'root',
+          name: 'root',
+          type: 'dir',
+          children: [...dirNodes].reverse(),
+        };
+
+        const forward = getBaseFuzzyCandidates(
+          makeState(
+            { root: forwardRoot, entries: [] },
+            {
+              mode: 'zoxide-jump',
+              zoxideData: Object.fromEntries(zoxideEntries),
+            }
+          )
+        );
+        const reversed = getBaseFuzzyCandidates(
+          makeState(
+            { root: reversedRoot, entries: [] },
+            {
+              mode: 'zoxide-jump',
+              zoxideData: Object.fromEntries([...zoxideEntries].reverse()),
+            }
+          )
+        );
+
+        // Strict weak order: identical output regardless of input traversal order.
+        expect(forward.map((c) => c.path)).toEqual(reversed.map((c) => c.path));
+
+        // Pairwise check: no score inversions across any pair, localeCompare on exact ties.
+        for (let i = 0; i < forward.length; i++) {
+          for (let j = i + 1; j < forward.length; j++) {
+            const a = forward[i];
+            const b = forward[j];
+            const scoreA = a.score ?? 0;
+            const scoreB = b.score ?? 0;
+            expect(scoreA).toBeGreaterThanOrEqual(scoreB);
+            if (scoreA === scoreB) {
+              expect(a.path.localeCompare(b.path)).toBeLessThan(0);
+            }
+          }
+        }
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
 });
 
 describe('property: filterFuzzyCandidates and getFuzzyCandidates contracts', () => {
