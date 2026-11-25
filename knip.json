@@ -1,3 +1,12 @@
 {
-  "ignoreBinaries": ["graphify"]
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "project": ["src/**/*.{ts,tsx,css}!", "tests/**/*.{ts,tsx}"],
+  "ignoreBinaries": ["graphify"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "rules": {
+    "cycles": "error"
+  }
 }

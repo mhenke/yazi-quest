@@ -1,3 +1,58 @@
 {
-  "ignoreBinaries": ["graphify"]
+  "$schema": "./node_modules/fallow/schema.json",
+  "ignoreBinaries": ["graphify"],
+  "ignoreDependencies": ["eslint-import-resolver-typescript"],
+  "audit": {
+    "gate": "new-only",
+    "worsened": "error"
+  },
+  "boundaries": {
+    "zones": [
+      { "name": "tests", "patterns": ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**"] },
+      { "name": "types", "patterns": ["src/types.ts"] },
+      { "name": "utils", "patterns": ["src/utils/**"] },
+      { "name": "constants", "patterns": ["src/constants/**"] },
+      { "name": "context", "patterns": ["src/GlobalInputContext.tsx"] },
+      { "name": "hooks", "patterns": ["src/hooks/**"] },
+      { "name": "components", "patterns": ["src/components/**"] },
+      { "name": "app", "patterns": ["src/App.tsx", "src/index.tsx"] }
+    ],
+    "rules": [
+      {
+        "from": "tests",
+        "allow": ["tests", "app", "components", "hooks", "utils", "constants", "types", "context"]
+      },
+      { "from": "types", "allow": [], "allowTypeOnly": ["hooks"] },
+      { "from": "utils", "allow": ["utils", "constants", "types"] },
+      { "from": "constants", "allow": ["constants", "utils", "types"] },
+      { "from": "context", "allow": ["types"] },
+      { "from": "hooks", "allow": ["hooks", "utils", "constants", "types", "context"] },
+      {
+        "from": "components",
+        "allow": ["components", "hooks", "utils", "constants", "types", "context"]
+      },
+      {
+        "from": "app",
+        "allow": ["app", "components", "hooks", "utils", "constants", "types", "context"]
+      }
+    ],
+    "coverage": {
+      "requireAllFiles": true,
+      "allowUnmatched": [
+        "index.html",
+        "public/**",
+        "src/**/*.css",
+        "*.config.*",
+        "commitlint.config.cjs"
+      ]
+    }
+  },
+  "rules": {
+    "policy-violation": "off",
+    "added-suppression": "error",
+    "private-type-leaks": "warn",
+    "prop-drilling": "warn",
+    "thin-wrapper": "warn",
+    "duplicate-prop-shape": "warn"
+  }
 }

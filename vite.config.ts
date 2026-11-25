@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
       exclude: ['tests/**', 'node_modules/**'],
       coverage: {
         provider: 'v8',
-        reporter: ['text', 'html', 'json-summary'],
+        reporter: ['text', 'html', 'json', 'json-summary'],
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts'],
       },
