@@ -73,7 +73,7 @@ The narrative explanation of a level's situation, stakes, and purpose. The inter
 _Avoid_: Objective, task, file target
 
 **Mission Drawer**:
-The collapsible in-game HUD container in the inspection pane presenting the active level's mission brief and task checklist.
+The collapsible in-game HUD container in the preview pane presenting the active level's mission brief and task checklist.
 _Avoid_: Mission sidebar, task panel, objective tray
 
 **Current item**:
