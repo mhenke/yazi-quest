@@ -695,7 +695,8 @@ export const LEVELS: Level[] = [
     id: 9,
     episodeId: 2,
     title: 'TRACE CLEANUP',
-    description: 'Purge the evidence. Preserve only the critical anchors. Decoys are everywhere.',
+    description:
+      'Purge the evidence. Preserve only the critical anchors: credentials (.key), process records (.pid), and sockets (.sock). Decoys are everywhere.',
     initialPath: ['root', 'tmp'],
     hint: {
       nudge: 'Preserve key, pid, and socket files.',
@@ -718,10 +719,10 @@ export const LEVELS: Level[] = [
       {
         id: 'cleanup-1-select',
         description:
-          'Filter keepers with f `\\.(key|pid|sock)$`; Esc closes the prompt. Select matches (Ctrl+a), then Esc clears the filter but keeps the selection.',
+          'Filter keepers with `f` and `\\.(key|pid|sock)$`; press `Esc` to close the prompt, then `Ctrl+a` to select matches. Press `Esc` again to clear the filter while keeping the selection.',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
-          if (!tmp || !c.currentPath.includes(tmp.id)) return false;
+          if (!tmp || !c.currentPath.includes(tmp.id) || c.filters?.[tmp.id]) return false;
           const ghost = tmp.children?.find((n) => n.name === 'ghost_process.pid');
           const sock = tmp.children?.find((n) => n.name === 'socket_001.sock');
           const monitor = tmp.children?.find((n) => n.name === 'system_monitor.pid');

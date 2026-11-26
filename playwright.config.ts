@@ -29,7 +29,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --base / --port ${port} --strictPort`,
+    command: `npm run dev -- --base / --port ${port} --strictPort --bypass-lock`,
     url: baseURL,
     reuseExistingServer: !isolatedServer,
   },

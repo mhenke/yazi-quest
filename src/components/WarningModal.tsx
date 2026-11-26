@@ -25,12 +25,13 @@ export const WarningModal: React.FC<WarningModalProps> = ({
   const id = useId();
   return (
     <div
-      className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm animate-terminal-fade"
+      className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-xs animate-terminal-fade"
       onKeyDown={containOverlayTab}
     >
       <div
         ref={panelRef}
         role="alertdialog"
+        aria-modal="true"
         aria-labelledby={`${id}-title`}
         aria-describedby={`${id}-description`}
         tabIndex={-1}
@@ -74,7 +75,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
             {allowAutoFix ? (
               <p className="text-zinc-400 text-xs font-mono tracking-wide">
                 Or press{' '}
-                <span className="bg-zinc-800 border border-yellow-500/60 text-yellow-300 px-2 py-0.5 rounded-sm font-bold mx-1">
+                <span className="bg-zinc-800 border border-yellow-500/60 text-yellow-300 px-2 py-0.5 rounded-xs font-bold mx-1">
                   Shift+Enter
                 </span>{' '}
                 {autoFixText}
@@ -91,7 +92,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
             <button
               type="button"
               onClick={onDismiss}
-              className="text-sm text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="min-h-6 px-2 py-1 text-sm text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
               Close
             </button>

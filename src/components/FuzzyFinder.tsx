@@ -105,6 +105,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
       <div
         ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby={`${id}-label`}
         tabIndex={-1}
         data-testid="fuzzy-finder"
@@ -127,7 +128,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
               dispatch({ type: 'SET_INPUT_BUFFER', buffer: event.target.value });
               dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
             }}
-            className="w-full min-w-0 bg-zinc-900 border border-zinc-600 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
+            className="w-full min-w-0 bg-zinc-900 border border-zinc-600 px-2 py-1 text-sm text-zinc-100 outline-hidden focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
           />
         </div>
         <div className="flex-1 flex flex-col min-h-0">
@@ -180,7 +181,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
             <div className="h-[38%] min-h-0 flex flex-col bg-zinc-950/80">
               <div className="px-4 py-2 text-xs uppercase font-bold text-zinc-400 tracking-[0.2em] flex items-center gap-2 border-b border-zinc-900">
                 <div
-                  className={`w-2 h-2 rounded-sm ${isQuantumLevel ? 'bg-purple-900' : 'bg-zinc-800'}`}
+                  className={`w-2 h-2 rounded-xs ${isQuantumLevel ? 'bg-purple-900' : 'bg-zinc-800'}`}
                 />
                 Preview
                 {selectedCandidate && (

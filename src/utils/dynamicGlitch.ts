@@ -1,47 +1,56 @@
 type GlitchElement = HTMLElement & { __dynamicGlitchApplied?: boolean };
 
-export function applyDynamicGlitch(el: GlitchElement) {
-  if (!el) return;
-  // If already applied, skip
-  if (el.__dynamicGlitchApplied) return;
+const POOL_SIZE = 4;
+const STYLE_ID = 'yazi-dynamic-glitch-pool';
 
-  const uid = Math.random().toString(36).slice(2, 9);
-  const beforeName = `glitch_before_${uid}`;
-  const afterName = `glitch_after_${uid}`;
+const makeInsetSteps = (steps: number, seedOffset: number): string => {
+  const frames: string[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const pct = Math.round((i / steps) * 100);
+    const top = (i * 37 + seedOffset * 19) % 70;
+    const height = 8 + ((i * 13 + seedOffset * 7) % 24);
+    const bottom = Math.max(0, 100 - (top + height));
+    const tx = ((i + seedOffset) % 3) - 1;
+    const ty = ((i * 2 + seedOffset) % 3) - 1;
+    const skew = ((((i * 7 + seedOffset) % 11) - 5) * 0.18).toFixed(2);
+    frames.push(
+      `${pct}% { clip-path: inset(${top}% 0 ${bottom}% 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`
+    );
+  }
+  return frames.join('\n');
+};
 
-  const makeSteps = (steps: number) => {
-    const arr: string[] = [];
-    for (let i = 0; i <= steps; i++) {
-      const pct = Math.round((i / steps) * 100);
-      const top = Math.floor(Math.random() * 80);
-      // thinner slices for sleek look
-      const height = Math.floor(2 + Math.random() * 18); // 2..20px
-      const bottom = top + height;
-      const tx = Math.floor(Math.random() * 3) - 1; // -1..1 px
-      const ty = Math.floor(Math.random() * 3) - 1; // -1..1 px
-      const skew = (Math.random() * 2 - 1).toFixed(2); // -1..1 deg
-      arr.push(
-        `${pct}% { clip: rect(${top}px, 9999px, ${bottom}px, 0); transform: translate(${tx}px, ${ty}px) skew(${skew}deg); }`
-      );
-    }
-    return arr.join('\n');
-  };
+const ensurePool = () => {
+  if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
 
-  // more steps = finer slices
-  const beforeFrames = `@keyframes ${beforeName} {\n${makeSteps(12)}\n}`;
-  const afterFrames = `@keyframes ${afterName} {\n${makeSteps(12)}\n}`;
+  const rules: string[] = [];
+  for (let idx = 0; idx < POOL_SIZE; idx++) {
+    rules.push(`@keyframes glitch_before_${idx} {\n${makeInsetSteps(12, idx * 2)}\n}`);
+    rules.push(`@keyframes glitch_after_${idx} {\n${makeInsetSteps(12, idx * 2 + 1)}\n}`);
+  }
 
   const style = document.createElement('style');
-  style.setAttribute('data-glitch', uid);
-  style.textContent = `${beforeFrames}\n${afterFrames}`;
+  style.id = STYLE_ID;
+  style.textContent = rules.join('\n');
   document.head.appendChild(style);
+};
 
-  // assign variables on the element so pseudo-elements use these keyframes
-  el.style.setProperty('--glitch-before', beforeName);
-  el.style.setProperty('--glitch-after', afterName);
-  // subtler, faster durations for sleek feel
-  el.style.setProperty('--glitch-dur-before', `${(1.2 + Math.random() * 1.2).toFixed(2)}s`);
-  el.style.setProperty('--glitch-dur-after', `${(0.9 + Math.random() * 0.9).toFixed(2)}s`);
+export function applyDynamicGlitch(el: GlitchElement) {
+  if (!el || el.__dynamicGlitchApplied) return;
+
+  ensurePool();
+
+  const text = el.dataset.text || el.textContent || '';
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash * 31 + text.charCodeAt(i)) | 0;
+  }
+  const slot = Math.abs(hash) % POOL_SIZE;
+
+  el.style.setProperty('--glitch-before', `glitch_before_${slot}`);
+  el.style.setProperty('--glitch-after', `glitch_after_${slot}`);
+  el.style.setProperty('--glitch-dur-before', `${(1.2 + slot * 0.25).toFixed(2)}s`);
+  el.style.setProperty('--glitch-dur-after', `${(0.9 + slot * 0.2).toFixed(2)}s`);
 
   el.__dynamicGlitchApplied = true;
 }

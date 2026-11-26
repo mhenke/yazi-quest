@@ -36,7 +36,6 @@ export function GlitchOverlay({
     Array<{ char: string; left: number; top: number; opacity: number }>
   >([]);
   const glitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Calculate combined intensity from threat and consciousness
   const threatIntensity = getGlitchIntensity(threatLevel);
@@ -64,6 +63,9 @@ export function GlitchOverlay({
 
     if (randomGlitch === 'text-scramble') {
       setGlitchChars(generateGlitchChars(20));
+      if (threatLevel >= 50) {
+        setScrambledText(scrambleText('SYSTEM CORRUPTION DETECTED'));
+      }
     }
 
     // Clear glitch after short duration based on combined intensity
@@ -93,30 +95,18 @@ export function GlitchOverlay({
       if (glitchTimeoutRef.current) {
         clearTimeout(glitchTimeoutRef.current);
       }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
     };
   }, [enabled, threatLevel, consciousnessLevel, combinedIntensity, triggerGlitch]);
 
-  // Continuous text scrambling effect at high threat levels
+  // Throttled text scrambling effect only while active at high threat levels
   useEffect(() => {
-    if (!enabled || threatLevel < 50) return;
+    if (!enabled || threatLevel < 50 || activeGlitch !== 'text-scramble') return;
 
-    const animateScramble = () => {
-      if (activeGlitch === 'text-scramble') {
-        setScrambledText(scrambleText('SYSTEM CORRUPTION DETECTED'));
-      }
-      animationFrameRef.current = requestAnimationFrame(animateScramble);
-    };
+    const scrambleInterval = setInterval(() => {
+      setScrambledText(scrambleText('SYSTEM CORRUPTION DETECTED'));
+    }, 100);
 
-    animationFrameRef.current = requestAnimationFrame(animateScramble);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
+    return () => clearInterval(scrambleInterval);
   }, [enabled, threatLevel, activeGlitch]);
 
   const effectsAvailable = enabled && threatLevel >= 20;

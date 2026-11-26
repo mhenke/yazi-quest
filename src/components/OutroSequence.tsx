@@ -18,18 +18,193 @@ interface OutroSequenceProps {
   reduceMotion?: boolean;
 }
 
+interface TeaserOverlayProps {
+  onRestartCycle?: () => void;
+}
+
+const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
+  <div className="relative z-30 h-full w-full overflow-y-auto flex items-start sm:items-center justify-center">
+    <div className="my-auto flex flex-col items-center text-center space-y-4 md:space-y-8 p-6 sm:p-10 md:p-12 bg-black/40 backdrop-blur-xs border-y border-red-500/30 w-full animate-terminal-pop animate-terminal-delay-1s">
+      <div className="animate-pulse text-red-500 mb-2">
+        <Signal size={48} />
+      </div>
+
+      <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-terminal-rise">
+        {CONCLUSION_DATA.overlayTitle}
+      </h2>
+
+      <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]">
+        {CONCLUSION_DATA.sequelTitle}
+      </h2>
+
+      <div className="h-px w-32 bg-red-500" />
+
+      <h3 className="text-xl sm:text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
+        {CONCLUSION_DATA.sequelSubtitle}
+      </h3>
+
+      {/* Persistent Rewards / System Status */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-6 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+        {EPISODE_LORE.map((ep, idx) => {
+          const episodeIcons = [Zap, Shield, Crown];
+          const Icon = episodeIcons[idx] || Shield;
+          const palette = paletteFor(ep.color);
+          return (
+            <div key={ep.id} className="flex flex-col items-center gap-2">
+              <div
+                className={`p-3 rounded-full bg-zinc-900 ring-2 ring-offset-2 ring-offset-black ${palette.ring}`}
+              >
+                <Icon size={24} className={palette.text} />
+              </div>
+              <span className={`text-xs font-mono uppercase tracking-widest ${palette.text}`}>
+                {ep.name}
+              </span>
+              <span className="text-xs text-zinc-400 uppercase">System Installed</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="pt-8 md:pt-12">
+        <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
+          <UploadCloud size={16} className="animate-pulse" aria-hidden="true" />
+          <a
+            href="https://github.com/mhenke/yazi-quest"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center min-h-6 py-0.5 underline hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            Establishing Remote Uplink...
+          </a>
+        </div>
+      </div>
+
+      {/* ROLLING CREDITS SECTION */}
+      <div className="pt-12 w-full max-w-md overflow-hidden h-40 relative outro-credits-viewport">
+        <div className="animate-scroll-y flex flex-col gap-8 py-4">
+          {CREDITS_DATA.map((credit, i) => (
+            <div key={i} className="flex flex-col gap-1 items-center">
+              <span className="text-xs text-zinc-400 font-mono tracking-widest uppercase">
+                {credit.role}
+              </span>
+              <span className="text-lg text-white font-bold tracking-tight">{credit.name}</span>
+            </div>
+          ))}
+        </div>
+        {/* Fade masks */}
+        <div className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
+      </div>
+
+      {/* Manual Restart Button (Pillar I) */}
+      <div className="pt-6 md:pt-8 animate-terminal-rise animate-terminal-delay-5s">
+        <button
+          type="button"
+          onClick={onRestartCycle}
+          className="group relative px-8 py-4 bg-transparent border-2 border-red-500/50 hover:border-red-500 rounded text-red-400 hover:text-white transition-all duration-300 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-10" />
+          <div className="flex items-center gap-3 font-mono font-bold tracking-[0.2em] uppercase">
+            <Zap size={20} className="animate-pulse" aria-hidden="true" />
+            <span>Initialize New Cycle</span>
+            <ArrowRight
+              size={20}
+              className="group-hover:translate-x-1 transition-transform"
+              aria-hidden="true"
+            />
+          </div>
+        </button>
+        <p className="mt-4 text-xs text-zinc-400 font-mono uppercase tracking-widest animate-pulse">
+          Establishing consciousness bridge...
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+interface OutroVideoSectionProps {
+  showTeaser: boolean;
+  showOverlay: boolean;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  onRestartCycle?: () => void;
+}
+
+const OutroVideoSection: React.FC<OutroVideoSectionProps> = ({
+  showTeaser,
+  showOverlay,
+  videoRef,
+  onRestartCycle,
+}) => (
+  <div className="absolute inset-0 z-10 overflow-hidden">
+    <div
+      className={`absolute inset-0 pointer-events-none transition-opacity duration-500 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+    >
+      <video
+        ref={videoRef}
+        src={showTeaser ? CONCLUSION_DATA.videoUrl : undefined}
+        preload="none"
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
+        muted
+        playsInline
+      />
+      <Scanlines className="z-20" />
+    </div>
+
+    {showTeaser && showOverlay && <TeaserOverlay onRestartCycle={onRestartCycle} />}
+  </div>
+);
+
+const useOutroTypewriter = (
+  sectionKey: string,
+  currentText: string,
+  showTeaser: boolean,
+  reduceMotion?: boolean
+) => {
+  const [typingState, setTypingState] = useState({ key: sectionKey, text: '', done: false });
+  const typewriterRef = useRef<number | null>(null);
+
+  const isCurrent = typingState.key === sectionKey;
+  const displayedText = reduceMotion ? currentText : isCurrent ? typingState.text : '';
+  const showContinue = Boolean(reduceMotion) || (isCurrent && typingState.done);
+  const isAnimating = !reduceMotion && !showTeaser && !showContinue;
+
+  useEffect(() => {
+    if (showTeaser || reduceMotion) return;
+
+    let charIndex = 0;
+    const animate = () => {
+      if (charIndex < currentText.length) {
+        charIndex++;
+        setTypingState({ key: sectionKey, text: currentText.slice(0, charIndex), done: false });
+        typewriterRef.current = window.setTimeout(animate, 25);
+      } else {
+        setTypingState({ key: sectionKey, text: currentText, done: true });
+      }
+    };
+
+    typewriterRef.current = window.setTimeout(animate, 100);
+    return () => {
+      if (typewriterRef.current) clearTimeout(typewriterRef.current);
+    };
+  }, [sectionKey, currentText, showTeaser, reduceMotion]);
+
+  const skipTyping = useCallback(() => {
+    if (typewriterRef.current) clearTimeout(typewriterRef.current);
+    setTypingState({ key: sectionKey, text: currentText, done: true });
+  }, [sectionKey, currentText]);
+
+  return { displayedText, showContinue, isAnimating, skipTyping };
+};
+
 export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, reduceMotion }) => {
   // Part navigation (like EpisodeIntro but across multiple parts)
   const [partIndex, setPartIndex] = useState(0);
   const [sectionIndex, setSectionIndex] = useState(0);
-  const [displayedText, setDisplayedText] = useState('');
-  const [showContinue, setShowContinue] = useState(false);
+  const sectionKey = `${partIndex}:${sectionIndex}`;
   const [showTeaser, setShowTeaser] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const overlayTimer = useRef<number | null>(null);
-  const typewriterRef = useRef<number | null>(null);
-  const isAnimatingRef = useRef(false);
+  const [overlayReady, setOverlayReady] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Current part data
@@ -65,47 +240,18 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
   const currentSection = sections[sectionIndex] || [];
   const currentText = currentSection.join('\n');
 
+  const { displayedText, showContinue, isAnimating, skipTyping } = useOutroTypewriter(
+    sectionKey,
+    currentText,
+    showTeaser,
+    reduceMotion
+  );
+  const showOverlay = showTeaser && (Boolean(reduceMotion) || overlayReady);
+
   // Check if we're at the final section of the final part
   const isFinalPart = partIndex === CONCLUSION_PARTS.length - 1;
   const isFinalSection = sectionIndex === sections.length - 1;
   const isComplete = isFinalPart && isFinalSection && showContinue;
-
-  // Typewriter effect for current section
-  useEffect(() => {
-    if (showTeaser) return;
-    if (reduceMotion) {
-      setDisplayedText(currentText);
-      setShowContinue(true);
-      isAnimatingRef.current = false;
-      return;
-    }
-
-    setDisplayedText('');
-    setShowContinue(false);
-    isAnimatingRef.current = true;
-
-    let charIndex = 0;
-    const text = currentText;
-
-    const animate = () => {
-      if (charIndex < text.length) {
-        charIndex++;
-        setDisplayedText(text.slice(0, charIndex));
-        typewriterRef.current = window.setTimeout(animate, 25);
-      } else {
-        isAnimatingRef.current = false;
-        setShowContinue(true);
-      }
-    };
-
-    typewriterRef.current = window.setTimeout(animate, 100);
-
-    return () => {
-      if (typewriterRef.current) {
-        clearTimeout(typewriterRef.current);
-      }
-    };
-  }, [partIndex, sectionIndex, currentText, showTeaser, reduceMotion]);
 
   // Skip animation or advance to next section/part
   const handleAdvance = useCallback(() => {
@@ -120,13 +266,8 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
     }
 
     // If animating, skip to end
-    if (isAnimatingRef.current) {
-      if (typewriterRef.current) {
-        clearTimeout(typewriterRef.current);
-      }
-      setDisplayedText(currentText);
-      isAnimatingRef.current = false;
-      setShowContinue(true);
+    if (isAnimating) {
+      skipTyping();
       return;
     }
 
@@ -141,7 +282,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
       // Advance to next section
       setSectionIndex((prev) => prev + 1);
     }
-  }, [showTeaser, currentText, sectionIndex, sections.length, partIndex, isComplete]);
+  }, [showTeaser, isAnimating, skipTyping, sectionIndex, sections.length, partIndex, isComplete]);
 
   // Enter skips typing; Shift+Enter advances.
   useGlobalInput(
@@ -156,18 +297,13 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
         }
 
         // Enter without shift only skips typing if animation is running
-        if (isAnimatingRef.current) {
-          if (typewriterRef.current) {
-            clearTimeout(typewriterRef.current);
-          }
-          setDisplayedText(currentText);
-          isAnimatingRef.current = false;
-          setShowContinue(true);
+        if (isAnimating) {
+          skipTyping();
         }
         return true;
       }
     },
-    [handleAdvance, showTeaser, currentText],
+    [handleAdvance, isAnimating, skipTyping],
     { priority: 900, enabled: !showTeaser }
   );
 
@@ -237,30 +373,10 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
 
   // Delay rendering of the teaser overlay content slightly to avoid a flash
   useEffect(() => {
-    if (reduceMotion) {
-      setShowOverlay(showTeaser);
-      return;
-    }
+    if (!showTeaser || reduceMotion) return;
 
-    if (showTeaser) {
-      // hide overlay immediately, then show after short delay when video has begun fading in
-      setShowOverlay(false);
-      overlayTimer.current = window.setTimeout(() => setShowOverlay(true), 600);
-    } else {
-      // cleanup/hide
-      setShowOverlay(false);
-      if (overlayTimer.current) {
-        clearTimeout(overlayTimer.current);
-        overlayTimer.current = null;
-      }
-    }
-
-    return () => {
-      if (overlayTimer.current) {
-        clearTimeout(overlayTimer.current);
-        overlayTimer.current = null;
-      }
-    };
+    const timer = window.setTimeout(() => setOverlayReady(true), 600);
+    return () => clearTimeout(timer);
   }, [showTeaser, reduceMotion]);
 
   // The page cannot scroll (body is overflow:hidden), so the log owns the scroll.
@@ -290,7 +406,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
             playSuccessSound(true);
             setShowTeaser(true);
           }}
-          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-sm shadow-lg"
+          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-xs shadow-lg"
         >
           <span>
             {showTeaser ? (reduceMotion ? 'Play Teaser' : 'Replay Teaser') : 'Skip Outro'}
@@ -320,7 +436,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
               <h1 className="text-2xl font-bold tracking-wider uppercase">{currentPart.title}</h1>
             </div>
             {currentPart.subtitle && (
-              <p className="text-zinc-500 font-mono tracking-[0.3em] uppercase">
+              <p className="text-zinc-400 font-mono tracking-[0.3em] uppercase">
                 {'//'} {currentPart.subtitle}
               </p>
             )}
@@ -335,7 +451,10 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                   key={idx}
                   className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
                 >
-                  <span className={`${isBootLike ? 'text-orange-400/70' : partPalette.soft} mr-2`}>
+                  <span
+                    aria-hidden="true"
+                    className={`${isBootLike ? 'text-orange-400/70' : partPalette.soft} mr-2`}
+                  >
                     {'>'}
                   </span>
                   {renderHighlighted(line)}
@@ -355,7 +474,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
                     i < partIndex
                       ? 'bg-green-500'
                       : i === partIndex
-                        ? `${partPalette.bgSolid} animate-pulse`
+                        ? `${partPalette.bgSolid} ring-2 ring-offset-2 ring-offset-black ${partPalette.ring}`
                         : 'bg-zinc-700'
                   }`}
                 />
@@ -406,122 +525,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
       </div>
 
       {/* Video Teaser Section */}
-      <div className={`absolute inset-0 z-10 flex items-center justify-center`}>
-        {/* Background Video Container - Fades in */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-500 delay-500 ${showTeaser ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
-        >
-          <video
-            ref={videoRef}
-            src={CONCLUSION_DATA.videoUrl}
-            className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen"
-            muted
-            playsInline
-          />
-          {/* Scanlines Effect */}
-          <Scanlines className="z-20" />
-        </div>
-
-        {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
-        {showTeaser && showOverlay && (
-          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-terminal-pop animate-terminal-delay-1s">
-            <div className="animate-pulse text-red-500 mb-2">
-              <Signal size={48} />
-            </div>
-
-            <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-terminal-rise">
-              {CONCLUSION_DATA.overlayTitle}
-            </h2>
-
-            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] scale-in-center">
-              {CONCLUSION_DATA.sequelTitle}
-            </h2>
-
-            <div className="h-px w-32 bg-red-500" />
-
-            <h3 className="text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
-              {CONCLUSION_DATA.sequelSubtitle}
-            </h3>
-
-            {/* Persistent Rewards / System Status */}
-            <div className="grid grid-cols-3 gap-6 my-6 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
-              {EPISODE_LORE.map((ep, idx) => {
-                const episodeIcons = [Zap, Shield, Crown];
-
-                const Icon = episodeIcons[idx] || Shield;
-                const palette = paletteFor(ep.color);
-                return (
-                  <div key={ep.id} className="flex flex-col items-center gap-2">
-                    <div
-                      className={`p-3 rounded-full bg-zinc-900 ring-2 ring-offset-2 ring-offset-black ${palette.ring}`}
-                    >
-                      <Icon size={24} className={palette.text} />
-                    </div>
-                    <span className={`text-xs font-mono uppercase tracking-widest ${palette.text}`}>
-                      {ep.name}
-                    </span>
-                    <span className="text-xs text-zinc-400 uppercase">System Installed</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-8 md:pt-12">
-              <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
-                <UploadCloud size={16} className="animate-pulse" />
-                <a
-                  href="https://github.com/mhenke/yazi-quest"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-white"
-                >
-                  Establishing Remote Uplink...
-                </a>
-              </div>
-            </div>
-
-            {/* ROLLING CREDITS SECTION */}
-            <div className="pt-12 w-full max-w-md overflow-hidden h-40 relative">
-              <div className="animate-scroll-y flex flex-col gap-8 py-4">
-                {CREDITS_DATA.map((credit, i) => (
-                  <div key={i} className="flex flex-col gap-1 items-center">
-                    <span className="text-xs text-zinc-400 font-mono tracking-widest uppercase">
-                      {credit.role}
-                    </span>
-                    <span className="text-lg text-white font-bold tracking-tight">
-                      {credit.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {/* Fade masks */}
-              <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-            </div>
-
-            {/* Manual Restart Button (Pillar I) */}
-            <div className="pt-6 md:pt-8 animate-terminal-rise animate-terminal-delay-5s">
-              <button
-                onClick={onRestartCycle}
-                className="group relative px-8 py-4 bg-transparent border-2 border-red-500/50 hover:border-red-500 rounded text-red-500 hover:text-white transition-all duration-300 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-10" />
-                <div className="flex items-center gap-3 font-mono font-bold tracking-[0.2em] uppercase">
-                  <Zap size={20} className="animate-pulse" />
-                  <span>Initialize New Cycle</span>
-                  <ArrowRight
-                    size={20}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
-                </div>
-              </button>
-              <p className="mt-4 text-xs text-zinc-400 font-mono uppercase tracking-widest animate-pulse">
-                Establishing consciousness bridge...
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      <OutroVideoSection
+        showTeaser={showTeaser}
+        showOverlay={showOverlay}
+        videoRef={videoRef}
+        onRestartCycle={onRestartCycle}
+      />
     </div>
   );
 };

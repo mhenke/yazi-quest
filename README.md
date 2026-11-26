@@ -47,7 +47,15 @@ is outside the current scope; desktop zoom and narrow windows remain in scope.
 
 ## Run Locally
 
-**Prerequisites:** Node.js
+**Prerequisites:** Node.js 24.15+ (24.x) or 26+. Use npm; `package-lock.json` is
+the CI install source. `pnpm-lock.yaml` is kept in sync for pnpm users.
+
+The toolchain uses Vite 8, Vitest 5, TypeScript 6, jsdom 31, and Tailwind CSS 4
+(via its Vite plugin). Supported browsers: Chrome/Edge 111+, Safari 16.4+,
+Firefox 128+. ESLint stays on 9 until the React/import/accessibility plugins
+support 10; TypeScript stays on 6 until TypeScript-ESLint supports stable 7.
+React Hooks lint stays on 7.0.1: 7.1's expanded recommended preset requires
+a separate migration of existing effect-driven state resets.
 
 1.  **Install dependencies:**
     ```bash

@@ -17,7 +17,7 @@ interface EpisodeIntroProps {
 const logFocusClass = (showFocusRing: boolean): string =>
   showFocusRing
     ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400'
-    : 'focus-visible:outline-none';
+    : 'focus-visible:outline-hidden';
 
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   episode,
@@ -266,7 +266,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
                 {episode.title}
               </h1>
             </div>
-            <p className="text-zinc-500 text-sm sm:text-xl tracking-[0.2em] font-bold uppercase">
+            <p className="text-zinc-400 text-sm sm:text-xl tracking-[0.2em] font-bold uppercase">
               {'//'} {ep.subtitle}
             </p>
           </div>
@@ -318,7 +318,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
         </div>
 
         {/* Progress Indicator */}
-        <div className="shrink-0 flex items-center gap-2 text-zinc-600 text-sm">
+        <div className="shrink-0 flex items-center gap-2 text-zinc-400 text-sm">
           {sections.map((_, idx) => (
             <div
               key={idx}

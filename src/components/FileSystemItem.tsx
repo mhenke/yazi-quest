@@ -59,7 +59,6 @@ const getListItemRowClasses = (
   isCursor: boolean,
   isMarked: boolean,
   isParent: boolean,
-  isCut: boolean,
   rowText: string
 ): string => {
   let rowBg = '';
@@ -79,8 +78,19 @@ const getListItemRowClasses = (
     ${rowBg}
     ${isMarked ? 'text-yellow-400' : rowText}
     ${isParent && !isCursor ? 'text-zinc-400' : ''}
-    ${isCut ? 'opacity-50' : ''}
   `;
+};
+
+const resolveRowTextClass = (
+  isCut: boolean,
+  isMarked: boolean,
+  isCursor: boolean,
+  isActive: boolean
+): string => {
+  if (isMarked) return '';
+  if (isCut) return 'text-zinc-400';
+  if (!isCursor) return '';
+  return isActive ? 'text-white font-medium' : 'text-zinc-400';
 };
 
 const FileSystemItem: React.FC<FileSystemItemProps> = ({
@@ -97,15 +107,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
   dirCount,
 }) => {
   const { color, icon: Icon } = getFileStyle(item);
-
-  let rowTextClass = '';
-  if (isCursor) {
-    if (isActive) {
-      if (!isMarked) rowTextClass = 'text-white font-medium';
-    } else {
-      if (!isMarked) rowTextClass = 'text-zinc-400';
-    }
-  }
+  const rowTextClass = resolveRowTextClass(isCut, isMarked, isCursor, isActive);
 
   return (
     <React.Fragment>
@@ -116,14 +118,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
         data-testid={`file-${item.name}`}
         aria-current={isCursor ? 'location' : undefined}
         aria-label={`${item.name}, ${item.type}`}
-        className={getListItemRowClasses(
-          isActive,
-          isCursor,
-          isMarked,
-          isParent,
-          isCut,
-          rowTextClass
-        )}
+        className={getListItemRowClasses(isActive, isCursor, isMarked, isParent, rowTextClass)}
       >
         <span className={`${isMarked ? 'text-yellow-500' : color} shrink-0`} aria-hidden="true">
           <Icon
@@ -134,7 +129,7 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
         </span>
 
         <span className={`truncate flex-1 flex items-center gap-2 ${isMarked ? 'font-bold' : ''}`}>
-          <span className={`${isCut ? 'line-through decoration-red-500/50' : ''}`}>
+          <span className={`${isCut ? 'line-through decoration-red-400' : ''}`}>
             {item.displayPath || item.name}
           </span>
         </span>
@@ -150,15 +145,15 @@ const FileSystemItem: React.FC<FileSystemItemProps> = ({
         )}
 
         <div className="flex items-center gap-2 min-w-[20px] justify-end">
-          {isCut && <Scissors size={10} className="text-red-500 animate-pulse" />}
-          {isYank && <Copy size={10} className="text-blue-400" />}
+          {isCut && <Scissors size={12} className="text-red-400" aria-hidden="true" />}
+          {isYank && <Copy size={10} className="text-blue-400" aria-hidden="true" />}
           {isMarked && (
             <span className="text-yellow-500 text-xs font-bold tracking-tighter">[VIS]</span>
           )}
         </div>
 
         {item.type === 'dir' && !isGrid && (
-          <span className="text-zinc-700 shrink-0">
+          <span className="text-zinc-700 shrink-0" aria-hidden="true">
             <ChevronRight size={12} strokeWidth={3} />
           </span>
         )}

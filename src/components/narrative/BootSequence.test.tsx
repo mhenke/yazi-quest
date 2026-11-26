@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { BootSequence } from './BootSequence';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // Use real timers for this test
 vi.useRealTimers();

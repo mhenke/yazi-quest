@@ -32,7 +32,8 @@ export default class ErrorBoundary extends Component<
             <p className="mb-4">The application encountered an error. Refresh to try again.</p>
             <div className="flex gap-2">
               <button
-                className="px-3 py-1 bg-blue-600 rounded"
+                type="button"
+                className="min-h-8 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                 onClick={() => window.location.reload()}
               >
                 Refresh

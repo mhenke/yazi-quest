@@ -6,6 +6,21 @@ import { getNodeByPath } from '../utils/fsHelpers';
 import { getSortLabel } from '../utils/sortHelpers';
 import { getFilterRegex } from '../utils/viewHelpers';
 
+// -500 backgrounds: black chip text clears 4.5:1 (blue-600 was ~4.1:1);
+// blue-500 #3b82f6 is the Awakening token in DESIGN.md
+const MODE_STYLES: Record<string, { bg: string; text: string }> = {
+  normal: { bg: 'bg-blue-500', text: 'NOR' },
+  input: { bg: 'bg-green-500', text: 'INS' },
+  filter: { bg: 'bg-purple-500', text: 'FLT' },
+  visual: { bg: 'bg-orange-500', text: 'VIS' },
+};
+
+const formatTime = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
 interface StatusBarProps {
   state: GameState;
   level: Level;
@@ -21,16 +36,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onNextLevel,
   currentItem,
 }) => {
-  // Mode configuration
-  const MODE_STYLES: Record<string, { bg: string; text: string }> = {
-    // -500 backgrounds: black chip text clears 4.5:1 (blue-600 was ~4.1:1);
-    // blue-500 #3b82f6 is the Awakening token in DESIGN.md
-    normal: { bg: 'bg-blue-500', text: 'NOR' },
-    input: { bg: 'bg-green-500', text: 'INS' },
-    filter: { bg: 'bg-purple-500', text: 'FLT' },
-    visual: { bg: 'bg-orange-500', text: 'VIS' },
-  };
-
   // Determine active mode key
   let modeKey = 'normal';
   if (state.mode.startsWith('input')) modeKey = 'input';
@@ -85,13 +90,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
     else if (state.cursorIndex >= total - 1) percentStr = 'Bot';
     else percentStr = `${Math.round((current / total) * 100)}%`;
   }
-
-  // Timer formatting
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
 
   // Helper to determine sort active state
   const isCustomSort = state.sortBy !== 'natural';
@@ -221,14 +219,14 @@ const StatusBar: React.FC<StatusBarProps> = ({
 
             if (noise > 50) {
               // Critical State
-              statusColor = 'text-red-500';
+              statusColor = 'text-red-100';
               urgentClass = 'bg-red-600/50 animate-urgent-pulse';
-              icon = <ShieldAlert size={14} className="text-red-500" />;
+              icon = <ShieldAlert size={14} className="text-red-200" aria-hidden="true" />;
             } else if (noise > 20) {
               // Warning State
               statusColor = 'text-yellow-300';
               urgentClass = 'bg-yellow-600/30 animate-pulse';
-              icon = <Activity size={14} className="text-yellow-400" />;
+              icon = <Activity size={14} className="text-yellow-400" aria-hidden="true" />;
             } else {
               // Standard State
               statusColor = 'text-red-400';
@@ -243,7 +241,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           let timerClass = 'text-zinc-200 font-mono text-sm';
           if (state.timeLeft !== null) {
             if (state.timeLeft < 10) {
-              timerClass = 'text-red-500 font-mono text-sm animate-urgent-pulse font-bold';
+              timerClass = 'text-red-200 font-mono text-sm animate-urgent-pulse font-bold';
             } else if (state.timeLeft < 30) {
               timerClass = 'text-yellow-400 font-mono text-sm animate-pulse';
             }
@@ -278,12 +276,13 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {/* Next Level Button (Context Aware) */}
         {allTasksComplete && (
           <button
+            type="button"
             onClick={onNextLevel}
-            className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors"
+            className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             <span className="hidden sm:inline">NEXT</span>
             <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-              SHIFT <ArrowRight size={8} /> ENTER
+              SHIFT <ArrowRight size={8} aria-hidden="true" /> ENTER
             </span>
           </button>
         )}
@@ -294,9 +293,13 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {/* Quest Info with Task Progress */}
         <span className="text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap text-xs">
           <span className="font-bold text-zinc-300">L{level.id}</span>
-          <span className="text-zinc-600 hidden xl:inline">•</span>
+          <span className="text-zinc-600 hidden xl:inline" aria-hidden="true">
+            •
+          </span>
           <span className="hidden xl:inline text-zinc-400 truncate max-w-32">{level.title}</span>
-          <span className="text-zinc-600">•</span>
+          <span className="text-zinc-600" aria-hidden="true">
+            •
+          </span>
           <span
             data-testid="task-counter"
             className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}

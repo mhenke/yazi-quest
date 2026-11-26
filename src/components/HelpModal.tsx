@@ -72,7 +72,7 @@ const CurrentLevelHelpSection: React.FC<CurrentLevelHelpSectionProps> = ({
           aria-expanded={isExpanded}
           aria-controls="current-level-help-content"
           onClick={onToggle}
-          className="inline-flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+          className="inline-flex min-h-6 py-0.5 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
         >
           Current Level
           <ChevronDown
@@ -291,7 +291,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 px-4 backdrop-blur-xs"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -305,7 +305,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
         aria-labelledby="help-modal-title"
         tabIndex={-1}
         onScroll={updateScrollCue}
-        className="w-full max-w-4xl md:max-w-6xl bg-zinc-900 border border-zinc-700 shadow-2xl relative max-h-[80vh] overflow-y-auto focus:outline-none"
+        className="w-full max-w-4xl md:max-w-6xl bg-zinc-900 border border-zinc-700 shadow-2xl relative max-h-[80vh] overflow-y-auto focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
       >
         <div className="sticky top-0 z-10 bg-zinc-900 px-4 pt-4 pb-3 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
           <h2 id="help-modal-title" className="text-xl font-bold text-orange-500 tracking-wider">
@@ -329,7 +329,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
               }}
               placeholder="Filter commands or keys (/)..."
               aria-label="Filter keybindings"
-              className="w-full sm:w-64 bg-zinc-950 border border-zinc-700 px-2.5 py-1 text-xs font-mono text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-orange-400"
+              className="w-full sm:w-64 bg-zinc-950 border border-zinc-700 px-2.5 py-1 text-xs font-mono text-zinc-100 placeholder:text-zinc-400 focus:outline-hidden focus:border-orange-400"
             />
             <button
               type="button"

@@ -101,7 +101,7 @@ Components read as cinematic instrumentation, not generic cards. Working surface
 - Episode-specific signals within a stable dark environment.
 - Narrative pressure expressed through messages, glitches, and transitions.
 
-Evidence: `index.html`, local CSS, `src/components/`, and rendered desktop workspace/help/input states. Token names below describe existing utility values; the application compiles literal Tailwind classes via PostCSS rather than exposing a unified CSS-variable theme.
+Evidence: `index.html`, local CSS, `src/components/`, and rendered desktop workspace/help/input states. Token names below describe existing utility values; `:root` CSS custom properties in `src/index.css` mirror the frontmatter palette alongside the compiled Tailwind utilities.
 
 ## Colors
 
@@ -145,7 +145,7 @@ The working surface fills the viewport with a top progression/control bar, a pat
 
 Platform scope is desktop with a hardware keyboard at 1024 CSS px or wider (ADR-0001). Below 1024 px or on touch-primary devices (`(hover: none) and (pointer: coarse)`), the file manager yields to a plain product notice (`RequirementNotice`) stating the requirement, while cinematic sequences remain reachable below 1024 px. The page hides outer overflow and relies on internal pane scrolling.
 
-The top bar is approximately 57px tall before wrapping; the bottom status bar is 48px. Parent context uses a third of the pane width alongside active files and preview. Mission-log content uses a minimum height (`160px`) and up to 40% of the preview pane when expanded. Utility overlays shrink to the available width without changing the file-manager layout.
+The top bar is at least `64px` (`min-h-16`) and wraps cleanly when text scales; the bottom status bar is `48px`. The parent context pane is fixed at `256px` (`w-64`), while active files and preview share the remaining space (`flex-1`). Mission-log content uses a minimum height (`160px`) and up to 40% of the preview pane when expanded. Utility overlays shrink to the available width without changing the file-manager layout.
 
 ## Elevation & Depth
 

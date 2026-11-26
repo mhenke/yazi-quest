@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SystemAlerts } from './SystemAlerts';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 const alert = {
   id: 'write-access-l6',

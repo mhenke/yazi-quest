@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import type { FileNode } from '../types';
 import { InfoPanel } from './InfoPanel';
 

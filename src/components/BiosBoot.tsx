@@ -71,9 +71,9 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, redu
           <div key={i} className="min-h-[1.2em]">
             {line && line.startsWith('[ OK ]') ? (
               <>
-                <span className="text-green-700">[</span>
+                <span className="text-green-500">[</span>
                 <span className="text-green-400 font-bold"> OK </span>
-                <span className="text-green-700">]</span>
+                <span className="text-green-500">]</span>
                 {line.substring(6)}
               </>
             ) : (
@@ -86,23 +86,13 @@ export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, redu
 
       {showContinue && (
         <div className="mt-8 text-green-500 font-mono text-sm flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
+          <span className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true" />
           Press Shift+Enter to continue...
         </div>
       )}
 
       {/* Skip Intro Button */}
       <SkipIntroButton />
-
-      {/* Screen flicker effect */}
-      <div className="absolute inset-0 pointer-events-none bg-white/5 opacity-0 animate-[flicker_0.15s_infinite]" />
-      <style>{`
-        @keyframes flicker {
-          0% { opacity: 0.1; }
-          50% { opacity: 0.02; }
-          100% { opacity: 0.08; }
-        }
-      `}</style>
     </div>
   );
 };

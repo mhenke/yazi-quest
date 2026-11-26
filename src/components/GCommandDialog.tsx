@@ -8,7 +8,7 @@ export const GCommandDialog: React.FC<GCommandDialogProps> = ({ onClose: _onClos
   return (
     <div
       data-testid="g-command-dialog"
-      className="fixed bottom-16 left-0 right-0 mx-auto w-fit max-w-[calc(100%-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-sm z-50 rounded-sm animate-terminal-rise sm:absolute"
+      className="fixed bottom-16 left-0 right-0 mx-auto w-fit max-w-[calc(100%-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 backdrop-blur-xs z-50 rounded-xs animate-terminal-rise sm:absolute"
       role="dialog"
       aria-modal="false"
     >

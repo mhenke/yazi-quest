@@ -22,8 +22,8 @@
 }
 
 .glitch-thought .base-text {
-  color: #ffaa00; /* Orange base */
-  opacity: 0.9;
+  color: var(--color-mastery, #eab308);
+  opacity: 0.95;
   animation: glitch-base 2.5s infinite;
   position: relative;
   display: block;
@@ -31,13 +31,13 @@
 }
 
 .glitch-thought .white-text {
-  color: white;
+  color: var(--color-text-white, #ffffff);
   animation: glitch1 2.5s infinite;
   z-index: 1;
 }
 
 .glitch-thought .orange-text {
-  color: #ff6600; /* Orange */
+  color: var(--color-signal, #f97316);
   animation: glitch2 2.5s infinite;
   z-index: 2;
 }
@@ -68,6 +68,10 @@
     transform: none;
     opacity: 1;
   }
+  50% {
+    transform: none;
+    opacity: 1;
+  }
   52% {
     transform: none;
     opacity: 1;
@@ -75,10 +79,6 @@
   55% {
     transform: skew(-1deg, 0.2deg);
     opacity: 0.75;
-  }
-  50% {
-    transform: none;
-    opacity: 1;
   }
   72% {
     transform: none;
@@ -123,6 +123,10 @@
     transform: none;
     opacity: 0.25;
   }
+  50% {
+    transform: none;
+    opacity: 0.25;
+  }
   52% {
     transform: none;
     opacity: 0.25;
@@ -130,10 +134,6 @@
   55% {
     transform: translate(-5px, -1px);
     opacity: 0.5;
-  }
-  50% {
-    transform: none;
-    opacity: 0.25;
   }
   72% {
     transform: none;
@@ -157,12 +157,24 @@
   0%,
   100% {
     text-shadow:
-      0 0 2px rgba(255, 170, 0, 0.8),
-      0 0 5px rgba(255, 170, 0, 0.5);
+      0 0 2px color-mix(in srgb, var(--color-mastery, #eab308) 80%, transparent),
+      0 0 5px color-mix(in srgb, var(--color-mastery, #eab308) 50%, transparent);
   }
   50% {
     text-shadow:
-      0 0 3px rgba(255, 170, 0, 0.6),
-      0 0 8px rgba(255, 170, 0, 0.3);
+      0 0 3px color-mix(in srgb, var(--color-mastery, #eab308) 60%, transparent),
+      0 0 8px color-mix(in srgb, var(--color-mastery, #eab308) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-thought .base-text {
+    animation: none;
+  }
+
+  .glitch-thought .white-text,
+  .glitch-thought .orange-text {
+    animation: none;
+    display: none;
   }
 }

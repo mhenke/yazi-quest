@@ -8,6 +8,7 @@ interface InputModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   borderColorClass?: string;
+  labelColorClass?: string;
   testid?: string;
   placeholder?: string;
 }
@@ -19,6 +20,7 @@ export const InputModal: React.FC<InputModalProps> = ({
   onConfirm,
   onCancel,
   borderColorClass = 'border-blue-500', // Default to blue like Search
+  labelColorClass = 'text-blue-500',
   testid,
   placeholder,
 }) => {
@@ -32,8 +34,9 @@ export const InputModal: React.FC<InputModalProps> = ({
     >
       <div
         ref={panelRef}
-        className={`pointer-events-auto w-full max-w-md bg-zinc-900/95 border ${borderColorClass} shadow-2xl p-4 backdrop-blur-sm rounded-sm`}
+        className={`pointer-events-auto w-full max-w-md bg-zinc-900/95 border ${borderColorClass} shadow-2xl p-4 backdrop-blur-xs rounded-xs`}
         role="dialog"
+        aria-modal="true"
         aria-labelledby={`${labelId}-label`}
         tabIndex={-1}
         data-testid="input-modal"
@@ -41,7 +44,7 @@ export const InputModal: React.FC<InputModalProps> = ({
         <label
           id={`${labelId}-label`}
           htmlFor={labelId}
-          className={`block text-sm font-mono mb-2 font-bold uppercase tracking-widest ${borderColorClass.replace('border-', 'text-')}`}
+          className={`block text-sm font-mono mb-2 font-bold uppercase tracking-widest ${labelColorClass}`}
         >
           {label}:
         </label>
@@ -62,7 +65,7 @@ export const InputModal: React.FC<InputModalProps> = ({
             }
             if (e.key !== 'Tab') e.stopPropagation();
           }}
-          className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
+          className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-hidden focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
           placeholder={placeholder}
         />
       </div>

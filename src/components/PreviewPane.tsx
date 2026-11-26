@@ -69,7 +69,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
         {node ? (
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-4 custom-scrollbar focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="flex-1 overflow-y-auto p-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             tabIndex={0}
             role="region"
             aria-label="File preview"
@@ -80,6 +80,8 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                 <img
                   src={node.content}
                   alt={node.name}
+                  loading="lazy"
+                  decoding="async"
                   className="max-w-full max-h-full object-contain rounded shadow-lg"
                 />
               </div>
@@ -88,7 +90,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
             {/* CASE 2: Text Content */}
             {node.type === 'file' && !isImage && !showChildren && (
               <div className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-400">
-                {node.content || <span className="italic text-zinc-600">(Empty file)</span>}
+                {node.content || <span className="italic text-zinc-400">(Empty file)</span>}
               </div>
             )}
 
@@ -107,10 +109,10 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                 if (protectionMessage) {
                   // Show access denied message for protected directories
                   return (
-                    <div className="flex flex-col items-center justify-center min-h-[100px] gap-3 text-zinc-500">
-                      <ShieldAlert size={32} className="text-red-500/70" />
+                    <div className="flex flex-col items-center justify-center min-h-[100px] gap-3 text-zinc-400">
+                      <ShieldAlert size={32} className="text-red-400" aria-hidden="true" />
                       <div className="text-xs font-mono text-center">
-                        <div className="text-red-500/80">[RESTRICTED]</div>
+                        <div className="text-red-400">[RESTRICTED]</div>
                         <div className="mt-1 text-zinc-400">{protectionMessage}</div>
                       </div>
                     </div>

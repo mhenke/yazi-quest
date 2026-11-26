@@ -12,7 +12,7 @@ interface MissionDrawerProps {
 const renderInlineCode = (text: string): React.ReactNode =>
   text.split(/(`[^`]+`)/g).map((part, index) =>
     part.startsWith('`') && part.endsWith('`') ? (
-      <code key={index} className="rounded-sm bg-zinc-800 px-1 text-amber-200">
+      <code key={index} className="rounded-xs bg-zinc-800 px-1 text-amber-200">
         {part.slice(1, -1)}
       </code>
     ) : (
@@ -98,16 +98,20 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
             <span className="text-orange-500 font-bold uppercase tracking-wider">
               MISSION LOG: LVL {level.id}
             </span>
-            <span className="text-zinc-600 hidden xl:inline">•</span>
+            <span className="text-zinc-600 hidden xl:inline" aria-hidden="true">
+              •
+            </span>
             <span className="hidden max-w-48 truncate text-zinc-300 xl:inline">{level.title}</span>
-            <span className="text-zinc-600 hidden sm:inline">•</span>
+            <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
+              •
+            </span>
             <span className="text-zinc-400 text-xs hidden sm:inline">
               {completedCount}/{totalCount} Tasks
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-zinc-400 group-hover:text-white font-mono text-xs">
             <span className="text-xs text-zinc-400 hidden sm:inline">EXPAND</span>
-            <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-sm text-xs">
+            <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-xs text-xs">
               Alt+O
             </span>
             <ChevronUp size={14} />
@@ -131,12 +135,12 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         </h1>
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded-sm hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          className="flex items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded-xs hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           aria-label="Collapse mission drawer to maximize file preview (Alt+O)"
           title="Collapse mission drawer (Alt+O)"
         >
           <span className="text-xs text-zinc-400 hidden sm:inline">COLLAPSE</span>
-          <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-sm text-xs">Alt+O</span>
+          <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-xs text-xs">Alt+O</span>
           <ChevronDown size={14} />
         </button>
       </div>
@@ -152,9 +156,16 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
           </p>
         </div>
         <div className="min-h-0 flex-1 flex flex-col">
-          <h2 className="text-xs uppercase font-bold text-zinc-400 mb-2 tracking-widest">
-            Objectives
-          </h2>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2 className="text-xs uppercase font-bold text-zinc-400 tracking-widest">
+              Objectives
+            </h2>
+            {remainingTasks > 0 && (
+              <span role="status" className="text-xs text-orange-300 font-mono shrink-0">
+                ↓ {remainingTasks} more
+              </span>
+            )}
+          </div>
           <div className="relative min-h-0 flex-1">
             <div
               ref={taskListRef}
@@ -164,7 +175,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
               onScroll={updateOverflowCue}
               className="relative h-full overflow-y-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
-              <ol className="list-none space-y-2">
+              <ol className={`list-none space-y-2 ${remainingTasks > 0 ? 'pb-6' : ''}`}>
                 {visibleTasks.map((task) => (
                   <MissionTaskRow
                     key={task.id}
@@ -178,21 +189,13 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
                   />
                 ))}
               </ol>
-              {remainingTasks > 0 && (
-                <>
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-7 bg-gradient-to-t from-zinc-900 to-transparent"
-                  />
-                  <span
-                    role="status"
-                    className="pointer-events-none absolute bottom-1 right-2 text-xs text-orange-300 font-mono"
-                  >
-                    ↓ {remainingTasks} more
-                  </span>
-                </>
-              )}
             </div>
+            {remainingTasks > 0 && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-7 bg-linear-to-t from-zinc-900 to-transparent"
+              />
+            )}
           </div>
         </div>
       </div>

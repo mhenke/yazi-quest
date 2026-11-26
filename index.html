@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="https://yazi-rs.github.io/img/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="Yazi Quest - Learn the Yazi file manager" />
@@ -42,64 +42,64 @@
       }
       .glitch-text::before {
         left: 2px;
-        text-shadow: -2px 0 #ff00c1;
-        clip: rect(44px, 450px, 56px, 0);
+        text-shadow: -2px 0 var(--color-glitch-magenta, #ff00c1);
+        clip-path: inset(40% 0 35% 0);
         animation: glitch-anim 5s infinite linear alternate-reverse;
       }
       .glitch-text::after {
         left: -2px;
         text-shadow:
-          -2px 0 #00fff9,
-          2px 2px #ff00c1;
+          -2px 0 var(--color-glitch-cyan, #00fff9),
+          2px 2px var(--color-glitch-magenta, #ff00c1);
         animation: glitch-anim2 1s infinite linear alternate-reverse;
       }
 
       @keyframes glitch-anim {
         0% {
-          clip: rect(31px, 9999px, 94px, 0);
+          clip-path: inset(30% 0 10% 0);
           transform: skew(0.85deg);
         }
         5% {
-          clip: rect(70px, 9999px, 71px, 0);
+          clip-path: inset(65% 0 25% 0);
           transform: skew(0.18deg);
         }
         10% {
-          clip: rect(60px, 9999px, 83px, 0);
+          clip-path: inset(55% 0 18% 0);
           transform: skew(0.97deg);
         }
         15% {
-          clip: rect(80px, 9999px, 41px, 0);
+          clip-path: inset(75% 0 15% 0);
           transform: skew(0.55deg);
         }
         20% {
-          clip: rect(33px, 9999px, 94px, 0);
+          clip-path: inset(32% 0 10% 0);
           transform: skew(0.4deg);
         }
         100% {
-          clip: rect(33px, 9999px, 94px, 0);
+          clip-path: inset(32% 0 10% 0);
           transform: skew(0.4deg);
         }
       }
 
       @keyframes glitch-anim2 {
         0% {
-          clip: rect(65px, 9999px, 100px, 0);
+          clip-path: inset(60% 0 5% 0);
           transform: skew(0.13deg);
         }
         20% {
-          clip: rect(10px, 9999px, 20px, 0);
+          clip-path: inset(12% 0 70% 0);
           transform: skew(0.5deg);
         }
         40% {
-          clip: rect(80px, 9999px, 90px, 0);
+          clip-path: inset(75% 0 10% 0);
           transform: skew(0.2deg);
         }
         60% {
-          clip: rect(40px, 9999px, 50px, 0);
+          clip-path: inset(40% 0 45% 0);
           transform: skew(0.8deg);
         }
         100% {
-          clip: rect(0, 0, 0, 0);
+          clip-path: inset(0 0 100% 0);
         }
       }
 
@@ -120,97 +120,61 @@
       }
       .glitch-text-2::before {
         left: 1px;
-        text-shadow: -1px 0 #ff00c1;
+        text-shadow: -1px 0 var(--color-glitch-magenta, #ff00c1);
         animation: var(--glitch-before, glitch2-anim) var(--glitch-dur-before, 1.8s) infinite linear; /* no blend for crisper look */
       }
       .glitch-text-2::after {
         left: -1px;
         text-shadow:
-          -1px 0 #00fff9,
-          1px 1px #ff00c1;
+          -1px 0 var(--color-glitch-cyan, #00fff9),
+          1px 1px var(--color-glitch-magenta, #ff00c1);
         animation: var(--glitch-after, glitch2-anim2) var(--glitch-dur-after, 1.2s) infinite linear;
       }
       @keyframes glitch2-anim {
         0% {
-          clip: rect(2px, 9999px, 6px, 0);
+          clip-path: inset(10% 0 65% 0);
           transform: translate(0, 0) skew(0deg);
-        }
-        10% {
-          clip: rect(6px, 9999px, 12px, 0);
-          transform: translate(-1px, -1px) skew(-0.4deg);
         }
         20% {
-          clip: rect(12px, 9999px, 20px, 0);
+          clip-path: inset(50% 0 20% 0);
           transform: translate(1px, 0px) skew(0.6deg);
         }
-        30% {
-          clip: rect(4px, 9999px, 10px, 0);
-          transform: translate(-1px, 1px) skew(-0.2deg);
-        }
         40% {
-          clip: rect(8px, 9999px, 14px, 0);
+          clip-path: inset(30% 0 40% 0);
           transform: translate(1px, -1px) skew(0.3deg);
         }
-        50% {
-          clip: rect(2px, 9999px, 8px, 0);
-          transform: translate(0, 0) skew(0deg);
-        }
         60% {
-          clip: rect(10px, 9999px, 16px, 0);
+          clip-path: inset(45% 0 25% 0);
           transform: translate(-1px, 0px) skew(-0.5deg);
         }
-        70% {
-          clip: rect(5px, 9999px, 11px, 0);
-          transform: translate(1px, 1px) skew(0.4deg);
-        }
         80% {
-          clip: rect(7px, 9999px, 13px, 0);
+          clip-path: inset(25% 0 45% 0);
           transform: translate(0, -1px) skew(-0.3deg);
         }
-        90% {
-          clip: rect(3px, 9999px, 9px, 0);
-          transform: translate(-1px, 0px) skew(0.2deg);
-        }
         100% {
-          clip: rect(2px, 9999px, 6px, 0);
+          clip-path: inset(10% 0 65% 0);
           transform: translate(0, 0) skew(0deg);
         }
       }
       @keyframes glitch2-anim2 {
         0% {
-          clip: rect(3px, 9999px, 7px, 0);
+          clip-path: inset(15% 0 60% 0);
           transform: translate(0, 0) skew(0deg);
-        }
-        12% {
-          clip: rect(7px, 9999px, 13px, 0);
-          transform: translate(1px, 0) skew(0.3deg);
         }
         25% {
-          clip: rect(10px, 9999px, 16px, 0);
+          clip-path: inset(45% 0 25% 0);
           transform: translate(-1px, 1px) skew(-0.2deg);
         }
-        37% {
-          clip: rect(4px, 9999px, 9px, 0);
-          transform: translate(1px, -1px) skew(0.4deg);
-        }
         50% {
-          clip: rect(6px, 9999px, 12px, 0);
+          clip-path: inset(25% 0 45% 0);
           transform: translate(0, 0) skew(0deg);
         }
-        62% {
-          clip: rect(9px, 9999px, 15px, 0);
-          transform: translate(-1px, 0) skew(-0.3deg);
-        }
         75% {
-          clip: rect(5px, 9999px, 11px, 0);
+          clip-path: inset(35% 0 35% 0);
           transform: translate(1px, 1px) skew(0.2deg);
         }
-        88% {
-          clip: rect(8px, 9999px, 14px, 0);
-          transform: translate(0, -1px) skew(-0.1deg);
-        }
         100% {
-          clip: rect(3px, 9999px, 7px, 0);
+          clip-path: inset(15% 0 60% 0);
           transform: translate(0, 0) skew(0deg);
         }
       }
@@ -239,6 +203,16 @@
           animation: none;
           display: none;
         }
+        .glitch-text::before,
+        .glitch-text::after,
+        .glitch-text-2::before,
+        .glitch-text-2::after {
+          animation: none;
+          display: none;
+        }
+        .animate-urgent-pulse {
+          animation: none;
+        }
       }
       /* Opacity must stay high: it multiplies the label's contrast against the
          tinted background. 0.7 dropped WATCHDOG v1.1 to 2.6:1; 0.9 keeps the
@@ -265,8 +239,8 @@
         inset: 0;
         z-index: 9999;
         overflow-y: auto;
-        background: #09090b;
-        color: #a1a1aa;
+        background: var(--color-ground, #09090b);
+        color: var(--color-text-muted, #a1a1aa);
         font-family:
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
           monospace;
@@ -279,48 +253,48 @@
       @media (min-width: 640px) {
         .touch-gate__panel {
           padding: 2.5rem;
-          border: 1px solid #27272a;
+          border: 1px solid var(--color-raised, #27272a);
         }
       }
       .touch-gate__eyebrow {
         margin: 0 0 0.75rem;
-        font-size: 0.6875rem;
+        font-size: 0.75rem;
         font-weight: 700;
         letter-spacing: 0.3em;
         text-transform: uppercase;
-        color: #f97316;
+        color: var(--color-signal, #f97316);
       }
       .touch-gate__title {
         margin: 0 0 1rem;
         padding-bottom: 1rem;
-        border-bottom: 2px dashed #3f3f46;
-        font-size: 1.375rem;
+        border-bottom: 2px dashed var(--color-border-strong, #3f3f46);
+        font-size: 1.25rem;
         line-height: 1.2;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        color: #fafafa;
+        color: var(--color-text-white, #ffffff);
         text-wrap: balance;
       }
       .touch-gate__body {
         margin: 0 0 0.875rem;
-        font-size: 0.9375rem;
+        font-size: 0.875rem;
         line-height: 1.7;
         text-wrap: pretty;
       }
       .touch-gate code {
         padding: 0 0.25rem;
-        border: 1px solid #3f3f46;
-        color: #d4d4d8;
+        border: 1px solid var(--color-border-strong, #3f3f46);
+        color: var(--color-text-main, #d4d4d8);
       }
       .touch-gate__hint {
         margin: 1.5rem 0 0;
         padding-top: 1rem;
-        border-top: 1px dashed #3f3f46;
+        border-top: 1px dashed var(--color-border-strong, #3f3f46);
         font-size: 0.75rem;
         letter-spacing: 0.15em;
         text-transform: uppercase;
-        color: #a1a1aa;
+        color: var(--color-text-muted, #a1a1aa);
         text-wrap: pretty;
       }
       @media (hover: none) and (pointer: coarse) {

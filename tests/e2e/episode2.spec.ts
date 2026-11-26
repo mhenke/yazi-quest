@@ -242,10 +242,11 @@ test.describe('Episode 2: FORTIFICATION', () => {
 
     // Select the four visible keeper files.
     await pressKey(page, 'Ctrl+a');
-    await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
+    await assertTask(page, '0/3', testInfo.outputDir, 'select_wait_for_filter_clear');
 
     // Clear the filter but keep the selection before inverting it.
     await clearFilter(page);
+    await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
     await expect(page.locator('[data-testid="breadcrumbs"]')).not.toContainText('filter:');
     await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).toBeVisible();
 

@@ -10,12 +10,13 @@ export const OverwriteModal: React.FC<OverwriteModalProps> = ({ fileName, onDeci
   const panelRef = useOverlayFocus(true, '[data-cancel-overwrite]');
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs"
       onKeyDown={containOverlayTab}
     >
       <div
         ref={panelRef}
         role="alertdialog"
+        aria-modal="true"
         aria-labelledby="overwrite-title"
         aria-describedby="overwrite-path"
         tabIndex={-1}

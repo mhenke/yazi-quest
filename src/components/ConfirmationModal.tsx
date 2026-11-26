@@ -26,12 +26,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs"
       onKeyDown={containOverlayTab}
     >
       <div
         ref={panelRef}
         role="alertdialog"
+        aria-modal="true"
         aria-labelledby="confirmation-modal-title"
         aria-describedby="confirmation-modal-files"
         tabIndex={-1}

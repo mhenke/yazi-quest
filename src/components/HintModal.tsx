@@ -21,7 +21,7 @@ const HINT_STAGE_LABELS = [
 const renderInlineCode = (text: string): React.ReactNode =>
   text.split(/(`[^`]+`)/g).map((part, idx) =>
     part.startsWith('`') && part.endsWith('`') && part.length > 2 ? (
-      <code key={idx} className="bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-sm font-mono">
+      <code key={idx} className="bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-xs font-mono">
         {part.slice(1, -1)}
       </code>
     ) : (
@@ -41,7 +41,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
       ref={panelRef}
       tabIndex={-1}
       aria-labelledby="hint-dialog-title"
-      className="fixed bottom-14 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-5rem)] overflow-y-auto max-w-md bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-terminal-rise rounded-none backdrop-blur-sm"
+      className="fixed bottom-14 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-5rem)] overflow-y-auto max-w-md bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-terminal-rise rounded-none backdrop-blur-xs"
       role="dialog"
       aria-modal="false"
     >
@@ -65,7 +65,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
             <button
               type="button"
               onClick={onNextStage}
-              className="px-2 py-0.5 border border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="min-h-6 px-2 py-1 border border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
               More detail (Alt+H)
             </button>
@@ -73,7 +73,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="min-h-6 px-2 py-1 text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             Close
           </button>

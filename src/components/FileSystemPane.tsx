@@ -21,7 +21,7 @@ interface FileSystemPaneProps {
 
 const paneLayout = (isParent: boolean, className?: string) => {
   const isGrid = !!className?.includes('grid');
-  const width = isParent ? 'w-1/3' : 'flex-1';
+  const width = isParent ? 'w-64' : 'flex-1';
   const background = isParent ? 'bg-zinc-950/50 text-zinc-400' : 'bg-zinc-900/80 text-zinc-300';
   const finalClass = isGrid ? (className ?? '') : `${width} ${background} ${className ?? ''}`;
 
@@ -41,7 +41,7 @@ const resolveDirCount = (
 const focusRingClass = (showFocusRing: boolean): string =>
   showFocusRing
     ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400'
-    : 'focus-visible:outline-none';
+    : 'focus-visible:outline-hidden';
 
 const listContainerProps = (
   isParent: boolean,

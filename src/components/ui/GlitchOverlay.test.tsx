@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { GlitchOverlay } from './GlitchOverlay';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // Mock the glitchEffects utilities
 vi.mock('../../utils/glitchEffects', () => ({

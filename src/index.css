@@ -1,6 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+
+@source '../index.html';
+@source './';
+
+@layer base {
+  /* Preserve the pre-upgrade border, placeholder, and button defaults. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+:root {
+  --color-primary: #3b82f6;
+  --color-fortification: #a855f7;
+  --color-mastery: #eab308;
+  --color-signal: #f97316;
+  --color-directory: #22d3ee;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-void: #000000;
+  --color-ground: #09090b;
+  --color-console: #18181b;
+  --color-raised: #27272a;
+  --color-border-strong: #3f3f46;
+  --color-text-main: #d4d4d8;
+  --color-text-muted: #a1a1aa;
+  --color-text-white: #ffffff;
+  --color-glitch-magenta: #ff00c1;
+  --color-glitch-cyan: #00fff9;
+}
 
 /* Objective and brief copy wraps mid-phrase at narrow widths; `pretty` pulls the
    orphan word down. Progressive: browsers without it keep the default wrap. */
@@ -8,78 +50,13 @@
   text-wrap: pretty;
 }
 
-/* Glitch Overlay Effects */
-.glitch-container {
-  position: relative;
-}
-
-.scramble-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  color: #ef4444;
-  font-size: 0.75rem;
-  opacity: 0.5;
-  animation: flicker 0.2s ease-in-out;
-  z-index: 50;
-}
-
-.scan-lines {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0.1) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  z-index: 40;
-}
-
-.color-bleed {
-  animation: colorBleed 2s ease-in-out infinite;
-}
-
-@keyframes flicker {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes colorBleed {
-  0%,
-  100% {
-    filter: hue-rotate(0deg);
-  }
-  50% {
-    filter: hue-rotate(10deg);
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .scramble-overlay,
-  .scan-lines,
-  .color-bleed {
-    animation: none;
-    display: none;
-  }
-}
-
 /* Keep all UI states, including urgency cues, visible without movement. */
 html[data-reduce-motion] *,
 html[data-reduce-motion] *::before,
 html[data-reduce-motion] *::after {
   animation: none !important;
-  transition: none !important;
   scroll-behavior: auto !important;
+  transition-property: color, background-color, border-color, opacity !important;
 }
 
 html[data-reduce-motion] .scanline,
@@ -88,29 +65,40 @@ html[data-narrative-effects='reduced'] .scanline {
   display: none;
 }
 
-html[data-reduce-motion] :is(.glitch-text, .glitch-text-2, .glitch-text-3, .glitch-thought)::before,
-html[data-reduce-motion] :is(.glitch-text, .glitch-text-2, .glitch-text-3, .glitch-thought)::after {
+[data-reduce-motion] .glitch-text::before,
+[data-reduce-motion] .glitch-text::after,
+[data-reduce-motion] .glitch-text-2::before,
+[data-reduce-motion] .glitch-text-2::after,
+[data-reduce-motion] .white-text,
+[data-reduce-motion] .orange-text {
   display: none;
 }
 
-/* Ghost Message (AI-7733 consciousness) */
-.ghost-message {
-  text-shadow: 0 0 3px rgba(34, 211, 238, 0.3);
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+@keyframes scroll-y {
+  0% {
+    transform: translateY(40%);
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+  100% {
+    transform: translateY(-100%);
   }
 }
 
-.animate-slideIn {
-  animation: slideIn 0.3s ease-out;
+.animate-scroll-y {
+  animation: scroll-y 22s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-y {
+    animation: none;
+  }
+
+  .outro-credits-viewport {
+    overflow-y: auto;
+  }
+}
+
+html[data-reduce-motion] .outro-credits-viewport {
+  overflow-y: auto;
 }
 
 /* Terminal overlay & cue entrances (use standalone translate/scale to preserve Tailwind transforms) */

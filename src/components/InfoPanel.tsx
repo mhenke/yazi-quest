@@ -83,7 +83,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
 
   return (
     <div
-      className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs"
       onKeyDown={(event) => {
         if (event.shiftKey) containOverlayTab(event);
       }}
@@ -91,9 +91,10 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
       <div
         ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="file-info-title"
         tabIndex={-1}
-        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 shadow-2xl rounded-none outline-none"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 shadow-2xl rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950">
@@ -106,7 +107,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-zinc-300 hover:text-white"
+            className="min-h-6 px-2 py-1 rounded text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             Close
           </button>

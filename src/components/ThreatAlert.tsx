@@ -42,7 +42,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
 
         {author && (
           <div className="w-full text-right mt-2 mr-2">
-            <span className="text-orange-500/80 font-mono text-xs italic">- {author}</span>
+            <span className="text-orange-300 font-mono text-xs italic">- {author}</span>
           </div>
         )}
 

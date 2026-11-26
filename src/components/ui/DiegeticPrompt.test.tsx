@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { DiegeticPrompt } from './DiegeticPrompt';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 describe('DiegeticPrompt', () => {
   it('should show normal prompt in calm state', () => {

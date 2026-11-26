@@ -1,4 +1,6 @@
 import React, {
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useCallback,
@@ -15,7 +17,6 @@ import { UPLINK_V1_CONTENT, UPLINK_V2_CONTENT } from './constants/protocols';
 import { InputModal } from './components/InputModal';
 import {
   getNodeByPath,
-  getParentNode,
   getNodeById,
   cloneFS,
   resolvePath,
@@ -28,12 +29,9 @@ import { playSuccessSound, playTaskCompleteSound } from './utils/sounds';
 import { CodropsGlitchSVG } from './components/CodropsGlitchSVG';
 import { checkAllTasksComplete, getLevelStartPath } from './utils/gameUtils';
 import StatusBar from './components/StatusBar';
-import { HelpModal } from './components/HelpModal';
 import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
 import { EpisodeIntro } from './components/EpisodeIntro';
-import { OutroSequence } from './components/OutroSequence';
-import { BiosBoot } from './components/BiosBoot';
 import { BootSequence } from './components/narrative/BootSequence';
 import { GameOverModal } from './components/GameOverModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
@@ -53,7 +51,6 @@ import { GlitchOverlay } from './components/ui/GlitchOverlay';
 import { useConsciousness } from './hooks/useConsciousness';
 import { Zap, Shield, Crown } from 'lucide-react';
 import { gameReducer } from './hooks/gameReducer';
-import { FuzzyFinder } from './components/FuzzyFinder';
 import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSystemPane';
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
@@ -78,10 +75,20 @@ import {
   resetSkipIntroRequested,
 } from './utils/skipIntroFlag';
 import './glitch.css';
-import './glitch-text-3.css';
 import './glitch-thought.css';
 import type { FileNode, GameState } from './types';
 import { persistUnlockedLevelIndex } from './utils/progressionStorage';
+
+const HelpModal = lazy(() =>
+  import('./components/HelpModal').then((m) => ({ default: m.HelpModal }))
+);
+const OutroSequence = lazy(() =>
+  import('./components/OutroSequence').then((m) => ({ default: m.OutroSequence }))
+);
+const BiosBoot = lazy(() => import('./components/BiosBoot').then((m) => ({ default: m.BiosBoot })));
+const FuzzyFinder = lazy(() =>
+  import('./components/FuzzyFinder').then((m) => ({ default: m.FuzzyFinder }))
+);
 
 const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): FileNode[] => {
   if (showHidden) return results;
@@ -141,6 +148,28 @@ const usePersistProgress = (
   }, [levelIndex, shouldPersistProgress]);
 };
 
+const useEpisodeBootTransition = (
+  levelIndex: number,
+  showEpisodeIntro: boolean,
+  onEnterEpisode3: () => void
+) => {
+  const [showBoot, setShowBoot] = useState(false);
+  const [currentEpisode, setCurrentEpisode] = useState(() =>
+    showEpisodeIntro ? 1 : Math.ceil((levelIndex + 1) / 5)
+  );
+
+  const derivedEpisode = Math.ceil((levelIndex + 1) / 5);
+  if (derivedEpisode !== currentEpisode && !showEpisodeIntro) {
+    setCurrentEpisode(derivedEpisode);
+    setShowBoot(true);
+    if (derivedEpisode === 3) {
+      onEnterEpisode3();
+    }
+  }
+
+  return { showBoot, setShowBoot, currentEpisode };
+};
+
 const SORT_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
   ['n', 'Natural'],
   ['N', 'Natural (rev)'],
@@ -160,7 +189,7 @@ const LINEMODE_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
 ];
 
 const SortOptionsMenu: React.FC = () => (
-  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-terminal-rise sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
+  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-xs animate-terminal-rise sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
     <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
       <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
         Sort Options
@@ -256,10 +285,11 @@ export default function App() {
   }, [canFocusFilePane]);
 
   // Boot sequence state for episode transitions
-  const [showBoot, setShowBoot] = useState(false);
   const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(() => gameState.levelIndex < 10);
-  const [currentEpisode, setCurrentEpisode] = useState(() =>
-    gameState.showEpisodeIntro ? 1 : Math.ceil((gameState.levelIndex + 1) / 5)
+  const { showBoot, setShowBoot, currentEpisode } = useEpisodeBootTransition(
+    gameState.levelIndex,
+    gameState.showEpisodeIntro,
+    () => setIsMissionDrawerOpen(false)
   );
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
@@ -283,18 +313,6 @@ export default function App() {
     gameState.levelIndex,
     shouldPersistProgress
   );
-
-  // Show boot sequence on episode change
-  useEffect(() => {
-    const episode = Math.ceil((gameState.levelIndex + 1) / 5);
-    if (episode !== currentEpisode && !gameState.showEpisodeIntro) {
-      setCurrentEpisode(episode);
-      setShowBoot(true);
-      if (episode === 3) {
-        setIsMissionDrawerOpen(false);
-      }
-    }
-  }, [gameState.levelIndex, currentEpisode, gameState.showEpisodeIntro]);
 
   // Use the Narrative System hook to handle thoughts and notifications
   useNarrativeSystem(gameState, dispatch);
@@ -425,6 +443,15 @@ export default function App() {
     () => getNodeByPath(gameState.fs, gameState.currentPath.slice(0, -1)),
     [gameState.fs, gameState.currentPath]
   );
+
+  const parentItems = useMemo(() => {
+    const items = parent?.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+    return gameState.showHidden ? items : items.filter((c) => !c.name.startsWith('.'));
+  }, [parent, gameState.showHidden]);
+
+  const toggleMissionDrawer = useCallback(() => {
+    setIsMissionDrawerOpen((prev) => !prev);
+  }, []);
 
   // Mirror Yazi's tab folder cache: the current directory is loaded, and the
   // preview loads the hovered directory. Counts are read only from that cache.
@@ -1459,16 +1486,22 @@ export default function App() {
 
   if (gameState.isBooting) {
     return (
-      <BiosBoot
-        onComplete={handleBootComplete}
-        cycleCount={gameState.cycleCount || 1}
-        reduceMotion={reduceMotion}
-      />
+      <Suspense fallback={null}>
+        <BiosBoot
+          onComplete={handleBootComplete}
+          cycleCount={gameState.cycleCount || 1}
+          reduceMotion={reduceMotion}
+        />
+      </Suspense>
     );
   }
 
   if (isLastLevel) {
-    return <OutroSequence onRestartCycle={handleRestartCycle} reduceMotion={reduceMotion} />;
+    return (
+      <Suspense fallback={null}>
+        <OutroSequence onRestartCycle={handleRestartCycle} reduceMotion={reduceMotion} />
+      </Suspense>
+    );
   }
 
   return (
@@ -1478,14 +1511,12 @@ export default function App() {
       enabled={!reduceMotion && gameState.settings.narrativeEffects === 'full'}
     >
       <div
-        className={`flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative ${
-          gameState.mode === 'auto-fix' && !reduceMotion ? 'animate-glitch' : ''
-        }`}
+        className="flex h-screen w-screen bg-zinc-950 text-zinc-300 overflow-hidden relative"
         style={
           gameState.mode === 'auto-fix' && !reduceMotion ? { filter: 'url(#codrops-glitch)' } : {}
         }
       >
-        {!reduceMotion && <CodropsGlitchSVG />}
+        {gameState.mode === 'auto-fix' && !reduceMotion && <CodropsGlitchSVG />}
         {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
           <EpisodeIntro
             showFocusRing={hasKeyboardInteraction}
@@ -1504,6 +1535,245 @@ export default function App() {
           />
         )}
 
+        {atFloor ? (
+          <main
+            className="flex flex-col flex-1 h-full min-w-0"
+            inert={gameState.showEpisodeIntro || gameState.isGameOver}
+          >
+            {!gameState.showEpisodeIntro && (
+              <LevelProgress
+                levels={LEVELS}
+                currentLevelIndex={gameState.levelIndex}
+                notification={null}
+                thought={gameState.thought}
+                cycleCount={gameState.cycleCount ?? 1}
+                onToggleHint={() => {
+                  setUtilityPanel('hint', !gameState.showHint);
+                  dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
+                }}
+                onSelectEpisode={(tab) =>
+                  dispatch({ type: 'UPDATE_QUEST_MAP', tab, missionIdx: 0 })
+                }
+                onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
+                isOpen={Boolean(gameState.showMap)}
+                onClose={() =>
+                  dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
+                }
+                onToggleMap={() => setUtilityPanel('map', !gameState.showMap)}
+                onJumpToLevel={(idx) => {
+                  const lvl = LEVELS[idx];
+                  if (lvl.episodeId === 3 && LEVELS[gameState.levelIndex].episodeId !== 3) {
+                    setIsMissionDrawerOpen(false);
+                  }
+                  let fs = cloneFS(INITIAL_FS);
+                  fs = ensurePrerequisiteState(fs, lvl.id, gameState);
+                  dispatch({
+                    type: 'SET_LEVEL',
+                    index: idx,
+                    fs,
+                    path: getLevelStartPath(fs, lvl),
+                    showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
+                    notification: null, // No specific notification on jump
+                    zoxideData: gameState.zoxideData,
+                  });
+                }}
+                activeTab={gameState.questMapTab}
+                selectedMissionIdx={gameState.questMapMissionIdx}
+              />
+            )}
+
+            {!gameState.showEpisodeIntro && (
+              <DiegeticPrompt
+                threatLevel={gameState.threatLevel}
+                mode={gameState.mode}
+                currentPath={gameState.currentPath}
+                fs={gameState.fs}
+                filterQuery={gameState.inputBuffer}
+                confirmedFilter={(() => {
+                  const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                  return dir ? gameState.filters[dir.id] : undefined;
+                })()}
+                searchQuery={gameState.searchQuery ?? undefined}
+                searchResults={gameState.searchResults}
+                cycleCount={gameState.cycleCount}
+              />
+            )}
+
+            {!gameState.showEpisodeIntro && (
+              <div className="flex flex-1 min-h-0 relative">
+                {/* Search Input - centered overlay popup matching Yazi style */}
+                {gameState.mode === 'search' && (
+                  <div
+                    className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
+                    onKeyDown={containOverlayTab}
+                  >
+                    <div
+                      ref={searchPanelRef}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="fd-search-label"
+                      tabIndex={-1}
+                      className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-xs"
+                    >
+                      <label
+                        id="fd-search-label"
+                        htmlFor="fd-search"
+                        className="block text-zinc-400 text-sm font-mono mb-2"
+                      >
+                        Search via fd:
+                      </label>
+                      <input
+                        id="fd-search"
+                        type="text"
+                        value={gameState.inputBuffer}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.nativeEvent.isComposing) return;
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSearchConfirm();
+                            e.stopPropagation();
+                          } else if (e.key === 'Escape') {
+                            dispatch({ type: 'SET_MODE', mode: 'normal' });
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-hidden focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
+                        data-testid="search-input"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <FileSystemPane
+                  items={parentItems}
+                  isActive={false}
+                  isParent={true}
+                  selectedIds={[]}
+                  clipboard={null}
+                  linemode={gameState.linemode}
+                  showHidden={gameState.showHidden}
+                  loadedDirIds={gameState.loadedDirIds}
+                  // ADR-0001: the parent pane is one of the three panes, so it shows
+                  // wherever the file-manager view itself is shown. Same fact as the
+                  // floor gate above; derived from it rather than a separate breakpoint.
+                  className={`${atFloor ? 'flex' : 'hidden'} border-r border-zinc-800 bg-zinc-950/50`}
+                />
+
+                <div className="flex-1 flex flex-col min-w-0 sm:relative">
+                  <FileSystemPane
+                    showFocusRing={hasKeyboardInteraction}
+                    focusRef={filePaneRef}
+                    items={visibleItems}
+                    isActive={
+                      !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
+                    }
+                    cursorIndex={gameState.cursorIndex}
+                    isParent={false}
+                    selectedIds={gameState.selectedIds}
+                    clipboard={gameState.clipboard}
+                    linemode={gameState.linemode}
+                    showHidden={gameState.showHidden}
+                    loadedDirIds={gameState.loadedDirIds}
+                    className="flex-1"
+                  />
+
+                  {gameState.mode === 'sort' && <SortOptionsMenu />}
+
+                  {gameState.mode === 'g-command' && (
+                    <GCommandDialog
+                      onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                    />
+                  )}
+
+                  {gameState.mode === 'input-file' && (
+                    <InputModal
+                      label="Create"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                      onConfirm={handleInputConfirm}
+                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                      borderColorClass="border-green-500"
+                      labelColorClass="text-green-500"
+                      testid="create-input"
+                    />
+                  )}
+
+                  {gameState.mode === 'filter' && (
+                    <InputModal
+                      label="Filter"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => {
+                        const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                        if (dir) {
+                          dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
+                        }
+                        // Also update inputBuffer so the input field shows the typed text
+                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                      }}
+                      onConfirm={() => {
+                        dispatch({ type: 'SET_MODE', mode: 'normal' });
+                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                      }}
+                      onCancel={() => {
+                        dispatch({ type: 'SET_MODE', mode: 'normal' });
+                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                      }}
+                      borderColorClass="border-orange-500"
+                      labelColorClass="text-orange-500"
+                      testid="filter-input"
+                    />
+                  )}
+
+                  {gameState.mode === 'rename' && (
+                    <InputModal
+                      label="Rename"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                      onConfirm={handleRenameConfirm}
+                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                      borderColorClass="border-cyan-500" // or green/cyan mix
+                      labelColorClass="text-cyan-400"
+                      testid="rename-input"
+                    />
+                  )}
+
+                  {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+                    <Suspense fallback={null}>
+                      <FuzzyFinder gameState={gameState} dispatch={dispatch} />
+                    </Suspense>
+                  )}
+                </div>
+
+                <PreviewPane
+                  node={currentItem}
+                  level={currentLevel}
+                  gameState={gameState}
+                  previewScroll={gameState.previewScroll}
+                  dispatch={dispatch}
+                  isMissionDrawerOpen={isMissionDrawerOpen}
+                  onToggleMissionDrawer={toggleMissionDrawer}
+                />
+              </div>
+            )}
+
+            {!gameState.showEpisodeIntro && (
+              <StatusBar
+                state={gameState}
+                level={currentLevel}
+                allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
+                onNextLevel={advanceLevel}
+                currentItem={currentItem}
+              />
+            )}
+          </main>
+        ) : (
+          <RequirementNotice reason={touchOnly ? 'keyboard' : 'width'} />
+        )}
+
         {gameState.isGameOver && (
           <GameOverModal
             reason={gameState.gameOverReason!}
@@ -1515,16 +1785,18 @@ export default function App() {
         )}
 
         {gameState.showHelp && (
-          <HelpModal
-            onClose={() =>
-              dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
-            }
-            scrollPosition={gameState.helpScrollPosition || 0}
-            level={currentLevel}
-            gameState={gameState}
-            dispatch={dispatch}
-            narrativeEffects={gameState.settings.narrativeEffects}
-          />
+          <Suspense fallback={null}>
+            <HelpModal
+              onClose={() =>
+                dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
+              }
+              scrollPosition={gameState.helpScrollPosition || 0}
+              level={currentLevel}
+              gameState={gameState}
+              dispatch={dispatch}
+              narrativeEffects={gameState.settings.narrativeEffects}
+            />
+          </Suspense>
         )}
 
         {gameState.showHint && (
@@ -1622,247 +1894,6 @@ export default function App() {
           alerts={gameState.alerts}
           onDismiss={(id) => dispatch({ type: 'REMOVE_ALERT', id })}
         />
-
-        {atFloor ? (
-          <main
-            className="flex flex-col flex-1 h-full min-w-0"
-            inert={gameState.showEpisodeIntro || gameState.isGameOver}
-          >
-            {!gameState.showEpisodeIntro && (
-              <LevelProgress
-                levels={LEVELS}
-                currentLevelIndex={gameState.levelIndex}
-                notification={null}
-                thought={gameState.thought}
-                cycleCount={gameState.cycleCount ?? 1}
-                onToggleHint={() => {
-                  setUtilityPanel('hint', !gameState.showHint);
-                  dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
-                }}
-                onSelectEpisode={(tab) =>
-                  dispatch({ type: 'UPDATE_QUEST_MAP', tab, missionIdx: 0 })
-                }
-                onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
-                isOpen={Boolean(gameState.showMap)}
-                onClose={() =>
-                  dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false })
-                }
-                onToggleMap={() => setUtilityPanel('map', !gameState.showMap)}
-                onJumpToLevel={(idx) => {
-                  const lvl = LEVELS[idx];
-                  if (lvl.episodeId === 3 && LEVELS[gameState.levelIndex].episodeId !== 3) {
-                    setIsMissionDrawerOpen(false);
-                  }
-                  let fs = cloneFS(INITIAL_FS);
-                  fs = ensurePrerequisiteState(fs, lvl.id, gameState);
-                  dispatch({
-                    type: 'SET_LEVEL',
-                    index: idx,
-                    fs,
-                    path: getLevelStartPath(fs, lvl),
-                    showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
-                    notification: null, // No specific notification on jump
-                    zoxideData: gameState.zoxideData,
-                  });
-                }}
-                activeTab={gameState.questMapTab}
-                selectedMissionIdx={gameState.questMapMissionIdx}
-              />
-            )}
-
-            {!gameState.showEpisodeIntro && (
-              <DiegeticPrompt
-                threatLevel={gameState.threatLevel}
-                mode={gameState.mode}
-                currentPath={gameState.currentPath}
-                fs={gameState.fs}
-                filterQuery={gameState.inputBuffer}
-                confirmedFilter={(() => {
-                  const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                  return dir ? gameState.filters[dir.id] : undefined;
-                })()}
-                searchQuery={gameState.searchQuery ?? undefined}
-                searchResults={gameState.searchResults}
-                cycleCount={gameState.cycleCount}
-              />
-            )}
-
-            {!gameState.showEpisodeIntro && (
-              <div className="flex flex-1 min-h-0 relative">
-                {/* Search Input - centered overlay popup matching Yazi style */}
-                {gameState.mode === 'search' && (
-                  <div
-                    className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
-                    onKeyDown={containOverlayTab}
-                  >
-                    <div
-                      ref={searchPanelRef}
-                      role="dialog"
-                      aria-labelledby="fd-search-label"
-                      tabIndex={-1}
-                      className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
-                    >
-                      <label
-                        id="fd-search-label"
-                        htmlFor="fd-search"
-                        className="block text-zinc-400 text-sm font-mono mb-2"
-                      >
-                        Search via fd:
-                      </label>
-                      <input
-                        id="fd-search"
-                        type="text"
-                        value={gameState.inputBuffer}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.nativeEvent.isComposing) return;
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSearchConfirm();
-                            e.stopPropagation();
-                          } else if (e.key === 'Escape') {
-                            dispatch({ type: 'SET_MODE', mode: 'normal' });
-                            e.stopPropagation();
-                          }
-                        }}
-                        className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
-                        data-testid="search-input"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <FileSystemPane
-                  items={(() => {
-                    const parent = getParentNode(gameState.fs, gameState.currentPath);
-                    let items =
-                      parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
-                    if (!gameState.showHidden) {
-                      items = items.filter((c) => !c.name.startsWith('.'));
-                    }
-                    return items;
-                  })()}
-                  isActive={false}
-                  isParent={true}
-                  selectedIds={[]}
-                  clipboard={null}
-                  linemode={gameState.linemode}
-                  showHidden={gameState.showHidden}
-                  loadedDirIds={gameState.loadedDirIds}
-                  // ADR-0001: the parent pane is one of the three panes, so it shows
-                  // wherever the file-manager view itself is shown. Same fact as the
-                  // floor gate above; derived from it rather than a separate breakpoint.
-                  className={`${atFloor ? 'flex' : 'hidden'} w-64 border-r border-zinc-800 bg-zinc-950/50`}
-                />
-
-                <div className="flex-1 flex flex-col min-w-0 sm:relative">
-                  <FileSystemPane
-                    showFocusRing={hasKeyboardInteraction}
-                    focusRef={filePaneRef}
-                    items={visibleItems}
-                    isActive={
-                      !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
-                    }
-                    cursorIndex={gameState.cursorIndex}
-                    isParent={false}
-                    selectedIds={gameState.selectedIds}
-                    clipboard={gameState.clipboard}
-                    linemode={gameState.linemode}
-                    showHidden={gameState.showHidden}
-                    loadedDirIds={gameState.loadedDirIds}
-                    className="flex-1"
-                  />
-
-                  {gameState.mode === 'sort' && <SortOptionsMenu />}
-
-                  {gameState.mode === 'g-command' && (
-                    <GCommandDialog
-                      onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                    />
-                  )}
-
-                  {gameState.mode === 'input-file' && (
-                    <InputModal
-                      label="Create"
-                      value={gameState.inputBuffer}
-                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                      onConfirm={handleInputConfirm}
-                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                      borderColorClass="border-green-500"
-                      testid="create-input"
-                    />
-                  )}
-
-                  {gameState.mode === 'filter' && (
-                    <InputModal
-                      label="Filter"
-                      value={gameState.inputBuffer}
-                      onChange={(val) => {
-                        const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                        if (dir) {
-                          dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
-                        }
-                        // Also update inputBuffer so the input field shows the typed text
-                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                      }}
-                      onConfirm={() => {
-                        dispatch({ type: 'SET_MODE', mode: 'normal' });
-                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                      }}
-                      onCancel={() => {
-                        dispatch({ type: 'SET_MODE', mode: 'normal' });
-                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                      }}
-                      borderColorClass="border-orange-500"
-                      testid="filter-input"
-                    />
-                  )}
-
-                  {gameState.mode === 'rename' && (
-                    <InputModal
-                      label="Rename"
-                      value={gameState.inputBuffer}
-                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                      onConfirm={handleRenameConfirm}
-                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                      borderColorClass="border-cyan-500" // or green/cyan mix
-                      testid="rename-input"
-                    />
-                  )}
-
-                  {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-                    <FuzzyFinder gameState={gameState} dispatch={dispatch} />
-                  )}
-                </div>
-
-                <PreviewPane
-                  node={currentItem}
-                  level={currentLevel}
-                  gameState={gameState}
-                  previewScroll={gameState.previewScroll}
-                  dispatch={dispatch}
-                  isMissionDrawerOpen={isMissionDrawerOpen}
-                  onToggleMissionDrawer={() => setIsMissionDrawerOpen((prev) => !prev)}
-                />
-              </div>
-            )}
-
-            {!gameState.showEpisodeIntro && (
-              <StatusBar
-                state={gameState}
-                level={currentLevel}
-                allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
-                onNextLevel={advanceLevel}
-                currentItem={currentItem}
-              />
-            )}
-          </main>
-        ) : (
-          <RequirementNotice reason={touchOnly ? 'keyboard' : 'width'} />
-        )}
       </div>
     </GlitchOverlay>
   );

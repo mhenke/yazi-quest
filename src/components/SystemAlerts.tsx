@@ -38,9 +38,9 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts, onDismiss })
               alert.severity === 'error'
                 ? 'bg-red-950/90 border-red-500/50 text-red-100'
                 : alert.severity === 'warning'
-                  ? 'bg-amber-950/90 border-amber-500/50 text-amber-100'
+                  ? 'bg-yellow-950/90 border-yellow-500/50 text-yellow-100'
                   : alert.severity === 'success'
-                    ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-100'
+                    ? 'bg-green-950/90 border-green-500/50 text-green-100'
                     : 'bg-blue-950/90 border-blue-500/50 text-blue-100'
             }
           `}
@@ -49,24 +49,28 @@ export const SystemAlerts: React.FC<SystemAlertsProps> = ({ alerts, onDismiss })
             type="button"
             onClick={() => onDismiss?.(alert.id)}
             aria-label={`Dismiss ${alert.title}`}
-            className="absolute right-2 top-2 z-10 p-1 opacity-60 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="absolute right-2 top-2 z-10 p-1 text-zinc-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             <X className="w-4 h-4" />
           </button>
           <div className="flex items-start gap-3">
             <div className="mt-1 shrink-0">
-              {alert.severity === 'error' && <ShieldAlert className="w-5 h-5 text-red-500" />}
-              {alert.severity === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-              {alert.severity === 'success' && <CheckCircle className="w-5 h-5 text-emerald-500" />}
-              {alert.severity === 'info' && <Info className="w-5 h-5 text-blue-500" />}
+              {alert.severity === 'error' && (
+                <ShieldAlert className="w-5 h-5 text-red-400" aria-hidden="true" />
+              )}
+              {alert.severity === 'warning' && (
+                <AlertTriangle className="w-5 h-5 text-yellow-400" aria-hidden="true" />
+              )}
+              {alert.severity === 'success' && (
+                <CheckCircle className="w-5 h-5 text-green-400" aria-hidden="true" />
+              )}
+              {alert.severity === 'info' && (
+                <Info className="w-5 h-5 text-blue-400" aria-hidden="true" />
+              )}
             </div>
             <div className="min-w-0 flex-1 break-words">
-              <h3 className="font-bold text-xs tracking-wide uppercase opacity-90 mb-1">
-                {alert.title}
-              </h3>
-              <p className="text-xs opacity-80 leading-relaxed whitespace-pre-wrap">
-                {alert.message}
-              </p>
+              <h3 className="font-bold text-xs tracking-wide uppercase mb-1">{alert.title}</h3>
+              <p className="text-xs leading-relaxed whitespace-pre-wrap">{alert.message}</p>
             </div>
           </div>
           {/* Progress bar or timer could go here if auto-dismiss logic existed in UI */}

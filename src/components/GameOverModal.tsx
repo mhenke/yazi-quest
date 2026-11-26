@@ -93,12 +93,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   return (
     <div
       data-testid="game-over-modal"
-      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 px-4 backdrop-blur-sm animate-terminal-fade"
+      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 px-4 backdrop-blur-xs animate-terminal-fade"
       onKeyDown={containOverlayTab}
     >
       <div
         ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="game-over-title"
         tabIndex={-1}
         className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-4 sm:p-8 text-center relative"

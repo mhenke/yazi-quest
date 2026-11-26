@@ -77,3 +77,45 @@ describe('Level 8 deploy-patch check', () => {
     ).toBe(false);
   });
 });
+
+const level9 = LEVELS.find((level) => level.id === 9);
+const selectKeepers = level9?.tasks.find((task) => task.id === 'cleanup-1-select');
+
+if (!level9 || !selectKeepers) {
+  throw new Error('Level 9 keeper-selection task is missing');
+}
+
+const selectedKeepers = {
+  fs: {
+    id: 'root',
+    name: 'root',
+    type: 'dir',
+    children: [
+      {
+        id: 'tmp',
+        name: 'tmp',
+        type: 'dir',
+        children: [
+          { id: 'ghost', name: 'ghost_process.pid', type: 'file' },
+          { id: 'socket', name: 'socket_001.sock', type: 'file' },
+          { id: 'monitor', name: 'system_monitor.pid', type: 'file' },
+          { id: 'token', name: 'access_token.key', type: 'file' },
+        ],
+      },
+    ],
+  } as FileNode,
+  currentPath: ['root', 'tmp'],
+  selectedIds: ['ghost', 'socket', 'monitor', 'token'],
+} as unknown as GameState;
+
+describe('Level 9 keeper-selection task', () => {
+  it('waits for the filter to be cleared after selecting the keepers', () => {
+    expect(
+      selectKeepers.check(
+        { ...selectedKeepers, filters: { tmp: '\\.(key|pid|sock)$' } } as GameState,
+        level9
+      )
+    ).toBe(false);
+    expect(selectKeepers.check({ ...selectedKeepers, filters: {} }, level9)).toBe(true);
+  });
+});

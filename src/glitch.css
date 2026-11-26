@@ -34,7 +34,7 @@
 }
 
 .glitch-content.glitching {
-  animation: flicker 0.15s infinite;
+  animation: flicker 0.6s steps(2, end) infinite;
 }
 
 /* Scan Lines Effect */
@@ -75,7 +75,7 @@
   pointer-events: none;
   z-index: 10;
   mix-blend-mode: screen;
-  animation: colorBleed 0.3s ease-in-out infinite;
+  animation: colorBleed 0.8s ease-in-out infinite;
 }
 
 .color-bleed::before,
@@ -89,15 +89,15 @@
 }
 
 .color-bleed::before {
-  background: rgba(255, 0, 193, 0.3);
+  background: color-mix(in srgb, var(--color-glitch-magenta, #ff00c1) 30%, transparent);
   transform: translateX(calc(-1 * var(--glitch-offset, 2px)));
-  animation: colorBleedLeft 0.2s ease-in-out infinite;
+  animation: colorBleedLeft 0.6s ease-in-out infinite;
 }
 
 .color-bleed::after {
-  background: rgba(0, 255, 249, 0.3);
+  background: color-mix(in srgb, var(--color-glitch-cyan, #00fff9) 30%, transparent);
   transform: translateX(var(--glitch-offset, 2px));
-  animation: colorBleedRight 0.2s ease-in-out infinite;
+  animation: colorBleedRight 0.6s ease-in-out infinite;
 }
 
 @keyframes colorBleed {
@@ -144,10 +144,10 @@
 
 .scramble-overlay .glitch-char {
   position: absolute;
-  font-size: 1.2rem;
-  color: #00ff00;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
-  animation: glitch-char-flicker 0.1s infinite;
+  font-size: 1rem;
+  color: var(--color-success, #22c55e);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--color-success, #22c55e) 80%, transparent);
+  animation: glitch-char-flicker 0.6s steps(2, end) infinite;
 }
 
 .scramble-overlay .scrambled-text {
@@ -155,11 +155,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  color: #ff0000;
-  text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  font-size: 1.25rem;
+  color: var(--color-danger, #ef4444);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-danger, #ef4444) 80%, transparent);
   white-space: nowrap;
-  animation: text-scramble-pulse 0.2s infinite;
+  animation: text-scramble-pulse 0.6s ease-in-out infinite;
 }
 
 @keyframes glitch-char-flicker {
@@ -275,10 +275,10 @@
   }
 
   .color-bleed::before {
-    background: rgba(255, 0, 193, 0.5);
+    background: color-mix(in srgb, var(--color-glitch-magenta, #ff00c1) 50%, transparent);
   }
 
   .color-bleed::after {
-    background: rgba(0, 255, 249, 0.5);
+    background: color-mix(in srgb, var(--color-glitch-cyan, #00fff9) 50%, transparent);
   }
 }
