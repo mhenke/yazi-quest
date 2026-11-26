@@ -129,9 +129,10 @@ export const handleConfirmDeleteModeKeyDown = (
   visibleItems: FileNode[],
   currentLevelParam: Level
 ) => {
-  if (e.key === 'y') {
+  const key = e.key.toLowerCase();
+  if (key === 'y') {
     confirmDelete(dispatch, gameState, visibleItems, currentLevelParam);
-  } else if (e.key === 'n' || e.key === 'Escape') {
+  } else if (key === 'n' || e.key === 'Escape') {
     cancelDelete(dispatch);
   }
 };

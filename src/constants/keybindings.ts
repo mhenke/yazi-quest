@@ -215,6 +215,8 @@ export const HELP_KEYBINDINGS = [
   { group: 'Navigation', keys: ['G'], description: 'Jump to Bottom' },
   { group: 'Navigation', keys: ['J'], description: 'Scroll Preview Down' },
   { group: 'Navigation', keys: ['K'], description: 'Scroll Preview Up' },
+  { group: 'Navigation', keys: ['H'], description: 'History Back' },
+  { group: 'Navigation', keys: ['L'], description: 'History Forward' },
   { group: 'Selection', keys: ['Space'], description: 'Toggle Selection' },
   { group: 'Selection', keys: ['Ctrl+A'], description: 'Select All' },
   { group: 'Selection', keys: ['Ctrl+R'], description: 'Invert Selection' },
@@ -226,12 +228,12 @@ export const HELP_KEYBINDINGS = [
   {
     group: 'Clipboard',
     keys: ['y'],
-    description:
-      'Copy/Yank Selected — copies items into the clipboard (does NOT remove them); use x (Cut) to mark items for moving',
+    description: 'Yank selected (copy; originals remain)',
   },
   { group: 'Clipboard', keys: ['p'], description: 'Paste' },
   { group: 'Clipboard', keys: ['Y', 'X'], description: 'Clear Clipboard' },
   { group: 'Find & Jump', keys: ['f'], description: 'Filter Files' },
+  { group: 'Find & Jump', keys: ['s'], description: 'Search (Recursive)' },
   { group: 'Find & Jump', keys: ['z'], description: 'FZF Find (Recursive)' },
   { group: 'Find & Jump', keys: ['Z'], description: 'Zoxide Jump (History)' },
   { group: 'Find & Jump', keys: ['Esc'], description: 'Clear Filter / Exit Mode' },
@@ -259,5 +261,6 @@ export const HELP_META_KEYBINDINGS = [
   { keys: ['Alt+M'], description: 'Quest Map' },
   { keys: ['Alt+H'], description: 'Show Hint' },
   { keys: ['Alt+?'], description: 'Show Help' },
+  { keys: ['Alt+O'], description: 'Toggle Mission Log' },
   { keys: ['Alt+Shift+M'], description: 'Toggle Sound' },
 ];

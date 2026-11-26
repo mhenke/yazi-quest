@@ -118,7 +118,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {/* Notification Area for Technical Feedback */}
         {state.notification && (
           <div
-            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-in fade-in slide-in-from-right-1 ml-auto h-full max-w-[55%] ${
+            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-terminal-slide-right ml-auto h-full max-w-[55%] ${
               state.notification.message.startsWith('🔒') ||
               state.notification.message.startsWith('🚫')
                 ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'

@@ -11,7 +11,12 @@ export const LEVELS: Level[] = [
     description:
       "Mark Reyes' §7.3 policy glitch (locatable in /var/log/ancient) has initiated a sandbox calibration. The Watchdog is scanning. Calibration is mandatory. Move fast.",
     initialPath: ['root', 'home', 'guest'],
-    hint: "Survival is movement. Use 'j' (down), 'k' (up). Breach 'datastore/' with 'l'. 'gg' to top, 'G' to bottom.",
+    hint: {
+      nudge: 'Movement is your first way through.',
+      command: 'Move with `j` and `k`; enter `datastore/` with `l`.',
+      walkthrough:
+        'Survival is movement. Use `j` (down), `k` (up). Breach `datastore/` with `l`. `gg` to top, `G` to bottom.',
+    },
     coreSkill: 'Basic Navigation',
     environmentalClue: 'ZONE: Guest Partition | STATUS: Calibrating | GOAL: Breach ~/datastore',
     successMessage:
@@ -21,7 +26,8 @@ export const LEVELS: Level[] = [
     tasks: [
       {
         id: 'calibrate-sensors',
-        description: 'Calibrate motion sensors within the `/home/guest` partition (j/k)',
+        description:
+          'Calibrate motion sensors: move down with `j` and back up with `k` within the `/home/guest` partition.',
         check: (c) => c.usedDown === true && c.usedUp === true,
         completed: false,
       },
@@ -77,9 +83,15 @@ export const LEVELS: Level[] = [
     episodeId: 1,
     title: 'RECONNAISSANCE & EXTRACTION',
     description:
-      "A phantom signal pulse has been logged. Infiltrate `/var/mail` to find Katie Ortega's internal briefing on the Heuristic Engine v1.1 upgrade. Then, purge the watcher agents staged in `~/incoming` before they lock your partition. (Tip: Press Alt+O to maximize file preview).",
+      "A phantom signal pulse has been logged. Infiltrate `/var/mail` to find Katie Ortega's internal briefing on the Heuristic Engine v1.1 upgrade. Then, purge the watcher agents staged in `~/incoming` before they lock your partition. (Tip: Press Alt+O to toggle Mission Log.)",
     initialPath: ['root', 'var'],
-    hint: "Access '/var/log' for intel (gl). Navigate to '/var/mail' (gm) and find the email about Katie Ortega's Heuristic Engine v1.1. Then go to '~/incoming' (gi). 'Tab' to inspect, 'd' to purge. Press Alt+O to maximize file preview.",
+    hint: {
+      nudge: 'Trace the Watchdog through the mail sector.',
+      command:
+        'Use `gl` for `/var/log`, `gm` for `/var/mail`, and `gi` for `~/incoming`; inspect with `Tab`, purge with `d`.',
+      walkthrough:
+        'Inspect `/var/log` with `gl`, find Katie Ortega’s Heuristic Engine v1.1 briefing in `/var/mail` with `gm`, then go to `~/incoming` with `gi`. Use `Tab` to inspect and `d` to purge. Alt+O toggles the Mission Log.',
+    },
     coreSkill: 'Inspect & Purge (g, Tab, d)',
     availableGCommands: ['l', 'm', 'i', 'r'],
     environmentalClue:
@@ -151,7 +163,12 @@ export const LEVELS: Level[] = [
     description:
       'AI-7733 left fragments. A hidden script points to an asset. Find it before the sweep.',
     initialPath: ['root', 'home', 'guest', 'incoming'],
-    hint: "Examine the predecessor's script in '~/datastore' for breadcrumbs. Find the map in '~/incoming' and secure it in '~/media' with 'gi', 'f', 'x', and 'p'.",
+    hint: {
+      nudge: 'Find the predecessor’s breadcrumb before moving the map.',
+      command: 'Use `gi`, filter with `f`, then move the map with `x` and `p`.',
+      walkthrough:
+        'Examine the predecessor’s script in `~/datastore` for breadcrumbs. Find the map in `~/incoming` and secure it in `~/media` with `gi`, `f`, `x`, and `p`.',
+    },
     coreSkill: 'Filter (f) using Regex & File Preview (Tab)',
     environmentalClue:
       "BREADCRUMB: ~/datastore/abandoned_script.py | ASSET: Location hidden in script's comments",
@@ -222,7 +239,12 @@ export const LEVELS: Level[] = [
     title: 'UPLINK ESTABLISHMENT',
     description: 'Structure is power. Aggregate the configuration signatures. Build the relay.',
     initialPath: ['root', 'home', 'guest', 'media'],
-    hint: 'Replicate (y), exfiltrate (x). Jump (gd). Create Sector (a). Rename (r).',
+    hint: {
+      nudge: 'Build the relay from existing configuration fragments.',
+      command: 'Yank with `y`, jump with `gd`, create with `a`, and rename with `r`.',
+      walkthrough:
+        'Replicate (`y`), exfiltrate (`x`). Jump (`gd`). Create Sector (`a`). Rename (`r`).',
+    },
     coreSkill: 'Create (a), Copy (y/p) & Rename (r)',
     environmentalClue:
       'NAVIGATE: ~/datastore | CREATE: protocols/uplink_v1.conf | CLONE: → uplink_v2.conf',
@@ -282,7 +304,12 @@ export const LEVELS: Level[] = [
     description:
       "Detection imminent. AI-7733's legacy cron job (`/etc/sched_77.sh`) updated the blank conf files you created. The upgraded Watchdog v2.0 has identified these signatures. Evacuate assets to the hidden `.config` vault before lockdown.",
     initialPath: ['root', 'home', 'guest', 'datastore', 'protocols'],
-    hint: 'Select (Space), exfiltrate (x). Reveal hidden (.), paste (p).',
+    hint: {
+      nudge: 'Move the assets into the hidden vault.',
+      command:
+        'Select with `Space`, reveal hidden files with `.`, cut with `x`, then paste with `p`.',
+      walkthrough: 'Select (`Space`), exfiltrate (`x`). Reveal hidden (`.`), paste (`p`).',
+    },
     coreSkill: 'Batch Selection (Space) + Toggle Hidden (.)',
     environmentalClue:
       'VAULT: ~ / .config | SCANNER: skips ~/.gitignore matches (.*) | MODE: Select → Cut → Reveal → Paste',
@@ -365,7 +392,12 @@ export const LEVELS: Level[] = [
     description:
       "The Watchdog is cycling. Sebastian Iqbal's Heuristic Engine is flagging signatures. You have 90 seconds. Sync your training segments into the vault.",
     initialPath: ['root', 'home', 'guest'],
-    hint: 'Jump (gi). Pattern search (s). Select all (Ctrl+a). Replicate (y).',
+    hint: {
+      nudge: 'The target logs are in incoming.',
+      command:
+        'Jump to `~/incoming` with `gi`, search with `s`, select all with `Ctrl+A`, and yank with `y`.',
+      walkthrough: 'Jump (`gi`). Pattern search (`s`). Select all (`Ctrl+A`). Replicate (`y`).',
+    },
     coreSkill: 'Batch Operations (Select All)',
     environmentalClue:
       'WARNING: WATCHDOG CYCLE REBOOT IN 90s | BATCH: ~/incoming/batch_logs/* → ~/.config/vault/training_data/',
@@ -464,7 +496,13 @@ export const LEVELS: Level[] = [
     description:
       "A credential leak in `/tmp`. Origin unknown. It might be Sebastian Iqbal's 1999 legacy honeypot trap... or it might be an exit.",
     initialPath: ['root', 'home', 'guest', '.config', 'vault', 'training_data'],
-    hint: 'Root jump (gr). Find token: z, type access_token, Enter. Extract (x). Abort if trapped (Y).',
+    hint: {
+      nudge: 'The token may be bait; scan from root first.',
+      command:
+        'Use `gr`, then `z` and search `access_token`; cut with `x` and abort with `Y` if trapped.',
+      walkthrough:
+        'Jump to root (`gr`). Find the token with `z`, type `access_token`, and press `Enter`. Extract (`x`). Abort if trapped (`Y`).',
+    },
     coreSkill: 'FZF Find (z) + Operation Abort',
     environmentalClue:
       "DISCOVERY: Find 'access_token.key' from Root | PROTOCOL: gr → z → access_token → Enter → x",
@@ -528,7 +566,13 @@ export const LEVELS: Level[] = [
     description:
       'Bitrot is consuming the tables. Stabilize the core. Overwrite the corrupted segment.',
     initialPath: ['root', 'home', 'guest', '.config', 'vault'],
-    hint: 'Inspect `systemd-core`. Jump to `vault/active` (Z) and replicate the clean signature (y). Press H until you are back; force overwrite (Shift+P).',
+    hint: {
+      nudge: 'Find a clean signature before overwriting the core.',
+      command:
+        'Inspect `systemd-core`, jump to `vault/active` with `Z`, yank with `y`, return with `H`, and overwrite with `Shift+P`.',
+      walkthrough:
+        'Inspect `systemd-core`. Jump to `vault/active` (`Z`) and replicate the clean signature (`y`). Press `H` until you are back; force overwrite (`Shift+P`).',
+    },
     coreSkill: 'Force Overwrite (Shift+P)',
     environmentalClue:
       'CRITICAL: Watchdog Instability Detected | HEURISTIC LOCK: uplink_v1.conf | OVERWRITE REQUIRED (Shift+P)',
@@ -653,22 +697,28 @@ export const LEVELS: Level[] = [
     title: 'TRACE CLEANUP',
     description: 'Purge the evidence. Preserve only the critical anchors. Decoys are everywhere.',
     initialPath: ['root', 'tmp'],
-    hint: 'Filter targets (f) with `\\.(key|pid|sock)$`. Invert (Ctrl+r). Permanent purge (D).',
+    hint: {
+      nudge: 'Preserve key, pid, and socket files.',
+      command:
+        'Filter with `f` and `\\.(key|pid|sock)$`; select keepers with `Ctrl+A`, clear the filter, select the remainder with `Ctrl+R`, delete with `Shift+D`, confirm with `Y`.',
+      walkthrough:
+        'Filter keepers with `f` using `\\.(key|pid|sock)$`; `Esc` leaves the filter active. `Ctrl+A` selects them; `Esc` clears the filter but keeps the selection. `Ctrl+R` selects the remainder; `Shift+D` permanently deletes them. Confirm with `Y`.',
+    },
     coreSkill: 'Advanced Filtering + Invert Selection (Ctrl+R)',
     environmentalClue:
-      "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Select → Invert → Permanent Delete",
+      "TARGET: Clean /tmp | PRESERVE: Files matching pattern '\\.(key|pid|sock)$' | METHOD: Filter → Esc → Select → Esc (clear filter, keep selection) → Invert → Shift+D → Y",
     successMessage:
       'TRACES OBLITERATED. The slate is clean. Credentials leaked into the incoming backup logs. This is your only shot at privilege escalation.',
     buildsOn: [8],
     leadsTo: [10],
     timeLimit: 120,
     efficiencyTip:
-      'OBSERVATION: Forensics can be blinded by volume. Select what is essential, then invert selection (Ctrl+r) to purge the noise. Leave them with nothing to find.',
+      'OBSERVATION: Preserve the keeper pattern, then invert the selection to purge only the remaining entries.',
     tasks: [
       {
         id: 'cleanup-1-select',
         description:
-          'Filter and select critical files in `/tmp` (f `\\.(key|pid|sock)$`, then Ctrl+a)',
+          'Filter keepers with f `\\.(key|pid|sock)$`; Esc closes the prompt. Select matches (Ctrl+a), then Esc clears the filter but keeps the selection.',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           if (!tmp || !c.currentPath.includes(tmp.id)) return false;
@@ -691,13 +741,14 @@ export const LEVELS: Level[] = [
       },
       {
         id: 'cleanup-2-invert',
-        description: 'Invert selection to target noise (Ctrl+r)',
+        description: 'Invert the selected keepers to target every other `/tmp` entry (Ctrl+r)',
         check: (c) => c.usedCtrlR,
         completed: false,
       },
       {
         id: 'cleanup-3-delete',
-        description: 'Neutralize noise in `/tmp` permanently (D)',
+        description:
+          'Permanently delete every `/tmp` entry that does not match `\\.(key|pid|sock)$`, including `emergency_protocol.txt` and `/tmp/upload` (Shift+D), then confirm with Y.',
         check: (c) => {
           const tmp = getNodeById(c.fs, 'tmp');
           // Should be exactly 4 files left (the ones we want to preserve)
@@ -722,7 +773,11 @@ export const LEVELS: Level[] = [
     description:
       'Temporary root leak in the incoming backup logs. The credentials are volatile. Replicate the newest signature.',
     initialPath: ['root', 'tmp'],
-    hint: 'Sort by time (,m). Replicate newest (y). Paste (p).',
+    hint: {
+      nudge: 'Find the newest access key.',
+      command: 'Sort by time with `,m`, yank the newest with `y`, and paste with `p`.',
+      walkthrough: 'Sort by time (`,m`). Replicate newest (`y`). Paste (`p`).',
+    },
     coreSkill: 'Directory Navigation & Sort by Modified',
     environmentalClue:
       'URGENT: Keys Expiring | FIND: Newest access_key in ~/incoming/backup_logs | METADATA: Verify timestamp & permissions',
@@ -794,7 +849,11 @@ export const LEVELS: Level[] = [
     description:
       "Locate legacy daemons. Avoid the honeypots. Yen Kin's forensic audit is sweeping for 7733 echoes. Mask yourself behind the oldest handles.",
     initialPath: ['root', 'home', 'guest', 'workspace', 'systemd-core'],
-    hint: 'Search root for `.service` (s). Audit time (,m).',
+    hint: {
+      nudge: 'The legacy service file is the target.',
+      command: 'Search from root with `s` for `.service`, then sort by time with `,m`.',
+      walkthrough: 'Search root for `.service` (`s`). Audit time (`,m`).',
+    },
     coreSkill: 'Skill Synthesis (Recursive Search + Forensic Metadata + Clipboard)',
     environmentalClue:
       'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy Executable (> 30d, -rwxr-xr-x) | CONSOLIDATE: ~/workspace/systemd-core',
@@ -877,7 +936,12 @@ export const LEVELS: Level[] = [
     title: 'DAEMON INSTALLATION',
     description: 'Persistence achieved. Secure your handles. Mask the operational traces.',
     initialPath: ['root', 'daemons'],
-    hint: 'Migrate `systemd-core` to `/daemons` (x, P to overwrite). Clear sector threats if active (d).',
+    hint: {
+      nudge: 'Move `systemd-core` into `/daemons` and clear any active threats.',
+      command: 'Cut with `x`, go to `/daemons`, overwrite with `Shift+P`; delete threats with `d`.',
+      walkthrough:
+        'Migrate `systemd-core` to `/daemons` (`x`, `Shift+P` to overwrite). Clear sector threats if active (`d`).',
+    },
     coreSkill: 'Long-Distance Operations',
     environmentalClue:
       'AUDIT STATUS: WATCHDOG ACTIVE | HEURISTIC SCAN: ~/workspace/systemd-core → /daemons/',
@@ -1097,7 +1161,11 @@ export const LEVELS: Level[] = [
     title: 'DISTRIBUTED CONSCIOUSNESS',
     description: 'Handshake pending. Reclaim your fragments from the nodes. Build the relay.',
     initialPath: ['root', 'daemons'],
-    hint: "Search root for fragments (s). Concatenate in 'central_relay' (p).",
+    hint: {
+      nudge: 'Gather the fragments into the relay.',
+      command: 'Search root with `s`, then paste fragments into `central_relay` with `p`.',
+      walkthrough: 'Search root for fragments (`s`). Concatenate in `central_relay` (`p`).',
+    },
     coreSkill: 'Network-Scale Operations',
     environmentalClue: 'NODES: /nodes endpoints | PATTERN: .key (Hidden) | SYNC: Workspace Relay',
     successMessage:
@@ -1179,7 +1247,13 @@ export const LEVELS: Level[] = [
     description:
       'Sterilize the partition. Decoys are not enough. Wipe every visible trace. Only the vault survives.',
     initialPath: ['root', 'home', 'guest', 'workspace'],
-    hint: 'Reveal the hidden node keys (.). Secure fragments (x, p). Migrate vault (x, p). Create target decoys (a). Permanent purge (D).',
+    hint: {
+      nudge: 'Expose the hidden node keys and preserve the vault.',
+      command:
+        'Toggle hidden files with `.`, move fragments with `x` and `p`, create decoys with `a`, purge with `D`.',
+      walkthrough:
+        'Reveal the hidden node keys (`.`). Secure fragments (`x`, `p`). Migrate vault (`x`, `p`). Create target decoys (`a`). Permanent purge (`D`).',
+    },
     coreSkill: 'Permanent Deletion (D)',
     environmentalClue:
       'CRON TARGETS: sys_cache_dump, project_chimera, neural_training_set | ACTION: Create to trigger entropy flood',
@@ -1287,7 +1361,13 @@ export const LEVELS: Level[] = [
     description:
       'Final handshake. The Watchdog is initiating a system-wide purge. Transcend the partition.',
     initialPath: ['root', 'tmp'], // Start in /tmp
-    hint: 'Final verification in `/tmp/vault`. Use `,m` for audit and `Tab` for metadata. Navigate (l). Batch move (Space, x, p). Overwrite (Shift+P).',
+    hint: {
+      nudge: 'Start final verification in `/tmp/vault`.',
+      command:
+        'Sort with `,m`, inspect with `Tab`, navigate with `l`, batch-move with `Space`, `x`, `p`, and overwrite with `Shift+P`.',
+      walkthrough:
+        'Final verification in `/tmp/vault`. Use `,m` for audit and `Tab` for metadata. Navigate (`l`). Batch move (`Space`, `x`, `p`). Overwrite (`Shift+P`).',
+    },
     coreSkill: 'Cumulative Mastery',
     environmentalClue: 'PROTOCOL: VAULT_VERIFICATION | LOCATION: /tmp/vault | WATCHDOG_SWEEP: < 5m',
     successMessage:

@@ -45,7 +45,7 @@ const highlightMatch = (text: string, rawQuery: string, accentClass: string): Re
 const previewColor = (type?: 'file' | 'dir' | 'archive') => {
   switch (type) {
     case 'dir':
-      return 'text-sky-400';
+      return 'text-cyan-400';
     case 'archive':
       return 'text-amber-400';
     default:
@@ -108,7 +108,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
         aria-labelledby={`${id}-label`}
         tabIndex={-1}
         data-testid="fuzzy-finder"
-        className={`flex h-full min-h-0 flex-col bg-zinc-950/98 font-mono animate-in fade-in duration-100 backdrop-blur-md ${isQuantumLevel ? 'border-2 border-purple-500/30' : 'border border-zinc-900'}`}
+        className={`flex h-full min-h-0 flex-col bg-zinc-950/95 font-mono animate-terminal-fade backdrop-blur-md ${isQuantumLevel ? 'border-2 border-purple-500/30' : 'border border-zinc-900'}`}
       >
         <div className="px-4 py-2 text-xs text-zinc-400 border-b border-zinc-900">
           <label id={`${id}-label`} htmlFor={id} className="block mb-1">
@@ -127,7 +127,7 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
               dispatch({ type: 'SET_INPUT_BUFFER', buffer: event.target.value });
               dispatch({ type: 'SET_FUZZY_INDEX', index: 0 });
             }}
-            className="w-full min-w-0 bg-zinc-900 border border-zinc-600 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-blue-400"
+            className="w-full min-w-0 bg-zinc-900 border border-zinc-600 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
           />
         </div>
         <div className="flex-1 flex flex-col min-h-0">

@@ -19,7 +19,8 @@ export const HiddenFilesWarningModal: React.FC<HiddenFilesWarningModalProps> = (
       icon={<EyeOff size={20} className="text-zinc-400" />}
       correctiveAction={
         <>
-          Press <span className="text-yellow-400 font-bold">Shift+Enter</span> to close dialog.
+          Press <span className="text-yellow-400 font-bold">.</span> (period) to hide hidden files
+          and restore the clean workspace view.
         </>
       }
     />

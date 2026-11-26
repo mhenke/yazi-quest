@@ -236,31 +236,38 @@ test.describe('Episode 2: FORTIFICATION', () => {
     await gotoCommand(page, 't');
     await expectCurrentDir(page, '/tmp');
 
-    // In authentic Yazi, Escape clears both filter AND selections.
-    // So we use filter + Ctrl+A to select all filtered items, then invert.
-    // The invert (Ctrl+R) works against ALL files in directory, not just filtered ones.
-
-    // Filter to show only the keeper files
+    // Escape exits the live filter prompt without clearing the filter.
+    // After Ctrl+A, another Escape clears the filter while preserving selection.
     await filterByText(page, '\\.(key|pid|sock)$');
 
-    // Ctrl+A to select all visible (filtered) keeper files
+    // Select the four visible keeper files.
     await pressKey(page, 'Ctrl+a');
-
     await assertTask(page, '1/3', testInfo.outputDir, 'select_preserve_files');
 
-    // Task 2: Invert the selection (Ctrl+R) - now junk files are selected
-    // Ctrl+R inverts against ALL files in directory, so even while filtered,
-    // the junk files become selected
+    // Clear the filter but keep the selection before inverting it.
+    await clearFilter(page);
+    await expect(page.locator('[data-testid="breadcrumbs"]')).not.toContainText('filter:');
+    await expect(page.getByTestId('status-bar').getByText('VIS', { exact: true })).toBeVisible();
+
+    // Ctrl+R inverts against all direct /tmp entries, selecting the 16 nonmatches.
     await pressKey(page, 'Ctrl+r');
     await assertTask(page, '2/3', testInfo.outputDir, 'invert_selection');
 
-    // Task 3: Permanently delete the selected junk files (D)
-    // DO NOT clear filter - Escape clears selections in authentic Yazi behavior.
-    // Delete works on selected items regardless of filter visibility.
-    await deleteItem(page, { permanent: true, confirm: true });
+    // Permanently purge every nonmatching entry; keep the four critical files.
+    await deleteItem(page, { permanent: true, confirm: false });
+    const deleteDialog = page.getByRole('alertdialog');
+    await expect(deleteDialog).toBeVisible();
+    const targetPaths = await deleteDialog
+      .locator('#confirmation-modal-files > div')
+      .allTextContents();
+    expect(targetPaths).toHaveLength(16);
+    expect(targetPaths).toContain('/tmp/emergency_protocol.txt');
+    expect(targetPaths).toContain('/tmp/upload');
+    expect(targetPaths.filter((path) => /\.(key|pid|sock)$/.test(path))).toEqual([]);
+    await page.keyboard.press('y');
+    await expect(deleteDialog).not.toBeVisible();
 
     await assertTask(page, '3/3', testInfo.outputDir, 'delete_junk');
-    await pressKey(page, 'Shift+Enter'); // Explicitly restore the baseline before confirming.
     await expect(page.getByTestId('status-bar')).not.toContainText('FILTER:');
 
     await confirmMission(page, 'TRACE CLEANUP');

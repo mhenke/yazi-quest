@@ -72,14 +72,13 @@ export async function enterDirectory(page: Page, name: string): Promise<void> {
 }
 
 /**
- * Clears an active filter by pressing Escape.
+ * Clears an active filter by pressing Escape, preserving its selection.
  */
 export async function clearFilter(page: Page): Promise<void> {
   // If a violation modal is present, dismiss it first
   await dismissViolation(page);
 
-  // Press Escape once to clear the filter.
-  // Do NOT press it twice as it might clear visual selections.
+  // A second Escape with no active filter clears the selection.
   await page.keyboard.press('Escape');
   await page.waitForTimeout(DEFAULT_DELAY);
 }
@@ -114,7 +113,8 @@ export async function filterByText(page: Page, text: string): Promise<void> {
   // Verify that the input contains the expected text
   await expect(input).toHaveValue(text);
 
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  await expect(input).not.toBeVisible();
 
   // Handle distinct Protocol Violation modal that may appear
   await dismissViolation(page);
@@ -431,7 +431,7 @@ export async function filterAndSelect(
   await input.focus();
   await input.fill(filterText);
   await expect(input).toHaveValue(filterText);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
   await expect(input).not.toBeVisible();
 
   let target;
@@ -447,8 +447,7 @@ export async function filterAndSelect(
   await pressKey(page, ' '); // Toggle selection
   await expect(target).toHaveClass(/text-yellow-400/);
 
-  // Only clear filter if not keeping it (default behavior)
-  // Note: In Yazi, Escape clears BOTH filter AND selections
+  // Clear only the filter, preserving the selected item.
   if (!options.keepFilter) {
     await clearFilter(page);
   }

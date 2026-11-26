@@ -88,9 +88,9 @@ This document audits the current levels for narrative consistency, clear objecti
 - **Keybindings**:
   - `z, Z, gr, Y` `[R2]` -> **DROP MENTIONS**
   - `P` `[R1]`
-  - `Ctrl+R, D, gt` `[INTRO]`
-- **Objectives**: Purge the junk in /tmp while preserving critical process artifacts using anchored filters and selection inversion.
-- **Regex Clause**: **CRITICAL.** Provide the anchored pattern `\.(key|pid|sock)$` to prevent accidental deletion of decoy files. Explain that the `$` ensures we only match the extension.
+  - `f, Esc, Ctrl+A, Esc, Ctrl+R, D, Y, gt` `[INTRO]`
+  - **Objectives**: In `/tmp`, filter keepers with `\.(key|pid|sock)$`; Esc closes the prompt, Ctrl+A selects matches, and Esc clears the filter while preserving selection. Ctrl+R targets every other entry; Shift+D permanently deletes those nonmatches, including `emergency_protocol.txt` and `/tmp/upload`.
+  - **Regex Clause**: Use the anchored pattern `\.(key|pid|sock)$` to preserve keeper files; `$` ensures only matching filename extensions are selected.
 
 ### Level 10: CREDENTIAL HEIST
 

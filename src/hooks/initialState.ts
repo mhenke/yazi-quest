@@ -6,6 +6,29 @@ import { isValidZoxideData } from '../utils/validation';
 import { getLevelStartPath } from '../utils/gameUtils';
 import { getSkipIntroRequested } from '../utils/skipIntroFlag';
 import { INITIAL_ACTION_FLAGS } from './gameReducer';
+import { loadUnlockedLevelIndex } from '../utils/progressionStorage';
+
+const resolveTargetLevelIndex = (params: URLSearchParams): number => {
+  const debugParam = params.get('debug');
+  const epParam = params.get('ep') || params.get('episode');
+  const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
+
+  if (debugParam === 'outro') return LEVELS.length;
+  if (lvlParam) {
+    const id = parseInt(lvlParam, 10);
+    const idx = LEVELS.findIndex((l) => l.id === id);
+    return idx !== -1 ? idx : 0;
+  }
+  if (epParam) {
+    const id = parseInt(epParam, 10);
+    const idx = LEVELS.findIndex((l) => l.episodeId === id);
+    return idx !== -1 ? idx : 0;
+  }
+  if (!debugParam) {
+    return Math.max(0, loadUnlockedLevelIndex());
+  }
+  return 0;
+};
 
 export function createInitialState(): GameState {
   // 1. Initialize Completed Tasks State
@@ -17,8 +40,6 @@ export function createInitialState(): GameState {
   // 2. Parse URL Parameters
   const params = new URLSearchParams(window.location.search);
   const debugParam = params.get('debug');
-  const epParam = params.get('ep') || params.get('episode');
-  const lvlParam = params.get('lvl') || params.get('level') || params.get('mission');
   const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
   const skipIntro =
     params.get('intro') === 'false' ||
@@ -26,18 +47,7 @@ export function createInitialState(): GameState {
     getSkipIntroRequested();
 
   // 3. Determine Target Level
-  let targetIndex = 0;
-  if (debugParam === 'outro') {
-    targetIndex = LEVELS.length;
-  } else if (lvlParam) {
-    const id = parseInt(lvlParam, 10);
-    const idx = LEVELS.findIndex((l) => l.id === id);
-    if (idx !== -1) targetIndex = idx;
-  } else if (epParam) {
-    const id = parseInt(epParam, 10);
-    const idx = LEVELS.findIndex((l) => l.episodeId === id);
-    if (idx !== -1) targetIndex = idx;
-  }
+  const targetIndex = resolveTargetLevelIndex(params);
 
   // Pre-complete tasks for all levels leading up to the target level
   for (let i = 0; i < targetIndex; i++) {

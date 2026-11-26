@@ -16,6 +16,7 @@ interface FileSystemPaneProps {
   loadedDirIds: string[];
   className?: string;
   focusRef?: React.RefObject<HTMLDivElement | null>;
+  showFocusRing?: boolean;
 }
 
 const paneLayout = (isParent: boolean, className?: string) => {
@@ -37,6 +38,29 @@ const resolveDirCount = (
   return countVisibleChildren(item, showHidden);
 };
 
+const focusRingClass = (showFocusRing: boolean): string =>
+  showFocusRing
+    ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400'
+    : 'focus-visible:outline-none';
+
+const listContainerProps = (
+  isParent: boolean,
+  isActive: boolean,
+  hasActiveItem: boolean,
+  listId: string,
+  cursorIndex: number
+) =>
+  isParent
+    ? { role: 'list' as const, 'aria-label': 'Parent folder' }
+    : {
+        role: 'listbox' as const,
+        tabIndex: isActive ? 0 : -1,
+        'aria-label': 'File Browser',
+        'aria-multiselectable': true,
+        'aria-activedescendant': hasActiveItem ? `${listId}-${cursorIndex}` : undefined,
+        'aria-description': 'Use Tab to inspect the current item or Shift+Tab for the toolbar.',
+      };
+
 const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   items,
   isActive,
@@ -49,6 +73,7 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
   loadedDirIds,
   className,
   focusRef,
+  showFocusRing = true,
 }) => {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const listRef = focusRef ?? fallbackRef;
@@ -67,18 +92,14 @@ const FileSystemPane: React.FC<FileSystemPaneProps> = ({
     >
       <div
         ref={listRef}
-        {...(isParent
-          ? { role: 'list', 'aria-label': 'Parent folder' }
-          : {
-              role: 'listbox',
-              tabIndex: isActive ? 0 : -1,
-              'aria-label': 'File Browser',
-              'aria-multiselectable': true,
-              'aria-activedescendant': items[cursorIndex] ? `${listId}-${cursorIndex}` : undefined,
-              'aria-description':
-                'Use Tab to inspect the current item or Shift+Tab for the toolbar.',
-            })}
-        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400 ${isGrid ? className : ''}`}
+        {...listContainerProps(
+          isParent,
+          isActive,
+          Boolean(items[cursorIndex]),
+          listId,
+          cursorIndex
+        )}
+        className={`flex-1 overflow-y-auto py-1 scrollbar-hide relative ${focusRingClass(showFocusRing)} ${isGrid ? className : ''}`}
       >
         {items.map((item, idx) => {
           const isCursor = idx === cursorIndex;

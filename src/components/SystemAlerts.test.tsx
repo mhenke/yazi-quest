@@ -20,10 +20,24 @@ describe('SystemAlerts', () => {
     expect(onDismiss).toHaveBeenCalledWith('write-access-l6');
   });
 
-  it('renders the alert copy', () => {
+  it('dismisses the latest alert on Escape', () => {
+    const onDismiss = vi.fn();
+    render(
+      <SystemAlerts
+        alerts={[alert, { ...alert, id: 'next', title: 'NEXT ALERT' }]}
+        onDismiss={onDismiss}
+      />
+    );
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(onDismiss).toHaveBeenCalledWith('next');
+  });
+  it('renders the alert copy and semantic heading', () => {
     render(<SystemAlerts alerts={[alert]} />);
 
-    expect(screen.getByText('WRITE ACCESS GRANTED')).toBeInTheDocument();
+    expect(screen.getByText(alert.title)).toBeInTheDocument();
     expect(screen.getByText(alert.message)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: alert.title })).toBeInTheDocument();
   });
 });

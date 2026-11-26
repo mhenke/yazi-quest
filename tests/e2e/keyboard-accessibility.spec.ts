@@ -17,6 +17,91 @@ test('toolbar focus exits gameplay without changing the current file', async ({ 
   await page.keyboard.press('j');
   await expect(current).toContainText('incoming');
 });
+test('programmatic initial focus hides its outline until keyboard input', async ({ page }) => {
+  await startLevel(page, 1, { intro: false });
+  const pane = page.getByRole('listbox', { name: 'File Browser' });
+  await expect(pane).toBeFocused();
+  await expect(pane).toHaveCSS('outline-color', 'rgba(0, 0, 0, 0)');
+  await page.keyboard.press('j');
+  await expect(pane).toHaveCSS('outline-color', 'rgb(96, 165, 250)');
+});
+
+test('Mission Log objective list is keyboard-focusable at the viewport floor', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await startLevel(page, 1, { intro: false });
+
+  const missionLog = page.getByRole('region', { name: 'Mission log' });
+  const objectiveList = missionLog.getByRole('region', { name: 'Mission objectives' });
+  const scrollRange = await objectiveList.evaluate(
+    (element) => element.scrollHeight - element.clientHeight
+  );
+  expect(scrollRange).toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: /Collapse mission drawer/ }).focus();
+  await page.keyboard.press('Tab');
+  await expect(objectiveList).toBeFocused();
+  const initialScrollTop = await objectiveList.evaluate((element) => element.scrollTop);
+  await page.keyboard.press('PageDown');
+  await expect
+    .poll(() => objectiveList.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(initialScrollTop);
+});
+
+test('Mission Log renders inline key chips and counts clipped objectives', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await startLevel(page, 1, { intro: false });
+
+  const missionLog = page.getByRole('region', { name: 'Mission log' });
+  const firstTask = missionLog.locator('[aria-current="step"]');
+  await expect(firstTask.locator('code').first()).toHaveText('j');
+
+  const objectiveList = missionLog.getByRole('region', { name: 'Mission objectives' });
+  const nextTaskFits = await objectiveList.evaluate((list) => {
+    const nextTask = list.querySelector('[aria-current="step"]');
+    if (!nextTask) return false;
+    const listBounds = list.getBoundingClientRect();
+    const taskBounds = nextTask.getBoundingClientRect();
+    return taskBounds.top >= listBounds.top && taskBounds.bottom <= listBounds.bottom;
+  });
+  expect(nextTaskFits).toBe(true);
+  const overflowCue = missionLog.getByRole('status');
+  const clippedCount = await objectiveList.evaluate((list) => {
+    const bottom = list.getBoundingClientRect().bottom;
+    return [...list.querySelectorAll('li')].filter(
+      (item) => item.getBoundingClientRect().bottom > bottom + 1
+    ).length;
+  });
+  expect(clippedCount).toBeGreaterThan(0);
+  await expect(overflowCue).toHaveText(`↓ ${clippedCount} more`);
+});
+
+test('Quest Map episode tabs are keyboard-operable tabs', async ({ page }) => {
+  await startLevel(page, 1, { intro: false });
+  await page.getByTestId('map-button').click();
+
+  const tablist = page.getByRole('tablist', { name: 'Quest Map episodes' });
+  const tabs = tablist.getByRole('tab');
+  await expect(tabs).toHaveCount(3);
+  await tabs.nth(0).focus();
+  await page.keyboard.press('ArrowRight');
+
+  await expect(tabs.nth(1)).toBeFocused();
+  await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'quest-map-tab-1');
+});
+
+test('Mission Log marks the first incomplete objective as next', async ({ page }) => {
+  await startLevel(page, 1, { intro: false });
+
+  const missionLog = page.getByRole('region', { name: 'Mission log' });
+  const nextObjective = missionLog.locator('[aria-current="step"]');
+  await expect(nextObjective).toContainText('Calibrate motion sensors');
+  await expect(nextObjective.getByText('NEXT', { exact: true })).toBeVisible();
+
+  await page.keyboard.press('j');
+  await page.keyboard.press('k');
+  await expect(missionLog.locator('[aria-current="step"]')).toContainText('Infiltrate');
+});
 
 test('search and filter keep focus and return it on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 700 });
@@ -49,6 +134,18 @@ test('window below the floor shows the width notice, not the file manager', asyn
   await expect(notice.getByRole('heading', { name: /1024 px/i })).toBeVisible();
   await expect(page.getByRole('listbox', { name: 'File Browser' })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Keyboard required' })).toHaveCount(0);
+});
+test('EpisodeIntro gates workspace panes until the intro is completed', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('region', { name: 'Episode log' })).toBeVisible();
+  await expect(page.getByRole('listbox', { name: 'File Browser' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Episode log' })).toHaveCSS(
+    'outline-color',
+    'rgba(0, 0, 0, 0)'
+  );
+
+  await page.getByRole('button', { name: 'Skip Intro' }).click();
+  await expect(page.getByRole('listbox', { name: 'File Browser' })).toBeVisible();
 });
 
 test('file names keep their width at the floor with three columns', async ({ page }) => {

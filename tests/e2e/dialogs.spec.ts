@@ -124,6 +124,59 @@ test.describe('Dialogs Functionality', () => {
     await expect(page.getByTestId('hint-modal')).toBeVisible();
   });
 
+  test('Hint and Help are labeled and Help leads with current-level commands', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    const hintButton = page.getByTestId('hint-button');
+    const helpButton = page.getByTestId('help-button');
+    await expect(hintButton).toContainText('Hint');
+    await expect(helpButton).toContainText('Help');
+
+    await helpButton.click();
+    const dialog = page.getByTestId('help-modal');
+    const currentLevelHeading = dialog.getByRole('heading', { name: 'Current Level', exact: true });
+    const referenceHeading = dialog.getByRole('heading', {
+      name: 'Core Yazi Commands',
+      exact: true,
+    });
+    await expect(currentLevelHeading).toBeVisible();
+    await expect(dialog).toContainText('Basic Navigation');
+    await expect(dialog).toContainText('Calibrate motion sensors');
+
+    const currentLevelToggle = dialog.getByRole('button', { name: 'Current Level' });
+    await expect(currentLevelToggle).toHaveAttribute('aria-expanded', 'true');
+    await currentLevelToggle.click();
+    await expect(currentLevelToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(dialog.getByText('Basic Navigation')).not.toBeVisible();
+    const filter = dialog.getByRole('searchbox', { name: 'Filter keybindings' });
+    await filter.fill('Calibrate');
+    await expect(currentLevelToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(dialog).toContainText('Calibrate motion sensors');
+    await filter.fill('');
+
+    const headings = await dialog.getByRole('heading', { level: 3 }).allTextContents();
+    expect(headings.indexOf('Current Level')).toBeGreaterThanOrEqual(0);
+    expect(headings.indexOf('Current Level')).toBeLessThan(headings.indexOf('Core Yazi Commands'));
+    await expect(referenceHeading).toBeVisible();
+  });
+
+  test('More detail and Alt+H advance hints through walkthrough without wrapping', async ({
+    page,
+  }) => {
+    await page.getByTestId('hint-button').click();
+    const modal = page.getByTestId('hint-modal');
+    await expect(modal.getByRole('heading', { name: /Nudge/ })).toBeVisible();
+    await expect(modal).toContainText('Movement is your first way through.');
+
+    await page.getByRole('button', { name: 'More detail (Alt+H)' }).click();
+    await expect(modal.getByRole('heading', { name: /Command/ })).toBeVisible();
+    await page.keyboard.press('Alt+h');
+    await expect(modal.getByRole('heading', { name: /Walkthrough/ })).toBeVisible();
+    await page.getByTestId('hint-button').click();
+    await expect(modal).not.toBeVisible();
+    await page.getByTestId('hint-button').click();
+    await expect(modal.getByRole('heading', { name: /Nudge/ })).toBeVisible();
+  });
+
   test('Help keeps keyboard focus inside and returns it to the opener', async ({ page }) => {
     const opener = page.getByTestId('help-button');
     await opener.click();

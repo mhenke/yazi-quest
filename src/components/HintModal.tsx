@@ -2,41 +2,46 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Lightbulb } from 'lucide-react';
 import { useOverlayFocus } from './useOverlayFocus';
+import type { HintStages } from '../types';
 
 interface HintModalProps {
-  hint: string;
-  stage: number; // 0=vague, 1=partial, 2=detailed
+  hint: HintStages;
+  stage: number;
   onClose: () => void;
+  onNextStage: () => void;
 }
 
-export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) => {
+const HINT_STAGE_KEYS = ['nudge', 'command', 'walkthrough'] as const;
+const HINT_STAGE_LABELS = [
+  'Hint (1/3 • Nudge)',
+  'Hint (2/3 • Command)',
+  'Hint (3/3 • Walkthrough)',
+];
+
+const renderInlineCode = (text: string): React.ReactNode =>
+  text.split(/(`[^`]+`)/g).map((part, idx) =>
+    part.startsWith('`') && part.endsWith('`') && part.length > 2 ? (
+      <code key={idx} className="bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-sm font-mono">
+        {part.slice(1, -1)}
+      </code>
+    ) : (
+      part
+    )
+  );
+
+export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNextStage }) => {
   const panelRef = useOverlayFocus();
-  // Parse hint into progressive stages
-  // Split by sentence or period, show increasing amounts
-  const sentences = hint.split(/\.\s+/).filter((s) => s.trim());
+  const clampedStage = Math.max(0, Math.min(2, stage));
+  const displayText = hint[HINT_STAGE_KEYS[clampedStage]];
+  const stageLabel = HINT_STAGE_LABELS[clampedStage];
 
-  let displayText = '';
-  if (stage === 0 && sentences.length > 0) {
-    // Vague: First sentence only or just the goal
-    displayText = sentences[0] + '.';
-  } else if (stage === 1 && sentences.length > 1) {
-    // Partial: First half of instructions
-    const midpoint = Math.ceil(sentences.length / 2);
-    displayText = sentences.slice(0, midpoint).join('. ') + '.';
-  } else {
-    // Detailed: Full walkthrough
-    displayText = hint;
-  }
-
-  const stageLabels = ['Hint (Vague)', 'Hint (Partial)', 'Hint (Detailed)'];
-  const stageLabel = stageLabels[stage] || stageLabels[2];
   return createPortal(
     <div
       data-testid="hint-modal"
       ref={panelRef}
       tabIndex={-1}
       aria-labelledby="hint-dialog-title"
-      className="fixed bottom-10 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-4rem)] overflow-y-auto max-w-sm bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 rounded-none backdrop-blur-sm"
+      className="fixed bottom-14 left-4 right-4 sm:left-6 z-[250] max-h-[calc(100dvh-5rem)] overflow-y-auto max-w-md bg-zinc-900/95 border border-zinc-700 shadow-2xl p-4 sm:p-5 flex flex-col gap-3 animate-terminal-rise rounded-none backdrop-blur-sm"
       role="dialog"
       aria-modal="false"
     >
@@ -47,20 +52,32 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose }) =>
             {stageLabel}
           </h2>
         </div>
-        {stage < 2 && (
-          <div className="text-xs text-yellow-400 font-mono uppercase tracking-wider">
-            Press Alt+H for more detail
-          </div>
-        )}
       </div>
 
-      <p className="text-zinc-300 text-xs leading-relaxed font-mono">{displayText}</p>
+      <p className="text-zinc-200 text-xs leading-relaxed font-mono">
+        {renderInlineCode(displayText)}
+      </p>
 
-      <div className="flex items-center justify-between gap-3 text-xs text-zinc-400 font-mono mt-1">
-        <span>Shift+Enter or Escape to close</span>
-        <button type="button" onClick={onClose} className="text-zinc-300 hover:text-white">
-          Close
-        </button>
+      <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-zinc-400 font-mono mt-1">
+        <span>Shift+Enter or Esc to close</span>
+        <div className="flex items-center gap-3">
+          {clampedStage < 2 && onNextStage && (
+            <button
+              type="button"
+              onClick={onNextStage}
+              className="px-2 py-0.5 border border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            >
+              More detail (Alt+H)
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>,
     document.body

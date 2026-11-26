@@ -28,6 +28,11 @@ export interface LevelTask {
   completed: boolean;
   hidden?: (gameState: GameState, level: Level) => boolean | undefined; // Hide task until condition met
 }
+export interface HintStages {
+  nudge: string;
+  command: string;
+  walkthrough: string;
+}
 
 export interface Level {
   id: number;
@@ -36,7 +41,7 @@ export interface Level {
   description?: string;
   tasks: LevelTask[];
   initialPath?: string[] | null; // Directory names from root, resolved to node IDs on entry.
-  hint: string;
+  hint: HintStages;
   timeLimit?: number; // Time limit in seconds (optional)
   maxKeystrokes?: number; // Max allowed keystrokes for mastery (optional, replaces timeLimit)
   efficiencyTip?: string; // Level-specific tip shown on game over (for timed/keystroke levels)

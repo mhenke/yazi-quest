@@ -359,7 +359,7 @@ describe('fsHelpers', () => {
         lore: [],
         color: 'blue',
         tasks,
-        hint: 'hint',
+        hint: { nudge: 'hint', command: 'hint', walkthrough: 'hint' },
         // defaults
       }) as unknown as Level;
 

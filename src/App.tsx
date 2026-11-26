@@ -80,7 +80,8 @@ import {
 import './glitch.css';
 import './glitch-text-3.css';
 import './glitch-thought.css';
-import type { FileNode } from './types';
+import type { FileNode, GameState } from './types';
+import { persistUnlockedLevelIndex } from './utils/progressionStorage';
 
 const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): FileNode[] => {
   if (showHidden) return results;
@@ -92,8 +93,148 @@ const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): File
   });
 };
 
+const PROGRESS_OVERRIDE_PARAMS = [
+  'debug',
+  'ep',
+  'episode',
+  'lvl',
+  'level',
+  'mission',
+  'tasks',
+  'task',
+  'complete',
+  'startAtTask',
+];
+
+const shouldPersistFromUrl = (): boolean => {
+  const params = new URLSearchParams(window.location.search);
+  return !PROGRESS_OVERRIDE_PARAMS.some((key) => params.has(key));
+};
+
+const useKeyboardFocusRing = (): boolean => {
+  const [hasKeyboardInteraction, setHasKeyboardInteraction] = useState(false);
+  useEffect(() => {
+    const enableFocusRing = () => setHasKeyboardInteraction(true);
+    window.addEventListener('keydown', enableFocusRing, { capture: true, once: true });
+    return () => window.removeEventListener('keydown', enableFocusRing, true);
+  }, []);
+  return hasKeyboardInteraction;
+};
+
+const usePersistProgress = (
+  zoxideData: GameState['zoxideData'],
+  cycleCount: number | undefined,
+  levelIndex: number,
+  shouldPersistProgress: boolean
+): void => {
+  useEffect(() => {
+    try {
+      localStorage.setItem('yazi-quest-zoxide-history', JSON.stringify(zoxideData));
+      localStorage.setItem('yazi-quest-cycle', (cycleCount ?? 1).toString());
+    } catch (e) {
+      console.error('Failed to save state to localStorage', e);
+    }
+  }, [zoxideData, cycleCount]);
+
+  useEffect(() => {
+    if (shouldPersistProgress) persistUnlockedLevelIndex(levelIndex);
+  }, [levelIndex, shouldPersistProgress]);
+};
+
+const SORT_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
+  ['n', 'Natural'],
+  ['N', 'Natural (rev)'],
+  ['a', 'A-Z'],
+  ['A', 'Z-A'],
+  ['m', 'Modified (new)'],
+  ['M', 'Modified (old)'],
+  ['s', 'Size (large)'],
+  ['S', 'Size (small)'],
+  ['e', 'Extension'],
+  ['E', 'Extension (rev)'],
+];
+
+const LINEMODE_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
+  ['l', 'Cycle Linemode'],
+  ['-', 'Clear Linemode'],
+];
+
+const SortOptionsMenu: React.FC = () => (
+  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-terminal-rise sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
+    <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
+      <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+        Sort Options
+      </span>
+      <span className="text-xs font-mono text-zinc-400">Which-Key</span>
+    </div>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+      {SORT_MENU_OPTIONS.map(([key, label]) => (
+        <div key={key} className="flex gap-2">
+          <span className="text-orange-500 font-bold">{key}</span>{' '}
+          <span className="text-zinc-400">{label}</span>
+        </div>
+      ))}
+      <div className="col-span-2 border-t border-zinc-800 my-1" />
+      {LINEMODE_MENU_OPTIONS.map(([key, label]) => (
+        <div key={key} className="flex gap-2">
+          <span className="text-orange-500 font-bold">{key}</span>{' '}
+          <span className="text-zinc-400">{label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const resolveIntroEpisode = (episodeId: number, cycleCount?: number) => {
+  const baseEpisode = EPISODE_LORE.find((e) => e.id === episodeId)!;
+  if ((cycleCount || 1) > 1 && baseEpisode.id === 1) {
+    return { ...baseEpisode, lore: ECHO_EPISODE_1_LORE };
+  }
+  return baseEpisode;
+};
+
+interface ProtocolWarningModalsProps {
+  gameState: GameState;
+  allowAutoFix: boolean;
+  dismissWarning: (modal: 'sortWarning' | 'filterWarning' | 'searchWarning') => void;
+  dismissHiddenWarning: () => void;
+}
+
+const ProtocolWarningModals: React.FC<ProtocolWarningModalsProps> = ({
+  gameState,
+  allowAutoFix,
+  dismissWarning,
+  dismissHiddenWarning,
+}) => (
+  <>
+    {gameState.showHiddenWarning && (
+      <HiddenFilesWarningModal allowAutoFix={allowAutoFix} onDismiss={dismissHiddenWarning} />
+    )}
+    {gameState.showSortWarning && (
+      <SortWarningModal
+        allowAutoFix={allowAutoFix}
+        onDismiss={() => dismissWarning('sortWarning')}
+      />
+    )}
+    {gameState.showFilterWarning && (
+      <FilterWarningModal
+        allowAutoFix={allowAutoFix}
+        onDismiss={() => dismissWarning('filterWarning')}
+      />
+    )}
+    {gameState.showSearchWarning && (
+      <SearchWarningModal
+        allowAutoFix={allowAutoFix}
+        onDismiss={() => dismissWarning('searchWarning')}
+      />
+    )}
+  </>
+);
+
 export default function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, createInitialState);
+  const [shouldPersistProgress] = useState(shouldPersistFromUrl);
+  const hasKeyboardInteraction = useKeyboardFocusRing();
   const reduceMotion = useReduceMotion(gameState.settings.narrativeEffects);
   const atFloor = useFileManagerView();
   const touchOnly = useTouchOnly();
@@ -136,15 +277,12 @@ export default function App() {
     return () => window.removeEventListener('yazi-quest-skip-intro', handleSkip);
   }, [handleSkip]);
 
-  // --- LOCALSTORAGE PERSISTENCE ---
-  useEffect(() => {
-    try {
-      localStorage.setItem('yazi-quest-zoxide-history', JSON.stringify(gameState.zoxideData));
-      localStorage.setItem('yazi-quest-cycle', (gameState.cycleCount ?? 1).toString());
-    } catch (e) {
-      console.error('Failed to save state to localStorage', e);
-    }
-  }, [gameState.zoxideData, gameState.cycleCount]);
+  usePersistProgress(
+    gameState.zoxideData,
+    gameState.cycleCount,
+    gameState.levelIndex,
+    shouldPersistProgress
+  );
 
   // Show boot sequence on episode change
   useEffect(() => {
@@ -865,7 +1003,7 @@ export default function App() {
       if ((e.key.toLowerCase() === 'h' || e.code === 'KeyH') && e.altKey) {
         e.preventDefault();
         if (gameState.showHint) {
-          const nextStage = (gameState.hintStage + 1) % 3;
+          const nextStage = Math.min(2, gameState.hintStage + 1);
           dispatch({ type: 'SET_HINT_STAGE', stage: nextStage });
         } else {
           setUtilityPanel('hint', true);
@@ -1350,15 +1488,9 @@ export default function App() {
         {!reduceMotion && <CodropsGlitchSVG />}
         {gameState.showEpisodeIntro && !gameState.ignoreEpisodeIntro && (
           <EpisodeIntro
+            showFocusRing={hasKeyboardInteraction}
             reduceMotion={reduceMotion}
-            episode={(() => {
-              const baseEpisode = EPISODE_LORE.find((e) => e.id === currentLevel.episodeId)!;
-              // E C H O   C Y C L E   L O G I C
-              if ((gameState.cycleCount || 1) > 1 && baseEpisode.id === 1) {
-                return { ...baseEpisode, lore: ECHO_EPISODE_1_LORE };
-              }
-              return baseEpisode;
-            })()}
+            episode={resolveIntroEpisode(currentLevel.episodeId, gameState.cycleCount)}
             onComplete={(options) => dispatch({ type: 'COMPLETE_INTRO', isSkip: options?.isSkip })}
           />
         )}
@@ -1388,6 +1520,8 @@ export default function App() {
               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
             }
             scrollPosition={gameState.helpScrollPosition || 0}
+            level={currentLevel}
+            gameState={gameState}
             dispatch={dispatch}
             narrativeEffects={gameState.settings.narrativeEffects}
           />
@@ -1401,12 +1535,19 @@ export default function App() {
               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
               dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
             }}
+            onNextStage={() =>
+              dispatch({
+                type: 'SET_HINT_STAGE',
+                stage: Math.min(2, gameState.hintStage + 1),
+              })
+            }
           />
         )}
 
         {gameState.showInfoPanel && (
           <InfoPanel
             file={currentItem}
+            showHidden={gameState.showHidden}
             onClose={() =>
               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'info', visible: false })
             }
@@ -1447,36 +1588,18 @@ export default function App() {
           />
         )}
 
-        {gameState.showHiddenWarning && (
-          <HiddenFilesWarningModal
-            allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() =>
-              dispatch({
-                type: 'SET_MODAL_VISIBILITY',
-                modal: 'hiddenWarning',
-                visible: false,
-              })
-            }
-          />
-        )}
-        {gameState.showSortWarning && (
-          <SortWarningModal
-            allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() => dismissWarning('sortWarning')}
-          />
-        )}
-        {gameState.showFilterWarning && (
-          <FilterWarningModal
-            allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() => dismissWarning('filterWarning')}
-          />
-        )}
-        {gameState.showSearchWarning && (
-          <SearchWarningModal
-            allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
-            onDismiss={() => dismissWarning('searchWarning')}
-          />
-        )}
+        <ProtocolWarningModals
+          gameState={gameState}
+          allowAutoFix={checkAllTasksComplete(gameState, currentLevel)}
+          dismissWarning={dismissWarning}
+          dismissHiddenWarning={() =>
+            dispatch({
+              type: 'SET_MODAL_VISIBILITY',
+              modal: 'hiddenWarning',
+              visible: false,
+            })
+          }
+        />
 
         {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
           <OverwriteModal
@@ -1511,7 +1634,14 @@ export default function App() {
                 currentLevelIndex={gameState.levelIndex}
                 notification={null}
                 thought={gameState.thought}
-                onToggleHint={() => setUtilityPanel('hint', !gameState.showHint)}
+                cycleCount={gameState.cycleCount ?? 1}
+                onToggleHint={() => {
+                  setUtilityPanel('hint', !gameState.showHint);
+                  dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
+                }}
+                onSelectEpisode={(tab) =>
+                  dispatch({ type: 'UPDATE_QUEST_MAP', tab, missionIdx: 0 })
+                }
                 onToggleHelp={() => setUtilityPanel('help', !gameState.showHelp)}
                 isOpen={Boolean(gameState.showMap)}
                 onClose={() =>
@@ -1557,227 +1687,168 @@ export default function App() {
               />
             )}
 
-            <div className="flex flex-1 min-h-0 relative">
-              {/* Search Input - centered overlay popup matching Yazi style */}
-              {gameState.mode === 'search' && (
-                <div
-                  className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
-                  onKeyDown={containOverlayTab}
-                >
+            {!gameState.showEpisodeIntro && (
+              <div className="flex flex-1 min-h-0 relative">
+                {/* Search Input - centered overlay popup matching Yazi style */}
+                {gameState.mode === 'search' && (
                   <div
-                    ref={searchPanelRef}
-                    role="dialog"
-                    aria-labelledby="fd-search-label"
-                    tabIndex={-1}
-                    className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
+                    className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
+                    onKeyDown={containOverlayTab}
                   >
-                    <label
-                      id="fd-search-label"
-                      htmlFor="fd-search"
-                      className="block text-zinc-400 text-sm font-mono mb-2"
+                    <div
+                      ref={searchPanelRef}
+                      role="dialog"
+                      aria-labelledby="fd-search-label"
+                      tabIndex={-1}
+                      className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl shadow-blue-500/20 p-4 backdrop-blur-sm"
                     >
-                      Search via fd:
-                    </label>
-                    <input
-                      id="fd-search"
-                      type="text"
-                      value={gameState.inputBuffer}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.nativeEvent.isComposing) return;
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSearchConfirm();
-                          e.stopPropagation();
-                        } else if (e.key === 'Escape') {
-                          dispatch({ type: 'SET_MODE', mode: 'normal' });
-                          e.stopPropagation();
-                        }
-                      }}
-                      className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400"
-                      data-testid="search-input"
-                    />
+                      <label
+                        id="fd-search-label"
+                        htmlFor="fd-search"
+                        className="block text-zinc-400 text-sm font-mono mb-2"
+                      >
+                        Search via fd:
+                      </label>
+                      <input
+                        id="fd-search"
+                        type="text"
+                        value={gameState.inputBuffer}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.nativeEvent.isComposing) return;
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSearchConfirm();
+                            e.stopPropagation();
+                          } else if (e.key === 'Escape') {
+                            dispatch({ type: 'SET_MODE', mode: 'normal' });
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-none focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
+                        data-testid="search-input"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <FileSystemPane
-                items={(() => {
-                  const parent = getParentNode(gameState.fs, gameState.currentPath);
-                  let items =
-                    parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
-                  if (!gameState.showHidden) {
-                    items = items.filter((c) => !c.name.startsWith('.'));
-                  }
-                  return items;
-                })()}
-                isActive={false}
-                isParent={true}
-                selectedIds={[]}
-                clipboard={null}
-                linemode={gameState.linemode}
-                showHidden={gameState.showHidden}
-                loadedDirIds={gameState.loadedDirIds}
-                // ADR-0001: the parent pane is one of the three panes, so it shows
-                // wherever the file-manager view itself is shown. Same fact as the
-                // floor gate above; derived from it rather than a separate breakpoint.
-                className={`${atFloor ? 'flex' : 'hidden'} w-64 border-r border-zinc-800 bg-zinc-950/50`}
-              />
-
-              <div className="flex-1 flex flex-col min-w-0 sm:relative">
                 <FileSystemPane
-                  focusRef={filePaneRef}
-                  items={visibleItems}
-                  isActive={
-                    !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
-                  }
-                  cursorIndex={gameState.cursorIndex}
-                  isParent={false}
-                  selectedIds={gameState.selectedIds}
-                  clipboard={gameState.clipboard}
+                  items={(() => {
+                    const parent = getParentNode(gameState.fs, gameState.currentPath);
+                    let items =
+                      parent && parent.children ? sortNodes(parent.children, 'natural', 'asc') : [];
+                    if (!gameState.showHidden) {
+                      items = items.filter((c) => !c.name.startsWith('.'));
+                    }
+                    return items;
+                  })()}
+                  isActive={false}
+                  isParent={true}
+                  selectedIds={[]}
+                  clipboard={null}
                   linemode={gameState.linemode}
                   showHidden={gameState.showHidden}
                   loadedDirIds={gameState.loadedDirIds}
-                  className="flex-1"
+                  // ADR-0001: the parent pane is one of the three panes, so it shows
+                  // wherever the file-manager view itself is shown. Same fact as the
+                  // floor gate above; derived from it rather than a separate breakpoint.
+                  className={`${atFloor ? 'flex' : 'hidden'} w-64 border-r border-zinc-800 bg-zinc-950/50`}
                 />
 
-                {gameState.mode === 'sort' && (
-                  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-sm animate-in slide-in-from-bottom-2 duration-150 sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
-                    <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                        Sort Options
-                      </span>
-                      <span className="text-xs font-mono text-zinc-600">Which-Key</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">n</span>{' '}
-                        <span className="text-zinc-400">Natural</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">N</span>{' '}
-                        <span className="text-zinc-400">Natural (rev)</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">a</span>{' '}
-                        <span className="text-zinc-400">A-Z</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">A</span>{' '}
-                        <span className="text-zinc-400">Z-A</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">m</span>{' '}
-                        <span className="text-zinc-400">Modified (new)</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">M</span>{' '}
-                        <span className="text-zinc-400">Modified (old)</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">s</span>{' '}
-                        <span className="text-zinc-400">Size (large)</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">S</span>{' '}
-                        <span className="text-zinc-400">Size (small)</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">e</span>{' '}
-                        <span className="text-zinc-400">Extension</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">E</span>{' '}
-                        <span className="text-zinc-400">Extension (rev)</span>
-                      </div>
-                      <div className="col-span-2 border-t border-zinc-800 my-1"></div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">l</span>{' '}
-                        <span className="text-zinc-400">Cycle Linemode</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-orange-500 font-bold">-</span>{' '}
-                        <span className="text-zinc-400">Clear Linemode</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {gameState.mode === 'g-command' && (
-                  <GCommandDialog onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })} />
-                )}
-
-                {gameState.mode === 'input-file' && (
-                  <InputModal
-                    label="Create"
-                    value={gameState.inputBuffer}
-                    onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                    onConfirm={handleInputConfirm}
-                    onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                    borderColorClass="border-green-500"
-                    testid="create-input"
+                <div className="flex-1 flex flex-col min-w-0 sm:relative">
+                  <FileSystemPane
+                    showFocusRing={hasKeyboardInteraction}
+                    focusRef={filePaneRef}
+                    items={visibleItems}
+                    isActive={
+                      !['search', 'zoxide-jump', 'fzf-current', 'z-prompt'].includes(gameState.mode)
+                    }
+                    cursorIndex={gameState.cursorIndex}
+                    isParent={false}
+                    selectedIds={gameState.selectedIds}
+                    clipboard={gameState.clipboard}
+                    linemode={gameState.linemode}
+                    showHidden={gameState.showHidden}
+                    loadedDirIds={gameState.loadedDirIds}
+                    className="flex-1"
                   />
-                )}
 
-                {gameState.mode === 'filter' && (
-                  <InputModal
-                    label="Filter"
-                    value={gameState.inputBuffer}
-                    onChange={(val) => {
-                      const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                      if (dir) {
-                        dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
-                      }
-                      // Also update inputBuffer so the input field shows the typed text
-                      dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                    }}
-                    onConfirm={() => {
-                      dispatch({ type: 'SET_MODE', mode: 'normal' });
-                      dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                    }}
-                    onCancel={() => {
-                      const dir = getNodeByPath(gameState.fs, gameState.currentPath);
-                      if (dir) {
-                        dispatch({ type: 'CLEAR_FILTER', dirId: dir.id });
-                      }
-                      dispatch({ type: 'SET_MODE', mode: 'normal' });
-                      dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
-                    }}
-                    borderColorClass="border-orange-500"
-                    testid="filter-input"
-                  />
-                )}
+                  {gameState.mode === 'sort' && <SortOptionsMenu />}
 
-                {gameState.mode === 'rename' && (
-                  <InputModal
-                    label="Rename"
-                    value={gameState.inputBuffer}
-                    onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
-                    onConfirm={handleRenameConfirm}
-                    onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
-                    borderColorClass="border-cyan-500" // or green/cyan mix
-                    testid="rename-input"
-                  />
-                )}
+                  {gameState.mode === 'g-command' && (
+                    <GCommandDialog
+                      onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                    />
+                  )}
 
-                {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
-                  <FuzzyFinder gameState={gameState} dispatch={dispatch} />
-                )}
+                  {gameState.mode === 'input-file' && (
+                    <InputModal
+                      label="Create"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                      onConfirm={handleInputConfirm}
+                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                      borderColorClass="border-green-500"
+                      testid="create-input"
+                    />
+                  )}
+
+                  {gameState.mode === 'filter' && (
+                    <InputModal
+                      label="Filter"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => {
+                        const dir = getNodeByPath(gameState.fs, gameState.currentPath);
+                        if (dir) {
+                          dispatch({ type: 'SET_FILTER', dirId: dir.id, filter: val });
+                        }
+                        // Also update inputBuffer so the input field shows the typed text
+                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
+                      }}
+                      onConfirm={() => {
+                        dispatch({ type: 'SET_MODE', mode: 'normal' });
+                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                      }}
+                      onCancel={() => {
+                        dispatch({ type: 'SET_MODE', mode: 'normal' });
+                        dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
+                      }}
+                      borderColorClass="border-orange-500"
+                      testid="filter-input"
+                    />
+                  )}
+
+                  {gameState.mode === 'rename' && (
+                    <InputModal
+                      label="Rename"
+                      value={gameState.inputBuffer}
+                      onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                      onConfirm={handleRenameConfirm}
+                      onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                      borderColorClass="border-cyan-500" // or green/cyan mix
+                      testid="rename-input"
+                    />
+                  )}
+
+                  {(gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') && (
+                    <FuzzyFinder gameState={gameState} dispatch={dispatch} />
+                  )}
+                </div>
+
+                <PreviewPane
+                  node={currentItem}
+                  level={currentLevel}
+                  gameState={gameState}
+                  previewScroll={gameState.previewScroll}
+                  dispatch={dispatch}
+                  isMissionDrawerOpen={isMissionDrawerOpen}
+                  onToggleMissionDrawer={() => setIsMissionDrawerOpen((prev) => !prev)}
+                />
               </div>
-
-              <PreviewPane
-                node={currentItem}
-                level={currentLevel}
-                gameState={gameState}
-                previewScroll={gameState.previewScroll}
-                dispatch={dispatch}
-                isMissionDrawerOpen={isMissionDrawerOpen}
-                onToggleMissionDrawer={() => setIsMissionDrawerOpen((prev) => !prev)}
-              />
-            </div>
+            )}
 
             {!gameState.showEpisodeIntro && (
               <StatusBar

@@ -65,11 +65,11 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               aria-label="Confirm deletion"
             >
               <span
-                className={`px-2 py-0.5 font-bold ${isPermanent ? 'bg-red-500 text-white' : 'bg-gray-200 text-black'}`}
+                className={`px-2 py-0.5 font-bold ${isPermanent ? 'bg-red-500 text-white' : 'bg-zinc-200 text-black'}`}
               >
                 [Y]
               </span>
-              <span className="text-gray-400 group-hover:text-white ml-0.5">es</span>
+              <span className="text-zinc-400 group-hover:text-white ml-0.5">es</span>
             </button>
             <button
               type="button"

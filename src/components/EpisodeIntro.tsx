@@ -11,12 +11,19 @@ interface EpisodeIntroProps {
   episode: Episode;
   onComplete: (options?: { isSkip?: boolean }) => void;
   reduceMotion?: boolean;
+  showFocusRing?: boolean;
 }
+
+const logFocusClass = (showFocusRing: boolean): string =>
+  showFocusRing
+    ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400'
+    : 'focus-visible:outline-none';
 
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   episode,
   onComplete,
   reduceMotion,
+  showFocusRing = true,
 }) => {
   const ep =
     episode ||
@@ -272,9 +279,8 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
           ref={logRef}
           role="region"
           aria-label="Episode log"
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be focusable to scroll by keyboard
           tabIndex={0}
-          className="min-h-24 overflow-y-auto [scrollbar-gutter:stable] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400"
+          className={`min-h-24 overflow-y-auto p-2 [scrollbar-gutter:stable] ${logFocusClass(showFocusRing)}`}
         >
           {/* Invisible full-section copies stacked in one grid cell reserve the tallest section's
               height, so typing and section changes never resize the frame. */}

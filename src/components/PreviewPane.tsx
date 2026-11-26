@@ -1,22 +1,12 @@
 import React, { useEffect, useRef, memo } from 'react';
-import {
-  FileText,
-  FileArchive,
-  PackageOpen,
-  Folder,
-  FileCode,
-  FileImage,
-  FileCog,
-  FileLock,
-  Terminal as TerminalIcon,
-  ShieldAlert,
-} from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 import { sortNodes } from '../utils/sortHelpers';
 import { isProtected } from '../utils/fsHelpers';
 import { FileNode, Level, GameState } from '../types';
 import { Action } from '../hooks/gameReducer';
 import { MissionDrawer } from './MissionDrawer';
+import { getFileStyle } from './fileIcon';
 
 interface PreviewPaneProps {
   node: FileNode | null;
@@ -27,25 +17,6 @@ interface PreviewPaneProps {
   isMissionDrawerOpen?: boolean;
   onToggleMissionDrawer?: () => void;
 }
-
-// Helper for preview icons (simplified version of FileSystemPane style)
-const getPreviewIcon = (node: FileNode) => {
-  if (node.type === 'dir') return { color: 'text-blue-400', icon: Folder };
-  if (node.type === 'archive') return { color: 'text-red-400', icon: PackageOpen };
-
-  const name = node.name.toLowerCase();
-  if (/\.(png|jpg|jpeg|gif|webp|svg)$/.test(name))
-    return { color: 'text-purple-400', icon: FileImage };
-  if (/\.(exe|bin|sh|bat)$/.test(name)) return { color: 'text-green-400', icon: TerminalIcon };
-  if (/\.(zip|tar|gz|7z|rar)$/.test(name)) return { color: 'text-red-400', icon: FileArchive };
-  if (/\.(json|toml|yaml|conf|ini|xml)$/.test(name))
-    return { color: 'text-cyan-400', icon: FileCog };
-  if (/\.(js|ts|tsx|py|rs|c|cpp|go|java)$/.test(name))
-    return { color: 'text-yellow-400', icon: FileCode };
-  if (/\.(pem|key|lock)$/.test(name)) return { color: 'text-amber-600', icon: FileLock };
-
-  return { color: 'text-zinc-400', icon: FileText };
-};
 
 // fallow-ignore-next-line complexity
 const PreviewPane: React.FC<PreviewPaneProps> = ({
@@ -99,7 +70,6 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-4 custom-scrollbar focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be reachable for keyboard scrolling
             tabIndex={0}
             role="region"
             aria-label="File preview"
@@ -164,7 +134,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                 return (
                   <div className="flex flex-col gap-0.5">
                     {filtered.map((child) => {
-                      const { icon: Icon, color } = getPreviewIcon(child);
+                      const { icon: Icon, color } = getFileStyle(child);
                       return (
                         <div
                           key={child.id}
@@ -172,7 +142,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                         >
                           <Icon size={12} className={color} />
                           <span
-                            className={`text-xs font-mono truncate ${child.type === 'dir' ? 'text-blue-300' : 'text-zinc-400'}`}
+                            className={`text-xs font-mono truncate ${child.type === 'dir' ? 'text-cyan-400' : 'text-zinc-400'}`}
                           >
                             {child.name}
                           </span>

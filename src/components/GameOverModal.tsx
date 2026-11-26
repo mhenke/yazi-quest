@@ -93,7 +93,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   return (
     <div
       data-testid="game-over-modal"
-      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 px-4 backdrop-blur-sm animate-in fade-in duration-300"
+      className="absolute inset-0 z-[300] flex items-center justify-center bg-red-950/80 px-4 backdrop-blur-sm animate-terminal-fade"
       onKeyDown={containOverlayTab}
     >
       <div

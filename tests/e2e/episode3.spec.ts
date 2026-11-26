@@ -31,8 +31,8 @@ import {
 async function readMissionSearchPattern(page: Page): Promise<string> {
   const log = page.getByRole('region', { name: 'Mission log' });
   if (!(await log.isVisible())) await pressKey(page, 'Alt+o');
-  const objective = log.getByText(/\$`/).first();
-  const pattern = (await objective.innerText()).split('`').find((part) => part.endsWith('$'));
+  const codeChip = log.locator('code').filter({ hasText: /\$$/ }).first();
+  const pattern = (await codeChip.innerText()).trim();
   if (!pattern) throw new Error('No search pattern shown in the mission log');
   return pattern;
 }
@@ -357,13 +357,14 @@ test.describe('Episode 3: MASTERY', () => {
 
       // Select only the original visible directories to delete (NOT decoys or hidden files)
       // Task requires deleting: workspace, media, datastore, incoming
-      // Use keepFilter=true on ALL to preserve selections (Escape clears both filter AND selections)
+      // Keep filters while accumulating directory selections; Escape clears the final filter but keeps them.
       const toDelete = ['workspace', 'media', 'datastore', 'incoming'];
       for (const dir of toDelete) {
         await filterAndSelect(page, dir, { keepFilter: true });
       }
 
-      // Delete without clearing filter first (Escape would clear selections)
+      // Clear the final filter so the confirmation lists every selected path.
+      await clearFilter(page);
       await pressKey(page, 'Shift+D'); // Permanent delete
       const modal = page.locator('[aria-labelledby="confirmation-modal-title"]');
       await expect(modal).toBeVisible({ timeout: 1000 });

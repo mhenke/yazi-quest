@@ -17,7 +17,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
 
   return (
     <div
-      className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4 z-[200] animate-in zoom-in-95 fade-in duration-300"
+      className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4 z-[200] animate-terminal-pop"
       role="alert"
       data-testid="threat-alert"
     >

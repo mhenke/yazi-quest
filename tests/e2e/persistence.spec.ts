@@ -67,4 +67,15 @@ test.describe('Persistence & State Survival', () => {
     // Level 1: "AI-7738 INITIALIZATION" (7733 + 5)
     await expect(page.locator('[data-testid="status-bar"]')).toContainText('AI-7738');
   });
+  test('restores saved Quest Map progress after reload', async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('yazi-quest-unlocked-level', '5'));
+    await page.goto('/?intro=false');
+
+    const progress = page.getByTestId('level-progress-bar');
+    await expect(progress).toContainText('CONTAINMENT BREACH');
+    await page.getByTestId('map-button').click();
+    await expect(page.locator('#quest-map-panel button[aria-current="step"]')).toContainText(
+      'CONTAINMENT BREACH'
+    );
+  });
 });

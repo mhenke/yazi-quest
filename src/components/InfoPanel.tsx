@@ -1,89 +1,82 @@
 import React from 'react';
 
 import { FileNode } from '../types';
-import { computeNodeBytes, formatBytes } from '../utils/sizeHelpers';
+import { computeNodeBytes, countVisibleChildren, formatBytes } from '../utils/sizeHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface InfoPanelProps {
   file: FileNode | null;
   onClose: () => void;
+  showHidden: boolean;
 }
 
-export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
+const MIME_MAP: Record<string, string> = {
+  txt: 'text/plain',
+  md: 'text/markdown',
+  json: 'application/json',
+  js: 'text/javascript',
+  ts: 'text/typescript',
+  tsx: 'text/typescript',
+  rs: 'text/rust',
+  conf: 'text/plain',
+  log: 'text/plain',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  pdf: 'application/pdf',
+  pem: 'application/x-pem-file',
+  key: 'application/x-pem-file',
+  bin: 'application/octet-stream',
+};
+
+const getMimetype = (node: FileNode): string => {
+  if (node.type === 'dir') return 'inode/directory';
+  if (node.type === 'archive') {
+    if (node.name.endsWith('.zip')) return 'application/zip';
+    if (node.name.endsWith('.tar.gz') || node.name.endsWith('.tgz')) return 'application/gzip';
+    return 'application/x-archive';
+  }
+  const ext = node.name.split('.').pop()?.toLowerCase();
+  return MIME_MAP[ext || ''] || 'application/octet-stream';
+};
+
+const formatDate = (timestamp?: number): string => {
+  if (!timestamp) return '-';
+  const date = new Date(timestamp);
+  return date.toLocaleString('en-GB', {
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+const resolvePluginLabels = (isDir: boolean, isArchive: boolean, mimetype: string) => {
+  if (isDir) return { spotter: 'folder', previewer: 'folder', fetchers: '-' };
+  if (isArchive) return { spotter: 'archive', previewer: 'archive', fetchers: 'mime' };
+  const fetchers = mimetype === 'application/octet-stream' ? 'binary' : 'mime';
+  if (mimetype.startsWith('text')) return { spotter: 'code', previewer: 'code', fetchers };
+  if (mimetype.startsWith('image')) return { spotter: 'image', previewer: 'image', fetchers };
+  return { spotter: 'mime', previewer: 'file', fetchers };
+};
+
+export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden }) => {
   const panelRef = useOverlayFocus(Boolean(file));
+
   if (!file) return null;
 
-  const getMimetype = (node: FileNode): string => {
-    if (node.type === 'dir') return 'inode/directory';
-    if (node.type === 'archive') {
-      if (node.name.endsWith('.zip')) return 'application/zip';
-      if (node.name.endsWith('.tar.gz') || node.name.endsWith('.tgz')) return 'application/gzip';
-      return 'application/x-archive';
-    }
-    const ext = node.name.split('.').pop()?.toLowerCase();
-    const mimeMap: Record<string, string> = {
-      txt: 'text/plain',
-      md: 'text/markdown',
-      json: 'application/json',
-      js: 'text/javascript',
-      ts: 'text/typescript',
-      tsx: 'text/typescript',
-      rs: 'text/rust',
-      conf: 'text/plain',
-      log: 'text/plain',
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      gif: 'image/gif',
-      pdf: 'application/pdf',
-      pem: 'application/x-pem-file',
-      key: 'application/x-pem-file',
-      bin: 'application/octet-stream',
-    };
-    return mimeMap[ext || ''] || 'application/octet-stream';
-  };
-
-  const size = formatBytes(computeNodeBytes(file));
-  const mimetype = getMimetype(file);
   const isDir = file.type === 'dir';
   const isArchive = file.type === 'archive';
-
-  // Plugins heuristics — match wording in screenshots
-  const spotterLabel = isDir
-    ? 'folder'
-    : isArchive
-      ? 'archive'
-      : mimetype.startsWith('text')
-        ? 'code'
-        : mimetype.startsWith('image')
-          ? 'image'
-          : 'mime';
-
-  const previewerLabel = isDir
-    ? 'folder'
-    : isArchive
-      ? 'archive'
-      : mimetype.startsWith('text')
-        ? 'code'
-        : mimetype.startsWith('image')
-          ? 'image'
-          : 'file';
-
-  const fetchersLabel = isDir ? '-' : mimetype === 'application/octet-stream' ? 'binary' : 'mime';
-
-  // Format timestamp as dd/MM/yy HH:mm (24h) to match UI
-  const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return '-';
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-GB', {
-      year: '2-digit',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
+  const size = isDir ? countVisibleChildren(file, showHidden) : formatBytes(computeNodeBytes(file));
+  const mimetype = getMimetype(file);
+  const {
+    spotter: spotterLabel,
+    previewer: previewerLabel,
+    fetchers: fetchersLabel,
+  } = resolvePluginLabels(isDir, isArchive, mimetype);
 
   const created = formatDate(file.createdAt);
   const modified = formatDate(file.modifiedAt);
@@ -125,7 +118,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose }) => {
           <div className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
             <div className="flex items-center gap-3 mb-1">
               <div
-                className={`text-xs font-bold tracking-widest ${isDir ? 'text-green-400' : isArchive ? 'text-yellow-400' : 'text-cyan-400'}`}
+                className={`text-xs font-bold tracking-widest ${isDir ? 'text-cyan-400' : isArchive ? 'text-yellow-400' : 'text-cyan-400'}`}
               >
                 {isDir ? 'Folder' : isArchive ? 'Archive' : 'File'}
               </div>

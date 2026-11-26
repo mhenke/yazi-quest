@@ -272,7 +272,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
   // We will now use a manual button instead
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-in fade-in duration-500">
+    <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-terminal-fade">
       {/* Skip Outro Button */}
       <div className="absolute top-4 right-4 z-50">
         <button
@@ -307,13 +307,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
           ref={panelRef}
           role="region"
           aria-label="Conclusion"
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be focusable to scroll by keyboard
           tabIndex={0}
           className="min-h-0 overflow-y-auto focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400"
         >
           {/* Part Header */}
           <div
-            className="mb-8 border-l-4 pl-6 animate-in slide-in-from-left duration-1000"
+            className="mb-8 border-l-4 pl-6 animate-terminal-slide-left"
             style={{ borderColor: partPalette.hex }}
           >
             <div className={`flex items-center gap-3 ${partPalette.text} mb-2`}>
@@ -387,7 +386,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
 
         {/* Continue prompt or Final button */}
         {showContinue && !showTeaser && (
-          <div className="shrink-0 pt-4 flex justify-center animate-in fade-in duration-500">
+          <div className="shrink-0 pt-4 flex justify-center animate-terminal-fade">
             {isComplete ? (
               <button
                 onClick={() => {
@@ -425,12 +424,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
 
         {/* Teaser Overlay Content - Rendered ONLY when active to prevent flash */}
         {showTeaser && showOverlay && (
-          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-in fade-in zoom-in-95 duration-1000 delay-1000 fill-mode-forwards">
+          <div className="relative z-30 flex flex-col items-center text-center space-y-4 md:space-y-8 p-12 bg-black/40 backdrop-blur-sm border-y border-red-500/30 w-full animate-terminal-pop animate-terminal-delay-1s">
             <div className="animate-pulse text-red-500 mb-2">
               <Signal size={48} />
             </div>
 
-            <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-in slide-in-from-bottom-4 duration-1000">
+            <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-terminal-rise">
               {CONCLUSION_DATA.overlayTitle}
             </h2>
 
@@ -501,7 +500,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
             </div>
 
             {/* Manual Restart Button (Pillar I) */}
-            <div className="pt-6 md:pt-8 animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000 delay-[5000ms] fill-mode-both">
+            <div className="pt-6 md:pt-8 animate-terminal-rise animate-terminal-delay-5s">
               <button
                 onClick={onRestartCycle}
                 className="group relative px-8 py-4 bg-transparent border-2 border-red-500/50 hover:border-red-500 rounded text-red-500 hover:text-white transition-all duration-300 overflow-hidden"

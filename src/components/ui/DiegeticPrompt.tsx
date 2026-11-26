@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileNode, GameState } from '../../types';
 import { resolvePath } from '../../utils/fsHelpers';
+import { getPlayerIdentity } from '../../constants/identity';
 
 interface DiegeticPromptProps {
   threatLevel: number;
@@ -49,7 +50,6 @@ export function DiegeticPrompt({
     }
   };
 
-  const getDesignation = () => `AI-${7734 + cycleCount}`;
   const getHostname = () => {
     const status = getThreatStatus();
     if (status === 'BREACH') return '[COMPROMISED]';
@@ -75,7 +75,7 @@ export function DiegeticPrompt({
 
   const status = getThreatStatus();
   const modeIndicator = getModeIndicator();
-  const designation = getDesignation();
+  const designation = getPlayerIdentity(cycleCount);
   const hostname = getHostname();
   const path = getPath();
 

@@ -25,7 +25,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
   const id = useId();
   return (
     <div
-      className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm animate-terminal-fade"
       onKeyDown={containOverlayTab}
     >
       <div
@@ -70,19 +70,20 @@ export const WarningModal: React.FC<WarningModalProps> = ({
             </div>
           </div>
 
-          <div className="w-full flex justify-center mt-4">
+          <div className="w-full flex justify-center mt-2">
             {allowAutoFix ? (
-              <p className="text-zinc-300 text-base font-mono font-semibold tracking-wide">
-                Press{' '}
-                <span className="bg-yellow-500 text-black px-3 py-1 rounded-sm font-extrabold mx-2 text-sm">
+              <p className="text-zinc-400 text-xs font-mono tracking-wide">
+                Or press{' '}
+                <span className="bg-zinc-800 border border-yellow-500/60 text-yellow-300 px-2 py-0.5 rounded-sm font-bold mx-1">
                   Shift+Enter
                 </span>{' '}
                 {autoFixText}
               </p>
             ) : (
-              <p className="text-zinc-500 text-sm font-mono tracking-wide">
-                Press <span className="font-bold text-zinc-300">Shift+Enter</span> to close, then
-                apply fix manually.
+              <p className="text-zinc-400 text-xs font-mono tracking-wide">
+                Press <span className="font-bold text-zinc-200">Esc</span> or{' '}
+                <span className="font-bold text-zinc-200">Shift+Enter</span> to close, then apply
+                the Yazi fix manually.
               </p>
             )}
           </div>
@@ -90,7 +91,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
             <button
               type="button"
               onClick={onDismiss}
-              className="text-sm text-zinc-300 hover:text-white"
+              className="text-sm text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
               Close
             </button>
