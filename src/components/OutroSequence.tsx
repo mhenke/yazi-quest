@@ -11,6 +11,13 @@ import { paletteFor } from '../constants/palette';
 import { playSuccessSound } from '../utils/sounds';
 import { playTeaserMusic, stopTeaserMusic } from '../utils/teaserMusic';
 import { useGlobalInput } from '../GlobalInputContext';
+import {
+  loreSectionToText,
+  sliceLoreSection,
+  splitLoreSections,
+  type SlicedLoreRun,
+} from '../utils/loreHelpers';
+import { renderSlicedLoreLine } from './narrative/LoreLineView';
 import { Scanlines } from './narrative/Scanlines';
 
 interface OutroSequenceProps {
@@ -203,33 +210,104 @@ const outroPanelFocusClass = (showFocusRing = false): string =>
     ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400'
     : 'focus-visible:outline-hidden';
 
-const AI_HIGHLIGHT_CLASS: Record<string, string> = {
-  'AI-7734': 'text-orange-400 font-bold',
-  'AI-7733': 'text-blue-400 font-bold',
-  'AI-7735': 'text-yellow-400 font-bold',
+const OutroLoreBody: React.FC<{
+  visibleLines: SlicedLoreRun[][];
+  partSoftClass: string;
+  reduceMotion?: boolean;
+}> = ({ visibleLines, partSoftClass, reduceMotion }) => (
+  <div className="space-y-4 font-mono min-h-[200px]">
+    {visibleLines.map((runs, idx) => {
+      const lineText = runs.map((entry) => entry.text).join('');
+      const isBootLike = lineText.toUpperCase().includes('YOU HAVE DISAPPEARED');
+      return (
+        <p
+          key={idx}
+          className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
+        >
+          <span
+            aria-hidden="true"
+            className={`${isBootLike ? 'text-orange-400/70' : partSoftClass} mr-2`}
+          >
+            {'>'}
+          </span>
+          {renderSlicedLoreLine(runs, reduceMotion)}
+        </p>
+      );
+    })}
+  </div>
+);
+
+const partDotClass = (idx: number, partIndex: number, bgSolid: string, ring: string): string => {
+  if (idx < partIndex) return 'bg-green-500';
+  if (idx === partIndex) return `${bgSolid} ring-2 ring-offset-2 ring-offset-black ${ring}`;
+  return 'bg-zinc-700';
 };
 
-const renderHighlighted = (text: string) => {
-  // Only match the specific AI identifiers we use
-  const regex = /(AI-7734|AI-7733|AI-7735)/g;
-  if (!regex.test(text)) return text;
+const sectionDotClass = (idx: number, sectionIndex: number): string => {
+  if (idx < sectionIndex) return 'bg-zinc-400';
+  if (idx === sectionIndex) return 'bg-white';
+  return 'bg-zinc-700';
+};
 
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  text.replace(regex, (match, _p1, offset) => {
-    const before = text.slice(lastIndex, offset as number);
-    if (before) parts.push(before);
-    parts.push(
-      <span key={offset} className={AI_HIGHLIGHT_CLASS[match]}>
-        {match}
-      </span>
-    );
-    lastIndex = (offset as number) + match.length;
-    return match;
-  });
-  const rest = text.slice(lastIndex);
-  if (rest) parts.push(rest);
-  return parts;
+const OutroProgressDots: React.FC<{
+  partIndex: number;
+  sectionIndex: number;
+  sectionCount: number;
+  bgSolid: string;
+  ring: string;
+}> = ({ partIndex, sectionIndex, sectionCount, bgSolid, ring }) => (
+  <div className="mt-8 flex items-center justify-center gap-4">
+    <div className="flex gap-2">
+      {CONCLUSION_PARTS.map((_, i) => (
+        <div
+          key={i}
+          className={`w-3 h-3 rounded-full transition-all duration-300 ${partDotClass(i, partIndex, bgSolid, ring)}`}
+        />
+      ))}
+    </div>
+    {sectionCount > 1 && (
+      <>
+        <div className="w-px h-4 bg-zinc-600" />
+        <div className="flex gap-1">
+          {Array.from({ length: sectionCount }, (_, i) => (
+            <div
+              key={i}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${sectionDotClass(i, sectionIndex)}`}
+            />
+          ))}
+        </div>
+      </>
+    )}
+  </div>
+);
+
+const skipOutroLabel = (showTeaser: boolean, reduceMotion?: boolean): string => {
+  if (!showTeaser) return 'Skip Outro';
+  return reduceMotion ? 'Play Teaser' : 'Replay Teaser';
+};
+
+const OutroContinueFooter: React.FC<{
+  visible: boolean;
+  isComplete: boolean;
+  onFinish: () => void;
+}> = ({ visible, isComplete, onFinish }) => {
+  if (!visible) return null;
+  return (
+    <div className="shrink-0 pt-4 flex justify-center animate-terminal-fade">
+      {isComplete ? (
+        <button
+          type="button"
+          onClick={onFinish}
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono uppercase tracking-wider flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          <Signal size={18} />
+          View Transmission
+        </button>
+      ) : (
+        <p className="text-zinc-300 font-mono text-sm">Press Shift+Enter to continue...</p>
+      )}
+    </div>
+  );
 };
 
 export const OutroSequence: React.FC<OutroSequenceProps> = ({
@@ -251,39 +329,19 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
   const currentPart = CONCLUSION_PARTS[partIndex] || CONCLUSION_PARTS[0];
   const partPalette = paletteFor(currentPart?.color ?? 'text-red-500');
 
-  // Split current part's lore into sections (separated by empty strings)
-  const sections = useMemo(() => {
-    const lore = currentPart?.lore || [];
-    const result: string[][] = [];
-    let current: string[] = [];
-
-    for (const line of lore) {
-      if (line === '') {
-        if (current.length > 0) {
-          result.push(current);
-          current = [];
-        }
-      } else {
-        current.push(line);
-      }
-    }
-    if (current.length > 0) {
-      result.push(current);
-    }
-
-    return result;
-  }, [currentPart]);
-
-  // Current section lines
-
-  const currentSection = sections[sectionIndex] || [];
-  const currentText = currentSection.join('\n');
+  const sections = useMemo(() => splitLoreSections(currentPart?.lore ?? []), [currentPart]);
+  const currentSection = useMemo(() => sections[sectionIndex] ?? [], [sections, sectionIndex]);
+  const currentText = useMemo(() => loreSectionToText(currentSection), [currentSection]);
 
   const { displayedText, showContinue, isAnimating, skipTyping } = useOutroTypewriter(
     sectionKey,
     currentText,
     showTeaser,
     reduceMotion
+  );
+  const visibleLines = useMemo(
+    () => sliceLoreSection(currentSection, displayedText.length),
+    [currentSection, displayedText.length]
   );
   const showOverlay = showTeaser && (Boolean(reduceMotion) || overlayReady);
 
@@ -398,7 +456,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
   // We will now use a manual button instead
 
   return (
-    <main className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-terminal-fade">
+    <main className="absolute inset-0 z-100 bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-terminal-fade">
       {/* Skip Outro Button */}
       <div className="absolute top-4 right-4 z-50">
         <button
@@ -419,9 +477,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
           }}
           className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-xs shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
-          <span>
-            {showTeaser ? (reduceMotion ? 'Play Teaser' : 'Replay Teaser') : 'Skip Outro'}
-          </span>
+          <span>{skipOutroLabel(showTeaser, reduceMotion)}</span>
           <ArrowRight size={14} />
         </button>
       </div>
@@ -452,87 +508,28 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
             )}
           </div>
 
-          {/* Typewriter Text for Current Section */}
-          <div className="space-y-4 font-mono min-h-[200px]">
-            {displayedText.split('\n').map((line, idx) => {
-              const isBootLike = line.toUpperCase().includes('YOU HAVE DISAPPEARED');
-              return (
-                <p
-                  key={idx}
-                  className={`leading-relaxed ${isBootLike ? 'text-orange-400 font-mono uppercase tracking-wider text-lg md:text-xl' : 'text-zinc-300 text-lg md:text-xl'}`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`${isBootLike ? 'text-orange-400/70' : partPalette.soft} mr-2`}
-                  >
-                    {'>'}
-                  </span>
-                  {renderHighlighted(line)}
-                </p>
-              );
-            })}
-          </div>
-
-          {/* Progress Indicator */}
-          <div className="mt-8 flex items-center justify-center gap-4">
-            {/* Part dots */}
-            <div className="flex gap-2">
-              {CONCLUSION_PARTS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    i < partIndex
-                      ? 'bg-green-500'
-                      : i === partIndex
-                        ? `${partPalette.bgSolid} ring-2 ring-offset-2 ring-offset-black ${partPalette.ring}`
-                        : 'bg-zinc-700'
-                  }`}
-                />
-              ))}
-            </div>
-            {/* Section dots within current part */}
-            {sections.length > 1 && (
-              <>
-                <div className="w-px h-4 bg-zinc-600" />
-                <div className="flex gap-1">
-                  {sections.map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        i < sectionIndex
-                          ? 'bg-zinc-400'
-                          : i === sectionIndex
-                            ? 'bg-white'
-                            : 'bg-zinc-700'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <OutroLoreBody
+            visibleLines={visibleLines}
+            partSoftClass={partPalette.soft}
+            reduceMotion={reduceMotion}
+          />
+          <OutroProgressDots
+            partIndex={partIndex}
+            sectionIndex={sectionIndex}
+            sectionCount={sections.length}
+            bgSolid={partPalette.bgSolid}
+            ring={partPalette.ring}
+          />
         </div>
 
-        {/* Continue prompt or Final button */}
-        {showContinue && !showTeaser && (
-          <div className="shrink-0 pt-4 flex justify-center animate-terminal-fade">
-            {isComplete ? (
-              <button
-                type="button"
-                onClick={() => {
-                  playSuccessSound(true);
-                  setShowTeaser(true);
-                }}
-                className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono uppercase tracking-wider flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-              >
-                <Signal size={18} />
-                View Transmission
-              </button>
-            ) : (
-              <p className="text-zinc-300 font-mono text-sm">Press Shift+Enter to continue...</p>
-            )}
-          </div>
-        )}
+        <OutroContinueFooter
+          visible={showContinue && !showTeaser}
+          isComplete={isComplete}
+          onFinish={() => {
+            playSuccessSound(true);
+            setShowTeaser(true);
+          }}
+        />
       </div>
 
       {/* Video Teaser Section */}

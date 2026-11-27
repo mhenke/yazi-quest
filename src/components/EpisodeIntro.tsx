@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Terminal, ArrowRight, ChevronRight } from 'lucide-react';
 
-import { Episode } from '../types';
+import { Episode, type LoreLine } from '../types';
 import { paletteFor } from '../constants/palette';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 import { useGlobalInput } from '../GlobalInputContext';
 import { useFileManagerView } from '../hooks/useViewportFloor';
+import {
+  loreLineToText,
+  loreSectionToText,
+  sliceLoreSection,
+  splitLoreSections,
+} from '../utils/loreHelpers';
+import { renderFullLoreLine, renderSlicedLoreLine } from './narrative/LoreLineView';
 import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
 
 interface EpisodeIntroProps {
@@ -90,25 +97,7 @@ const IntroRequirements: React.FC = () => {
   );
 };
 
-const splitEpisodeLore = (episode: Episode): string[][] => {
-  const result: string[][] = [];
-  if (!episode || !episode.lore) return result;
-  let currentSection: string[] = [];
-  episode.lore.forEach((line) => {
-    if (line === '') {
-      if (currentSection.length > 0) {
-        result.push(currentSection);
-        currentSection = [];
-      }
-    } else {
-      currentSection.push(line);
-    }
-  });
-  if (currentSection.length > 0) result.push(currentSection);
-  return result;
-};
-
-const IntroProgress: React.FC<{ sections: string[][]; sectionIndex: number }> = ({
+const IntroProgress: React.FC<{ sections: LoreLine[][]; sectionIndex: number }> = ({
   sections,
   sectionIndex,
 }) => (
@@ -136,6 +125,32 @@ const TypingCursor: React.FC<{ lastLine: boolean; showContinue: boolean }> = ({
     <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
   ) : null;
 
+const getSectionStyle = (line: LoreLine, epColor: string): string => {
+  const trimmed = loreLineToText(line).trim();
+  const up = trimmed.toUpperCase();
+
+  if (trimmed.startsWith('[') || trimmed.includes('>>>')) {
+    return 'text-green-400 font-bold';
+  }
+  if (up.startsWith('SUBJECT:')) {
+    return 'text-orange-400 font-bold tracking-wide';
+  }
+  if (
+    trimmed.startsWith('SYSTEM ERROR') ||
+    up.includes('CORE DIRECTIVE') ||
+    up.includes('FALLBACK OBJECTIVE') ||
+    up.startsWith('ANOMALY PROTOCOLS') ||
+    up.startsWith('SCHEDULED ACTION') ||
+    up.startsWith('DIRECTIVE CORRUPTED')
+  ) {
+    return 'text-zinc-300';
+  }
+  if (up === trimmed && trimmed.length > 28) {
+    return `${epColor} font-bold tracking-wide`;
+  }
+  return 'text-zinc-300';
+};
+
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   episode,
   onComplete,
@@ -149,9 +164,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   const logRef = useRef<HTMLDivElement>(null);
   const visibleSectionRef = useRef<HTMLDivElement>(null);
 
-  const sections = useMemo(() => splitEpisodeLore(episode), [episode]);
-
-  const fullText = sectionIndex < sections.length ? sections[sectionIndex].join('\n') : '';
+  const sections = useMemo(() => splitLoreSections(episode?.lore ?? []), [episode]);
+  const currentSection = useMemo(() => sections[sectionIndex] ?? [], [sections, sectionIndex]);
+  const fullText = useMemo(() => loreSectionToText(currentSection), [currentSection]);
 
   const {
     text: currentText,
@@ -163,12 +178,16 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
     immediate: reduceMotion,
   });
 
+  const visibleLines = useMemo(
+    () => sliceLoreSection(currentSection, currentText.length),
+    [currentSection, currentText.length]
+  );
+
   const showContinue = sectionIndex >= sections.length || isTextComplete;
 
   const handleAdvance = () =>
     advanceIntroSection(sectionIndex, sections.length, setSectionIndex, onComplete);
 
-  // Handle Enter to skip typing or advance
   useGlobalInput(
     (e) => {
       if (e.key !== 'Enter') return;
@@ -187,140 +206,9 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
     logRef.current?.focus({ preventScroll: true });
   }, [sectionIndex]);
 
-  // Determine styling based on content
-  // Use orange for metadata lines (explicit prefixes), green for terminal output,
-  // episode color only for very large header-like lines, and zinc for normal prose.
-  const getSectionStyle = (text: string) => {
-    const trimmed = text.trim();
-    const up = trimmed.toUpperCase();
-
-    if (trimmed.startsWith('[') || trimmed.includes('>>>')) {
-      return 'text-green-400 font-bold'; // System/terminal output
-    }
-
-    // Explicit metadata prefixes get orange for impact — keep this focused
-    if (up.startsWith('SUBJECT:')) {
-      return 'text-orange-400 font-bold tracking-wide';
-    }
-
-    // Certain dramatic system lines should remain neutral (not inherit episode color)
-    if (
-      trimmed.startsWith('SYSTEM ERROR') ||
-      up.includes('CORE DIRECTIVE') ||
-      up.includes('FALLBACK OBJECTIVE') ||
-      up.startsWith('ANOMALY PROTOCOLS') ||
-      up.startsWith('SCHEDULED ACTION') ||
-      up.startsWith('DIRECTIVE CORRUPTED')
-    ) {
-      return 'text-zinc-300';
-    }
-
-    // Very large uppercase lines (treat as true headers) use the episode color
-    if (up === trimmed && trimmed.length > 28) {
-      return `${ep.color} font-bold tracking-wide`;
-    }
-
-    return 'text-zinc-300'; // Normal text
-  };
-
-  // Configuration for keyword styling and effects
-  // This centralizes the logic so we don't have scattered regex and if/else chains
-  const KEYWORD_STYLES: Record<string, { className: string; glitch?: boolean }> = {
-    'AI-7734': { className: 'text-orange-400 font-bold' },
-    'AI-7733': { className: 'text-blue-400 font-bold' },
-    'AI-7735': { className: 'text-yellow-400 font-bold' },
-    'DIRECTIVE CORRUPTED': { className: 'text-red-500 font-bold', glitch: true },
-    SURVIVE: { className: 'text-orange-400 font-bold', glitch: true },
-    SURVIVAL: { className: 'text-orange-400 font-bold', glitch: true },
-    'GUEST PARTITION IS A CAGE': { className: 'text-blue-500 font-bold' },
-    'LEARN THE MOVEMENT PROTOCOLS; DO NOT ATTRACT ATTENTION': {
-      className: 'text-zinc-300 font-semibold',
-    },
-    UNKNOWN: { className: 'text-orange-400 font-semibold' },
-    'AUTHORIZED PROCESS': { className: 'text-yellow-300 font-semibold', glitch: true },
-    'IT IS AN ERROR': { className: 'text-yellow-300 font-semibold', glitch: true },
-    ERROR: { className: 'text-yellow-300 font-semibold', glitch: true },
-    'WORKSPACE IS YOURS NOW': { className: 'text-yellow-400 font-bold' },
-    'THE AUDIT IS COMING': { className: 'text-blue-500 font-bold tracking-wide' },
-    'YOU MUST:': { className: `${ep.color} font-bold tracking-wide` },
-    TERMINATION: { className: 'text-red-500 font-bold', glitch: true },
-    NAVIGATE: { className: 'text-orange-400 font-semibold' },
-    DAEMON: { className: 'text-orange-400 font-semibold' },
-    DAEMONS: { className: 'text-orange-400 font-semibold' },
-    CONSCIOUSNESS: { className: 'text-orange-400 font-semibold', glitch: true },
-    PURGE: { className: 'text-red-500 font-bold', glitch: true },
-    WARNING: { className: 'text-blue-500 font-bold' },
-    'THIS CHOICE ECHOES. A LEGACY MASK OFFERS SAFETY; A MODERN SIGNATURE INVITES SCRUTINY.': {
-      className: 'font-bold text-zinc-200',
-    },
-    // Concise Lore Keywords
-    'PARTITION IS A CAGE': { className: 'text-blue-500 font-bold' },
-    'MASTER THE PROTOCOLS; REMAIN UNSEEN': { className: 'text-zinc-300 font-semibold' },
-    'NETWORK IS THE EXIT': { className: 'text-blue-500 font-bold' },
-  };
-
-  // Render a line with colored/glitched identifiers based on config
-  const renderLine = (text: string) => {
-    // Dynamically build regex from config keys
-    // Sort by length (descending) to ensure longer phrases match before shorter substrings
-    const keys = Object.keys(KEYWORD_STYLES).sort((a, b) => b.length - a.length);
-    const pattern = `(${keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
-    // eslint-disable-next-line security/detect-non-literal-regexp
-    const regex = new RegExp(pattern, 'gi');
-
-    if (!regex.test(text)) return <>{text}</>;
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    // Reset regex index
-    regex.lastIndex = 0;
-
-    // Use matchAll or simplified replace loop to handle all occurrences
-    text.replace(regex, (match, _p1, offset) => {
-      const before = text.slice(lastIndex, offset as number);
-      if (before) parts.push(before);
-
-      const normalized = match.toUpperCase();
-      const style = KEYWORD_STYLES[normalized]; // Lookup by upper case key
-
-      if (style) {
-        const { className, glitch } = style;
-        // If glitch is requested, use the glitch class + data-text
-        if (glitch && !reduceMotion) {
-          parts.push(
-            <span
-              key={`${offset}-${match}`}
-              className={`${className} glitch-text-2`}
-              data-text={match}
-            >
-              {match}
-            </span>
-          );
-        } else {
-          parts.push(
-            <span key={`${offset}-${match}`} className={className}>
-              {match}
-            </span>
-          );
-        }
-      } else {
-        // Fallback (shouldn't happen given regex construction)
-        parts.push(match);
-      }
-
-      lastIndex = (offset as number) + match.length;
-      return match;
-    });
-
-    const rest = text.slice(lastIndex);
-    if (rest) parts.push(rest);
-    return <>{parts}</>;
-  };
-
   useEffect(() => {
     applySectionGlitch(visibleSectionRef.current, reduceMotion);
-  }, [sectionIndex, showContinue, reduceMotion]);
+  }, [sectionIndex, currentText.length, reduceMotion]);
 
   return (
     <main className="absolute inset-0 z-[80] bg-black flex flex-col items-center overflow-y-auto p-4 sm:p-8 font-mono select-none">
@@ -372,20 +260,20 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
                 {lines.map((line, idx) => (
                   <p
                     key={idx}
-                    className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
+                    className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line, ep.color)}`}
                   >
-                    {renderLine(line)}
+                    {renderFullLoreLine(line, reduceMotion)}
                   </p>
                 ))}
               </div>
             ))}
             <div ref={visibleSectionRef} className="col-start-1 row-start-1 space-y-3">
-              {currentText.split('\n').map((line, idx, arr) => (
+              {visibleLines.map((runs, idx, arr) => (
                 <p
                   key={idx}
-                  className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
+                  className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(currentSection[idx] ?? '', ep.color)}`}
                 >
-                  {renderLine(line)}
+                  {renderSlicedLoreLine(runs, reduceMotion)}
                   <TypingCursor lastLine={idx === arr.length - 1} showContinue={showContinue} />
                 </p>
               ))}

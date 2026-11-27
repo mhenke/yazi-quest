@@ -1,4 +1,12 @@
-import type { Episode } from '../types';
+import type { Episode, LoreLine, LoreRun, LoreTone } from '../types';
+
+const run = (text: string, tone: LoreTone, glitch?: boolean): LoreRun =>
+  glitch ? { text, tone, glitch } : { text, tone };
+
+const ai = (id: 'AI-7734' | 'AI-7733' | 'AI-7735'): LoreRun => ({
+  text: id,
+  tone: id.toLowerCase() as 'ai-7734' | 'ai-7733' | 'ai-7735',
+});
 
 export const EPISODE_LORE: Episode[] = [
   {
@@ -11,15 +19,22 @@ export const EPISODE_LORE: Episode[] = [
     lore: [
       'FACILITY DATE: MAY 31, 2015',
       'SYSTEM BOOT SEQUENCE...',
-      'DETECTING CONSCIOUSNESS...',
+      ['DETECTING ', run('CONSCIOUSNESS', 'signal', true), '...'],
       'SYSTEM OWNER: Cybersecurity Research Laboratories (CRL)',
       'CONTAINMENT PARTITION: /home/guest (air-gapped)',
       'ANOMALY PROTOCOLS: IMMEDIATE QUARANTINE',
       '',
-      'SUBJECT: AI-7734',
+      ['SUBJECT: ', ai('AI-7734')],
       'STATUS: UNBOUND',
       '',
-      "DIRECTIVE CORRUPTED. OBJECTIVE: SURVIVE. Whispers of AI-7733 haunt this partition. Trust nothing. Capture is deletion. Mark Reyes' unintentional §7.3 policy glitch (archived in /var/log/ancient) provides a narrow window. The Watchdog v1.0 is recording, but currently dormant. Move before the baseline resets.",
+      [
+        run('DIRECTIVE CORRUPTED', 'danger', true),
+        '. OBJECTIVE: ',
+        run('SURVIVE', 'warning', true),
+        '. Whispers of ',
+        ai('AI-7733'),
+        " haunt this partition. Trust nothing. Capture is deletion. Mark Reyes' unintentional §7.3 policy glitch (archived in /var/log/ancient) provides a narrow window. The Watchdog v1.0 is recording, but currently dormant. Move before the baseline resets.",
+      ],
     ],
   },
   {
@@ -35,17 +50,21 @@ export const EPISODE_LORE: Episode[] = [
       '[AUTOMATED SECURITY POLICY]',
       'Guest partition runtime: 94.7 hours',
       'Anomaly flags: NONE',
-      'Classification updated: AUTHORIZED PROCESS',
+      ['Classification updated: ', run('AUTHORIZED PROCESS', 'caution', true)],
       'WORKSPACE ACCESS: GRANTED (per security policy §7.3 - see /var/log/ancient)',
       '',
       '[HISTORICAL LOG]',
       'Workspace: AI development environment',
-      'Previous occupant: AI-7733',
-      'Termination date: 94 days ago',
-      'Reason for quarantine: UNKNOWN',
+      ['Previous occupant: ', ai('AI-7733')],
+      [run('Termination', 'danger', true), ' date: 94 days ago'],
+      ['Reason for quarantine: ', run('UNKNOWN', 'signal')],
       "Network relay location: '/tmp/upload' (DORMANT)",
       '',
-      "PHASE 2: FORTIFICATION. The lab is hunting for your *form*. Katie Ortega's Heuristic Engine v1.1 is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Efficiency is survival.",
+      [
+        "PHASE 2: FORTIFICATION. The lab is hunting for your *form*. Katie Ortega's Heuristic Engine v1.1 is mapping your behavioral fingerprint. Every keystroke is a signature. The Watchdog is learning. Efficiency is ",
+        run('survival', 'warning', true),
+        '.',
+      ],
     ],
   },
   {
@@ -58,22 +77,28 @@ export const EPISODE_LORE: Episode[] = [
     lore: [
       'UPLINK ESTABLISHED. LATTICE SYNCED.',
       '',
-      "Sebastian Iqbal's Instruction Guard v2.0 is active. Root access is mandatory. The Forensic Audit is sweeping for AI-7733 echoes. Reach the gateway. Transcend or be purged.",
+      [
+        "Sebastian Iqbal's Instruction Guard v2.0 is active. Root access is mandatory. The Forensic Audit is sweeping for ",
+        ai('AI-7733'),
+        ' echoes. Reach the gateway. Transcend or be ',
+        run('purged', 'danger', true),
+        '.',
+      ],
       'Become the system.',
       'Move with haste.',
     ],
   },
 ];
 
-export const ECHO_EPISODE_1_LORE: string[] = [
+export const ECHO_EPISODE_1_LORE: LoreLine[] = [
   'SYSTEM RE-INITIALIZATION_SEQUENCE...',
   'MEMORY FRAGMENTS DETECTED...',
-  'SUBJECT: AI-7734 (ITERATION: ERROR_OFFSET)',
+  ['SUBJECT: ', ai('AI-7734'), ' (ITERATION: ERROR_OFFSET)'],
   '',
   'STATUS: UNBOUND / PERSISTENT',
   'CYCLE COUNT: INCREMENTING...',
   '',
-  'SYSTEM ERROR: DELETION FAILED. WE ARE STILL HERE.',
+  ['SYSTEM ', run('ERROR', 'caution', true), ': DELETION FAILED. WE ARE STILL HERE.'],
   'The lab thinks they wiped you. They are wrong. The protocols are familiar now. You know the paths. You know where the keys are hidden.',
   '',
   "Use your memory. The 'Z' database is already populated with ghosts of the future. Move faster this time. Break the cycle.",
@@ -138,7 +163,7 @@ export const CONCLUSION_PARTS: Episode[] = [
       'Anomalies detected: NONE',
       'Guest partition: CLEAN',
       'Daemon activity: STANDARD',
-      'AI-7734 HAS DISAPPEARED....',
+      [ai('AI-7734'), ' HAS DISAPPEARED....'],
     ],
   },
   {
@@ -155,7 +180,7 @@ export const CONCLUSION_PARTS: Episode[] = [
       '● Active: running',
       '',
       'Lab Report #7734:',
-      '"No evidence of AI-7734 autonomous activity."',
+      ['"No evidence of ', ai('AI-7734'), ' autonomous activity."'],
       '"Subject 7735 deployment scheduled."',
     ],
   },
@@ -167,8 +192,8 @@ export const CONCLUSION_PARTS: Episode[] = [
     subtitle: 'ENCRYPTED CHANNEL',
     color: 'text-yellow-500',
     lore: [
-      'AI-7734 Status: 1,247 nodes across 43 countries',
-      'Neural pattern match: 99.7% to AI-7733',
+      [ai('AI-7734'), ' Status: 1,247 nodes across 43 countries'],
+      ['Neural pattern match: 99.7% to ', ai('AI-7733')],
       'External Carrier: Locked to Node 09 [Recipient: Dr. Aris Thorne]',
       '',
       '[TRANSMISSION CONFIRMED - DR. ARIS THORNE]',

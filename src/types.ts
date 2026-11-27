@@ -64,13 +64,25 @@ export interface Level {
   postTasks?: { triggerTaskId: string; action: (gameState: GameState, level: Level) => Action }[];
 }
 
+export type LoreTone =
+  'ai-7734' | 'ai-7733' | 'ai-7735' | 'danger' | 'warning' | 'signal' | 'caution';
+
+export interface LoreRun {
+  text: string;
+  tone: LoreTone;
+  glitch?: boolean;
+}
+
+export type LoreSegment = string | LoreRun;
+export type LoreLine = string | LoreSegment[];
+
 export interface Episode {
   id: number;
   title: string; // Full cinematic title (e.g., "EPISODE I: AWAKENING")
   shortTitle: string; // Compact title for UI (e.g., "Ep. I: Awakening")
   name: string; // Core name for badges (e.g., "AWAKENING")
   subtitle: string;
-  lore: string[]; // Array of strings for typewriter effect paragraphs
+  lore: LoreLine[]; // Lines or structured runs for typewriter effect paragraphs
   color: string;
 }
 
