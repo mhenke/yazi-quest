@@ -167,12 +167,6 @@ const ToolbarControls: React.FC<{ onToggleHint: () => void; onToggleHelp: () => 
   onToggleHelp,
 }) => (
   <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-h-8 ml-auto flex-nowrap">
-    <span
-      aria-hidden="true"
-      className="hidden group-focus-within:inline-flex items-center px-1.5 py-0.5 text-xs font-mono text-zinc-300 bg-zinc-900 border border-zinc-700 rounded-xs shrink-0"
-    >
-      Esc → Files
-    </span>
     <div className="flex items-center gap-2">
       <button
         type="button"
@@ -240,7 +234,7 @@ const LevelProgressBase: React.FC<LevelProgressProps> = ({
     <header
       data-testid="level-progress-bar"
       onKeyDown={(e) => handleToolbarEscape(e, isMapOpen, onReturnFocusToFiles)}
-      className="group shrink-0 py-2 w-full bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto scrollbar-hide z-[300] relative"
+      className="shrink-0 py-2 w-full bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto scrollbar-hide z-[300] relative"
     >
       <HeaderLeftCluster
         onToggleMap={onToggleMap}
