@@ -6,11 +6,12 @@ import {
   integer,
   option,
   record,
+  string,
   stringMatching,
   type Arbitrary,
 } from 'fast-check';
 import { describe, it, expect } from 'vitest';
-import { sortNodes } from './sortHelpers';
+import { getSortLabel, sortNodes } from './sortHelpers';
 import type { FileNode, SortBy, SortDirection } from '../types';
 
 /**
@@ -175,6 +176,41 @@ describe('property: sortNodes honours its documented key per mode', () => {
         const fallback = sortNodes(nodes, 'bogus' as SortBy, 'asc').map((n) => n.id);
         expect(fallback).toEqual(sortNodes(nodes, 'natural', 'asc').map((n) => n.id));
       }),
+      { numRuns: 100 }
+    );
+  });
+});
+
+const SORT_LABELS: Record<SortBy, string> = {
+  natural: 'Natural',
+  alphabetical: 'A-Z',
+  modified: 'Modified',
+  size: 'Size',
+  extension: 'Extension',
+};
+
+describe('property: getSortLabel formats every sort mode and direction', () => {
+  it('pairs the documented mode label with the ascending or descending arrow', () => {
+    assert(
+      property(sortBys, directions, (sortBy, sortDirection) => {
+        const arrow = sortDirection === 'asc' ? '↑' : '↓';
+        expect(getSortLabel(sortBy, sortDirection)).toBe(`${SORT_LABELS[sortBy]} ${arrow}`);
+      }),
+      { numRuns: 100 }
+    );
+  });
+
+  it('falls back to Natural for unrecognized sort modes', () => {
+    const known = new Set<string>(Object.keys(SORT_LABELS));
+    assert(
+      property(
+        string().filter((s) => !known.has(s)),
+        directions,
+        (unknownMode, sortDirection) => {
+          const arrow = sortDirection === 'asc' ? '↑' : '↓';
+          expect(getSortLabel(unknownMode as SortBy, sortDirection)).toBe(`Natural ${arrow}`);
+        }
+      ),
       { numRuns: 100 }
     );
   });
