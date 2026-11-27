@@ -2,7 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { LEVELS } from '../../constants/levels';
 import type { FileNode, GameState } from '../../types';
 import { createInitialState } from '../initialState';
-import { buildDeleteModalData, handleSortWarningKey, runGameLoopKeyDown } from './gameLoopHelpers';
+import {
+  buildDeleteModalData,
+  handleSortWarningKey,
+  isProtocolWarningOpen,
+  runGameLoopKeyDown,
+} from './gameLoopHelpers';
 
 const makeKey = (key: string, overrides: Partial<KeyboardEvent> = {}): KeyboardEvent =>
   ({
@@ -170,6 +175,22 @@ describe('runGameLoopKeyDown', () => {
     const fuzzyEscapeDeps = makeDeps({ mode: 'zoxide-jump' });
     runGameLoopKeyDown(makeKey('Escape'), fuzzyEscapeDeps);
     expect(fuzzyEscapeDeps.dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'normal' });
+  });
+
+  it('detects open protocol warnings and skips keystroke counting while a warning is open', () => {
+    const baseState = createInitialState();
+    expect(isProtocolWarningOpen(baseState)).toBe(false);
+    expect(isProtocolWarningOpen({ ...baseState, mode: 'filter-warning' })).toBe(true);
+    expect(isProtocolWarningOpen({ ...baseState, showFilterWarning: true })).toBe(true);
+    expect(isProtocolWarningOpen({ ...baseState, showSearchWarning: true })).toBe(true);
+    expect(isProtocolWarningOpen({ ...baseState, showSortWarning: true })).toBe(true);
+    expect(isProtocolWarningOpen({ ...baseState, showHiddenWarning: true })).toBe(true);
+
+    const warningDeps = makeDeps({ showSearchWarning: true });
+    runGameLoopKeyDown(makeKey('j'), warningDeps);
+    expect(warningDeps.dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'INCREMENT_KEYSTROKES' })
+    );
   });
 });
 

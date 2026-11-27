@@ -256,3 +256,68 @@ test.describe('Protocol Violations and Navigation Blocking', () => {
     });
   }
 });
+
+test.describe('Timed protocol warnings', () => {
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status !== testInfo.expectedStatus) {
+      await page.screenshot({ path: testInfo.outputPath('failure.png'), fullPage: true });
+    }
+  });
+
+  for (const kind of ['search', 'filter'] as const) {
+    test(`Level 10 pauses the timer during a ${kind} warning`, async ({ page }) => {
+      await page.clock.install();
+      await startLevel(page, 10, { intro: false });
+
+      if (kind === 'search') {
+        await search(page, 'key');
+      } else {
+        await filterByText(page, 'key');
+      }
+      await page.keyboard.press('j');
+      await expect(page.getByRole('alertdialog')).toContainText(
+        kind === 'search' ? 'Active search session detected.' : 'Active filters detected.'
+      );
+      await expect(page.getByRole('alertdialog')).toContainText(
+        kind === 'search'
+          ? 'Press Esc to close this warning and clear the search results.'
+          : 'Press Esc to close this warning, then Esc again to clear the filter.'
+      );
+
+      const timer = page.getByTestId('status-bar').getByText(/^\d{2}:\d{2}$/);
+      const remaining = await timer.textContent();
+      await page.clock.runFor(160_000);
+      await expect(timer).toHaveText(remaining!);
+      await expect(page.getByTestId('game-over-modal')).not.toBeVisible();
+      await expect(page.getByTestId('status-bar').getByText('L10', { exact: true })).toBeVisible();
+      await expect(page.getByTestId('task-counter')).toHaveText('Tasks: 0/4');
+
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('alertdialog')).not.toBeVisible();
+      if (kind === 'filter') await page.keyboard.press('Escape');
+      await page.clock.runFor(3_000);
+      await expect(timer).not.toHaveText(remaining!);
+      await expect(page.getByTestId('game-over-modal')).not.toBeVisible();
+      await expect(page.getByTestId('status-bar').getByText('L10', { exact: true })).toBeVisible();
+    });
+  }
+
+  test('Level 11 does not count keys pressed during a search warning', async ({ page }) => {
+    await startLevel(page, 11, { intro: false });
+    await search(page, 'service');
+    await page.keyboard.press('j');
+    await expect(page.getByRole('alertdialog')).toContainText('Active search session detected.');
+
+    const audit = page.getByText(/^IG_AUDIT: \d+$/);
+    const noise = await audit.textContent();
+    for (let i = 0; i < 65; i++) await page.keyboard.press('s');
+    await expect(audit).toHaveText(noise!);
+    await expect(page.getByTestId('game-over-modal')).not.toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    await page.keyboard.press('s');
+    await expect(page.getByTestId('search-input')).toBeVisible();
+    await expect(page.getByTestId('status-bar').getByText('L11', { exact: true })).toBeVisible();
+  });
+});

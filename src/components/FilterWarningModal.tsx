@@ -16,9 +16,13 @@ export const FilterWarningModal: React.FC<FilterWarningModalProps> = ({
       allowAutoFix={allowAutoFix}
       onDismiss={onDismiss}
       detectedText="Active filters detected."
-      note="Note: filters are per directory and persist with Yazi across sessions."
+      note="Navigation is blocked while the current directory is filtered."
       icon={<Filter size={20} className="text-zinc-400" />}
-      correctiveAction="Clear filter (Esc twice) to restore expected results."
+      correctiveAction={
+        <>
+          Press <kbd>Esc</kbd> to close this warning, then <kbd>Esc</kbd> again to clear the filter.
+        </>
+      }
     />
   );
 };

@@ -63,6 +63,7 @@ import { ViewportGate } from './components/ViewportGate';
 import {
   buildDeleteModalData,
   handleSortWarningKey,
+  isProtocolWarningOpen,
   runGameLoopKeyDown,
 } from './hooks/keyboard/gameLoopHelpers';
 import { hasBaselineViolation, hasSearchViolation } from './hooks/keyboard/utils';
@@ -443,12 +444,10 @@ export default function App() {
     gameState.showHint ||
     gameState.showMap ||
     gameState.showInfoPanel ||
-    gameState.mode === 'filter-warning' ||
     gameState.mode === 'confirm-delete' ||
     gameState.mode === 'overwrite-confirm' ||
     gameState.showThreatAlert ||
-    gameState.showHiddenWarning ||
-    gameState.showSortWarning
+    isProtocolWarningOpen(gameState)
   );
 
   const isLastLevel = gameState.levelIndex >= LEVELS.length;

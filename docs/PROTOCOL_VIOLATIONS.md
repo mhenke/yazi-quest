@@ -16,6 +16,8 @@ To maintain a consistent and educational gameplay experience, Yazi Quest enforce
 - **Blocking Violations**: Active filters, search results, or non-standard sorting **block** movement between directories (`h`, `l`, `g`). The player must clear these to navigate between directories. While sort violations block moving into or out of directories (`h, l`, arrow left/right), vertical navigation within the current file list (`j, k, G, gg`, up/down arrows) is permitted so the player can view the sorted items.
 - **Non-Blocking Violations**: Visible hidden files do **not** block navigation, but must be cleared before finalizing a level.
 
+The level timer and keystroke counter pause while a protocol warning is open and resume when the warning is dismissed. The player remains on the current level and can correct the view.
+
 ## Audit Mode (Mission Complete)
 
 When all mission tasks are finished, the system enters **Audit Mode**. If any protocol violations are still active:

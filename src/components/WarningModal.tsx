@@ -67,7 +67,9 @@ export const WarningModal: React.FC<WarningModalProps> = ({
               <p className="text-yellow-500 font-bold text-xs uppercase tracking-wider mb-1">
                 Corrective Action
               </p>
-              <div className="text-zinc-300 text-xs font-mono">{correctiveAction}</div>
+              <div className="text-zinc-300 text-xs font-mono [&_kbd]:inline-block [&_kbd]:border [&_kbd]:border-yellow-500/60 [&_kbd]:bg-zinc-800 [&_kbd]:px-1.5 [&_kbd]:py-0.5 [&_kbd]:font-bold [&_kbd]:text-yellow-300">
+                {correctiveAction}
+              </div>
             </div>
           </div>
 
@@ -82,9 +84,8 @@ export const WarningModal: React.FC<WarningModalProps> = ({
               </p>
             ) : (
               <p className="text-zinc-400 text-xs font-mono tracking-wide">
-                Press <span className="font-bold text-zinc-200">Esc</span> or{' '}
-                <span className="font-bold text-zinc-200">Shift+Enter</span> to close, then apply
-                the Yazi fix manually.
+                Follow the corrective action above, or press{' '}
+                <span className="font-bold text-zinc-200">Shift+Enter</span> to close.
               </p>
             )}
           </div>

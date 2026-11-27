@@ -18,7 +18,11 @@ export const SearchWarningModal: React.FC<SearchWarningModalProps> = ({
       detectedText="Active search session detected."
       note="Note: Navigation is blocked while viewing search results."
       icon={<Search size={20} className="text-zinc-400" />}
-      correctiveAction="Press Esc to exit search mode and resume navigation."
+      correctiveAction={
+        <>
+          Press <kbd>Esc</kbd> to close this warning and clear the search results.
+        </>
+      }
     />
   );
 };

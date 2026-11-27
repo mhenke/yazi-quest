@@ -13,9 +13,13 @@ export const SortWarningModal: React.FC<SortWarningModalProps> = ({ allowAutoFix
       allowAutoFix={allowAutoFix}
       onDismiss={onDismiss}
       detectedText="Custom sorting active."
-      note="Note: sort order is global and persists with Yazi across sessions."
+      note="Directory navigation is blocked until the natural sort order is restored."
       icon={<ListOrdered size={20} className="text-zinc-400" />}
-      correctiveAction="Reset sort to natural (,n) to restore expected order."
+      correctiveAction={
+        <>
+          Press <kbd aria-label="comma">,</kbd> then <kbd>n</kbd> to restore natural sort order.
+        </>
+      }
       autoFixText="to continue..."
     />
   );

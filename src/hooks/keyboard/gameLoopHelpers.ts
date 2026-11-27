@@ -148,6 +148,20 @@ const shouldSkipGameLoopTarget = (
   );
 };
 
+export const isProtocolWarningOpen = (gameState: GameState): boolean =>
+  gameState.mode === 'filter-warning' ||
+  Boolean(
+    gameState.showFilterWarning ||
+    gameState.showSearchWarning ||
+    gameState.showSortWarning ||
+    gameState.showHiddenWarning
+  );
+
+const IGNORED_KEYSTROKE_KEYS = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'];
+
+const shouldCountKeystroke = (e: KeyboardEvent, gameState: GameState): boolean =>
+  !isProtocolWarningOpen(gameState) && !IGNORED_KEYSTROKE_KEYS.includes(e.key.toLowerCase());
+
 export const runGameLoopKeyDown = (e: KeyboardEvent, deps: GameLoopDeps): boolean | void => {
   const { gameState, currentLevel, isLastLevel, filePaneEl, dispatch } = deps;
   if (gameState.isBooting || gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver)
@@ -172,7 +186,7 @@ export const runGameLoopKeyDown = (e: KeyboardEvent, deps: GameLoopDeps): boolea
     return true;
   }
 
-  if (!['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())) {
+  if (shouldCountKeystroke(e, gameState)) {
     const noise = currentLevel?.id >= 11 ? getActionIntensity(e.key, e.ctrlKey) : 1;
     dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
   }
