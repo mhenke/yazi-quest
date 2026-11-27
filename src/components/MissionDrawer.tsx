@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CheckSquare, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import { Level, GameState } from '../types';
 import { renderInlineCode } from './ui/inlineCode';
@@ -34,7 +34,7 @@ const MissionTaskRow: React.FC<MissionTaskRowProps> = ({ description, isComplete
         </span>
       )}
       <div
-        className={`text-xs font-mono leading-snug mission-prose ${isCompleted ? 'line-through text-zinc-400 decoration-zinc-500' : 'text-zinc-300'}`}
+        className={`${isNext ? 'text-sm text-zinc-100' : 'text-xs text-zinc-300'} font-mono leading-snug mission-prose ${isCompleted ? 'line-through text-zinc-400 decoration-zinc-500' : ''}`}
       >
         {renderInlineCode(description)}
       </div>
@@ -71,6 +71,17 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
     window.addEventListener('resize', updateOverflowCue);
     return () => window.removeEventListener('resize', updateOverflowCue);
   }, [updateOverflowCue, visibleTasks.length]);
+
+  useLayoutEffect(() => {
+    const list = taskListRef.current;
+    const next = list?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!list || !next) return;
+    const bounds = list.getBoundingClientRect();
+    const task = next.getBoundingClientRect();
+    if (task.top < bounds.top) list.scrollTop += task.top - bounds.top;
+    else if (task.bottom > bounds.bottom) list.scrollTop += task.bottom - bounds.bottom;
+    updateOverflowCue();
+  }, [nextTask?.id, isExpanded, updateOverflowCue]);
 
   if (!isExpanded) {
     return (
@@ -141,12 +152,6 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         role="region"
         aria-label="Mission log"
       >
-        <div>
-          <h2 className="text-xs uppercase font-bold text-zinc-400 mb-1 tracking-widest">Target</h2>
-          <p className="text-xs text-zinc-300 font-mono leading-relaxed mission-prose">
-            {renderInlineCode(level.description ?? '')}
-          </p>
-        </div>
         <div className="min-h-0 flex-1 flex flex-col">
           <div className="flex items-center justify-between gap-2 mb-2">
             <h2 className="text-xs uppercase font-bold text-zinc-400 tracking-widest">
@@ -154,7 +159,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
             </h2>
             {remainingTasks > 0 && (
               <span role="status" className="text-xs text-orange-300 font-mono shrink-0">
-                ↓ {remainingTasks} more
+                ↓ {remainingTasks} more · Focus list: PgDn
               </span>
             )}
           </div>
@@ -185,11 +190,19 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
             {remainingTasks > 0 && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-7 bg-linear-to-t from-zinc-900 to-transparent"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-orange-500/40"
               />
             )}
           </div>
         </div>
+        <details className="order-last text-zinc-300">
+          <summary className="cursor-pointer text-xs uppercase font-bold text-zinc-400 tracking-widest focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+            Target
+          </summary>
+          <p className="mt-2 text-sm font-mono leading-relaxed mission-prose">
+            {renderInlineCode(level.description ?? '')}
+          </p>
+        </details>
       </div>
     </div>
   );

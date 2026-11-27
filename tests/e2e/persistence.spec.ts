@@ -3,7 +3,7 @@ import { startLevel, gotoCommand, expectCurrentDir, DEFAULT_DELAY, pressKey } fr
 
 test.describe('Persistence & State Survival', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?debug=outro');
     await page.evaluate(() => localStorage.clear());
   });
 
@@ -12,6 +12,35 @@ test.describe('Persistence & State Survival', () => {
       const screenshotPath = `test-results/failure-${testInfo.title.replace(/\s+/g, '_')}.png`;
       await page.screenshot({ path: screenshotPath, fullPage: true });
     }
+  });
+  test('restores the active attempt after reload without losing unlocked missions', async ({
+    page,
+  }) => {
+    await page.evaluate(() => localStorage.setItem('yazi-quest-unlocked-level', '5'));
+    await page.goto('/?intro=false');
+    await page.getByTestId('map-button').click();
+    await page.getByRole('button', { name: /SYSTEM AWAKENING/ }).click();
+    await expect(page.getByText('QUARANTINE ALERT', { exact: false })).toHaveCount(0);
+    await expect(page.getByRole('listbox', { name: 'File Browser' })).toBeFocused();
+    await page.keyboard.press('j');
+    await page.keyboard.press('k');
+    await page.keyboard.press('l');
+    const missionLog = page.getByRole('region', { name: 'Mission log' });
+    await expect(missionLog.locator('[aria-current="step"]')).toContainText('Inspect');
+    await page.reload();
+    await expect(missionLog.locator('[aria-current="step"]')).toContainText('Inspect');
+    await expectCurrentDir(page, 'datastore');
+    await page.getByTestId('map-button').click();
+    await expect(page.getByRole('button', { name: /CONTAINMENT BREACH/ })).toBeEnabled();
+  });
+  test('warns when an unreadable saved session cannot be replaced', async ({ page }) => {
+    const broken = '{"version":1,"state":{"fs":null}}';
+    await page.evaluate((value) => localStorage.setItem('yazi-quest-session-v1', value), broken);
+    await page.goto('/?intro=false');
+    await expect(page.getByRole('alert')).toContainText('Progress is not being saved');
+    await page.reload();
+    await expect(page.getByRole('alert')).toContainText('Progress is not being saved');
+    expect(await page.evaluate(() => localStorage.getItem('yazi-quest-session-v1'))).toBe(broken);
   });
 
   test('localStorage persists zoxide history across reloads', async ({ page }) => {

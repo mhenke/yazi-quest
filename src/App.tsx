@@ -79,6 +79,7 @@ import './glitch.css';
 import './glitch-thought.css';
 import type { FileNode, GameState } from './types';
 import { persistUnlockedLevelIndex, resetUnlockedLevel } from './utils/progressionStorage';
+import { hasProgressOverride, resetGameSession, saveGameSession } from './utils/gameSessionStorage';
 
 const HelpModal = lazy(() =>
   import('./components/HelpModal').then((m) => ({ default: m.HelpModal }))
@@ -103,22 +104,9 @@ const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): File
   });
 };
 
-const PROGRESS_OVERRIDE_PARAMS = [
-  'debug',
-  'ep',
-  'episode',
-  'lvl',
-  'level',
-  'mission',
-  'tasks',
-  'task',
-  'complete',
-  'startAtTask',
-];
-
 const shouldPersistFromUrl = (): boolean => {
   const params = new URLSearchParams(window.location.search);
-  return !PROGRESS_OVERRIDE_PARAMS.some((key) => params.has(key));
+  return !hasProgressOverride(params);
 };
 
 const useKeyboardFocusRing = (): boolean => {
@@ -150,6 +138,76 @@ const usePersistProgress = (
     if (shouldPersistProgress) persistUnlockedLevelIndex(levelIndex);
   }, [levelIndex, shouldPersistProgress]);
 };
+
+const usePersistSession = (gameState: GameState, enabled: boolean): boolean => {
+  const current = useRef(gameState);
+  const [saveFailed, setSaveFailed] = useState(false);
+  useLayoutEffect(() => {
+    current.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const save = () => {
+      if (current.current.levelIndex < LEVELS.length) saveGameSession(current.current);
+      else resetGameSession();
+    };
+    window.addEventListener('pagehide', save);
+    return () => window.removeEventListener('pagehide', save);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const timer = window.setTimeout(() => {
+      if (gameState.levelIndex >= LEVELS.length) {
+        resetGameSession();
+      } else {
+        setSaveFailed(!saveGameSession(gameState));
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [gameState, enabled]);
+  return saveFailed;
+};
+
+const SessionSaveWarning: React.FC<{ failed: boolean }> = ({ failed }) =>
+  failed ? (
+    <p
+      role="alert"
+      className="shrink-0 border-b border-amber-500/50 bg-zinc-900 px-3 py-2 text-sm text-amber-200"
+    >
+      Progress is not being saved. Check browser storage. An unreadable save is preserved until you
+      restart the current cycle.
+    </p>
+  ) : null;
+
+const useRestartCycle = (dispatch: React.Dispatch<Action>, shouldPersistProgress: boolean) =>
+  useCallback(() => {
+    resetSkipIntroRequested();
+    if (shouldPersistProgress) {
+      resetUnlockedLevel();
+      resetGameSession();
+    }
+    dispatch({ type: 'RESTART_CYCLE' });
+  }, [dispatch, shouldPersistProgress]);
+
+const useSearchConfirmation = (gameState: GameState, dispatch: React.Dispatch<Action>) =>
+  useCallback(() => {
+    const query = gameState.inputBuffer.trim();
+    if (!query) {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      return;
+    }
+    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
+    if (!currentDirNode) return;
+    const results = getRecursiveSearchResults(
+      gameState.fs,
+      gameState.inputBuffer,
+      gameState.showHidden,
+      gameState.currentPath
+    );
+    dispatch({ type: 'CONFIRM_SEARCH', query: gameState.inputBuffer, results });
+  }, [gameState, dispatch]);
 
 const useEpisodeBootTransition = (levelIndex: number, showEpisodeIntro: boolean) => {
   const [showBoot, setShowBoot] = useState(false);
@@ -340,6 +398,7 @@ function useToolbarActions(
       return;
     }
     resetUnlockedLevel();
+    resetGameSession();
     resetSkipIntroRequested();
     dispatch({ type: 'RESET_CURRENT_CYCLE' });
   }, [dispatch]);
@@ -410,6 +469,7 @@ export default function App() {
     gameState.unlockedLevelIndex,
     shouldPersistProgress
   );
+  const sessionSaveFailed = usePersistSession(gameState, shouldPersistProgress);
 
   // Use the Narrative System hook to handle thoughts and notifications
   useNarrativeSystem(gameState, dispatch);
@@ -1000,12 +1060,7 @@ export default function App() {
     });
   }, [gameState.levelIndex, gameState.levelStartFS, gameState.levelStartPath, dispatch]);
 
-  // Handle the end of the final level - trigger restart sequence
-  const handleRestartCycle = useCallback(() => {
-    resetSkipIntroRequested();
-    if (shouldPersistProgress) resetUnlockedLevel();
-    dispatch({ type: 'RESTART_CYCLE' });
-  }, [dispatch, shouldPersistProgress]);
+  const handleRestartCycle = useRestartCycle(dispatch, shouldPersistProgress);
 
   const handleBootComplete = useCallback(
     (options?: { isSkip?: boolean }) => {
@@ -1014,23 +1069,7 @@ export default function App() {
     [dispatch]
   );
 
-  const handleSearchConfirm = useCallback(() => {
-    const query = gameState.inputBuffer.trim();
-    if (!query) {
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      return;
-    }
-    const currentDirNode = getNodeByPath(gameState.fs, gameState.currentPath);
-    if (!currentDirNode) return;
-    const results = getRecursiveSearchResults(
-      gameState.fs,
-      gameState.inputBuffer,
-      gameState.showHidden,
-      gameState.currentPath
-    );
-
-    dispatch({ type: 'CONFIRM_SEARCH', query: gameState.inputBuffer, results });
-  }, [gameState, dispatch]);
+  const handleSearchConfirm = useSearchConfirmation(gameState, dispatch);
 
   const handleInputConfirm = useCallback(() => {
     const name = gameState.inputBuffer.trim();
@@ -1456,22 +1495,20 @@ export default function App() {
   const gameShell = (
     <>
       {!gameState.showEpisodeIntro && (
-        <LevelProgress
-          levels={LEVELS}
-          currentLevelIndex={gameState.levelIndex}
-          unlockedLevelIndex={gameState.unlockedLevelIndex}
-          thought={gameState.thought}
-          isMapOpen={Boolean(gameState.showMap)}
-          onToggleHint={handleToggleHint}
-          onToggleHelp={handleToggleHelp}
-          onToggleMap={handleToggleMap}
-          onReturnFocusToFiles={returnFocusToFiles}
-        />
-      )}
-
-      <main className="flex flex-col flex-1 min-h-0 min-w-0">
-        {!gameState.showEpisodeIntro && (
-          <>
+        <>
+          <LevelProgress
+            levels={LEVELS}
+            currentLevelIndex={gameState.levelIndex}
+            unlockedLevelIndex={gameState.unlockedLevelIndex}
+            thought={gameState.thought}
+            isMapOpen={Boolean(gameState.showMap)}
+            onToggleHint={handleToggleHint}
+            onToggleHelp={handleToggleHelp}
+            onToggleMap={handleToggleMap}
+            onReturnFocusToFiles={returnFocusToFiles}
+          />
+          <SessionSaveWarning failed={sessionSaveFailed} />
+          <main className="flex flex-col flex-1 min-h-0 min-w-0">
             <DiegeticPrompt
               threatLevel={gameState.threatLevel}
               mode={gameState.mode}
@@ -1620,18 +1657,16 @@ export default function App() {
                 onToggleMissionDrawer={toggleMissionDrawer}
               />
             </div>
-          </>
-        )}
-      </main>
+          </main>
 
-      {!gameState.showEpisodeIntro && (
-        <StatusBar
-          state={gameState}
-          level={currentLevel}
-          allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
-          onNextLevel={advanceLevel}
-          currentItem={currentItem}
-        />
+          <StatusBar
+            state={gameState}
+            level={currentLevel}
+            allTasksComplete={checkAllTasksComplete(gameState, currentLevel)}
+            onNextLevel={advanceLevel}
+            currentItem={currentItem}
+          />
+        </>
       )}
     </>
   );

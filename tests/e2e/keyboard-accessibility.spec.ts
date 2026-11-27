@@ -83,7 +83,7 @@ test('Mission Log renders inline key chips and counts clipped objectives', async
     ).length;
   });
   expect(clippedCount).toBeGreaterThan(0);
-  await expect(overflowCue).toHaveText(`↓ ${clippedCount} more`);
+  await expect(overflowCue).toHaveText(`↓ ${clippedCount} more · Focus list: PgDn`);
 });
 
 test('Quest Map episode tabs are keyboard-operable tabs', async ({ page }) => {
@@ -112,6 +112,18 @@ test('Mission Log marks the first incomplete objective as next', async ({ page }
   await page.keyboard.press('j');
   await page.keyboard.press('k');
   await expect(missionLog.locator('[aria-current="step"]')).toContainText('Infiltrate');
+  await page.keyboard.press('l');
+  await expect(missionLog.locator('[aria-current="step"]')).toContainText('Inspect');
+  const objectiveList = missionLog.getByRole('region', { name: 'Mission objectives' });
+  await expect
+    .poll(() =>
+      objectiveList.evaluate((list) => {
+        const task = list.querySelector('[aria-current="step"]')?.getBoundingClientRect();
+        const bounds = list.getBoundingClientRect();
+        return !!task && task.top >= bounds.top && task.bottom <= bounds.bottom;
+      })
+    )
+    .toBe(true);
 });
 
 test('search and filter keep focus and return it on Escape', async ({ page }) => {
@@ -144,8 +156,18 @@ test('window below the floor shows the width notice, not the file manager', asyn
   await expect(notice).toBeVisible();
   await expect(notice.getByRole('heading', { name: /1024 px/i })).toBeVisible();
   await expect(page.getByRole('listbox', { name: 'File Browser' })).toHaveCount(0);
+  await expect(notice).toContainText('screen magnifier');
+  await expect(notice).not.toContainText('reduce browser zoom');
   await expect(page.getByRole('region', { name: 'Keyboard required' })).toHaveCount(0);
 });
+test('narrow window explains the gameplay requirement during the intro', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.goto('/');
+  await expect(page.getByText(/Gameplay needs a 1024 CSS px window/)).toBeVisible();
+  await page.getByRole('button', { name: 'Skip Intro' }).click();
+  await expect(page.getByRole('region', { name: 'Window too narrow' })).toBeVisible();
+});
+
 test('EpisodeIntro gates workspace panes until the intro is completed', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('region', { name: 'Episode log' })).toBeVisible();

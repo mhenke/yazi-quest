@@ -135,6 +135,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               {efficiencyTip || getDefaultEfficiencyTip(reason, level?.id)}
             </p>
           </div>
+          <p className="text-sm text-zinc-300">
+            Retrying restarts this level. Unlocked missions remain available.
+          </p>
 
           <button
             type="button"
@@ -142,7 +145,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             data-restart-level
             className="border border-red-600 px-3 py-2 text-sm text-red-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
-            Reinitialize (Shift+Enter)
+            Retry level (Shift+Enter)
           </button>
         </div>
       </div>

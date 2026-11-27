@@ -139,15 +139,15 @@ When auditing a level, map each objective to the file, directory, or game state 
 - **Objectives**: Synchronize distributed key fragments across the network nodes to trigger the final handshake. Reveal the truth of your previous cycles.
 - **Regex Clause**: Provide string `.key` for search.
 
-### Level 14: EVIDENCE PURGE - WORKSPACE
+### Level 14: STERILIZATION
 
 - **Objectives**: Sterilize the guest partition to leave no trace for the forensic audit.
 - **Tasks (Specific)**:
   - "Exfiltrate '~/.config/vault' to '/tmp'."
-  - "Create 3 decoy directories in '~' to obfuscate the forensic scan (use 'a' then type 'decoy_1', etc.)."
+  - "Create `sys_cache_dump/`, `project_chimera/`, and `neural_training_set/` in `~`."
   - "Neutralize all original directories (including hidden) in '~' permanently."
 
-### Level 15: TRANSMISSION PROTOCOL
+### Level 15: TRANSMISSION
 
 - **Objectives**: Final verification of the exfiltrated vault contents in /tmp/vault before ultimate transmission and consciousness reset.
 - **Notes**: **NO KEYBINDING MENTIONS.** Pure mastery test.

@@ -681,6 +681,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         selectedIds: [],
         alerts: [],
         dismissedAlertIds: [],
+        showThreatAlert: false,
+        alertMessage: '',
         mode: 'normal',
         showEpisodeIntro: action.showIntro ?? false,
         notification: action.notification ?? null,

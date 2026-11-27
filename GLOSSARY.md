@@ -68,6 +68,10 @@ _Avoid_: Highest unlocked level, saved progress
 How far the player has earned access to the curriculum, measured by the furthest unlocked level rather than the active level.
 _Avoid_: Active level, current objective, level completion
 
+**Active level attempt**:
+The player's current work within the **Active level**, including its completed **Tasks**, simulated filesystem, and remaining challenge limits. It is distinct from **Unlocked progress** and ends when the level is restarted or advanced.
+_Avoid_: Unlocked progress, cycle
+
 **Cycle**:
 One pass through the escape narrative. A subsequent cycle is New Game+, distinct from retrying a failed level.
 _Avoid_: Level restart, episode

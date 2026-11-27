@@ -5,6 +5,7 @@ import { Episode } from '../types';
 import { paletteFor } from '../constants/palette';
 import { applyDynamicGlitch } from '../utils/dynamicGlitch';
 import { useGlobalInput } from '../GlobalInputContext';
+import { useFileManagerView } from '../hooks/useViewportFloor';
 import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
 
 interface EpisodeIntroProps {
@@ -79,6 +80,62 @@ const EpisodeIntroFooter: React.FC<{
   </div>
 );
 
+const IntroRequirements: React.FC = () => {
+  const canPlay = useFileManagerView();
+  return (
+    <p className="shrink-0 text-sm leading-relaxed text-zinc-300">
+      {!canPlay && 'Gameplay needs a 1024 CSS px window and Ctrl/Alt. '}
+      Progress and settings save in this browser when storage is available.
+    </p>
+  );
+};
+
+const splitEpisodeLore = (episode: Episode): string[][] => {
+  const result: string[][] = [];
+  if (!episode || !episode.lore) return result;
+  let currentSection: string[] = [];
+  episode.lore.forEach((line) => {
+    if (line === '') {
+      if (currentSection.length > 0) {
+        result.push(currentSection);
+        currentSection = [];
+      }
+    } else {
+      currentSection.push(line);
+    }
+  });
+  if (currentSection.length > 0) result.push(currentSection);
+  return result;
+};
+
+const IntroProgress: React.FC<{ sections: string[][]; sectionIndex: number }> = ({
+  sections,
+  sectionIndex,
+}) => (
+  <div className="shrink-0 flex items-center gap-2 text-zinc-400 text-sm">
+    {sections.map((_, idx) => (
+      <div
+        key={idx}
+        className={`h-1 rounded-full transition-all duration-300 ${
+          idx < sectionIndex
+            ? 'w-8 bg-orange-500'
+            : idx === sectionIndex
+              ? 'w-12 bg-orange-400'
+              : 'w-4 bg-zinc-800'
+        }`}
+      />
+    ))}
+  </div>
+);
+
+const TypingCursor: React.FC<{ lastLine: boolean; showContinue: boolean }> = ({
+  lastLine,
+  showContinue,
+}) =>
+  lastLine && !showContinue ? (
+    <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
+  ) : null;
+
 export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   episode,
   onComplete,
@@ -92,28 +149,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
   const logRef = useRef<HTMLDivElement>(null);
   const visibleSectionRef = useRef<HTMLDivElement>(null);
 
-  // Split lore into sections (separated by empty strings) - useMemo to avoid recalculation
-  const sections = useMemo(() => {
-    const result: string[][] = [];
-    if (!episode || !episode.lore) return result;
-    let currentSection: string[] = [];
-
-    episode.lore.forEach((line) => {
-      if (line === '') {
-        if (currentSection.length > 0) {
-          result.push(currentSection);
-          currentSection = [];
-        }
-      } else {
-        currentSection.push(line);
-      }
-    });
-    if (currentSection.length > 0) {
-      result.push(currentSection);
-    }
-
-    return result;
-  }, [episode]);
+  const sections = useMemo(() => splitEpisodeLore(episode), [episode]);
 
   const fullText = sectionIndex < sections.length ? sections[sectionIndex].join('\n') : '';
 
@@ -288,7 +324,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
 
   return (
     <main className="absolute inset-0 z-[80] bg-black flex flex-col items-center overflow-y-auto p-4 sm:p-8 font-mono select-none">
-      <div className="my-auto w-full max-w-3xl max-h-full flex flex-col gap-4 sm:gap-6">
+      <div className="my-auto w-full max-w-3xl max-h-full flex flex-col gap-3 sm:gap-6">
         {/* Header */}
         <div
           className={`shrink-0 flex flex-wrap items-start gap-x-4 gap-y-3 border-b-2 border-dashed ${paletteFor(ep.color).border} pb-4 duration-1000`}
@@ -313,6 +349,7 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
           </div>
           <SkipIntroButton className="shrink-0" />
         </div>
+        <IntroRequirements />
 
         {/* Content - Current Section */}
         <div
@@ -349,30 +386,14 @@ export const EpisodeIntro: React.FC<EpisodeIntroProps> = ({
                   className={`text-lg leading-relaxed border-l-2 border-zinc-800 pl-4 ${getSectionStyle(line)}`}
                 >
                   {renderLine(line)}
-                  {idx === arr.length - 1 && !showContinue && (
-                    <span className="inline-block w-2.5 h-5 bg-orange-500 ml-1 animate-pulse" />
-                  )}
+                  <TypingCursor lastLine={idx === arr.length - 1} showContinue={showContinue} />
                 </p>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Progress Indicator */}
-        <div className="shrink-0 flex items-center gap-2 text-zinc-400 text-sm">
-          {sections.map((_, idx) => (
-            <div
-              key={idx}
-              className={`h-1 rounded-full transition-all duration-300 ${
-                idx < sectionIndex
-                  ? 'w-8 bg-orange-500'
-                  : idx === sectionIndex
-                    ? 'w-12 bg-orange-400'
-                    : 'w-4 bg-zinc-800'
-              }`}
-            />
-          ))}
-        </div>
+        <IntroProgress sections={sections} sectionIndex={sectionIndex} />
 
         {/* Footer */}
         <EpisodeIntroFooter

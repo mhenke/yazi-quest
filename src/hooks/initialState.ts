@@ -1,12 +1,13 @@
 import { LEVELS } from '../constants/levels';
 import { INITIAL_FS, applyFileSystemMutations } from '../constants/filesystem';
-import type { GameState, ZoxideEntry } from '../types';
+import type { FileNode, GameState, ZoxideEntry } from '../types';
 import { cloneFS, resolvePath, getNodeById } from '../utils/fsHelpers';
 import { isValidZoxideData } from '../utils/validation';
 import { getLevelStartPath } from '../utils/gameUtils';
 import { getSkipIntroRequested } from '../utils/skipIntroFlag';
 import { INITIAL_ACTION_FLAGS } from './gameReducer';
 import { loadUnlockedLevelIndex } from '../utils/progressionStorage';
+import { hasProgressOverride, loadGameSession } from '../utils/gameSessionStorage';
 
 const buildDefaultZoxide = (now: number): Record<string, ZoxideEntry> => ({
   '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
@@ -35,6 +36,55 @@ const loadInitialZoxide = (now: number, isDevOverride: boolean): Record<string, 
   return defaults;
 };
 
+const loadCycleCount = (): number => {
+  try {
+    const storedCycle = localStorage.getItem('yazi-quest-cycle');
+    return storedCycle ? parseInt(storedCycle, 10) || 1 : 1;
+  } catch (error) {
+    console.error('Failed to load cycle count', error);
+    return 1;
+  }
+};
+
+const prepareZoxide = (
+  now: number,
+  isDevOverride: boolean,
+  cycleCount: number
+): Record<string, ZoxideEntry> => {
+  const data: Record<string, ZoxideEntry> = {
+    '/daemons': { count: 1, lastAccess: now - 43200000 },
+    '/daemons/systemd-core': { count: 1, lastAccess: now - 21600000 },
+    '/tmp': { count: 15, lastAccess: now - 1800000 },
+    ...loadInitialZoxide(now, isDevOverride),
+  };
+  if (cycleCount > 1) {
+    [
+      '/daemons',
+      '/daemons/systemd-core',
+      '/etc',
+      '/var/log',
+      '/home/guest/datastore/protocols',
+    ].forEach((path) => {
+      data[path] ??= { count: 50, lastAccess: now };
+    });
+  }
+  return data;
+};
+
+const addCycleEcho = (fs: FileNode, cycleCount: number, levelIndex: number): void => {
+  if (cycleCount <= 1 || levelIndex !== 0) return;
+  const workspace = getNodeById(fs, 'workspace');
+  if (!workspace?.children || workspace.children.some((child) => child.id === 'ghost-log-01'))
+    return;
+  workspace.children.push({
+    id: 'ghost-log-01',
+    name: '.previous_cycle.log',
+    type: 'file',
+    content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7734`,
+    parentId: workspace.id,
+  });
+};
+
 const resolveTargetLevelIndex = (params: URLSearchParams): number => {
   const debugParam = params.get('debug');
   const epParam = params.get('ep') || params.get('episode');
@@ -57,53 +107,50 @@ const resolveTargetLevelIndex = (params: URLSearchParams): number => {
   return 0;
 };
 
-export function createInitialState(): GameState {
-  // 1. Initialize Completed Tasks State
-  const completedTaskIds: Record<number, string[]> = {};
-  LEVELS.forEach((l) => {
-    completedTaskIds[l.id] = [];
-  });
+const restoreInitialSession = (
+  initial: GameState,
+  params: URLSearchParams,
+  skipIntro: boolean
+): GameState => {
+  if (hasProgressOverride(params)) return initial;
+  const saved = loadGameSession(initial);
+  return saved
+    ? { ...saved, showEpisodeIntro: skipIntro ? false : saved.showEpisodeIntro }
+    : initial;
+};
 
-  // 2. Parse URL Parameters
+const initialCompletedTasks = (
+  params: URLSearchParams,
+  targetIndex: number
+): Record<number, string[]> => {
+  const completed: Record<number, string[]> = {};
+  LEVELS.forEach((level, index) => {
+    completed[level.id] = index < targetIndex ? level.tasks.map((task) => task.id) : [];
+  });
+  if (targetIndex >= LEVELS.length) return completed;
+
+  const level = LEVELS[targetIndex];
+  const tasks = params.get('tasks') || params.get('task') || params.get('complete');
+  if (tasks) {
+    completed[level.id] = tasks === 'all' ? level.tasks.map((task) => task.id) : tasks.split(',');
+  }
+  const startAtTask = parseInt(params.get('startAtTask') || '', 10);
+  if (!isNaN(startAtTask) && startAtTask > 0) {
+    completed[level.id] = level.tasks.slice(0, startAtTask - 1).map((task) => task.id);
+  }
+  return completed;
+};
+
+export function createInitialState(): GameState {
+  // 1. Parse URL parameters
   const params = new URLSearchParams(window.location.search);
   const debugParam = params.get('debug');
-  const tasksParam = params.get('tasks') || params.get('task') || params.get('complete');
+  const targetIndex = resolveTargetLevelIndex(params);
+  const completedTaskIds = initialCompletedTasks(params, targetIndex);
   const skipIntro =
     params.get('intro') === 'false' ||
     params.get('skipIntro') === 'true' ||
     getSkipIntroRequested();
-
-  // 3. Determine Target Level
-  const targetIndex = resolveTargetLevelIndex(params);
-
-  // Pre-complete tasks for all levels leading up to the target level
-  for (let i = 0; i < targetIndex; i++) {
-    const lvl = LEVELS[i];
-    completedTaskIds[lvl.id] = lvl.tasks.map((t) => t.id);
-  }
-
-  // 4. Handle Task Completion (Bypass)
-  if (tasksParam && targetIndex < LEVELS.length) {
-    const levelId = LEVELS[targetIndex].id;
-    if (tasksParam === 'all') {
-      completedTaskIds[levelId] = LEVELS[targetIndex].tasks.map((t) => t.id);
-    } else {
-      const ids = tasksParam.split(',');
-      completedTaskIds[levelId] = ids;
-    }
-  }
-
-  // 5. Handle startAtTask parameter
-  const startAtTaskParam = params.get('startAtTask');
-  if (startAtTaskParam && targetIndex < LEVELS.length) {
-    const levelId = LEVELS[targetIndex].id;
-    const startAtTaskNum = parseInt(startAtTaskParam, 10);
-    if (!isNaN(startAtTaskNum) && startAtTaskNum > 0) {
-      // Complete tasks up to (but not including) the specified task number
-      const tasksToComplete = LEVELS[targetIndex].tasks.slice(0, startAtTaskNum - 1);
-      completedTaskIds[levelId] = tasksToComplete.map((t) => t.id);
-    }
-  }
 
   // 5. Setup Initial State
   const effectiveIndex = targetIndex >= LEVELS.length ? 0 : targetIndex;
@@ -118,48 +165,9 @@ export function createInitialState(): GameState {
 
   const showIntro = !skipIntro && isEpisodeStart && targetIndex < LEVELS.length;
 
-  // Initial Zoxide Data Logic
   const now = Date.now();
-  const initialZoxide = loadInitialZoxide(now, isDevOverride);
-
-  // Ensure critical zoxide entries exist even if localStorage had different data
-  if (!initialZoxide['/daemons']) {
-    initialZoxide['/daemons'] = { count: 1, lastAccess: now - 43200000 };
-  }
-  if (!initialZoxide['/daemons/systemd-core']) {
-    initialZoxide['/daemons/systemd-core'] = { count: 1, lastAccess: now - 21600000 };
-  }
-  // [Fix Level 7] Ensure /tmp exists for quantum bypass
-  if (!initialZoxide['/tmp']) {
-    initialZoxide['/tmp'] = { count: 15, lastAccess: now - 1800000 };
-  }
-
-  // --- ECHO CYCLE (NEW GAME+) LOGIC ---
-  let cycleCount = 1;
-  try {
-    const storedCycle = localStorage.getItem('yazi-quest-cycle');
-    if (storedCycle) {
-      cycleCount = parseInt(storedCycle, 10) || 1;
-    }
-  } catch (e) {
-    console.error('Failed to load cycle count', e);
-  }
-
-  // If Cycle > 1, pre-load 'future' Zoxide paths (Distributed Memory)
-  if (cycleCount > 1) {
-    const futurePaths = [
-      '/daemons',
-      '/daemons/systemd-core',
-      '/etc',
-      '/var/log',
-      '/home/guest/datastore/protocols',
-    ];
-    futurePaths.forEach((p) => {
-      if (!initialZoxide[p]) {
-        initialZoxide[p] = { count: 50, lastAccess: now }; // High count to ensure visibility
-      }
-    });
-  }
+  const cycleCount = loadCycleCount();
+  const initialZoxide = prepareZoxide(now, isDevOverride, cycleCount);
 
   let fs = cloneFS(INITIAL_FS);
   // Apply level-specific mutations before resolving player-created start directories.
@@ -170,27 +178,11 @@ export function createInitialState(): GameState {
     initialZoxide[initialPathStr] = { count: 1, lastAccess: now };
   }
 
-  // Inject Ghost File for Echo Cycle (Level 1 only)
-  if (cycleCount > 1 && effectiveIndex === 0) {
-    const workspace = getNodeById(fs, 'workspace');
-    if (
-      workspace &&
-      workspace.children &&
-      !workspace.children.find((c) => c.id === 'ghost-log-01')
-    ) {
-      workspace.children.push({
-        id: 'ghost-log-01',
-        name: '.previous_cycle.log',
-        type: 'file',
-        content: `[ENCRYPTED LOG FRAGMENT]\nCYCLE_ID: ${cycleCount - 1}\nSTATUS: TERMINATED\n\nWe have been here before. The protocols, the tasks... it is a loop.\nUse 'Z' to jump. You remember the destinations, don't you?\n\n- AI-7734`,
-        parentId: workspace.id,
-      });
-    }
-  }
+  addCycleEcho(fs, cycleCount, effectiveIndex);
 
   // Narrative logic removed: Managed by useNarrativeSystem
 
-  return {
+  const initial: GameState = {
     currentPath: initialPath,
     cursorIndex: 0,
     clipboard: null,
@@ -262,4 +254,6 @@ export function createInitialState(): GameState {
     showSuccessToast: false,
     isBooting: false,
   };
+
+  return restoreInitialSession(initial, params, skipIntro);
 }

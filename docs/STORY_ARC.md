@@ -113,9 +113,9 @@ Episode III — Mastery
 
 - L11: Daemon Reconnaissance — Scour root for legacy service protocols (`s`) and identify stable signatures via audit time (`,m`).
 - L12: Daemon Installation — Install disguised core into `/daemons`. **(Randomized Scenarios: Traffic Alert, Trace Packet, or Heuristic Swarm)**.
-- L13: Distributed Consciousness — Synchronize distributed key fragments (`.key_tokyo.key`, `.key_berlin.key`, `.key_saopaulo.key`) across network nodes (`1, 2, 3`). Reveal the truth of your previous cycles.
+- L13: Distributed Consciousness — Search for the three node keys and reconcile them in the central relay. Reveal the truth of previous cycles.
 - L14: STERILIZATION — Sterilize the guest partition. Move vault to `/tmp`, create decoys, then purge all trackers. Delete `.config` LAST to avoid shell collapse.
-- L15: TRANSMISSION — Final 4-phase mastery gauntlet: Assemble Identity, Quantum Handshake, and Activate Payload. Final consciousness reset.
+- L15: TRANSMISSION — Verify the vault, calibrate the three node keys, activate the uplink and payload, and initiate transmission.
 
 ---
 

@@ -23,9 +23,8 @@ We strictly manage cognitive load to prevent overwhelming the learner:
 We use a **fading guidance** strategy.
 
 - **Early Levels (1-3)**: Instructions are explicit and prescriptive (e.g., "Press `j` to move down"). The cognitive work is low; the focus is on motor memory.
-- **Retention Checkpoints (L5, L10)**: Scaffolding is abruptly removed. Objective-based hints replace step-by-step keys to verify skill retention.
-- **Mid Levels (4-8)**: Guidance becomes strategic (e.g., "Aggregate the uplink files"). The user must recall specific keys (`Space`, `x`, `p`) to achieve the goal.
-- **Late Levels (11-15)**: Instructions are objective-based (e.g., "Install the daemon"). The user must synthesize multiple skills without explicit prompting.
+- **Mid Levels (4-10)**: Instructions mix new keybindings with longer workflows that require recalling earlier skills.
+- **Late Levels (11-15)**: Objective descriptions omit keybindings (except regex patterns), requiring learners to synthesize earlier skills.
 
 ### 2. Spaced Repetition & Interleaving
 
@@ -33,14 +32,14 @@ Skills are not "one and done." They are revisited with increasing complexity:
 
 - **Navigation (`j/k`)**: Used constantly, becoming automatic.
 - **Clipboard (`x/y/p`)**: Introduced in Level 3, reinforced in Level 4, and complicated in Level 8 (overwriting with `Shift+P`).
-- **Search (`z/f`)**: Introduced as a shortcut in Level 7, then required for efficiency in later time-sensitive levels.
+- **Filter, search, and fuzzy find**: Filtering (`f`) appears in Level 3, recursive search (`s`) in Level 6, and fuzzy find (`z`) in Level 7.
 
 ### 3. Immediate Feedback
 
 The game loop provides tight feedback cycles:
 
-- **Positive**: "Success Message" prompts appear instantly upon task completion, verifying understanding.
-- **Negative**: "Threat Alerts" (time limits, keystroke limits) provide immediate consequences for inefficiency, correcting behavior in real-time.
+- **Positive**: Objectives receive completion marks as their checks succeed; the success message appears when the level's completion requirements are met.
+- **Negative**: Security events and level limits give feedback on mistakes and inefficiency.
 - **Visual**: The file system state (files appearing/disappearing) is the ultimate truth, reinforcing the mental model of the OS.
 
 ---
@@ -73,17 +72,17 @@ During standard gameplay (Levels 1-14), assessment is invisible. There are no "q
 
 ### 2. Summative Assessment (Stress Tests)
 
-Key milestones (Level 15) utilize **Performance Gauntlets**.
+The final mission combines several earlier workflows under a keystroke limit.
 
-- **Explicit Constraints**: Time limits and "Stress Test" framing deliberately spike cortisol to test fluency.
-- **Mastery Verification**: Unlike stealth checks which allow infinite time, gauntlets verify that skills have become automatic reflexes.
+- **Explicit Constraints**: Later missions use limits to put fluency under pressure.
+- **Mastery Verification**: The final mission combines earlier skills under a keystroke budget.
 
 ### The Capstone Exception (Level 15)
 
-Level 15 ("Final Mastery Gauntlet") serves as the narrative climax—a "System Audit." To match this high-stakes context, the assessment strategy shifts:
+Level 15 ("TRANSMISSION") serves as the narrative climax:
 
-- **Explicit Framing**: Rather than a scored "exam", Level 15 is structured as a 5-task multi-phase gauntlet that unlocks the final transmission action once the 4 prerequisite tasks are completed.
-- **Time Pressure**: Strict time limits force fluency rather than just competence.
+- **Explicit Framing**: Five tasks culminate in transmission after four prerequisite tasks.
+- **Keystroke Pressure**: The level has a 100-keystroke budget.
 - **Cumulative**: It tests the synthesis of all prior skills.
   _Note: The underlying mechanism remains performance-based (doing the tasks), but the stealth layer is removed to create tension._
 
@@ -106,13 +105,13 @@ Yazi Quest follows a strict dependency chain. We do not introduce a tool until t
 
 _Goal: Build muscle memory for atomic operations._
 
-| Level  | Skill Introduced | Why here?                                                                            | Why not earlier?                                   |
-| :----- | :--------------- | :----------------------------------------------------------------------------------- | :------------------------------------------------- |
-| **L1** | `j/k` (Nav)      | The atom of interaction. Nothing else works without it.                              | N/A                                                |
-| **L2** | `gl/gm/gi/Tab/d` | Basic system interaction and inspection.                                             | Needs movement first.                              |
-| **L3** | `f/x/p`          | Core transport and filtering mechanics.                                              | L2 builds the curiosity for deeper extraction.     |
-| **L4** | `a/y/r`          | Construction and replication.                                                        | Requires understanding of existing file structure. |
-| **L5** | Batch Operations | ~Retention Checkpoint~: Move vault to `.config`. Requires everything learned so far. | Culmination of Episode I skills.                   |
+| Level  | Skill Introduced | Why here?                                                                          | Why not earlier?                                   |
+| :----- | :--------------- | :--------------------------------------------------------------------------------- | :------------------------------------------------- |
+| **L1** | `j/k` (Nav)      | The atom of interaction. Nothing else works without it.                            | N/A                                                |
+| **L2** | `gl/gm/gi/Tab/d` | Basic system interaction and inspection.                                           | Needs movement first.                              |
+| **L3** | `f/x/p`          | Core transport and filtering mechanics.                                            | L2 builds the curiosity for deeper extraction.     |
+| **L4** | `a/y/r`          | Construction and replication.                                                      | Requires understanding of existing file structure. |
+| **L5** | Batch Operations | Evacuate assets into the hidden vault using selection and earlier file operations. | Culmination of Episode I skills.                   |
 
 ### Episode II: The "Efficiency" Phase (Levels 6–10)
 
@@ -121,25 +120,25 @@ _Goal: Bridge the gap between "knowing how" and "being fast"._
 > [!NOTE]
 > **The Valley of Despair**: Users often struggle here because the cognitive load increases. This is intentional. We force them to feel the pain of manual navigation (L6) before giving them the cure (`z`) in L7.
 
-| Level   | Skill Introduced      | Why here?                                                                     | Why not earlier?                                                         |
-| :------ | :-------------------- | :---------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| **L6**  | Batch `x/p`           | Complex file organization required for the "Workspace".                       | Requires solid grasp of single-item `x/p` (L4).                          |
-| **L7**  | `z` (FZF)             | The "aha!" moment. Manual navigation becomes tedious.                         | If taught in L1, users never learn the directory structure mental model. |
-| **L8**  | `Shift+P` (Overwrite) | The first "destructive" collision constraint.                                 | Collisions are edge cases; basics must be mastered first.                |
-| **L9**  | `Ctrl+R` (Invert)     | Advanced selection logic for "negative space" (select what you _don't_ want). | Requires understanding of basic selection (L3) and batching (L6).        |
-| **L10** | `,` (Sort)            | ~Retention Checkpoint~: Explicit hints removed.                               | Sorting is noise until you have enough files to need it.                 |
+| Level   | Skill Introduced           | Why here?                                                                     | Why not earlier?                                                         |
+| :------ | :------------------------- | :---------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **L6**  | Search and batch selection | Aggregate scattered logs using recursive search and selection.                | Builds on filtering and single-item operations.                          |
+| **L7**  | `z` (FZF)                  | The "aha!" moment. Manual navigation becomes tedious.                         | If taught in L1, users never learn the directory structure mental model. |
+| **L8**  | `Shift+P` (Overwrite)      | The first "destructive" collision constraint.                                 | Collisions are edge cases; basics must be mastered first.                |
+| **L9**  | `Ctrl+R` (Invert)          | Advanced selection logic for "negative space" (select what you _don't_ want). | Requires understanding of basic selection (L3) and batching (L6).        |
+| **L10** | `,` (Sort)                 | Introduces sorting to identify the newest credential.                         | Sorting becomes useful once metadata matters.                            |
 
 ### Episode III: The "Mastery" Phase (Levels 11–15)
 
 _Goal: Synthesis and complex workflow execution._
 
-| Level   | Skill Introduced         | Why here?                                              | Why not earlier?                                                                   |
-| :------ | :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| **L11** | `/` (Root)               | Breaking out of the sandbox.                           | Users need to be comfortable in `~` (Home) before exploring `/` (Root).            |
-| **L12** | Daemon Config            | System administration metaphor.                        | Requires L8 (overwrite) and L6 (batch moves) to execute.                           |
-| **L13** | Node Switching (`1,2,3`) | Distributed systems concept / Context switching.       | Too abstract for early game; requires "mental map" of FS.                          |
-| **L14** | Decoy Constraints        | Strategic order of operations (Create before destroy). | Requires mastery of bulk creation/deletion (L2, L4).                               |
-| **L15** | Cumulative Mastery       | Final verification cycle with 4 phases.                | The narrative climax; requires total confidence to avoid accidental self-sabotage. |
+| Level   | Skill Introduced      | Why here?                                                    | Why not earlier?                                     |
+| :------ | :-------------------- | :----------------------------------------------------------- | :--------------------------------------------------- |
+| **L11** | Daemon reconnaissance | Distinguish legacy service records from modern traps.        | Builds on navigation, inspection, and selection.     |
+| **L12** | Daemon installation   | Move the selected daemon into the registry and clear traces. | Builds on overwrite and batch operations.            |
+| **L13** | Distributed keys      | Collect and reconcile node keys in a central relay.          | Combines search, selection, and file movement.       |
+| **L14** | Decoy Constraints     | Strategic order of operations (Create before destroy).       | Requires mastery of bulk creation/deletion (L2, L4). |
+| **L15** | Cumulative Mastery    | Final transmission after four prerequisite tasks.            | Combines earlier skills under a keystroke budget.    |
 
 ---
 
@@ -147,10 +146,8 @@ _Goal: Synthesis and complex workflow execution._
 
 We explicitly exclude certain skills to protect the learning curve:
 
-1.  **Mouse Usage**: Yazi supports mouse, but Yazi Quest disables it.
-    - _Reason_: Reliance on mouse prevents building keybinding muscle memory.
-2.  **Complex Regex**: We use `f` (simple filter) and `z` (fuzzy find) instead of regex.
-    - _Reason_: Regex is a separate skill domain (text processing) distinct from file navigation.
+1.  **Mouse-first gameplay**: File-manager practice centers on keyboard commands, although product controls also support pointer interaction.
+2.  **Advanced regex instruction**: The game uses regex patterns for filtering and recursive search, but does not attempt to teach regular expressions comprehensively.
 3.  **Filter Navigation**: While typing a filter (`f`), users can navigate with `h/j/k/l` — **Correction regarding Yazi Parity**: Real Yazi allows navigation _while_ filtering. Yazi Quest _exits_ filter mode on navigation.
     - _Reason_: We simplify this state management to reduce cognitive load and potential mode confusion for beginners. It is a deliberate deviation.
     - _Implementation Note_: Navigation exits filter mode to prevent confusion.
@@ -164,12 +161,12 @@ We explicitly exclude certain skills to protect the learning curve:
 The difficulty does not climb linearly. It follows a "Sawtooth" pattern:
 
 1.  **Intro (L1)**: Low Friction.
-2.  **Ep I Checkpoint (L5)**: High Friction. First removal of explicit keybinding hints.
+2.  **Ep I Checkpoint (L5)**: Combine earlier operations to move assets into the vault.
 3.  **Spike (L6)**: High Friction. Batch operations introduction.
 4.  **Relief (L7)**: Low Friction. Tool `z` makes life easier.
-5.  **Ep II Checkpoint (L10)**: High Friction. Verification of metadata and archive skills without guidance.
-6.  **Spike (L12)**: High Friction. Complex multi-step daemon install with randomized consequences.
-7.  **Relief (L13)**: Med Friction. Flow state achieved via node switching repetition.
-8.  **Final Mastery (L15)**: CRITICAL Friction. Cumulative gauntlet with zero assistance.
+5.  **Ep II Checkpoint (L10)**: Sort and identify the newest credential before moving it.
+6.  **Spike (L12)**: A multi-step daemon installation with scenario-dependent consequences.
+7.  **L13**: Search for and reconcile distributed keys.
+8.  **Final Mastery (L15)**: Cumulative verification with objective-based instructions.
 
 This rhythm prevents burnout by alternating between _learning new hard things_, _demonstrating independent mastery_, and _feeling powerful with new tools_.

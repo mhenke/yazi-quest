@@ -57,8 +57,8 @@ export const RequirementNotice: React.FC<{ reason: RequirementReason }> = ({ rea
               not be Yazi.
             </p>
             <p className="touch-gate__body">
-              Widen the window, or reduce browser zoom to 100% or lower, and the mission will start
-              normally.
+              Widen the window or use a larger display. To enlarge the game while keeping all three
+              panes, try your operating system&apos;s screen magnifier and pan across the screen.
             </p>
             <p className="touch-gate__hint text-zinc-400" style={{ textWrap: 'pretty' }}>
               A keyboard with Ctrl and Alt is also required

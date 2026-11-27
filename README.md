@@ -24,6 +24,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 - **Memory Wipe Twist** - A conclusion that recontextualizes everything
 - **Real Yazi Simulation** - Authentic keybindings and file manager behavior
 - **Quest Map** (Alt+M) - Track objectives, skills, and progression. “Restart current cycle” asks for confirmation before clearing that cycle's progress and simulated filesystem; the cycle number stays the same.
+- **Session recovery** - The active level, simulated files, objectives, challenge counters, and settings are saved in this browser. Clearing site storage removes them.
 - **Debug Parameters** - `?lvl=5`, `?ep=2`, `?tasks=all`, `?intro=false`, `FORCE_SCENARIO` (see CONTRIBUTING.md)
 
 ### The Haunted Machine (Narrative Features)
@@ -42,8 +43,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 
 [Play Yazi Quest](https://mhenke.github.io/yazi-quest/)
 
-Designed for desktop browsers with a physical keyboard. Touch-only mobile gameplay
-is outside the current scope; desktop zoom and narrow windows remain in scope.
+Designed for desktop browsers with a hardware keyboard and a window at least 1024 CSS pixels wide for the three-pane file manager. On a larger display, an operating-system screen magnifier can enlarge the view without reducing the CSS viewport. Touch-primary gameplay is outside the current scope.
 
 ## Run Locally
 
