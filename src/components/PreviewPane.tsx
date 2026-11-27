@@ -82,9 +82,11 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
                 <img
                   src={node.content}
                   alt={node.name}
+                  width={640}
+                  height={360}
                   loading="lazy"
                   decoding="async"
-                  className="max-w-full max-h-full object-contain rounded shadow-lg"
+                  className="w-auto h-auto max-w-full max-h-full object-contain rounded shadow-lg"
                 />
               </div>
             )}

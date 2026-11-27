@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 import { ChevronRight, Scissors, Copy } from 'lucide-react';
 import { FileNode, Linemode } from '../types';
-import { BASE_TIME } from '../constants/timings';
-import { computeNodeBytes, formatBytes } from '../utils/sizeHelpers';
+import { computeNodeBytes, formatBytes, getDeterministicTimestamp } from '../utils/sizeHelpers';
 import { getFileStyle as resolveFileStyle } from './fileIcon';
 
 interface FileSystemItemProps {
@@ -30,22 +29,7 @@ const formatSize = (node: FileNode, dirCount: number | null) => {
 };
 
 const getFakeDate = (node: FileNode) => {
-  // Use actual modifiedAt if available, otherwise fallback to stable fake date
-  if (node.modifiedAt) {
-    const date = new Date(node.modifiedAt);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-  }
-
-  // Fallback: Generate stable date from hash
-  let hash = 0;
-  for (let i = 0; i < node.id.length; i++) {
-    hash = (hash << 5) - hash + node.id.charCodeAt(i);
-    hash |= 0;
-  }
-  // Keep undated files on the same historical clock as the rest of the simulation.
-  const baseTime = BASE_TIME;
-  const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
-  const date = new Date(baseTime - offset);
+  const date = new Date(getDeterministicTimestamp(node));
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 

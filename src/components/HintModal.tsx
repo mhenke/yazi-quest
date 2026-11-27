@@ -10,6 +10,7 @@ interface HintModalProps {
   stage: number;
   onClose: () => void;
   onNextStage: () => void;
+  returnFocusTo?: React.RefObject<HTMLElement | null>;
 }
 
 const HINT_STAGE_KEYS = ['nudge', 'command', 'walkthrough'] as const;
@@ -21,8 +22,14 @@ const HINT_STAGE_LABELS = [
 
 const HINT_CHIP_CLASS = 'bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-xs font-mono';
 
-export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNextStage }) => {
-  const panelRef = useOverlayFocus();
+export const HintModal: React.FC<HintModalProps> = ({
+  hint,
+  stage,
+  onClose,
+  onNextStage,
+  returnFocusTo,
+}) => {
+  const panelRef = useOverlayFocus(true, undefined, returnFocusTo);
   const clampedStage = Math.max(0, Math.min(2, stage));
   const displayText = hint[HINT_STAGE_KEYS[clampedStage]];
   const stageLabel = HINT_STAGE_LABELS[clampedStage];
@@ -51,13 +58,13 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
       </p>
 
       <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-zinc-400 font-mono mt-1">
-        <span>Shift+Enter or Esc to close</span>
+        <span>Practice keys while open · Esc to close</span>
         <div className="flex items-center gap-3">
           {clampedStage < 2 && onNextStage && (
             <button
               type="button"
               onClick={onNextStage}
-              className="min-h-6 px-2 py-1 border border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="min-h-9 px-3 py-1.5 border border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
               More detail (Alt+H)
             </button>
@@ -65,7 +72,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
           <button
             type="button"
             onClick={onClose}
-            className="min-h-6 px-2 py-1 text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="min-h-9 px-3 py-1.5 text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             Close
           </button>

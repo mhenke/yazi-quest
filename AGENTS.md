@@ -1,15 +1,14 @@
 # AGENTS.md — Yazi Quest
 
-> Scanner-maintained instructions; last reviewed 2026-11-23.
+> Scanner-maintained instructions; last reviewed 2026-11-27.
 > Future scanner updates require detected architectural changes and human confirmation.
 
 ## Stack Context
 
-React + TypeScript + Vite, deployed as a static browser game on GitHub Pages.
-The filesystem and security threats are simulated; there is no application backend.
-Tailwind is compiled at build time via PostCSS — there is no runtime Tailwind CDN, so a
-class that is not literally present in `index.html` or `src/**/*.{ts,tsx}` will not exist
-in the bundle.
+React 19 + TypeScript 6 + Vite 8 + Tailwind CSS 4 + Vitest 5, deployed as a
+static browser game on GitHub Pages. The filesystem and security threats are simulated;
+there is no application backend. Tailwind runs through the Vite plugin; `src/index.css`
+declares its source paths. Write complete utility class names so the scanner finds them.
 
 The product is **desktop, hardware-keyboard play at 1024 CSS px or wider** (ADR-0001).
 That is scope, not a bug: a narrower window or a touch device gets a product notice
@@ -36,7 +35,8 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
 - **E2E changes or debugging:** read that file's Anti-Failure Protocols and Development
   Environment sections. Its old `src/constants.tsx` references mean the current
   `src/constants/` modules.
-- **Deployment changes:** read README's Deployment section and `.github/workflows/deploy.yml`.
+- **Deployment changes:** read README's Deployment section and `.github/workflows/ci.yml`
+  and `deploy.yml`; deployment calls CI.
 
 ## Architecture Guardrails
 
@@ -48,6 +48,11 @@ That is scope, not a bug: a narrower window or a touch device gets a product not
   mode handlers. Preserve priority, event consumption, and input-focus behavior.
 - Level definitions and task checks live in `src/constants/levels.ts`; filesystem
   seeds, prerequisites, and consequences live in `src/constants/filesystem/`.
+- Keep active level separate from the current cycle's furthest unlocked level; Quest Map
+  and keyboard navigation use the latter. `src/utils/progressionStorage.ts` persists the
+  high-water mark on ordinary launches; starting a new cycle clears it.
+- Directory counts follow ADR-0002 (`docs/adr/0002-file-metadata-cache.md`): show size
+  linemode counts only for loaded folders; keep the parent pane blank and archives byte-sized.
 - Set clipboard restrictions in `Level.clipboardPolicy`; keep mission copy independent
   of which commands the game allows.
 - Player actions must satisfy objectives. Do not pre-solve them with level-specific
@@ -81,6 +86,9 @@ dev server) are the check, and they currently report zero violations — keep it
 Keep keyboard mode behavior under `src/hooks/keyboard/`, reusable stateful behavior
 under `src/hooks/`, and filesystem/view operations under `src/utils/`. Keep content
 under `src/constants/` and UI under `src/components/`.
+
+- `.fallowrc.json` enforces eight dependency zones and requires source files to match a
+  zone. Check its rules when moving files or introducing cross-layer imports.
 
 ## Testing Requirements
 

@@ -15,6 +15,8 @@ export interface EpisodePalette {
   textStrongHex: string;
   /** Hairline border tint. */
   border: string;
+  /** Solid left-rule / structural border colour. */
+  borderStrong: string;
   /** Faint background wash. */
   bg: string;
   /** Solid fill, used for progress dots. */
@@ -33,6 +35,7 @@ const PALETTES: Record<string, EpisodePalette> = {
     textStrong: 'text-blue-400',
     textStrongHex: '#60a5fa',
     border: 'border-blue-500/30',
+    borderStrong: 'border-blue-500',
     bg: 'bg-blue-500/10',
     bgSolid: 'bg-blue-500',
     ring: 'ring-blue-500',
@@ -44,6 +47,7 @@ const PALETTES: Record<string, EpisodePalette> = {
     textStrong: 'text-purple-400',
     textStrongHex: '#c084fc',
     border: 'border-purple-500/30',
+    borderStrong: 'border-purple-500',
     bg: 'bg-purple-500/10',
     bgSolid: 'bg-purple-500',
     ring: 'ring-purple-500',
@@ -55,6 +59,7 @@ const PALETTES: Record<string, EpisodePalette> = {
     textStrong: 'text-yellow-400',
     textStrongHex: '#facc15',
     border: 'border-yellow-500/30',
+    borderStrong: 'border-yellow-500',
     bg: 'bg-yellow-500/10',
     bgSolid: 'bg-yellow-500',
     ring: 'ring-yellow-500',
@@ -66,6 +71,7 @@ const PALETTES: Record<string, EpisodePalette> = {
     textStrong: 'text-red-400',
     textStrongHex: '#f87171',
     border: 'border-red-500/30',
+    borderStrong: 'border-red-500',
     bg: 'bg-red-500/10',
     bgSolid: 'bg-red-500',
     ring: 'ring-red-500',
@@ -77,6 +83,7 @@ const PALETTES: Record<string, EpisodePalette> = {
     textStrong: 'text-green-400',
     textStrongHex: '#4ade80',
     border: 'border-green-500/30',
+    borderStrong: 'border-green-500',
     bg: 'bg-green-500/10',
     bgSolid: 'bg-green-500',
     ring: 'ring-green-500',

@@ -1,4 +1,5 @@
 import { GameState, Level } from '../../types';
+import { JUMP_TARGETS } from '../../constants/keybindings';
 import { getNodeByPath, isProtected } from '../../utils/fsHelpers';
 import { checkProtocolViolations } from './utils';
 import { jumpToLastVisibleItem } from './handleNavigation';
@@ -47,26 +48,6 @@ export const handleGCommandKeyDown = (
     jumpToLastVisibleItem(gameState, dispatch);
     return;
   }
-
-  const JUMP_TARGETS: Record<
-    string,
-    {
-      path: string[];
-      label: string;
-      flag?: 'G' | 'GI' | 'GC' | 'GG' | 'GR' | 'GH';
-    }
-  > = {
-    g: { path: [], label: 'top', flag: 'GG' }, // Special handling later, but defined here for completeness
-    h: { path: ['root', 'home', 'guest'], label: 'home', flag: 'GH' },
-    c: { path: ['root', 'home', 'guest', '.config'], label: 'config', flag: 'GC' },
-    w: { path: ['root', 'home', 'guest', 'workspace'], label: 'workspace' },
-    t: { path: ['root', 'tmp'], label: 'tmp' },
-    r: { path: ['root'], label: 'root', flag: 'GR' },
-    i: { path: ['root', 'home', 'guest', 'incoming'], label: 'incoming', flag: 'GI' },
-    d: { path: ['root', 'home', 'guest', 'datastore'], label: 'datastore' },
-    l: { path: ['root', 'var', 'log'], label: 'log' },
-    m: { path: ['root', 'var', 'mail'], label: 'mail' },
-  };
 
   const target = JUMP_TARGETS[e.key];
 

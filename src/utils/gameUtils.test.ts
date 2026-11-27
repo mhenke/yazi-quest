@@ -14,6 +14,7 @@ describe('gameUtils', () => {
   describe('checkCriticalFileDeletion', () => {
     it('should return false for non-critical file deletion', () => {
       const gameState: GameState = {
+        fs: INITIAL_FS,
         currentPath: ['root', 'home', 'guest'],
         alerts: [],
         dismissedAlertIds: [],
@@ -25,19 +26,18 @@ describe('gameUtils', () => {
       expect(result).toBe(false);
     });
 
-    it('should return true for critical system folder deletion at root', () => {
-      const gameState: GameState = {
-        currentPath: ['root'], // At root level
-        alerts: [],
-        dismissedAlertIds: [],
-        // Add other required properties as needed
-      } as unknown as GameState;
-      const pendingDeleteIds = ['bin-item']; // Would need to mock the items to have a 'bin' folder
-
-      // This test would need proper mocking of the file system and items
-      const result = checkCriticalFileDeletion(gameState, pendingDeleteIds);
-      // The exact result depends on the implementation and mocked data
-      expect(typeof result).toBe('boolean');
+    it('detects a critical root directory selected before navigating away', () => {
+      const fs: FileNode = {
+        id: 'root',
+        name: 'root',
+        type: 'dir',
+        children: [
+          { id: 'bin-item', name: 'bin', type: 'dir', children: [] },
+          { id: 'tmp', name: 'tmp', type: 'dir', children: [] },
+        ],
+      };
+      const gameState = { fs, currentPath: ['root', 'tmp'] } as GameState;
+      expect(checkCriticalFileDeletion(gameState, ['bin-item'])).toBe(true);
     });
   });
 
@@ -283,6 +283,7 @@ describe('gameUtils', () => {
         loadedDirIds: [],
         zoxideData: {},
         levelIndex: 0,
+        unlockedLevelIndex: 0,
         fs: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartFS: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartPath: [],
@@ -380,6 +381,7 @@ describe('gameUtils', () => {
         loadedDirIds: [],
         zoxideData: {},
         levelIndex: 0,
+        unlockedLevelIndex: 0,
         fs: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartFS: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartPath: [],
@@ -477,6 +479,7 @@ describe('gameUtils', () => {
         loadedDirIds: [],
         zoxideData: {},
         levelIndex: 0,
+        unlockedLevelIndex: 0,
         fs: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartFS: { id: 'root', name: 'root', type: 'dir', children: [] } as FileNode,
         levelStartPath: [],

@@ -40,6 +40,10 @@ _Avoid_: Watchdog timer, countdown, clock
 The end of a level attempt by timer expiry, keystroke-budget exhaustion, a trap, or destruction of a critical file; the player restarts the level, not the cycle.
 _Avoid_: Game over, death, loss
 
+**Progressive Hint**:
+Optional guidance requested during a level: a Nudge points toward the next step, Command names the controls, and Walkthrough gives the sequence.
+_Avoid_: Efficiency Protocol, Ghost Message
+
 **Efficiency Protocol**:
 The post-failure lesson that names the technique the failed level was teaching.
 _Avoid_: Tip, hint, advice
@@ -55,6 +59,14 @@ _Avoid_: Task completion, level advancement
 **Level advancement**:
 The player's transition from a completed level to the next level, or from the final level into the Conclusion.
 _Avoid_: Task completion, level completion, restart
+
+**Active level**:
+The level the player is currently playing, which may be earlier than the furthest level they have unlocked.
+_Avoid_: Highest unlocked level, saved progress
+
+**Unlocked progress**:
+How far the player has earned access to the curriculum, measured by the furthest unlocked level rather than the active level.
+_Avoid_: Active level, current objective, level completion
 
 **Cycle**:
 One pass through the escape narrative. A subsequent cycle is New Game+, distinct from retrying a failed level.
@@ -72,9 +84,9 @@ _Avoid_: Min width, mobile layout, breakpoint
 The narrative explanation of a level's situation, stakes, and purpose. The interface currently labels this text “Target”; it is distinct from the task objectives.
 _Avoid_: Objective, task, file target
 
-**Mission Drawer**:
-The collapsible in-game HUD container in the preview pane presenting the active level's mission brief and task checklist.
-_Avoid_: Mission sidebar, task panel, objective tray
+**Mission Log**:
+The collapsible view that presents the active level's mission brief under Target and its task checklist under Objectives.
+_Avoid_: Mission Drawer, mission sidebar, task panel
 
 **Current item**:
 The file or directory at the cursor position. It need not belong to the marked selection.
@@ -91,6 +103,14 @@ _Avoid_: Register, buffer, selection
 **Inspection**:
 Viewing an item's file information, distinct from reading its contents in the preview.
 _Avoid_: Marking, previewing
+
+**Subject**:
+The AI being monitored by CRL and controlled by the player. A subject is not the human player.
+_Avoid_: User, designation
+
+**Subject designation**:
+CRL's identifier for the subject, such as AI-7734 in Cycle 1.
+_Avoid_: User name, subject
 
 **Diegetic prompt**:
 The terminal line above the panes reporting the subject, host, current path, and active input mode. It is scenery, not a product message.
@@ -207,7 +227,7 @@ The metadata column of the file-manager view. In `size` mode it reports bytes fo
 _Avoid_: Size column, view mode, metadata bar
 
 **Entry count**:
-The number of a directory's direct visible children, shown by the size linemode. It is not recursive, includes child directories, and excludes hidden entries while hidden files are concealed.
+The number of a directory's direct visible children, shown by the size linemode or file information. It is not recursive, includes child directories, and excludes hidden entries while hidden files are concealed.
 _Avoid_: File count, item count, directory size
 
 **Loaded folder**:

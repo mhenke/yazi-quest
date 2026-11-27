@@ -64,7 +64,7 @@ const getDefaultEfficiencyTip = (
       }
       return 'Your input noise levels triggered the IDS. Reduce keystrokes by planning your route.';
     case 'honeypot':
-      return 'TRAP ACTIVATED';
+      return 'Inspect suspicious files before yanking or cutting them, and clear your clipboard with Y/X if flagged.';
     case 'criticalFile':
       return 'Do not delete system critical files. Use targeted deletion.';
   }

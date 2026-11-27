@@ -41,17 +41,16 @@
         background: black;
       }
       .glitch-text::before {
-        left: 2px;
-        text-shadow: -2px 0 var(--color-glitch-magenta, #ff00c1);
-        clip-path: inset(40% 0 35% 0);
+        left: 1px;
+        text-shadow: -1px 0 var(--color-glitch-magenta, #ff00c1);
+        clip-path: inset(44% 0 40% 0);
         animation: glitch-anim 5s infinite linear alternate-reverse;
       }
       .glitch-text::after {
-        left: -2px;
-        text-shadow:
-          -2px 0 var(--color-glitch-cyan, #00fff9),
-          2px 2px var(--color-glitch-magenta, #ff00c1);
-        animation: glitch-anim2 1s infinite linear alternate-reverse;
+        left: -1px;
+        text-shadow: -1px 0 var(--color-glitch-cyan, #00fff9);
+        clip-path: inset(70% 0 18% 0);
+        animation: glitch-anim2 2.4s infinite linear alternate-reverse;
       }
 
       @keyframes glitch-anim {
@@ -121,14 +120,12 @@
       .glitch-text-2::before {
         left: 1px;
         text-shadow: -1px 0 var(--color-glitch-magenta, #ff00c1);
-        animation: var(--glitch-before, glitch2-anim) var(--glitch-dur-before, 1.8s) infinite linear; /* no blend for crisper look */
+        animation: var(--glitch-before, glitch2-anim) var(--glitch-dur-before, 2.4s) infinite linear; /* no blend for crisper look */
       }
       .glitch-text-2::after {
         left: -1px;
-        text-shadow:
-          -1px 0 var(--color-glitch-cyan, #00fff9),
-          1px 1px var(--color-glitch-magenta, #ff00c1);
-        animation: var(--glitch-after, glitch2-anim2) var(--glitch-dur-after, 1.2s) infinite linear;
+        text-shadow: -1px 0 var(--color-glitch-cyan, #00fff9);
+        animation: var(--glitch-after, glitch2-anim2) var(--glitch-dur-after, 1.8s) infinite linear;
       }
       @keyframes glitch2-anim {
         0% {

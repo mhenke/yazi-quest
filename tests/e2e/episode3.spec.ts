@@ -401,9 +401,23 @@ test.describe('Episode 3: MASTERY', () => {
     });
   });
 
-  test('Level 15: TRANSMISSION PROTOCOL - completes the cycle', async ({ page }, testInfo) => {
-    page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
-    await startLevel(page, 15, { intro: false });
+  test('Level 15: completes the cycle, restarts, and reloads', async ({ page }, testInfo) => {
+    const duplicateKeys: string[] = [];
+    page.on('console', (message) => {
+      if (
+        message.type() === 'error' &&
+        message.text().includes('Encountered two children with the same key')
+      ) {
+        duplicateKeys.push(message.text());
+      }
+    });
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem('yazi-quest-unlocked-level', '15');
+    });
+    await page.goto('/?intro=false');
+    await assertLevel(page, '15');
 
     // Task 1: Enter vault
     await test.step('Task 1: Enter vault', async () => {
@@ -481,9 +495,24 @@ test.describe('Episode 3: MASTERY', () => {
     });
 
     await pressKey(page, 'Escape');
-    await confirmMission(page, 'TRANSMISSION');
+    await expect(page.getByTestId('mission-complete')).toBeVisible();
+    await expect(page.getByTestId('mission-complete')).toContainText('TRANSMISSION');
     await page.keyboard.press('Shift+Enter');
     await expect(page.getByRole('heading', { name: 'CONCLUSION I: AUDIT' })).toBeVisible();
+    await page.getByRole('button', { name: 'Skip Outro' }).click();
+    await page.getByRole('button', { name: 'Initialize New Cycle' }).click();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('yazi-quest-cycle')))
+      .toBe('2');
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('yazi-quest-unlocked-level')))
+      .toBe('1');
+    await page.goto('/?intro=false');
+    await assertLevel(page, '1');
+    await expect(page.getByRole('region', { name: 'Mission log', exact: true })).toContainText(
+      'Subject AI-7735 Online'
+    );
+    expect(duplicateKeys).toEqual([]);
   });
 });
 

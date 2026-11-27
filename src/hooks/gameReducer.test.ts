@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { gameReducer } from './gameReducer';
 import { LEVELS } from '../constants/levels';
 import type { GameState } from '../types';
+import { createInitialState } from './initialState';
 
 /**
  * Alerts are keyed by id and dismissible. An effect can dispatch before state
@@ -154,6 +155,34 @@ describe('gameReducer action flag sanitization', () => {
     sortBy: 'natural' as const,
     sortDirection: 'asc' as const,
   } as unknown as GameState;
+
+  it('retains unlocked progress when revisiting a level and clears it on a new cycle', () => {
+    const state = { ...createInitialState(), levelIndex: 4, unlockedLevelIndex: 4 };
+    const revisited = gameReducer(state, {
+      type: 'SET_LEVEL',
+      index: 1,
+      fs: state.fs,
+      path: state.currentPath,
+    });
+    expect(revisited.levelIndex).toBe(1);
+    expect(revisited.unlockedLevelIndex).toBe(4);
+    expect(gameReducer(revisited, { type: 'RESTART_CYCLE' }).unlockedLevelIndex).toBe(0);
+  });
+
+  it('restarts the current cycle without changing its number', () => {
+    const state = {
+      ...createInitialState(),
+      cycleCount: 2,
+      levelIndex: 4,
+      unlockedLevelIndex: 4,
+      showMap: true,
+    };
+    const next = gameReducer(state, { type: 'RESET_CURRENT_CYCLE' });
+    expect(next.cycleCount).toBe(2);
+    expect(next.levelIndex).toBe(0);
+    expect(next.unlockedLevelIndex).toBe(0);
+    expect(next.showMap).toBe(false);
+  });
 
   it('resets all action tracking flags on RESTART_CYCLE to prevent cross-cycle leakage', () => {
     const next = gameReducer(dirtyState, { type: 'RESTART_CYCLE' });

@@ -167,6 +167,7 @@ export interface GameState {
   loadedDirIds: string[]; // Tab folder cache: current dir plus any hover-previewed dir; Yazi counts only loaded folders
   previewScroll: number; // Scroll offset index for preview pane
   levelIndex: number;
+  unlockedLevelIndex: number; // Furthest level unlocked in the current cycle
   fs: FileNode; // The entire file tree
   levelStartFS: FileNode; // Snapshot of FS at start of level (for reset)
   levelStartPath: string[]; // Path at start of level (for reset)

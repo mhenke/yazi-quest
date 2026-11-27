@@ -1,4 +1,6 @@
 // Lightweight WebAudio ambient pad for teaser
+import { createAudioContext, hasUserActivation } from './audioContext';
+
 let audioCtx: AudioContext | null = null;
 let nodes: {
   oscA?: OscillatorNode | null;
@@ -10,21 +12,10 @@ let nodes: {
 
 const getCtx = (): AudioContext => {
   if (!audioCtx) {
-    const w = window as unknown as {
-      AudioContext?: typeof AudioContext;
-      webkitAudioContext?: typeof AudioContext;
-    };
-    const Ctor = w.AudioContext || w.webkitAudioContext;
-    if (!Ctor) throw new Error('No AudioContext available');
-    audioCtx = new Ctor();
+    audioCtx = createAudioContext();
   }
   return audioCtx;
 };
-
-const hasUserActivation = (): boolean =>
-  typeof navigator === 'undefined' ||
-  !('userActivation' in navigator) ||
-  navigator.userActivation.hasBeenActive;
 
 export const playTeaserMusic = (enabled: boolean = true) => {
   if (!enabled) return;

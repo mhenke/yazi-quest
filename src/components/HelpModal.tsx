@@ -66,14 +66,14 @@ const CurrentLevelHelpSection: React.FC<CurrentLevelHelpSectionProps> = ({
 }) => {
   if (tasks.length === 0) return null;
   return (
-    <section aria-labelledby="current-level-help-heading" className="border-b border-zinc-800 pb-4">
-      <h3 id="current-level-help-heading" className="text-sm font-bold text-orange-400 mb-2">
+    <section aria-labelledby="current-level-help-heading" className="border-b border-zinc-800 pb-3">
+      <h3 id="current-level-help-heading" className="text-sm font-bold text-orange-400 mb-1.5">
         <button
           type="button"
           aria-expanded={isExpanded}
           aria-controls="current-level-help-content"
           onClick={onToggle}
-          className="inline-flex min-h-9 py-1.5 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+          className="inline-flex min-h-9 py-1 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
         >
           Current Level
           <ChevronDown
@@ -85,11 +85,13 @@ const CurrentLevelHelpSection: React.FC<CurrentLevelHelpSectionProps> = ({
       </h3>
       {isExpanded && (
         <div id="current-level-help-content">
-          <p className="text-xs text-zinc-300 font-mono">{level.title}</p>
-          {level.coreSkill && (
-            <p className="mt-1 text-xs text-orange-300 font-mono">{level.coreSkill}</p>
-          )}
-          <ol className="mt-2 list-decimal pl-4 flex flex-col gap-y-1">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <p className="text-xs text-zinc-300 font-mono">{level.title}</p>
+            {level.coreSkill && (
+              <p className="text-xs text-orange-300 font-mono">{level.coreSkill}</p>
+            )}
+          </div>
+          <ol className="mt-1.5 list-decimal pl-4 flex flex-col gap-y-1">
             {tasks.map((task) => (
               <li key={task.id} className="text-xs text-zinc-300 font-mono leading-snug">
                 {renderInlineCode(task.description)}
@@ -106,41 +108,6 @@ interface AccessibilitySettingsSectionProps {
   dispatch: React.Dispatch<Action>;
   narrativeEffects: 'full' | 'reduced' | 'minimal';
 }
-
-const HeaderEffectsControl: React.FC<{
-  dispatch?: React.Dispatch<Action>;
-  narrativeEffects: 'full' | 'reduced' | 'minimal';
-}> = ({ dispatch, narrativeEffects }) => {
-  if (!dispatch) return null;
-  return (
-    <div className="flex items-center gap-1.5 shrink-0">
-      <label
-        htmlFor="help-header-effects"
-        className="text-xs font-mono text-zinc-400 hidden md:inline"
-      >
-        Effects:
-      </label>
-      <select
-        id="help-header-effects"
-        aria-label="Quick narrative effects setting"
-        value={narrativeEffects}
-        onChange={(e) => {
-          dispatch({
-            type: 'UPDATE_SETTINGS',
-            payload: {
-              narrativeEffects: e.target.value as 'full' | 'reduced' | 'minimal',
-            },
-          });
-        }}
-        className="min-h-9 bg-zinc-950 border border-zinc-700 px-2 py-1 text-xs font-mono text-zinc-200 focus:border-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
-      >
-        <option value="full">Effects: Full</option>
-        <option value="reduced">Effects: Reduced</option>
-        <option value="minimal">Effects: Minimal</option>
-      </select>
-    </div>
-  );
-};
 
 const AccessibilitySettingsSection: React.FC<AccessibilitySettingsSectionProps> = ({
   dispatch,
@@ -244,7 +211,7 @@ const HelpCommandsBody: React.FC<HelpCommandsBodyProps> = ({
                 {binding.keys.map((k) => (
                   <span
                     key={k}
-                    className="min-w-[36px] text-center px-1.5 py-0.5 bg-zinc-800 rounded border border-zinc-700 text-zinc-200 font-mono text-xs font-bold"
+                    className="min-w-9 text-center px-1.5 py-0.5 bg-zinc-800 rounded border border-zinc-700 text-zinc-200 font-mono text-xs font-bold"
                   >
                     {k}
                   </span>
@@ -348,7 +315,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             HELP / KEYBINDINGS
           </h2>
           <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end min-w-48">
-            <HeaderEffectsControl dispatch={dispatch} narrativeEffects={narrativeEffects} />
             <input
               ref={filterInputRef}
               type="search"

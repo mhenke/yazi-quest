@@ -80,26 +80,28 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         </h1>
         <button
           onClick={onToggle}
-          className="min-h-9 px-3 py-1.5 w-full flex items-center justify-between text-left hover:bg-zinc-800 transition-colors cursor-pointer group focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
+          className="min-h-9 px-3 py-1.5 w-full flex items-center justify-between gap-2 whitespace-nowrap text-left hover:bg-zinc-800 transition-colors cursor-pointer group focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
           aria-label="Expand mission drawer (Alt+O)"
           title="Expand mission drawer (Alt+O)"
         >
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <span className="text-orange-500 font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 font-mono text-xs min-w-0">
+            <span className="text-orange-500 font-bold uppercase tracking-wider shrink-0">
               MISSION LOG: LVL {level.id}
             </span>
-            <span className="text-zinc-600 hidden xl:inline" aria-hidden="true">
+            <span className="text-zinc-600 hidden xl:inline shrink-0" aria-hidden="true">
               •
             </span>
-            <span className="hidden max-w-48 truncate text-zinc-300 xl:inline">{level.title}</span>
-            <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
+            <span className="hidden min-w-0 max-w-48 truncate text-zinc-300 xl:inline">
+              {level.title}
+            </span>
+            <span className="text-zinc-600 hidden sm:inline shrink-0" aria-hidden="true">
               •
             </span>
-            <span className="text-zinc-400 text-xs hidden sm:inline">
+            <span className="text-zinc-400 text-xs hidden sm:inline shrink-0">
               {completedCount}/{totalCount} Tasks
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-zinc-400 group-hover:text-white font-mono text-xs">
+          <div className="flex items-center gap-1.5 text-zinc-400 group-hover:text-white font-mono text-xs shrink-0">
             <span className="text-xs text-zinc-400 hidden sm:inline">EXPAND</span>
             <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-xs text-xs">
               Alt+O
@@ -112,7 +114,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
   }
 
   return (
-    <div className="h-1/2 max-h-3/5 min-h-[160px] border-t border-zinc-800 bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200">
+    <div className="h-1/2 max-h-3/5 min-h-40 border-t border-zinc-800 bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200">
       <div className="px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between gap-2 shrink-0 select-none">
         <h1
           aria-label={`Mission Log: LVL ${level.id} — ${level.title}`}
@@ -156,7 +158,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
               </span>
             )}
           </div>
-          <div className="relative min-h-[110px] flex-1">
+          <div className="relative min-h-28 flex-1">
             <div
               ref={taskListRef}
               role="region"

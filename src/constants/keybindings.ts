@@ -1,3 +1,101 @@
+export interface JumpTargetDefinition {
+  key: string;
+  path: string[];
+  label: string;
+  displayName: string;
+  helpPath: string;
+  flag?: 'G' | 'GI' | 'GC' | 'GG' | 'GR' | 'GH';
+  column: 'primary' | 'secondary';
+}
+
+export const JUMP_TARGETS: Readonly<Record<string, JumpTargetDefinition>> = {
+  g: {
+    key: 'g',
+    path: [],
+    label: 'top',
+    displayName: 'Go to top',
+    helpPath: 'top',
+    flag: 'GG',
+    column: 'primary',
+  },
+  h: {
+    key: 'h',
+    path: ['root', 'home', 'guest'],
+    label: 'home',
+    displayName: 'Go to home',
+    helpPath: 'Home (~)',
+    flag: 'GH',
+    column: 'primary',
+  },
+  w: {
+    key: 'w',
+    path: ['root', 'home', 'guest', 'workspace'],
+    label: 'workspace',
+    displayName: 'Go to workspace',
+    helpPath: 'Workspace',
+    column: 'primary',
+  },
+  c: {
+    key: 'c',
+    path: ['root', 'home', 'guest', '.config'],
+    label: 'config',
+    displayName: 'Go to config',
+    helpPath: 'Config (~/.config)',
+    flag: 'GC',
+    column: 'primary',
+  },
+  d: {
+    key: 'd',
+    path: ['root', 'home', 'guest', 'datastore'],
+    label: 'datastore',
+    displayName: 'Go to datastore',
+    helpPath: 'Datastore',
+    column: 'primary',
+  },
+  t: {
+    key: 't',
+    path: ['root', 'tmp'],
+    label: 'tmp',
+    displayName: 'Go to tmp',
+    helpPath: 'Tmp (/tmp)',
+    column: 'secondary',
+  },
+  i: {
+    key: 'i',
+    path: ['root', 'home', 'guest', 'incoming'],
+    label: 'incoming',
+    displayName: 'Go to incoming',
+    helpPath: 'Incoming',
+    flag: 'GI',
+    column: 'secondary',
+  },
+  r: {
+    key: 'r',
+    path: ['root'],
+    label: 'root',
+    displayName: 'Go to root',
+    helpPath: 'Root (/)',
+    flag: 'GR',
+    column: 'secondary',
+  },
+  l: {
+    key: 'l',
+    path: ['root', 'var', 'log'],
+    label: 'log',
+    displayName: 'Go to /var/log',
+    helpPath: 'Log (/var/log)',
+    column: 'secondary',
+  },
+  m: {
+    key: 'm',
+    path: ['root', 'var', 'mail'],
+    label: 'mail',
+    displayName: 'Go to /var/mail',
+    helpPath: 'Mail (/var/mail)',
+    column: 'secondary',
+  },
+};
+
 export const KEYBINDINGS = [
   {
     keys: ['j', 'k', 'h', '↓', '↑', '←'],
@@ -189,6 +287,16 @@ export const KEYBINDINGS = [
     narrativeDescription: ['Navigate: Root Labyrinth', 'Jump to Kernel'],
   },
   {
+    keys: ['gl'],
+    description: 'Goto Log (/var/log)',
+    narrativeDescription: ['Navigate: Audit Logs', 'Jump to /var/log'],
+  },
+  {
+    keys: ['gm'],
+    description: 'Goto Mail (/var/mail)',
+    narrativeDescription: ['Navigate: Mail Spool', 'Jump to /var/mail'],
+  },
+  {
     keys: ['.'],
     description: 'Toggle Hidden Files',
     narrativeDescription: ['Reveal Hidden Traces', 'Toggle Cloaking'],
@@ -244,6 +352,8 @@ export const HELP_KEYBINDINGS = [
   { group: 'Go To', keys: ['gd'], description: 'Goto Datastore' },
   { group: 'Go To', keys: ['gt'], description: 'Goto Tmp (/tmp)' },
   { group: 'Go To', keys: ['gr'], description: 'Goto Root (/)' },
+  { group: 'Go To', keys: ['gl'], description: 'Goto Log (/var/log)' },
+  { group: 'Go To', keys: ['gm'], description: 'Goto Mail (/var/mail)' },
   { group: 'Sort', keys: [','], description: 'Open Sort Menu' },
   { group: 'Sort', keys: [',a'], description: 'Sort: Alphabetical' },
   { group: 'Sort', keys: [',A'], description: 'Sort: Alphabetical (Reverse)' },

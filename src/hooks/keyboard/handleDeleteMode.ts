@@ -4,7 +4,7 @@ import {
   checkCriticalFileDeletion,
   validateDeletions,
 } from '../../utils/gameUtils';
-import { isProtected, deleteNode, getNodeById } from '../../utils/fsHelpers';
+import { isProtected, deleteNode, findPathById, getNodeById } from '../../utils/fsHelpers';
 import { getNarrativeAction } from './utils';
 import { Action } from '../gameReducer';
 
@@ -69,10 +69,9 @@ export const confirmDelete = (
     }
 
     if (node) {
-      // Determine the target directory path for this node.
-      // Search results include their full path from root; normal items use the currentPath.
-      const targetDirPath =
-        node.path && node.path.length > 0 ? node.path.slice(0, -1) : gameState.currentPath;
+      // Selection can include nodes outside the current directory.
+      const targetDirPath = findPathById(newFs, id)?.slice(0, -1);
+      if (!targetDirPath) continue;
 
       const protection = isProtected(
         newFs,

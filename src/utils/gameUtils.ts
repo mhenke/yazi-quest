@@ -1,6 +1,5 @@
 import { GameState, Level, FileNode } from '../types';
-import { getVisibleItems } from './viewHelpers';
-import { isProtected } from './fsHelpers';
+import { findPathById, getNodeById, isProtected } from './fsHelpers';
 
 // Level definitions use directory names; player-created directories have generated IDs.
 export const getLevelStartPath = (fs: FileNode, level: Level): string[] => {
@@ -35,8 +34,6 @@ export const checkHoneypotTriggered = (
   pendingDeleteIds: string[],
   currentLevel: Level
 ): { triggered: boolean; reason?: 'honeypot'; message?: string } => {
-  const items = getVisibleItems(gameState);
-
   // 1. Level-Specific Conditional Logic
   // Level 14 (STERILIZATION): Allow deleting ALL files including honeypots.
   // The narrative requires purging everything to "sterilize" the partition.
@@ -50,7 +47,7 @@ export const checkHoneypotTriggered = (
     predicate: (node: FileNode) => boolean
   ): FileNode | undefined => {
     for (const id of pendingDeleteIds) {
-      const node = items.find((n) => n.id === id);
+      const node = getNodeById(gameState.fs, id);
       if (node && predicate(node)) return node;
     }
     return undefined;
@@ -106,7 +103,6 @@ export const checkCriticalFileDeletion = (
   gameState: GameState,
   pendingDeleteIds: string[]
 ): boolean => {
-  const items = getVisibleItems(gameState);
   const CRITICAL_FOLDERS = [
     'bin',
     'boot',
@@ -125,8 +121,8 @@ export const checkCriticalFileDeletion = (
   ];
 
   for (const id of pendingDeleteIds) {
-    const node = items.find((n) => n.id === id);
-    const isRoot = gameState.currentPath.length === 1 && gameState.currentPath[0] === 'root';
+    const node = getNodeById(gameState.fs, id);
+    const isRoot = findPathById(gameState.fs, id)?.length === 2;
     if (node && isRoot && CRITICAL_FOLDERS.includes(node.name)) {
       return true;
     }
@@ -142,12 +138,10 @@ export const validateDeletions = (
   pendingDeleteIds: string[],
   currentLevel: Level
 ): { ok: true } | { ok: false; error: string } => {
-  const items = getVisibleItems(gameState);
   for (const id of pendingDeleteIds) {
-    const node = items.find((n) => n.id === id);
+    const node = getNodeById(gameState.fs, id);
     if (node) {
-      const targetDirPath =
-        node.path && node.path.length > 0 ? node.path.slice(0, -1) : gameState.currentPath;
+      const targetDirPath = findPathById(gameState.fs, id)?.slice(0, -1);
       const protection = isProtected(
         gameState.fs,
         targetDirPath,

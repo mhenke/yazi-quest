@@ -1,18 +1,10 @@
 // Simple Web Audio API sound effects
 // No external files needed - generates tones programmatically
 
+import { createAudioContext, hasUserActivation } from './audioContext';
+
 let audioContext: AudioContext | null = null;
 let awaitingGesture = false;
-
-const createAudioContext = (): AudioContext => {
-  const w = window as unknown as {
-    AudioContext?: { new (): AudioContext };
-    webkitAudioContext?: { new (): AudioContext };
-  };
-  const Ctor = w.AudioContext || w.webkitAudioContext;
-  if (!Ctor) throw new Error('No AudioContext available');
-  return new Ctor();
-};
 
 const getAudioContext = (): AudioContext => {
   if (!audioContext) {
@@ -20,11 +12,6 @@ const getAudioContext = (): AudioContext => {
   }
   return audioContext;
 };
-
-const hasUserActivation = (): boolean =>
-  typeof navigator === 'undefined' ||
-  !('userActivation' in navigator) ||
-  navigator.userActivation.hasBeenActive;
 
 // Ensure audio context is running or schedule resume on next user gesture
 const ensureContextRunning = (cb: (ctx: AudioContext) => void) => {

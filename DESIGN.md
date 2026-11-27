@@ -4,8 +4,11 @@ name: Yazi Quest
 description: The Containment Terminal — cinematic instrumentation for learning Yazi.
 colors:
   primary: '#3b82f6'
+  primary-text: '#60a5fa'
   fortification-purple: '#a855f7'
+  fortification-purple-text: '#c084fc'
   mastery-yellow: '#eab308'
+  mastery-yellow-text: '#facc15'
   signal-orange: '#f97316'
   directory-cyan: '#22d3ee'
   success-green: '#22c55e'
@@ -108,7 +111,7 @@ Radius: square 0px, small 2px, utility 4px
 North Star: "The Containment Terminal"
 Rules:
 
-- The Episode Signal Rule. Keep the episode mapping stable across story and progression: Awakening Blue, Fortification Purple, Mastery Yellow.
+- The Episode Signal Rule. Keep the episode mapping stable across story and progression: Awakening Blue (`#3b82f6` / `-400` `#60a5fa` for dark-ground text), Fortification Purple (`#a855f7` / `-400` `#c084fc` for dark-ground text), Mastery Yellow (`#eab308` / `-400` `#facc15` for dark-ground text).
 - The Working Plane Rule. Reserve depth for overlays and active signals; keep the file-manager working plane flat.
   Don't:
 - Don't replace the file-manager composition with a generic card dashboard.

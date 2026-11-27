@@ -88,15 +88,8 @@ const deleteCutSourceNode = (
   }
   const sourcePath = node.actualParentPath || clipboard.originalPath;
   const deleteResult: Result<FileNode, FsError> = deleteNode(fs, sourcePath, node.id, levelIndex);
-  if (!deleteResult.ok) {
-    const err = (deleteResult as { ok: false; error: FsError }).error;
-    if (err !== 'NotFound') {
-      return { fs, error: err };
-    }
-  } else {
-    fs = deleteResult.value;
-  }
-  return { fs };
+  if (!deleteResult.ok) return { fs, error: deleteResult.error };
+  return { fs: deleteResult.value };
 };
 
 /**
@@ -154,6 +147,16 @@ const applyPasteNodes = (
   let newFs = initialFs;
 
   for (const node of clipboard.nodes) {
+    const cutDeleteRes = deleteCutSourceNode(newFs, node, clipboard, levelIndex);
+    if (cutDeleteRes.error) {
+      return {
+        newFs,
+        error: cutDeleteRes.error,
+        errorNodeName: node.name,
+      };
+    }
+    newFs = cutDeleteRes.fs;
+
     if (force) {
       const collisionRes = checkDestinationCollision(newFs, currentPath, node, levelIndex);
       if (collisionRes.error) {
@@ -164,16 +167,6 @@ const applyPasteNodes = (
         };
       }
       newFs = collisionRes.fs;
-    } else {
-      const cutDeleteRes = deleteCutSourceNode(newFs, node, clipboard, levelIndex);
-      if (cutDeleteRes.error) {
-        return {
-          newFs,
-          error: cutDeleteRes.error,
-          errorNodeName: node.name,
-        };
-      }
-      newFs = cutDeleteRes.fs;
     }
 
     const cleanNode = preparePasteNode(node, force, initialFs, currentPath, preserveRootId);
@@ -190,18 +183,6 @@ const applyPasteNodes = (
       };
     }
     newFs = addResult.value;
-
-    if (force) {
-      const cutDeleteRes = deleteCutSourceNode(newFs, node, clipboard, levelIndex);
-      if (cutDeleteRes.error) {
-        return {
-          newFs,
-          error: cutDeleteRes.error,
-          errorNodeName: node.name,
-        };
-      }
-      newFs = cutDeleteRes.fs;
-    }
   }
 
   return { newFs };
@@ -397,15 +378,10 @@ export const handleClipboardKeyDown = (
       }
 
       if (uniqueNodes.length > 0) {
-        const nodesWithPaths = gameState.searchQuery
-          ? uniqueNodes.map((n) => {
-              const fullPath = findPathById(gameState.fs, n.id);
-              return {
-                ...n,
-                actualParentPath: fullPath ? fullPath.slice(0, -1) : gameState.currentPath,
-              };
-            })
-          : uniqueNodes;
+        const nodesWithPaths = uniqueNodes.map((n) => ({
+          ...n,
+          actualParentPath: findPathById(gameState.fs, n.id)?.slice(0, -1),
+        }));
 
         dispatch({
           type: 'SET_CLIPBOARD',

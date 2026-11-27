@@ -79,7 +79,10 @@ export function DiegeticPrompt({
   const path = getPath();
 
   return (
-    <div className="diegetic-prompt font-mono text-sm" data-testid="breadcrumbs">
+    <div
+      className="diegetic-prompt font-mono text-sm px-4 py-1.5 bg-zinc-950 border-b border-zinc-800"
+      data-testid="breadcrumbs"
+    >
       <span className={status === 'BREACH' ? 'text-red-500' : 'text-green-500'}>
         {designation}@{hostname}:
       </span>
@@ -87,9 +90,16 @@ export function DiegeticPrompt({
         <span className="text-red-500">[{status}]</span>
       )}
       <span className="breadcrumb text-blue-400">{path}</span>
-      {searchQuery && <span className="text-yellow-400"> (search: {searchQuery})</span>}
-      {confirmedFilter && <span className="text-yellow-400"> (filter: {confirmedFilter})</span>}
-      {modeIndicator && <span className="text-yellow-500"> {modeIndicator}</span>}
+      {searchQuery && <span className="text-cyan-400"> (search: {searchQuery})</span>}
+      {mode !== 'filter' && confirmedFilter && (
+        <span className="text-purple-400"> (filter: {confirmedFilter})</span>
+      )}
+      {modeIndicator && (
+        <span className={mode === 'filter' ? 'text-purple-400' : 'text-yellow-400'}>
+          {' '}
+          {modeIndicator}
+        </span>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ describe('initial level restoration', () => {
     localStorage.setItem('yazi-quest-unlocked-level', '5');
 
     expect(createInitialState().levelIndex).toBe(4);
+    expect(createInitialState().unlockedLevelIndex).toBe(4);
   });
 
   it('ignores malformed progress and keeps explicit debug level selection authoritative', () => {

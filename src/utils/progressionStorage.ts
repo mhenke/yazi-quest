@@ -26,3 +26,11 @@ export const persistUnlockedLevelIndex = (index: number): void => {
     // Storage can be unavailable in private or restricted browser contexts.
   }
 };
+
+export const resetUnlockedLevel = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable in private or restricted browser contexts.
+  }
+};

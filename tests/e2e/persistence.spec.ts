@@ -78,4 +78,64 @@ test.describe('Persistence & State Survival', () => {
       'CONTAINMENT BREACH'
     );
   });
+
+  test('revisiting a level keeps later unlocked levels available by mouse and keyboard', async ({
+    page,
+  }) => {
+    await page.evaluate(() => localStorage.setItem('yazi-quest-unlocked-level', '5'));
+    await page.goto('/?intro=false');
+    await expect(page.getByTestId('level-progress-bar')).toContainText('CONTAINMENT BREACH');
+
+    await page.getByTestId('map-button').click();
+    await page.getByRole('button', { name: /RECONNAISSANCE & EXTRACTION/ }).click();
+    await expect(page.getByTestId('level-progress-bar')).toContainText(
+      'RECONNAISSANCE & EXTRACTION'
+    );
+    await page.getByTestId('map-button').click();
+    await expect(page.getByRole('button', { name: /CONTAINMENT BREACH/ })).toBeEnabled();
+    await page.getByRole('button', { name: /CONTAINMENT BREACH/ }).click();
+    await expect(page.getByTestId('level-progress-bar')).toContainText('CONTAINMENT BREACH');
+
+    await page.getByTestId('map-button').click();
+    await page.getByRole('button', { name: /RECONNAISSANCE & EXTRACTION/ }).click();
+    await page.getByTestId('map-button').click();
+    await page.keyboard.press('j');
+    await page.keyboard.press('j');
+    await page.keyboard.press('j');
+    await page.keyboard.press('j');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('level-progress-bar')).toContainText('CONTAINMENT BREACH');
+  });
+
+  test('later-cycle mission brief uses the full subject designation', async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('yazi-quest-cycle', '7'));
+    await page.goto('/?intro=false');
+    await expect(page.getByTestId('level-progress-bar')).toContainText('AI-7740');
+    await expect(page.getByRole('region', { name: 'Mission log', exact: true })).toContainText(
+      'Subject AI-7740 Online'
+    );
+  });
+
+  test('preserves ambiguous old saves until the player confirms a current-cycle restart', async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      localStorage.setItem('yazi-quest-cycle', '2');
+      localStorage.setItem('yazi-quest-unlocked-level', '5');
+    });
+    await page.goto('/?intro=false');
+    await expect(page.getByTestId('level-progress-bar')).toContainText('CONTAINMENT BREACH');
+    await page.getByTestId('map-button').click();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await page.getByRole('button', { name: 'Restart current cycle' }).click();
+    await expect(page.getByTestId('level-progress-bar')).toContainText('CONTAINMENT BREACH');
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Restart current cycle' }).click();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('yazi-quest-unlocked-level')))
+      .toBe('1');
+    await page.goto('/?intro=false');
+    await expect(page.getByTestId('level-progress-bar')).toContainText('AI-7735');
+    await expect(page.getByTestId('status-bar')).toContainText('L1');
+  });
 });

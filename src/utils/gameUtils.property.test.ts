@@ -32,8 +32,7 @@ import {
   hasBaselineViolation,
   checkProtocolViolations,
 } from '../hooks/keyboard/utils';
-import { getNodeByPath, isProtected } from './fsHelpers';
-import { getVisibleItems } from './viewHelpers';
+import { findPathById, getNodeByPath, isProtected } from './fsHelpers';
 import { LEVELS } from '../constants/levels';
 import { INITIAL_FS } from '../constants/filesystem/initial';
 import { applyFileSystemMutations } from '../constants/filesystem/mutations';
@@ -385,7 +384,7 @@ describe('property: checkHoneypotTriggered', () => {
     );
   });
 
-  it('non-L9/non-L14 levels match the visible honeypot & content-trap oracle and are order-independent for triggered', () => {
+  it('non-L9/non-L14 levels match the selected honeypot & content-trap oracle and are order-independent for triggered', () => {
     assert(
       property(
         constantFrom(...nonSpecialLevels),
@@ -401,8 +400,6 @@ describe('property: checkHoneypotTriggered', () => {
             ...(useSearchMode ? { searchQuery: '.*', searchResults: children } : {}),
           });
 
-          const visible = getVisibleItems(state);
-          const visibleById = new Map(visible.map((n) => [n.id, n]));
           const allIds = [...children.map((c) => c.id), 'nonexistent-id'];
 
           const stateSnap = JSON.stringify(state);
@@ -414,12 +411,9 @@ describe('property: checkHoneypotTriggered', () => {
           expect(first).toEqual(repeat);
           expect(JSON.stringify(state)).toBe(stateSnap);
 
-          // Exact trigger oracle (only visible nodes in pendingDeleteIds count)
-          const visiblePending = allIds
-            .map((id) => visibleById.get(id))
-            .filter((n): n is FileNode => n !== undefined);
-          const hasFlagHoneypot = visiblePending.some((n) => Boolean(n.isHoneypot && !n.isDecoy));
-          const hasContentTrap = visiblePending.some(isContentTrapSpec);
+          // Every selected node counts, even when it is hidden or no longer in the current view.
+          const hasFlagHoneypot = children.some((n) => Boolean(n.isHoneypot && !n.isDecoy));
+          const hasContentTrap = children.some(isContentTrapSpec);
           const expectedTriggered = hasFlagHoneypot || hasContentTrap;
 
           expect(first.triggered).toBe(expectedTriggered);
@@ -444,7 +438,7 @@ describe('property: checkHoneypotTriggered', () => {
     );
   });
 
-  it('Level 9 matches the visible keeper oracle across arbitrary mixed batches and is order-independent', () => {
+  it('Level 9 matches the selected keeper oracle across arbitrary mixed batches and is order-independent', () => {
     assert(
       property(
         arbUniqueFileNodes(0, 8),
@@ -460,8 +454,6 @@ describe('property: checkHoneypotTriggered', () => {
             ...(useSearchMode ? { searchQuery: '.*', searchResults: children } : {}),
           });
 
-          const visible = getVisibleItems(state);
-          const visibleById = new Map(visible.map((n) => [n.id, n]));
           const allIds = [...children.map((c) => c.id), 'nonexistent-id'];
           const rot = allIds.length > 0 ? rawRotation % allIds.length : 0;
           const rotatedIds = [...allIds.slice(rot), ...allIds.slice(0, rot)];
@@ -476,13 +468,10 @@ describe('property: checkHoneypotTriggered', () => {
           expect(first).toEqual(repeat);
           expect(JSON.stringify(state)).toBe(stateSnap);
 
-          const visiblePending = allIds
-            .map((id) => visibleById.get(id))
-            .filter((n): n is FileNode => n !== undefined);
-          const flagKeepers = visiblePending.filter(
+          const flagKeepers = children.filter(
             (n) => Boolean(n.isHoneypot && !n.isDecoy) && LEVEL_9_KEEPER_PATTERN.test(n.name)
           );
-          const contentKeepers = visiblePending.filter(
+          const contentKeepers = children.filter(
             (n) => isContentTrapSpec(n) && LEVEL_9_KEEPER_PATTERN.test(n.name)
           );
           const expectedTriggered = flagKeepers.length > 0 || contentKeepers.length > 0;
@@ -727,7 +716,7 @@ describe('property: checkCriticalFileDeletion', () => {
     'custom_dir'
   );
 
-  it('triggers iff at root and pendingDeleteIds includes a visible critical folder name', () => {
+  it('detects selected critical root entries regardless of the current view', () => {
     const arbRootPath = constantFrom(['root'], ['root', 'sub'], ['other'], [] as string[]);
 
     assert(
@@ -763,14 +752,9 @@ describe('property: checkCriticalFileDeletion', () => {
           const got = checkCriticalFileDeletion(state, pendingIds);
           const reversed = checkCriticalFileDeletion(state, [...pendingIds].reverse());
 
-          const isRoot = currentPath.length === 1 && currentPath[0] === 'root';
-          const visible = getVisibleItems(state);
           const expected =
-            isRoot &&
-            pendingIds.some((id) => {
-              const node = visible.find((n) => n.id === id);
-              return Boolean(node && CRITICAL_FOLDERS.has(node.name));
-            });
+            !currentPath.includes('sub') &&
+            children.some((node) => CRITICAL_FOLDERS.has(node.name));
 
           expect(got).toBe(expected);
           expect(reversed).toBe(expected);
@@ -989,7 +973,7 @@ describe('property: validateDeletions', () => {
     }))
   );
 
-  it('partitions visible nodes into allowed vs blocked and approves a batch iff every node is allowed', () => {
+  it('partitions all selected nodes into allowed vs blocked and approves only allowed batches', () => {
     assert(
       property(arbValidateCase, (c) => {
         const completedTaskIds = { [LEVELS[c.levelIndex].id]: c.taskIds };
@@ -1002,7 +986,6 @@ describe('property: validateDeletions', () => {
           ...(c.searchMode ? { searchQuery: '.*', searchResults: SEARCH_NODES_WITH_PATH } : {}),
         });
 
-        const visible = getVisibleItems(state);
         const result = validateDeletions(state, c.pendingDeleteIds, level);
         const repeat = validateDeletions(state, c.pendingDeleteIds, level);
 
@@ -1010,13 +993,13 @@ describe('property: validateDeletions', () => {
         expect(result).toEqual(repeat);
         expect(JSON.stringify(VALIDATE_FS)).toBe(VALIDATE_FS_SNAPSHOT);
 
-        // Partition pending visible nodes using isProtected
+        // Partition every selected node using its actual parent.
         const blockedErrors: string[] = [];
         for (const id of c.pendingDeleteIds) {
-          const node = visible.find((n) => n.id === id);
-          if (!node) continue;
-          const targetDirPath =
-            node.path && node.path.length > 0 ? node.path.slice(0, -1) : state.currentPath;
+          const path = findPathById(state.fs, id);
+          const node = getNodeByPath(state.fs, path);
+          if (!node || !path) continue;
+          const targetDirPath = path.slice(0, -1);
           const err = isProtected(
             state.fs,
             targetDirPath,

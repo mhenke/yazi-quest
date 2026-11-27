@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useMemo } from 'react';
 
 import type { Action } from '../hooks/gameReducer';
-import type { GameState } from '../types';
+import type { FileNode, GameState } from '../types';
 import { getAllDirectoriesWithPaths, resolvePath } from '../utils/fsHelpers';
 import { getBaseFuzzyCandidates, filterFuzzyCandidates } from '../utils/fuzzyHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
@@ -51,6 +51,44 @@ const previewColor = (type?: 'file' | 'dir' | 'archive') => {
     default:
       return 'text-zinc-200';
   }
+};
+
+const sortPreviewEntries = (items: FileNode[]): FileNode[] =>
+  items.slice().sort((a, b) => {
+    if (a.type === b.type) return a.name.localeCompare(b.name);
+    if (a.type === 'dir') return -1;
+    if (b.type === 'dir') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+const FuzzyPreviewGrid: React.FC<{ items: FileNode[]; hasSelection: boolean }> = ({
+  items,
+  hasSelection,
+}) => {
+  if (items.length === 0) {
+    return (
+      <div className="text-zinc-400 italic">
+        {hasSelection ? '(empty)' : 'Waiting for selection'}
+      </div>
+    );
+  }
+  return (
+    <div
+      className="grid gap-2"
+      style={{
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, 100%), 1fr))',
+      }}
+    >
+      {sortPreviewEntries(items).map((child) => (
+        <div key={child.id} className="truncate">
+          <span className={`${previewColor(child.type)} font-mono`}>
+            {child.name}
+            {child.type === 'dir' ? '/' : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch }) => {
@@ -133,7 +171,10 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
         </div>
         <div className="flex-1 flex flex-col min-h-0">
           <div
-            className={`flex-1 min-h-0 overflow-y-auto scrollbar-hide ${isZoxide ? 'border-b border-zinc-900' : ''}`}
+            role="region"
+            tabIndex={0}
+            aria-label="Search results"
+            className={`flex-1 min-h-0 overflow-y-auto scrollbar-hide focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white ${isZoxide ? 'border-b border-zinc-900' : ''}`}
           >
             <div ref={listRef} id={`${id}-results`} role="listbox" aria-labelledby={`${id}-label`}>
               {filteredCandidates.map((item, idx: number) => {
@@ -190,36 +231,13 @@ export const FuzzyFinder: React.FC<FuzzyFinderProps> = ({ gameState, dispatch })
                   </span>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-4 text-sm leading-relaxed bg-zinc-950/60">
-                {previewItems.length > 0 ? (
-                  <div
-                    className="grid gap-2"
-                    style={{
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, 100%), 1fr))',
-                    }}
-                  >
-                    {previewItems
-                      .slice()
-                      .sort((a, b) => {
-                        if (a.type === b.type) return a.name.localeCompare(b.name);
-                        if (a.type === 'dir') return -1;
-                        if (b.type === 'dir') return 1;
-                        return a.name.localeCompare(b.name);
-                      })
-                      .map((child) => (
-                        <div key={child.id} className="truncate">
-                          <span className={`${previewColor(child.type)} font-mono`}>
-                            {child.name}
-                            {child.type === 'dir' ? '/' : ''}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-zinc-400 italic">
-                    {selectedCandidate ? '(empty)' : 'Waiting for selection'}
-                  </div>
-                )}
+              <div
+                tabIndex={0}
+                role="region"
+                aria-label="Directory preview"
+                className="flex-1 overflow-y-auto px-4 pb-4 text-sm leading-relaxed bg-zinc-950/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
+              >
+                <FuzzyPreviewGrid items={previewItems} hasSelection={Boolean(selectedCandidate)} />
               </div>
             </div>
           )}

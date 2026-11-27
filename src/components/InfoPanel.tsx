@@ -1,7 +1,12 @@
 import React from 'react';
 
 import { FileNode } from '../types';
-import { computeNodeBytes, countVisibleChildren, formatBytes } from '../utils/sizeHelpers';
+import {
+  computeNodeBytes,
+  countVisibleChildren,
+  formatBytes,
+  getDeterministicTimestamp,
+} from '../utils/sizeHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
 interface InfoPanelProps {
@@ -78,8 +83,9 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
     fetchers: fetchersLabel,
   } = resolvePluginLabels(isDir, isArchive, mimetype);
 
-  const created = formatDate(file.createdAt);
-  const modified = formatDate(file.modifiedAt);
+  const modifiedTimestamp = getDeterministicTimestamp(file);
+  const created = formatDate(file.createdAt ?? modifiedTimestamp);
+  const modified = formatDate(modifiedTimestamp);
 
   return (
     <div
@@ -128,7 +134,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
               <div className="min-w-0 break-words text-sm font-bold text-white">{file.name}</div>
             </div>
             <div className="text-xs text-zinc-300 font-mono mb-3">
-              <span className="text-zinc-400">{isDir ? 'Items:' : 'Size:'}</span> {size}
+              <span className="text-zinc-400">{isDir ? 'Entry count:' : 'Size:'}</span> {size}
             </div>
 
             <h3 className="text-xs uppercase font-bold text-green-500 mb-2 tracking-widest">

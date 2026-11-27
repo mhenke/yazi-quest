@@ -26,23 +26,23 @@ interface TeaserOverlayProps {
 const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
   <div className="relative z-30 h-full w-full overflow-y-auto flex items-start sm:items-center justify-center">
     <div className="my-auto flex flex-col items-center text-center space-y-4 md:space-y-8 p-6 sm:p-10 md:p-12 bg-black/40 backdrop-blur-xs border-y border-red-500/30 w-full animate-terminal-pop animate-terminal-delay-1s">
-      <div className="animate-pulse text-red-500 mb-2">
-        <Signal size={48} />
+      <div className="text-red-500 mb-2">
+        <Signal size={48} aria-hidden="true" />
       </div>
 
-      <h2 className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-terminal-rise">
+      <p className="text-xl md:text-2xl text-red-400 font-mono tracking-[0.3em] uppercase animate-terminal-rise">
         {CONCLUSION_DATA.overlayTitle}
-      </h2>
+      </p>
 
-      <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase">
+      <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase">
         {CONCLUSION_DATA.sequelTitle}
-      </h2>
+      </h1>
 
       <div className="h-px w-32 bg-red-500" />
 
-      <h3 className="text-xl sm:text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
+      <h2 className="text-xl sm:text-2xl text-red-400 tracking-[0.5em] uppercase font-light">
         {CONCLUSION_DATA.sequelSubtitle}
-      </h3>
+      </h2>
 
       {/* Persistent Rewards / System Status */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-6 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
@@ -68,7 +68,7 @@ const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
 
       <div className="pt-8 md:pt-12">
         <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono border border-zinc-700 px-4 py-2 rounded bg-black/80">
-          <UploadCloud size={16} className="animate-pulse" aria-hidden="true" />
+          <UploadCloud size={16} aria-hidden="true" />
           <a
             href="https://github.com/mhenke/yazi-quest"
             target="_blank"
@@ -106,7 +106,7 @@ const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
         >
           <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-10" />
           <div className="flex items-center gap-3 font-mono font-bold tracking-[0.2em] uppercase">
-            <Zap size={20} className="animate-pulse" aria-hidden="true" />
+            <Zap size={20} aria-hidden="true" />
             <span>Initialize New Cycle</span>
             <ArrowRight
               size={20}
@@ -115,7 +115,7 @@ const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
             />
           </div>
         </button>
-        <p className="mt-4 text-xs text-zinc-400 font-mono uppercase tracking-widest animate-pulse">
+        <p className="mt-4 text-xs text-zinc-400 font-mono uppercase tracking-widest">
           Establishing consciousness bridge...
         </p>
       </div>
@@ -202,6 +202,35 @@ const outroPanelFocusClass = (showFocusRing = false): string =>
   showFocusRing
     ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400'
     : 'focus-visible:outline-hidden';
+
+const AI_HIGHLIGHT_CLASS: Record<string, string> = {
+  'AI-7734': 'text-orange-400 font-bold',
+  'AI-7733': 'text-blue-400 font-bold',
+  'AI-7735': 'text-yellow-400 font-bold',
+};
+
+const renderHighlighted = (text: string) => {
+  // Only match the specific AI identifiers we use
+  const regex = /(AI-7734|AI-7733|AI-7735)/g;
+  if (!regex.test(text)) return text;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  text.replace(regex, (match, _p1, offset) => {
+    const before = text.slice(lastIndex, offset as number);
+    if (before) parts.push(before);
+    parts.push(
+      <span key={offset} className={AI_HIGHLIGHT_CLASS[match]}>
+        {match}
+      </span>
+    );
+    lastIndex = (offset as number) + match.length;
+    return match;
+  });
+  const rest = text.slice(lastIndex);
+  if (rest) parts.push(rest);
+  return parts;
+};
 
 export const OutroSequence: React.FC<OutroSequenceProps> = ({
   onRestartCycle,
@@ -352,35 +381,6 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
     };
   }, [showTeaser, reduceMotion]);
 
-  const renderHighlighted = (text: string) => {
-    // Only match the specific AI identifiers we use
-    const regex = /(AI-7734|AI-7733|AI-7735)/g;
-    if (!regex.test(text)) return text;
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    text.replace(regex, (match, p1, offset) => {
-      const before = text.slice(lastIndex, offset as number);
-      if (before) parts.push(before);
-      const cls =
-        match === 'AI-7734'
-          ? 'text-orange-400 font-bold'
-          : match === 'AI-7733'
-            ? 'text-blue-400 font-bold'
-            : 'text-yellow-400 font-bold';
-      parts.push(
-        <span key={offset} className={cls}>
-          {match}
-        </span>
-      );
-      lastIndex = (offset as number) + match.length;
-      return match;
-    });
-    const rest = text.slice(lastIndex);
-    if (rest) parts.push(rest);
-    return parts;
-  };
-
   // Delay rendering of the teaser overlay content slightly to avoid a flash
   useEffect(() => {
     if (!showTeaser || reduceMotion) return;
@@ -398,10 +398,11 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
   // We will now use a manual button instead
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-terminal-fade">
+    <main className="absolute inset-0 z-[100] bg-black flex items-center justify-center p-4 sm:p-8 overflow-hidden animate-terminal-fade">
       {/* Skip Outro Button */}
       <div className="absolute top-4 right-4 z-50">
         <button
+          type="button"
           onClick={() => {
             if (showTeaser && videoRef.current) {
               // Replay the teaser if it's already showing
@@ -438,8 +439,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
         >
           {/* Part Header */}
           <div
-            className="mb-8 border-l-4 pl-6 animate-terminal-slide-left"
-            style={{ borderColor: partPalette.hex }}
+            className={`mb-8 border-l-4 pl-6 animate-terminal-slide-left ${partPalette.borderStrong}`}
           >
             <div className={`flex items-center gap-3 ${partPalette.text} mb-2`}>
               <Terminal size={28} />
@@ -518,11 +518,12 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
           <div className="shrink-0 pt-4 flex justify-center animate-terminal-fade">
             {isComplete ? (
               <button
+                type="button"
                 onClick={() => {
                   playSuccessSound(true);
                   setShowTeaser(true);
                 }}
-                className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono uppercase tracking-wider flex items-center gap-2"
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded text-white font-mono uppercase tracking-wider flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               >
                 <Signal size={18} />
                 View Transmission
@@ -541,6 +542,6 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
         videoRef={videoRef}
         onRestartCycle={onRestartCycle}
       />
-    </div>
+    </main>
   );
 };

@@ -67,6 +67,7 @@ export type Action =
       zoxideData?: Record<string, ZoxideEntry>;
     }
   | { type: 'RESTART_CYCLE' }
+  | { type: 'RESET_CURRENT_CYCLE' }
   | { type: 'INCREMENT_KEYSTROKES'; weighted?: boolean }
   | { type: 'GAME_OVER'; reason: GameState['gameOverReason'] }
   | { type: 'RESET_LEVEL' }
@@ -453,13 +454,14 @@ function applyUpdateConsciousness(state: GameState, payload: number): GameState 
   };
 }
 
-function applyRestartCycle(state: GameState): GameState {
+function applyRestartCycle(state: GameState, nextCycle = true): GameState {
   const freshFs = cloneFS(INITIAL_FS);
   const startPath = ['root', 'home', 'guest'];
   return {
     ...state,
-    cycleCount: (state.cycleCount || 1) + 1,
+    cycleCount: (state.cycleCount || 1) + (nextCycle ? 1 : 0),
     levelIndex: 0,
+    unlockedLevelIndex: 0,
     fs: freshFs,
     currentPath: startPath,
     levelStartFS: cloneFS(freshFs),
@@ -491,6 +493,7 @@ function applyRestartCycle(state: GameState): GameState {
     dismissedAlertIds: [],
     timeLeft: LEVELS[0].timeLimit ?? null,
     completedTaskIds: {},
+    showMap: false,
     showEpisodeIntro: true,
     isBooting: true,
     ...INITIAL_ACTION_FLAGS,
@@ -532,30 +535,29 @@ function applyCompleteIntro(state: GameState, isSkip = false): GameState {
   return newState;
 }
 
+function preserveCursor(
+  prevState: GameState,
+  nextState: GameState,
+  fallbackIndex: number
+): GameState {
+  const currentItemId = getVisibleItems(prevState)[prevState.cursorIndex]?.id;
+  if (!currentItemId) return { ...nextState, cursorIndex: fallbackIndex };
+  const newIndex = getVisibleItems(nextState).findIndex((item) => item.id === currentItemId);
+  return { ...nextState, cursorIndex: newIndex !== -1 ? newIndex : fallbackIndex };
+}
+
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'SHOW_TOAST':
       return { ...state, toast: { message: action.message, duration: action.duration } };
     case 'HIDE_TOAST':
       return { ...state, toast: undefined };
-    case 'SET_MODE': {
-      // Find current item ID to maintain cursor position if list changes
-      const visibleItemsBefore = getVisibleItems(state);
-      const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
-
-      let newState = { ...state, mode: action.mode, inputBuffer: '' };
-
-      // Special case: if we were in search and are now in normal, or vice versa
-      // (Actually any mode switch might change visible list)
-      if (currentItemId) {
-        const visibleItemsAfter = getVisibleItems(newState);
-        const newIndex = visibleItemsAfter.findIndex((item) => item.id === currentItemId);
-        if (newIndex !== -1) {
-          newState = { ...newState, cursorIndex: newIndex };
-        }
-      }
-      return newState;
-    }
+    case 'SET_MODE':
+      return preserveCursor(
+        state,
+        { ...state, mode: action.mode, inputBuffer: '' },
+        state.cursorIndex
+      );
 
     case 'NAVIGATE': {
       const { path, cursorIndex } = action;
@@ -606,23 +608,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, loadedDirIds: [...state.loadedDirIds, ...nextIds] };
     }
 
-    case 'TOGGLE_HIDDEN': {
-      // Maintain cursor position on same file if possible
-      const visibleItemsBefore = getVisibleItems(state);
-      const currentItemId = visibleItemsBefore[state.cursorIndex]?.id;
-
-      const newState = { ...state, showHidden: !state.showHidden };
-
-      if (currentItemId) {
-        const visibleItemsAfter = getVisibleItems(newState);
-        const newIndex = visibleItemsAfter.findIndex((item) => item.id === currentItemId);
-        if (newIndex !== -1) {
-          return { ...newState, cursorIndex: newIndex };
-        }
-      }
-
-      return { ...newState, cursorIndex: 0 };
-    }
+    case 'TOGGLE_HIDDEN':
+      return preserveCursor(state, { ...state, showHidden: !state.showHidden }, 0);
 
     case 'TOGGLE_INFO_PANEL':
       return { ...state, showInfoPanel: !state.showInfoPanel };
@@ -681,6 +668,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         levelIndex: action.index,
+        unlockedLevelIndex: Math.max(state.unlockedLevelIndex, action.index),
         fs: action.fs,
         currentPath: action.path,
         levelStartFS: action.fs,
@@ -725,6 +713,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case 'RESTART_CYCLE':
       return applyRestartCycle(state);
+
+    case 'RESET_CURRENT_CYCLE':
+      return applyRestartCycle(state, false);
 
     case 'INCREMENT_KEYSTROKES':
       return {

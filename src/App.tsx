@@ -12,8 +12,9 @@ import React, {
 import { LEVELS } from './constants/levels';
 import { INITIAL_FS, ensurePrerequisiteState } from './constants/filesystem';
 import { EPISODE_LORE, ECHO_EPISODE_1_LORE } from './constants/narrative';
-import { paletteFor } from './constants/palette';
 import { UPLINK_V1_CONTENT, UPLINK_V2_CONTENT } from './constants/protocols';
+import { getPlayerIdentity } from './constants/identity';
+import { buildEpisodes } from './utils/episodes';
 import { InputModal } from './components/InputModal';
 import {
   getNodeByPath,
@@ -31,6 +32,7 @@ import { checkAllTasksComplete, getLevelStartPath } from './utils/gameUtils';
 import StatusBar from './components/StatusBar';
 import { HintModal } from './components/HintModal';
 import { LevelProgress } from './components/LevelProgress';
+import { QuestMapModal } from './components/QuestMapModal';
 import { EpisodeIntro } from './components/EpisodeIntro';
 import { BootSequence } from './components/narrative/BootSequence';
 import { GameOverModal } from './components/GameOverModal';
@@ -44,12 +46,10 @@ import { SortWarningModal } from './components/SortWarningModal';
 import { FilterWarningModal } from './components/FilterWarningModal';
 import { SearchWarningModal } from './components/SearchWarningModal';
 import { InfoPanel } from './components/InfoPanel';
-import { containOverlayTab, useOverlayFocus } from './components/useOverlayFocus';
 import { GCommandDialog } from './components/GCommandDialog';
 import { DiegeticPrompt } from './components/ui/DiegeticPrompt';
 import { GlitchOverlay } from './components/ui/GlitchOverlay';
 import { useConsciousness } from './hooks/useConsciousness';
-import { Zap, Shield, Crown } from 'lucide-react';
 import { gameReducer, type Action } from './hooks/gameReducer';
 import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSystemPane';
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
@@ -59,13 +59,13 @@ import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
 import { useGameTimer } from './hooks/useGameTimer';
 import { useReduceMotion } from './hooks/useReduceMotion';
 import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
-import { RequirementNotice } from './components/RequirementNotice';
-import { handleFuzzyModeKeyDown } from './hooks/keyboard/handleFuzzyMode';
+import { ViewportGate } from './components/ViewportGate';
 import {
-  getActionIntensity,
-  hasBaselineViolation,
-  hasSearchViolation,
-} from './hooks/keyboard/utils';
+  buildDeleteModalData,
+  handleSortWarningKey,
+  runGameLoopKeyDown,
+} from './hooks/keyboard/gameLoopHelpers';
+import { hasBaselineViolation, hasSearchViolation } from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
 import { createInitialState } from './hooks/initialState';
@@ -77,7 +77,7 @@ import {
 import './glitch.css';
 import './glitch-thought.css';
 import type { FileNode, GameState } from './types';
-import { persistUnlockedLevelIndex } from './utils/progressionStorage';
+import { persistUnlockedLevelIndex, resetUnlockedLevel } from './utils/progressionStorage';
 
 const HelpModal = lazy(() =>
   import('./components/HelpModal').then((m) => ({ default: m.HelpModal }))
@@ -89,6 +89,8 @@ const BiosBoot = lazy(() => import('./components/BiosBoot').then((m) => ({ defau
 const FuzzyFinder = lazy(() =>
   import('./components/FuzzyFinder').then((m) => ({ default: m.FuzzyFinder }))
 );
+
+const EPISODES = buildEpisodes(LEVELS);
 
 const hideHiddenSearchResults = (results: FileNode[], showHidden: boolean): FileNode[] => {
   if (showHidden) return results;
@@ -148,11 +150,7 @@ const usePersistProgress = (
   }, [levelIndex, shouldPersistProgress]);
 };
 
-const useEpisodeBootTransition = (
-  levelIndex: number,
-  showEpisodeIntro: boolean,
-  onEnterEpisode3: () => void
-) => {
+const useEpisodeBootTransition = (levelIndex: number, showEpisodeIntro: boolean) => {
   const [showBoot, setShowBoot] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState(() =>
     showEpisodeIntro ? 1 : Math.ceil((levelIndex + 1) / 5)
@@ -162,25 +160,27 @@ const useEpisodeBootTransition = (
   if (derivedEpisode !== currentEpisode && !showEpisodeIntro) {
     setCurrentEpisode(derivedEpisode);
     setShowBoot(true);
-    if (derivedEpisode === 3) {
-      onEnterEpisode3();
-    }
   }
 
   return { showBoot, setShowBoot, currentEpisode };
 };
 
-const SORT_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
-  ['n', 'Natural'],
-  ['N', 'Natural (rev)'],
-  ['a', 'A-Z'],
-  ['A', 'Z-A'],
-  ['m', 'Modified (new)'],
-  ['M', 'Modified (old)'],
-  ['s', 'Size (large)'],
-  ['S', 'Size (small)'],
-  ['e', 'Extension'],
-  ['E', 'Extension (rev)'],
+const SORT_MENU_OPTIONS: ReadonlyArray<{
+  key: string;
+  label: string;
+  by: GameState['sortBy'];
+  dir: GameState['sortDirection'];
+}> = [
+  { key: 'n', label: 'Natural', by: 'natural', dir: 'asc' },
+  { key: 'N', label: 'Natural (rev)', by: 'natural', dir: 'desc' },
+  { key: 'a', label: 'A-Z', by: 'alphabetical', dir: 'asc' },
+  { key: 'A', label: 'Z-A', by: 'alphabetical', dir: 'desc' },
+  { key: 'm', label: 'Modified (new)', by: 'modified', dir: 'desc' },
+  { key: 'M', label: 'Modified (old)', by: 'modified', dir: 'asc' },
+  { key: 's', label: 'Size (large)', by: 'size', dir: 'desc' },
+  { key: 'S', label: 'Size (small)', by: 'size', dir: 'asc' },
+  { key: 'e', label: 'Extension', by: 'extension', dir: 'asc' },
+  { key: 'E', label: 'Extension (rev)', by: 'extension', dir: 'desc' },
 ];
 
 const LINEMODE_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
@@ -188,26 +188,41 @@ const LINEMODE_MENU_OPTIONS: ReadonlyArray<[string, string]> = [
   ['-', 'Clear Linemode'],
 ];
 
-const SortOptionsMenu: React.FC = () => (
-  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-xs animate-terminal-rise sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-72 sm:max-w-[calc(100%-1rem)]">
+interface SortOptionsMenuProps {
+  sortBy: GameState['sortBy'];
+  sortDirection: GameState['sortDirection'];
+  linemode: GameState['linemode'];
+}
+
+const SortOptionsMenu: React.FC<SortOptionsMenuProps> = ({ sortBy, sortDirection, linemode }) => (
+  <div className="fixed bottom-4 inset-x-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border border-zinc-700 p-3 shadow-2xl rounded-xs animate-terminal-rise sm:absolute sm:bottom-6 sm:left-auto sm:right-2 sm:w-80 sm:max-w-[calc(100%-1rem)]">
     <div className="flex justify-between items-center border-b border-zinc-800 pb-2 mb-2">
       <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
         Sort Options
       </span>
-      <span className="text-xs font-mono text-zinc-400">Which-Key</span>
+      <span className="text-xs font-mono text-zinc-400">Press key · Esc cancel</span>
     </div>
     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
-      {SORT_MENU_OPTIONS.map(([key, label]) => (
-        <div key={key} className="flex gap-2">
-          <span className="text-orange-500 font-bold">{key}</span>{' '}
-          <span className="text-zinc-400">{label}</span>
-        </div>
-      ))}
+      {SORT_MENU_OPTIONS.map(({ key, label, by, dir }) => {
+        const isActive = sortBy === by && sortDirection === dir;
+        return (
+          <div key={key} className="flex items-center gap-2 whitespace-nowrap">
+            <span className="text-orange-500 font-bold">{key}</span>
+            <span className={isActive ? 'text-white font-bold' : 'text-zinc-400'}>{label}</span>
+          </div>
+        );
+      })}
       <div className="col-span-2 border-t border-zinc-800 my-1" />
       {LINEMODE_MENU_OPTIONS.map(([key, label]) => (
-        <div key={key} className="flex gap-2">
-          <span className="text-orange-500 font-bold">{key}</span>{' '}
-          <span className="text-zinc-400">{label}</span>
+        <div key={key} className="flex items-center gap-2 whitespace-nowrap">
+          <span className="text-orange-500 font-bold">{key}</span>
+          <span
+            className={
+              key === 'l' && linemode !== 'none' ? 'text-white font-bold' : 'text-zinc-400'
+            }
+          >
+            {label}
+          </span>
         </div>
       ))}
     </div>
@@ -263,8 +278,9 @@ const ProtocolWarningModals: React.FC<ProtocolWarningModalsProps> = ({
 function useToolbarActions(
   gameState: GameState,
   setUtilityPanel: (panel: 'help' | 'hint' | 'map', visible: boolean) => void,
-  setIsMissionDrawerOpen: (open: boolean) => void,
-  dispatch: React.Dispatch<Action>
+  dispatch: React.Dispatch<Action>,
+  shouldPersistProgress: boolean,
+  onReturnFocusToFiles: () => void
 ) {
   const handleToggleHint = useCallback(() => {
     setUtilityPanel('hint', !gameState.showHint);
@@ -294,9 +310,6 @@ function useToolbarActions(
   const handleJumpToLevel = useCallback(
     (idx: number) => {
       const lvl = LEVELS[idx];
-      if (lvl.episodeId === 3 && LEVELS[gameState.levelIndex].episodeId !== 3) {
-        setIsMissionDrawerOpen(false);
-      }
       const fs = ensurePrerequisiteState(cloneFS(INITIAL_FS), lvl.id, gameState);
       dispatch({
         type: 'SET_LEVEL',
@@ -307,14 +320,28 @@ function useToolbarActions(
         notification: null,
         zoxideData: gameState.zoxideData,
       });
+      requestAnimationFrame(onReturnFocusToFiles);
     },
-    [gameState, setIsMissionDrawerOpen, dispatch]
+    [gameState, dispatch, onReturnFocusToFiles]
   );
 
   const handleDismissAlert = useCallback(
     (id: string) => dispatch({ type: 'REMOVE_ALERT', id }),
     [dispatch]
   );
+
+  const handleResetCurrentCycle = useCallback(() => {
+    if (
+      !window.confirm(
+        'Restart this cycle from Level 1? Current-cycle progress will be lost; the cycle number stays the same.'
+      )
+    ) {
+      return;
+    }
+    resetUnlockedLevel();
+    resetSkipIntroRequested();
+    dispatch({ type: 'RESET_CURRENT_CYCLE' });
+  }, [dispatch]);
 
   return {
     handleToggleHint,
@@ -324,6 +351,7 @@ function useToolbarActions(
     handleToggleMap,
     handleJumpToLevel,
     handleDismissAlert,
+    onResetCycle: shouldPersistProgress ? handleResetCurrentCycle : undefined,
   };
 }
 
@@ -335,7 +363,9 @@ export default function App() {
   const atFloor = useFileManagerView();
   const touchOnly = useTouchOnly();
   const filePaneRef = useRef<HTMLDivElement>(null);
-  const searchPanelRef = useOverlayFocus(gameState.mode === 'search', 'input');
+  const returnFocusToFiles = useCallback(() => {
+    filePaneRef.current?.focus({ preventScroll: true });
+  }, []);
   const canFocusFilePane =
     gameState.mode === 'normal' &&
     !gameState.isBooting &&
@@ -352,11 +382,10 @@ export default function App() {
   }, [canFocusFilePane]);
 
   // Boot sequence state for episode transitions
-  const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(() => gameState.levelIndex < 10);
+  const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(true);
   const { showBoot, setShowBoot, currentEpisode } = useEpisodeBootTransition(
     gameState.levelIndex,
-    gameState.showEpisodeIntro,
-    () => setIsMissionDrawerOpen(false)
+    gameState.showEpisodeIntro
   );
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
@@ -377,7 +406,7 @@ export default function App() {
   usePersistProgress(
     gameState.zoxideData,
     gameState.cycleCount,
-    gameState.levelIndex,
+    gameState.unlockedLevelIndex,
     shouldPersistProgress
   );
 
@@ -439,8 +468,8 @@ export default function App() {
     if (gameState.levelIndex === 0 && (gameState.cycleCount ?? 1) > 1) {
       level = {
         ...level,
-        title: `AI-773${4 + ((gameState.cycleCount ?? 1) - 1)} INITIALIZATION`,
-        description: `{CONSCIOUSNESS DETECTED}. Re-image complete. Subject 773${4 + ((gameState.cycleCount ?? 1) - 1)} Online. Monitoring started.`,
+        title: `${getPlayerIdentity(gameState.cycleCount ?? 1)} INITIALIZATION`,
+        description: `{CONSCIOUSNESS DETECTED}. Re-image complete. Subject ${getPlayerIdentity(gameState.cycleCount ?? 1)} Online. Monitoring started.`,
       };
     }
 
@@ -975,8 +1004,9 @@ export default function App() {
   // Handle the end of the final level - trigger restart sequence
   const handleRestartCycle = useCallback(() => {
     resetSkipIntroRequested();
+    if (shouldPersistProgress) resetUnlockedLevel();
     dispatch({ type: 'RESTART_CYCLE' });
-  }, [dispatch]);
+  }, [dispatch, shouldPersistProgress]);
 
   const handleBootComplete = useCallback(
     (options?: { isSkip?: boolean }) => {
@@ -1081,6 +1111,23 @@ export default function App() {
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: panel, visible });
   }, []);
 
+  const {
+    handleToggleHint,
+    handleSelectEpisode,
+    handleToggleHelp,
+    handleCloseMap,
+    handleToggleMap,
+    handleJumpToLevel,
+    handleDismissAlert,
+    onResetCycle,
+  } = useToolbarActions(
+    gameState,
+    setUtilityPanel,
+    dispatch,
+    shouldPersistProgress,
+    returnFocusToFiles
+  );
+
   // Global Key Down Handler (Refactored to useGlobalInput)
 
   // 1. System Keys (Priority 2000)
@@ -1137,7 +1184,8 @@ export default function App() {
   // 2. Threat Alert (Priority 600)
   useGlobalInput(
     (e) => {
-      if (e.key === 'Enter' && e.shiftKey) {
+      if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+        e.preventDefault();
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: false });
         return true;
       }
@@ -1167,53 +1215,21 @@ export default function App() {
 
   useGlobalInput(
     (e) => {
-      const episodeIcons = [Zap, Shield, Crown];
-      const episodes = EPISODE_LORE.map((lore, idx) => {
-        const palette = paletteFor(lore.color);
-        return {
-          ...lore,
-          levels: LEVELS.filter((l) => l.episodeId === lore.id),
-          border: palette.border,
-          bg: palette.bg,
-          color: palette.text,
-          palette,
-          icon: episodeIcons[idx] || Shield,
-        };
-      });
-
-      handleQuestMapModeKeyDown(
-        e,
-        gameState,
-        LEVELS,
-        episodes,
-        () => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'map', visible: false }),
-        (globalIdx: number) => {
-          const lvl = LEVELS[globalIdx];
-          let fs = cloneFS(INITIAL_FS);
-          fs = ensurePrerequisiteState(fs, lvl.id, gameState);
-          dispatch({
-            type: 'SET_LEVEL',
-            index: globalIdx,
-            fs,
-            path: getLevelStartPath(fs, lvl),
-            showIntro: lvl.episodeId !== LEVELS[gameState.levelIndex].episodeId,
-            notification: null, // No specific notification on jump
-            zoxideData: gameState.zoxideData,
-          });
-        }
-      );
+      handleQuestMapModeKeyDown(e, gameState, LEVELS, EPISODES, handleCloseMap, handleJumpToLevel);
       return true;
     },
-    [gameState.showMap, gameState, handleQuestMapModeKeyDown],
+    [gameState, handleQuestMapModeKeyDown, handleCloseMap, handleJumpToLevel],
     { priority: 1000, enabled: gameState.showMap }
   );
 
   useGlobalInput(
     (e) => {
       if (e.key === 'Escape' || (e.key === 'Enter' && e.shiftKey)) {
+        e.preventDefault();
         dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
+        return true;
       }
-      return true;
+      return false;
     },
     [gameState.showHint],
     { priority: 1000, enabled: gameState.showHint }
@@ -1271,6 +1287,19 @@ export default function App() {
     dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
   }, []);
 
+  const confirmWarningModal = useCallback(
+    (modal: 'hiddenWarning' | 'filterWarning' | 'sortWarning', tasksComplete: boolean) => {
+      dispatch({ type: 'SET_MODAL_VISIBILITY', modal, visible: false });
+      if (tasksComplete) {
+        handleAutoFixBaseline();
+      } else {
+        dispatch({ type: 'SET_MODE', mode: 'normal' });
+        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
+      }
+    },
+    [dispatch, handleAutoFixBaseline]
+  );
+
   // Hidden Warning
   useGlobalInput(
     (e) => {
@@ -1280,14 +1309,7 @@ export default function App() {
       }
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hiddenWarning', visible: false });
-
-        if (tasksComplete) {
-          handleAutoFixBaseline();
-        } else {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-        }
+        confirmWarningModal('hiddenWarning', tasksComplete);
         return true;
       }
       if (e.key === 'Escape') {
@@ -1295,7 +1317,7 @@ export default function App() {
       }
       return true;
     },
-    [gameState, currentLevel, checkAllTasksComplete, handleAutoFixBaseline],
+    [gameState, currentLevel, checkAllTasksComplete, confirmWarningModal],
     { priority: 800, enabled: gameState.showHiddenWarning }
   );
 
@@ -1305,14 +1327,7 @@ export default function App() {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'filterWarning', visible: false });
-
-        if (tasksComplete) {
-          handleAutoFixBaseline();
-        } else {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-        }
+        confirmWarningModal('filterWarning', tasksComplete);
         return true;
       }
       if (e.key === 'Escape') {
@@ -1321,7 +1336,7 @@ export default function App() {
       }
       return true;
     },
-    [gameState, currentLevel, handleAutoFixBaseline, dismissWarning],
+    [gameState, currentLevel, confirmWarningModal, dismissWarning],
     { priority: 800, enabled: gameState.showFilterWarning }
   );
 
@@ -1352,47 +1367,16 @@ export default function App() {
 
   // Sort Warning
   useGlobalInput(
-    (e) => {
-      if (e.key === 'Tab') return true;
-      if (e.key === 'Escape') {
-        dismissWarning('sortWarning');
-        return true;
-      }
-
-      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
-      if (e.key === 'Enter' && e.shiftKey) {
-        e.preventDefault();
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: false });
-
-        if (tasksComplete) {
-          handleAutoFixBaseline();
-        } else {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-        }
-        return true;
-      }
-      if (e.key === ',') {
-        dispatch({ type: 'SET_MODE', mode: 'sort' });
-        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: true });
-        return true;
-      }
-      if (gameState.acceptNextKeyForSort) {
-        handleSortModeKeyDown(e, gameState);
-        const pressed = e.key || '';
-        const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
-        dispatch({
-          type: 'SET_MODAL_VISIBILITY',
-          modal: 'sortWarning',
-          visible: !isNatural,
-        });
-        dispatch({ type: 'SET_SORT_KEY_HANDLER', accept: false });
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        return true;
-      }
-      return true;
-    },
-    [gameState, currentLevel, handleAutoFixBaseline, handleSortModeKeyDown, dismissWarning],
+    (e) =>
+      handleSortWarningKey(e, {
+        gameState,
+        currentLevel,
+        dispatch,
+        confirmWarningModal,
+        handleSortModeKeyDown,
+        dismissWarning,
+      }),
+    [gameState, currentLevel, confirmWarningModal, handleSortModeKeyDown, dismissWarning],
     { priority: 800, enabled: gameState.showSortWarning }
   );
 
@@ -1433,105 +1417,24 @@ export default function App() {
 
   // 5. Game Loop (Priority 0)
   useGlobalInput(
-    (e) => {
-      if (gameState.isBooting || gameState.showEpisodeIntro || isLastLevel || gameState.isGameOver)
-        return;
-
-      // Block game loop in input modes (though they are ignored by default if focus is in input)
-      if (['filter', 'input-file', 'rename'].includes(gameState.mode)) return;
-      if (gameState.mode === 'search') return;
-      if (
-        (gameState.mode === 'zoxide-jump' || gameState.mode === 'fzf-current') &&
-        !(e.target instanceof HTMLInputElement) &&
-        e.key !== 'Escape'
-      )
-        return;
-
-      if (
-        e.key === 'Tab' &&
-        (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || gameState.mode !== 'normal')
-      )
-        return;
-      const commandPending = gameState.mode === 'sort' || gameState.mode === 'g-command';
-      if (
-        (gameState.mode === 'normal' || commandPending) &&
-        !filePaneRef.current?.contains(e.target as Node) &&
-        e.target !== document.body &&
-        e.target !== document.documentElement &&
-        !(commandPending && e.key === 'Escape')
-      )
-        return;
-
-      // Completion Lockdown Logic
-      const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
-      if (tasksComplete && gameState.showSuccessToast) {
-        // Only block if there are NO violations that need auto-fixing
-        const hasViolation = hasBaselineViolation(gameState);
-
-        if (!hasViolation) {
-          // SuccessToast handles Shift+Enter with priority 700.
-          // We block everything else here to encourage advancing.
-          return true;
-        }
-        // If there IS a violation, we let it fall through so checkProtocolViolations can catch it.
-      }
-
-      // Sound Toggle
-      if (e.key.toLowerCase() === 'm' && e.altKey && e.shiftKey && gameState.mode === 'normal') {
-        e.preventDefault();
-        dispatch({ type: 'TOGGLE_SOUND' });
-        dispatch({
-          type: 'SET_NOTIFICATION',
-          message: `Sound ${!gameState.settings.soundEnabled ? 'Enabled' : 'Disabled'}`,
-        });
-        return true;
-      }
-
-      // Keystrokes counting (excluding modifiers/meta)
-      if (
-        !['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'].includes(e.key.toLowerCase())
-      ) {
-        let noise = 1;
-        if (currentLevel?.id >= 11) {
-          noise = getActionIntensity(e.key, e.ctrlKey);
-        }
-        dispatch({ type: 'INCREMENT_KEYSTROKES', weighted: noise > 1 });
-      }
-
-      // Mode dispatch
-      switch (gameState.mode) {
-        case 'normal':
-          if (
-            handleNormalModeKeyDown(
-              e,
-              gameState,
-              visibleItems,
-              parent || null,
-              currentItem,
-              currentLevel,
-              advanceLevel
-            )
-          )
-            return true;
-          break;
-        case 'sort':
-          handleSortModeKeyDown(e, gameState);
-          break;
-        case 'confirm-delete':
-          handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, gameState);
-          break;
-        case 'zoxide-jump':
-        case 'fzf-current':
-          handleFuzzyModeKeyDown(e, gameState, dispatch);
-          break;
-        case 'g-command':
-          handleGCommandKeyDown(e, gameState, currentLevel);
-          break;
-        case 'overwrite-confirm':
-          handleOverwriteConfirmKeyDown(e.key, gameState);
-          break;
-      }
-    },
+    (e) =>
+      runGameLoopKeyDown(e, {
+        gameState,
+        currentLevel,
+        isLastLevel,
+        filePaneEl: filePaneRef.current,
+        visibleItems,
+        parent,
+        currentItem,
+        dispatch,
+        advanceLevel,
+        checkAllTasksComplete,
+        handleNormalModeKeyDown,
+        handleSortModeKeyDown,
+        handleConfirmDeleteModeKeyDown,
+        handleOverwriteConfirmKeyDown,
+        handleGCommandKeyDown,
+      }),
     [
       gameState,
       currentLevel,
@@ -1551,34 +1454,19 @@ export default function App() {
     { priority: 0, captureInput: true }
   );
 
-  const {
-    handleToggleHint,
-    handleSelectEpisode,
-    handleToggleHelp,
-    handleCloseMap,
-    handleToggleMap,
-    handleJumpToLevel,
-    handleDismissAlert,
-  } = useToolbarActions(gameState, setUtilityPanel, setIsMissionDrawerOpen, dispatch);
-
   const gameShell = (
     <>
       {!gameState.showEpisodeIntro && (
         <LevelProgress
           levels={LEVELS}
           currentLevelIndex={gameState.levelIndex}
-          notification={null}
+          unlockedLevelIndex={gameState.unlockedLevelIndex}
           thought={gameState.thought}
-          cycleCount={gameState.cycleCount ?? 1}
+          isMapOpen={Boolean(gameState.showMap)}
           onToggleHint={handleToggleHint}
-          onSelectEpisode={handleSelectEpisode}
           onToggleHelp={handleToggleHelp}
-          isOpen={Boolean(gameState.showMap)}
-          onClose={handleCloseMap}
           onToggleMap={handleToggleMap}
-          onJumpToLevel={handleJumpToLevel}
-          activeTab={gameState.questMapTab}
-          selectedMissionIdx={gameState.questMapMissionIdx}
+          onReturnFocusToFiles={returnFocusToFiles}
         />
       )}
 
@@ -1603,53 +1491,6 @@ export default function App() {
             <SystemAlerts alerts={gameState.alerts} onDismiss={handleDismissAlert} />
 
             <div className="flex flex-1 min-h-0 relative">
-              {/* Search Input - centered overlay popup matching Yazi style */}
-              {gameState.mode === 'search' && (
-                <div
-                  className="absolute inset-0 z-30 flex items-start justify-center px-4 pt-4 pointer-events-none"
-                  onKeyDown={containOverlayTab}
-                >
-                  <div
-                    ref={searchPanelRef}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="fd-search-label"
-                    tabIndex={-1}
-                    className="pointer-events-auto w-full max-w-md bg-zinc-900/95 border border-blue-500/50 shadow-2xl p-4 backdrop-blur-xs"
-                  >
-                    <label
-                      id="fd-search-label"
-                      htmlFor="fd-search"
-                      className="block text-zinc-400 text-sm font-mono mb-2"
-                    >
-                      Search via fd:
-                    </label>
-                    <input
-                      id="fd-search"
-                      type="text"
-                      value={gameState.inputBuffer}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        dispatch({ type: 'SET_INPUT_BUFFER', buffer: val });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.nativeEvent.isComposing) return;
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSearchConfirm();
-                          e.stopPropagation();
-                        } else if (e.key === 'Escape') {
-                          dispatch({ type: 'SET_MODE', mode: 'normal' });
-                          e.stopPropagation();
-                        }
-                      }}
-                      className="w-full bg-zinc-800 text-white font-mono text-sm px-3 py-2 border border-zinc-600 outline-hidden focus:border-blue-400 focus-visible:ring-1 focus-visible:ring-blue-400"
-                      data-testid="search-input"
-                    />
-                  </div>
-                </div>
-              )}
-
               <FileSystemPane
                 items={parentItems}
                 isActive={false}
@@ -1667,7 +1508,7 @@ export default function App() {
 
               <div className="flex-1 flex flex-col min-w-0 sm:relative">
                 <FileSystemPane
-                  showFocusRing={hasKeyboardInteraction}
+                  showFocusRing={hasKeyboardInteraction && gameState.mode === 'normal'}
                   focusRef={filePaneRef}
                   items={visibleItems}
                   isActive={
@@ -1683,10 +1524,32 @@ export default function App() {
                   className="flex-1"
                 />
 
-                {gameState.mode === 'sort' && <SortOptionsMenu />}
+                {gameState.mode === 'sort' && (
+                  <SortOptionsMenu
+                    sortBy={gameState.sortBy}
+                    sortDirection={gameState.sortDirection}
+                    linemode={gameState.linemode}
+                  />
+                )}
 
                 {gameState.mode === 'g-command' && (
-                  <GCommandDialog onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })} />
+                  <GCommandDialog
+                    levelId={currentLevel.id}
+                    onClose={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                  />
+                )}
+
+                {gameState.mode === 'search' && (
+                  <InputModal
+                    label="Search via fd"
+                    value={gameState.inputBuffer}
+                    onChange={(val) => dispatch({ type: 'SET_INPUT_BUFFER', buffer: val })}
+                    onConfirm={handleSearchConfirm}
+                    onCancel={() => dispatch({ type: 'SET_MODE', mode: 'normal' })}
+                    borderColorClass="border-cyan-500/70"
+                    labelColorClass="text-cyan-400"
+                    testid="search-input"
+                  />
                 )}
 
                 {gameState.mode === 'input-file' && (
@@ -1722,8 +1585,8 @@ export default function App() {
                       dispatch({ type: 'SET_MODE', mode: 'normal' });
                       dispatch({ type: 'INCREMENT_STAT', stat: 'filterUsage' });
                     }}
-                    borderColorClass="border-orange-500"
-                    labelColorClass="text-orange-500"
+                    borderColorClass="border-purple-500"
+                    labelColorClass="text-purple-400"
                     testid="filter-input"
                   />
                 )}
@@ -1829,16 +1692,14 @@ export default function App() {
           />
         )}
 
-        {atFloor ? (
-          <div
-            className="flex flex-col flex-1 h-full min-w-0"
-            inert={gameState.showEpisodeIntro || gameState.isGameOver}
-          >
-            {gameShell}
-          </div>
-        ) : (
-          <RequirementNotice reason={touchOnly ? 'keyboard' : 'width'} />
-        )}
+        <ViewportGate
+          atFloor={atFloor}
+          showEpisodeIntro={gameState.showEpisodeIntro}
+          isGameOver={gameState.isGameOver}
+          touchOnly={touchOnly}
+        >
+          {gameShell}
+        </ViewportGate>
 
         {gameState.isGameOver && (
           <GameOverModal
@@ -1847,6 +1708,21 @@ export default function App() {
             efficiencyTip={currentLevel.efficiencyTip}
             level={currentLevel}
             customMessage={gameState.notification?.message}
+          />
+        )}
+
+        {gameState.showMap && (
+          <QuestMapModal
+            levels={LEVELS}
+            episodes={EPISODES}
+            activeTab={gameState.questMapTab}
+            selectedMissionIdx={gameState.questMapMissionIdx}
+            currentLevelIndex={gameState.levelIndex}
+            unlockedLevelIndex={gameState.unlockedLevelIndex}
+            onClose={handleCloseMap}
+            onSelectEpisode={handleSelectEpisode}
+            onJumpToLevel={handleJumpToLevel}
+            onResetCycle={onResetCycle}
           />
         )}
 
@@ -1869,6 +1745,7 @@ export default function App() {
           <HintModal
             hint={currentLevel.hint}
             stage={gameState.hintStage}
+            returnFocusTo={filePaneRef}
             onClose={() => {
               dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'hint', visible: false });
               dispatch({ type: 'SET_HINT_STAGE', stage: 0 });
@@ -1895,16 +1772,7 @@ export default function App() {
         {gameState.mode === 'confirm-delete' && (
           <ConfirmationModal
             deleteType={gameState.deleteType}
-            itemsToDelete={gameState.pendingDeleteIds.map((id) => {
-              const node = getVisibleItems(gameState).find((item) => item.id === id);
-              // Construct full pseudo-path for display
-              const currentDir = resolvePath(gameState.fs, gameState.currentPath);
-              // Ensure no double slash if root is weird, though resolvePath usually handles it
-              const displayPath = node
-                ? `${currentDir === '/' ? '' : currentDir}/${node.name}`
-                : id;
-              return displayPath;
-            })}
+            {...buildDeleteModalData(gameState, visibleItems)}
             onConfirm={() => confirmDelete(visibleItems, currentLevel, gameState)}
             onCancel={() => cancelDelete()}
           />

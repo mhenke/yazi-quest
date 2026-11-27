@@ -12,7 +12,7 @@ import { handleOverwriteConfirmKeyDown } from './keyboard/handleOverwriteMode';
 import { handleGCommandKeyDown } from './keyboard/handleGCommandMode';
 import { handleNormalModeKeyDown } from './keyboard/handleNormalMode';
 import { handleHelpModeKeyDown } from './keyboard/handleHelpMode';
-import { handleQuestMapModeKeyDown } from './keyboard/handleQuestMapMode';
+import { handleQuestMapModeKeyDown, type QuestMapEpisode } from './keyboard/handleQuestMapMode';
 
 export const useKeyboardHandlers = (
   dispatch: React.Dispatch<Action>,
@@ -99,16 +99,7 @@ export const useKeyboardHandlers = (
       e: KeyboardEvent,
       gameState: GameState,
       levels: Level[],
-      episodes: {
-        id: number;
-        name: string;
-        shortTitle: string;
-        color: string;
-        border: string;
-        bg: string;
-        icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-        levels: Level[];
-      }[],
+      episodes: QuestMapEpisode[],
       onClose: () => void,
       onJumpToLevel: (levelIndex: number) => void
     ) => {

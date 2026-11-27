@@ -23,7 +23,7 @@ Discover the truth about AI-7733, the workspace you inherited, and the breadcrum
 - **15 Progressive Levels** teaching Yazi through narrative-driven challenges
 - **Memory Wipe Twist** - A conclusion that recontextualizes everything
 - **Real Yazi Simulation** - Authentic keybindings and file manager behavior
-- **Quest Map** (Alt+M) - Track objectives, skills, and progression
+- **Quest Map** (Alt+M) - Track objectives, skills, and progression. “Restart current cycle” asks for confirmation before clearing that cycle's progress and simulated filesystem; the cycle number stays the same.
 - **Debug Parameters** - `?lvl=5`, `?ep=2`, `?tasks=all`, `?intro=false`, `FORCE_SCENARIO` (see CONTRIBUTING.md)
 
 ### The Haunted Machine (Narrative Features)
@@ -54,8 +54,6 @@ The toolchain uses Vite 8, Vitest 5, TypeScript 6, jsdom 31, and Tailwind CSS 4
 (via its Vite plugin). Supported browsers: Chrome/Edge 111+, Safari 16.4+,
 Firefox 128+. ESLint stays on 9 until the React/import/accessibility plugins
 support 10; TypeScript stays on 6 until TypeScript-ESLint supports stable 7.
-React Hooks lint stays on 7.0.1: 7.1's expanded recommended preset requires
-a separate migration of existing effect-driven state resets.
 
 1.  **Install dependencies:**
     ```bash

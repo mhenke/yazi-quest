@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { loadUnlockedLevelIndex, persistUnlockedLevelIndex } from './progressionStorage';
+import {
+  loadUnlockedLevelIndex,
+  persistUnlockedLevelIndex,
+  resetUnlockedLevel,
+} from './progressionStorage';
 
 const STORAGE_KEY = 'yazi-quest-unlocked-level';
 
@@ -24,6 +28,14 @@ describe('level progression storage', () => {
 
     persistUnlockedLevelIndex(6);
     expect(localStorage.getItem(STORAGE_KEY)).toBe('7');
+  });
+
+  it('starts a fresh cycle at level one instead of restoring the previous unlock', () => {
+    persistUnlockedLevelIndex(14);
+    resetUnlockedLevel();
+    expect(loadUnlockedLevelIndex()).toBe(-1);
+    persistUnlockedLevelIndex(0);
+    expect(loadUnlockedLevelIndex()).toBe(0);
   });
 
   it('replaces corrupt progress with the valid current level', () => {

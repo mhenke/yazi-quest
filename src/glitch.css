@@ -260,6 +260,14 @@
     animation: none;
     opacity: 0.5;
   }
+
+  .glitch-content {
+    filter: none;
+  }
+}
+
+html[data-reduce-motion] .glitch-content {
+  filter: none;
 }
 
 /* High contrast mode support */

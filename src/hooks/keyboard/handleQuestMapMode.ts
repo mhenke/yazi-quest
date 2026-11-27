@@ -4,14 +4,8 @@ import { getActionIntensity } from './utils';
 
 import { Action } from '../gameReducer';
 
-interface EpisodeWithLevels {
+export interface QuestMapEpisode {
   id: number;
-  name: string;
-  shortTitle: string;
-  color: string;
-  border: string;
-  bg: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   levels: Level[];
 }
 
@@ -20,7 +14,7 @@ export const handleQuestMapModeKeyDown = (
   gameState: GameState,
   dispatch: React.Dispatch<Action>,
   levels: Level[],
-  episodes: EpisodeWithLevels[], // We might need to construct this or pass it in
+  episodes: QuestMapEpisode[],
   onClose: () => void,
   onJumpToLevel: (levelIndex: number) => void
 ) => {
@@ -98,12 +92,7 @@ export const handleQuestMapModeKeyDown = (
         if (selectedLevel) {
           // Find global index
           const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
-          // Verify unlocked
-          if (globalIdx !== -1 && globalIdx <= gameState.levelIndex) {
-            // gameState.levelIndex is "unlocked max" basically? No, it's current.
-            // Wait, user can jump to any COMPLETED level or CURRENT level.
-            // gameState.levelIndex is the level they are ON.
-            // So if globalIdx <= gameState.levelIndex, it's safe.
+          if (globalIdx !== -1 && globalIdx <= gameState.unlockedLevelIndex) {
             onJumpToLevel(globalIdx);
             onClose();
           }

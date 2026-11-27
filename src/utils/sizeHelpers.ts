@@ -1,4 +1,16 @@
 import type { FileNode } from '../types';
+import { BASE_TIME } from '../constants/timings';
+
+export const getDeterministicTimestamp = (node: FileNode): number => {
+  if (node.modifiedAt) return node.modifiedAt;
+  let hash = 0;
+  for (let i = 0; i < node.id.length; i++) {
+    hash = (hash << 5) - hash + node.id.charCodeAt(i);
+    hash |= 0;
+  }
+  const offset = Math.abs(hash) % (30 * 24 * 60 * 60 * 1000);
+  return BASE_TIME - offset;
+};
 
 export const computeNodeBytes = (node: FileNode): number => {
   if (node.type === 'dir' || node.type === 'archive') {

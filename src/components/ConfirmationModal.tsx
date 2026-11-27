@@ -6,13 +6,18 @@ import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 interface ConfirmationModalProps {
   deleteType: GameState['deleteType'];
   itemsToDelete: string[];
+  itemKind?: 'file' | 'folder' | 'item';
   onConfirm: () => void;
   onCancel: () => void;
 }
 
+const confirmButtonClass = (isPermanent: boolean): string =>
+  `px-2 py-0.5 font-bold border transition-colors ${isPermanent ? 'border-red-500/80 text-red-300 group-hover:bg-red-600 group-hover:text-white' : 'border-zinc-600 text-zinc-200 group-hover:bg-zinc-700 group-hover:text-white'}`;
+
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   deleteType,
   itemsToDelete,
+  itemKind = 'file',
   onConfirm,
   onCancel,
 }) => {
@@ -21,7 +26,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const count = itemsToDelete.length;
   const action = isPermanent ? 'Delete' : 'Trash';
-  const suffix = count === 1 ? 'file' : 'files';
+  const suffix = count === 1 ? itemKind : `${itemKind}s`;
   const title = `${action} ${count} selected ${suffix}?`;
 
   return (
@@ -65,12 +70,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               onClick={onConfirm}
               aria-label="Confirm deletion"
             >
-              <span
-                className={`px-2 py-0.5 font-bold ${isPermanent ? 'bg-red-500 text-white' : 'bg-zinc-200 text-black'}`}
-              >
-                [Y]
-              </span>
-              <span className="text-zinc-400 group-hover:text-white ml-0.5">es</span>
+              <span className={confirmButtonClass(isPermanent)}>[Y]</span>
+              <span className="text-zinc-300 group-hover:text-white ml-0.5">es</span>
             </button>
             <button
               type="button"
@@ -79,8 +80,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               onClick={onCancel}
               aria-label="Cancel deletion"
             >
-              <span className="text-zinc-400 font-bold px-2 py-0.5">(N)</span>
-              <span className="text-zinc-400 group-hover:text-white ml-0.5">o</span>
+              <span className="bg-zinc-200 text-black font-bold px-2 py-0.5">(N)</span>
+              <span className="text-zinc-200 group-hover:text-white ml-0.5">o</span>
             </button>
           </div>
         </div>

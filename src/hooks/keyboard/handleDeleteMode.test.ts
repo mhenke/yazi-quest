@@ -38,4 +38,74 @@ describe('delete confirmation key', () => {
       expect(getNodeById(deletion.newFs, 'target')).toBeUndefined();
     }
   });
+
+  it('deletes a selected file from its actual parent after navigating elsewhere', () => {
+    const state = {
+      ...createInitialState(),
+      fs,
+      currentPath: ['root'],
+      pendingDeleteIds: ['target'],
+    };
+    const actions: Action[] = [];
+    handleConfirmDeleteModeKeyDown(
+      { key: 'y' } as KeyboardEvent,
+      (action) => actions.push(action),
+      state,
+      fs.children ?? [],
+      LEVELS[0]
+    );
+    const deletion = actions.find((action) => action.type === 'DELETE_NODES');
+    expect(deletion?.type).toBe('DELETE_NODES');
+    if (deletion?.type === 'DELETE_NODES') {
+      expect(getNodeById(deletion.newFs, 'target')).toBeUndefined();
+    }
+  });
+
+  it('detects a selected honeypot outside the current directory', () => {
+    const trapped = { ...target, isHoneypot: true };
+    const trappedFs = { ...fs, children: [{ ...fs.children![0], children: [trapped] }] };
+    const state = {
+      ...createInitialState(),
+      fs: trappedFs,
+      currentPath: ['root'],
+      pendingDeleteIds: ['target'],
+    };
+    const actions: Action[] = [];
+    handleConfirmDeleteModeKeyDown(
+      { key: 'y' } as KeyboardEvent,
+      (action) => actions.push(action),
+      state,
+      trappedFs.children ?? [],
+      LEVELS[0]
+    );
+    expect(actions).toContainEqual({ type: 'GAME_OVER', reason: 'honeypot' });
+    expect(actions.some((action) => action.type === 'DELETE_NODES')).toBe(false);
+  });
+
+  it('blocks deletion of a protected selection outside the current directory', () => {
+    const protectedFs = {
+      ...fs,
+      children: [{ ...fs.children![0], children: [{ ...target, protected: true }] }],
+    };
+    const state = {
+      ...createInitialState(),
+      fs: protectedFs,
+      currentPath: ['root'],
+      pendingDeleteIds: ['target'],
+    };
+    const actions: Action[] = [];
+    handleConfirmDeleteModeKeyDown(
+      { key: 'y' } as KeyboardEvent,
+      (action) => actions.push(action),
+      state,
+      protectedFs.children ?? [],
+      LEVELS[0]
+    );
+    expect(actions.some((action) => action.type === 'DELETE_NODES')).toBe(false);
+    expect(
+      actions.some(
+        (action) => action.type === 'SET_NOTIFICATION' && action.message.includes('PROTECTED')
+      )
+    ).toBe(true);
+  });
 });

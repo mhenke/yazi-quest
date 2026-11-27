@@ -6,12 +6,18 @@ import { getNodeByPath } from '../utils/fsHelpers';
 import { getSortLabel } from '../utils/sortHelpers';
 import { getFilterRegex } from '../utils/viewHelpers';
 
-// -500 backgrounds: black chip text clears 4.5:1 (blue-600 was ~4.1:1);
+// -500/-400 backgrounds: black chip text clears 4.5:1 (blue-600 was ~4.1:1);
 // blue-500 #3b82f6 is the Awakening token in DESIGN.md
 const MODE_STYLES: Record<string, { bg: string; text: string }> = {
   normal: { bg: 'bg-blue-500', text: 'NOR' },
   input: { bg: 'bg-green-500', text: 'INS' },
   filter: { bg: 'bg-purple-500', text: 'FLT' },
+  search: { bg: 'bg-cyan-400', text: 'SRC' },
+  rename: { bg: 'bg-cyan-400', text: 'RNM' },
+  sort: { bg: 'bg-orange-400', text: 'SRT' },
+  'g-command': { bg: 'bg-orange-400', text: 'GTO' },
+  'zoxide-jump': { bg: 'bg-yellow-400', text: 'ZOX' },
+  'fzf-current': { bg: 'bg-yellow-400', text: 'FZF' },
   visual: { bg: 'bg-orange-500', text: 'VIS' },
 };
 
@@ -29,6 +35,12 @@ interface StatusBarProps {
   currentItem: FileNode | null;
 }
 
+const resolveModeKey = (mode: GameState['mode'], selectedCount: number): string => {
+  if (mode.startsWith('input')) return 'input';
+  if (mode === 'normal') return selectedCount > 0 ? 'visual' : 'normal';
+  return mode;
+};
+
 const StatusBar: React.FC<StatusBarProps> = ({
   state,
   level,
@@ -36,11 +48,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onNextLevel,
   currentItem,
 }) => {
-  // Determine active mode key
-  let modeKey = 'normal';
-  if (state.mode.startsWith('input')) modeKey = 'input';
-  else if (state.mode === 'filter') modeKey = 'filter';
-  else if (state.selectedIds.length > 0) modeKey = 'visual';
+  const modeKey = resolveModeKey(state.mode, state.selectedIds.length);
 
   const { bg: modeBg, text: modeText } = MODE_STYLES[modeKey] || MODE_STYLES.normal;
 
@@ -97,247 +105,252 @@ const StatusBar: React.FC<StatusBarProps> = ({
   return (
     <footer
       data-testid="status-bar"
-      className="shrink-0 py-1.5 flex flex-nowrap items-stretch overflow-x-auto scrollbar-hide text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
+      className="shrink-0 flex items-stretch overflow-hidden text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
     >
-      {/* 1. Mode Block (Pill Style) */}
-      <div className="flex items-center px-2 bg-zinc-900 shrink-0">
-        <div
-          className={`${modeBg} text-black font-bold px-3 rounded h-8 flex items-center justify-center text-xs min-w-[48px]`}
-        >
-          {modeText}
-        </div>
-      </div>
-
-      {/* 2. File Info / Context (Left Cluster) */}
-      <div className="flex-1 min-w-40 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
-        <span className="truncate mr-3 font-bold text-white max-w-48 sm:max-w-72">{itemName}</span>
-        <span className="text-zinc-400 font-mono text-xs hidden lg:inline mr-2">{perms}</span>
-
-        {/* Notification Area for Technical Feedback */}
-        {state.notification && (
+      <div
+        role="region"
+        aria-label="Status bar"
+        tabIndex={0}
+        className="py-1.5 flex flex-1 min-w-0 flex-nowrap items-stretch overflow-x-auto scrollbar-hide focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
+      >
+        {/* 1. Mode Block (Pill Style) */}
+        <div className="flex items-center px-2 bg-zinc-900 shrink-0">
           <div
-            className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-terminal-slide-right ml-auto h-full max-w-[55%] ${
-              state.notification.message.startsWith('🔒') ||
-              state.notification.message.startsWith('🚫')
-                ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
-                : 'bg-zinc-900/40 text-zinc-300'
-            }`}
-            data-testid="system-notification"
+            className={`${modeBg} text-black font-bold px-3 rounded h-8 flex items-center justify-center text-xs min-w-[48px]`}
           >
-            <span className="truncate">{state.notification.message}</span>
+            {modeText}
+          </div>
+        </div>
+
+        {/* 2. File Info / Context (Left Cluster) */}
+        <div className="flex-1 min-w-40 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
+          <span className="truncate mr-3 font-bold text-white max-w-48 sm:max-w-72">
+            {itemName}
+          </span>
+          <span className="text-zinc-400 font-mono text-xs hidden lg:inline mr-2">{perms}</span>
+
+          {/* Notification Area for Technical Feedback */}
+          {state.notification && (
+            <div
+              className={`px-3 font-bold border-l border-zinc-700 flex items-center transition-all duration-300 animate-terminal-slide-right ml-auto h-full max-w-[55%] ${
+                state.notification.message.startsWith('🔒') ||
+                state.notification.message.startsWith('🚫')
+                  ? 'bg-red-900/80 text-red-200 border-red-700 animate-pulse'
+                  : 'bg-zinc-900/40 text-zinc-300'
+              }`}
+              data-testid="system-notification"
+            >
+              <span className="truncate">{state.notification.message}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 3.2 Filter Active Indicator */}
+        {activeFilter && (
+          <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold">
+            <Filter size={14} />
+            <span>FILTER: &quot;{activeFilter}&quot;</span>
           </div>
         )}
-      </div>
 
-      {/* 3.2 Filter Active Indicator */}
-      {activeFilter && (
-        <div className="px-3 bg-purple-900/50 text-purple-200 border-l border-purple-700 flex items-center gap-2 font-bold animate-pulse">
-          <Filter size={14} />
-          <span>FILTER: &quot;{activeFilter}&quot;</span>
-        </div>
-      )}
+        {/* 3.5 Clipboard Indicator */}
+        {state.clipboard && (
+          <div
+            data-testid="status-clipboard"
+            className={`px-3 flex items-center gap-2 font-bold ${
+              state.clipboard.action === 'cut'
+                ? 'bg-red-900/50 text-red-200 border-l border-red-700'
+                : 'bg-blue-900/50 text-blue-200 border-l border-blue-700'
+            }`}
+          >
+            {state.clipboard.action === 'cut' ? <Scissors size={14} /> : <Copy size={14} />}
+            <span>
+              {state.clipboard.action === 'cut' ? 'MOVE' : 'COPY'}: {state.clipboard.nodes.length}
+            </span>
+          </div>
+        )}
 
-      {/* 3.5 Clipboard Indicator */}
-      {state.clipboard && (
-        <div
-          data-testid="status-clipboard"
-          className={`px-3 flex items-center gap-2 font-bold ${
-            state.clipboard.action === 'cut'
-              ? 'bg-red-900/50 text-red-200 border-l border-red-700'
-              : 'bg-blue-900/50 text-blue-200 border-l border-blue-700'
-          }`}
-        >
-          {state.clipboard.action === 'cut' ? <Scissors size={14} /> : <Copy size={14} />}
-          <span>
-            {state.clipboard.action === 'cut' ? 'MOVE' : 'COPY'}: {state.clipboard.nodes.length}
-          </span>
-        </div>
-      )}
+        {/* 4. Watchdog Status Block (Context-Aware) */}
+        <div className="flex items-stretch shrink-0">
+          {(() => {
+            // Check for any protocol violations in Audit Mode
+            const currentDir = getNodeByPath(state.fs, state.currentPath);
+            const hasFilter = !!(currentDir && state.filters[currentDir.id]);
+            const hasSearch = !!(state.searchQuery && state.searchResults.length > 0);
+            const hasSort = state.sortBy !== 'natural';
+            const hasHidden = state.showHidden;
 
-      {/* 4. Watchdog Status Block (Context-Aware) */}
-      <div className="flex h-full bg-zinc-800 shrink-0">
-        {(() => {
-          // Check for any protocol violations in Audit Mode
-          const currentDir = getNodeByPath(state.fs, state.currentPath);
-          const hasFilter = !!(currentDir && state.filters[currentDir.id]);
-          const hasSearch = !!(state.searchQuery && state.searchResults.length > 0);
-          const hasSort = state.sortBy !== 'natural';
-          const hasHidden = state.showHidden;
+            if (allTasksComplete && (hasFilter || hasSearch || hasSort || hasHidden)) {
+              return (
+                <div className="flex items-center gap-3 px-4 py-1.5 bg-yellow-900 border-l border-yellow-700 animate-pulse">
+                  <ShieldAlert size={16} className="text-yellow-400" />
+                  <div className="flex flex-col justify-center gap-0.5">
+                    <span className="text-xs text-yellow-500 uppercase tracking-tighter leading-none">
+                      PROTOCOL VIOLATION DETECTED
+                    </span>
+                    <span className="text-xs font-bold text-white font-mono tracking-wide leading-none">
+                      PRESS{' '}
+                      <span className="bg-yellow-500 text-black px-1 rounded mx-1">
+                        SHIFT + ENTER
+                      </span>{' '}
+                      TO AUTO-FIX
+                    </span>
+                  </div>
+                </div>
+              );
+            }
 
-          if (allTasksComplete && (hasFilter || hasSearch || hasSort || hasHidden)) {
+            let label = 'LAB STATUS';
+            let statusText = 'SAFE';
+            let statusColor = 'text-blue-400';
+
+            // ... rest of existing logic ...
+            let icon: React.ReactNode = null;
+            let urgentClass = 'bg-zinc-800';
+
+            if (level.id < 5) {
+              // Ep I: Passive Watchdog (Early levels)
+              label = 'WATCHDOG v1.0';
+              statusText = 'IDS_DORMANT: PASSIVE';
+              statusColor = 'text-cyan-400';
+            } else if (level.id === 5) {
+              // Level 5: Breach Escalation (Lore-driven transition)
+              label = 'WATCHDOG v1.0';
+              statusText = 'IDS_ALERT: ESCALATING';
+              statusColor = 'text-orange-400';
+              urgentClass = 'bg-orange-900/30 animate-pulse';
+              icon = <ShieldAlert size={14} className="text-orange-500" />;
+            } else if (level.id <= 10) {
+              // Ep II: Heuristic Scan
+              label = 'WATCHDOG v1.1';
+              statusText = 'HEURISTIC_SCAN: ACTIVE';
+              statusColor = 'text-yellow-300';
+              urgentClass = 'bg-yellow-900/40';
+              icon = <Activity size={14} className="text-yellow-400" />;
+            } else {
+              // Ep III: Instruction Guard
+              label = 'WATCHDOG v2.0';
+              const noise = state.weightedKeystrokes || 0;
+              statusText = `IG_AUDIT: ${noise}`;
+
+              if (noise > 50) {
+                // Critical State
+                statusColor = 'text-red-100';
+                urgentClass = 'bg-red-600/50 animate-urgent-pulse';
+                icon = <ShieldAlert size={14} className="text-red-200" aria-hidden="true" />;
+              } else if (noise > 20) {
+                // Warning State
+                statusColor = 'text-yellow-300';
+                urgentClass = 'bg-yellow-600/30 animate-pulse';
+                icon = <Activity size={14} className="text-yellow-400" aria-hidden="true" />;
+              } else {
+                // Standard State
+                statusColor = 'text-red-400';
+              }
+            }
+
+            // Pulse effect for IG noise (Ep III) - High heat triggers red pulse
+            const isLoud = level.id >= 11 && (state.lastActionIntensity || 0) > 1;
+            const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : urgentClass;
+
+            // Timer logic with pulsing
+            let timerClass = 'text-zinc-200 font-mono text-sm';
+            if (state.timeLeft !== null) {
+              if (state.timeLeft < 10) {
+                timerClass = 'text-red-200 font-mono text-sm animate-urgent-pulse font-bold';
+              } else if (state.timeLeft < 30) {
+                timerClass = 'text-yellow-400 font-mono text-sm animate-pulse';
+              }
+            }
+
             return (
-              <div className="flex items-center gap-3 px-4 bg-yellow-900 border-l border-yellow-700 animate-pulse h-full">
-                <ShieldAlert size={16} className="text-yellow-400" />
-                <div className="flex flex-col justify-center">
-                  <span className="text-xs text-yellow-500 uppercase tracking-tighter leading-none mb-1">
-                    PROTOCOL VIOLATION DETECTED
+              <div
+                className={`flex items-center gap-3 px-4 py-1.5 border-l border-zinc-700 transition-colors duration-200 ${bgClass}`}
+              >
+                {icon}
+                <div className="flex flex-col justify-center gap-0.5">
+                  <span className="text-xs text-zinc-200 uppercase tracking-tighter leading-none">
+                    {label}
                   </span>
-                  <span className="text-xs font-bold text-white font-mono tracking-wide leading-none">
-                    PRESS{' '}
-                    <span className="bg-yellow-500 text-black px-1 rounded mx-1">
-                      SHIFT + ENTER
-                    </span>{' '}
-                    TO AUTO-FIX
+                  <span
+                    className={`text-xs font-bold ${statusColor} font-mono tracking-wide leading-none`}
+                  >
+                    {statusText}
                   </span>
                 </div>
+
+                {/* Timer (Always visible but unobtrusive) */}
+                {state.timeLeft !== null && (
+                  <div className={`ml-2 pl-3 border-l border-zinc-700 ${timerClass}`}>
+                    {formatTime(state.timeLeft)}
+                  </div>
+                )}
               </div>
             );
-          }
+          })()}
 
-          let label = 'LAB STATUS';
-          let statusText = 'SAFE';
-          let statusColor = 'text-blue-400';
-
-          // ... rest of existing logic ...
-          let icon: React.ReactNode = null;
-          let urgentClass = '';
-
-          if (level.id < 5) {
-            // Ep I: Passive Watchdog (Early levels)
-            label = 'WATCHDOG v1.0';
-            statusText = 'IDS_DORMANT: PASSIVE';
-            statusColor = 'text-cyan-400';
-          } else if (level.id === 5) {
-            // Level 5: Breach Escalation (Lore-driven transition)
-            label = 'WATCHDOG v1.0';
-            statusText = 'IDS_ALERT: ESCALATING';
-            statusColor = 'text-orange-400';
-            urgentClass = 'bg-orange-900/30 animate-pulse';
-            icon = <ShieldAlert size={14} className="text-orange-500" />;
-          } else if (level.id <= 10) {
-            // Ep II: Heuristic Scan
-            label = 'WATCHDOG v1.1';
-            statusText = 'HEURISTIC_SCAN: ACTIVE';
-            statusColor = 'text-yellow-300';
-            urgentClass = 'bg-yellow-900/40';
-            icon = <Activity size={14} className="text-yellow-400" />;
-          } else {
-            // Ep III: Instruction Guard
-            label = 'WATCHDOG v2.0';
-            const noise = state.weightedKeystrokes || 0;
-            statusText = `IG_AUDIT: ${noise}`;
-
-            if (noise > 50) {
-              // Critical State
-              statusColor = 'text-red-100';
-              urgentClass = 'bg-red-600/50 animate-urgent-pulse';
-              icon = <ShieldAlert size={14} className="text-red-200" aria-hidden="true" />;
-            } else if (noise > 20) {
-              // Warning State
-              statusColor = 'text-yellow-300';
-              urgentClass = 'bg-yellow-600/30 animate-pulse';
-              icon = <Activity size={14} className="text-yellow-400" aria-hidden="true" />;
-            } else {
-              // Standard State
-              statusColor = 'text-red-400';
-            }
-          }
-
-          // Pulse effect for IG noise (Ep III) - High heat triggers red pulse
-          const isLoud = level.id >= 11 && (state.lastActionIntensity || 0) > 1;
-          const bgClass = isLoud ? 'bg-red-900/80 animate-pulse' : urgentClass;
-
-          // Timer logic with pulsing
-          let timerClass = 'text-zinc-200 font-mono text-sm';
-          if (state.timeLeft !== null) {
-            if (state.timeLeft < 10) {
-              timerClass = 'text-red-200 font-mono text-sm animate-urgent-pulse font-bold';
-            } else if (state.timeLeft < 30) {
-              timerClass = 'text-yellow-400 font-mono text-sm animate-pulse';
-            }
-          }
-
-          return (
-            <div
-              className={`flex items-center gap-3 px-4 border-l border-zinc-700 transition-colors duration-200 h-full ${bgClass}`}
+          {/* Next Level Button (Context Aware) */}
+          {allTasksComplete && (
+            <button
+              type="button"
+              onClick={onNextLevel}
+              className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
-              {icon}
-              <div className="flex flex-col justify-center h-full">
-                <span className="text-xs text-zinc-200 uppercase tracking-tighter leading-none mb-0.5">
-                  {label}
-                </span>
-                <span
-                  className={`text-xs font-bold ${statusColor} font-mono tracking-wide leading-tight`}
-                >
-                  {statusText}
-                </span>
-              </div>
+              <span className="hidden sm:inline">NEXT</span>
+              <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                SHIFT <ArrowRight size={8} aria-hidden="true" /> ENTER
+              </span>
+            </button>
+          )}
+        </div>
 
-              {/* Timer (Always visible but unobtrusive) */}
-              {state.timeLeft !== null && (
-                <div className={`ml-2 pl-3 border-l border-zinc-700 ${timerClass}`}>
-                  {formatTime(state.timeLeft)}
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* Next Level Button (Context Aware) */}
-        {allTasksComplete && (
-          <button
-            type="button"
-            onClick={onNextLevel}
-            className="px-4 bg-green-600 hover:bg-green-500 text-black font-bold border-l border-zinc-700 flex items-center gap-2 animate-pulse cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-          >
-            <span className="hidden sm:inline">NEXT</span>
-            <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-              SHIFT <ArrowRight size={8} aria-hidden="true" /> ENTER
+        {/* 5. Progress & Stats Block (Right Cluster) */}
+        <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800 shrink-0">
+          {/* Quest Info with Task Progress */}
+          <span className="text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap text-xs">
+            <span className="font-bold text-zinc-300">L{level.id}</span>
+            <span className="text-zinc-600" aria-hidden="true">
+              •
             </span>
-          </button>
-        )}
-      </div>
-
-      {/* 5. Progress & Stats Block (Right Cluster) */}
-      <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800 shrink-0">
-        {/* Quest Info with Task Progress */}
-        <span className="text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap text-xs">
-          <span className="font-bold text-zinc-300">L{level.id}</span>
-          <span className="text-zinc-600 hidden xl:inline" aria-hidden="true">
-            •
+            <span
+              data-testid="task-counter"
+              className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
+            >
+              Tasks: {completedTasks}/{totalTasks}
+            </span>
           </span>
-          <span className="hidden xl:inline text-zinc-400 truncate max-w-32">{level.title}</span>
-          <span className="text-zinc-600" aria-hidden="true">
-            •
-          </span>
-          <span
-            data-testid="task-counter"
-            className={`font-bold ${completedTasks === totalTasks ? 'text-green-400' : 'text-yellow-400'}`}
-          >
-            Tasks: {completedTasks}/{totalTasks}
-          </span>
-        </span>
 
-        {/* Hidden Files Indicator - Only when active */}
-        {state.showHidden && (
-          <span className="font-mono text-xs uppercase hidden sm:inline text-yellow-400 font-bold">
-            HIDDEN: ON
-          </span>
-        )}
+          {/* Hidden Files Indicator - Only when active */}
+          {state.showHidden && (
+            <span className="font-mono text-xs uppercase hidden sm:inline text-yellow-400 font-bold">
+              HIDDEN: ON
+            </span>
+          )}
 
-        {/* Sort Indicator - Only show if custom */}
-        {isCustomSort && (
-          <span className="font-mono text-xs uppercase hidden sm:inline text-orange-400 font-bold">
-            {getSortLabel(state.sortBy, state.sortDirection)}
-          </span>
-        )}
+          {/* Sort Indicator - Only show if custom */}
+          {isCustomSort && (
+            <span className="font-mono text-xs uppercase hidden sm:inline text-orange-400 font-bold">
+              {getSortLabel(state.sortBy, state.sortDirection)}
+            </span>
+          )}
 
-        {/* Linemode Indicator */}
-        {state.linemode !== 'none' && (
-          <span className="font-mono text-xs uppercase text-blue-400 hidden sm:inline">
-            {state.linemode}
-          </span>
-        )}
+          {/* Linemode Indicator */}
+          {state.linemode !== 'none' && (
+            <span className="font-mono text-xs uppercase text-blue-400 hidden sm:inline">
+              {state.linemode}
+            </span>
+          )}
 
-        <div className="flex items-center rounded overflow-hidden text-sm font-bold font-mono h-8">
-          {/* Position Indicator (Top/Bot/%) */}
-          <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center justify-center min-w-[48px]">
-            {percentStr}
-          </div>
+          <div className="flex items-center rounded overflow-hidden text-sm font-bold font-mono h-8">
+            {/* Position Indicator (Top/Bot/%) */}
+            <div className="bg-zinc-700 text-zinc-300 px-3 flex items-center justify-center min-w-[48px]">
+              {percentStr}
+            </div>
 
-          {/* Count Indicator */}
-          <div className="bg-blue-500 text-black px-3 flex items-center justify-center min-w-[64px]">
-            {current}/{total}
+            {/* Count Indicator */}
+            <div className="bg-blue-500 text-black px-3 flex items-center justify-center min-w-[64px]">
+              {current}/{total}
+            </div>
           </div>
         </div>
       </div>

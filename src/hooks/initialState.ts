@@ -208,6 +208,7 @@ export function createInitialState(): GameState {
     previewScroll: 0,
     zoxideData: initialZoxide,
     levelIndex: targetIndex,
+    unlockedLevelIndex: Math.min(targetIndex, LEVELS.length - 1),
     fs: fs,
     levelStartFS: cloneFS(fs),
     levelStartPath: [...initialPath],

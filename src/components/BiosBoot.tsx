@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useGlobalInput } from '../GlobalInputContext';
 import { SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
+import { getPlayerIdentity } from '../constants/identity';
 
 interface BiosBootProps {
   onComplete: (options?: { isSkip?: boolean }) => void;
@@ -9,7 +10,7 @@ interface BiosBootProps {
 }
 
 export const BiosBoot: React.FC<BiosBootProps> = ({ onComplete, cycleCount, reduceMotion }) => {
-  const subjectId = 7734 + (cycleCount > 0 ? cycleCount : 0);
+  const subjectId = getPlayerIdentity(cycleCount);
 
   const bootSequence = useMemo(
     () => [
