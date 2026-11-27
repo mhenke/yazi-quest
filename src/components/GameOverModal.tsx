@@ -102,7 +102,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         aria-modal="true"
         aria-labelledby="game-over-title"
         tabIndex={-1}
-        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-black border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] p-4 sm:p-8 text-center relative"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-black border-2 border-red-600 shadow-2xl p-4 sm:p-8 text-center relative"
       >
         {/* Scanline bg */}
         <Scanlines className="opacity-20" />

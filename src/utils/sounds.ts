@@ -21,9 +21,16 @@ const getAudioContext = (): AudioContext => {
   return audioContext;
 };
 
+const hasUserActivation = (): boolean =>
+  typeof navigator === 'undefined' ||
+  !('userActivation' in navigator) ||
+  navigator.userActivation.hasBeenActive;
+
 // Ensure audio context is running or schedule resume on next user gesture
 const ensureContextRunning = (cb: (ctx: AudioContext) => void) => {
   try {
+    // Avoid instantiating AudioContext before any user gesture to satisfy browser autoplay policy
+    if (!audioContext && !hasUserActivation()) return;
     const ctx = getAudioContext();
     if (ctx.state === 'running') {
       cb(ctx);

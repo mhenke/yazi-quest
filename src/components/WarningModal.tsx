@@ -35,7 +35,7 @@ export const WarningModal: React.FC<WarningModalProps> = ({
         aria-labelledby={`${id}-title`}
         aria-describedby={`${id}-description`}
         tabIndex={-1}
-        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border-2 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)] p-4 sm:p-8 text-center relative rounded-none"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-zinc-900 border-2 border-yellow-600 shadow-2xl p-4 sm:p-8 text-center relative rounded-none"
       >
         <div className="absolute inset-0 bg-yellow-900/10 pointer-events-none" />
 

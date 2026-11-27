@@ -85,6 +85,8 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
     <div
       className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs"
       onKeyDown={(event) => {
+        // Plain Tab is Yazi's toggle-close keybinding (handled at priority 1000 in App.tsx);
+        // keep Shift+Tab trapped inside the dialog while letting forward Tab close normally.
         if (event.shiftKey) containOverlayTab(event);
       }}
     >
@@ -107,7 +109,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ file, onClose, showHidden 
           <button
             type="button"
             onClick={onClose}
-            className="min-h-6 px-2 py-1 rounded text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="min-h-9 px-3 py-1.5 rounded text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             Close
           </button>

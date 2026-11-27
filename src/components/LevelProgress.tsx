@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Lock, Map, MapPin, Shield, Zap, Crown, HelpCircle, Lightbulb } from 'lucide-react';
 
 import { Level } from '../types';
 import { EPISODE_LORE } from '../constants/narrative';
 import { paletteFor } from '../constants/palette';
-import { useOverlayFocus } from './useOverlayFocus';
+import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 import { getPlayerIdentity } from '../constants/identity';
 
 // One token per status; a ternary chain here costs a complexity point per branch.
@@ -238,7 +238,8 @@ const QuestMapModal: React.FC<QuestMapModalProps> = ({
   return createPortal(
     <div
       data-testid="quest-map-modal"
-      className="fixed inset-x-0 bottom-0 top-16 z-[250] flex items-center justify-center bg-black/80 px-4 pb-4 backdrop-blur-xs"
+      className="fixed inset-x-0 bottom-0 top-14 z-[250] flex items-center justify-center bg-black/80 px-4 pb-4 backdrop-blur-xs"
+      onKeyDown={containOverlayTab}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -265,7 +266,7 @@ const QuestMapModal: React.FC<QuestMapModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-8 px-2.5 text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="min-h-9 px-3 text-xs text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
               Close
             </button>
@@ -295,7 +296,7 @@ const QuestMapModal: React.FC<QuestMapModalProps> = ({
               }}
               onClick={() => onSelectEpisode(idx)}
               onKeyDown={(event) => handleEpisodeTabKeyDown(event, idx)}
-              className={`flex-1 min-w-0 px-1 py-3 break-words text-center text-xs font-bold uppercase sm:tracking-wider border-b-2
+              className={`flex-1 min-w-0 px-1 py-3 break-words text-center text-xs font-bold uppercase sm:tracking-wider border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white
                       ${activeTab === idx ? `${ep.palette.textStrong} ${ep.bg} border-current` : 'text-zinc-400 border-transparent'}
                   `}
             >
@@ -313,7 +314,7 @@ const QuestMapModal: React.FC<QuestMapModalProps> = ({
           role="tabpanel"
           aria-labelledby={`quest-map-tab-${activeTab}`}
           tabIndex={0}
-          className="flex-1 overflow-y-auto bg-black/20"
+          className="flex-1 overflow-y-auto bg-black/20 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
         >
           <div className="divide-y divide-zinc-800/50">
             {activeEpisode.levels.map((level, missionIdx) => (
@@ -340,7 +341,7 @@ const QuestMapModal: React.FC<QuestMapModalProps> = ({
   );
 };
 
-export const LevelProgress: React.FC<LevelProgressProps> = ({
+const LevelProgressBase: React.FC<LevelProgressProps> = ({
   levels,
   currentLevelIndex,
   thought,
@@ -373,10 +374,10 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     <>
       <header
         data-testid="level-progress-bar"
-        className="min-h-16 py-2 w-full bg-black/50 border-b border-zinc-800 px-4 sm:px-6 flex flex-wrap items-center justify-between gap-y-2 backdrop-blur-xs z-[300] relative"
+        className="shrink-0 py-2 w-full bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto scrollbar-hide z-[300] relative"
       >
         {/* Left Side: Map Button + Current Episode Progress */}
-        <div className="flex items-center gap-3 sm:gap-5 min-w-0 max-w-full mr-2 min-h-8">
+        <div className="flex items-center gap-3 sm:gap-5 shrink-0 mr-2 min-h-9">
           <button
             type="button"
             data-testid="map-button"
@@ -386,7 +387,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             // Since we lifted state, 'onClose' is strictly checking the prop.
             // But verify: App.tsx usually passes () => set(p => !p) for toggles.
             // Let's assume onClose is the toggle action provided by parent.
-            className="flex h-8 px-2 items-center gap-2 rounded border border-transparent text-xs font-mono text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors group cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white shrink-0"
+            className="flex min-h-9 px-2.5 py-1.5 items-center gap-2 rounded border border-transparent text-xs font-mono text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors group cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white shrink-0"
             title="Quest Map (Alt+M)"
           >
             <Map
@@ -437,7 +438,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
                       className={`
                                 flex items-center gap-1.5 px-1.5 py-0.5 rounded border text-xs font-mono transition-all duration-300
                                 ${isCompleted ? 'bg-zinc-900/50 border-zinc-800 text-zinc-400' : ''}
-                                ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].palette.textStrong} shadow-[0_0_15px_rgba(255,255,255,0.05)] scale-105 z-10` : ''}
+                                ${isCurrent ? `bg-zinc-900 ${episodes[currentEpisodeIdx].border} ${episodes[currentEpisodeIdx].palette.textStrong} z-10` : ''}
                                 ${isLocked ? 'bg-transparent border-transparent text-zinc-400' : ''}
                             `}
                     >
@@ -479,7 +480,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
         </div>
 
         {/* Right Side: Trilogy Badges & Controls */}
-        <div className="flex items-center gap-3 sm:gap-5 max-w-full min-h-8 ml-auto flex-wrap">
+        <div className="flex items-center gap-3 sm:gap-5 shrink-0 min-h-8 ml-auto flex-nowrap">
           {/* Prominent User Label (keeps AI identity visible) */}
           <div className="mr-2 sm:mr-4 text-right hidden lg:block">
             <span className="text-orange-400 font-mono font-bold uppercase tracking-wider text-sm">
@@ -496,7 +497,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               data-testid="hint-button"
               onClick={onToggleHint}
               aria-label="Show Hint (Alt+H)"
-              className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded border border-transparent px-2 font-mono text-xs uppercase text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-yellow-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded border border-transparent px-2.5 py-1.5 font-mono text-xs uppercase text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-yellow-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               title="Show Hint (Alt+H)"
             >
               <Lightbulb size={16} aria-hidden="true" />
@@ -507,7 +508,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
               data-testid="help-button"
               onClick={onToggleHelp}
               aria-label="Show Help (Alt+?)"
-              className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded border border-transparent px-2 font-mono text-xs uppercase text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded border border-transparent px-2.5 py-1.5 font-mono text-xs uppercase text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               title="Show Help (Alt+?)"
             >
               <HelpCircle size={16} aria-hidden="true" />
@@ -534,3 +535,5 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
     </>
   );
 };
+
+export const LevelProgress = memo(LevelProgressBase);

@@ -89,8 +89,10 @@ This document audits the current levels for narrative consistency, clear objecti
   - `z, Z, gr, Y` `[R2]` -> **DROP MENTIONS**
   - `P` `[R1]`
   - `f, Esc, Ctrl+A, Esc, Ctrl+R, D, Y, gt` `[INTRO]`
-  - **Objectives**: In `/tmp`, filter keepers with `\.(key|pid|sock)$`; Esc closes the prompt, Ctrl+A selects matches, and Esc clears the filter while preserving selection. Ctrl+R targets every other entry; Shift+D permanently deletes those nonmatches, including `emergency_protocol.txt` and `/tmp/upload`.
-  - **Regex Clause**: Use the anchored pattern `\.(key|pid|sock)$` to preserve keeper files; `$` ensures only matching filename extensions are selected.
+- **Target**: “Purge the evidence. Preserve only the critical anchors: credentials (.key), process records (.pid), and sockets (.sock). Decoys are everywhere.”
+- **Objectives**: In `/tmp`, filter with `\.(key|pid|sock)$`; press `Esc` to close the prompt, `Ctrl+a` to select matches, then `Esc` to clear the filter while keeping the selection. `Ctrl+r` selects every other entry; `Shift+D` permanently deletes those nonmatches, including `emergency_protocol.txt` and `/tmp/upload`, then `Y` confirms.
+- **Data mapping**: `.key` → `access_token.key` (credential); `.pid` → `ghost_process.pid` and `system_monitor.pid` (process records); `.sock` → `socket_001.sock` (socket). Decoys such as `mysockfile.txt`, `passwordkey_backup.log`, `pid_monitor_service.conf`, and `socket_pid_key_info.doc` contain those terms but do not end in the keeper extensions.
+- **Regex Clause**: The `\\.(key|pid|sock)$` pattern matches these extensions only at the end of a filename, separating keeper files from decoys that merely contain the terms.
 
 ### Level 10: CREDENTIAL HEIST
 

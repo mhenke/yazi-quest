@@ -16,6 +16,7 @@ import { Scanlines } from './narrative/Scanlines';
 interface OutroSequenceProps {
   onRestartCycle?: () => void;
   reduceMotion?: boolean;
+  showFocusRing?: boolean;
 }
 
 interface TeaserOverlayProps {
@@ -33,7 +34,7 @@ const TeaserOverlay: React.FC<TeaserOverlayProps> = ({ onRestartCycle }) => (
         {CONCLUSION_DATA.overlayTitle}
       </h2>
 
-      <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]">
+      <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white tracking-tighter uppercase">
         {CONCLUSION_DATA.sequelTitle}
       </h2>
 
@@ -197,7 +198,16 @@ const useOutroTypewriter = (
   return { displayedText, showContinue, isAnimating, skipTyping };
 };
 
-export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, reduceMotion }) => {
+const outroPanelFocusClass = (showFocusRing = false): string =>
+  showFocusRing
+    ? 'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400'
+    : 'focus-visible:outline-hidden';
+
+export const OutroSequence: React.FC<OutroSequenceProps> = ({
+  onRestartCycle,
+  reduceMotion,
+  showFocusRing,
+}) => {
   // Part navigation (like EpisodeIntro but across multiple parts)
   const [partIndex, setPartIndex] = useState(0);
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -406,7 +416,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
             playSuccessSound(true);
             setShowTeaser(true);
           }}
-          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-xs shadow-lg"
+          className="text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-2 border-zinc-700 hover:border-red-500 rounded backdrop-blur-xs shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
           <span>
             {showTeaser ? (reduceMotion ? 'Play Teaser' : 'Replay Teaser') : 'Skip Outro'}
@@ -424,7 +434,7 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({ onRestartCycle, re
           role="region"
           aria-label="Conclusion"
           tabIndex={0}
-          className="min-h-0 overflow-y-auto focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400"
+          className={`min-h-0 overflow-y-auto px-3 py-2 ${outroPanelFocusClass(showFocusRing)}`}
         >
           {/* Part Header */}
           <div

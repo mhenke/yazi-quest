@@ -20,7 +20,7 @@ export const OverwriteModal: React.FC<OverwriteModalProps> = ({ fileName, onDeci
         aria-labelledby="overwrite-title"
         aria-describedby="overwrite-path"
         tabIndex={-1}
-        className="w-full max-w-xl max-h-[calc(100dvh-2rem)] overflow-y-auto border border-purple-400 bg-zinc-900/95 shadow-2xl rounded-md"
+        className="w-full max-w-xl max-h-[calc(100dvh-2rem)] overflow-y-auto border border-purple-400 bg-zinc-900/95 shadow-2xl rounded-none"
       >
         <h2
           id="overwrite-title"

@@ -21,8 +21,8 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({
       role="alert"
       data-testid="threat-alert"
     >
-      <div className="bg-orange-950/95 border-2 border-orange-500 shadow-2xl shadow-orange-500/20 px-4 sm:px-8 py-4 sm:py-6 rounded-none max-h-[calc(100dvh-2rem)] overflow-y-auto flex flex-col items-center text-center break-words">
-        <div className="bg-orange-500 rounded-none border border-orange-400 p-3 mb-4 animate-pulse shadow-lg shadow-orange-500/50">
+      <div className="bg-orange-950/95 border-2 border-orange-500 shadow-2xl px-4 sm:px-8 py-4 sm:py-6 rounded-none max-h-[calc(100dvh-2rem)] overflow-y-auto flex flex-col items-center text-center break-words">
+        <div className="bg-orange-500 rounded-none border border-orange-400 p-3 mb-4 animate-pulse">
           <AlertTriangle size={32} className="text-black" />
         </div>
 

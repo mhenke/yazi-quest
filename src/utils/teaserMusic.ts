@@ -21,9 +21,15 @@ const getCtx = (): AudioContext => {
   return audioCtx;
 };
 
+const hasUserActivation = (): boolean =>
+  typeof navigator === 'undefined' ||
+  !('userActivation' in navigator) ||
+  navigator.userActivation.hasBeenActive;
+
 export const playTeaserMusic = (enabled: boolean = true) => {
   if (!enabled) return;
   if (nodes.running) return;
+  if (!audioCtx && !hasUserActivation()) return;
   try {
     const ctx = getCtx();
     const now = ctx.currentTime;

@@ -8,6 +8,33 @@ import { getSkipIntroRequested } from '../utils/skipIntroFlag';
 import { INITIAL_ACTION_FLAGS } from './gameReducer';
 import { loadUnlockedLevelIndex } from '../utils/progressionStorage';
 
+const buildDefaultZoxide = (now: number): Record<string, ZoxideEntry> => ({
+  '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
+  '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
+  '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
+  '/home/guest/.config': { count: 30, lastAccess: now - 900000 },
+  '/home/guest/.config/vault': { count: 25, lastAccess: now - 800000 },
+  '/home/guest/.config/vault/active': { count: 10, lastAccess: now - 600000 },
+  '/tmp': { count: 15, lastAccess: now - 1800000 },
+  '/etc': { count: 8, lastAccess: now - 86400000 },
+  '/daemons': { count: 12, lastAccess: now - 43200000 },
+  '/daemons/systemd-core': { count: 5, lastAccess: now - 21600000 },
+});
+
+const loadInitialZoxide = (now: number, isDevOverride: boolean): Record<string, ZoxideEntry> => {
+  const defaults = buildDefaultZoxide(now);
+  try {
+    const storedZoxide = localStorage.getItem('yazi-quest-zoxide-history');
+    if (!storedZoxide) return defaults;
+    const parsed = JSON.parse(storedZoxide);
+    if (isValidZoxideData(parsed)) return parsed;
+    if (isDevOverride) console.error('Zoxide load error: Invalid zoxide data structure');
+  } catch (err) {
+    if (isDevOverride) console.error('Zoxide load error:', err);
+  }
+  return defaults;
+};
+
 const resolveTargetLevelIndex = (params: URLSearchParams): number => {
   const debugParam = params.get('debug');
   const epParam = params.get('ep') || params.get('episode');
@@ -93,34 +120,7 @@ export function createInitialState(): GameState {
 
   // Initial Zoxide Data Logic
   const now = Date.now();
-  let initialZoxide: Record<string, ZoxideEntry>;
-  try {
-    const storedZoxide = localStorage.getItem('yazi-quest-zoxide-history');
-    if (storedZoxide) {
-      const parsed = JSON.parse(storedZoxide);
-      if (isValidZoxideData(parsed)) {
-        initialZoxide = parsed;
-      } else {
-        throw new Error('Invalid zoxide data structure');
-      }
-    } else {
-      throw new Error('No stored zoxide history');
-    }
-  } catch (err) {
-    if (isDevOverride) console.error('Zoxide load error:', err);
-    initialZoxide = {
-      '/home/guest/datastore': { count: 42, lastAccess: now - 3600000 },
-      '/home/guest/incoming': { count: 35, lastAccess: now - 1800000 },
-      '/home/guest/workspace': { count: 28, lastAccess: now - 7200000 },
-      '/home/guest/.config': { count: 30, lastAccess: now - 900000 },
-      '/home/guest/.config/vault': { count: 25, lastAccess: now - 800000 },
-      '/home/guest/.config/vault/active': { count: 10, lastAccess: now - 600000 },
-      '/tmp': { count: 15, lastAccess: now - 1800000 },
-      '/etc': { count: 8, lastAccess: now - 86400000 },
-      '/daemons': { count: 12, lastAccess: now - 43200000 },
-      '/daemons/systemd-core': { count: 5, lastAccess: now - 21600000 },
-    };
-  }
+  const initialZoxide = loadInitialZoxide(now, isDevOverride);
 
   // Ensure critical zoxide entries exist even if localStorage had different data
   if (!initialZoxide['/daemons']) {

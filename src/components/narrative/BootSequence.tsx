@@ -1,5 +1,5 @@
-import React, { useEffect, useEffectEvent, useState } from 'react';
-import { getBootSequenceForEpisode, type BootSequence } from '../../constants/bootSequences';
+import { useEffect, useEffectEvent, useState } from 'react';
+import { getBootSequenceForEpisode } from '../../constants/bootSequences';
 
 interface BootSequenceProps {
   episode: number;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckSquare, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import { Level, GameState } from '../types';
+import { renderInlineCode } from './ui/inlineCode';
 
 interface MissionDrawerProps {
   level: Level;
@@ -8,17 +9,6 @@ interface MissionDrawerProps {
   isExpanded: boolean;
   onToggle: () => void;
 }
-
-const renderInlineCode = (text: string): React.ReactNode =>
-  text.split(/(`[^`]+`)/g).map((part, index) =>
-    part.startsWith('`') && part.endsWith('`') ? (
-      <code key={index} className="rounded-xs bg-zinc-800 px-1 text-amber-200">
-        {part.slice(1, -1)}
-      </code>
-    ) : (
-      part
-    )
-  );
 
 interface MissionTaskRowProps {
   description: string;
@@ -90,7 +80,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         </h1>
         <button
           onClick={onToggle}
-          className="h-8 px-3 py-1.5 w-full flex items-center justify-between text-left hover:bg-zinc-800 transition-colors cursor-pointer group focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
+          className="min-h-9 px-3 py-1.5 w-full flex items-center justify-between text-left hover:bg-zinc-800 transition-colors cursor-pointer group focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
           aria-label="Expand mission drawer (Alt+O)"
           title="Expand mission drawer (Alt+O)"
         >
@@ -122,7 +112,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
   }
 
   return (
-    <div className="h-1/2 max-h-96 min-h-40 border-t border-zinc-800 bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200">
+    <div className="h-1/2 max-h-3/5 min-h-[160px] border-t border-zinc-800 bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200">
       <div className="px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between gap-2 shrink-0 select-none">
         <h1
           aria-label={`Mission Log: LVL ${level.id} — ${level.title}`}
@@ -135,7 +125,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         </h1>
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded-xs hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          className="flex min-h-9 items-center gap-1.5 text-zinc-400 hover:text-white font-mono text-xs px-2.5 py-1.5 rounded-xs hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           aria-label="Collapse mission drawer to maximize file preview (Alt+O)"
           title="Collapse mission drawer (Alt+O)"
         >
@@ -145,7 +135,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
         </button>
       </div>
       <div
-        className="min-h-0 flex-1 p-3.5 flex flex-col gap-3"
+        className="min-h-0 flex-1 overflow-y-auto p-3.5 flex flex-col gap-3"
         role="region"
         aria-label="Mission log"
       >
@@ -166,7 +156,7 @@ export const MissionDrawer: React.FC<MissionDrawerProps> = ({
               </span>
             )}
           </div>
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-[110px] flex-1">
             <div
               ref={taskListRef}
               role="region"

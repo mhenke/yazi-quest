@@ -18,6 +18,8 @@ colors:
   text-main: '#d4d4d8'
   text-muted: '#a1a1aa'
   text-white: '#ffffff'
+  glitch-magenta: '#ff00c1'
+  glitch-cyan: '#00fff9'
 typography:
   body:
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
@@ -29,6 +31,16 @@ typography:
     fontSize: '12px'
     fontWeight: 400
     lineHeight: '16px'
+  heading-sm:
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+    fontSize: '16px'
+    fontWeight: 700
+    lineHeight: '24px'
+  heading-md:
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+    fontSize: '20px'
+    fontWeight: 700
+    lineHeight: '24px'
 rounded:
   square: '0px'
   small: '2px'

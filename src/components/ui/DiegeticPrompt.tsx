@@ -1,4 +1,3 @@
-import React from 'react';
 import { FileNode, GameState } from '../../types';
 import { resolvePath } from '../../utils/fsHelpers';
 import { getPlayerIdentity } from '../../constants/identity';

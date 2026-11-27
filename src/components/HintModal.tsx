@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Lightbulb } from 'lucide-react';
 import { useOverlayFocus } from './useOverlayFocus';
+import { renderInlineCode } from './ui/inlineCode';
 import type { HintStages } from '../types';
 
 interface HintModalProps {
@@ -18,16 +19,7 @@ const HINT_STAGE_LABELS = [
   'Hint (3/3 • Walkthrough)',
 ];
 
-const renderInlineCode = (text: string): React.ReactNode =>
-  text.split(/(`[^`]+`)/g).map((part, idx) =>
-    part.startsWith('`') && part.endsWith('`') && part.length > 2 ? (
-      <code key={idx} className="bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-xs font-mono">
-        {part.slice(1, -1)}
-      </code>
-    ) : (
-      part
-    )
-  );
+const HINT_CHIP_CLASS = 'bg-zinc-800/90 text-zinc-100 px-1 py-0.5 rounded-xs font-mono';
 
 export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNextStage }) => {
   const panelRef = useOverlayFocus();
@@ -55,7 +47,7 @@ export const HintModal: React.FC<HintModalProps> = ({ hint, stage, onClose, onNe
       </div>
 
       <p className="text-zinc-200 text-xs leading-relaxed font-mono">
-        {renderInlineCode(displayText)}
+        {renderInlineCode(displayText, HINT_CHIP_CLASS)}
       </p>
 
       <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-zinc-400 font-mono mt-1">

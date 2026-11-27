@@ -66,9 +66,15 @@ html[data-narrative-effects='reduced'] .scanline {
 }
 
 [data-reduce-motion] .glitch-text::before,
-[data-reduce-motion] .glitch-text::after,
+[data-reduce-motion] .glitch-text::after {
+  display: none;
+}
+
 [data-reduce-motion] .glitch-text-2::before,
-[data-reduce-motion] .glitch-text-2::after,
+[data-reduce-motion] .glitch-text-2::after {
+  display: none;
+}
+
 [data-reduce-motion] .white-text,
 [data-reduce-motion] .orange-text {
   display: none;

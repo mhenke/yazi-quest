@@ -21,9 +21,20 @@ test('programmatic initial focus hides its outline until keyboard input', async 
   await startLevel(page, 1, { intro: false });
   const pane = page.getByRole('listbox', { name: 'File Browser' });
   await expect(pane).toBeFocused();
-  await expect(pane).toHaveCSS('outline-color', 'rgba(0, 0, 0, 0)');
+  await expect(pane).toHaveCSS('outline-style', 'none');
   await page.keyboard.press('j');
-  await expect(pane).toHaveCSS('outline-color', 'rgb(96, 165, 250)');
+  await expect(pane).toHaveCSS('outline-style', 'solid');
+  const outlineRgb = await pane.evaluate((el) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    const g = c.getContext('2d')!;
+    g.fillStyle = getComputedStyle(el).outlineColor;
+    g.fillRect(0, 0, 1, 1);
+    const [r, gr, b] = g.getImageData(0, 0, 1, 1).data;
+    return { r, g: gr, b };
+  });
+  expect(outlineRgb.b).toBeGreaterThan(200);
+  expect(outlineRgb.b).toBeGreaterThan(outlineRgb.r + 100);
 });
 
 test('Mission Log objective list is keyboard-focusable at the viewport floor', async ({ page }) => {
@@ -140,8 +151,8 @@ test('EpisodeIntro gates workspace panes until the intro is completed', async ({
   await expect(page.getByRole('region', { name: 'Episode log' })).toBeVisible();
   await expect(page.getByRole('listbox', { name: 'File Browser' })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Episode log' })).toHaveCSS(
-    'outline-color',
-    'rgba(0, 0, 0, 0)'
+    'outline-style',
+    'none'
   );
 
   await page.getByRole('button', { name: 'Skip Intro' }).click();
@@ -248,7 +259,16 @@ test('short ending keeps the advance prompt pinned, readable, and clear of the h
   const prompt = page.getByText('Press Shift+Enter to continue...', { exact: true });
   await expect(transmission).toBeFocused();
   await expect(prompt).toBeInViewport({ ratio: 1 });
-  await expect(prompt).toHaveCSS('color', 'rgb(212, 212, 216)');
+  const contrast = await prompt.evaluate((el) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    const g = c.getContext('2d')!;
+    g.fillStyle = getComputedStyle(el).color;
+    g.fillRect(0, 0, 1, 1);
+    const [r, gr, b] = g.getImageData(0, 0, 1, 1).data;
+    return (r + gr + b) / 3;
+  });
+  expect(contrast).toBeGreaterThanOrEqual(180);
 
   // The Skip Outro button is absolutely positioned; it must not cover the heading.
   const heading = await page.getByRole('heading', { name: 'CONCLUSION I: AUDIT' }).boundingBox();

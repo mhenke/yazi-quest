@@ -18,6 +18,8 @@ interface PreviewPaneProps {
   onToggleMissionDrawer?: () => void;
 }
 
+const noop = () => {};
+
 // fallow-ignore-next-line complexity
 const PreviewPane: React.FC<PreviewPaneProps> = ({
   node,
@@ -167,10 +169,22 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({
         level={level}
         gameState={gameState}
         isExpanded={isMissionDrawerOpen}
-        onToggle={onToggleMissionDrawer || (() => {})}
+        onToggle={onToggleMissionDrawer ?? noop}
       />
     </div>
   );
 };
 
-export const MemoizedPreviewPane = memo(PreviewPane);
+const arePreviewPanePropsEqual = (prev: PreviewPaneProps, next: PreviewPaneProps): boolean =>
+  prev.node === next.node &&
+  prev.level === next.level &&
+  prev.previewScroll === next.previewScroll &&
+  prev.dispatch === next.dispatch &&
+  prev.isMissionDrawerOpen === next.isMissionDrawerOpen &&
+  prev.onToggleMissionDrawer === next.onToggleMissionDrawer &&
+  prev.gameState.fs === next.gameState.fs &&
+  prev.gameState.currentPath === next.gameState.currentPath &&
+  prev.gameState.showHidden === next.gameState.showHidden &&
+  prev.gameState.completedTaskIds === next.gameState.completedTaskIds;
+
+export const MemoizedPreviewPane = memo(PreviewPane, arePreviewPanePropsEqual);

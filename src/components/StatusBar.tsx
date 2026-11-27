@@ -97,10 +97,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
   return (
     <footer
       data-testid="status-bar"
-      className="h-12 flex text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
+      className="shrink-0 py-1.5 flex flex-nowrap items-stretch overflow-x-auto scrollbar-hide text-sm font-mono select-none bg-zinc-900 border-t border-zinc-800 z-30"
     >
       {/* 1. Mode Block (Pill Style) */}
-      <div className="flex items-center px-2 bg-zinc-900">
+      <div className="flex items-center px-2 bg-zinc-900 shrink-0">
         <div
           className={`${modeBg} text-black font-bold px-3 rounded h-8 flex items-center justify-center text-xs min-w-[48px]`}
         >
@@ -109,7 +109,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       {/* 2. File Info / Context (Left Cluster) */}
-      <div className="flex-1 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
+      <div className="flex-1 min-w-40 bg-zinc-800 text-zinc-300 px-3 flex items-center border-r border-zinc-700 overflow-hidden">
         <span className="truncate mr-3 font-bold text-white max-w-48 sm:max-w-72">{itemName}</span>
         <span className="text-zinc-400 font-mono text-xs hidden lg:inline mr-2">{perms}</span>
 
@@ -155,7 +155,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       )}
 
       {/* 4. Watchdog Status Block (Context-Aware) */}
-      <div className="flex h-full bg-zinc-800">
+      <div className="flex h-full bg-zinc-800 shrink-0">
         {(() => {
           // Check for any protocol violations in Audit Mode
           const currentDir = getNodeByPath(state.fs, state.currentPath);
@@ -209,7 +209,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
             label = 'WATCHDOG v1.1';
             statusText = 'HEURISTIC_SCAN: ACTIVE';
             statusColor = 'text-yellow-300';
-            urgentClass = 'bg-yellow-600/40 animate-urgent-pulse';
+            urgentClass = 'bg-yellow-900/40';
             icon = <Activity size={14} className="text-yellow-400" />;
           } else {
             // Ep III: Instruction Guard
@@ -289,7 +289,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       {/* 5. Progress & Stats Block (Right Cluster) */}
-      <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800">
+      <div className="bg-zinc-900 px-3 flex items-center gap-3 border-l border-zinc-800 shrink-0">
         {/* Quest Info with Task Progress */}
         <span className="text-zinc-400 hidden sm:flex items-center gap-2 whitespace-nowrap text-xs">
           <span className="font-bold text-zinc-300">L{level.id}</span>

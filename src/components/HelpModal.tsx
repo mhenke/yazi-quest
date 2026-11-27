@@ -6,6 +6,7 @@ import { HELP_KEYBINDINGS, HELP_META_KEYBINDINGS } from '../constants/keybinding
 import type { Action } from '../hooks/gameReducer';
 import type { GameState, Level } from '../types';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
+import { renderInlineCode } from './ui/inlineCode';
 
 interface HelpModalProps {
   onClose: () => void;
@@ -72,7 +73,7 @@ const CurrentLevelHelpSection: React.FC<CurrentLevelHelpSectionProps> = ({
           aria-expanded={isExpanded}
           aria-controls="current-level-help-content"
           onClick={onToggle}
-          className="inline-flex min-h-6 py-0.5 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+          className="inline-flex min-h-9 py-1.5 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
         >
           Current Level
           <ChevronDown
@@ -91,7 +92,7 @@ const CurrentLevelHelpSection: React.FC<CurrentLevelHelpSectionProps> = ({
           <ol className="mt-2 list-decimal pl-4 flex flex-col gap-y-1">
             {tasks.map((task) => (
               <li key={task.id} className="text-xs text-zinc-300 font-mono leading-snug">
-                {task.description}
+                {renderInlineCode(task.description)}
               </li>
             ))}
           </ol>
@@ -105,6 +106,41 @@ interface AccessibilitySettingsSectionProps {
   dispatch: React.Dispatch<Action>;
   narrativeEffects: 'full' | 'reduced' | 'minimal';
 }
+
+const HeaderEffectsControl: React.FC<{
+  dispatch?: React.Dispatch<Action>;
+  narrativeEffects: 'full' | 'reduced' | 'minimal';
+}> = ({ dispatch, narrativeEffects }) => {
+  if (!dispatch) return null;
+  return (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <label
+        htmlFor="help-header-effects"
+        className="text-xs font-mono text-zinc-400 hidden md:inline"
+      >
+        Effects:
+      </label>
+      <select
+        id="help-header-effects"
+        aria-label="Quick narrative effects setting"
+        value={narrativeEffects}
+        onChange={(e) => {
+          dispatch({
+            type: 'UPDATE_SETTINGS',
+            payload: {
+              narrativeEffects: e.target.value as 'full' | 'reduced' | 'minimal',
+            },
+          });
+        }}
+        className="min-h-9 bg-zinc-950 border border-zinc-700 px-2 py-1 text-xs font-mono text-zinc-200 focus:border-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+      >
+        <option value="full">Effects: Full</option>
+        <option value="reduced">Effects: Reduced</option>
+        <option value="minimal">Effects: Minimal</option>
+      </select>
+    </div>
+  );
+};
 
 const AccessibilitySettingsSection: React.FC<AccessibilitySettingsSectionProps> = ({
   dispatch,
@@ -291,7 +327,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 px-4 backdrop-blur-xs"
+      className="fixed inset-x-0 bottom-0 top-14 z-[250] flex items-center justify-center bg-black/80 px-4 pb-4 backdrop-blur-xs"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -312,6 +348,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             HELP / KEYBINDINGS
           </h2>
           <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end min-w-48">
+            <HeaderEffectsControl dispatch={dispatch} narrativeEffects={narrativeEffects} />
             <input
               ref={filterInputRef}
               type="search"
@@ -329,12 +366,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({
               }}
               placeholder="Filter commands or keys (/)..."
               aria-label="Filter keybindings"
-              className="w-full sm:w-64 bg-zinc-950 border border-zinc-700 px-2.5 py-1 text-xs font-mono text-zinc-100 placeholder:text-zinc-400 focus:outline-hidden focus:border-orange-400"
+              className="w-full sm:w-64 min-h-9 bg-zinc-950 border border-zinc-700 px-2.5 py-1 text-xs font-mono text-zinc-100 placeholder:text-zinc-400 focus:border-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
             />
             <button
               type="button"
               onClick={onClose}
-              className="min-h-6 px-2 py-1 border border-zinc-700 text-xs font-bold tracking-wider text-zinc-300 hover:text-orange-400 hover:border-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400 shrink-0"
+              className="min-h-9 px-3 py-1.5 border border-zinc-700 text-xs font-bold tracking-wider text-zinc-300 hover:text-orange-400 hover:border-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400 shrink-0"
               title="Close (Esc)"
             >
               CLOSE
