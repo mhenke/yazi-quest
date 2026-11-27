@@ -89,7 +89,7 @@ During an `EpisodeIntro`, `App.tsx` gates the workspace panes and diegetic promp
 ## Modularity Practices
 
 - Use existing filesystem helpers and clone-before-mutation setup patterns; reducer-owned trees are treated as immutable.
-- `useKeyboardHandlers` coordinates handlers under `src/hooks/keyboard/`. `App` also registers mode/modal input through `useGlobalInput`.
+- Typed context handlers under `src/hooks/keyboard/` (`types.ts`, `gameLoopHelpers.ts`, and direct mode handlers) coordinate keyboard actions via the DOM-free `KeyInput` contract. `App` registers mode/modal input through `useGlobalInput`.
 - Input handlers have priority, enabled-state, and input-focus capture options. A consumed event stops further handlers; do not model this as independent global listeners per modal.
 - Level task checks are content-driven. Filesystem prerequisites and consequences belong with filesystem setup, not in presentation components.
 - Narrative content and narrative hooks are separated, but some game-specific narrative coordination remains in `App`.
@@ -142,7 +142,7 @@ External resources are limited to an external favicon/background image and a con
 ## Test Coverage
 
 - Coverage (`npm run test:coverage`, `@vitest/coverage-v8` 5.1.2): **35.17% statements** (1749/4972), **31.83% branches** (1311/4118), **34.35% functions** (326/949), **34.97% lines** (1536/4392). The default `json-summary` reporter succeeded and produced `coverage/coverage-summary.json`; Playwright E2E runs are not instrumented.
-- Frameworks: Vitest 5.1.2 with jsdom and `fast-check` 4.11.0; Testing Library for component/hooks tests; Playwright 1.65.1 for Chromium E2E and production-build smoke scenarios.
+- Frameworks: Vitest 5.1.2 (split into `node` and `dom` projects in `vite.config.ts`) and `fast-check` 4.11.0; Testing Library for component/hooks tests; Playwright 1.65.1 for Chromium E2E and production-build smoke scenarios.
 - Inventory: **36 unit/property test files (331 tests passing)** — including **10 `fast-check` property suites** (`fsHelpers`, `fsStateMachine`, `gameReducer`, `gameUtils`, `fuzzyHelpers`, `consciousnessTracker`, `protection`, `sortHelpers`, `viewHelpers`, `primitives`). The earlier scan recorded **20 E2E spec files (123 Playwright tests)** plus **1 production boot spec**; those browser test counts were not refreshed.
 - High-coverage unit/property areas include `gameReducer.ts` (99.59% statements), `viewHelpers.ts` (98.30%), `fsHelpers.ts` (97.02%), `progressionStorage.ts` (95%), `sortHelpers.ts` (84.31%), and `constants/filesystem/` (77.10%). Component tests also cover `BiosBoot`, `HintModal`, `SystemAlerts`, `InfoPanel`, `DiegeticPrompt`, `GlitchOverlay`, `BootSequence`, and their shared presentation hooks.
 - Key untested areas (0% unit coverage, partially exercised by E2E): `src/App.tsx`, most keyboard mode handlers under `src/hooks/keyboard/`, most presentation components (including `FileSystemPane`, `PreviewPane`, `MissionDrawer`, `LevelProgress`, `HelpModal`, and `OutroSequence`), and audio utilities.
@@ -156,7 +156,7 @@ External resources are limited to an external favicon/background image and a con
 ## Entry Points
 
 - `index.html` loads `src/index.tsx`; `src/App.tsx` owns game orchestration, and `src/hooks/initialState.ts` owns initial state assembly. `public/404.html` is the standalone 404 terminal page.
-- `src/hooks/gameReducer.ts`, `src/GlobalInputContext.tsx`, `src/hooks/useKeyboardHandlers.ts`, and `src/constants/levels.ts` are central behavior entry points.
+- `src/hooks/gameReducer.ts`, `src/GlobalInputContext.tsx`, `src/hooks/keyboard/gameLoopHelpers.ts`, and `src/constants/levels.ts` are central behavior entry points.
 - `vite.config.ts` sets the production `/yazi-quest/` base, port 3000, React and Tailwind plugins, aliases, Vitest discovery, and V8 coverage. Rolldown `codeSplitting` groups React and `lucide-react` separately for browser caching.
 - `src/index.css` declares Tailwind source paths; there is no runtime Tailwind.
 - `playwright.config.ts` configures Chromium E2E runs against the dev server; `playwright.production.config.ts` tests the built `dist/` bundle via `vite preview` on port 3200. Run with `--reporter=list` as required by project instructions.

@@ -1,25 +1,13 @@
-import React from 'react';
-import { GameState, Level } from '../../types';
-import { Action } from '../gameReducer';
 import { getAllDirectoriesWithPaths, resolvePath, getNodeByPath } from '../../utils/fsHelpers';
 import { LEVELS } from '../../constants/levels';
-import { checkProtocolViolations } from './utils';
-import { checkAllTasksComplete } from '../../utils/gameUtils';
+import { guardProtocolViolations } from './utils';
 import { sortNodes } from '../../utils/sortHelpers';
 import { getFuzzyCandidates, FuzzyCandidate } from '../../utils/fuzzyHelpers';
+import type { KeyInput, LevelModeContext, ModeContext } from './types';
 
-function handleFuzzySelection(
-  e: KeyboardEvent,
-  selected: FuzzyCandidate,
-  gameState: GameState,
-  currentLevel: Level,
-  dispatch: React.Dispatch<Action>
-) {
-  if (
-    checkProtocolViolations(e, gameState, dispatch, checkAllTasksComplete(gameState, currentLevel))
-  ) {
-    return;
-  }
+function handleFuzzySelection(e: KeyInput, selected: FuzzyCandidate, ctx: LevelModeContext): void {
+  const { gameState, currentLevel, dispatch } = ctx;
+  if (guardProtocolViolations(e, ctx)) return;
 
   if (selected.isZoxide) {
     const dirs = getAllDirectoriesWithPaths(gameState.fs, currentLevel);
@@ -47,11 +35,8 @@ function handleFuzzySelection(
   }
 }
 
-export const handleFuzzyModeKeyDown = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>
-) => {
+export const handleFuzzyModeKeyDown = (e: KeyInput, ctx: ModeContext): void => {
+  const { gameState, dispatch } = ctx;
   const currentLevel = LEVELS[gameState.levelIndex];
 
   // Navigation
@@ -79,7 +64,7 @@ export const handleFuzzyModeKeyDown = (
     const candidates = getFuzzyCandidates(gameState);
     const selected = candidates[gameState.fuzzySelectedIndex || 0];
     if (selected) {
-      handleFuzzySelection(e, selected, gameState, currentLevel, dispatch);
+      handleFuzzySelection(e, selected, { ...ctx, currentLevel });
     }
     return;
   }
@@ -89,6 +74,5 @@ export const handleFuzzyModeKeyDown = (
     e.preventDefault();
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_INPUT_BUFFER', buffer: '' });
-    return;
   }
 };

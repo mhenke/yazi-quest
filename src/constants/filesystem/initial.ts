@@ -1,8 +1,7 @@
-import type { FileNode, GameState } from '../../types';
+import type { FileNode } from '../../types';
 import { BASE_TIME, day } from '../timings';
 import { NODE_KEY_NAMES, SECURITY_POLICY_73_CONTENT } from '../protocols';
 import { getDaemonSystemdCoreChildren } from './scenarios';
-import { applyFileSystemMutations } from './mutations';
 
 const [TOKYO_KEY, BERLIN_KEY, SAO_PAULO_KEY] = NODE_KEY_NAMES;
 
@@ -2059,12 +2058,4 @@ SUBJECT: AI-7733
       ],
     },
   ],
-};
-
-export const ensurePrerequisiteState = (
-  fs: FileNode,
-  levelId: number,
-  gameState?: GameState
-): FileNode => {
-  return applyFileSystemMutations(fs, levelId, gameState);
 };

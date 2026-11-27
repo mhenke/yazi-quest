@@ -1,9 +1,9 @@
-import { GameState, FileNode, Level } from '../../types';
-import { getNarrativeAction, checkProtocolViolations, hasSearchViolation } from './utils';
+import { GameState } from '../../types';
+import { getNarrativeAction, guardProtocolViolations, hasSearchViolation } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
 import { isProtected, getNodeByPath } from '../../utils/fsHelpers';
 import { Action } from '../gameReducer';
-import { checkAllTasksComplete } from '../../utils/gameUtils';
+import type { KeyInput, NormalModeContext } from './types';
 
 const handleEscapeKey = (
   gameState: GameState,
@@ -44,14 +44,8 @@ const handleEscapeKey = (
   return true;
 };
 
-export const handleSystemParamsKeyDown = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  currentItem: FileNode | null,
-  currentLevel: Level,
-  showNotification: (message: string, duration?: number) => void
-): boolean => {
+export const handleSystemParamsKeyDown = (e: KeyInput, ctx: NormalModeContext): boolean => {
+  const { gameState, dispatch, currentItem, currentLevel, showNotification } = ctx;
   switch (e.key) {
     case 'f':
       if (!e.ctrlKey && !e.metaKey) {
@@ -87,16 +81,7 @@ export const handleSystemParamsKeyDown = (
 
     case 'Z':
       if (e.shiftKey) {
-        if (
-          checkProtocolViolations(
-            e,
-            gameState,
-            dispatch,
-            checkAllTasksComplete(gameState, currentLevel)
-          )
-        ) {
-          return true;
-        }
+        if (guardProtocolViolations(e, ctx)) return true;
         e.preventDefault();
         showNotification(getNarrativeAction('Z') || 'Zoxide jump', 4000);
         dispatch({ type: 'SET_MODE', mode: 'zoxide-jump' });
@@ -107,16 +92,7 @@ export const handleSystemParamsKeyDown = (
 
     case 'z':
       if (!e.shiftKey) {
-        if (
-          checkProtocolViolations(
-            e,
-            gameState,
-            dispatch,
-            checkAllTasksComplete(gameState, currentLevel)
-          )
-        ) {
-          return true;
-        }
+        if (guardProtocolViolations(e, ctx)) return true;
         e.preventDefault();
         showNotification(getNarrativeAction('z') || 'FZF file search', 4000);
         dispatch({ type: 'SET_MODE', mode: 'fzf-current' });

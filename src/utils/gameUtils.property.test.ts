@@ -30,7 +30,7 @@ import {
   getActionIntensity,
   hasSearchViolation,
   hasBaselineViolation,
-  checkProtocolViolations,
+  guardProtocolViolations,
 } from '../hooks/keyboard/utils';
 import { findPathById, getNodeByPath, isProtected } from './fsHelpers';
 import { LEVELS } from '../constants/levels';
@@ -1348,9 +1348,17 @@ describe('property: keyboard/utils protocol violation checks', () => {
         const snapshot = JSON.stringify(state);
         const preventDefault = vi.fn();
         const dispatch = vi.fn<(action: Action) => void>();
-        const event = { key, preventDefault } as unknown as KeyboardEvent;
+        const event = { key, preventDefault };
 
-        const blocked = checkProtocolViolations(event, state, dispatch, allTasksComplete);
+        const level: Level = {
+          ...LEVELS[0],
+          tasks: allTasksComplete ? [] : LEVELS[0].tasks,
+        };
+        const blocked = guardProtocolViolations(event, {
+          gameState: { ...state, completedTaskIds: {} },
+          dispatch,
+          currentLevel: level,
+        });
 
         const currentDir = getNodeByPath(state.fs, state.currentPath);
         const filter = Boolean(currentDir && state.filters[currentDir.id]);
@@ -1424,9 +1432,17 @@ describe('property: keyboard/utils protocol violation checks', () => {
 
           const preventDefault = vi.fn();
           const dispatch = vi.fn<(action: Action) => void>();
-          const event = { key, preventDefault } as unknown as KeyboardEvent;
+          const event = { key, preventDefault };
 
-          const blocked = checkProtocolViolations(event, state, dispatch, allTasksComplete);
+          const level: Level = {
+            ...LEVELS[0],
+            tasks: allTasksComplete ? [] : LEVELS[0].tasks,
+          };
+          const blocked = guardProtocolViolations(event, {
+            gameState: { ...state, completedTaskIds: {} },
+            dispatch,
+            currentLevel: level,
+          });
 
           // Only hidden && allTasksComplete can block vertical nav during custom sort
           expect(blocked).toBe(showHidden && allTasksComplete);

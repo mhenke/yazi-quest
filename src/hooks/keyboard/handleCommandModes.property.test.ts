@@ -1,67 +1,35 @@
 import { assert, boolean, constantFrom, integer, property, stringMatching } from 'fast-check';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { JUMP_TARGETS } from '../../constants/keybindings';
 import { LEVELS } from '../../constants/levels';
 import type { FileNode, GameState } from '../../types';
 import { addNode, getNodeById, getNodeByPath } from '../../utils/fsHelpers';
-import { resetGameSession } from '../../utils/gameSessionStorage';
 import { getVisibleItems } from '../../utils/viewHelpers';
-import { gameReducer, type Action } from '../gameReducer';
-import { createInitialState } from '../initialState';
+import {
+  makeBootState,
+  makeKey,
+  makeNormalContext,
+  runDispatched,
+} from '../../../tests/helpers/keyboardHarness';
 import { handleGCommandKeyDown } from './handleGCommandMode';
 import { handleOverwriteConfirmKeyDown } from './handleOverwriteMode';
 import { handleSystemParamsKeyDown } from './handleSystemParams';
 
-interface KeySpec {
-  key: string;
-  shiftKey?: boolean;
-  ctrlKey?: boolean;
-  metaKey?: boolean;
-}
-
-const makeKeyEvent = ({
-  key,
-  shiftKey = false,
-  ctrlKey = false,
-  metaKey = false,
-}: KeySpec): KeyboardEvent =>
-  new KeyboardEvent('keydown', { key, shiftKey, ctrlKey, metaKey, cancelable: true });
-
-const applyActions = (initial: GameState, actions: Action[]): GameState =>
-  actions.reduce((state, action) => gameReducer(state, action), initial);
-
-const createBootState = (lvl = 1): GameState => {
-  window.history.replaceState({}, '', `/?intro=false&lvl=${lvl}`);
-  return createInitialState();
-};
-
 describe('property: system params, g-command, and overwrite mode handlers', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    resetGameSession();
-    window.history.replaceState({}, '', '/?intro=false');
-  });
-
-  afterEach(() => {
-    localStorage.clear();
-    resetGameSession();
-    window.history.replaceState({}, '', '/');
-  });
-
-  it('handleSystemParamsKeyDown preserves selections when clearing filter on Escape and respects mode/protection rules', () => {
+  it('handleSystemParamsKeyDown clears mode/modals on Escape and preserves selections only when clearing a filter', () => {
     assert(
       property(
         boolean(),
         constantFrom<string | null>(null, '', 'readme'),
         boolean(),
         (hasFilter, searchQuery, startInfoOpen) => {
-          let state = createBootState(1);
-          const dirId = state.currentPath[state.currentPath.length - 1];
-          const items = getVisibleItems(state);
+          const base = makeBootState(1);
+          const dirId = base.currentPath[base.currentPath.length - 1];
+          const items = getVisibleItems(base);
           const initialSelections = items.slice(0, 2).map((item) => item.id);
 
-          state = {
-            ...state,
+          const state: GameState = {
+            ...base,
             mode: 'filter',
             inputBuffer: 'abc',
             showInfoPanel: startInfoOpen,
@@ -76,32 +44,24 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
             showHiddenWarning: true,
           };
 
-          const dispatched: Action[] = [];
-          const handled = handleSystemParamsKeyDown(
-            makeKeyEvent({ key: 'Escape' }),
-            state,
-            (action) => dispatched.push(action),
-            items[0] ?? null,
-            LEVELS[0],
-            vi.fn()
+          const run = runDispatched(state, (dispatch) =>
+            handleSystemParamsKeyDown(
+              makeKey({ key: 'Escape' }),
+              makeNormalContext(state, dispatch)
+            )
           );
+          expect(run.result).toBe(true);
+          const next = run.state;
 
-          expect(handled).toBe(true);
-          const next = applyActions(state, dispatched);
           expect(next.mode).toBe('normal');
           expect(next.inputBuffer).toBe('');
           expect(next.showFilterWarning).toBe(false);
           expect(next.showSearchWarning).toBe(false);
           expect(next.showSortWarning).toBe(false);
           expect(next.showHiddenWarning).toBe(false);
+          expect(next.selectedIds).toEqual(hasFilter ? initialSelections : []);
 
-          if (hasFilter) {
-            expect(next.filters[dirId]).toBeUndefined();
-            expect(next.selectedIds).toEqual(initialSelections);
-          } else {
-            expect(next.selectedIds).toEqual([]);
-          }
-
+          if (hasFilter) expect(next.filters[dirId]).toBeUndefined();
           if (searchQuery !== null) {
             expect(next.searchQuery).toBeNull();
             expect(next.searchResults).toEqual([]);
@@ -111,109 +71,75 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
       ),
       { numRuns: 80 }
     );
+  });
 
-    // Dot toggles showHidden as an involution; f/s/, transition modes cleanly; Tab honors quarantine.
+  it('handleSystemParamsKeyDown handles dot involution, mode switches, Tab protection, and z/Z gating', () => {
     assert(
       property(boolean(), boolean(), (startHidden, ctrlOrMeta) => {
-        const base: GameState = { ...createBootState(1), showHidden: startHidden };
-        const items = getVisibleItems(base);
+        const base = makeBootState(1, { showHidden: startHidden });
 
-        // Toggle '.' twice restores original showHidden
-        let toggled = base;
-        for (let i = 0; i < 2; i++) {
-          const actions: Action[] = [];
+        const once = runDispatched(base, (dispatch) =>
+          handleSystemParamsKeyDown(makeKey({ key: '.' }), makeNormalContext(base, dispatch))
+        ).state;
+        const twice = runDispatched(once, (dispatch) =>
+          handleSystemParamsKeyDown(makeKey({ key: '.' }), makeNormalContext(once, dispatch))
+        ).state;
+        expect(twice.showHidden).toBe(startHidden);
+
+        const fRun = runDispatched(base, (dispatch) =>
           handleSystemParamsKeyDown(
-            makeKeyEvent({ key: '.' }),
-            toggled,
-            (a) => actions.push(a),
-            items[0] ?? null,
-            LEVELS[0],
-            vi.fn()
-          );
-          toggled = applyActions(toggled, actions);
-        }
-        expect(toggled.showHidden).toBe(startHidden);
-
-        // 'f' ignores Ctrl/Meta shortcuts, enters 'filter' only cleanly
-        const fActions: Action[] = [];
-        const fHandled = handleSystemParamsKeyDown(
-          makeKeyEvent({ key: 'f', ctrlKey: ctrlOrMeta }),
-          base,
-          (a) => fActions.push(a),
-          items[0] ?? null,
-          LEVELS[0],
-          vi.fn()
+            makeKey({ key: 'f', ctrlKey: ctrlOrMeta }),
+            makeNormalContext(base, dispatch)
+          )
         );
-        expect(fHandled).toBe(!ctrlOrMeta);
-        if (!ctrlOrMeta) {
-          expect(applyActions(base, fActions).mode).toBe('filter');
-        }
+        expect(fRun.result).toBe(!ctrlOrMeta);
+        if (!ctrlOrMeta) expect(fRun.state.mode).toBe('filter');
 
-        // 's' enters search and clears filters; ',' enters sort with acceptNextKeyForSort
-        const sActions: Action[] = [];
-        handleSystemParamsKeyDown(
-          makeKeyEvent({ key: 's' }),
-          { ...base, filters: { guest: 'abc' } },
-          (a) => sActions.push(a),
-          items[0] ?? null,
-          LEVELS[0],
-          vi.fn()
-        );
-        const sState = applyActions(base, sActions);
+        const filteredBase: GameState = { ...base, filters: { guest: 'abc' } };
+        const sState = runDispatched(filteredBase, (dispatch) =>
+          handleSystemParamsKeyDown(
+            makeKey({ key: 's' }),
+            makeNormalContext(filteredBase, dispatch)
+          )
+        ).state;
         expect(sState.mode).toBe('search');
         expect(sState.filters).toEqual({});
 
-        const commaActions: Action[] = [];
-        handleSystemParamsKeyDown(
-          makeKeyEvent({ key: ',' }),
-          base,
-          (a) => commaActions.push(a),
-          items[0] ?? null,
-          LEVELS[0],
-          vi.fn()
-        );
-        const commaState = applyActions(base, commaActions);
+        const commaState = runDispatched(base, (dispatch) =>
+          handleSystemParamsKeyDown(makeKey({ key: ',' }), makeNormalContext(base, dispatch))
+        ).state;
         expect(commaState.mode).toBe('sort');
         expect(commaState.acceptNextKeyForSort).toBe(true);
-
-        // Tab on quarantined workspace in Level 1 blocks info panel opening
-        const ws = items.find((node) => node.name === 'workspace') ?? null;
-        if (ws) {
-          const tabActions: Action[] = [];
-          const notify = vi.fn();
-          handleSystemParamsKeyDown(
-            makeKeyEvent({ key: 'Tab' }),
-            { ...base, showInfoPanel: false },
-            (a) => tabActions.push(a),
-            ws,
-            LEVELS[0],
-            notify
-          );
-          expect(tabActions).toEqual([]);
-          expect(notify).toHaveBeenCalledWith(expect.stringContaining('🔒'), 4000);
-        }
       }),
       { numRuns: 40 }
     );
 
-    // z / Shift+Z respect protocol violations
+    const base = makeBootState(1);
+    const ws = getVisibleItems(base).find((node) => node.name === 'workspace') ?? null;
+    if (ws) {
+      const showNotification = vi.fn();
+      const tabRun = runDispatched(base, (dispatch) =>
+        handleSystemParamsKeyDown(
+          makeKey({ key: 'Tab' }),
+          makeNormalContext(base, dispatch, { currentItem: ws, showNotification })
+        )
+      );
+      expect(tabRun.actions).toEqual([]);
+      expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('🔒'), 4000);
+    }
+
     assert(
       property(boolean(), boolean(), (hasFilter, useZoxide) => {
-        let state = createBootState(6);
-        const dirId = state.currentPath[state.currentPath.length - 1];
-        if (hasFilter) {
-          state = gameReducer(state, { type: 'SET_FILTER', dirId, filter: 'a' });
-        }
-        const actions: Action[] = [];
-        handleSystemParamsKeyDown(
-          makeKeyEvent({ key: useZoxide ? 'Z' : 'z', shiftKey: useZoxide }),
-          state,
-          (a) => actions.push(a),
-          null,
-          LEVELS[state.levelIndex],
-          vi.fn()
-        );
-        const next = applyActions(state, actions);
+        const lvl6 = makeBootState(6);
+        const dirId = lvl6.currentPath[lvl6.currentPath.length - 1];
+        const state: GameState = hasFilter ? { ...lvl6, filters: { [dirId]: 'a' } } : lvl6;
+        const next = runDispatched(state, (dispatch) =>
+          handleSystemParamsKeyDown(
+            makeKey({ key: useZoxide ? 'Z' : 'z', shiftKey: useZoxide }),
+            makeNormalContext(state, dispatch)
+          )
+        ).state;
+
         if (hasFilter) {
           expect(next.showFilterWarning).toBe(true);
           expect(next.mode).toBe('normal');
@@ -226,85 +152,103 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
     );
   });
 
-  it('handleGCommandKeyDown locks shortcuts on Level 1 and safely resolves or blocks jumps on Levels 2+', () => {
-    const gSubKeys = [...Object.keys(JUMP_TARGETS), 'G', 'Escape', 'x', 'q'];
+  const gSubKeys = [...Object.keys(JUMP_TARGETS), 'G', 'Escape', 'x', 'q'];
 
+  it('handleGCommandKeyDown locks navigation shortcuts on Level 1', () => {
     assert(
       property(constantFrom(...gSubKeys), (key) => {
-        const state: GameState = { ...createBootState(1), mode: 'g-command' };
-        const dispatched: Action[] = [];
-
-        handleGCommandKeyDown(
-          makeKeyEvent({ key, shiftKey: key === 'G' }),
-          (action) => dispatched.push(action),
-          state,
-          LEVELS[0]
+        const state = makeBootState(1, { mode: 'g-command' });
+        const run = runDispatched(state, (dispatch) =>
+          handleGCommandKeyDown(makeKey({ key, shiftKey: key === 'G' }), {
+            gameState: state,
+            dispatch,
+            currentLevel: LEVELS[0],
+          })
         );
-        const next = applyActions(state, dispatched);
-
-        expect(next.mode).toBe('normal');
-        expect(dispatched.some((a) => a.type === 'NAVIGATE')).toBe(false);
+        expect(run.state.mode).toBe('normal');
+        expect(run.actions.some((a) => a.type === 'NAVIGATE')).toBe(false);
         if (key !== 'g' && key !== 'Escape') {
-          expect(next.notification?.message).toContain('Shortcuts disabled in Level 1');
+          expect(run.state.notification?.message).toContain('Shortcuts disabled in Level 1');
         }
       }),
       { numRuns: 40 }
     );
+  });
 
+  it('handleGCommandKeyDown exits cleanly on Escape/unknown and resolves or blocks jumps on Levels 2+', () => {
     assert(
       property(
         integer({ min: 1, max: LEVELS.length - 1 }),
-        constantFrom(...gSubKeys),
+        constantFrom('Escape', 'x', 'q', 'g', 'G'),
         boolean(),
         boolean(),
         (levelIdx, key, hasFilter, hasSort) => {
-          let state: GameState = { ...createBootState(LEVELS[levelIdx].id), mode: 'g-command' };
-          const dirId = state.currentPath[state.currentPath.length - 1];
-          if (hasFilter) {
-            state = gameReducer(state, { type: 'SET_FILTER', dirId, filter: 'x' });
-          }
-          if (hasSort) {
-            state = gameReducer(state, { type: 'SET_SORT', sortBy: 'size', direction: 'asc' });
-          }
+          const base = makeBootState(LEVELS[levelIdx].id, { mode: 'g-command' });
+          const dirId = base.currentPath[base.currentPath.length - 1];
+          const state: GameState = {
+            ...base,
+            filters: hasFilter ? { [dirId]: 'x' } : {},
+            sortBy: hasSort ? 'size' : 'natural',
+            sortDirection: hasSort ? 'asc' : 'asc',
+          };
 
-          const dispatched: Action[] = [];
-          handleGCommandKeyDown(
-            makeKeyEvent({ key, shiftKey: key === 'G' }),
-            (action) => dispatched.push(action),
-            state,
-            LEVELS[levelIdx]
+          const run = runDispatched(state, (dispatch) =>
+            handleGCommandKeyDown(makeKey({ key, shiftKey: key === 'G' }), {
+              gameState: state,
+              dispatch,
+              currentLevel: LEVELS[levelIdx],
+            })
           );
-          const next = applyActions(state, dispatched);
 
-          expect(getNodeByPath(next.fs, next.currentPath)).toBeDefined();
-
-          if (key === 'Escape' || (!JUMP_TARGETS[key] && key !== 'G')) {
-            expect(next.mode).toBe('normal');
-            expect(dispatched.some((a) => a.type === 'NAVIGATE')).toBe(false);
-            return;
+          expect(run.state.mode).toBe('normal');
+          if (key === 'Escape' || key === 'x' || key === 'q') {
+            expect(run.actions.some((a) => a.type === 'NAVIGATE')).toBe(false);
+          } else {
+            expect(run.state.showFilterWarning).toBe(hasFilter);
+            expect(run.state.showSortWarning).toBe(false);
           }
+        }
+      ),
+      { numRuns: 80 }
+    );
 
-          if (key === 'g' || key === 'G') {
-            expect(next.mode).toBe('normal');
-            if (hasFilter) {
-              expect(next.showFilterWarning).toBe(true);
-            } else {
-              expect(next.showSortWarning).toBe(false);
-            }
-            return;
-          }
+    const jumpKeys = Object.keys(JUMP_TARGETS).filter((k) => k !== 'g');
+    assert(
+      property(
+        integer({ min: 1, max: LEVELS.length - 1 }),
+        constantFrom(...jumpKeys),
+        boolean(),
+        boolean(),
+        (levelIdx, key, hasFilter, hasSort) => {
+          const base = makeBootState(LEVELS[levelIdx].id, { mode: 'g-command' });
+          const dirId = base.currentPath[base.currentPath.length - 1];
+          const state: GameState = {
+            ...base,
+            filters: hasFilter ? { [dirId]: 'x' } : {},
+            sortBy: hasSort ? 'size' : 'natural',
+            sortDirection: 'asc',
+          };
 
-          const target = JUMP_TARGETS[key];
+          const run = runDispatched(state, (dispatch) =>
+            handleGCommandKeyDown(makeKey({ key }), {
+              gameState: state,
+              dispatch,
+              currentLevel: LEVELS[levelIdx],
+            })
+          );
+
+          // Regression guard: even on protocol violations, g-command always returns to normal.
+          expect(run.state.mode).toBe('normal');
+          expect(getNodeByPath(run.state.fs, run.state.currentPath)).toBeDefined();
+
           if (hasFilter || hasSort) {
-            expect(dispatched.some((a) => a.type === 'NAVIGATE')).toBe(false);
-            expect(next.showFilterWarning || next.showSortWarning).toBe(true);
+            expect(run.actions.some((a) => a.type === 'NAVIGATE')).toBe(false);
+            expect(run.state.showFilterWarning || run.state.showSortWarning).toBe(true);
             return;
           }
 
-          expect(next.mode).toBe('normal');
-          const targetExists = Boolean(getNodeByPath(state.fs, target.path));
-          if (!targetExists) {
-            expect(dispatched.some((a) => a.type === 'NAVIGATE')).toBe(false);
+          if (!getNodeByPath(state.fs, JUMP_TARGETS[key].path)) {
+            expect(run.actions.some((a) => a.type === 'NAVIGATE')).toBe(false);
           }
         }
       ),
@@ -312,28 +256,27 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
     );
   });
 
-  it('handleOverwriteConfirmKeyDown protects existing fs on cancel, traps honeypots, and replaces safely on y', () => {
+  it('handleOverwriteConfirmKeyDown preserves state on cancel/idle and traps honeypots or replaces on y', () => {
     assert(
       property(constantFrom('n', 'Escape', 'x', 'a', '1'), (key) => {
-        const base = createBootState(1);
+        const base = makeBootState(1);
         const existing = getVisibleItems(base).find((node) => node.type === 'file') ?? null;
-        const state: GameState = {
-          ...base,
+        const state = makeBootState(1, {
           mode: 'overwrite-confirm',
           pendingOverwriteNode: existing,
           inputBuffer: existing?.name ?? 'new.txt',
-        };
-        const dispatched: Action[] = [];
+        });
 
-        handleOverwriteConfirmKeyDown(key, (action) => dispatched.push(action), state);
-        const next = applyActions(state, dispatched);
+        const run = runDispatched(state, (dispatch) =>
+          handleOverwriteConfirmKeyDown(key, { gameState: state, dispatch })
+        );
 
         if (key === 'n' || key === 'Escape') {
-          expect(next.mode).toBe('normal');
-          expect(next.pendingOverwriteNode).toBeNull();
-          expect(next.fs).toEqual(state.fs);
+          expect(run.state.mode).toBe('normal');
+          expect(run.state.pendingOverwriteNode).toBeNull();
+          expect(run.state.fs).toEqual(state.fs);
         } else {
-          expect(dispatched).toEqual([]);
+          expect(run.actions).toEqual([]);
         }
       }),
       { numRuns: 40 }
@@ -345,7 +288,7 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
         boolean(),
         boolean(),
         (fileName, hasPending, hasTrapClipboard) => {
-          const base = createBootState(8);
+          const base = makeBootState(8);
           const victim: FileNode = {
             id: `victim-${fileName}`,
             name: fileName,
@@ -372,9 +315,9 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
           };
 
           const snapshot = JSON.stringify(state.fs);
-          const dispatched: Action[] = [];
-          handleOverwriteConfirmKeyDown('y', (action) => dispatched.push(action), state);
-          const next = applyActions(state, dispatched);
+          const next = runDispatched(state, (dispatch) =>
+            handleOverwriteConfirmKeyDown('y', { gameState: state, dispatch })
+          ).state;
 
           expect(JSON.stringify(state.fs)).toBe(snapshot);
           expect(next.mode).toBe('normal');
@@ -382,20 +325,16 @@ describe('property: system params, g-command, and overwrite mode handlers', () =
 
           if (!hasPending) {
             expect(next.isGameOver).toBe(false);
-            return;
-          }
-
-          if (hasTrapClipboard) {
+          } else if (hasTrapClipboard) {
             expect(next.isGameOver).toBe(true);
             expect(next.gameOverReason).toBe('honeypot');
-            return;
+          } else {
+            expect(next.isGameOver).toBe(false);
+            expect(next.inputBuffer).toBe('');
+            expect(getNodeById(next.fs, victim.id)).toBeUndefined();
+            const currentDir = getNodeByPath(next.fs, next.currentPath);
+            expect(currentDir?.children?.some((child) => child.name === fileName)).toBe(true);
           }
-
-          expect(next.isGameOver).toBe(false);
-          expect(next.inputBuffer).toBe('');
-          expect(getNodeById(next.fs, victim.id)).toBeUndefined();
-          const currentDir = getNodeByPath(next.fs, next.currentPath);
-          expect(currentDir?.children?.some((child) => child.name === fileName)).toBe(true);
         }
       ),
       { numRuns: 60 }

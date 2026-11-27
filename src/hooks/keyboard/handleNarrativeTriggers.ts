@@ -1,5 +1,7 @@
+import type React from 'react';
 import { GameState, FileNode } from '../../types';
 import { Action } from '../gameReducer';
+import type { KeyInput } from './types';
 // import { BASE_TIME } from '../../constants'; // Avoid circular dependency
 
 // May 31, 2015 - Midnight
@@ -10,7 +12,7 @@ const BASE_TIME = 1433059200000;
  * Handles keys '1', '2', '3' for manual node jumps in the final mission.
  */
 export const handleLevel13NodeSwitch = (
-  e: KeyboardEvent,
+  e: KeyInput,
   currentLevelIndex: number,
   dispatch: React.Dispatch<Action>
 ): boolean => {

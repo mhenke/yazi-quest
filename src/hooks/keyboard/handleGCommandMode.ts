@@ -1,28 +1,21 @@
-import { GameState, Level } from '../../types';
 import { JUMP_TARGETS } from '../../constants/keybindings';
 import { getNodeByPath, isProtected } from '../../utils/fsHelpers';
-import { checkProtocolViolations } from './utils';
+import { guardProtocolViolations } from './utils';
 import { jumpToLastVisibleItem } from './handleNavigation';
-import { Action } from '../gameReducer';
-import { checkAllTasksComplete } from '../../utils/gameUtils';
+import type { KeyInput, LevelModeContext } from './types';
 
-export const handleGCommandKeyDown = (
-  e: KeyboardEvent,
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState,
-  currentLevel: Level
-) => {
+export const handleGCommandKeyDown = (e: KeyInput, ctx: LevelModeContext): void => {
+  const { dispatch, gameState, currentLevel } = ctx;
+
   // Level 1 Pedagogical Constraint: Block shortcuts (gd, gw, etc.) to force manual navigation
   // Only allow 'g' (for gg) or Escape
-  if (currentLevel.id === 1) {
-    if (e.key !== 'g' && e.key !== 'Escape') {
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({
-        type: 'SET_NOTIFICATION',
-        message: 'Shortcuts disabled in Level 1. Use manual navigation.',
-      });
-      return;
-    }
+  if (currentLevel.id === 1 && e.key !== 'g' && e.key !== 'Escape') {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: 'Shortcuts disabled in Level 1. Use manual navigation.',
+    });
+    return;
   }
 
   if (e.key === 'Escape') {
@@ -32,94 +25,71 @@ export const handleGCommandKeyDown = (
 
   // Handle Shift+G (Jump to bottom) specially
   if (e.key === 'G') {
-    if (
-      checkProtocolViolations(
-        e,
-        gameState,
-        dispatch,
-        checkAllTasksComplete(gameState, currentLevel)
-      )
-    ) {
+    if (guardProtocolViolations(e, ctx)) {
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       return;
     }
     e.preventDefault();
     dispatch({ type: 'SET_MODE', mode: 'normal' });
-    jumpToLastVisibleItem(gameState, dispatch);
+    jumpToLastVisibleItem({ gameState, dispatch });
     return;
   }
 
   const target = JUMP_TARGETS[e.key];
-
-  if (target) {
-    // Special case for 'gg' (top of list) - doesn't change path
-    if (e.key === 'g') {
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        return;
-      }
-      dispatch({ type: 'SET_CURSOR', index: 0 });
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({ type: 'MARK_ACTION_USED', actionId: 'GG' });
-      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
-    } else {
-      // Check for active protocol violations - block navigation
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        return;
-      }
-      const targetNode = getNodeByPath(gameState.fs, target.path);
-
-      // Check if target exists (fix for gw on Level 15)
-      if (!targetNode) {
-        dispatch({ type: 'SET_MODE', mode: 'normal' });
-        dispatch({
-          type: 'SET_NOTIFICATION',
-          message: `Directory not found: ${target.label}`,
-        });
-        return;
-      }
-
-      // Check for protection
-      if (targetNode) {
-        const protection = isProtected(
-          gameState.fs,
-          gameState.currentPath,
-          targetNode,
-          currentLevel,
-          'jump'
-        );
-        if (protection) {
-          dispatch({ type: 'SET_MODE', mode: 'normal' });
-          dispatch({ type: 'SET_NOTIFICATION', message: `🔒 ${protection}` });
-          return;
-        }
-      }
-
-      // Standard Path Jumps
-      dispatch({ type: 'NAVIGATE', path: target.path });
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({ type: 'SET_NOTIFICATION', message: `Jumped to ${target.label}` });
-      dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
-      if (target.flag) {
-        dispatch({ type: 'MARK_ACTION_USED', actionId: target.flag });
-      }
-    }
-  } else {
+  if (!target) {
     // Unknown key, exit mode
     dispatch({ type: 'SET_MODE', mode: 'normal' });
+    return;
+  }
+
+  // Special case for 'gg' (top of list) - doesn't change path
+  if (e.key === 'g') {
+    if (guardProtocolViolations(e, ctx)) {
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+      return;
+    }
+    dispatch({ type: 'SET_CURSOR', index: 0 });
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'MARK_ACTION_USED', actionId: 'GG' });
+    dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+    return;
+  }
+
+  // Check for active protocol violations - exit g-command cleanly before showing warning
+  if (guardProtocolViolations(e, ctx)) {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    return;
+  }
+
+  const targetNode = getNodeByPath(gameState.fs, target.path);
+  if (!targetNode) {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: `Directory not found: ${target.label}`,
+    });
+    return;
+  }
+
+  const protection = isProtected(
+    gameState.fs,
+    gameState.currentPath,
+    targetNode,
+    currentLevel,
+    'jump'
+  );
+  if (protection) {
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_NOTIFICATION', message: `🔒 ${protection}` });
+    return;
+  }
+
+  // Standard Path Jumps
+  dispatch({ type: 'NAVIGATE', path: target.path });
+  dispatch({ type: 'SET_MODE', mode: 'normal' });
+  dispatch({ type: 'SET_NOTIFICATION', message: `Jumped to ${target.label}` });
+  dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
+  if (target.flag) {
+    dispatch({ type: 'MARK_ACTION_USED', actionId: target.flag });
   }
 };

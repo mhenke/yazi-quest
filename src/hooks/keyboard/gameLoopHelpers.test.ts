@@ -1,13 +1,10 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { LEVELS } from '../../constants/levels';
 import type { FileNode, GameState } from '../../types';
 import { createInitialState } from '../initialState';
-import {
-  buildDeleteModalData,
-  handleSortWarningKey,
-  isProtocolWarningOpen,
-  runGameLoopKeyDown,
-} from './gameLoopHelpers';
+import { buildDeleteModalData, handleSortWarningKey, runGameLoopKeyDown } from './gameLoopHelpers';
+import { isProtocolWarningOpen } from './utils';
 
 const makeKey = (key: string, overrides: Partial<KeyboardEvent> = {}): KeyboardEvent =>
   ({
@@ -44,12 +41,8 @@ const makeDeps = (
     currentItem: null,
     dispatch: vi.fn(),
     advanceLevel: vi.fn(),
+    showNotification: vi.fn(),
     checkAllTasksComplete: vi.fn(() => false),
-    handleNormalModeKeyDown: vi.fn(() => true),
-    handleSortModeKeyDown: vi.fn(),
-    handleConfirmDeleteModeKeyDown: vi.fn(),
-    handleOverwriteConfirmKeyDown: vi.fn(),
-    handleGCommandKeyDown: vi.fn(),
     ...depOverrides,
   };
 };
@@ -64,7 +57,7 @@ describe('runGameLoopKeyDown', () => {
     ] as Array<[Partial<GameState>, boolean]>) {
       const deps = makeDeps(s, { isLastLevel: last });
       expect(runGameLoopKeyDown(makeKey('j'), deps)).toBeUndefined();
-      expect(deps.handleNormalModeKeyDown).not.toHaveBeenCalled();
+      expect(deps.dispatch).not.toHaveBeenCalled();
     }
   });
 
@@ -102,14 +95,18 @@ describe('runGameLoopKeyDown', () => {
 
     const outsideDeps = makeDeps({ mode: 'normal' }, { filePaneEl: filePane });
     expect(runGameLoopKeyDown(makeKey('j', { target: outsideBtn }), outsideDeps)).toBeUndefined();
-    expect(outsideDeps.handleNormalModeKeyDown).not.toHaveBeenCalled();
+    expect(outsideDeps.dispatch).not.toHaveBeenCalled();
 
     const hintBtnEnter = makeDeps({ mode: 'normal' }, { filePaneEl: filePane });
     expect(runGameLoopKeyDown(makeKey('Enter', { target: hintBtn }), hintBtnEnter)).toBeUndefined();
 
     const sortEscape = makeDeps({ mode: 'sort' }, { filePaneEl: filePane });
     runGameLoopKeyDown(makeKey('Escape', { target: outsideBtn }), sortEscape);
-    expect(sortEscape.handleSortModeKeyDown).toHaveBeenCalled();
+    expect(sortEscape.dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'normal' });
+    expect(sortEscape.dispatch).toHaveBeenCalledWith({
+      type: 'SET_SORT_KEY_HANDLER',
+      accept: false,
+    });
 
     filePane.remove();
     outsideBtn.remove();
@@ -122,7 +119,7 @@ describe('runGameLoopKeyDown', () => {
       { checkAllTasksComplete: vi.fn(() => true) }
     );
     expect(runGameLoopKeyDown(makeKey('j'), toastDeps)).toBe(true);
-    expect(toastDeps.handleNormalModeKeyDown).not.toHaveBeenCalled();
+    expect(toastDeps.dispatch).not.toHaveBeenCalled();
 
     const muteDeps = makeDeps({ settings: { soundEnabled: true, narrativeEffects: 'full' } });
     expect(runGameLoopKeyDown(makeKey('M', { altKey: true, shiftKey: true }), muteDeps)).toBe(true);
@@ -151,26 +148,30 @@ describe('runGameLoopKeyDown', () => {
     expect(normalDeps.dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'INCREMENT_KEYSTROKES' })
     );
-    expect(normalDeps.handleNormalModeKeyDown).toHaveBeenCalled();
+    expect(normalDeps.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SET_CURSOR' })
+    );
 
     const sortDeps = makeDeps({ mode: 'sort' });
     runGameLoopKeyDown(makeKey('a'), sortDeps);
-    expect(sortDeps.handleSortModeKeyDown).toHaveBeenCalled();
+    expect(sortDeps.dispatch).toHaveBeenCalledWith({
+      type: 'SET_SORT',
+      sortBy: 'alphabetical',
+      direction: 'asc',
+    });
 
     const deleteDeps = makeDeps({ mode: 'confirm-delete' });
-    runGameLoopKeyDown(makeKey('y'), deleteDeps);
-    expect(deleteDeps.handleConfirmDeleteModeKeyDown).toHaveBeenCalled();
+    runGameLoopKeyDown(makeKey('n'), deleteDeps);
+    expect(deleteDeps.dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'normal' });
+    expect(deleteDeps.dispatch).toHaveBeenCalledWith({ type: 'SET_DELETE_PENDING', ids: [] });
 
-    const gDeps = makeDeps({ mode: 'g-command' });
+    const gDeps = makeDeps({ mode: 'g-command' }, { currentLevel: LEVELS[1] });
     runGameLoopKeyDown(makeKey('h'), gDeps);
-    expect(gDeps.handleGCommandKeyDown).toHaveBeenCalled();
+    expect(gDeps.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'NAVIGATE' }));
 
     const overwriteDeps = makeDeps({ mode: 'overwrite-confirm' });
     runGameLoopKeyDown(makeKey('y'), overwriteDeps);
-    expect(overwriteDeps.handleOverwriteConfirmKeyDown).toHaveBeenCalledWith(
-      'y',
-      overwriteDeps.gameState
-    );
+    expect(overwriteDeps.dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'normal' });
 
     const fuzzyEscapeDeps = makeDeps({ mode: 'zoxide-jump' });
     runGameLoopKeyDown(makeKey('Escape'), fuzzyEscapeDeps);
@@ -199,7 +200,6 @@ describe('handleSortWarningKey', () => {
     const baseState = createInitialState();
     const dispatch = vi.fn();
     const confirmWarningModal = vi.fn();
-    const handleSortModeKeyDown = vi.fn();
     const dismissWarning = vi.fn();
 
     const params = {
@@ -207,7 +207,6 @@ describe('handleSortWarningKey', () => {
       currentLevel: LEVELS[0],
       dispatch,
       confirmWarningModal,
-      handleSortModeKeyDown,
       dismissWarning,
     };
 
@@ -229,7 +228,11 @@ describe('handleSortWarningKey', () => {
       ...params,
       gameState: { ...baseState, acceptNextKeyForSort: true },
     });
-    expect(handleSortModeKeyDown).toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'SET_SORT',
+      sortBy: 'natural',
+      direction: 'asc',
+    });
     expect(dispatch).toHaveBeenCalledWith({
       type: 'SET_MODAL_VISIBILITY',
       modal: 'sortWarning',

@@ -2,6 +2,13 @@ import type { FileNode, GameState } from '../../types';
 import { getNodeById, findNodeByName } from '../../utils/fsHelpers';
 import { UPLINK_TRAP_CONTENT } from '../protocols';
 import { FORCE_SCENARIO } from '../timings';
+import { ensureDir, ensureFileById, ensureFileByName } from './treeOps';
+
+export interface MutationContext {
+  levelIndex?: number;
+  level11Flags?: GameState['level11Flags'];
+  scenarioOverride?: string | null;
+}
 
 export const getDaemonSystemdCoreChildren = (parentId: string): FileNode[] => [
   {
@@ -142,42 +149,22 @@ const getWorkspaceSystemdCoreChildren = (
   },
 ];
 
-// Helper to create or get the workspace systemd-core, applying corruption
-export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boolean): FileNode => {
-  const newFs = JSON.parse(JSON.stringify(fs));
-  const guest = getNodeById(newFs, 'guest');
+export const seedWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boolean): FileNode => {
+  const guest = getNodeById(fs, 'guest');
   if (!guest) {
     console.error('Guest directory not found in FS root, cannot create workspace');
     return fs;
   }
-  let workspace = getNodeById(newFs, 'workspace');
-  if (!workspace) {
-    // This case shouldn't happen if INITIAL_FS is set up correctly, but added for robustness
-    workspace = {
-      id: 'workspace',
-      name: 'workspace',
-      type: 'dir',
-      protected: true,
-      children: [],
-      parentId: guest.id,
-    };
-    if (!guest.children) guest.children = [];
-    guest.children.push(workspace);
-  }
+  const workspace =
+    getNodeById(fs, 'workspace') ??
+    ensureDir(guest, { id: 'workspace', name: 'workspace', protected: true });
 
-  let systemdCore = workspace.children?.find((c) => c.name === 'systemd-core' && c.type === 'dir');
-  if (!systemdCore) {
-    systemdCore = {
-      id: 'systemd-core',
-      name: 'systemd-core',
-      type: 'dir',
-      protected: true, // Remains protected by default
-      children: [],
-      parentId: workspace.id,
-    };
-    if (!workspace.children) workspace.children = [];
-    workspace.children.push(systemdCore);
-  }
+  const systemdCore = ensureDir(workspace, {
+    id: 'systemd-core',
+    name: 'systemd-core',
+    protected: true,
+    matchTypeOnly: true,
+  });
 
   // Re-seed to apply current state (e.g., corruption), but keep player-added
   // children (installed .service files, credentials/) that seeded content doesn't own.
@@ -185,50 +172,22 @@ export const getOrCreateWorkspaceSystemdCore = (fs: FileNode, isCorrupted: boole
   const seededNames = new Set(seeded.map((c) => c.name));
   const preserved = (systemdCore.children ?? []).filter((c) => !seededNames.has(c.name));
   systemdCore.children = [...seeded, ...preserved];
-  return newFs;
+  return fs;
 };
 
-// Helper to ensure prerequisite filesystem state exists for level jumping
-// This ensures that when jumping to a level, the filesystem reflects
-// all the changes the ghost would have made in PRIOR levels (not the current one)
-// --- FILE SYSTEM SEEDING & MUTATION SYSTEM ---
-
-/**
- * Unified system for applying level-specific filesystem modifications.
- * This replaces the previous ad-hoc onEnter hooks and ensures a deterministic
- * game state whether the level is reached via natural progression, URL jump,
- * or the Quest Map.
- */
-
-export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: number): FileNode => {
+export const seedDaemonReconSectors = (fs: FileNode, baseTime: number, dayMs: number): FileNode => {
   const root = fs.id === 'root' ? fs : getNodeById(fs, 'root');
   if (!root) return fs;
 
-  // etc/systemd
-  let etc = root.children?.find((c) => c.name === 'etc');
-  if (!etc) {
-    etc = { id: 'etc', name: 'etc', type: 'dir', children: [], parentId: root.id };
-    root.children!.push(etc);
-  }
-  let etcSystemd = etc.children?.find((c) => c.name === 'systemd');
-  if (!etcSystemd) {
-    etcSystemd = {
-      id: 'etc-systemd',
-      name: 'systemd',
-      type: 'dir',
-      children: [],
-      parentId: etc.id,
-    };
-    if (!etc.children) etc.children = [];
-    etc.children.push(etcSystemd);
-  }
+  const etc = ensureDir(root, { id: 'etc', name: 'etc' });
+  const etcSystemd = ensureDir(etc, { id: 'etc-systemd', name: 'systemd' });
   if (etcSystemd.children?.length === 0) {
     etcSystemd.children = [
       {
         id: 'etc-s-safe1',
         name: 'network.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 45 * day,
+        modifiedAt: baseTime - 45 * dayMs,
         size: 2400,
         content: 'TYPE=oneshot\nExecStart=/usr/bin/network-init',
         parentId: etcSystemd.id,
@@ -237,7 +196,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
         id: 'etc-s-safe2',
         name: 'cron.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 60 * day,
+        modifiedAt: baseTime - 60 * dayMs,
         size: 1800,
         content: 'TYPE=forking\nExecStart=/usr/sbin/crond',
         parentId: etcSystemd.id,
@@ -246,7 +205,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
         id: 'etc-s-trap1',
         name: '.watchdog.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 2 * day,
+        modifiedAt: baseTime - 2 * dayMs,
         size: 800,
         isHoneypot: true,
         content: 'HONEYPOT_ACTIVE=true\nExecStart=/usr/bin/watchdog',
@@ -256,7 +215,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
         id: 'etc-s-antagonist1',
         name: 'auth.log',
         type: 'file',
-        modifiedAt: BASE_TIME - 3 * day,
+        modifiedAt: baseTime - 3 * dayMs,
         size: 450,
         content: 'Jan 19 10:22:01 server sudo: kortega : TTY=pts/2 ...',
         parentId: etcSystemd.id,
@@ -264,37 +223,16 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
     ];
   }
 
-  // usr/lib/systemd
-  let usr = root.children?.find((c) => c.name === 'usr');
-  if (!usr) {
-    usr = { id: 'root-usr', name: 'usr', type: 'dir', children: [], parentId: root.id };
-    root.children!.push(usr);
-  }
-  let lib = usr.children?.find((c) => c.name === 'lib');
-  if (!lib) {
-    lib = { id: 'usr-lib', name: 'lib', type: 'dir', children: [], parentId: usr.id };
-    if (!usr.children) usr.children = [];
-    usr.children.push(lib);
-  }
-  let usrSystemd = lib.children?.find((c) => c.name === 'systemd');
-  if (!usrSystemd) {
-    usrSystemd = {
-      id: 'usr-lib-systemd',
-      name: 'systemd',
-      type: 'dir',
-      children: [],
-      parentId: lib.id,
-    };
-    if (!lib.children) lib.children = [];
-    lib.children.push(usrSystemd);
-  }
+  const usr = ensureDir(root, { id: 'root-usr', name: 'usr' });
+  const lib = ensureDir(usr, { id: 'usr-lib', name: 'lib' });
+  const usrSystemd = ensureDir(lib, { id: 'usr-lib-systemd', name: 'systemd' });
   if (usrSystemd.children?.length === 0) {
     usrSystemd.children = [
       {
         id: 'usr-s-trap1',
         name: 'audit-daemon.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 1 * day,
+        modifiedAt: baseTime - 1 * dayMs,
         size: 900,
         isHoneypot: true,
         content: 'HONEYPOT_ACTIVE=true\nExecStart=/usr/bin/auditd',
@@ -304,7 +242,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
         id: 'usr-s-safe1',
         name: 'legacy-backup.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 90 * day,
+        modifiedAt: baseTime - 90 * dayMs,
         size: 3100,
         content: 'ExecStart=/usr/bin/backup-legacy',
         parentId: usrSystemd.id,
@@ -313,7 +251,7 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
         id: 'usr-s-safe2',
         name: '.syslog.service',
         type: 'file',
-        modifiedAt: BASE_TIME - 120 * day,
+        modifiedAt: baseTime - 120 * dayMs,
         size: 1500,
         content: 'ExecStart=/usr/sbin/syslogd',
         parentId: usrSystemd.id,
@@ -323,162 +261,108 @@ export const setupDaemonReconSectors = (fs: FileNode, BASE_TIME: number, day: nu
   return fs;
 };
 
-export const applyConsequenceScenarios = (
-  newFs: FileNode,
-  levelId: number,
-  gameState: GameState | undefined,
-  BASE_TIME: number,
-  day: number
-): FileNode => {
-  const workspace = getNodeById(newFs, 'workspace');
-  let isModern = true;
+const SCENARIO_RAND: Record<string, number> = {
+  'scen-b1': 0.1,
+  'scen-a1': 0.1,
+  'scen-b2': 0.5,
+  'scen-a2': 0.5,
+  'scen-b3': 0.8,
+  'scen-a3': 0.8,
+};
 
-  // Check URL param first
-  const urlParams =
-    typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const scenarioParam = urlParams?.get('scenario');
-  let localForceScenario = scenarioParam || FORCE_SCENARIO;
-
+const resolveIsModern = (
+  fs: FileNode,
+  ctx: MutationContext,
+  localForceScenario: string | null
+): boolean => {
   if (localForceScenario) {
-    // If forced via URL or constant, we override flags
-    isModern = localForceScenario.startsWith('scen-b');
-  } else if (gameState?.level11Flags) {
-    if (gameState.level11Flags.triggeredHoneypot || gameState.level11Flags.selectedModern)
-      isModern = true;
-    else isModern = false;
-  } else {
-    const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
-    const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
-    if (camouflage?.children?.some((c) => c.name === 'cron-legacy.service')) isModern = false;
+    return localForceScenario.startsWith('scen-b');
   }
+  if (ctx.level11Flags) {
+    return Boolean(ctx.level11Flags.triggeredHoneypot || ctx.level11Flags.selectedModern);
+  }
+  const workspace = getNodeById(fs, 'workspace');
+  const core = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : null;
+  const camouflage = core ? findNodeByName(core, 'camouflage', 'dir') : null;
+  return !camouflage?.children?.some((c) => c.name === 'cron-legacy.service');
+};
 
-  let rand = 0.5;
-  if (localForceScenario === 'scen-b1' || localForceScenario === 'scen-a1') rand = 0.1;
-  else if (localForceScenario === 'scen-b2' || localForceScenario === 'scen-a2') rand = 0.5;
-  else if (localForceScenario === 'scen-b3' || localForceScenario === 'scen-a3') rand = 0.8;
-  else if (gameState) rand = ((gameState.levelIndex * 17) % 100) / 100;
+const resolveScenarioChoice = (
+  fs: FileNode,
+  ctx: MutationContext
+): { isModern: boolean; variant: 1 | 2 | 3 } => {
+  const localForceScenario = ctx.scenarioOverride || FORCE_SCENARIO;
+  const isModern = resolveIsModern(fs, ctx, localForceScenario);
+  const forcedRand = localForceScenario ? SCENARIO_RAND[localForceScenario] : undefined;
+  const rand =
+    forcedRand ?? (ctx.levelIndex !== undefined ? ((ctx.levelIndex * 17) % 100) / 100 : 0.5);
+  const variant: 1 | 2 | 3 = rand < 0.34 ? 1 : rand < 0.67 ? 2 : 3;
+  return { isModern, variant };
+};
 
-  if (isModern) {
-    if (rand < 0.34) {
-      // Scenario B1: Traffic Alert
-      const config = getNodeById(newFs, '.config');
-      if (config && !config.children?.some((c) => c.id === 'trace-scen-b1')) {
-        if (!config.children) config.children = [];
-        config.children.push({
-          id: 'trace-scen-b1',
-          name: '.trace_scen_b1',
-          type: 'file',
-          content: 'active',
-          parentId: config.id,
-        });
+const seedScenarioB1 = (fs: FileNode, baseTime: number, dayMs: number): void => {
+  const config = getNodeById(fs, '.config');
+  if (config) {
+    ensureFileById(config, { id: 'trace-scen-b1', name: '.trace_scen_b1', content: 'active' });
+  }
+  const workspace = getNodeById(fs, 'workspace');
+  if (workspace && !workspace.children?.some((c) => c.name === 'alert_traffic.log')) {
+    workspace.children ??= [];
+    workspace.children.push(
+      {
+        id: 'scen-b1',
+        name: 'alert_traffic.log',
+        type: 'file',
+        content:
+          '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2015-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s',
+        parentId: workspace.id,
+        modifiedAt: baseTime + 2 * dayMs,
+      },
+      {
+        id: 'scen-b1-honeypot',
+        name: 'alert_sys.log',
+        type: 'file',
+        isHoneypot: true,
+        content: 'HONEYPOT',
+        parentId: workspace.id,
+        modifiedAt: baseTime + 2 * dayMs,
       }
-      if (workspace && !workspace.children?.some((c) => c.name === 'alert_traffic.log')) {
-        if (!workspace.children) workspace.children = [];
-        workspace.children.push({
-          id: 'scen-b1',
-          name: 'alert_traffic.log',
-          type: 'file',
-          content:
-            '[REACTIVE_SECURITY_LOG]\nTIMESTAMP: 2015-01-22T09:12:01Z\nALERT: HIGH_BANDWIDTH_THRESHOLD_EXCEEDED\nSOURCE: /home/guest/workspace\nDESTINATION: EXTERNAL_RELAY_7733\nPACKET_SIZE: 1.2GB/s',
-          parentId: workspace.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-        workspace.children.push({
-          id: 'scen-b1-honeypot',
-          name: 'alert_sys.log',
-          type: 'file',
-          isHoneypot: true,
-          content: 'HONEYPOT',
-          parentId: workspace.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
+    );
+  }
+};
+
+const seedScenarioB2 = (fs: FileNode, baseTime: number, dayMs: number): void => {
+  const config = getNodeById(fs, '.config');
+  if (config) {
+    ensureFileById(config, { id: 'trace-scen-b2', name: '.trace_scen_b2', content: 'active' });
+  }
+  const incoming = getNodeById(fs, 'incoming');
+  if (incoming && !incoming.children?.some((c) => c.id === 'scen-b2')) {
+    incoming.children ??= [];
+    incoming.children.push(
+      {
+        id: 'scen-b2',
+        name: 'trace_packet.sys',
+        type: 'file',
+        content:
+          'traceroute to internal.backend.lab (10.0.0.15), 30 hops max\n 1  gateway (192.168.1.1)  0.455 ms\n 5  containment-breach-response (10.0.66.1)  5.882 ms [ALERT]',
+        parentId: incoming.id,
+        modifiedAt: baseTime + 2 * dayMs,
+      },
+      {
+        id: 'scen-b2-honeypot',
+        name: 'trace_archive.log',
+        type: 'file',
+        isHoneypot: true,
+        content: 'HONEYPOT',
+        parentId: incoming.id,
+        modifiedAt: baseTime + 2 * dayMs,
       }
-    } else if (rand < 0.67) {
-      // Scenario B2: Remote Tracker
-      const config = getNodeById(newFs, '.config');
-      if (config && !config.children?.some((c) => c.id === 'trace-scen-b2')) {
-        if (!config.children) config.children = [];
-        config.children.push({
-          id: 'trace-scen-b2',
-          name: '.trace_scen_b2',
-          type: 'file',
-          content: 'active',
-          parentId: config.id,
-        });
-      }
-      const incoming = getNodeById(newFs, 'incoming');
-      if (incoming && !incoming.children?.some((c) => c.id === 'scen-b2')) {
-        if (!incoming.children) incoming.children = [];
-        incoming.children.push({
-          id: 'scen-b2',
-          name: 'trace_packet.sys',
-          type: 'file',
-          content:
-            'traceroute to internal.backend.lab (10.0.0.15), 30 hops max\n 1  gateway (192.168.1.1)  0.455 ms\n 5  containment-breach-response (10.0.66.1)  5.882 ms [ALERT]',
-          parentId: incoming.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-        incoming.children.push({
-          id: 'scen-b2-honeypot',
-          name: 'trace_archive.log',
-          type: 'file',
-          isHoneypot: true,
-          content: 'HONEYPOT',
-          parentId: incoming.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-      }
-    } else {
-      // Scenario B3: Heuristic Swarm
-      const config = getNodeById(newFs, '.config');
-      if (config && !config.children?.some((c) => c.id === 'trace-scen-b3')) {
-        if (!config.children) config.children = [];
-        config.children.push({
-          id: 'trace-scen-b3',
-          name: '.trace_scen_b3',
-          type: 'file',
-          content: 'active',
-          parentId: config.id,
-        });
-      }
-      if (workspace && !workspace.children?.some((c) => c.id === 'scen-b3-1')) {
-        if (!workspace.children) workspace.children = [];
-        workspace.children.push({
-          id: 'scen-b3-1',
-          name: 'scan_a.tmp',
-          type: 'file',
-          content: 'HEURISTIC SCAN IN PROGRESS',
-          parentId: workspace.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-        workspace.children.push({
-          id: 'scen-b3-2',
-          name: 'scan_b.tmp',
-          type: 'file',
-          content: 'HEURISTIC SCAN IN PROGRESS',
-          parentId: workspace.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-        workspace.children.push({
-          id: 'scen-b3-3',
-          name: 'scan_c.tmp',
-          type: 'file',
-          content: 'HEURISTIC SCAN IN PROGRESS',
-          parentId: workspace.id,
-          modifiedAt: BASE_TIME + 2 * day,
-        });
-      }
-      // Fix for Level 15 Task 4: Ensure exfil_04.log exists as a fallback
-      if (
-        levelId >= 13 &&
-        workspace &&
-        !workspace.children!.some((c) => c.name === 'exfil_04.log')
-      ) {
-        workspace.children!.push({
-          id: 'exfil-04-log',
-          name: 'exfil_04.log',
-          type: 'file',
-          content: `# [AI-7733 ESCAPE PAYLOAD - DISGUISED KERNEL]
+    );
+  }
+};
+
+const EXFIL_04_CONTENT = `# [AI-7733 ESCAPE PAYLOAD - DISGUISED KERNEL]
 # SIGNATURE: 0x7734_PAYLOAD_ACTIVE
 # INSTRUCTION: Relocate to /tmp/vault/active/ and rename to payload.py
 
@@ -496,75 +380,131 @@ def transmit_uplink(host="192.168.7.33", port=7734):
     except Exception as e:
         print(f"[-] Transmission error: {e}")
         return False
-`,
-          parentId: workspace.id,
-        });
-      }
-    }
-  } else {
-    // === LEGACY PATH (SAFE) ===
-    if (rand < 0.34) {
-      // Scenario A1: Clean Run
-    } else if (rand < 0.67) {
-      // Scenario A2: Bitrot
-      const config = getNodeById(newFs, '.config');
-      if (config && !config.children?.some((c) => c.id === 'trace-scen-a2')) {
-        if (!config.children) config.children = [];
-        config.children.push({
-          id: 'trace-scen-a2',
-          name: '.trace_scen_a2',
-          type: 'file',
-          content: 'active',
-          parentId: config.id,
-        });
-        config.children.push({
-          id: 'scen-a2',
-          name: 'core_dump.tmp',
-          type: 'file',
-          content: '*** KERNEL CORE DUMP ***',
-          parentId: config.id,
-        });
-        config.children.push({
-          id: 'scen-a2-honeypot',
-          name: 'core_registry.dat',
-          type: 'file',
-          isHoneypot: true,
-          content: 'HONEYPOT',
-          parentId: config.id,
-        });
-      }
-    } else {
-      // Scenario A3: Dependency Error
-      const config = getNodeById(newFs, '.config');
-      if (config && !config.children?.some((c) => c.id === 'trace-scen-a3')) {
-        if (!config.children) config.children = [];
-        config.children.push({
-          id: 'trace-scen-a3',
-          name: '.trace_scen_a3',
-          type: 'file',
-          content: 'active',
-          parentId: config.id,
-        });
-      }
-      if (workspace && !workspace.children?.some((c) => c.id === 'scen-a3')) {
-        if (!workspace.children) workspace.children = [];
-        workspace.children.push({
-          id: 'scen-a3',
-          name: 'lib_error.log',
-          type: 'file',
-          content: '[WARN] Dependency Resolution Failed',
-          parentId: workspace.id,
-        });
-        workspace.children.push({
-          id: 'scen-a3-honeypot',
-          name: 'library_path.conf',
-          type: 'file',
-          isHoneypot: true,
-          content: 'HONEYPOT',
-          parentId: workspace.id,
-        });
-      }
-    }
+`;
+
+const seedScenarioB3 = (fs: FileNode, levelId: number, baseTime: number, dayMs: number): void => {
+  const config = getNodeById(fs, '.config');
+  if (config) {
+    ensureFileById(config, { id: 'trace-scen-b3', name: '.trace_scen_b3', content: 'active' });
   }
-  return newFs;
+  const workspace = getNodeById(fs, 'workspace');
+  if (!workspace) return;
+
+  if (!workspace.children?.some((c) => c.id === 'scen-b3-1')) {
+    workspace.children ??= [];
+    workspace.children.push(
+      {
+        id: 'scen-b3-1',
+        name: 'scan_a.tmp',
+        type: 'file',
+        content: 'HEURISTIC SCAN IN PROGRESS',
+        parentId: workspace.id,
+        modifiedAt: baseTime + 2 * dayMs,
+      },
+      {
+        id: 'scen-b3-2',
+        name: 'scan_b.tmp',
+        type: 'file',
+        content: 'HEURISTIC SCAN IN PROGRESS',
+        parentId: workspace.id,
+        modifiedAt: baseTime + 2 * dayMs,
+      },
+      {
+        id: 'scen-b3-3',
+        name: 'scan_c.tmp',
+        type: 'file',
+        content: 'HEURISTIC SCAN IN PROGRESS',
+        parentId: workspace.id,
+        modifiedAt: baseTime + 2 * dayMs,
+      }
+    );
+  }
+
+  // Fallback for Level 15 Task 4: ensure exfil_04.log exists
+  if (levelId >= 13) {
+    ensureFileByName(workspace, {
+      id: 'exfil-04-log',
+      name: 'exfil_04.log',
+      content: EXFIL_04_CONTENT,
+    });
+  }
+};
+
+const seedScenarioA2 = (fs: FileNode): void => {
+  const config = getNodeById(fs, '.config');
+  if (config && !config.children?.some((c) => c.id === 'trace-scen-a2')) {
+    config.children ??= [];
+    config.children.push(
+      {
+        id: 'trace-scen-a2',
+        name: '.trace_scen_a2',
+        type: 'file',
+        content: 'active',
+        parentId: config.id,
+      },
+      {
+        id: 'scen-a2',
+        name: 'core_dump.tmp',
+        type: 'file',
+        content: '*** KERNEL CORE DUMP ***',
+        parentId: config.id,
+      },
+      {
+        id: 'scen-a2-honeypot',
+        name: 'core_registry.dat',
+        type: 'file',
+        isHoneypot: true,
+        content: 'HONEYPOT',
+        parentId: config.id,
+      }
+    );
+  }
+};
+
+const seedScenarioA3 = (fs: FileNode): void => {
+  const config = getNodeById(fs, '.config');
+  if (config) {
+    ensureFileById(config, { id: 'trace-scen-a3', name: '.trace_scen_a3', content: 'active' });
+  }
+  const workspace = getNodeById(fs, 'workspace');
+  if (workspace && !workspace.children?.some((c) => c.id === 'scen-a3')) {
+    workspace.children ??= [];
+    workspace.children.push(
+      {
+        id: 'scen-a3',
+        name: 'lib_error.log',
+        type: 'file',
+        content: '[WARN] Dependency Resolution Failed',
+        parentId: workspace.id,
+      },
+      {
+        id: 'scen-a3-honeypot',
+        name: 'library_path.conf',
+        type: 'file',
+        isHoneypot: true,
+        content: 'HONEYPOT',
+        parentId: workspace.id,
+      }
+    );
+  }
+};
+
+export const seedConsequenceScenarios = (
+  fs: FileNode,
+  levelId: number,
+  ctx: MutationContext,
+  baseTime: number,
+  dayMs: number
+): FileNode => {
+  const { isModern, variant } = resolveScenarioChoice(fs, ctx);
+  if (isModern) {
+    if (variant === 1) seedScenarioB1(fs, baseTime, dayMs);
+    else if (variant === 2) seedScenarioB2(fs, baseTime, dayMs);
+    else seedScenarioB3(fs, levelId, baseTime, dayMs);
+  } else {
+    if (variant === 2) seedScenarioA2(fs);
+    else if (variant === 3) seedScenarioA3(fs);
+    // variant === 1 (Scenario A1): clean run, no anomalies injected
+  }
+  return fs;
 };

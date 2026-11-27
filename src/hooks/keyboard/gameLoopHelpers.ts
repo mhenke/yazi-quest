@@ -2,8 +2,13 @@ import type React from 'react';
 import { LEVELS } from '../../constants/levels';
 import type { FileNode, GameState } from '../../types';
 import type { Action } from '../gameReducer';
+import { handleConfirmDeleteModeKeyDown } from './handleDeleteMode';
 import { handleFuzzyModeKeyDown } from './handleFuzzyMode';
-import { getActionIntensity, hasBaselineViolation } from './utils';
+import { handleGCommandKeyDown } from './handleGCommandMode';
+import { handleNormalModeKeyDown } from './handleNormalMode';
+import { handleOverwriteConfirmKeyDown } from './handleOverwriteMode';
+import { handleSortModeKeyDown } from './handleSortMode';
+import { getActionIntensity, hasBaselineViolation, isProtocolWarningOpen } from './utils';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
 import { resolvePath } from '../../utils/fsHelpers';
 
@@ -17,25 +22,8 @@ export interface GameLoopDeps {
   currentItem: FileNode | null;
   dispatch: React.Dispatch<Action>;
   advanceLevel: () => void;
+  showNotification: (message: string, duration?: number) => void;
   checkAllTasksComplete: (s: GameState, l: (typeof LEVELS)[number]) => boolean;
-  handleNormalModeKeyDown: (
-    e: KeyboardEvent,
-    s: GameState,
-    items: FileNode[],
-    parent: FileNode | null,
-    current: FileNode | null,
-    lvl: (typeof LEVELS)[number],
-    advance: () => void
-  ) => boolean | void;
-  handleSortModeKeyDown: (e: KeyboardEvent, s: GameState) => void;
-  handleConfirmDeleteModeKeyDown: (
-    e: KeyboardEvent,
-    items: FileNode[],
-    lvl: (typeof LEVELS)[number],
-    s: GameState
-  ) => void;
-  handleOverwriteConfirmKeyDown: (key: string, s: GameState) => void;
-  handleGCommandKeyDown: (e: KeyboardEvent, s: GameState, lvl: (typeof LEVELS)[number]) => void;
 }
 
 const isNonGameplayMode = (e: KeyboardEvent, mode: GameState['mode']): boolean => {
@@ -50,34 +38,43 @@ const isNonGameplayMode = (e: KeyboardEvent, mode: GameState['mode']): boolean =
 };
 
 const dispatchModeKey = (e: KeyboardEvent, deps: GameLoopDeps): boolean | void => {
-  const { gameState, currentLevel, visibleItems, parent, currentItem, dispatch, advanceLevel } =
-    deps;
+  const {
+    gameState,
+    currentLevel,
+    visibleItems,
+    parent,
+    currentItem,
+    dispatch,
+    advanceLevel,
+    showNotification,
+  } = deps;
   switch (gameState.mode) {
     case 'normal':
-      return deps.handleNormalModeKeyDown(
-        e,
+      return handleNormalModeKeyDown(e, {
         gameState,
-        visibleItems,
-        parent || null,
+        dispatch,
+        items: visibleItems,
+        parent: parent || null,
         currentItem,
         currentLevel,
-        advanceLevel
-      );
+        advanceLevel,
+        showNotification,
+      });
     case 'sort':
-      deps.handleSortModeKeyDown(e, gameState);
+      handleSortModeKeyDown(e, { gameState, dispatch });
       break;
     case 'confirm-delete':
-      deps.handleConfirmDeleteModeKeyDown(e, visibleItems, currentLevel, gameState);
+      handleConfirmDeleteModeKeyDown(e, { gameState, dispatch, visibleItems, currentLevel });
       break;
     case 'zoxide-jump':
     case 'fzf-current':
-      handleFuzzyModeKeyDown(e, gameState, dispatch);
+      handleFuzzyModeKeyDown(e, { gameState, dispatch });
       break;
     case 'g-command':
-      deps.handleGCommandKeyDown(e, gameState, currentLevel);
+      handleGCommandKeyDown(e, { gameState, dispatch, currentLevel });
       break;
     case 'overwrite-confirm':
-      deps.handleOverwriteConfirmKeyDown(e.key, gameState);
+      handleOverwriteConfirmKeyDown(e.key, { gameState, dispatch });
       break;
   }
 };
@@ -87,19 +84,11 @@ export interface SortWarningParams {
   currentLevel: (typeof LEVELS)[number];
   dispatch: React.Dispatch<Action>;
   confirmWarningModal: (modal: 'sortWarning' | 'filterWarning', tasksComplete: boolean) => void;
-  handleSortModeKeyDown: (e: KeyboardEvent, s: GameState) => void;
   dismissWarning: (modal: 'sortWarning' | 'filterWarning' | 'searchWarning') => void;
 }
 
 export const handleSortWarningKey = (e: KeyboardEvent, params: SortWarningParams): boolean => {
-  const {
-    gameState,
-    currentLevel,
-    dispatch,
-    confirmWarningModal,
-    handleSortModeKeyDown,
-    dismissWarning,
-  } = params;
+  const { gameState, currentLevel, dispatch, confirmWarningModal, dismissWarning } = params;
   if (e.key === 'Tab') return true;
   if (e.key === 'Escape') {
     dismissWarning('sortWarning');
@@ -118,7 +107,7 @@ export const handleSortWarningKey = (e: KeyboardEvent, params: SortWarningParams
     return true;
   }
   if (gameState.acceptNextKeyForSort) {
-    handleSortModeKeyDown(e, gameState);
+    handleSortModeKeyDown(e, { gameState, dispatch });
     const pressed = e.key || '';
     const isNatural = pressed.toLowerCase() === 'n' && !e.shiftKey;
     dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'sortWarning', visible: !isNatural });
@@ -147,15 +136,6 @@ const shouldSkipGameLoopTarget = (
     !(commandPending && e.key === 'Escape')
   );
 };
-
-export const isProtocolWarningOpen = (gameState: GameState): boolean =>
-  gameState.mode === 'filter-warning' ||
-  Boolean(
-    gameState.showFilterWarning ||
-    gameState.showSearchWarning ||
-    gameState.showSortWarning ||
-    gameState.showHiddenWarning
-  );
 
 const IGNORED_KEYSTROKE_KEYS = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'];
 

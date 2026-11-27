@@ -1,11 +1,7 @@
-import { GameState, Linemode } from '../../types';
-import { Action } from '../gameReducer';
+import type { Linemode, GameState } from '../../types';
+import type { KeyInput, ModeContext } from './types';
 
-export const handleSortModeKeyDown = (
-  e: KeyboardEvent,
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState
-) => {
+export const handleSortModeKeyDown = (e: KeyInput, { dispatch, gameState }: ModeContext): void => {
   const key = e.key;
   const shift = e.shiftKey;
 

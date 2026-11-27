@@ -27,7 +27,7 @@ import type {
   ZoxideEntry,
 } from '../types';
 import { gameReducer, INITIAL_ACTION_FLAGS, type Action } from './gameReducer';
-import { createInitialState } from './initialState';
+import { makeBootState } from '../../tests/helpers/keyboardHarness';
 import { LEVELS } from '../constants/levels';
 import { INITIAL_FS, applyFileSystemMutations } from '../constants/filesystem';
 import {
@@ -166,7 +166,7 @@ const nodeIds = (fs: FileNode): string[] => {
 
 describe('property: reducer keeps list and navigation state coherent', () => {
   it('cursor stays in bounds and paths/selections stay resolvable', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const dirs = getAllDirectoriesWithPaths(initial.fs);
     const paths = dirs.map((d) => d.path);
     const ids = nodeIds(initial.fs);
@@ -201,7 +201,7 @@ describe('property: reducer keeps list and navigation state coherent', () => {
   });
 
   it('clamps the cursor when DELETE_NODES shrinks the visible list', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const visible = getVisibleItems(initial);
     expect(visible.length).toBeGreaterThan(0);
 
@@ -240,7 +240,7 @@ describe('property: reducer keeps list and navigation state coherent', () => {
   });
 
   it('keeps the same node when earlier items go, else moves to the next survivor', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const visible = getVisibleItems(initial);
     expect(visible.length).toBeGreaterThanOrEqual(4);
 
@@ -272,7 +272,7 @@ describe('property: reducer keeps list and navigation state coherent', () => {
 
 describe('property: SET_CURSOR clamps arbitrary indices into the visible list', () => {
   it('any index, negative or huge, leaves the cursor in bounds', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const dirs = getAllDirectoriesWithPaths(initial.fs);
     const paths = dirs.map((d) => d.path);
 
@@ -308,7 +308,7 @@ describe('property: SET_CURSOR clamps arbitrary indices into the visible list', 
 
 describe('property: PASTE keeps the current path resolvable', () => {
   it('re-anchors to the deepest surviving ancestor when newFs lost the directory', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const dirs = getAllDirectoriesWithPaths(initial.fs);
     const paths = dirs.map((d) => d.path);
 
@@ -350,7 +350,7 @@ describe('property: PASTE keeps the current path resolvable', () => {
   });
 
   it('leaves an intact current directory untouched when pasting', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const dirs = getAllDirectoriesWithPaths(initial.fs);
     const paths = dirs.map((d) => d.path);
 
@@ -373,7 +373,7 @@ describe('property: PASTE keeps the current path resolvable', () => {
   });
 
   it('root is the worst-case fallback when the whole tree under it is gone', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const emptied = { ...initial.fs, children: [] } as FileNode;
     const next = gameReducer(initial, { type: 'PASTE', newFs: emptied, action: 'yank' });
 
@@ -505,7 +505,7 @@ const KNOWN_GOOD_PATH = ['root', 'home', 'guest'];
 
 describe('property: fs-mutating action sequences keep the tree and list coherent', () => {
   it('ADD/RENAME/DELETE/PASTE sequences leave a resolvable path, in-bounds cursor, live selections, unique ids and the oracle list', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
 
     assert(
       property(array(fsStepArb, { minLength: 20, maxLength: 30 }), (rawSteps) => {
@@ -917,7 +917,7 @@ const applyInterleavedViewStep = (
 
 describe('property: interleaved FS mutations, history, filters, search, and clipboard', () => {
   it('maintains path, cursor, live selections, unique ids, and hidden-file invariants', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
 
     assert(
       property(array(interleavedStepArb, { minLength: 20, maxLength: 35 }), (rawSteps) => {
@@ -945,7 +945,7 @@ describe('property: interleaved FS mutations, history, filters, search, and clip
   });
 
   it('NAVIGATE_BACK and NAVIGATE_FORWARD skip deleted directories and clear exhausted stacks', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const validPaths = getAllDirectoriesWithPaths(base.fs).map((d) => d.path);
     const deadPaths = [
       ['root', 'deleted-dir'],
@@ -1015,7 +1015,7 @@ describe('property: interleaved FS mutations, history, filters, search, and clip
   });
 
   it('DELETE_NODES and cut PASTE prune deleted nodes from searchResults and clamp cursor', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const results = getRecursiveSearchResults(base.fs, 'a', false, base.currentPath).filter(
       (n) => n.path && n.path.length > 1
     );
@@ -1087,7 +1087,7 @@ const expectedThreatStatus = (threat: number): string => {
 
 describe('property: TICK timer, threat monitor, and game-over transitions', () => {
   it('is an exact no-op when isGameOver or showEpisodeIntro is true', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
 
     assert(
       property(
@@ -1115,7 +1115,7 @@ describe('property: TICK timer, threat monitor, and game-over transitions', () =
   });
 
   it('decrements timeLeft, pauses when complete & hidden-off, and triggers game over at 0', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
 
     assert(
       property(
@@ -1166,7 +1166,7 @@ describe('property: TICK timer, threat monitor, and game-over transitions', () =
   });
 
   it('handles Level 15 gauntlet timeout across phases and score thresholds', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
     const tasks = [
       { id: 'gauntlet-1', completed: false },
       { id: 'gauntlet-2', completed: false },
@@ -1215,7 +1215,7 @@ describe('property: TICK timer, threat monitor, and game-over transitions', () =
   });
 
   it('keeps threatLevel in [0, 100], matches status buckets, and applies episode pressure rules', () => {
-    const initial = createInitialState();
+    const initial = makeBootState();
 
     assert(
       property(
@@ -1282,29 +1282,21 @@ describe('property: TICK timer, threat monitor, and game-over transitions', () =
 // ADVANCE_TO_OUTRO
 // ---------------------------------------------------------------------------
 
-const buildLevelFixtures = (): { fs: FileNode; startPath: string[]; dirs: string[][] }[] => {
-  const completedTaskIds: Record<number, string[]> = {};
-  LEVELS.forEach((l) => {
-    completedTaskIds[l.id] = [];
-  });
-  return LEVELS.map((level, idx) => {
-    for (let i = 0; i < idx; i++) {
-      completedTaskIds[LEVELS[i].id] = LEVELS[i].tasks.map((t) => t.id);
-    }
+const buildLevelFixtures = (): { fs: FileNode; startPath: string[]; dirs: string[][] }[] =>
+  LEVELS.map((level, idx) => {
     const fs = applyFileSystemMutations(cloneFS(INITIAL_FS), level.id, {
-      completedTaskIds: { ...completedTaskIds },
-    } as GameState);
+      levelIndex: idx,
+    });
     const startPath = getLevelStartPath(fs, level);
     const dirs = getAllDirectoriesWithPaths(fs).map((d) => d.path);
     return { fs, startPath, dirs };
   });
-};
 
 describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMPLETE_INTRO, ADVANCE_TO_OUTRO)', () => {
   const fixtures = buildLevelFixtures();
 
   it('SET_LEVEL resets ephemeral state, clamps cursor to 0, preserves other level completions, and resolves path', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1414,7 +1406,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
   });
 
   it('RESET_LEVEL restores levelStartFS, levelStartPath, cursor 0, and clears transient selection/clipboard/flags', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(integer({ min: 0, max: LEVELS.length - 1 }), nat(50), (levelIdx, cursor) => {
@@ -1453,7 +1445,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
   });
 
   it('RESTART_CYCLE increments cycleCount, resets dirty ephemeral state, and preserves settings/stats', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1560,7 +1552,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
   });
 
   it('COMPLETE_INTRO resets transient state, resolves level start path, and gates boot sequence on Ep 1 natural completion', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1611,7 +1603,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
   });
 
   it('ADVANCE_TO_OUTRO always sets levelIndex to LEVELS.length', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(integer({ min: 0, max: LEVELS.length }), (levelIndex) => {
@@ -1626,7 +1618,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
   });
 
   it('COMPLETE_INTRO does not crash after ADVANCE_TO_OUTRO when levelIndex === LEVELS.length', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const dirs = getAllDirectoriesWithPaths(base.fs).map((d) => d.path);
 
     assert(
@@ -1670,7 +1662,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
 
 describe('property: GAME_OVER and COMPLETE_TASK', () => {
   it('GAME_OVER sets isGameOver, records reason, and clears notification', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1698,7 +1690,7 @@ describe('property: GAME_OVER and COMPLETE_TASK', () => {
   });
 
   it('COMPLETE_TASK deduplicates ids, is idempotent, and isolates other levels', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const taskIdArb = stringMatching(/^[a-z0-9_-]{1,8}$/);
 
     assert(
@@ -1738,7 +1730,7 @@ describe('property: GAME_OVER and COMPLETE_TASK', () => {
 
 describe('property: UPDATE_ZOXIDE frecency tracking', () => {
   it('increments target count by 1, updates lastAccess, and preserves all other entries', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const pathArb = constantFrom(
       '/home/guest/workspace',
       '/tmp',
@@ -1779,7 +1771,7 @@ describe('property: UPDATE_ZOXIDE frecency tracking', () => {
 
 describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDATE_SETTINGS, TOGGLE_SOUND, UPDATE_LEVEL_11_FLAGS', () => {
   it('UPDATE_CONSCIOUSNESS clamps finite and infinite payloads to [0, 100] and ignores NaN', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const payloadArb = oneof(
       double({ min: -1000, max: 1000, noNaN: true, noDefaultInfinity: true }),
       constantFrom(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NaN)
@@ -1803,7 +1795,7 @@ describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDAT
   });
 
   it('UPDATE_GAUNTLET updates provided fields, preserves omitted ones, and clears notification on null', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const notificationArb = oneof(
       constant<GameState['notification'] | undefined>(undefined),
       constant<GameState['notification'] | undefined>(null),
@@ -1844,7 +1836,7 @@ describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDAT
   });
 
   it('INCREMENT_STAT increments only the targeted stat by amount ?? 1', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const allStats: (keyof GameStats)[] = [
       'fuzzyJumps',
       'fzfFinds',
@@ -1870,7 +1862,7 @@ describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDAT
   });
 
   it('UPDATE_SETTINGS merges partial payloads and TOGGLE_SOUND is an involution', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1901,7 +1893,7 @@ describe('property: UPDATE_CONSCIOUSNESS, UPDATE_GAUNTLET, INCREMENT_STAT, UPDAT
   });
 
   it('UPDATE_LEVEL_11_FLAGS merges partial flags even when level11Flags starts undefined', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -1962,7 +1954,7 @@ const ALL_MODAL_IDS = Object.keys(MODAL_KEY_MAP) as ModalId[];
 
 describe('property: modal visibility, toggles, hints, and boolean UI flags', () => {
   it('SET_MODAL_VISIBILITY updates only the targeted ModalId key across all 10 modals', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(constantFrom(...ALL_MODAL_IDS), boolean(), (modal, visible) => {
@@ -1984,7 +1976,7 @@ describe('property: modal visibility, toggles, hints, and boolean UI flags', () 
   });
 
   it('TOGGLE_HELP, TOGGLE_MAP, TOGGLE_HINT are independent involutions', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(boolean(), boolean(), boolean(), (showHelp, showMap, showHint) => {
@@ -2013,7 +2005,7 @@ describe('property: modal visibility, toggles, hints, and boolean UI flags', () 
   });
 
   it('SET_HINT_STAGE, SET_EPISODE_INTRO, SET_BOOT_STATUS, and SET_SORT_KEY_HANDLER set their flags accurately', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -2077,7 +2069,7 @@ const ALL_ACTION_FLAG_IDS = Object.keys(ACTION_FLAG_KEY_MAP) as ActionFlagId[];
 
 describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, toasts, notifications, thoughts, and scroll/buffer fields', () => {
   it('MARK_ACTION_USED sets only the targeted flag across all 24 actionIds and is idempotent', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(constantFrom(...ALL_ACTION_FLAG_IDS), (actionId) => {
@@ -2099,7 +2091,7 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
   });
 
   it('SET_LINEMODE, SET_DELETE_PENDING (including null clearing), SET_OVERWRITE_PENDING, and UPDATE_FS update state cleanly', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -2143,7 +2135,7 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
   });
 
   it('ADD_ALERT / REMOVE_ALERT enforce id uniqueness and permanent dismissal, and SET_ALERT_MESSAGE sets message', () => {
-    const base = createInitialState();
+    const base = makeBootState();
     const alertIdArb = constantFrom('alert-1', 'alert-2', 'alert-3', 'alert-4');
     const severityArb = constantFrom<GameAlert['severity']>('info', 'warning', 'error', 'success');
     const opArb = record({
@@ -2204,7 +2196,7 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
   });
 
   it('SHOW_TOAST/HIDE_TOAST, SET_NOTIFICATION/CLEAR_NOTIFICATION, and SET_THOUGHT/CLEAR_THOUGHT round-trip cleanly', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(
@@ -2240,7 +2232,7 @@ describe('property: linemode, pending ops, UPDATE_FS, MARK_ACTION_USED, alerts, 
   });
 
   it('UPDATE_QUEST_MAP, SET_PREVIEW_SCROLL, SET_HELP_SCROLL, SET_FUZZY_INDEX, and SET_INPUT_BUFFER update target fields', () => {
-    const base = createInitialState();
+    const base = makeBootState();
 
     assert(
       property(

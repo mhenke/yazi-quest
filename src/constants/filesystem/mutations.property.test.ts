@@ -9,16 +9,21 @@ import {
   record,
   stringMatching,
 } from 'fast-check';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
 import { UPLINK_TRAP_CONTENT } from '../protocols';
 import { BASE_TIME, day } from '../timings';
-import type { FileNode, GameState } from '../../types';
+import type { FileNode } from '../../types';
 import { cloneFS, getNodeById, getNodeByPath } from '../../utils/fsHelpers';
 import { getLevelStartPath } from '../../utils/gameUtils';
 import { INITIAL_FS } from './initial';
 import { applyFileSystemMutations } from './mutations';
-import { applyConsequenceScenarios, getOrCreateWorkspaceSystemdCore } from './scenarios';
+import {
+  seedConsequenceScenarios,
+  seedDaemonReconSectors,
+  seedWorkspaceSystemdCore,
+  type MutationContext,
+} from './scenarios';
 
 const collectNodes = (fs: FileNode): FileNode[] => {
   const nodes: FileNode[] = [];
@@ -31,11 +36,6 @@ const collectNodes = (fs: FileNode): FileNode[] => {
     }
   }
   return nodes;
-};
-
-const setScenarioQuery = (scenario: string | null): void => {
-  const search = scenario === null ? '' : `?scenario=${encodeURIComponent(scenario)}`;
-  window.history.replaceState({}, '', search ? `/${search}` : '/');
 };
 
 const SCENARIO_PARAMS = [
@@ -59,14 +59,6 @@ const arbLevel11Flags = option(
 );
 
 describe('property: filesystem mutations and consequence scenarios', () => {
-  beforeEach(() => {
-    setScenarioQuery(null);
-  });
-
-  afterEach(() => {
-    setScenarioQuery(null);
-  });
-
   it('applyFileSystemMutations is pure, preserves unique IDs, resolves start paths, and is idempotent', () => {
     const arbLevelIdx = integer({ min: 0, max: LEVELS.length - 1 });
 
@@ -75,14 +67,13 @@ describe('property: filesystem mutations and consequence scenarios', () => {
         arbLevelIdx,
         constantFrom(...SCENARIO_PARAMS),
         arbLevel11Flags,
-        (levelIdx, scenarioParam, level11Flags) => {
-          setScenarioQuery(scenarioParam);
+        (levelIdx, scenarioOverride, level11Flags) => {
           const level = LEVELS[levelIdx];
           const input = cloneFS(INITIAL_FS);
           const inputSnapshot = JSON.stringify(input);
-          const gameState = { levelIndex: levelIdx, level11Flags } as GameState;
+          const ctx: MutationContext = { levelIndex: levelIdx, level11Flags, scenarioOverride };
 
-          const once = applyFileSystemMutations(input, level.id, gameState);
+          const once = applyFileSystemMutations(input, level.id, ctx);
           expect(JSON.stringify(input)).toBe(inputSnapshot);
 
           const startPath = getLevelStartPath(once, level);
@@ -91,7 +82,7 @@ describe('property: filesystem mutations and consequence scenarios', () => {
           const ids = collectNodes(once).map((node) => node.id);
           expect(new Set(ids).size).toBe(ids.length);
 
-          const twice = applyFileSystemMutations(once, level.id, gameState);
+          const twice = applyFileSystemMutations(once, level.id, ctx);
           expect(twice).toEqual(once);
         }
       ),
@@ -99,7 +90,7 @@ describe('property: filesystem mutations and consequence scenarios', () => {
     );
   });
 
-  it('applyConsequenceScenarios isolates legacy vs modern branches and is idempotent on repeated calls', () => {
+  it('seedConsequenceScenarios isolates legacy vs modern branches and is idempotent', () => {
     const arbLevelId = integer({ min: 12, max: LEVELS.length });
     const arbLevelIdx = integer({ min: 11, max: LEVELS.length - 1 });
 
@@ -109,26 +100,19 @@ describe('property: filesystem mutations and consequence scenarios', () => {
         arbLevelIdx,
         constantFrom(...SCENARIO_PARAMS),
         arbLevel11Flags,
-        (levelId, levelIdx, scenarioParam, level11Flags) => {
-          setScenarioQuery(scenarioParam);
+        (levelId, levelIdx, scenarioOverride, level11Flags) => {
           const base = applyFileSystemMutations(cloneFS(INITIAL_FS), 11);
-          const gameState = { levelIndex: levelIdx, level11Flags } as GameState;
+          const ctx: MutationContext = { levelIndex: levelIdx, level11Flags, scenarioOverride };
 
-          const once = applyConsequenceScenarios(cloneFS(base), levelId, gameState, BASE_TIME, day);
-          const twice = applyConsequenceScenarios(
-            cloneFS(once),
-            levelId,
-            gameState,
-            BASE_TIME,
-            day
-          );
+          const once = seedConsequenceScenarios(cloneFS(base), levelId, ctx, BASE_TIME, day);
+          const twice = seedConsequenceScenarios(cloneFS(once), levelId, ctx, BASE_TIME, day);
           expect(twice).toEqual(once);
 
           const ids = collectNodes(once).map((node) => node.id);
           expect(new Set(ids).size).toBe(ids.length);
 
-          const effectiveModern = scenarioParam
-            ? scenarioParam.startsWith('scen-b')
+          const effectiveModern = scenarioOverride
+            ? scenarioOverride.startsWith('scen-b')
             : level11Flags
               ? level11Flags.triggeredHoneypot || level11Flags.selectedModern
               : true;
@@ -144,14 +128,14 @@ describe('property: filesystem mutations and consequence scenarios', () => {
     );
   });
 
-  it('getOrCreateWorkspaceSystemdCore preserves player-added files without mutating input and toggles corruption', () => {
+  it('seedWorkspaceSystemdCore preserves player-added files and toggles corruption', () => {
     const arbCustomFiles = array(stringMatching(/^custom-[a-z0-9]{1,8}\.service$/), {
       maxLength: 5,
     }).map((names) => Array.from(new Set(names)));
 
     assert(
       property(arbCustomFiles, boolean(), (customNames, isCorrupted) => {
-        const seeded = getOrCreateWorkspaceSystemdCore(INITIAL_FS, false);
+        const seeded = seedWorkspaceSystemdCore(cloneFS(INITIAL_FS), false);
         const systemdCore = getNodeById(seeded, 'systemd-core');
         expect(systemdCore).toBeDefined();
 
@@ -166,11 +150,7 @@ describe('property: filesystem mutations and consequence scenarios', () => {
           });
         }
 
-        const snapshot = JSON.stringify(seeded);
-        const updated = getOrCreateWorkspaceSystemdCore(seeded, isCorrupted);
-
-        expect(JSON.stringify(seeded)).toBe(snapshot);
-
+        const updated = seedWorkspaceSystemdCore(cloneFS(seeded), isCorrupted);
         const updatedCore = getNodeById(updated, 'systemd-core');
         expect(updatedCore?.children).toBeDefined();
         for (const name of customNames) {
@@ -187,5 +167,10 @@ describe('property: filesystem mutations and consequence scenarios', () => {
       }),
       { numRuns: 60 }
     );
+  });
+
+  it('seedDaemonReconSectors is idempotent on cloned filesystems', () => {
+    const once = seedDaemonReconSectors(cloneFS(INITIAL_FS), BASE_TIME, day);
+    expect(seedDaemonReconSectors(cloneFS(once), BASE_TIME, day)).toEqual(once);
   });
 });

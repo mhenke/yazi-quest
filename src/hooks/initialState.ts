@@ -171,7 +171,10 @@ export function createInitialState(): GameState {
 
   let fs = cloneFS(INITIAL_FS);
   // Apply level-specific mutations before resolving player-created start directories.
-  fs = applyFileSystemMutations(fs, initialLevel.id, { completedTaskIds } as GameState);
+  fs = applyFileSystemMutations(fs, initialLevel.id, {
+    levelIndex: effectiveIndex,
+    scenarioOverride: params.get('scenario'),
+  });
   const initialPath = getLevelStartPath(fs, initialLevel);
   const initialPathStr = resolvePath(fs, initialPath);
   if (!initialZoxide[initialPathStr]) {

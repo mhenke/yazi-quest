@@ -1,41 +1,14 @@
-import React from 'react';
-import { GameState, Level } from '../../types';
 import { getActionIntensity } from './utils';
-
-import { Action } from '../gameReducer';
-
-export interface QuestMapEpisode {
-  id: number;
-  levels: Level[];
-}
+import type { KeyInput, QuestMapModeContext } from './types';
 
 export const handleQuestMapModeKeyDown = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  levels: Level[],
-  episodes: QuestMapEpisode[],
-  onClose: () => void,
-  onJumpToLevel: (levelIndex: number) => void
-) => {
-  // We need to reconstruct the episodes logic or pass it.
-  // For now, let's assume we can derive active episode based on questMapTab.
-  // Actually, handleQuestMapState logic is simpler if we just manipulate indices.
+  e: KeyInput,
+  { gameState, dispatch, levels, episodes, onClose, onJumpToLevel }: QuestMapModeContext
+): void => {
+  getActionIntensity(e.key, Boolean(e.ctrlKey));
 
-  getActionIntensity(e.key, e.ctrlKey);
-
-  // Helper to get lengths
   const currentTab = gameState.questMapTab || 0;
   const currentMissionIdx = gameState.questMapMissionIdx || 0;
-
-  // Safe bounds checks require knowing how many episodes and levels per episode.
-  // We can pass a simplified structure or just the levels and compute.
-  // Let's rely on the caller (hook) to provide context if needed, but for pure reducer logic:
-
-  // Actually, we need the counts. Let's look at how to get them cheaply.
-  // Or we can just limit blindly and let the UI clamp it? No, UI state needs to be correct.
-
-  // Let's depend on the passed `episodes` array structure which App/Hook should derive.
   const activeEpisode = episodes[currentTab];
   const activeLevelsCount = activeEpisode?.levels?.length || 0;
 
@@ -43,34 +16,34 @@ export const handleQuestMapModeKeyDown = (
     case 'h':
       dispatch({
         type: 'UPDATE_QUEST_MAP',
-        tab: Math.max(0, (gameState.questMapTab || 0) - 1),
+        tab: Math.max(0, currentTab - 1),
         missionIdx: 0,
       });
       break;
     case 'l':
       dispatch({
         type: 'UPDATE_QUEST_MAP',
-        tab: Math.min(episodes.length - 1, (gameState.questMapTab || 0) + 1),
+        tab: Math.min(episodes.length - 1, currentTab + 1),
         missionIdx: 0,
       });
       break;
     case 'j':
       dispatch({
         type: 'UPDATE_QUEST_MAP',
-        missionIdx: Math.min(activeLevelsCount - 1, (gameState.questMapMissionIdx || 0) + 1),
+        missionIdx: Math.min(activeLevelsCount - 1, currentMissionIdx + 1),
       });
       break;
     case 'k':
       dispatch({
         type: 'UPDATE_QUEST_MAP',
-        missionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 1),
+        missionIdx: Math.max(0, currentMissionIdx - 1),
       });
       break;
     case 'J': // Shift+J
       if (e.shiftKey) {
         dispatch({
           type: 'UPDATE_QUEST_MAP',
-          missionIdx: Math.min(activeLevelsCount - 1, (gameState.questMapMissionIdx || 0) + 5),
+          missionIdx: Math.min(activeLevelsCount - 1, currentMissionIdx + 5),
         });
       }
       break;
@@ -78,7 +51,7 @@ export const handleQuestMapModeKeyDown = (
       if (e.shiftKey) {
         dispatch({
           type: 'UPDATE_QUEST_MAP',
-          missionIdx: Math.max(0, (gameState.questMapMissionIdx || 0) - 5),
+          missionIdx: Math.max(0, currentMissionIdx - 5),
         });
       }
       break;
@@ -86,11 +59,8 @@ export const handleQuestMapModeKeyDown = (
       if (e.shiftKey) {
         onClose();
       } else {
-        // Jump Logic
-        // We need to map (Tab, MissionIdx) -> GlobalLevelIndex
         const selectedLevel = activeEpisode?.levels[currentMissionIdx];
         if (selectedLevel) {
-          // Find global index
           const globalIdx = levels.findIndex((l) => l.id === selectedLevel.id);
           if (globalIdx !== -1 && globalIdx <= gameState.unlockedLevelIndex) {
             onJumpToLevel(globalIdx);

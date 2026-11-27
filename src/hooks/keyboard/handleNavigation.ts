@@ -1,16 +1,12 @@
-import { GameState, FileNode, Level } from '../../types';
 import { findPathById, resolvePath, isProtected } from '../../utils/fsHelpers';
 import { getVisibleItems } from '../../utils/viewHelpers';
-import { checkProtocolViolations } from './utils';
+import { guardProtocolViolations } from './utils';
 import { checkLevel11Scouting } from './handleNarrativeTriggers';
-import { Action } from '../gameReducer';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
+import type { KeyInput, ModeContext, NormalModeContext } from './types';
 
 // Shift+G: jump the cursor to the last visible item.
-export const jumpToLastVisibleItem = (
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>
-): void => {
+export const jumpToLastVisibleItem = ({ gameState, dispatch }: ModeContext): void => {
   const items = getVisibleItems(gameState) || [];
   const last = Math.max(0, items.length - 1);
   dispatch({ type: 'SET_CURSOR', index: last });
@@ -18,31 +14,22 @@ export const jumpToLastVisibleItem = (
   dispatch({ type: 'MARK_ACTION_USED', actionId: 'G' });
 };
 
-export const handleNavigationKeyDown = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  items: FileNode[],
-  parent: FileNode | null,
-  currentItem: FileNode | null,
-  currentLevel: Level,
-  advanceLevel: () => void,
-  showNotification: (message: string, duration?: number) => void,
-  _intensity: number
-): boolean => {
+export const handleNavigationKeyDown = (e: KeyInput, ctx: NormalModeContext): boolean => {
+  const {
+    gameState,
+    dispatch,
+    items,
+    parent,
+    currentItem,
+    currentLevel,
+    advanceLevel,
+    showNotification,
+  } = ctx;
+
   switch (e.key) {
     case 'j':
     case 'ArrowDown': {
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        return true;
-      }
+      if (guardProtocolViolations(e, ctx)) return true;
 
       const newCursorIndex =
         gameState.cursorIndex >= items.length - 1 ? 0 : gameState.cursorIndex + 1;
@@ -63,16 +50,7 @@ export const handleNavigationKeyDown = (
 
     case 'k':
     case 'ArrowUp':
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        return true;
-      }
+      if (guardProtocolViolations(e, ctx)) return true;
       dispatch({
         type: 'SET_CURSOR',
         index:
@@ -107,33 +85,15 @@ export const handleNavigationKeyDown = (
       return true;
 
     case 'G': {
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        return true;
-      }
+      if (guardProtocolViolations(e, ctx)) return true;
       e.preventDefault();
-      jumpToLastVisibleItem(gameState, dispatch);
+      jumpToLastVisibleItem({ gameState, dispatch });
       return true;
     }
 
     case 'h':
     case 'ArrowLeft': {
-      if (
-        checkProtocolViolations(
-          e,
-          gameState,
-          dispatch,
-          checkAllTasksComplete(gameState, currentLevel)
-        )
-      ) {
-        return true;
-      }
+      if (guardProtocolViolations(e, ctx)) return true;
 
       if (gameState.searchQuery && currentItem) {
         const itemPath = findPathById(gameState.fs, currentItem.id);
@@ -165,9 +125,7 @@ export const handleNavigationKeyDown = (
         return true;
       }
 
-      if (checkProtocolViolations(e, gameState, dispatch, allComplete)) {
-        return true;
-      }
+      if (guardProtocolViolations(e, ctx)) return true;
 
       if (currentItem && currentItem.type === 'dir') {
         const protection = isProtected(
@@ -206,16 +164,7 @@ export const handleNavigationKeyDown = (
 
     case 'H':
       if (e.shiftKey) {
-        if (
-          checkProtocolViolations(
-            e,
-            gameState,
-            dispatch,
-            checkAllTasksComplete(gameState, currentLevel)
-          )
-        ) {
-          return true;
-        }
+        if (guardProtocolViolations(e, ctx)) return true;
         if (gameState.history.length === 0) return true;
         dispatch({ type: 'NAVIGATE_BACK' });
         dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });
@@ -227,16 +176,7 @@ export const handleNavigationKeyDown = (
 
     case 'L':
       if (e.shiftKey) {
-        if (
-          checkProtocolViolations(
-            e,
-            gameState,
-            dispatch,
-            checkAllTasksComplete(gameState, currentLevel)
-          )
-        ) {
-          return true;
-        }
+        if (guardProtocolViolations(e, ctx)) return true;
         if (gameState.future.length === 0) return true;
         dispatch({ type: 'NAVIGATE_FORWARD' });
         dispatch({ type: 'SET_PREVIEW_SCROLL', scroll: 0 });

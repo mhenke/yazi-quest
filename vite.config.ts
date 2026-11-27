@@ -36,16 +36,34 @@ export default defineConfig(() => {
       },
     },
     test: {
-      globals: true,
-      environment: 'jsdom',
-      include: ['src/**/*.test.{ts,tsx}'],
-      exclude: ['tests/**', 'node_modules/**'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html', 'json', 'json-summary'],
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts'],
       },
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: 'dom',
+            globals: true,
+            environment: 'jsdom',
+            include: ['src/components/**/*.test.{ts,tsx}'],
+            exclude: ['tests/**', 'node_modules/**'],
+          },
+        },
+        {
+          extends: true,
+          test: {
+            name: 'node',
+            globals: true,
+            environment: 'node',
+            include: ['src/**/*.test.ts'],
+            exclude: ['tests/**', 'node_modules/**', 'src/components/**'],
+          },
+        },
+      ],
     },
   };
 });

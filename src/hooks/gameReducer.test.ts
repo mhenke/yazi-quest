@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { gameReducer } from './gameReducer';
 import { LEVELS } from '../constants/levels';
 import type { GameState } from '../types';
-import { createInitialState } from './initialState';
+import { makeBootState } from '../../tests/helpers/keyboardHarness';
 
 /**
  * Alerts are keyed by id and dismissible. An effect can dispatch before state
@@ -157,7 +157,7 @@ describe('gameReducer action flag sanitization', () => {
   } as unknown as GameState;
 
   it('retains unlocked progress when revisiting a level and clears it on a new cycle', () => {
-    const state = { ...createInitialState(), levelIndex: 4, unlockedLevelIndex: 4 };
+    const state = { ...makeBootState(), levelIndex: 4, unlockedLevelIndex: 4 };
     const revisited = gameReducer(state, {
       type: 'SET_LEVEL',
       index: 1,
@@ -171,7 +171,7 @@ describe('gameReducer action flag sanitization', () => {
 
   it('restarts the current cycle without changing its number', () => {
     const state = {
-      ...createInitialState(),
+      ...makeBootState(),
       cycleCount: 2,
       levelIndex: 4,
       unlockedLevelIndex: 4,

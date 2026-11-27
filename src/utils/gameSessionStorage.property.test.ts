@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { assert, boolean, constantFrom, integer, property, stringMatching } from 'fast-check';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createInitialState } from '../hooks/initialState';

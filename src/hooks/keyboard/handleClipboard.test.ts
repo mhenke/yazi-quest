@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { FileNode, GameState } from '../../types';
 import { LEVELS } from '../../constants/levels';
-import { createInitialState } from '../initialState';
 import { getNodeByPath } from '../../utils/fsHelpers';
+import { makeBootState, makeKey, makeNormalContext } from '../../../tests/helpers/keyboardHarness';
 import { gameReducer } from '../gameReducer';
 import { handleClipboardKeyDown } from './handleClipboard';
 
@@ -18,13 +18,7 @@ const stateWith = (
   fs: FileNode,
   currentPath: string[],
   clipboard: NonNullable<GameState['clipboard']>
-): GameState => ({
-  ...createInitialState(),
-  fs,
-  currentPath,
-  clipboard,
-  levelIndex: 0,
-});
+): GameState => makeBootState(1, { fs, currentPath, clipboard });
 
 const allIds = (fs: FileNode): string[] => {
   const ids: string[] = [];
@@ -47,23 +41,23 @@ describe('paste into the pasted node subtree', () => {
       originalPath: ['root'],
     });
     const dispatch = vi.fn();
-    const notify = vi.fn();
+    const showNotification = vi.fn();
 
     const handled = handleClipboardKeyDown(
-      { key: 'P', shiftKey: true } as KeyboardEvent,
-      state,
-      dispatch,
-      nested.children!,
-      nested.children![0],
-      LEVELS[0],
-      notify
+      makeKey({ key: 'P', shiftKey: true }),
+      makeNormalContext(state, dispatch, {
+        items: nested.children!,
+        currentItem: nested.children![0],
+        currentLevel: LEVELS[0],
+        showNotification,
+      })
     );
 
     expect(handled).toBe(true);
     expect(dispatch.mock.calls.some(([action]) => action.type === 'PASTE')).toBe(false);
-    expect(notify.mock.calls.some(([message]) => String(message).includes('own subtree'))).toBe(
-      true
-    );
+    expect(
+      showNotification.mock.calls.some(([message]) => String(message).includes('own subtree'))
+    ).toBe(true);
   });
 
   it('refuses yanking a directory into its own subtree', () => {
@@ -77,13 +71,12 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     handleClipboardKeyDown(
-      { key: 'p', shiftKey: false } as KeyboardEvent,
-      state,
-      dispatch,
-      nested.children!,
-      nested.children![0],
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: nested.children!,
+        currentItem: nested.children![0],
+        currentLevel: LEVELS[0],
+      })
     );
 
     expect(dispatch.mock.calls.some(([action]) => action.type === 'PASTE')).toBe(false);
@@ -101,13 +94,8 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     const handled = handleClipboardKeyDown(
-      { key: 'p', shiftKey: false } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, { items: [], currentItem: null, currentLevel: LEVELS[0] })
     );
 
     expect(handled).toBe(true);
@@ -133,13 +121,8 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     handleClipboardKeyDown(
-      { key: 'p', shiftKey: false } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, { items: [], currentItem: null, currentLevel: LEVELS[0] })
     );
 
     const paste = dispatch.mock.calls
@@ -180,13 +163,8 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     handleClipboardKeyDown(
-      { key: 'P', shiftKey: true } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'P', shiftKey: true }),
+      makeNormalContext(state, dispatch, { items: [], currentItem: null, currentLevel: LEVELS[0] })
     );
 
     const paste = dispatch.mock.calls
@@ -214,13 +192,8 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     handleClipboardKeyDown(
-      { key: 'p', shiftKey: false } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, { items: [], currentItem: null, currentLevel: LEVELS[0] })
     );
 
     const paste = dispatch.mock.calls
@@ -251,13 +224,8 @@ describe('paste into the pasted node subtree', () => {
     const dispatch = vi.fn();
 
     handleClipboardKeyDown(
-      { key: 'P', shiftKey: true } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'P', shiftKey: true }),
+      makeNormalContext(state, dispatch, { items: [], currentItem: null, currentLevel: LEVELS[0] })
     );
 
     const paste = dispatch.mock.calls
@@ -282,35 +250,32 @@ describe('paste into the pasted node subtree', () => {
       dir('active', 'active', [v2]),
       dir('training', 'training', [payload]),
     ]);
-    let state: GameState = {
-      ...createInitialState(),
+    let state = makeBootState(1, {
       fs,
       currentPath: ['root', 'training'],
       selectedIds: ['v2', 'payload'],
       clipboard: null,
-    };
+    });
     const dispatch = (action: Parameters<typeof gameReducer>[1]) => {
       state = gameReducer(state, action);
     };
 
     handleClipboardKeyDown(
-      { key: 'x' } as KeyboardEvent,
-      state,
-      dispatch,
-      [payload],
-      payload,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'x' }),
+      makeNormalContext(state, dispatch, {
+        items: [payload],
+        currentItem: payload,
+        currentLevel: LEVELS[0],
+      })
     );
     dispatch({ type: 'NAVIGATE', path: ['root', 'active'] });
     handleClipboardKeyDown(
-      { key: 'p' } as KeyboardEvent,
-      state,
-      dispatch,
-      [v2],
-      v2,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [v2],
+        currentItem: v2,
+        currentLevel: LEVELS[0],
+      })
     );
 
     expect(getNodeByPath(state.fs, ['root', 'training'])?.children).toEqual([]);
@@ -331,18 +296,18 @@ describe('paste into the pasted node subtree', () => {
       originalPath: ['root'],
     });
     const dispatch = vi.fn();
-    const notify = vi.fn();
+    const showNotification = vi.fn();
     handleClipboardKeyDown(
-      { key: 'p' } as KeyboardEvent,
-      state,
-      dispatch,
-      [],
-      null,
-      LEVELS[0],
-      notify
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [],
+        currentItem: null,
+        currentLevel: LEVELS[0],
+        showNotification,
+      })
     );
     expect(dispatch.mock.calls.some(([action]) => action.type === 'PASTE')).toBe(false);
-    expect(notify).toHaveBeenCalledWith(expect.stringContaining('NotFound'), 4000);
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('NotFound'), 4000);
   });
 
   it('keeps a cut file when force-pasting it back into its own directory', () => {
@@ -354,13 +319,12 @@ describe('paste into the pasted node subtree', () => {
     });
     const dispatch = vi.fn();
     handleClipboardKeyDown(
-      { key: 'P', shiftKey: true } as KeyboardEvent,
-      state,
-      dispatch,
-      [source],
-      source,
-      LEVELS[0],
-      vi.fn()
+      makeKey({ key: 'P', shiftKey: true }),
+      makeNormalContext(state, dispatch, {
+        items: [source],
+        currentItem: source,
+        currentLevel: LEVELS[0],
+      })
     );
     const paste = dispatch.mock.calls
       .map(([action]) => action)
@@ -375,19 +339,17 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
   it('toggles selection on Space and enters input-file or selects all on a / Ctrl+a', () => {
     const items = makeItems().slice(0, 2);
     const fs = dir('root', 'root', items);
-    const state = { ...createInitialState(), fs, currentPath: ['root'], levelIndex: 0 };
+    const state = makeBootState(1, { fs, currentPath: ['root'] });
     const dispatch = vi.fn();
-    const notify = vi.fn();
 
     expect(
       handleClipboardKeyDown(
-        { key: ' ' } as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: ' ' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({
@@ -399,13 +361,12 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'a', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'a' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'input-file' });
@@ -413,13 +374,12 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'a', ctrlKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'a', ctrlKey: true }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_SELECTION', ids: ['a', 'b'] });
@@ -429,26 +389,22 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
   it('inverts selection on Ctrl+r and handles rename vs batch rename on r', () => {
     const items = makeItems();
     const fs = dir('root', 'root', items);
-    const state = {
-      ...createInitialState(),
+    const state = makeBootState(1, {
       fs,
       currentPath: ['root'],
       selectedIds: ['a'],
       showHidden: false,
-      levelIndex: 0,
-    };
+    });
     const dispatch = vi.fn();
-    const notify = vi.fn();
 
     expect(
       handleClipboardKeyDown(
-        { key: 'r', ctrlKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items.slice(0, 2),
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'r', ctrlKey: true }),
+        makeNormalContext(state, dispatch, {
+          items: items.slice(0, 2),
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_SELECTION', ids: ['b'] });
@@ -456,13 +412,12 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'r', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        { ...state, selectedIds: ['a', 'b'] },
-        dispatch,
-        items.slice(0, 2),
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'r' }),
+        makeNormalContext({ ...state, selectedIds: ['a', 'b'] }, dispatch, {
+          items: items.slice(0, 2),
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({
@@ -473,13 +428,12 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'r', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        { ...state, selectedIds: [] },
-        dispatch,
-        items.slice(0, 2),
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'r' }),
+        makeNormalContext({ ...state, selectedIds: [] }, dispatch, {
+          items: items.slice(0, 2),
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_MODE', mode: 'rename' });
@@ -489,47 +443,50 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
   it('handles yank, cut, clipboardPolicy blocks, and Shift+Y clear', () => {
     const items = makeItems().slice(0, 2);
     const fs = dir('root', 'root', items);
-    const state = { ...createInitialState(), fs, currentPath: ['root'], levelIndex: 0 };
+    const state = makeBootState(1, { fs, currentPath: ['root'] });
     const dispatch = vi.fn();
-    const notify = vi.fn();
+    const showNotification = vi.fn();
 
     const cutOnlyLevel = { ...LEVELS[0], clipboardPolicy: 'cut' as const };
     expect(
       handleClipboardKeyDown(
-        { key: 'y' } as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        cutOnlyLevel,
-        notify
+        makeKey({ key: 'y' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: cutOnlyLevel,
+          showNotification,
+        })
       )
     ).toBe(true);
-    expect(notify).toHaveBeenCalledWith(expect.stringContaining('Yank (y) blocked'), 4000);
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.stringContaining('Yank (y) blocked'),
+      4000
+    );
 
     const yankOnlyLevel = { ...LEVELS[0], clipboardPolicy: 'yank' as const };
     expect(
       handleClipboardKeyDown(
-        { key: 'x' } as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        yankOnlyLevel,
-        notify
+        makeKey({ key: 'x' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: yankOnlyLevel,
+          showNotification,
+        })
       )
     ).toBe(true);
-    expect(notify).toHaveBeenCalledWith(expect.stringContaining('Cut (x) blocked'), 4000);
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('Cut (x) blocked'), 4000);
 
     expect(
       handleClipboardKeyDown(
-        { key: 'y' } as KeyboardEvent,
-        { ...state, selectedIds: ['a'] },
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'y' }),
+        makeNormalContext({ ...state, selectedIds: ['a'] }, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+          showNotification,
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith(
@@ -539,13 +496,13 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'Y', shiftKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'Y', shiftKey: true }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+          showNotification,
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({ type: 'CLEAR_CLIPBOARD' });
@@ -554,47 +511,50 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
   it('handles d/D delete queueing, level 14 trash block, empty selection, and unhandled keys', () => {
     const items = makeItems().slice(0, 2);
     const fs = dir('root', 'root', items);
-    const state = { ...createInitialState(), fs, currentPath: ['root'], levelIndex: 0 };
+    const state = makeBootState(1, { fs, currentPath: ['root'] });
     const dispatch = vi.fn();
-    const notify = vi.fn();
+    const showNotification = vi.fn();
 
     const level14 = LEVELS.find((l) => l.id === 14) ?? { ...LEVELS[0], id: 14 };
     expect(
       handleClipboardKeyDown(
-        { key: 'd', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        level14,
-        notify
+        makeKey({ key: 'd' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: level14,
+          showNotification,
+        })
       )
     ).toBe(true);
-    expect(notify).toHaveBeenCalledWith(expect.stringContaining('TRASH DELETE BLOCKED'), 4000);
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.stringContaining('TRASH DELETE BLOCKED'),
+      4000
+    );
 
     expect(
       handleClipboardKeyDown(
-        { key: 'd', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        [],
-        null,
-        LEVELS[0],
-        notify
+        makeKey({ key: 'd' }),
+        makeNormalContext(state, dispatch, {
+          items: [],
+          currentItem: null,
+          currentLevel: LEVELS[0],
+          showNotification,
+        })
       )
     ).toBe(true);
-    expect(notify).toHaveBeenCalledWith('Nothing to delete', 4000);
+    expect(showNotification).toHaveBeenCalledWith('Nothing to delete', 4000);
 
     dispatch.mockClear();
     expect(
       handleClipboardKeyDown(
-        { key: 'D', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'D' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+          showNotification,
+        })
       )
     ).toBe(true);
     expect(dispatch).toHaveBeenCalledWith({
@@ -605,13 +565,13 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
 
     expect(
       handleClipboardKeyDown(
-        { key: 'z' } as KeyboardEvent,
-        state,
-        dispatch,
-        items,
-        items[0],
-        LEVELS[0],
-        notify
+        makeKey({ key: 'z' }),
+        makeNormalContext(state, dispatch, {
+          items,
+          currentItem: items[0],
+          currentLevel: LEVELS[0],
+          showNotification,
+        })
       )
     ).toBe(false);
   });

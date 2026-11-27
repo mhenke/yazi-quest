@@ -1,4 +1,5 @@
-import { GameState, FileNode, Level, FsError } from '../../types';
+import type React from 'react';
+import { FsError } from '../../types';
 import {
   checkHoneypotTriggered,
   checkCriticalFileDeletion,
@@ -7,18 +8,19 @@ import {
 import { isProtected, deleteNode, findPathById, getNodeById } from '../../utils/fsHelpers';
 import { getNarrativeAction } from './utils';
 import { Action } from '../gameReducer';
+import type { DeleteModeContext, KeyInput } from './types';
 
-export const confirmDelete = (
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState,
-  visibleItems: FileNode[],
-  currentLevelParam: Level
-) => {
+export const confirmDelete = ({
+  dispatch,
+  gameState,
+  visibleItems,
+  currentLevel,
+}: DeleteModeContext): void => {
   let newFs = gameState.fs;
   let errorMsg: string | null | undefined = null;
 
   // Honeypot check
-  const honeypot = checkHoneypotTriggered(gameState, gameState.pendingDeleteIds, currentLevelParam);
+  const honeypot = checkHoneypotTriggered(gameState, gameState.pendingDeleteIds, currentLevel);
   if (honeypot.triggered) {
     if (honeypot.reason === 'honeypot') {
       dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
@@ -51,7 +53,7 @@ export const confirmDelete = (
   }
 
   // Policy-based protection check
-  const validation = validateDeletions(gameState, gameState.pendingDeleteIds, currentLevelParam);
+  const validation = validateDeletions(gameState, gameState.pendingDeleteIds, currentLevel);
   if (validation.ok === false) {
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
@@ -77,7 +79,7 @@ export const confirmDelete = (
         newFs,
         targetDirPath,
         node,
-        currentLevelParam,
+        currentLevel,
         'delete',
         gameState.completedTaskIds
       );
@@ -116,22 +118,16 @@ export const confirmDelete = (
   }
 };
 
-export const cancelDelete = (dispatch: React.Dispatch<Action>) => {
+export const cancelDelete = (dispatch: React.Dispatch<Action>): void => {
   dispatch({ type: 'SET_MODE', mode: 'normal' });
   dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
 };
 
-export const handleConfirmDeleteModeKeyDown = (
-  e: KeyboardEvent,
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState,
-  visibleItems: FileNode[],
-  currentLevelParam: Level
-) => {
+export const handleConfirmDeleteModeKeyDown = (e: KeyInput, ctx: DeleteModeContext): void => {
   const key = e.key.toLowerCase();
   if (key === 'y') {
-    confirmDelete(dispatch, gameState, visibleItems, currentLevelParam);
+    confirmDelete(ctx);
   } else if (key === 'n' || e.key === 'Escape') {
-    cancelDelete(dispatch);
+    cancelDelete(ctx.dispatch);
   }
 };

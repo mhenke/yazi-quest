@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 import { LEVELS } from './constants/levels';
-import { INITIAL_FS, ensurePrerequisiteState } from './constants/filesystem';
+import { INITIAL_FS, applyFileSystemMutations } from './constants/filesystem';
 import { EPISODE_LORE, ECHO_EPISODE_1_LORE } from './constants/narrative';
 import { UPLINK_V1_CONTENT, UPLINK_V2_CONTENT } from './constants/protocols';
 import { getPlayerIdentity } from './constants/identity';
@@ -55,7 +55,10 @@ import { MemoizedFileSystemPane as FileSystemPane } from './components/FileSyste
 import { MemoizedPreviewPane as PreviewPane } from './components/PreviewPane';
 import { reportError } from './utils/error';
 import { measure } from './utils/perf';
-import { useKeyboardHandlers } from './hooks/useKeyboardHandlers';
+import { cancelDelete, confirmDelete } from './hooks/keyboard/handleDeleteMode';
+import { handleHelpModeKeyDown } from './hooks/keyboard/handleHelpMode';
+import { handleOverwriteConfirmKeyDown } from './hooks/keyboard/handleOverwriteMode';
+import { handleQuestMapModeKeyDown } from './hooks/keyboard/handleQuestMapMode';
 import { useGameTimer } from './hooks/useGameTimer';
 import { useReduceMotion } from './hooks/useReduceMotion';
 import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
@@ -63,10 +66,13 @@ import { ViewportGate } from './components/ViewportGate';
 import {
   buildDeleteModalData,
   handleSortWarningKey,
-  isProtocolWarningOpen,
   runGameLoopKeyDown,
 } from './hooks/keyboard/gameLoopHelpers';
-import { hasBaselineViolation, hasSearchViolation } from './hooks/keyboard/utils';
+import {
+  hasBaselineViolation,
+  hasSearchViolation,
+  isProtocolWarningOpen,
+} from './hooks/keyboard/utils';
 import { useGlobalInput } from './GlobalInputContext';
 import { useNarrativeSystem } from './hooks/useNarrativeSystem';
 import { createInitialState } from './hooks/initialState';
@@ -369,7 +375,12 @@ function useToolbarActions(
   const handleJumpToLevel = useCallback(
     (idx: number) => {
       const lvl = LEVELS[idx];
-      const fs = ensurePrerequisiteState(cloneFS(INITIAL_FS), lvl.id, gameState);
+      const scenarioOverride = new URLSearchParams(window.location.search).get('scenario');
+      const fs = applyFileSystemMutations(cloneFS(INITIAL_FS), lvl.id, {
+        levelIndex: gameState.levelIndex,
+        level11Flags: gameState.level11Flags,
+        scenarioOverride,
+      });
       dispatch({
         type: 'SET_LEVEL',
         index: idx,
@@ -650,19 +661,6 @@ export default function App() {
     },
     [dispatch]
   );
-
-  // Extract keyboard handlers to custom hook
-  const {
-    handleNormalModeKeyDown,
-    handleSortModeKeyDown,
-    handleConfirmDeleteModeKeyDown,
-    handleOverwriteConfirmKeyDown,
-    handleGCommandKeyDown,
-    handleHelpModeKeyDown,
-    handleQuestMapModeKeyDown,
-    confirmDelete,
-    cancelDelete,
-  } = useKeyboardHandlers(dispatch, showNotification);
 
   // --- Task Checking & Level Progression ---
   useEffect(() => {
@@ -1019,11 +1017,14 @@ export default function App() {
     let fs = cloneFS(gameState.fs);
     let onEnterError: Error | null = null;
     try {
-      // Apply filesystem mutations for the target level using the centralized function
-      // This replaces the onEnter hook functionality
-      fs = ensurePrerequisiteState(fs, nextLevel.id, gameState);
+      const scenarioOverride = new URLSearchParams(window.location.search).get('scenario');
+      fs = applyFileSystemMutations(fs, nextLevel.id, {
+        levelIndex: gameState.levelIndex,
+        level11Flags: gameState.level11Flags,
+        scenarioOverride,
+      });
     } catch (err) {
-      reportError(err, { phase: 'ensurePrerequisiteState', level: nextLevel?.id });
+      reportError(err, { phase: 'applyFileSystemMutations', level: nextLevel?.id });
       onEnterError = err as Error;
     }
 
@@ -1242,21 +1243,30 @@ export default function App() {
         !(e.shiftKey && e.key === 'Enter')
       )
         return true;
-      handleHelpModeKeyDown(e, gameState, () =>
-        dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false })
-      );
+      handleHelpModeKeyDown(e, {
+        gameState,
+        dispatch,
+        onClose: () => dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'help', visible: false }),
+      });
       return true;
     },
-    [gameState.showHelp, gameState, handleHelpModeKeyDown],
+    [gameState.showHelp, gameState, dispatch],
     { priority: 1000, enabled: gameState.showHelp, captureInput: true }
   );
 
   useGlobalInput(
     (e) => {
-      handleQuestMapModeKeyDown(e, gameState, LEVELS, EPISODES, handleCloseMap, handleJumpToLevel);
+      handleQuestMapModeKeyDown(e, {
+        gameState,
+        dispatch,
+        levels: LEVELS,
+        episodes: EPISODES,
+        onClose: handleCloseMap,
+        onJumpToLevel: handleJumpToLevel,
+      });
       return true;
     },
-    [gameState, handleQuestMapModeKeyDown, handleCloseMap, handleJumpToLevel],
+    [gameState, dispatch, handleCloseMap, handleJumpToLevel],
     { priority: 1000, enabled: gameState.showMap }
   );
 
@@ -1411,10 +1421,9 @@ export default function App() {
         currentLevel,
         dispatch,
         confirmWarningModal,
-        handleSortModeKeyDown,
         dismissWarning,
       }),
-    [gameState, currentLevel, confirmWarningModal, handleSortModeKeyDown, dismissWarning],
+    [gameState, currentLevel, dispatch, confirmWarningModal, dismissWarning],
     { priority: 800, enabled: gameState.showSortWarning }
   );
 
@@ -1466,23 +1475,15 @@ export default function App() {
         currentItem,
         dispatch,
         advanceLevel,
+        showNotification,
         checkAllTasksComplete,
-        handleNormalModeKeyDown,
-        handleSortModeKeyDown,
-        handleConfirmDeleteModeKeyDown,
-        handleOverwriteConfirmKeyDown,
-        handleGCommandKeyDown,
       }),
     [
       gameState,
       currentLevel,
       isLastLevel,
-      handleNormalModeKeyDown,
-      handleSortModeKeyDown,
-      handleConfirmDeleteModeKeyDown,
-      handleOverwriteConfirmKeyDown,
-      handleGCommandKeyDown,
       advanceLevel,
+      showNotification,
       visibleItems,
       currentItem,
       parent,
@@ -1807,8 +1808,8 @@ export default function App() {
           <ConfirmationModal
             deleteType={gameState.deleteType}
             {...buildDeleteModalData(gameState, visibleItems)}
-            onConfirm={() => confirmDelete(visibleItems, currentLevel, gameState)}
-            onCancel={() => cancelDelete()}
+            onConfirm={() => confirmDelete({ gameState, dispatch, visibleItems, currentLevel })}
+            onCancel={() => cancelDelete(dispatch)}
           />
         )}
 
@@ -1844,7 +1845,7 @@ export default function App() {
         {gameState.mode === 'overwrite-confirm' && gameState.pendingOverwriteNode && (
           <OverwriteModal
             fileName={gameState.pendingOverwriteNode.name}
-            onDecision={(key) => handleOverwriteConfirmKeyDown(key, gameState)}
+            onDecision={(key) => handleOverwriteConfirmKeyDown(key, { gameState, dispatch })}
           />
         )}
 

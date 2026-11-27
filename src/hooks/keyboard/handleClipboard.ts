@@ -1,4 +1,5 @@
-import { GameState, FileNode, Level, FsError, Result } from '../../types';
+import type React from 'react';
+import { GameState, FileNode, FsError, Result } from '../../types';
 import {
   getNodeById,
   getNodeByPath,
@@ -13,6 +14,7 @@ import { checkGrabbingHoneypot, checkPastingHoneypot } from '../../utils/gameUti
 import { getNarrativeAction } from './utils';
 import { getLevel11LegacyThought } from './handleNarrativeTriggers';
 import { Action } from '../gameReducer';
+import type { KeyInput, NormalModeContext } from './types';
 
 /**
  * Strips transient clipboard/search properties that must not persist to the filesystem.
@@ -237,15 +239,8 @@ const executePaste = (
   return true;
 };
 
-export const handleClipboardKeyDown = (
-  e: KeyboardEvent,
-  gameState: GameState,
-  dispatch: React.Dispatch<Action>,
-  items: FileNode[],
-  currentItem: FileNode | null,
-  currentLevel: Level,
-  showNotification: (message: string, duration?: number) => void
-): boolean => {
+export const handleClipboardKeyDown = (e: KeyInput, ctx: NormalModeContext): boolean => {
+  const { gameState, dispatch, items, currentItem, currentLevel, showNotification } = ctx;
   switch (e.key) {
     case ' ':
       if (currentItem) {

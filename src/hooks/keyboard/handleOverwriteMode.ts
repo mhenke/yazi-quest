@@ -1,12 +1,11 @@
-import { GameState, FsError } from '../../types';
+import { FsError } from '../../types';
 import { deleteNode, resolveAndCreatePath } from '../../utils/fsHelpers';
-import { Action } from '../gameReducer';
+import type { ModeContext } from './types';
 
 export const handleOverwriteConfirmKeyDown = (
   key: string,
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState
-) => {
+  { dispatch, gameState }: ModeContext
+): void => {
   if (key === 'y') {
     if (!gameState.pendingOverwriteNode) {
       dispatch({ type: 'SET_MODE', mode: 'normal' });

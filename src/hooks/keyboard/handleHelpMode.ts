@@ -1,14 +1,11 @@
-import { GameState } from '../../types';
-import { Action } from '../gameReducer';
 import { getActionIntensity } from './utils';
+import type { HelpModeContext, KeyInput } from './types';
 
 export const handleHelpModeKeyDown = (
-  e: KeyboardEvent,
-  dispatch: React.Dispatch<Action>,
-  gameState: GameState,
-  onClose: () => void
-) => {
-  getActionIntensity(e.key, e.ctrlKey);
+  e: KeyInput,
+  { dispatch, gameState, onClose }: HelpModeContext
+): void => {
+  getActionIntensity(e.key, Boolean(e.ctrlKey));
 
   switch (e.key) {
     case 'j':
