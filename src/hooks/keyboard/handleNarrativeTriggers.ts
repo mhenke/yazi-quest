@@ -70,7 +70,7 @@ export const getLevel11LegacyThought = (nodes: FileNode[], levelIndex: number): 
   const hasRecent = nodes.some((n) => (n.modifiedAt || 0) > thirtyDaysAgo);
 
   if (hasRecent) {
-    return 'SCAN: This signature is too recent. Forensics will trace the delta. I need something older... something legacy.';
+    return 'SCAN: This signature is too recent. Forensics will trace it. I need something older... legacy.';
   }
   return null;
 };

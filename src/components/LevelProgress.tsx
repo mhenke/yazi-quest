@@ -145,18 +145,24 @@ const ThoughtBanner: React.FC<{ thought: LevelProgressProps['thought'] }> = ({ t
   <div className="flex-1 min-w-0 overflow-hidden text-center px-2 sm:px-4 flex items-center justify-center">
     {thought && (
       <div
-        data-testid="terminal-thought"
-        className="block w-full min-w-0 max-w-full overflow-hidden whitespace-nowrap text-ellipsis font-mono text-sm animate-terminal-drop glitch-thought"
-        data-message={thought.text}
-        title={thought.text}
+        className="w-full max-h-20 overflow-y-auto"
+        role="region"
+        aria-label="Narrative message"
+        tabIndex={0}
       >
-        <span className="base-text block truncate">{thought.text}</span>
-        <span className="white-text block truncate" aria-hidden="true">
-          {thought.text}
-        </span>
-        <span className="orange-text block truncate" aria-hidden="true">
-          {thought.text}
-        </span>
+        <div
+          data-testid="terminal-thought"
+          className="block w-full min-w-0 max-w-full font-mono text-sm animate-terminal-drop glitch-thought"
+          data-message={thought.text}
+        >
+          <span className="base-text block break-words">{thought.text}</span>
+          <span className="white-text block break-words" aria-hidden="true">
+            {thought.text}
+          </span>
+          <span className="orange-text block break-words" aria-hidden="true">
+            {thought.text}
+          </span>
+        </div>
       </div>
     )}
   </div>

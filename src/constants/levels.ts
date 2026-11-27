@@ -858,8 +858,7 @@ export const LEVELS: Level[] = [
     coreSkill: 'Skill Synthesis (Recursive Search + Forensic Metadata + Clipboard)',
     environmentalClue:
       'SCAN: Toggle Hidden (.) + Recursive Search | IDENTIFY: Legacy Executable (> 30d, -rwxr-xr-x) | CONSOLIDATE: ~/workspace/systemd-core',
-    thought:
-      'EXAM MODE ENGAGED. Sensory scaffolding retracted. Mission drawer collapsed for full preview (Alt+O to expand).',
+    thought: 'EXAM MODE. Scaffolding offline. Drawer collapsed for preview (Alt+O to expand).',
     successMessage:
       "PROTOCOLS HIJACKED. You are blending into the system background noise. Sebastian Iqbal's Instruction Guard v2.0 is blind to your movements... for now. Establish your stronghold.",
     buildsOn: [3, 5, 7, 9, 10],

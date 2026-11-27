@@ -97,8 +97,7 @@ export const useNarrativeSystem = (gameState: GameState, dispatch: React.Dispatc
       };
     } else if (currentLevel.id === 10 && completedTaskIds[9]?.length > 0) {
       levelNotification = {
-        message:
-          "Why this directory? Because it's where the heart of the system beats. I need to plant my seed here.",
+        message: "The system's heart beats here. Time to plant my seed.",
         isThought: true,
       };
     } else if (currentLevel.id === 15 && completedTaskIds[14]?.length > 0) {
