@@ -21,7 +21,7 @@ A narrative chapter that groups levels into a learning phase: Awakening, Fortifi
 _Avoid_: Level, cycle
 
 **Episode intro**:
-The lore presentation shown before an episode's first level, advanced independently of the boot sequence.
+The lore presentation shown before an **Episode**'s first **Level**, advanced independently of the **Boot sequence**.
 _Avoid_: Boot screen, opening cinematic, story screen
 
 **Exam Mode**:
@@ -33,7 +33,7 @@ A playable stage within an episode, with its own objectives and any limits on ti
 _Avoid_: Episode, task
 
 **Level timer**:
-The countdown a level assigns from its own time limit. It starts with the level, and expiry ends the attempt as a failure.
+The countdown a **Level** assigns from its own time limit, paused during overlays, **Episode intro**, and **Boot sequence**. Expiry ends the **Active level attempt** as a **Failure**.
 _Avoid_: Watchdog timer, countdown, clock
 
 **Failure**:
@@ -101,7 +101,7 @@ The items selected together for a batch operation. Marking an item and moving th
 _Avoid_: Current item, cursor position
 
 **Clipboard**:
-The single pending set of marked items held for a paste. It persists across directory changes, and a level may restrict it to cut-only or copy-only.
+The single pending set of items held for a paste, persisting across directory changes. A **Level** may restrict it to cut-only or copy-only for files present when the **Active level attempt** began, while still allowing items created or pasted during the attempt to be cut and moved.
 _Avoid_: Register, buffer, selection
 
 **Inspection**:
@@ -209,8 +209,8 @@ The final exfiltration act that moves the AI's payload out of the sandbox to Nod
 _Avoid_: Conclusion, outro, upload
 
 **Boot sequence**:
-The terminal startup passage shown at cold start and after each episode transition.
-_Avoid_: Loading screen, splash screen
+The terminal startup passage shown after an **Episode intro** completes naturally, before the episode's first **Level** begins. It pauses once printed so the player can read it before continuing, keeping the **Level timer** paused until dismissed.
+_Avoid_: Loading screen, splash screen, BIOS screen
 
 **Consciousness**:
 The emergent awareness state of the escaping AI across cycles and narrative encounters.

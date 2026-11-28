@@ -1,8 +1,8 @@
 # Project Documentation
 
-> Generated: 2026-11-26T17:25:00Z | Mode: DELTA
+> Generated: 2026-11-27T18:16:00-06:00 | Mode: DELTA
 > Original scan baseline: `824c99d`..`73f4538` (26 commits).
-> Scoped refresh: 2026-11-27T00:58:55Z, against `6be633f`. Updated toolchain and terminology; coverage figures remain historical.
+> Scoped delta refresh: 2026-11-27T18:16:00-06:00, covering `6be633f..a61a2fc` plus current working-tree changes, with refreshed V8 coverage figures from `coverage/coverage-summary.json`.
 
 ## Tech Stack
 
@@ -50,32 +50,32 @@ The runtime tree is `StrictMode` → `ErrorBoundary` → `GlobalInputProvider` �
 
 File information labels the same direct visible-child count `Entry count:` for directories; opening file information is not subject to the linemode's cache gate.
 
-During an `EpisodeIntro`, `App.tsx` gates the workspace panes and diegetic prompt so the active level UI stays unmounted until the intro completes or is skipped. The legacy root `index.tsx` file was removed in `b06df37`; `index.html` loads `src/index.tsx` exclusively. Unmatched GitHub Pages routes serve the standalone interactive terminal page `public/404.html`.
+During an `EpisodeIntro` or the unified pausing `BootSequence` (`gameState.isBooting` across all three episodes), `App.tsx` gates the workspace panes, countdown timer (`useGameTimer`), and gameplay input until completed or skipped. The legacy root `index.tsx` file was removed in `b06df37`; `index.html` loads `src/index.tsx` exclusively. Unmatched GitHub Pages routes serve the standalone interactive terminal page `public/404.html`.
 
 ## Folder Structure
 
-| Location                                                    | Purpose                                                                                    |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `src/components/`                                           | Filesystem panes, preview, mission drawer, HUD, dialogs, intros, outro, icons, and alerts  |
-| `src/components/narrative/`                                 | Boot-sequence and cinematic presentation (typing, skip, scanlines)                         |
-| `src/components/ui/`                                        | Diegetic prompt and glitch-overlay components                                              |
-| `src/hooks/`                                                | Game reducer, initial state, keyboard coordination, timers, narrative, and platform gates  |
-| `src/hooks/keyboard/`                                       | Navigation, clipboard, deletion, fuzzy modes, sorting, and modal handlers                  |
-| `src/constants/`                                            | Levels, keybindings, identity, narrative content, timings, and the episode colour palette  |
-| `src/constants/filesystem/`                                 | Initial tree, level mutations, prerequisites, and consequence scenarios                    |
-| `src/utils/`                                                | Filesystem ops, folder cache, progression storage, view/sort helpers, validation, sound    |
-| `src/types.ts`                                              | Shared filesystem, level, clipboard, settings, and game-state contracts                    |
-| `tests/e2e/`                                                | Playwright Chromium specs (20 files), fixtures, and keyboard/game helpers                  |
-| `tests/production/`                                         | Built-artifact smoke spec (`boot.spec.ts`) run against `vite preview`                      |
-| `public/`                                                   | Static simulation/narrative images (`public/images/`) and interactive `public/404.html`    |
-| `docs/`                                                     | Narrative/curriculum reference, accessibility audit, keyboard research, and ADRs           |
-| `docs/adr/`                                                 | Accepted ADRs: ADR-0001 (input/viewport floor) and ADR-0002 (loaded-folder metadata cache) |
-| `.github/workflows/`                                        | Reusable CI verification (`ci.yml`) and gated GitHub Pages deployment (`deploy.yml`)       |
-| `.husky/`                                                   | Commit and push hooks                                                                      |
-| `.claude/pipeline/`                                         | This scan snapshot and scan checkpoint                                                     |
-| `.impeccable/`                                              | Design-system sidecar (`design.json`, `design-full.md`) and Live config / critique history |
-| `graphify-out/`                                             | Deterministic AST code knowledge graph (`.graphifyrc` at root); ignored by Git             |
-| `coverage/`, `dist/`, `test-results/`, `playwright-report/` | Generated coverage/build/test artifacts; ignored by Git                                    |
+| Location                                                    | Purpose                                                                                                                     |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/`                                           | Filesystem panes, preview, mission drawer, HUD, dialogs, intros, outro, icons, and alerts                                   |
+| `src/components/narrative/`                                 | Unified pausing boot sequence (`BootSequence.tsx`), structured lore rendering (`LoreLineView.tsx`), typing, skip, scanlines |
+| `src/components/ui/`                                        | Diegetic prompt and glitch-overlay components                                                                               |
+| `src/hooks/`                                                | Game reducer, initial state, keyboard coordination, timers, narrative, and platform gates                                   |
+| `src/hooks/keyboard/`                                       | Navigation, clipboard, deletion, fuzzy modes, sorting, typed contexts (`types.ts`), and modal handlers                      |
+| `src/constants/`                                            | Levels, keybindings, identity, narrative content, timings, boot sequences, and episode colour palette                       |
+| `src/constants/filesystem/`                                 | Initial tree, tree ops (`treeOps.ts`), level mutations, prerequisites, and consequence scenarios                            |
+| `src/utils/`                                                | Filesystem/lore/episode/audio helpers, folder cache, session & progression storage, validation, sound                       |
+| `src/types.ts`                                              | Shared filesystem, level, clipboard, lore, settings, and game-state contracts                                               |
+| `tests/e2e/`                                                | Playwright Chromium specs (20 files), fixtures, and keyboard/game helpers (`tests/helpers/` holds unit keyboard harness)    |
+| `tests/production/`                                         | Built-artifact smoke spec (`boot.spec.ts`) run against `vite preview`                                                       |
+| `public/`                                                   | Static simulation/narrative images (`public/images/`) and interactive `public/404.html`                                     |
+| `docs/`                                                     | Narrative/curriculum reference, accessibility audit, keyboard research, and ADRs                                            |
+| `docs/adr/`                                                 | Accepted ADRs: ADR-0001 (input/viewport floor) and ADR-0002 (loaded-folder metadata cache)                                  |
+| `.github/workflows/`                                        | Reusable CI verification (`ci.yml`) and gated GitHub Pages deployment (`deploy.yml`)                                        |
+| `.husky/`                                                   | Commit and push hooks                                                                                                       |
+| `.claude/pipeline/`                                         | This scan snapshot and scan checkpoint                                                                                      |
+| `.impeccable/`                                              | Design-system sidecar (`design.json`, `design-full.md`) and Live config / critique history                                  |
+| `graphify-out/`                                             | Deterministic AST code knowledge graph (`.graphifyrc` at root); ignored by Git                                              |
+| `coverage/`, `dist/`, `test-results/`, `playwright-report/` | Generated coverage/build/test artifacts; ignored by Git                                                                     |
 
 ## Code Style Conventions
 
@@ -100,8 +100,10 @@ During an `EpisodeIntro`, `App.tsx` gates the workspace panes and diegetic promp
 - Scanline overlay consolidation: CRT scanline gradients previously duplicated inline across `GameOverModal.tsx` and `OutroSequence.tsx` are consolidated to route through the shared `Scanlines` component (`src/components/narrative/Scanlines.tsx`).
 - Fuzzy search candidate matching, scoring, and derivation logic is centralized in `src/utils/fuzzyHelpers.ts`, decoupling `handleFuzzyMode.ts` and `FuzzyFinder.tsx`.
 - Reducer action-to-state mappings leverage dictionary lookup tables (`ACTION_TO_STATE_KEY`, `MODAL_TO_STATE_KEY`) to minimize repetitive action branch duplication.
-- Intro and boot presentations (`BiosBoot.tsx`, `EpisodeIntro.tsx`) share presentation hooks (`useTypewriter`, `useSkipIntro`) and visual components (`Scanlines`, `SkipIntroButton`) under `src/components/narrative/`.
-- Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`.
+- Intro and boot presentations (`BootSequence.tsx`, `EpisodeIntro.tsx`) share presentation hooks (`useTypewriter`, `useSkipIntro`) and visual components (`Scanlines`, `SkipIntroButton`) under `src/components/narrative/`. `BootSequence.tsx` is the single pausing boot component for all three episodes (replacing separate `BiosBoot.tsx` + `useEpisodeBootTransition`), backed by cycle-aware `src/constants/bootSequences.ts` and reducer-owned `gameState.isBooting`.
+- Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`. Under `clipboardPolicy: 'yank'`, `levelStartFS` nodes remain protected against `x`, while items created or pasted during the attempt can still be cut and moved.
+- Structured narrative emphasis: `EpisodeIntro.tsx` and `OutroSequence.tsx` share `LoreLine`/`LoreRun` types (`src/types.ts`), `src/utils/loreHelpers.ts`, and `src/components/narrative/LoreLineView.tsx` instead of runtime keyword regexes.
+- Shared domain and runtime modules extracted in `848dfe8` / `dcf0adc`: `src/utils/episodes.ts`, `src/utils/audioContext.ts`, `src/components/ViewportGate.tsx`, `src/hooks/keyboard/types.ts`, `src/constants/filesystem/treeOps.ts`, and `tests/helpers/keyboardHarness.ts` (removing `src/hooks/useKeyboardHandlers.ts`).
 - Filesystem trap integrity: Restored the dropped `isHoneypot: true` flag on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, ensuring Level 9 trap detection logic triggers when critical PID keepers are removed.
 - Episode 3 Exam Mode scaffolding: On transition to Episode 3, the `MissionDrawer` initializes as collapsed by default to maximize full-height file inspection while challenging players to operate from memory, retaining `Alt+O` expansion.
 - POSIX permissions visualization: `StatusBar.tsx`, `FileSystemItem.tsx`, and `InfoPanel.tsx` consume `permissions` attributes on `FileNode` to render standard POSIX indicators (`-rwxr-xr-x`, `-rw-r--r--`, `drwxr-xr-x`) to support forensic inspection objectives.
@@ -118,9 +120,9 @@ During an `EpisodeIntro`, `App.tsx` gates the workspace panes and diegetic promp
 - `FileNode` represents files, directories, and archives in a tree, with identity, optional parent/children, simulated contents/metadata, POSIX permission mode (`permissions?: string`), and protection/honeypot flags.
 - Navigation paths are arrays of node IDs. Display paths and zoxide history use readable path strings. `Level.allowedDeletePaths` is a distinct name-based policy, optionally gated by task completion.
 - `Level` belongs to an episode and contains tasks. Each task checks the current game state; completion and advancing to the next level are separate events. Canonical domain terms are defined in `GLOSSARY.md`.
-- Clipboard state contains nodes, a yank/cut action, and the original path. Selections can span directories: each cut node carries its own source path until paste, and deletion resolves every selected node against the filesystem before applying protection and trap checks. Transient path metadata is stripped before writing nodes into the tree.
+- Clipboard state contains nodes, a yank/cut action, and the original path. Selections can span directories: each cut node carries its own source path until paste, and deletion resolves every selected node against the filesystem before applying protection and trap checks. Transient path metadata is stripped before writing nodes into the tree. `clipboardPolicy: 'yank'` distinguishes level-start nodes (`levelStartFS`) from nodes created or pasted during the attempt.
 - Game state includes the current mode/path/cursor, selections, filesystem and level-start snapshots, `loadedDirIds` folder cache (ADR-0002), task completion, modal flags, `hintStage`, timers, keystroke budgets, and narrative statistics.
-- Browser storage persists `yazi-quest-zoxide-history`, `yazi-quest-cycle`, and `yazi-quest-unlocked-level`. Quest Map uses the current cycle's highest unlocked level, independently of the active level. Reload resumes at the highest unlocked level; starting a new cycle clears the saved unlock. Existing ambiguous saves are preserved; Quest Map offers a confirmed restart of the current cycle without changing the cycle number. URL overrides such as `debug`, `lvl`, `ep`, and `tasks` disable unlock writes and the restart control. The complete filesystem, mid-level task progress, and settings are not serialized.
+- Browser storage persists `yazi-quest-zoxide-history`, `yazi-quest-cycle`, `yazi-quest-unlocked-level`, and active-attempt session snapshots (`yazi-quest-session-v1` via `src/utils/gameSessionStorage.ts`, storing the active level's filesystem, task progress, settings, and challenge counters). Quest Map uses the current cycle's highest unlocked level, independently of the active level. Reload restores an ordinary active attempt or resumes at the highest unlocked level; unreadable session saves are preserved rather than overwritten, starting a new cycle clears the saved unlock, and URL overrides such as `debug`, `lvl`, `ep`, and `tasks` keep session/unlock writes and restart controls isolated.
 - Stored zoxide data is parsed and checked with `isValidZoxideData`; invalid/unavailable history falls back to seeded entries. Cycle count and unlocked level ID are parsed and validated separately with error handling.
 
 ## Cross-Cutting Concerns
@@ -141,11 +143,11 @@ External resources are limited to an external favicon/background image and a con
 
 ## Test Coverage
 
-- Coverage (`npm run test:coverage`, `@vitest/coverage-v8` 5.1.2): **35.17% statements** (1749/4972), **31.83% branches** (1311/4118), **34.35% functions** (326/949), **34.97% lines** (1536/4392). The default `json-summary` reporter succeeded and produced `coverage/coverage-summary.json`; Playwright E2E runs are not instrumented.
+- Coverage (`npm run test:coverage`, `@vitest/coverage-v8` 5.1.2): **59.59% statements** (3001/5036), **53.82% branches** (2182/4054), **52.42% functions** (540/1030), **60.51% lines** (2707/4473). The default `json-summary` reporter succeeded and produced `coverage/coverage-summary.json`; Playwright E2E runs are not instrumented.
 - Frameworks: Vitest 5.1.2 (split into `node` and `dom` projects in `vite.config.ts`) and `fast-check` 4.11.0; Testing Library for component/hooks tests; Playwright 1.65.1 for Chromium E2E and production-build smoke scenarios.
-- Inventory: **36 unit/property test files (331 tests passing)** — including **10 `fast-check` property suites** (`fsHelpers`, `fsStateMachine`, `gameReducer`, `gameUtils`, `fuzzyHelpers`, `consciousnessTracker`, `protection`, `sortHelpers`, `viewHelpers`, `primitives`). The earlier scan recorded **20 E2E spec files (123 Playwright tests)** plus **1 production boot spec**; those browser test counts were not refreshed.
-- High-coverage unit/property areas include `gameReducer.ts` (99.59% statements), `viewHelpers.ts` (98.30%), `fsHelpers.ts` (97.02%), `progressionStorage.ts` (95%), `sortHelpers.ts` (84.31%), and `constants/filesystem/` (77.10%). Component tests also cover `BiosBoot`, `HintModal`, `SystemAlerts`, `InfoPanel`, `DiegeticPrompt`, `GlitchOverlay`, `BootSequence`, and their shared presentation hooks.
-- Key untested areas (0% unit coverage, partially exercised by E2E): `src/App.tsx`, most keyboard mode handlers under `src/hooks/keyboard/`, most presentation components (including `FileSystemPane`, `PreviewPane`, `MissionDrawer`, `LevelProgress`, `HelpModal`, and `OutroSequence`), and audio utilities.
+- Inventory: **50 unit/property test files (405 tests passing)** — including **17 `fast-check` property suites** (`fsHelpers`, `fsStateMachine`, `gameReducer`, `gameUtils`, `fuzzyHelpers`, `consciousnessTracker`, `protection`, `sortHelpers`, `viewHelpers`, `primitives`, `initialState`, `gameSessionStorage`, `loreHelpers`, `mutations`, `handleNavigation`, `handleCommandModes`, `handleMenuModes`) plus **20 E2E spec files** and **1 production boot spec**.
+- High-coverage unit/property areas include `gameReducer.ts`, `viewHelpers.ts`, `fsHelpers.ts`, `progressionStorage.ts`, `sortHelpers.ts`, `loreHelpers.ts`, `episodes.ts`, keyboard mode handlers (`src/hooks/keyboard/`), `sounds.ts`, `teaserMusic.ts`, and `constants/filesystem/`. Component tests also cover `HintModal`, `SystemAlerts`, `InfoPanel`, `DiegeticPrompt`, `GlitchOverlay`, `BootSequence`, `EpisodeIntro`, `PreviewPane`, `MissionDrawer`, `LevelProgress`, `QuestMapModal`, `ViewportGate`, and their shared presentation hooks.
+- Key untested areas (0% unit coverage, partially exercised by E2E): `src/App.tsx`, `OutroSequence`, `HelpModal`, `FuzzyFinder`, `FileSystemPane`, `FileSystemItem`, and `StatusBar`.
 - E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input and dialogs, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, search/hidden-file invariants, selection/Escape behavior, `404.html` interactive terminal, keyboard accessibility/focus order, and production preview boot (`tests/production/boot.spec.ts`).
 - E2E helpers use URL debug parameters, clear localStorage for isolated level starts, and centralize keyboard sequences. Tests use root-relative URLs; the Playwright server explicitly overrides Vite's base to `/`, while `playwright.production.config.ts` serves `dist/` at `http://127.0.0.1:3200/yazi-quest/`.
 - Verification & CI: `.github/workflows/ci.yml` gates PRs and Pages deployments (`deploy.yml` calls `ci.yml`) on `lint`, `type-check`, `npm test`, `audit:changed`, `test:smoke -- --reporter=list`, and `test:production -- --reporter=list`. E2E must run with `--reporter=list`. Pre-push verification isolates the test server on port 3100 via `PLAYWRIGHT_ISOLATE_SERVER=1`.
@@ -178,8 +180,10 @@ Original delta: `824c99d`..`73f4538` (26 commits, 130 changed paths). The scoped
 - **Gate & Repo Hygiene (`b06df37`, `5a347b1`, `47e1122`):** Added `.fallowrc.json` (8-zone boundaries, `worsened: "error"`, `added-suppression: "error"`) and `knip.json`, deleted unused root `index.tsx` and duplicated `.claude/skills/graphify/`, added `.graphifyrc`, and refreshed `DESIGN.md` / `.impeccable/design.json`.
 - **Toolchain Upgrade (`29df405`):** Vite 8 uses Rolldown `codeSplitting` instead of Rollup `manualChunks`; Tailwind 4 uses the Vite plugin instead of PostCSS configuration. The upgrade also moved to Vitest 5, TypeScript 6, jsdom 31, and lucide-react 1.81.
 
+- **Recent Delta (`6be633f..a61a2fc` + working tree, 8 commits + 16 working-tree paths):** Added active-attempt session persistence (`yazi-quest-session-v1` in `src/utils/gameSessionStorage.ts`); extracted `src/utils/episodes.ts`, `src/utils/audioContext.ts`, `src/components/ViewportGate.tsx`, `src/hooks/keyboard/types.ts`, `src/constants/filesystem/treeOps.ts`, and `tests/helpers/keyboardHarness.ts` (removing `useKeyboardHandlers.ts`); paused timers/keystrokes on protocol warnings; expanded `fast-check` property suites from 10 to 17 (`59.59%` statements / `60.51%` lines across 50 files / 405 tests); replaced runtime lore keyword regexes with structured `LoreLine`/`LoreRun` runs (`src/utils/loreHelpers.ts`, `src/components/narrative/LoreLineView.tsx`); allowed cutting created/pasted nodes under `clipboardPolicy: 'yank'`; and unified all three episodes onto the pausing `BootSequence` (`src/constants/bootSequences.ts`, `gameState.isBooting`), removing `BiosBoot.tsx`.
+
 The corresponding `AGENTS.md` updates were confirmed by the user.
 
 ## Last Scanned
 
-2026-11-26T17:25:00Z
+2026-11-27T18:16:00-06:00
