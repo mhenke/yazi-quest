@@ -104,6 +104,10 @@ _Avoid_: Current item, cursor position
 The single pending set of items held for a paste, persisting across directory changes. A **Level** may restrict it to cut-only or copy-only for files present when the **Active level attempt** began, while still allowing items created or pasted during the attempt to be cut and moved.
 _Avoid_: Register, buffer, selection
 
+**Overwrite paste**:
+Pasting from the **Clipboard** by replacing a same-named item in the destination directory instead of keeping both under a conflict-suffixed name.
+_Avoid_: Force paste, force overwrite, destructive paste
+
 **Inspection**:
 Viewing an item's file information, distinct from reading its contents in the preview.
 _Avoid_: Marking, previewing
@@ -123,6 +127,10 @@ _Avoid_: Location indicator, breadcrumb, status bar
 **Permission Mode**:
 The standard POSIX access representation (`drwxr-xr-x`, `-rwxr-xr-x`, `-rw-r--r--`) indicating file type and executable privileges, used to distinguish live daemons and directory structures from passive data or honeypots.
 _Avoid_: File mode, chmod, access flags, permission bits
+
+**Protected item**:
+A file or directory guarded by the **Sandbox** against deletion or renaming during an **Active level attempt**. Its rename lock holds only while it keeps its starting name from the beginning of the attempt; a conflict-renamed or duplicated copy can be renamed back into place, while a moved original still cannot be deleted.
+_Avoid_: Immutable file, locked file, system file, critical anchor
 
 **Critical anchor**:
 A file that TRACE CLEANUP requires the player to preserve. Being a critical anchor does not say what happens if the player tries to delete it.

@@ -1,8 +1,8 @@
 # Project Documentation
 
-> Generated: 2026-11-27T18:16:00-06:00 | Mode: DELTA
+> Generated: 2026-11-27T20:23:00-06:00 | Mode: DELTA
 > Original scan baseline: `824c99d`..`73f4538` (26 commits).
-> Scoped delta refresh: 2026-11-27T18:16:00-06:00, covering `6be633f..a61a2fc` plus current working-tree changes, with refreshed V8 coverage figures from `coverage/coverage-summary.json`.
+> Scoped delta refresh: 2026-11-27T20:23:00-06:00, covering `f15e48d` plus 11 working-tree changes, with refreshed V8 coverage figures from `coverage/coverage-summary.json`.
 
 ## Tech Stack
 
@@ -101,7 +101,7 @@ During an `EpisodeIntro` or the unified pausing `BootSequence` (`gameState.isBoo
 - Fuzzy search candidate matching, scoring, and derivation logic is centralized in `src/utils/fuzzyHelpers.ts`, decoupling `handleFuzzyMode.ts` and `FuzzyFinder.tsx`.
 - Reducer action-to-state mappings leverage dictionary lookup tables (`ACTION_TO_STATE_KEY`, `MODAL_TO_STATE_KEY`) to minimize repetitive action branch duplication.
 - Intro and boot presentations (`BootSequence.tsx`, `EpisodeIntro.tsx`) share presentation hooks (`useTypewriter`, `useSkipIntro`) and visual components (`Scanlines`, `SkipIntroButton`) under `src/components/narrative/`. `BootSequence.tsx` is the single pausing boot component for all three episodes (replacing separate `BiosBoot.tsx` + `useEpisodeBootTransition`), backed by cycle-aware `src/constants/bootSequences.ts` and reducer-owned `gameState.isBooting`.
-- Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`. Under `clipboardPolicy: 'yank'`, `levelStartFS` nodes remain protected against `x`, while items created or pasted during the attempt can still be cut and moved.
+- Clipboard collision detection, honeypot safety, and node cleanup are unified in `src/hooks/keyboard/handleClipboard.ts`. Under `clipboardPolicy: 'yank'`, `levelStartFS` nodes remain protected against `x`, while items created or pasted during the attempt can still be cut and moved. `isProtected` (`src/utils/fsHelpers.ts`) accepts optional `levelStartFS` (via `isCanonicalLevelStartName` and extracted `checkLevel14DeleteProtection`) so protected nodes remain immutable on rename only while matching their level-start `id` and `name`, leaving delete/cut locks intact; `P` (`Paste (Overwrite)`) is registered in `KEYBINDINGS`, `HELP_KEYBINDINGS`, `executePaste` (`dispatchPasteSuccess`), and Episode 3 `getActionIntensity`.
 - Structured narrative emphasis: `EpisodeIntro.tsx` and `OutroSequence.tsx` share `LoreLine`/`LoreRun` types (`src/types.ts`), `src/utils/loreHelpers.ts`, and `src/components/narrative/LoreLineView.tsx` instead of runtime keyword regexes.
 - Shared domain and runtime modules extracted in `848dfe8` / `dcf0adc`: `src/utils/episodes.ts`, `src/utils/audioContext.ts`, `src/components/ViewportGate.tsx`, `src/hooks/keyboard/types.ts`, `src/constants/filesystem/treeOps.ts`, and `tests/helpers/keyboardHarness.ts` (removing `src/hooks/useKeyboardHandlers.ts`).
 - Filesystem trap integrity: Restored the dropped `isHoneypot: true` flag on `system_monitor.pid` (`tmp-honeypot-1`) in `src/constants/filesystem/initial.ts`, ensuring Level 9 trap detection logic triggers when critical PID keepers are removed.
@@ -143,9 +143,9 @@ External resources are limited to an external favicon/background image and a con
 
 ## Test Coverage
 
-- Coverage (`npm run test:coverage`, `@vitest/coverage-v8` 5.1.2): **59.59% statements** (3001/5036), **53.82% branches** (2182/4054), **52.42% functions** (540/1030), **60.51% lines** (2707/4473). The default `json-summary` reporter succeeded and produced `coverage/coverage-summary.json`; Playwright E2E runs are not instrumented.
+- Coverage (`npm run test:coverage`, `@vitest/coverage-v8` 5.1.2): **59.87% statements** (3020/5044), **53.83% branches** (2188/4064), **53.28% functions** (551/1034), **60.80% lines** (2723/4478). The default `json-summary` reporter succeeded and produced `coverage/coverage-summary.json`; Playwright E2E runs are not instrumented.
 - Frameworks: Vitest 5.1.2 (split into `node` and `dom` projects in `vite.config.ts`) and `fast-check` 4.11.0; Testing Library for component/hooks tests; Playwright 1.65.1 for Chromium E2E and production-build smoke scenarios.
-- Inventory: **50 unit/property test files (405 tests passing)** — including **17 `fast-check` property suites** (`fsHelpers`, `fsStateMachine`, `gameReducer`, `gameUtils`, `fuzzyHelpers`, `consciousnessTracker`, `protection`, `sortHelpers`, `viewHelpers`, `primitives`, `initialState`, `gameSessionStorage`, `loreHelpers`, `mutations`, `handleNavigation`, `handleCommandModes`, `handleMenuModes`) plus **20 E2E spec files** and **1 production boot spec**.
+- Inventory: **50 unit/property test files (408 tests passing)** — including **17 `fast-check` property suites** (`fsHelpers`, `fsStateMachine`, `gameReducer`, `gameUtils`, `fuzzyHelpers`, `consciousnessTracker`, `protection`, `sortHelpers`, `viewHelpers`, `primitives`, `initialState`, `gameSessionStorage`, `loreHelpers`, `mutations`, `handleNavigation`, `handleCommandModes`, `handleMenuModes`) plus **20 E2E spec files** and **1 production boot spec**.
 - High-coverage unit/property areas include `gameReducer.ts`, `viewHelpers.ts`, `fsHelpers.ts`, `progressionStorage.ts`, `sortHelpers.ts`, `loreHelpers.ts`, `episodes.ts`, keyboard mode handlers (`src/hooks/keyboard/`), `sounds.ts`, `teaserMusic.ts`, and `constants/filesystem/`. Component tests also cover `HintModal`, `SystemAlerts`, `InfoPanel`, `DiegeticPrompt`, `GlitchOverlay`, `BootSequence`, `EpisodeIntro`, `PreviewPane`, `MissionDrawer`, `LevelProgress`, `QuestMapModal`, `ViewportGate`, and their shared presentation hooks.
 - Key untested areas (0% unit coverage, partially exercised by E2E): `src/App.tsx`, `OutroSequence`, `HelpModal`, `FuzzyFinder`, `FileSystemPane`, `FileSystemItem`, and `StatusBar`.
 - E2E scenarios: all three episodes and level advancement, intro/skip pathways, modal input and dialogs, clipboard restrictions, file creation, honeypots/protected assets, failure limits, persistence, protocol violations, search/hidden-file invariants, selection/Escape behavior, `404.html` interactive terminal, keyboard accessibility/focus order, and production preview boot (`tests/production/boot.spec.ts`).
@@ -182,8 +182,10 @@ Original delta: `824c99d`..`73f4538` (26 commits, 130 changed paths). The scoped
 
 - **Recent Delta (`6be633f..a61a2fc` + working tree, 8 commits + 16 working-tree paths):** Added active-attempt session persistence (`yazi-quest-session-v1` in `src/utils/gameSessionStorage.ts`); extracted `src/utils/episodes.ts`, `src/utils/audioContext.ts`, `src/components/ViewportGate.tsx`, `src/hooks/keyboard/types.ts`, `src/constants/filesystem/treeOps.ts`, and `tests/helpers/keyboardHarness.ts` (removing `useKeyboardHandlers.ts`); paused timers/keystrokes on protocol warnings; expanded `fast-check` property suites from 10 to 17 (`59.59%` statements / `60.51%` lines across 50 files / 405 tests); replaced runtime lore keyword regexes with structured `LoreLine`/`LoreRun` runs (`src/utils/loreHelpers.ts`, `src/components/narrative/LoreLineView.tsx`); allowed cutting created/pasted nodes under `clipboardPolicy: 'yank'`; and unified all three episodes onto the pausing `BootSequence` (`src/constants/bootSequences.ts`, `gameState.isBooting`), removing `BiosBoot.tsx`.
 
+- **Recent Delta (`f15e48d` + current 11 working-tree files):** Scoped `isProtected` rename immutability to canonical `levelStartFS` entries (`src/utils/fsHelpers.ts`), added first-class `P` (`Paste (Overwrite)`) keybinding/intensity/help wiring (`src/constants/keybindings.ts`, `src/hooks/keyboard/handleClipboard.ts`, `src/hooks/keyboard/utils.ts`), updated `docs/LEVEL.md` and `docs/LEARNING_DESIGN.md` for Level 12 manual recovery, and added unit/property/E2E coverage (`src/utils/fsHelpers.test.ts`, `src/utils/protection.property.test.ts`, `src/utils/gameUtils.property.test.ts`, `src/hooks/keyboard/handleClipboard.test.ts`, `tests/e2e/episode3.spec.ts`), raising suite totals to 50 files / 408 tests (`59.87%` statements / `60.80%` lines).
+
 The corresponding `AGENTS.md` updates were confirmed by the user.
 
 ## Last Scanned
 
-2026-11-27T18:16:00-06:00
+2026-11-27T20:23:00-06:00

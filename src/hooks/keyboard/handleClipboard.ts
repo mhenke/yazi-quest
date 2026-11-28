@@ -197,6 +197,21 @@ const applyPasteNodes = (
   return { newFs };
 };
 
+const dispatchPasteSuccess = (
+  clipboard: NonNullable<GameState['clipboard']>,
+  dispatch: React.Dispatch<Action>,
+  showNotification: (message: string, duration?: number) => void,
+  force: boolean
+): void => {
+  const narrativeKey = force ? 'P' : 'p';
+  const actionMsg = getNarrativeAction(narrativeKey) || `Deployed ${clipboard.nodes.length} assets`;
+  showNotification(force ? `(FORCED) ${actionMsg}` : actionMsg, 4000);
+  dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
+  if (force) {
+    dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
+  }
+};
+
 /**
  * Executes paste operation (standard paste 'p' or overwrite paste 'Shift+P').
  */
@@ -230,13 +245,7 @@ const executePaste = (
       );
     } else {
       dispatch({ type: 'PASTE', newFs, action: gameState.clipboard.action });
-      const actionMsg =
-        getNarrativeAction('p') || `Deployed ${gameState.clipboard.nodes.length} assets`;
-      showNotification(force ? `(FORCED) ${actionMsg}` : actionMsg, 4000);
-      dispatch({ type: 'MARK_ACTION_USED', actionId: 'P' });
-      if (force) {
-        dispatch({ type: 'MARK_ACTION_USED', actionId: 'ShiftP' });
-      }
+      dispatchPasteSuccess(gameState.clipboard, dispatch, showNotification, force);
     }
   } catch (err) {
     console.error(err);
@@ -427,7 +436,9 @@ export const handleClipboardKeyDown = (e: KeyInput, ctx: NormalModeContext): boo
           gameState.currentPath,
           currentItem,
           currentLevel,
-          'rename'
+          'rename',
+          gameState.completedTaskIds,
+          gameState.levelStartFS
         );
         if (protection) {
           showNotification(`🔒 PROTECTED: ${protection}`, 4000);

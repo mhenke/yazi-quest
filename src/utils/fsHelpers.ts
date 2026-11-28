@@ -428,69 +428,76 @@ export function addNodeWithConflictResolution(
   return addNode(newRoot, parentPath, newNode);
 }
 
+const findNodeByNamePath = (rootNode: FileNode, names: string[]): FileNode | undefined => {
+  let current: FileNode | undefined = rootNode;
+  for (const n of names) {
+    if (!current || !current.children) return undefined;
+    current = current.children.find(
+      (c) => c.name === n && (c.type === 'dir' || c.type === 'archive')
+    );
+    if (!current) return undefined;
+  }
+  return current;
+};
+
+const subtreeContainsId = (rootNode: FileNode, targetId: string): boolean => {
+  const stack: FileNode[] = [rootNode];
+  while (stack.length) {
+    const n = stack.pop()!;
+    if (n.id === targetId) return true;
+    if (n.children) stack.push(...n.children);
+  }
+  return false;
+};
+
+const checkLevel14DeleteProtection = (
+  root: FileNode,
+  node: FileNode,
+  level: Level,
+  completedTaskIds?: Record<number, string[]>
+): { decided: boolean; reason: string | null } => {
+  if (level.id !== 14) return { decided: false, reason: null };
+
+  for (const entry of level.allowedDeletePaths ?? []) {
+    const targetRoot = findNodeByNamePath(root, entry.path);
+    if (!targetRoot || !subtreeContainsId(targetRoot, node.id)) continue;
+
+    if (entry.requiresTaskId) {
+      const levelTaskIds = completedTaskIds?.[level.id] || [];
+      if (!levelTaskIds.includes(entry.requiresTaskId)) {
+        return { decided: true, reason: `PROTECTED: ${node.name} cannot be purged.` };
+      }
+    }
+    return { decided: true, reason: null };
+  }
+
+  // Broad rule for Level 14: allow deleting anything directly inside the guest home
+  // (except the guest home itself, though that's usually not listed)
+  if (node.parentId === 'guest') {
+    return { decided: true, reason: null };
+  }
+  return { decided: false, reason: null };
+};
+
+const isCanonicalLevelStartName = (levelStartFS: FileNode | undefined, node: FileNode): boolean => {
+  if (!levelStartFS) return true;
+  const startNode = getNodeById(levelStartFS, node.id);
+  return Boolean(startNode && startNode.name === node.name);
+};
+
 export function isProtected(
   root: FileNode,
   currentPath: string[] | undefined,
   node: FileNode,
   level: Level,
   action?: string,
-  completedTaskIds?: Record<number, string[]>
+  completedTaskIds?: Record<number, string[]>,
+  levelStartFS?: FileNode
 ): string | null {
   // Allow Level 14 to delete content under /home/guest (game objective)
-  if (level.id === 14 && action === 'delete') {
-    // Fallback to designated allowed paths policy (check explicit entries first)
-    const allowed = level.allowedDeletePaths;
-    const getNodeByNamePath = (rootNode: FileNode, names: string[]): FileNode | undefined => {
-      let current: FileNode | undefined = rootNode;
-      for (const n of names) {
-        if (!current || !current.children) return undefined;
-        current = current.children.find(
-          (c) => c.name === n && (c.type === 'dir' || c.type === 'archive')
-        );
-        if (!current) return undefined;
-      }
-      return current;
-    };
-
-    if (allowed) {
-      for (const entry of allowed) {
-        const namePath = entry.path;
-        const requiredTask = entry.requiresTaskId;
-
-        const targetRoot = getNodeByNamePath(root, namePath);
-        if (!targetRoot) continue;
-
-        // If this allowed entry targets the node (or an ancestor), enforce requiresTaskId if present
-        const stack: FileNode[] = [targetRoot];
-        let matched = false;
-        while (stack.length) {
-          const n = stack.pop()!;
-          if (n.id === node.id) {
-            matched = true;
-            break;
-          }
-          if (n.children) stack.push(...n.children);
-        }
-
-        if (!matched) continue;
-
-        if (requiredTask) {
-          const levelTaskIds = completedTaskIds?.[level.id] || [];
-          if (!levelTaskIds.includes(requiredTask)) {
-            return `PROTECTED: ${node.name} cannot be purged.`;
-          }
-          return null;
-        }
-
-        return null;
-      }
-    }
-
-    // Broad rule for Level 14: allow deleting anything directly inside the guest home
-    // (except the guest home itself, though that's usually not listed)
-    if (node.parentId === 'guest') {
-      return null;
-    }
+  if (action === 'delete') {
+    const l14 = checkLevel14DeleteProtection(root, node, level, completedTaskIds);
+    if (l14.decided) return l14.reason;
   }
 
   // Allow Level 12 to cut systemd-core from workspace (game objective)
@@ -513,7 +520,9 @@ export function isProtected(
   // General node protection
   if (node.protected) {
     if (action === 'rename') {
-      return `PROTECTED: ${node.name} is immutable.`;
+      return isCanonicalLevelStartName(levelStartFS, node)
+        ? `PROTECTED: ${node.name} is immutable.`
+        : null;
     }
     if (action === 'enter' || action === 'jump' || action === 'info') {
       // workspace is quarantined until Episode II (Level 7+)

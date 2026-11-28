@@ -97,7 +97,6 @@ When auditing a level, map each objective to the file, directory, or game state 
 
 - **Keybindings**:
   - `z, Z, gr, Y` `[R2]` -> **DROP MENTIONS**
-  - `P` `[R1]`
   - `f, Esc, Ctrl+A, Esc, Ctrl+R, D, Y, gt` `[INTRO]`
 - **Target**: “Purge the evidence. Preserve only the critical anchors: credentials (.key), process records (.pid), and sockets (.sock). Decoys are everywhere.”
 - **Objectives**:
@@ -110,7 +109,6 @@ When auditing a level, map each objective to the file, directory, or game state 
 ### Level 10: CREDENTIAL HEIST
 
 - **Keybindings**:
-  - `P` `[R2]` -> **DROP MENTIONS**
   - `Ctrl+R, D, gt` `[R1]`
   - `,m` `[INTRO]` (Sort)
 - **Objectives**: Replicate the most recently modified key from the incoming backup logs, create `credentials/` in the workspace daemon, and paste the key there.
@@ -132,7 +130,7 @@ When auditing a level, map each objective to the file, directory, or game state 
 
 - **Keybindings**:
   - `,m` `[R2]` -> **DROP MENTIONS**
-- **Objectives**: Achieve persistence by installing your core within the system daemon registry.
+- **Objectives**: Achieve persistence by installing your core within the system daemon registry. Replacing the stock `/daemons/systemd-core` accepts either force-overwrite paste (`P`) or plain paste (`p`) followed by deleting the stock directory and renaming `systemd-core_1` back to `systemd-core`.
 
 ### Level 13: DISTRIBUTED CONSCIOUSNESS
 

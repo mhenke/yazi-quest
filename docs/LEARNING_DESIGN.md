@@ -132,13 +132,13 @@ _Goal: Bridge the gap between "knowing how" and "being fast"._
 
 _Goal: Synthesis and complex workflow execution._
 
-| Level   | Skill Introduced      | Why here?                                                    | Why not earlier?                                     |
-| :------ | :-------------------- | :----------------------------------------------------------- | :--------------------------------------------------- |
-| **L11** | Daemon reconnaissance | Distinguish legacy service records from modern traps.        | Builds on navigation, inspection, and selection.     |
-| **L12** | Daemon installation   | Move the selected daemon into the registry and clear traces. | Builds on overwrite and batch operations.            |
-| **L13** | Distributed keys      | Collect and reconcile node keys in a central relay.          | Combines search, selection, and file movement.       |
-| **L14** | Decoy Constraints     | Strategic order of operations (Create before destroy).       | Requires mastery of bulk creation/deletion (L2, L4). |
-| **L15** | Cumulative Mastery    | Final transmission after four prerequisite tasks.            | Combines earlier skills under a keystroke budget.    |
+| Level   | Skill Introduced      | Why here?                                                    | Why not earlier?                                                                                  |
+| :------ | :-------------------- | :----------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| **L11** | Daemon reconnaissance | Distinguish legacy service records from modern traps.        | Builds on navigation, inspection, and selection.                                                  |
+| **L12** | Daemon installation   | Move the selected daemon into the registry and clear traces. | Builds on overwrite (`P`) while also permitting manual conflict recovery (`p` + delete + rename). |
+| **L13** | Distributed keys      | Collect and reconcile node keys in a central relay.          | Combines search, selection, and file movement.                                                    |
+| **L14** | Decoy Constraints     | Strategic order of operations (Create before destroy).       | Requires mastery of bulk creation/deletion (L2, L4).                                              |
+| **L15** | Cumulative Mastery    | Final transmission after four prerequisite tasks.            | Combines earlier skills under a keystroke budget.                                                 |
 
 ---
 

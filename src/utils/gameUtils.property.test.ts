@@ -73,7 +73,7 @@ const NAV_INTENSITY_KEYS = new Set([
   'ArrowRight',
 ]);
 const ANALYSIS_INTENSITY_KEYS = new Set(['f', 's', '/']);
-const HIGH_INTENSITY_KEYS = new Set(['x', 'p', 'd', 'D', 'y']);
+const HIGH_INTENSITY_KEYS = new Set(['x', 'p', 'P', 'd', 'D', 'y']);
 const CTRL_HIGH_INTENSITY_KEYS = new Set(['a', 'x', 'v']);
 
 const ALL_KEYBINDING_KEYS = KEYBINDINGS.flatMap((b) => b.keys);

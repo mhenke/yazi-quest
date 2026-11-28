@@ -37,7 +37,7 @@ export const getActionIntensity = (key: string, ctrlKey = false): number => {
     return 3;
   }
   // Exfiltration/Destruction (High Noise)
-  if (['x', 'p', 'd', 'D', 'y'].includes(key) || (ctrlKey && ['a', 'x', 'v'].includes(key))) {
+  if (['x', 'p', 'P', 'd', 'D', 'y'].includes(key) || (ctrlKey && ['a', 'x', 'v'].includes(key))) {
     return 5;
   }
   // Default (Low)

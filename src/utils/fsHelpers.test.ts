@@ -547,6 +547,67 @@ describe('fsHelpers', () => {
       expect(isProtected(root, [], traceSys, level12, 'delete')).toBeNull();
       expect(isProtected(root, [], scanTmp, level12, 'delete')).toBeNull();
     });
+
+    it('uses levelStartFS to allow renaming conflict-renamed or created protected nodes while protecting untouched ones', () => {
+      const level12 = createMockLevel(12);
+      const originalCore: FileNode = {
+        id: 'systemd-core',
+        name: 'systemd-core',
+        type: 'dir',
+        protected: true,
+        children: [],
+      };
+      const startFs: FileNode = {
+        id: 'root',
+        name: 'root',
+        type: 'dir',
+        children: [{ id: 'workspace', name: 'workspace', type: 'dir', children: [originalCore] }],
+      };
+
+      // Untouched protected node matching levelStartFS id + name -> blocked on rename
+      expect(
+        isProtected(startFs, [], originalCore, level12, 'rename', undefined, startFs)
+      ).toContain('immutable');
+
+      // Conflict-renamed copy (same id, different name) -> allowed to rename
+      const renamedCore: FileNode = {
+        id: 'systemd-core',
+        name: 'systemd-core_1',
+        type: 'dir',
+        protected: true,
+        children: [],
+      };
+      expect(
+        isProtected(startFs, [], renamedCore, level12, 'rename', undefined, startFs)
+      ).toBeNull();
+
+      // Intermediate typo (same id, still not canonical name) -> still allowed to rename
+      const typoCore: FileNode = {
+        id: 'systemd-core',
+        name: 'system-core',
+        type: 'dir',
+        protected: true,
+        children: [],
+      };
+      expect(isProtected(startFs, [], typoCore, level12, 'rename', undefined, startFs)).toBeNull();
+
+      // Still protected against delete even when conflict-renamed
+      expect(
+        isProtected(startFs, [], renamedCore, level12, 'delete', undefined, startFs)
+      ).toContain('cannot be purged');
+
+      // Yank-pasted protected copy (id absent from levelStartFS) -> allowed to rename
+      const yankedCopy: FileNode = {
+        id: 'fresh-copy-id',
+        name: 'systemd-core',
+        type: 'dir',
+        protected: true,
+        children: [],
+      };
+      expect(
+        isProtected(startFs, [], yankedCopy, level12, 'rename', undefined, startFs)
+      ).toBeNull();
+    });
   });
 
   describe('resolveAndCreatePath', () => {

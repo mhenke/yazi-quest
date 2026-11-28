@@ -178,6 +178,11 @@ export const KEYBINDINGS = [
     narrativeDescription: ['Deploy Assets', 'Install Modules', 'Inject Presence'],
   },
   {
+    keys: ['P'],
+    description: 'Paste (Overwrite)',
+    narrativeDescription: ['Overwrite Assets', 'Force Deploy', 'Replace Target'],
+  },
+  {
     keys: ['Y', 'X'],
     description: 'Clear Clipboard',
     narrativeDescription: ['Wipe Clipboard', 'Purge Buffer', 'Clear Payload'],
@@ -339,6 +344,7 @@ export const HELP_KEYBINDINGS = [
     description: 'Yank selected (copy; originals remain)',
   },
   { group: 'Clipboard', keys: ['p'], description: 'Paste' },
+  { group: 'Clipboard', keys: ['P'], description: 'Paste (Overwrite)' },
   { group: 'Clipboard', keys: ['Y', 'X'], description: 'Clear Clipboard' },
   { group: 'Find & Jump', keys: ['f'], description: 'Filter Files' },
   { group: 'Find & Jump', keys: ['s'], description: 'Search (Recursive)' },

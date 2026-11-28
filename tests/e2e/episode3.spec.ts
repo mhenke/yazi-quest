@@ -233,6 +233,56 @@ test.describe('Episode 3: MASTERY', () => {
     });
   }
 
+  test('Level 12: manual recovery via plain paste, deleting stock daemon, and renaming systemd-core_1', async ({
+    page,
+  }) => {
+    await startLevel(page, 12, {
+      intro: false,
+      extraParams: { scenario: 'scen-a1' },
+    });
+
+    await handleLevel12Threat(page, scenarios[0]);
+    await ensureCleanState(page);
+
+    // 1. Discover identity in ~/workspace and cut systemd-core
+    await gotoCommand(page, 'w');
+    await pressKey(page, '.');
+    await filterByText(page, 'identity');
+    await expect(page.getByTestId('file-.identity.log.enc')).toBeVisible({ timeout: 2000 });
+    await page.keyboard.press('Escape');
+    await pressKey(page, '.');
+
+    await filterAndSelect(page, 'systemd-core');
+    await dismissAlertIfPresent(page, /Protocol Violation/i);
+    await pressKey(page, 'x');
+    await expectClipboard(page, 'MOVE');
+
+    // 2. Navigate to /daemons and press plain 'p' (collision creates systemd-core_1)
+    await gotoCommand(page, 'r');
+    await enterDirectory(page, 'daemons');
+    await pressKey(page, 'p');
+
+    const activePane = page.getByTestId('filesystem-pane-active');
+    await expect(activePane.getByTestId('file-systemd-core')).toBeVisible();
+    await expect(activePane.getByTestId('file-systemd-core_1')).toBeVisible();
+
+    // 3. Delete the stock systemd-core and clear the filter
+    await filterByText(page, '^systemd-core$');
+    await expect(activePane.getByTestId('file-systemd-core')).toBeVisible();
+    await expect(activePane.getByTestId('file-systemd-core_1')).toHaveCount(0);
+    await deleteItem(page, { confirm: true });
+    await clearFilter(page);
+
+    // 4. Rename systemd-core_1 -> systemd-core, enter it, and complete the level
+    await filterByText(page, 'systemd-core_1');
+    await clearFilter(page);
+    await renameItem(page, 'systemd-core');
+    await expect(activePane.getByTestId('file-systemd-core')).toBeVisible();
+    await enterDirectory(page, 'systemd-core');
+
+    await waitForMissionComplete(page);
+  });
+
   // Level 13: DISTRIBUTED CONSCIOUSNESS
   test('Level 13: DISTRIBUTED CONSCIOUSNESS - gathers distributed keys', async ({
     page,

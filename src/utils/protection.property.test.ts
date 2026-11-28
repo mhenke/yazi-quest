@@ -30,6 +30,10 @@ import type { FileNode, Level } from '../types';
  *  - L15 rename/cut/delete of `exfil_04.log` / `payload.py`: allowed.
  *  - L2 delete of `watcher_agent.sys`: blocked while `locate-watcher` is not in
  *    the projected completed ids, null once it is.
+ *  - `levelStartFS` on `'rename'`: when provided, a protected node whose id is
+ *    absent from `levelStartFS` or whose name no longer matches its
+ *    `levelStartFS` name (conflict-renamed `_1` / typo recovery) may be
+ *    renamed; other actions still follow normal protection.
  */
 
 /** Carve-out tables — kept as data so the oracle stays flat. */
@@ -456,6 +460,61 @@ describe('property: protection verdicts follow the documented rules', () => {
           return (got === null) === (oracle(level, vault, 'delete', completedTaskIds) === null);
         });
       }),
+      { numRuns: 200 }
+    );
+  });
+
+  it('levelStartFS only relaxes rename for created or renamed protected nodes without weakening other actions', () => {
+    assert(
+      property(
+        arbCase,
+        constantFrom('canonical', 'renamed', 'fresh'),
+        ({ levelIndex, node, action, taskIds }, identityKind) => {
+          const completedTaskIds = { [LEVELS[levelIndex].id]: taskIds };
+          const level = projectLevel(levelIndex, completedTaskIds);
+          const candidate: FileNode =
+            identityKind === 'renamed'
+              ? { ...node, name: `${node.name}_1` }
+              : identityKind === 'fresh'
+                ? { ...node, id: `fresh-${node.id}` }
+                : node;
+
+          const gotWithStart = isProtected(
+            FIXTURE,
+            undefined,
+            candidate,
+            level,
+            action,
+            completedTaskIds,
+            FIXTURE
+          );
+          const baseline = isProtected(
+            FIXTURE,
+            undefined,
+            candidate,
+            level,
+            action,
+            completedTaskIds
+          );
+
+          if (action !== 'rename') {
+            return gotWithStart === baseline;
+          }
+
+          if (!candidate.protected) {
+            return gotWithStart === null;
+          }
+
+          // Special named carve-out stays exempt regardless of levelStartFS
+          if (namedCarveOut(level.id, candidate.name, 'rename')) {
+            return gotWithStart === null;
+          }
+
+          const startNode = FLAT.find((n) => n.id === candidate.id);
+          const matchesCanonicalStart = !!startNode && startNode.name === candidate.name;
+          return matchesCanonicalStart ? gotWithStart !== null : gotWithStart === null;
+        }
+      ),
       { numRuns: 200 }
     );
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { FileNode, GameState } from '../../types';
 import { LEVELS } from '../../constants/levels';
-import { getNodeByPath } from '../../utils/fsHelpers';
+import { cloneFS, deleteNode, getNodeById, getNodeByPath } from '../../utils/fsHelpers';
 import { makeBootState, makeKey, makeNormalContext } from '../../../tests/helpers/keyboardHarness';
 import { gameReducer } from '../gameReducer';
 import { handleClipboardKeyDown } from './handleClipboard';
@@ -757,5 +757,157 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
         })
       )
     ).toBe(false);
+  });
+
+  it('allows renaming a conflict-renamed or yank-pasted protected node (Level 12 p + delete + rename recovery) while blocking untouched protected nodes', () => {
+    const level12 = LEVELS.find((l) => l.id === 12)!;
+    const wsCore: FileNode = {
+      id: 'systemd-core',
+      name: 'systemd-core',
+      type: 'dir',
+      protected: true,
+      parentId: 'workspace',
+      children: [file('main-rs', 'main.rs')],
+    };
+    const stockDaemonCore: FileNode = {
+      id: 'daemons-systemd-core',
+      name: 'systemd-core',
+      type: 'dir',
+      parentId: 'daemons',
+      children: [file('dm-model', 'model.rs')],
+    };
+    const workspace = dir('workspace', 'workspace', [wsCore]);
+    const daemons = dir('daemons', 'daemons', [stockDaemonCore]);
+    const fs = dir('root', 'root', [workspace, daemons]);
+
+    let state = makeBootState(12, { fs, currentPath: ['root', 'workspace'] });
+    const dispatch = (action: Parameters<typeof gameReducer>[1]) => {
+      state = gameReducer(state, action);
+    };
+    const showNotification = vi.fn();
+
+    // 1. Untouched workspace/systemd-core (matches levelStartFS id + name) cannot be renamed.
+    handleClipboardKeyDown(
+      makeKey({ key: 'r' }),
+      makeNormalContext(state, dispatch, {
+        items: [wsCore],
+        currentItem: wsCore,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    expect(state.mode).toBe('normal');
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('immutable'), 4000);
+
+    // 2. Cut workspace/systemd-core and plain-paste ('p') into /daemons -> creates systemd-core_1.
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(state, dispatch, {
+        items: [wsCore],
+        currentItem: wsCore,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    dispatch({ type: 'NAVIGATE', path: ['root', 'daemons'] });
+    handleClipboardKeyDown(
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [stockDaemonCore],
+        currentItem: stockDaemonCore,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+
+    const daemonsChildren = getNodeByPath(state.fs, ['root', 'daemons'])?.children ?? [];
+    const pastedConflict = daemonsChildren.find((n) => n.name === 'systemd-core_1');
+    expect(pastedConflict?.id).toBe('systemd-core');
+    expect(pastedConflict?.protected).toBe(true);
+
+    // 3. Delete stock /daemons/systemd-core, then press 'r' on systemd-core_1 -> allowed.
+    const deleteRes = deleteNode(state.fs, ['root', 'daemons'], 'daemons-systemd-core', 11);
+    expect(deleteRes.ok).toBe(true);
+    if (!deleteRes.ok) return;
+    dispatch({ type: 'DELETE_NODES', newFs: deleteRes.value });
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'r' }),
+      makeNormalContext(state, dispatch, {
+        items: [pastedConflict!],
+        currentItem: pastedConflict!,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    expect(state.mode).toBe('rename');
+    expect(state.inputBuffer).toBe('systemd-core_1');
+
+    const renameTo = (newName: string) => {
+      const newFs = cloneFS(state.fs);
+      const node = getNodeById(newFs, 'systemd-core')!;
+      node.name = newName;
+      dispatch({ type: 'RENAME_NODE', oldId: 'systemd-core', newNode: node, newFs });
+      dispatch({ type: 'SET_MODE', mode: 'normal' });
+    };
+
+    // 4. Typo recovery: rename to 'system-core' -> 'r' still allowed until canonical name is restored.
+    renameTo('system-core');
+    const typoNode = getNodeByPath(state.fs, ['root', 'daemons'])?.children?.find(
+      (n) => n.id === 'systemd-core'
+    );
+    expect(typoNode?.name).toBe('system-core');
+    handleClipboardKeyDown(
+      makeKey({ key: 'r' }),
+      makeNormalContext(state, dispatch, {
+        items: [typoNode!],
+        currentItem: typoNode!,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    expect(state.mode).toBe('rename');
+    expect(state.inputBuffer).toBe('system-core');
+
+    // 5. Restoring canonical 'systemd-core' re-engages immutability against casual rename.
+    renameTo('systemd-core');
+    const restoredNode = getNodeByPath(state.fs, ['root', 'daemons'])?.children?.find(
+      (n) => n.id === 'systemd-core'
+    );
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'r' }),
+      makeNormalContext(state, dispatch, {
+        items: [restoredNode!],
+        currentItem: restoredNode!,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    expect(state.mode).toBe('normal');
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('immutable'), 4000);
+
+    // 6. A freshly yank-pasted protected copy (id absent from levelStartFS) is also renamable.
+    const yankedProtected: FileNode = {
+      id: 'fresh-yank-copy',
+      name: 'systemd-core',
+      type: 'dir',
+      protected: true,
+      parentId: 'daemons',
+      children: [],
+    };
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'r' }),
+      makeNormalContext(state, dispatch, {
+        items: [yankedProtected],
+        currentItem: yankedProtected,
+        currentLevel: level12,
+        showNotification,
+      })
+    );
+    expect(state.mode).toBe('rename');
+    expect(state.inputBuffer).toBe('systemd-core');
   });
 });
