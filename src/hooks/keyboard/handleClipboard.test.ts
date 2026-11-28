@@ -786,7 +786,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     };
     const showNotification = vi.fn();
 
-    // 1. Untouched workspace/systemd-core (matches levelStartFS id + name) cannot be renamed.
     handleClipboardKeyDown(
       makeKey({ key: 'r' }),
       makeNormalContext(state, dispatch, {
@@ -799,7 +798,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     expect(state.mode).toBe('normal');
     expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('immutable'), 4000);
 
-    // 2. Cut workspace/systemd-core and plain-paste ('p') into /daemons -> creates systemd-core_1.
     showNotification.mockClear();
     handleClipboardKeyDown(
       makeKey({ key: 'x' }),
@@ -826,7 +824,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     expect(pastedConflict?.id).toBe('systemd-core');
     expect(pastedConflict?.protected).toBe(true);
 
-    // 3. Delete stock /daemons/systemd-core, then press 'r' on systemd-core_1 -> allowed.
     const deleteRes = deleteNode(state.fs, ['root', 'daemons'], 'daemons-systemd-core', 11);
     expect(deleteRes.ok).toBe(true);
     if (!deleteRes.ok) return;
@@ -852,7 +849,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
       dispatch({ type: 'SET_MODE', mode: 'normal' });
     };
 
-    // 4. Typo recovery: rename to 'system-core' -> 'r' still allowed until canonical name is restored.
     renameTo('system-core');
     const typoNode = getNodeByPath(state.fs, ['root', 'daemons'])?.children?.find(
       (n) => n.id === 'systemd-core'
@@ -870,7 +866,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     expect(state.mode).toBe('rename');
     expect(state.inputBuffer).toBe('system-core');
 
-    // 5. Restoring canonical 'systemd-core' re-engages immutability against casual rename.
     renameTo('systemd-core');
     const restoredNode = getNodeByPath(state.fs, ['root', 'daemons'])?.children?.find(
       (n) => n.id === 'systemd-core'
@@ -888,7 +883,6 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     expect(state.mode).toBe('normal');
     expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('immutable'), 4000);
 
-    // 6. A freshly yank-pasted protected copy (id absent from levelStartFS) is also renamable.
     const yankedProtected: FileNode = {
       id: 'fresh-yank-copy',
       name: 'systemd-core',

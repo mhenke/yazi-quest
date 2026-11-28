@@ -65,6 +65,7 @@ import { useFileManagerView, useTouchOnly } from './hooks/useViewportFloor';
 import { ViewportGate } from './components/ViewportGate';
 import {
   buildDeleteModalData,
+  dispatchBaselineReset,
   handleSortWarningKey,
   runGameLoopKeyDown,
 } from './hooks/keyboard/gameLoopHelpers';
@@ -1288,17 +1289,7 @@ export default function App() {
     });
     dispatch({ type: 'SET_MODE', mode: 'auto-fix' });
 
-    if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-    if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-      dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-    }
-    const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
-    if (currentDir && gameState.filters[currentDir.id]) {
-      dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
-    }
-    if (hasSearchViolation(gameState)) {
-      dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-    }
+    dispatchBaselineReset(gameState, dispatch);
 
     setTimeout(() => dispatch({ type: 'SET_MODE', mode: 'normal' }), 1000);
   }, [gameState, dispatch]);
@@ -1413,22 +1404,12 @@ export default function App() {
     (e) => {
       const tasksComplete = checkAllTasksComplete(gameState, currentLevel);
       if (e.key === 'Enter' && e.shiftKey && tasksComplete) {
-        const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
         const hasViolation = hasBaselineViolation(gameState);
 
         if (hasViolation) {
           e.preventDefault();
           // Auto-fix all violations to restore baseline
-          if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
-          if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
-            dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
-          }
-          if (currentDir && gameState.filters[currentDir.id]) {
-            dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
-          }
-          if (hasSearchViolation(gameState)) {
-            dispatch({ type: 'SET_SEARCH', query: null, results: [] });
-          }
+          dispatchBaselineReset(gameState, dispatch);
 
           // Return to normal mode if we were in warning
           dispatch({ type: 'SET_MODE', mode: 'normal' });

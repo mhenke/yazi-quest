@@ -2,7 +2,7 @@ import React from 'react';
 import { Filter } from 'lucide-react';
 import { WarningModal } from './WarningModal';
 
-interface FilterWarningModalProps {
+export interface FilterWarningModalProps {
   allowAutoFix: boolean;
   onDismiss?: () => void;
 }

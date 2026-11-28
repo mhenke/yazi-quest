@@ -2,7 +2,7 @@ import React, { Component, ReactNode } from 'react';
 
 import { reportError } from '../utils/error';
 
-type Props = { children: ReactNode };
+export type Props = { children: ReactNode };
 
 export default class ErrorBoundary extends Component<
   Props,

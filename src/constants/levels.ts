@@ -1,4 +1,4 @@
-import type { Level } from '../types';
+import type { GameState, Level } from '../types';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { getNodeByPath, findNodeByName, getNodeById } from '../utils/fsHelpers';
 import { NODE_KEY_NAMES } from './protocols';
@@ -355,14 +355,7 @@ export const LEVELS: Level[] = [
       {
         id: 'deploy-assets',
         description: 'Paste gathered signatures into `~/.config/vault/active/` (p)',
-        check: (c) => {
-          const conf = getNodeById(c.fs, '.config');
-          const vault = conf?.children?.find((p) => p.name === 'vault');
-          const active = vault?.children?.find((p) => p.name === 'active');
-          const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
-          const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
-          return !!f && !!r;
-        },
+        check: (c) => hasDeployedVaultUplinks(c),
         completed: false,
       },
       {
@@ -370,12 +363,7 @@ export const LEVELS: Level[] = [
         description: 'Mask traces in `~` (gh, then .)',
         check: (c, _l) => {
           // Ensure assets are deployed first to prevent premature completion if hidden starts false
-          const conf = getNodeById(c.fs, '.config');
-          const vault = conf?.children?.find((p) => p.name === 'vault');
-          const active = vault?.children?.find((p) => p.name === 'active');
-          const f = active?.children?.some((z) => z.name === 'uplink_v1.conf');
-          const r = active?.children?.some((z) => z.name === 'uplink_v2.conf');
-          if (!f || !r) return false;
+          if (!hasDeployedVaultUplinks(c)) return false;
 
           const s = getNodeById(c.fs, 'guest');
           return c.currentPath.includes(s?.id || '') && c.showHidden === false && c.usedGH === true;
@@ -588,45 +576,13 @@ export const LEVELS: Level[] = [
       {
         id: 'investigate-corruption',
         description: 'Audit `~/workspace/systemd-core/` sector',
-        check: (c) => {
-          if (c.keystrokes === 0) return false;
-          const workspace = getNodeById(c.fs, 'workspace');
-          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
-
-          if (s && c.currentPath.includes(s.id)) return true;
-          // Also verify looking at the dir name
-          const lastId =
-            c.currentPath && c.currentPath.length
-              ? c.currentPath[c.currentPath.length - 1]
-              : undefined;
-          if (!lastId) return false;
-          const lastNode = getNodeById(c.fs, lastId);
-          return !!lastNode && lastNode.name === 'systemd-core';
-        },
+        check: (c) => hasEnteredWorkspaceCore(c),
         completed: false,
       },
       {
         id: 'verify-damage',
         description: 'Infiltrate `~/workspace/systemd-core/uplink_v1.conf` (f)',
-        check: (c) => {
-          if (c.keystrokes === 0) return false;
-          // Must be in systemd-core and cursor on buffer
-          const workspace = getNodeById(c.fs, 'workspace');
-          const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
-
-          if (!s || !c.currentPath.includes(s.id)) return false;
-
-          const items = getVisibleItems(c);
-          if (!items || items.length === 0) return false;
-
-          const node = items[c.cursorIndex];
-          return (
-            node?.name === 'uplink_v1.conf' &&
-            !!node.content &&
-            node.content.toLowerCase().includes('corrupt') &&
-            c.usedFilter === true
-          );
-        },
+        check: (c) => isInspectingCorruptUplink(c),
         completed: false,
       },
       {
@@ -646,13 +602,7 @@ export const LEVELS: Level[] = [
       {
         id: 'acquire-patch',
         description: 'Jump to `~/.config/vault/active` (Z) and replicate the clean signature (y)',
-        check: (c) => {
-          if (c.keystrokes === 0) return false;
-          // Check if we have the clean file in clipboard
-          if (!c.clipboard || c.clipboard.nodes.length === 0) return false;
-          const yanked = c.clipboard.nodes[0];
-          return yanked.name === 'uplink_v1.conf' && !yanked.content?.includes('CORRUPT');
-        },
+        check: (c) => hasCleanUplinkInClipboard(c),
         completed: false,
       },
       {
@@ -1084,26 +1034,7 @@ export const LEVELS: Level[] = [
           // Must have navigated to workspace first
           if (!c.completedTaskIds[_s.id]?.includes('navigate-workspace')) return false;
 
-          const workspace = getNodeById(c.fs, 'workspace');
-          if (!workspace) return false;
-
-          // Must be in workspace directory
-          const currentDirId = c.currentPath[c.currentPath.length - 1];
-          if (currentDirId !== workspace.id) return false;
-
-          // Must have hidden files visible
-          if (!c.showHidden) return false;
-
-          // Must have the identity file
-          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
-          if (!identityFile) return false;
-
-          // Must have cursor on the identity file and scrolled through preview
-          const items = getVisibleItems(c);
-          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-
-          // Check if scrolled (preview scroll requirement removed for reliability)
-          return cursorOnIdentity;
+          return isInspectingWorkspaceIdentity(c);
         },
         completed: false,
       },
@@ -1202,24 +1133,7 @@ export const LEVELS: Level[] = [
       {
         id: 'discover-identity-13',
         description: 'Verify regional hash reconciliation against `~/workspace/.identity.log.enc`',
-        check: (c, _s) => {
-          const workspace = getNodeById(c.fs, 'workspace');
-          if (!workspace) return false;
-
-          const currentDirId = c.currentPath[c.currentPath.length - 1];
-          if (currentDirId !== workspace.id) return false;
-
-          if (!c.showHidden) return false;
-
-          const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
-          if (!identityFile) return false;
-
-          const items = getVisibleItems(c);
-          const cursorOnIdentity = items[c.cursorIndex]?.name === '.identity.log.enc';
-
-          // Removed previewScroll check as file might be too small to scroll
-          return cursorOnIdentity;
-        },
+        check: (c) => isInspectingWorkspaceIdentity(c),
         completed: false,
       },
       {
@@ -1406,17 +1320,7 @@ export const LEVELS: Level[] = [
         id: 'verify-configs',
         description:
           'Neutralize `uplink_v1.conf` and relocate `uplink_v2.conf` to `uplink_active.conf`',
-        check: (c, _s) => {
-          if (c.keystrokes === 0) return false;
-          if (!(c.completedTaskIds[15] || []).includes('verify-keys')) return false;
-          const tmp = getNodeById(c.fs, 'tmp');
-          const vault = tmp?.children?.find((n) => n.name === 'vault');
-          const active = vault?.children?.find((x) => x.name === 'active');
-          if (!active) return false;
-          const hasV1 = active.children?.some((n) => n.name === 'uplink_v1.conf');
-          const hasActive = active.children?.some((n) => n.name === 'uplink_active.conf');
-          return !hasV1 && hasActive;
-        },
+        check: (c) => hasVerifiedVaultConfigs(c),
         completed: false,
       },
       // PHASE 4: Activate Payload
@@ -1446,3 +1350,67 @@ export const LEVELS: Level[] = [
     ],
   },
 ];
+
+function hasDeployedVaultUplinks(c: GameState): boolean {
+  const conf = getNodeById(c.fs, '.config');
+  const vault = conf?.children?.find((p) => p.name === 'vault');
+  const active = vault?.children?.find((p) => p.name === 'active');
+  const v1 = active?.children?.some((z) => z.name === 'uplink_v1.conf');
+  const v2 = active?.children?.some((z) => z.name === 'uplink_v2.conf');
+  return !!v1 && !!v2;
+}
+
+function isInspectingWorkspaceIdentity(c: GameState): boolean {
+  const workspace = getNodeById(c.fs, 'workspace');
+  if (!workspace) return false;
+
+  const currentDirId = c.currentPath[c.currentPath.length - 1];
+  if (currentDirId !== workspace.id) return false;
+  if (!c.showHidden) return false;
+
+  const identityFile = workspace.children?.find((n) => n.name === '.identity.log.enc');
+  if (!identityFile) return false;
+
+  const items = getVisibleItems(c);
+  return items[c.cursorIndex]?.name === '.identity.log.enc';
+}
+
+function hasEnteredWorkspaceCore(c: GameState): boolean {
+  if (c.keystrokes === 0) return false;
+  const workspace = getNodeById(c.fs, 'workspace');
+  const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+  if (s && c.currentPath.includes(s.id)) return true;
+
+  const lastId = c.currentPath[c.currentPath.length - 1];
+  return lastId ? getNodeById(c.fs, lastId)?.name === 'systemd-core' : false;
+}
+
+function isInspectingCorruptUplink(c: GameState): boolean {
+  if (c.keystrokes === 0 || !c.usedFilter) return false;
+  const workspace = getNodeById(c.fs, 'workspace');
+  const s = workspace ? findNodeByName(workspace, 'systemd-core', 'dir') : undefined;
+  if (!s || !c.currentPath.includes(s.id)) return false;
+
+  const node = getVisibleItems(c)[c.cursorIndex];
+  return (
+    node?.name === 'uplink_v1.conf' && Boolean(node.content?.toLowerCase().includes('corrupt'))
+  );
+}
+
+function hasCleanUplinkInClipboard(c: GameState): boolean {
+  if (c.keystrokes === 0 || !c.clipboard?.nodes.length) return false;
+  const yanked = c.clipboard.nodes[0];
+  return yanked.name === 'uplink_v1.conf' && !yanked.content?.includes('CORRUPT');
+}
+
+function hasVerifiedVaultConfigs(c: GameState): boolean {
+  if (c.keystrokes === 0) return false;
+  if (!(c.completedTaskIds[15] || []).includes('verify-keys')) return false;
+  const tmp = getNodeById(c.fs, 'tmp');
+  const vault = tmp?.children?.find((n) => n.name === 'vault');
+  const active = vault?.children?.find((x) => x.name === 'active');
+  if (!active) return false;
+  const hasV1 = active.children?.some((n) => n.name === 'uplink_v1.conf');
+  const hasActive = active.children?.some((n) => n.name === 'uplink_active.conf');
+  return !hasV1 && Boolean(hasActive);
+}

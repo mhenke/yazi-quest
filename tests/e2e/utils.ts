@@ -162,13 +162,7 @@ export async function addItem(page: Page, name: string): Promise<void> {
  */
 export async function pressKeys(page: Page, keys: string[]): Promise<void> {
   for (const key of keys) {
-    let pwKey = key;
-    if (key === ' ') pwKey = 'Space';
-    if (key.includes('+')) {
-      pwKey = key.replace('Ctrl+', 'Control+').replace('Alt+', 'Alt+').replace('Shift+', 'Shift+');
-    }
-    await page.keyboard.press(pwKey);
-    await page.waitForTimeout(DEFAULT_DELAY);
+    await pressKey(page, key);
   }
 }
 
@@ -425,14 +419,7 @@ export async function filterAndSelect(
   filterText: string,
   options: { exact?: boolean; keepFilter?: boolean } = {}
 ): Promise<void> {
-  await pressKey(page, 'f');
-  const input = page.getByTestId('filter-input');
-  await expect(input).toBeVisible({ timeout: 3000 });
-  await input.focus();
-  await input.fill(filterText);
-  await expect(input).toHaveValue(filterText);
-  await page.keyboard.press('Escape');
-  await expect(input).not.toBeVisible();
+  await filterByText(page, filterText);
 
   let target;
   if (options.exact) {

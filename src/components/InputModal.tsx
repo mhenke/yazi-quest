@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface InputModalProps {
+export interface InputModalProps {
   label: string;
   value: string;
   onChange: (val: string) => void;

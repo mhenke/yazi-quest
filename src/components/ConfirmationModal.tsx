@@ -3,7 +3,7 @@ import React from 'react';
 import { GameState } from '../types';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface ConfirmationModalProps {
+export interface ConfirmationModalProps {
   deleteType: GameState['deleteType'];
   itemsToDelete: string[];
   itemKind?: 'file' | 'folder' | 'item';

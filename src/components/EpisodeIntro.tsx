@@ -15,7 +15,7 @@ import {
 import { renderFullLoreLine, renderSlicedLoreLine } from './narrative/LoreLineView';
 import { Scanlines, SkipIntroButton, useSkipIntro, useTypewriter } from './narrative/useTypewriter';
 
-interface EpisodeIntroProps {
+export interface EpisodeIntroProps {
   episode: Episode;
   onComplete: (options?: { isSkip?: boolean }) => void;
   reduceMotion?: boolean;

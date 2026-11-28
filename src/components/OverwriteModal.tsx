@@ -1,7 +1,7 @@
 import React from 'react';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface OverwriteModalProps {
+export interface OverwriteModalProps {
   fileName: string;
   onDecision: (key: 'y' | 'n') => void;
 }

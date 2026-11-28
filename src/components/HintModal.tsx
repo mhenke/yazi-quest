@@ -5,7 +5,7 @@ import { useOverlayFocus } from './useOverlayFocus';
 import { renderInlineCode } from './ui/inlineCode';
 import type { HintStages } from '../types';
 
-interface HintModalProps {
+export interface HintModalProps {
   hint: HintStages;
   stage: number;
   onClose: () => void;

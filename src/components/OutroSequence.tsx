@@ -20,7 +20,7 @@ import {
 import { renderSlicedLoreLine } from './narrative/LoreLineView';
 import { Scanlines } from './narrative/Scanlines';
 
-interface OutroSequenceProps {
+export interface OutroSequenceProps {
   onRestartCycle?: () => void;
   reduceMotion?: boolean;
   showFocusRing?: boolean;
@@ -315,7 +315,6 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
   reduceMotion,
   showFocusRing,
 }) => {
-  // Part navigation (like EpisodeIntro but across multiple parts)
   const [partIndex, setPartIndex] = useState(0);
   const [sectionIndex, setSectionIndex] = useState(0);
   const sectionKey = `${partIndex}:${sectionIndex}`;
@@ -323,8 +322,6 @@ export const OutroSequence: React.FC<OutroSequenceProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [overlayReady, setOverlayReady] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  // Current part data
 
   const currentPart = CONCLUSION_PARTS[partIndex] || CONCLUSION_PARTS[0];
   const partPalette = paletteFor(currentPart?.color ?? 'text-red-500');

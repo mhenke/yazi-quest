@@ -2,7 +2,7 @@ import { FileNode, GameState } from '../../types';
 import { resolvePath } from '../../utils/fsHelpers';
 import { getPlayerIdentity } from '../../constants/identity';
 
-interface DiegeticPromptProps {
+export interface DiegeticPromptProps {
   threatLevel: number;
   mode: GameState['mode'];
   currentPath: string[];

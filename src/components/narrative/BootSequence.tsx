@@ -3,7 +3,7 @@ import { getBootSequenceForEpisode } from '../../constants/bootSequences';
 import { useGlobalInput } from '../../GlobalInputContext';
 import { SkipIntroButton, useSkipIntro, useTypewriter } from './useTypewriter';
 
-interface BootSequenceProps {
+export interface BootSequenceProps {
   episode: number;
   cycleCount?: number;
   onComplete?: (options?: { isSkip?: boolean }) => void;
@@ -25,13 +25,6 @@ const renderBootLine = (line: string): ReactNode => {
   return line;
 };
 
-/**
- * BootSequence component displays animated boot messages for each episode.
- * Pauses once complete so the player can read the text and explicitly continue.
- *
- * Note: Pass a `key` derived from `episode` and `cycleCount` to reset state
- * cleanly across transitions.
- */
 export function BootSequence({
   episode,
   cycleCount = 1,

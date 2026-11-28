@@ -8,7 +8,7 @@ import type { GameState, Level } from '../types';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 import { renderInlineCode } from './ui/inlineCode';
 
-interface HelpModalProps {
+export interface HelpModalProps {
   onClose: () => void;
   scrollPosition: number;
   level: Level;

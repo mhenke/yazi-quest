@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Level } from '../types';
 import { Action } from './gameReducer';
 
-interface UseGameTimerProps {
+export interface UseGameTimerProps {
   currentLevel: Level;
   allTasksComplete: boolean;
   isLastLevel: boolean;

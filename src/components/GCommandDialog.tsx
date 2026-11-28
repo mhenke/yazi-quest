@@ -1,7 +1,7 @@
 import React from 'react';
 import { JUMP_TARGETS, type JumpTargetDefinition } from '../constants/keybindings';
 
-interface GCommandDialogProps {
+export interface GCommandDialogProps {
   onClose: () => void;
   levelId?: number;
 }

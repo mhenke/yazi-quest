@@ -126,7 +126,7 @@ const checkDestinationCollision = (
     if (!deleteResult.ok) {
       return {
         fs,
-        error: (deleteResult as { ok: false; error: FsError }).error,
+        error: deleteResult.error,
         collidedNodeName: existingNode.name,
       };
     }
@@ -187,7 +187,7 @@ const applyPasteNodes = (
     if (!addResult.ok) {
       return {
         newFs,
-        error: (addResult as { ok: false; error: FsError }).error,
+        error: addResult.error,
         errorNodeName: node.name,
       };
     }

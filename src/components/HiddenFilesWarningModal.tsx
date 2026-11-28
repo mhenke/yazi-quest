@@ -2,7 +2,7 @@ import React from 'react';
 import { EyeOff } from 'lucide-react';
 import { WarningModal } from './WarningModal';
 
-interface HiddenFilesWarningModalProps {
+export interface HiddenFilesWarningModalProps {
   allowAutoFix: boolean;
   onDismiss?: () => void;
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { WarningModal } from './WarningModal';
 
-interface SearchWarningModalProps {
+export interface SearchWarningModalProps {
   allowAutoFix: boolean;
   onDismiss?: () => void;
 }

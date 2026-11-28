@@ -8,9 +8,14 @@ import { handleGCommandKeyDown } from './handleGCommandMode';
 import { handleNormalModeKeyDown } from './handleNormalMode';
 import { handleOverwriteConfirmKeyDown } from './handleOverwriteMode';
 import { handleSortModeKeyDown } from './handleSortMode';
-import { getActionIntensity, hasBaselineViolation, isProtocolWarningOpen } from './utils';
+import {
+  getActionIntensity,
+  hasBaselineViolation,
+  hasSearchViolation,
+  isProtocolWarningOpen,
+} from './utils';
 import { checkAllTasksComplete } from '../../utils/gameUtils';
-import { resolvePath } from '../../utils/fsHelpers';
+import { getNodeByPath, resolvePath } from '../../utils/fsHelpers';
 
 export interface GameLoopDeps {
   gameState: GameState;
@@ -137,7 +142,7 @@ const shouldSkipGameLoopTarget = (
   );
 };
 
-const IGNORED_KEYSTROKE_KEYS = ['Shift', 'Control', 'Alt', 'Tab', 'Escape', '?', 'm', 'h'];
+const IGNORED_KEYSTROKE_KEYS = ['shift', 'control', 'alt', 'tab', 'escape', '?', 'm', 'h'];
 
 const shouldCountKeystroke = (e: KeyboardEvent, gameState: GameState): boolean =>
   !isProtocolWarningOpen(gameState) && !IGNORED_KEYSTROKE_KEYS.includes(e.key.toLowerCase());
@@ -172,6 +177,23 @@ export const runGameLoopKeyDown = (e: KeyboardEvent, deps: GameLoopDeps): boolea
   }
 
   return dispatchModeKey(e, deps) ? true : undefined;
+};
+
+export const dispatchBaselineReset = (
+  gameState: GameState,
+  dispatch: React.Dispatch<Action>
+): void => {
+  if (gameState.showHidden) dispatch({ type: 'TOGGLE_HIDDEN' });
+  if (gameState.sortBy !== 'natural' || gameState.sortDirection !== 'asc') {
+    dispatch({ type: 'SET_SORT', sortBy: 'natural', direction: 'asc' });
+  }
+  const currentDir = getNodeByPath(gameState.fs, gameState.currentPath);
+  if (currentDir && gameState.filters[currentDir.id]) {
+    dispatch({ type: 'CLEAR_FILTER', dirId: currentDir.id });
+  }
+  if (hasSearchViolation(gameState)) {
+    dispatch({ type: 'SET_SEARCH', query: null, results: [] });
+  }
 };
 
 export const buildDeleteModalData = (gameState: GameState, visibleList: FileNode[]) => {

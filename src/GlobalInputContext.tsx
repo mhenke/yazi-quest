@@ -7,9 +7,9 @@ import React, {
   ReactNode,
 } from 'react';
 
-type InputHandler = (e: KeyboardEvent) => boolean | void;
+export type InputHandler = (e: KeyboardEvent) => boolean | void;
 
-interface HandlerOptions {
+export interface HandlerOptions {
   priority: number;
   enabled?: boolean;
   captureInput?: boolean; // If true, handler triggers even when focus is in an input/textarea

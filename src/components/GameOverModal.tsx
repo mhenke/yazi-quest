@@ -4,7 +4,7 @@ import { useGlobalInput } from '../GlobalInputContext';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 import { Scanlines } from './narrative/Scanlines';
 
-interface GameOverModalProps {
+export interface GameOverModalProps {
   reason: 'time' | 'keystrokes' | 'honeypot' | 'criticalFile';
   onRestart: () => void;
   efficiencyTip?: string; // Level-specific tip from constants.tsx

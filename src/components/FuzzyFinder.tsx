@@ -6,7 +6,7 @@ import { getAllDirectoriesWithPaths, resolvePath } from '../utils/fsHelpers';
 import { getBaseFuzzyCandidates, filterFuzzyCandidates } from '../utils/fuzzyHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface FuzzyFinderProps {
+export interface FuzzyFinderProps {
   gameState: GameState;
   dispatch: React.Dispatch<Action>;
 }

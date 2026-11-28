@@ -27,7 +27,7 @@ const formatTime = (seconds: number): string => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
-interface StatusBarProps {
+export interface StatusBarProps {
   state: GameState;
   level: Level;
   allTasksComplete: boolean;

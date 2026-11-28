@@ -2,7 +2,7 @@ import React from 'react';
 import { ListOrdered } from 'lucide-react';
 import { WarningModal } from './WarningModal';
 
-interface SortWarningModalProps {
+export interface SortWarningModalProps {
   allowAutoFix: boolean;
   onDismiss?: () => void;
 }

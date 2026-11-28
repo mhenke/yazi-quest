@@ -1,4 +1,4 @@
-type GlitchElement = HTMLElement & { __dynamicGlitchApplied?: boolean };
+export type GlitchElement = HTMLElement & { __dynamicGlitchApplied?: boolean };
 
 const POOL_SIZE = 4;
 const STYLE_ID = 'yazi-dynamic-glitch-pool';

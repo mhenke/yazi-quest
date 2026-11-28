@@ -1,5 +1,4 @@
 import type React from 'react';
-import { FsError } from '../../types';
 import {
   checkHoneypotTriggered,
   checkCriticalFileDeletion,
@@ -10,37 +9,27 @@ import { getNarrativeAction } from './utils';
 import { Action } from '../gameReducer';
 import type { DeleteModeContext, KeyInput } from './types';
 
-export const confirmDelete = ({
-  dispatch,
-  gameState,
-  visibleItems,
-  currentLevel,
-}: DeleteModeContext): void => {
-  let newFs = gameState.fs;
-  let errorMsg: string | null | undefined = null;
-
-  // Honeypot check
+const runPreDeleteGuards = ({ dispatch, gameState, currentLevel }: DeleteModeContext): boolean => {
   const honeypot = checkHoneypotTriggered(gameState, gameState.pendingDeleteIds, currentLevel);
   if (honeypot.triggered) {
     if (honeypot.reason === 'honeypot') {
       dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
       dispatch({ type: 'SET_MODE', mode: 'normal' });
       dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
-      if (honeypot.message) {
-        dispatch({ type: 'SET_NOTIFICATION', message: honeypot.message });
-      } else {
-        dispatch({ type: 'CLEAR_NOTIFICATION' });
-      }
-      return;
-    } else {
-      dispatch({ type: 'SET_MODE', mode: 'normal' });
-      dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
-      dispatch({
-        type: 'SET_NOTIFICATION',
-        message: honeypot.message || 'Honeypot triggered.',
-      });
-      return;
+      dispatch(
+        honeypot.message
+          ? { type: 'SET_NOTIFICATION', message: honeypot.message }
+          : { type: 'CLEAR_NOTIFICATION' }
+      );
+      return true;
     }
+    dispatch({ type: 'SET_MODE', mode: 'normal' });
+    dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
+    dispatch({
+      type: 'SET_NOTIFICATION',
+      message: honeypot.message || 'Honeypot triggered.',
+    });
+    return true;
   }
 
   // Critical System File Check (Shell Collapse)
@@ -49,7 +38,7 @@ export const confirmDelete = ({
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
     dispatch({ type: 'CLEAR_NOTIFICATION' });
-    return;
+    return true;
   }
 
   // Policy-based protection check
@@ -58,50 +47,66 @@ export const confirmDelete = ({
     dispatch({ type: 'SET_MODE', mode: 'normal' });
     dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
     dispatch({ type: 'SET_NOTIFICATION', message: `🔒 PROTECTED: ${validation.error}` });
+    return true;
+  }
+
+  return false;
+};
+
+const applyPendingDeletions = (
+  gameState: DeleteModeContext['gameState'],
+  visibleItems: DeleteModeContext['visibleItems'],
+  currentLevel: DeleteModeContext['currentLevel']
+) => {
+  let newFs = gameState.fs;
+  let errorMsg: string | null = null;
+
+  for (const id of gameState.pendingDeleteIds) {
+    const node = visibleItems.find((n) => n.id === id) || getNodeById(newFs, id);
+    if (!node) continue;
+
+    // Selection can include nodes outside the current directory.
+    const targetDirPath = findPathById(newFs, id)?.slice(0, -1);
+    if (!targetDirPath) continue;
+
+    const protection = isProtected(
+      newFs,
+      targetDirPath,
+      node,
+      currentLevel,
+      'delete',
+      gameState.completedTaskIds
+    );
+    if (protection) {
+      errorMsg = protection;
+      continue;
+    }
+
+    const res = deleteNode(newFs, targetDirPath, id, gameState.levelIndex);
+    if (!res.ok) {
+      if (res.error !== 'NotFound') {
+        errorMsg = res.error;
+        break;
+      }
+      continue;
+    }
+    newFs = res.value;
+  }
+
+  return { newFs, errorMsg };
+};
+
+export const confirmDelete = (ctx: DeleteModeContext): void => {
+  if (runPreDeleteGuards(ctx)) {
     return;
   }
 
-  for (const id of gameState.pendingDeleteIds) {
-    // Try to find the node in visibleItems first (faster, and contains path info for search results)
-    let node = visibleItems.find((n) => n.id === id);
-
-    // If not found in visible items (e.g. filtered out), look in the FS
-    if (!node) {
-      node = getNodeById(newFs, id);
-    }
-
-    if (node) {
-      // Selection can include nodes outside the current directory.
-      const targetDirPath = findPathById(newFs, id)?.slice(0, -1);
-      if (!targetDirPath) continue;
-
-      const protection = isProtected(
-        newFs,
-        targetDirPath,
-        node,
-        currentLevel,
-        'delete',
-        gameState.completedTaskIds
-      );
-      if (protection) {
-        errorMsg = protection;
-        continue;
-      }
-      const res = deleteNode(newFs, targetDirPath, id, gameState.levelIndex);
-      if (!res.ok) {
-        if ((res as { ok: false; error: FsError }).error !== 'NotFound') {
-          errorMsg = (res as { ok: false; error: FsError }).error;
-          break;
-        }
-      } else {
-        newFs = res.value;
-      }
-    }
-  }
+  const { dispatch, gameState, visibleItems, currentLevel } = ctx;
+  const { newFs, errorMsg } = applyPendingDeletions(gameState, visibleItems, currentLevel);
 
   dispatch({
     type: 'DELETE_NODES',
-    newFs: newFs,
+    newFs,
   });
 
   if (errorMsg) {
@@ -109,13 +114,14 @@ export const confirmDelete = ({
     dispatch({ type: 'SET_DELETE_PENDING', ids: [] });
     dispatch({ type: 'SET_NOTIFICATION', message: `🔒 PARTIAL: ${errorMsg}` });
     dispatch({ type: 'MARK_ACTION_USED', actionId: 'D' });
-  } else {
-    dispatch({
-      type: 'SET_NOTIFICATION',
-      message: getNarrativeAction('d') || 'Items deleted',
-    });
-    dispatch({ type: 'MARK_ACTION_USED', actionId: 'D' });
+    return;
   }
+
+  dispatch({
+    type: 'SET_NOTIFICATION',
+    message: getNarrativeAction('d') || 'Items deleted',
+  });
+  dispatch({ type: 'MARK_ACTION_USED', actionId: 'D' });
 };
 
 export const cancelDelete = (dispatch: React.Dispatch<Action>): void => {

@@ -7,7 +7,7 @@ import React from 'react';
  * reuses the gate classes from index.html; the static `.touch-gate` markup there is
  * the no-JS special case of this component.
  */
-type RequirementReason = 'keyboard' | 'width';
+export type RequirementReason = 'keyboard' | 'width';
 
 const COPY: Record<RequirementReason, { label: string; title: string; ariaLabel: string }> = {
   keyboard: {

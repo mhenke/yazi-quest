@@ -9,7 +9,7 @@ import {
 } from '../utils/sizeHelpers';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface InfoPanelProps {
+export interface InfoPanelProps {
   file: FileNode | null;
   onClose: () => void;
   showHidden: boolean;

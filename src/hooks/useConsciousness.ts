@@ -8,7 +8,7 @@ import {
   type ConsciousnessMetrics,
 } from '../utils/consciousnessTracker';
 
-interface UseConsciousnessProps {
+export interface UseConsciousnessProps {
   gameState: GameState;
   dispatch: React.Dispatch<Action>;
 }

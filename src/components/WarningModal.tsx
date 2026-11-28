@@ -2,7 +2,7 @@ import React, { ReactNode, useId } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { containOverlayTab, useOverlayFocus } from './useOverlayFocus';
 
-interface WarningModalProps {
+export interface WarningModalProps {
   allowAutoFix: boolean;
   onDismiss?: () => void;
   detectedText: string;

@@ -3,7 +3,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { useGlobalInput } from '../GlobalInputContext';
 import { renderInlineCode } from './ui/inlineCode';
 
-interface SuccessToastProps {
+export interface SuccessToastProps {
   message: string;
   levelTitle: string;
   onDismiss: () => void; // Shift+Enter - advances to next level

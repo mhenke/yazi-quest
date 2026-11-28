@@ -3,7 +3,7 @@ import { CheckSquare, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import { Level, GameState } from '../types';
 import { renderInlineCode } from './ui/inlineCode';
 
-interface MissionDrawerProps {
+export interface MissionDrawerProps {
   level: Level;
   gameState: GameState;
   isExpanded: boolean;

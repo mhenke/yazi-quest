@@ -1,14 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface UseTypewriterOptions {
+export interface UseTypewriterOptions {
   speed?: number;
   key?: unknown;
   onComplete?: () => void;
   immediate?: boolean;
 }
 
-interface UseTypewriterResult {
+export interface UseTypewriterResult {
   displayedText: string;
   text: string;
   displayedLines: string[];

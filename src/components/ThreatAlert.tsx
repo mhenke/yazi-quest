@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { renderInlineCode } from './ui/inlineCode';
 
-interface ThreatAlertProps {
+export interface ThreatAlertProps {
   message: string;
   author?: string;
   onDismiss: () => void;

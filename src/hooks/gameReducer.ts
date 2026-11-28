@@ -15,7 +15,7 @@ import { cloneFS, getNodeById, getNodeByPath } from '../utils/fsHelpers';
 import { getVisibleItems } from '../utils/viewHelpers';
 import { getLevelStartPath } from '../utils/gameUtils';
 
-type ModalId =
+export type ModalId =
   | 'help'
   | 'hint'
   | 'map'

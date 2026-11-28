@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Info, ShieldAlert, X } from 'lucide-react';
 import { GameAlert } from '../types';
 
-interface SystemAlertsProps {
+export interface SystemAlertsProps {
   alerts: GameAlert[];
   onDismiss?: (id: string) => void;
 }
