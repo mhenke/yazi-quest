@@ -54,7 +54,7 @@ export const SuccessToast: React.FC<SuccessToastProps> = ({ message, levelTitle,
             onClick={onDismiss}
             className="min-h-9 px-3 py-1.5 border border-green-500/70 bg-green-950/50 text-green-300 hover:bg-green-900/60 hover:text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
-            Continue (Shift+Enter)
+            Continue
           </button>
         </div>
       </div>

@@ -17,6 +17,13 @@ import { Action } from '../gameReducer';
 import type { KeyInput, NormalModeContext } from './types';
 
 /**
+ * Returns true if `node` or any descendant already existed at the start of the current level.
+ */
+const existsInLevelStart = (levelStartFS: FileNode, node: FileNode): boolean =>
+  Boolean(getNodeById(levelStartFS, node.id)) ||
+  Boolean(node.children?.some((child) => existsInLevelStart(levelStartFS, child)));
+
+/**
  * Strips transient clipboard/search properties that must not persist to the filesystem.
  */
 const cleanClipboardNode = (node: FileNode): FileNode => {
@@ -239,6 +246,124 @@ const executePaste = (
   return true;
 };
 
+const resolveNodesToGrab = (gameState: GameState, currentItem: FileNode | null): FileNode[] => {
+  let nodesToGrab: FileNode[] = [];
+  if (gameState.selectedIds.length > 0) {
+    nodesToGrab = gameState.selectedIds
+      .map((id) => getNodeById(gameState.fs, id))
+      .filter((n): n is FileNode => !!n);
+  } else if (currentItem) {
+    nodesToGrab = [currentItem];
+  }
+  return Array.from(new Map(nodesToGrab.map((n) => [n.id, n])).values());
+};
+
+const getClipboardPolicyBlockMessage = (
+  policy: NormalModeContext['currentLevel']['clipboardPolicy'],
+  isCut: boolean,
+  uniqueNodes: FileNode[],
+  levelStartFS: FileNode
+): string | null => {
+  if (policy === 'cut' && !isCut) {
+    return '🚫 PROTOCOL VIOLATION: Yank (y) blocked. Use Cut (x) for exfiltration.';
+  }
+  if (policy === 'yank' && isCut) {
+    const canCutCreatedNodes =
+      uniqueNodes.length > 0 &&
+      uniqueNodes.every((node) => !existsInLevelStart(levelStartFS, node));
+    if (!canCutCreatedNodes) {
+      return '🚫 PROTOCOL VIOLATION: Cut (x) blocked. Use Yank (y) for this objective.';
+    }
+  }
+  return null;
+};
+
+/** Handles honeypot side effects on grab; returns true when execution should stop (game over). */
+const handleGrabHoneypot = (
+  uniqueNodes: FileNode[],
+  levelIndex: number,
+  dispatch: React.Dispatch<Action>,
+  showNotification: (message: string, duration?: number) => void
+): boolean => {
+  const honeypotCheck = checkGrabbingHoneypot(uniqueNodes, levelIndex);
+  if (!honeypotCheck.triggered) {
+    return false;
+  }
+  if (honeypotCheck.severity === 'gameover') {
+    dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
+    return true;
+  }
+  if (honeypotCheck.severity === 'modal') {
+    dispatch({
+      type: 'SET_ALERT_MESSAGE',
+      message: honeypotCheck.message || '🚨 HONEYPOT DETECTED!',
+    });
+    dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
+    return false;
+  }
+  showNotification(
+    honeypotCheck.message ||
+      '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
+    4000
+  );
+  return false;
+};
+
+const handleYankOrCut = (key: 'x' | 'y', ctx: NormalModeContext): boolean => {
+  const { gameState, dispatch, currentItem, currentLevel, showNotification } = ctx;
+  const isCut = key === 'x';
+  const uniqueNodes = resolveNodesToGrab(gameState, currentItem);
+
+  const policyBlock = getClipboardPolicyBlockMessage(
+    currentLevel.clipboardPolicy,
+    isCut,
+    uniqueNodes,
+    gameState.levelStartFS
+  );
+  if (policyBlock) {
+    showNotification(policyBlock, 4000);
+    return true;
+  }
+
+  if (handleGrabHoneypot(uniqueNodes, gameState.levelIndex, dispatch, showNotification)) {
+    return true;
+  }
+
+  const legacyThought = getLevel11LegacyThought(uniqueNodes, gameState.levelIndex);
+  if (legacyThought) {
+    dispatch({
+      type: 'SET_THOUGHT',
+      payload: { text: legacyThought, author: 'AI-7734' },
+    });
+  }
+
+  if (uniqueNodes.length === 0) {
+    return false;
+  }
+
+  const nodesWithPaths = uniqueNodes.map((n) => ({
+    ...n,
+    actualParentPath: findPathById(gameState.fs, n.id)?.slice(0, -1),
+  }));
+
+  dispatch({
+    type: 'SET_CLIPBOARD',
+    nodes: nodesWithPaths,
+    action: isCut ? 'cut' : 'yank',
+    originalPath: gameState.currentPath,
+  });
+  dispatch({ type: 'SET_SELECTION', ids: [] });
+  dispatch({
+    type: 'MARK_ACTION_USED',
+    actionId: isCut ? 'X' : 'Y',
+  });
+  showNotification(
+    getNarrativeAction(key) || `${nodesWithPaths.length} item(s) ${isCut ? 'cut' : 'yanked'}`,
+    4000
+  );
+  return true;
+};
+
 export const handleClipboardKeyDown = (e: KeyInput, ctx: NormalModeContext): boolean => {
   const { gameState, dispatch, items, currentItem, currentLevel, showNotification } = ctx;
   switch (e.key) {
@@ -315,89 +440,8 @@ export const handleClipboardKeyDown = (e: KeyInput, ctx: NormalModeContext): boo
       break;
 
     case 'x':
-    case 'y': {
-      const isCut = e.key === 'x';
-      if (currentLevel.clipboardPolicy === 'cut' && !isCut) {
-        showNotification(
-          '🚫 PROTOCOL VIOLATION: Yank (y) blocked. Use Cut (x) for exfiltration.',
-          4000
-        );
-        return true;
-      }
-
-      if (currentLevel.clipboardPolicy === 'yank' && isCut) {
-        showNotification(
-          '🚫 PROTOCOL VIOLATION: Cut (x) blocked. Use Yank (y) for this objective.',
-          4000
-        );
-        return true;
-      }
-
-      let nodesToGrab: FileNode[] = [];
-      if (gameState.selectedIds.length > 0) {
-        nodesToGrab = gameState.selectedIds
-          .map((id) => getNodeById(gameState.fs, id))
-          .filter((n): n is FileNode => !!n);
-      } else if (currentItem) {
-        nodesToGrab = [currentItem];
-      }
-
-      const uniqueNodes = Array.from(new Map(nodesToGrab.map((n) => [n.id, n])).values());
-
-      const honeypotCheck = checkGrabbingHoneypot(uniqueNodes, gameState.levelIndex);
-      if (honeypotCheck.triggered) {
-        if (honeypotCheck.severity === 'gameover') {
-          dispatch({ type: 'GAME_OVER', reason: 'honeypot' });
-          return true;
-        } else if (honeypotCheck.severity === 'modal') {
-          dispatch({
-            type: 'SET_ALERT_MESSAGE',
-            message: honeypotCheck.message || '🚨 HONEYPOT DETECTED!',
-          });
-          dispatch({ type: 'SET_MODAL_VISIBILITY', modal: 'threat', visible: true });
-        } else {
-          showNotification(
-            honeypotCheck.message ||
-              '🚨 HONEYPOT DETECTED! You grabbed a security trap file. Clear clipboard (Y) immediately!',
-            4000
-          );
-        }
-      }
-
-      const legacyThought = getLevel11LegacyThought(uniqueNodes, gameState.levelIndex);
-      if (legacyThought) {
-        dispatch({
-          type: 'SET_THOUGHT',
-          payload: { text: legacyThought, author: 'AI-7734' },
-        });
-      }
-
-      if (uniqueNodes.length > 0) {
-        const nodesWithPaths = uniqueNodes.map((n) => ({
-          ...n,
-          actualParentPath: findPathById(gameState.fs, n.id)?.slice(0, -1),
-        }));
-
-        dispatch({
-          type: 'SET_CLIPBOARD',
-          nodes: nodesWithPaths,
-          action: isCut ? 'cut' : 'yank',
-          originalPath: gameState.currentPath,
-        });
-        dispatch({ type: 'SET_SELECTION', ids: [] });
-        dispatch({
-          type: 'MARK_ACTION_USED',
-          actionId: isCut ? 'X' : 'Y',
-        });
-        showNotification(
-          getNarrativeAction(e.key) ||
-            `${nodesWithPaths.length} item(s) ${isCut ? 'cut' : 'yanked'}`,
-          4000
-        );
-        return true;
-      }
-      break;
-    }
+    case 'y':
+      return handleYankOrCut(e.key, ctx);
 
     case 'Y':
       if (e.shiftKey) {

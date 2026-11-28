@@ -508,6 +508,189 @@ describe('handleClipboardKeyDown selection, rename, yank/cut, and delete branche
     expect(dispatch).toHaveBeenCalledWith({ type: 'CLEAR_CLIPBOARD' });
   });
 
+  it('allows cutting a misplaced pasted copy (and repeating) under clipboardPolicy: yank while still blocking cut on levelStartFS files', () => {
+    const token = file('fs-new-key', 'access_key_new.pem');
+    const sourceCreds = dir('creds', 'credentials', [token]);
+    const wrongDir = dir('systemd-core', 'systemd-core');
+    const targetCreds = dir('target-creds', 'credentials');
+    const otherWrongDir = dir('staging', 'staging');
+    const fs = dir('root', 'root', [sourceCreds, wrongDir, targetCreds, otherWrongDir]);
+    const level10 = LEVELS.find((l) => l.id === 10)!;
+
+    let state = makeBootState(10, { fs, currentPath: ['root', 'creds'] });
+    const dispatch = (action: Parameters<typeof gameReducer>[1]) => {
+      state = gameReducer(state, action);
+    };
+    const showNotification = vi.fn();
+
+    // Original levelStartFS token cannot be cut on a yank-only level
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(state, dispatch, {
+        items: [token],
+        currentItem: token,
+        currentLevel: level10,
+        showNotification,
+      })
+    );
+    expect(state.clipboard).toBeNull();
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('Cut (x) blocked'), 4000);
+
+    // Yank original token and accidentally paste into systemd-core
+    handleClipboardKeyDown(
+      makeKey({ key: 'y' }),
+      makeNormalContext(state, dispatch, {
+        items: [token],
+        currentItem: token,
+        currentLevel: level10,
+      })
+    );
+    expect(state.clipboard?.action).toBe('yank');
+
+    dispatch({ type: 'NAVIGATE', path: ['root', 'systemd-core'] });
+    handleClipboardKeyDown(
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [],
+        currentItem: null,
+        currentLevel: level10,
+      })
+    );
+
+    const pastedOnce = getNodeByPath(state.fs, ['root', 'systemd-core'])?.children?.find(
+      (n) => n.name === 'access_key_new.pem'
+    );
+    expect(pastedOnce).toBeDefined();
+    expect(pastedOnce?.id).not.toBe('fs-new-key');
+
+    // Cut misplaced copy and paste into a second wrong directory (staging)
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(state, dispatch, {
+        items: [pastedOnce!],
+        currentItem: pastedOnce!,
+        currentLevel: level10,
+        showNotification,
+      })
+    );
+    expect(state.clipboard?.action).toBe('cut');
+    expect(showNotification).not.toHaveBeenCalledWith(
+      expect.stringContaining('Cut (x) blocked'),
+      4000
+    );
+
+    dispatch({ type: 'NAVIGATE', path: ['root', 'staging'] });
+    handleClipboardKeyDown(
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [],
+        currentItem: null,
+        currentLevel: level10,
+      })
+    );
+    expect(getNodeByPath(state.fs, ['root', 'systemd-core'])?.children).toEqual([]);
+    const pastedTwice = getNodeByPath(state.fs, ['root', 'staging'])?.children?.find(
+      (n) => n.name === 'access_key_new.pem'
+    );
+    expect(pastedTwice?.id).toBe(pastedOnce?.id);
+
+    // Can still cut a second time and move into the intended credentials dir
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(state, dispatch, {
+        items: [pastedTwice!],
+        currentItem: pastedTwice!,
+        currentLevel: level10,
+      })
+    );
+    expect(state.clipboard?.action).toBe('cut');
+
+    dispatch({ type: 'NAVIGATE', path: ['root', 'target-creds'] });
+    handleClipboardKeyDown(
+      makeKey({ key: 'p' }),
+      makeNormalContext(state, dispatch, {
+        items: [],
+        currentItem: null,
+        currentLevel: level10,
+      })
+    );
+    expect(getNodeByPath(state.fs, ['root', 'staging'])?.children).toEqual([]);
+    expect(getNodeByPath(state.fs, ['root', 'target-creds'])?.children?.map((n) => n.name)).toEqual(
+      ['access_key_new.pem']
+    );
+    expect(getNodeByPath(state.fs, ['root', 'creds'])?.children?.map((n) => n.name)).toEqual([
+      'access_key_new.pem',
+    ]);
+  });
+
+  it('blocks mixed original + pasted multi-selection and checks descendants for directories on yank levels', () => {
+    const origFile = file('orig-1', 'orig.txt');
+    const fsAtStart = dir('root', 'root', [origFile]);
+    const pastedFile = file('fresh-1', 'copy.txt');
+    const cleanNewDir = dir('fresh-dir-clean', 'clean-dir', [pastedFile]);
+    const taintedNewDir = dir('fresh-dir-tainted', 'tainted-dir', [origFile]);
+    const currentFs = dir('root', 'root', [origFile, pastedFile, cleanNewDir, taintedNewDir]);
+    const yankLevel = { ...LEVELS[0], clipboardPolicy: 'yank' as const };
+    const dispatch = vi.fn();
+    const showNotification = vi.fn();
+
+    // Mixed selection (original + pasted) must block cut
+    const mixedState = makeBootState(1, {
+      fs: currentFs,
+      levelStartFS: fsAtStart,
+      currentPath: ['root'],
+      selectedIds: ['orig-1', 'fresh-1'],
+    });
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(mixedState, dispatch, {
+        items: currentFs.children!,
+        currentItem: pastedFile,
+        currentLevel: yankLevel,
+        showNotification,
+      })
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_CLIPBOARD' }));
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('Cut (x) blocked'), 4000);
+
+    // Newly created dir containing an original descendant must block cut
+    dispatch.mockClear();
+    showNotification.mockClear();
+    const taintedDirState = makeBootState(1, {
+      fs: currentFs,
+      levelStartFS: fsAtStart,
+      currentPath: ['root'],
+    });
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(taintedDirState, dispatch, {
+        items: currentFs.children!,
+        currentItem: taintedNewDir,
+        currentLevel: yankLevel,
+        showNotification,
+      })
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_CLIPBOARD' }));
+    expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('Cut (x) blocked'), 4000);
+
+    // Newly created dir containing only newly pasted descendants is allowed to be cut
+    dispatch.mockClear();
+    showNotification.mockClear();
+    handleClipboardKeyDown(
+      makeKey({ key: 'x' }),
+      makeNormalContext(taintedDirState, dispatch, {
+        items: currentFs.children!,
+        currentItem: cleanNewDir,
+        currentLevel: yankLevel,
+        showNotification,
+      })
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SET_CLIPBOARD', action: 'cut' })
+    );
+  });
+
   it('handles d/D delete queueing, level 14 trash block, empty selection, and unhandled keys', () => {
     const items = makeItems().slice(0, 2);
     const fs = dir('root', 'root', items);

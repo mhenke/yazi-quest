@@ -93,7 +93,6 @@ const HelpModal = lazy(() =>
 const OutroSequence = lazy(() =>
   import('./components/OutroSequence').then((m) => ({ default: m.OutroSequence }))
 );
-const BiosBoot = lazy(() => import('./components/BiosBoot').then((m) => ({ default: m.BiosBoot })));
 const FuzzyFinder = lazy(() =>
   import('./components/FuzzyFinder').then((m) => ({ default: m.FuzzyFinder }))
 );
@@ -214,21 +213,6 @@ const useSearchConfirmation = (gameState: GameState, dispatch: React.Dispatch<Ac
     );
     dispatch({ type: 'CONFIRM_SEARCH', query: gameState.inputBuffer, results });
   }, [gameState, dispatch]);
-
-const useEpisodeBootTransition = (levelIndex: number, showEpisodeIntro: boolean) => {
-  const [showBoot, setShowBoot] = useState(false);
-  const [currentEpisode, setCurrentEpisode] = useState(() =>
-    showEpisodeIntro ? 1 : Math.ceil((levelIndex + 1) / 5)
-  );
-
-  const derivedEpisode = Math.ceil((levelIndex + 1) / 5);
-  if (derivedEpisode !== currentEpisode && !showEpisodeIntro) {
-    setCurrentEpisode(derivedEpisode);
-    setShowBoot(true);
-  }
-
-  return { showBoot, setShowBoot, currentEpisode };
-};
 
 const SORT_MENU_OPTIONS: ReadonlyArray<{
   key: string;
@@ -437,6 +421,9 @@ export default function App() {
   const returnFocusToFiles = useCallback(() => {
     filePaneRef.current?.focus({ preventScroll: true });
   }, []);
+  // Mission drawer open/collapsed state
+  const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(true);
+
   const canFocusFilePane =
     gameState.mode === 'normal' &&
     !gameState.isBooting &&
@@ -451,13 +438,6 @@ export default function App() {
       filePaneRef.current?.focus({ preventScroll: true });
     }
   }, [canFocusFilePane]);
-
-  // Boot sequence state for episode transitions
-  const [isMissionDrawerOpen, setIsMissionDrawerOpen] = useState(true);
-  const { showBoot, setShowBoot, currentEpisode } = useEpisodeBootTransition(
-    gameState.levelIndex,
-    gameState.showEpisodeIntro
-  );
 
   // Honor a global test flag to skip all intro/boot overlays immediately if requested.
   const handleSkip = useCallback(() => {
@@ -963,6 +943,7 @@ export default function App() {
     allTasksComplete: checkAllTasksComplete(gameState, currentLevel),
     isLastLevel,
     isGamePaused,
+    isBooting: gameState.isBooting,
     showEpisodeIntro: gameState.showEpisodeIntro,
     isGameOver: gameState.isGameOver,
     showHidden: gameState.showHidden,
@@ -1674,13 +1655,13 @@ export default function App() {
 
   if (gameState.isBooting) {
     return (
-      <Suspense fallback={null}>
-        <BiosBoot
-          onComplete={handleBootComplete}
-          cycleCount={gameState.cycleCount || 1}
-          reduceMotion={reduceMotion}
-        />
-      </Suspense>
+      <BootSequence
+        key={`${currentLevel.episodeId}-${gameState.cycleCount || 1}`}
+        episode={currentLevel.episodeId}
+        cycleCount={gameState.cycleCount || 1}
+        onComplete={handleBootComplete}
+        reduceMotion={reduceMotion}
+      />
     );
   }
 
@@ -1715,15 +1696,6 @@ export default function App() {
             reduceMotion={reduceMotion}
             episode={resolveIntroEpisode(currentLevel.episodeId, gameState.cycleCount)}
             onComplete={(options) => dispatch({ type: 'COMPLETE_INTRO', isSkip: options?.isSkip })}
-          />
-        )}
-
-        {showBoot && (
-          <BootSequence
-            key={currentEpisode}
-            episode={currentEpisode}
-            reduceMotion={reduceMotion}
-            onComplete={() => setShowBoot(false)}
           />
         )}
 

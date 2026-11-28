@@ -1,15 +1,22 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
+import { GlobalInputProvider } from '../../GlobalInputContext';
+import { resetSkipIntroRequested } from '../../utils/skipIntroFlag';
 import { BootSequence } from './BootSequence';
 import '@testing-library/jest-dom/vitest';
 
-// Use real timers for this test
-vi.useRealTimers();
-
 describe('BootSequence', () => {
-  it('completes on schedule with the latest callback while the parent rerenders', () => {
+  beforeEach(() => {
+    resetSkipIntroRequested();
     vi.useFakeTimers();
+  });
 
+  afterEach(() => {
+    resetSkipIntroRequested();
+    vi.useRealTimers();
+  });
+
+  it('pauses after typing finishes instead of auto-advancing, and advances with the latest callback on Shift+Enter', () => {
     function BootHost({ message }: { message: string }) {
       const [completion, setCompletion] = useState('');
       return completion ? (
@@ -19,80 +26,111 @@ describe('BootSequence', () => {
       );
     }
 
-    const { rerender, unmount } = render(<BootHost message="Initial completion" />);
-    try {
-      for (let second = 0; second < 3; second++) {
-        act(() => vi.advanceTimersByTime(1000));
-        rerender(<BootHost message="Workspace ready" />);
-      }
-      act(() => vi.advanceTimersByTime(1000));
+    const { rerender } = render(
+      <GlobalInputProvider>
+        <BootHost message="Initial completion" />
+      </GlobalInputProvider>
+    );
 
-      expect(screen.getByText('Workspace ready')).toBeInTheDocument();
-    } finally {
-      unmount();
-      vi.useRealTimers();
-    }
+    // Advance past full compromised boot duration + extra idle time: must remain paused
+    act(() => vi.advanceTimersByTime(15000));
+    expect(screen.getByText(/Ghost process detected: PID 7733/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Press Shift+Enter to continue...' })
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Initial completion')).not.toBeInTheDocument();
+
+    // Update parent state before continuing to confirm latest callback is used
+    rerender(
+      <GlobalInputProvider>
+        <BootHost message="Workspace ready" />
+      </GlobalInputProvider>
+    );
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true }));
+    });
+    expect(screen.getByText('Workspace ready')).toBeInTheDocument();
   });
 
-  it('should show clean boot for Episode I', async () => {
-    render(<BootSequence episode={1} />);
-
-    // Clean boot: 2000ms duration + 1000ms completion delay
-    // Line 2 appears at 400ms, Line 5 appears at 1600ms
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Memory Test: 64MB OK/)).toBeInTheDocument();
-      },
-      { timeout: 4000 }
+  it('pauses in reduceMotion mode and lets button click advance', () => {
+    const onComplete = vi.fn();
+    render(
+      <GlobalInputProvider>
+        <BootSequence episode={1} onComplete={onComplete} reduceMotion />
+      </GlobalInputProvider>
     );
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Welcome, AI-7734/)).toBeInTheDocument();
-      },
-      { timeout: 4000 }
-    );
+    act(() => vi.advanceTimersByTime(15000));
+    expect(screen.getByText('READY.')).toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
 
-    expect(screen.queryByText(/Ghost process/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Press Shift+Enter to continue...' }));
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('should show compromised boot for Episode II', async () => {
-    render(<BootSequence episode={2} />);
-
-    // Compromised boot: 3000ms duration + 1000ms completion delay
-    // Line 4 appears at ~1714ms, Line 7 appears at 3000ms
-    await waitFor(
-      () => {
-        expect(screen.getByText(/WARNING: Modified boot sector detected/)).toBeInTheDocument();
-      },
-      { timeout: 5000 }
+  it('reveals remaining lines on plain Enter while typing, then continues on second Enter', () => {
+    const onComplete = vi.fn();
+    render(
+      <GlobalInputProvider>
+        <BootSequence episode={1} onComplete={onComplete} />
+      </GlobalInputProvider>
     );
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Ghost process detected: PID 7733/)).toBeInTheDocument();
-      },
-      { timeout: 5000 }
-    );
+    act(() => {
+      vi.advanceTimersByTime(300);
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+    expect(screen.getByText('READY.')).toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('should show possessed boot for Episode III', async () => {
-    render(<BootSequence episode={3} />);
-
-    // Possessed boot: 4000ms duration + 1000ms completion delay
-    // Line 1 appears at 0ms, Line 5 appears at ~2857ms
-    await waitFor(
-      () => {
-        expect(screen.getByText(/\[CORRUPTED\]/)).toBeInTheDocument();
-      },
-      { timeout: 6000 }
+  it('supports Skip Intro button during boot sequence', () => {
+    const onComplete = vi.fn();
+    render(
+      <GlobalInputProvider>
+        <BootSequence episode={2} onComplete={onComplete} />
+      </GlobalInputProvider>
     );
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/AI-7733 is watching/)).toBeInTheDocument();
-      },
-      { timeout: 6000 }
+    fireEvent.click(screen.getByRole('button', { name: 'Skip Intro' }));
+    expect(onComplete).toHaveBeenCalledWith({ isSkip: true });
+  });
+
+  it.each([
+    [1, 'AI-7734'],
+    [2, 'AI-7735'],
+    [7, 'AI-7740'],
+  ])('interpolates subject identity across episodes in cycle %i', (cycleCount, subject) => {
+    const { rerender } = render(
+      <GlobalInputProvider>
+        <BootSequence episode={1} cycleCount={cycleCount} reduceMotion />
+      </GlobalInputProvider>
     );
+    expect(screen.getByText(`INITIALIZING SUBJECT ${subject}...`)).toBeInTheDocument();
+    expect(screen.getByText('/root (read-only)', { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText('OK')).toHaveLength(6);
+
+    rerender(
+      <GlobalInputProvider>
+        <BootSequence episode={2} cycleCount={cycleCount} reduceMotion />
+      </GlobalInputProvider>
+    );
+    expect(screen.getByText(/WARNING: Modified boot sector detected/)).toBeInTheDocument();
+    expect(screen.getByText(`Welcome, ${subject}... [verification pending]`)).toBeInTheDocument();
+    expect(screen.getByText(/Ghost process detected: PID 7733/)).toBeInTheDocument();
+
+    rerender(
+      <GlobalInputProvider>
+        <BootSequence episode={3} cycleCount={cycleCount} reduceMotion />
+      </GlobalInputProvider>
+    );
+    expect(screen.getByText(/\[CORRUPTED\]/)).toBeInTheDocument();
+    expect(screen.getByText(`${subject} is online`)).toBeInTheDocument();
+    expect(screen.getByText(/AI-7733 is watching/)).toBeInTheDocument();
   });
 });

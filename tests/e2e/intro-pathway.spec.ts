@@ -263,6 +263,38 @@ test.describe('Intro Pathway Validation', () => {
       await assertBarsHidden(page);
     });
 
+    test('Episode II: BootScreen pauses for reading until Shift+Enter is pressed', async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto('/?lvl=6');
+      await page.waitForLoadState('domcontentloaded');
+
+      const bootSignal = page.getByText(/> Ghost process detected: PID 7733/);
+      for (let i = 0; i < 10; i++) {
+        if (await bootSignal.isVisible().catch(() => false)) {
+          break;
+        }
+        await pressKey(page, 'Shift+Enter');
+      }
+
+      await expect(bootSignal).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.getByRole('button', { name: 'Press Shift+Enter to continue...' })
+      ).toBeVisible();
+      await assertBarsHidden(page);
+
+      // Boot screen must remain paused rather than auto-advancing
+      await page.waitForTimeout(1500);
+      await expect(bootSignal).toBeVisible();
+      await expect(page.locator('[data-testid="status-bar"]')).not.toBeVisible();
+
+      await pressKey(page, 'Shift+Enter');
+      await waitForGameReady(page);
+      await assertPath(page, '~');
+      await assertTasksStartAtZero(page);
+    });
+
     test('UI Bar Visibility: Bars become visible after intro skip', async ({ page }) => {
       await page.goto('/?lvl=1');
       await page.waitForLoadState('domcontentloaded');

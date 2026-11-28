@@ -1,63 +1,103 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { getBootSequenceForEpisode } from '../../constants/bootSequences';
+import { useGlobalInput } from '../../GlobalInputContext';
+import { SkipIntroButton, useSkipIntro, useTypewriter } from './useTypewriter';
 
 interface BootSequenceProps {
   episode: number;
-  onComplete?: () => void;
+  cycleCount?: number;
+  onComplete?: (options?: { isSkip?: boolean }) => void;
   reduceMotion?: boolean;
 }
 
+const renderBootLine = (line: string): ReactNode => {
+  if (!line) return '';
+  if (line.startsWith('[ OK ]')) {
+    return (
+      <>
+        <span className="text-green-500">[</span>
+        <span className="text-green-400 font-bold"> OK </span>
+        <span className="text-green-500">]</span>
+        {line.substring(6)}
+      </>
+    );
+  }
+  return line;
+};
+
 /**
  * BootSequence component displays animated boot messages for each episode.
+ * Pauses once complete so the player can read the text and explicitly continue.
  *
- * Note: When using this component, pass a `key` prop equal to `episode` to ensure
- * the component remounts on episode change, preventing state leakage:
- * <BootSequence key={episode} episode={episode} onComplete={...} />
+ * Note: Pass a `key` derived from `episode` and `cycleCount` to reset state
+ * cleanly across transitions.
  */
-export function BootSequence({ episode, onComplete, reduceMotion }: BootSequenceProps) {
-  const [sequence] = useState(() => getBootSequenceForEpisode(episode));
-  const [visibleLines, setVisibleLines] = useState<string[]>([]);
-  const completeBoot = useEffectEvent(() => onComplete?.());
+export function BootSequence({
+  episode,
+  cycleCount = 1,
+  onComplete,
+  reduceMotion,
+}: BootSequenceProps) {
+  const sequence = useMemo(
+    () => getBootSequenceForEpisode(episode, cycleCount),
+    [episode, cycleCount]
+  );
+  const { lines, showContinue, skip } = useTypewriter(sequence.lines, {
+    speed: sequence.lineSpeedMs,
+    key: `${episode}-${cycleCount}`,
+    immediate: reduceMotion,
+  });
 
-  useEffect(() => {
-    if (reduceMotion) {
-      const timer = setTimeout(() => completeBoot(), sequence.duration + 1000);
-      return () => clearTimeout(timer);
-    }
+  const handleComplete = useCallback(
+    (options?: { isSkip?: boolean }) => {
+      onComplete?.(options);
+    },
+    [onComplete]
+  );
 
-    const lineDuration = sequence.duration / sequence.lines.length;
-    const timers: ReturnType<typeof setTimeout>[] = [];
+  useSkipIntro(handleComplete);
 
-    // Schedule all lines to appear
-    sequence.lines.forEach((line, index) => {
-      const timer = setTimeout(() => {
-        setVisibleLines((prev) => [...prev, line]);
-      }, index * lineDuration);
-      timers.push(timer);
-    });
-
-    // Schedule completion
-    const completionTimer = setTimeout(() => {
-      completeBoot();
-    }, sequence.duration + 1000);
-    timers.push(completionTimer);
-
-    // Cleanup
-    return () => {
-      timers.forEach((timer) => clearTimeout(timer));
-    };
-  }, [sequence, episode, reduceMotion]);
+  useGlobalInput(
+    (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (e.shiftKey || showContinue) {
+        handleComplete();
+      } else {
+        skip();
+      }
+      return true;
+    },
+    [showContinue, handleComplete, skip],
+    { priority: 1000 }
+  );
 
   return (
-    <div className="boot-sequence fixed inset-0 bg-black text-green-500 font-mono p-8 z-50">
-      <div className="max-w-2xl">
-        {(reduceMotion ? sequence.lines : visibleLines).map((line, index) => (
-          <div key={index} className="mb-2 animate-fadeIn">
-            {line}
+    <main className="boot-sequence fixed inset-0 z-50 bg-black text-green-500 font-mono p-8 sm:p-12 overflow-y-auto flex flex-col items-start justify-start select-none">
+      <div className="w-full max-w-2xl">
+        {lines.map((line, index) => (
+          <div key={index} className={reduceMotion ? 'min-h-5' : 'min-h-5 animate-fadeIn'}>
+            {renderBootLine(line)}
           </div>
         ))}
-        <div className="animate-pulse mt-4">_</div>
+        <div
+          className={`bg-green-500 w-2 h-4 inline-block ml-1 mt-1 ${reduceMotion ? '' : 'animate-pulse'}`}
+          aria-hidden="true"
+        />
       </div>
-    </div>
+
+      {showContinue && (
+        <button
+          type="button"
+          onClick={() => handleComplete()}
+          className="mt-8 text-green-400 hover:text-green-300 font-mono text-sm flex items-center gap-2 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-400"
+        >
+          <span className="w-2 h-2 bg-green-400 rounded-full" aria-hidden="true" />
+          Press Shift+Enter to continue...
+        </button>
+      )}
+
+      <SkipIntroButton />
+    </main>
   );
 }

@@ -1539,7 +1539,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
           expect(next.timeLeft).toBe(LEVELS[0].timeLimit ?? null);
           expect(next.completedTaskIds).toEqual({});
           expect(next.showEpisodeIntro).toBe(true);
-          expect(next.isBooting).toBe(true);
+          expect(next.isBooting).toBe(false);
           expect(next.settings).toEqual(customSettings);
           expect(next.stats).toEqual(customStats);
           for (const [k, v] of Object.entries(INITIAL_ACTION_FLAGS)) {
@@ -1551,15 +1551,16 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
     );
   });
 
-  it('COMPLETE_INTRO resets transient state, resolves level start path, and gates boot sequence on Ep 1 natural completion', () => {
+  it('COMPLETE_INTRO resets transient state, resolves level start path, and gates boot sequence on natural intro completion', () => {
     const base = makeBootState();
 
     assert(
       property(
         integer({ min: 0, max: LEVELS.length - 1 }),
         boolean(),
+        boolean(),
         option(boolean(), { nil: undefined }),
-        (levelIdx, showEpisodeIntro, isSkip) => {
+        (levelIdx, showEpisodeIntro, isBooting, isSkip) => {
           const fixture = fixtures[levelIdx];
           const dirty: GameState = {
             ...base,
@@ -1568,7 +1569,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
             currentPath: ['root'],
             cursorIndex: 4,
             showEpisodeIntro,
-            isBooting: true,
+            isBooting,
             keystrokes: 15,
             weightedKeystrokes: 8,
             searchQuery: 'foo',
@@ -1580,7 +1581,7 @@ describe('property: level lifecycle (SET_LEVEL, RESET_LEVEL, RESTART_CYCLE, COMP
           };
 
           const next = gameReducer(dirty, { type: 'COMPLETE_INTRO', isSkip });
-          const expectedBoot = !(isSkip ?? false) && showEpisodeIntro && levelIdx === 0;
+          const expectedBoot = !(isSkip ?? false) && !isBooting && showEpisodeIntro;
 
           expect(next.showEpisodeIntro).toBe(false);
           expect(next.isBooting).toBe(expectedBoot);

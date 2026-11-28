@@ -76,7 +76,7 @@ export const makeBootState = (levelId = 1, overrides: Partial<GameState> = {}): 
     levelIndex: idx,
     unlockedLevelIndex: idx,
     fs,
-    levelStartFS: cloneFS(fs),
+    levelStartFS: overrides.levelStartFS ?? cloneFS(overrides.fs ?? fs),
     levelStartPath: [...currentPath],
     notification: null,
     thought: null,

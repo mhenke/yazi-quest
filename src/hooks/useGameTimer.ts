@@ -7,6 +7,7 @@ interface UseGameTimerProps {
   allTasksComplete: boolean;
   isLastLevel: boolean;
   isGamePaused: boolean;
+  isBooting: boolean;
   showEpisodeIntro: boolean;
   isGameOver: boolean;
   showHidden: boolean;
@@ -19,17 +20,19 @@ export function useGameTimer({
   allTasksComplete,
   isLastLevel,
   isGamePaused,
+  isBooting,
   showEpisodeIntro,
   isGameOver,
   showHidden,
   keystrokes,
   dispatch,
 }: UseGameTimerProps) {
+  const paused = isBooting || showEpisodeIntro || isGamePaused;
+
   // Countdown timer — dispatches TICK every second when active
   useEffect(() => {
     if (allTasksComplete && !showHidden) return;
-    if (!currentLevel.timeLimit || isLastLevel || showEpisodeIntro || isGameOver || isGamePaused)
-      return;
+    if (!currentLevel.timeLimit || isLastLevel || isGameOver || paused) return;
 
     const timer = setInterval(() => {
       dispatch({
@@ -51,10 +54,9 @@ export function useGameTimer({
     currentLevel.episodeId,
     allTasksComplete,
     isLastLevel,
-    showEpisodeIntro,
+    paused,
     isGameOver,
     showHidden,
-    isGamePaused,
     dispatch,
   ]);
 

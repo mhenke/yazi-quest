@@ -41,7 +41,7 @@ export const ThreatAlert: React.FC<ThreatAlertProps> = ({ message, author, onDis
             onClick={onDismiss}
             className="min-h-9 px-3 py-1.5 border border-orange-500/70 bg-orange-950/50 text-orange-300 hover:bg-orange-900/60 hover:text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
-            Dismiss (Shift+Enter)
+            Dismiss
           </button>
         </div>
       </div>

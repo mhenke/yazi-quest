@@ -60,7 +60,7 @@ export interface Level {
   // this level. Each entry may optionally require a task id to be
   // completed (requiresTaskId) before the rule applies.
   allowedDeletePaths?: { path: string[]; requiresTaskId?: string }[];
-  clipboardPolicy?: 'cut' | 'yank'; // Restrict copying or moving for a level; omitted allows both.
+  clipboardPolicy?: 'cut' | 'yank'; // Restrict copying or moving level-start files; 'yank' still allows cutting/moving nodes created or pasted during the level; omitted allows both.
   postTasks?: { triggerTaskId: string; action: (gameState: GameState, level: Level) => Action }[];
 }
 
@@ -204,7 +204,7 @@ export interface GameState {
   alertMessage?: string;
   showSuccessToast?: boolean;
   toast?: { message: string; duration?: number };
-  isBooting: boolean; // Flag for the BIOS boot sequence overlay
+  isBooting: boolean; // Flag for the episode boot sequence overlay (pauses for user confirmation after EpisodeIntro)
   timeLeft: number | null; // Current countdown time in seconds (null if no timer)
   keystrokes: number; // Raw keystrokes (Ep 1 & 2)
   weightedKeystrokes: number; // Weighted "Noise" (Ep 3)

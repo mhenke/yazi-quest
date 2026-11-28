@@ -495,7 +495,7 @@ function applyRestartCycle(state: GameState, nextCycle = true): GameState {
     completedTaskIds: {},
     showMap: false,
     showEpisodeIntro: true,
-    isBooting: true,
+    isBooting: false,
     ...INITIAL_ACTION_FLAGS,
   };
 }
@@ -527,8 +527,9 @@ function applyCompleteIntro(state: GameState, isSkip = false): GameState {
     mode: 'normal' as const,
   };
 
-  // Conditionally trigger boot sequence only for Episode 1 natural progression
-  if (!isSkip && state.showEpisodeIntro && state.levelIndex === 0) {
+  // Natural completion of any episode intro transitions into that episode's boot screen.
+  // Completing the boot screen itself (or skipping) enters gameplay directly.
+  if (!isSkip && !state.isBooting && state.showEpisodeIntro && currentLevel) {
     return { ...newState, isBooting: true };
   }
 
@@ -685,6 +686,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         alertMessage: '',
         mode: 'normal',
         showEpisodeIntro: action.showIntro ?? false,
+        isBooting: false,
         notification: action.notification ?? null,
         thought: action.thought ?? null,
         timeLeft: LEVELS[action.index].timeLimit ?? null,

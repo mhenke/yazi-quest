@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { startLevel } from './utils';
+import {
+  addItem,
+  ensureCleanState,
+  enterDirectory,
+  filterAndSelect,
+  gotoCommand,
+  pressKey,
+  sortCommand,
+  startLevel,
+} from './utils';
 
 test.describe('Clipboard Level Restrictions', () => {
   test.afterEach(async ({ page }, testInfo) => {
@@ -103,5 +112,55 @@ test.describe('Clipboard Level Restrictions', () => {
     clipboardStatus = page.getByTestId('status-clipboard');
     await expect(clipboardStatus).toBeVisible();
     await expect(clipboardStatus).toContainText('MOVE');
+  });
+
+  test('Level 10 allows cutting an accidentally pasted key while blocking cut on the original', async ({
+    page,
+  }) => {
+    await startLevel(page, 10, { intro: false });
+
+    // Navigate to ~/incoming/backup_logs/credentials and locate access_key_new.pem
+    await gotoCommand(page, 'i');
+    await enterDirectory(page, 'backup_logs');
+    await enterDirectory(page, 'credentials');
+    await sortCommand(page, 'm');
+    await filterAndSelect(page, 'access_key_new.pem');
+
+    // Original level-start key cannot be cut
+    await pressKey(page, 'x');
+    const notification = page.getByTestId('system-notification');
+    await expect(notification).toBeVisible();
+    await expect(notification).toContainText('PROTOCOL VIOLATION');
+    await expect(notification).toContainText('Yank (y)');
+
+    // Yank original key
+    await pressKey(page, 'y');
+    await expect(page.getByTestId('status-clipboard')).toContainText('COPY');
+
+    // Accidentally paste in ~/workspace/systemd-core instead of ~/workspace/systemd-core/credentials
+    await ensureCleanState(page);
+    await gotoCommand(page, 'w');
+    await enterDirectory(page, 'systemd-core');
+    await pressKey(page, 'p');
+    await expect(
+      page.getByTestId('filesystem-pane-active').getByTestId('file-access_key_new.pem')
+    ).toBeVisible();
+
+    // Create credentials/, then cut the accidentally pasted copy and move it inside credentials/
+    await addItem(page, 'credentials/');
+    await filterAndSelect(page, 'access_key_new.pem');
+    await pressKey(page, 'x');
+    await expect(page.getByTestId('status-clipboard')).toContainText('MOVE');
+
+    await enterDirectory(page, 'credentials');
+    await pressKey(page, 'p');
+
+    await expect(
+      page.getByTestId('filesystem-pane-active').getByTestId('file-access_key_new.pem')
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('filesystem-pane-parent').getByTestId('file-access_key_new.pem')
+    ).toHaveCount(0);
+    await expect(page.getByTestId('mission-complete')).toBeVisible({ timeout: 5000 });
   });
 });
